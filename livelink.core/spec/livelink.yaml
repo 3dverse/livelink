@@ -1,0 +1,291 @@
+---
+#-------------------------------------------------------------------------------
+asyncapi: 3.0.0
+info:
+  title: 3dverse LiveLink Client Protocol
+  version: 0.1.0
+  description: |
+    This document describes the spec of the 3dverse LiveLink communication
+    protocol as it must be implemented on a client application.
+
+    It defines operations targeted to 2 parties, and 2 subparties:
+      - the cluster gateway
+        - the rendering server
+        - the remote viewer
+      - the livelink broadcast/persistence server
+
+#-------------------------------------------------------------------------------
+servers:
+  #-----------------------------------------------------------------------------
+  cluster-gateway:
+    description: |
+      Gateway server handling the client connection to a rendering server that
+      handles real-time remote operations and a remote viewer that handles
+      streaming frames and receveiving input devices states.
+
+      Note that the gateway abstracts those behind-the-scenes servers under a
+      common interface.
+    host: "{gateway_url}.3dverse.com"
+    protocol: wss
+
+  #-----------------------------------------------------------------------------
+  livelink:
+    description: |
+      Livelink server handling the persistence of data and broadcasting changes
+      as they occur cross sessions.
+    host: "livelink.3dverse.com"
+    protocol: wss
+#-------------------------------------------------------------------------------
+
+#-------------------------------------------------------------------------------
+channels:
+  #-----------------------------------------------------------------------------
+  authentication:
+    title: Authentication
+    summary: Authentication channel
+    description: A single use channel that handles a single authentication message
+    servers:
+      - $ref: "#/servers/cluster-gateway"
+    address: authentication
+    messages:
+      authenticate_client:
+        $ref: "#/components/messages/authenticate_client"
+      authentication_response:
+        description: ded
+        $ref: "#/components/messages/authentication_response"
+
+  #-----------------------------------------------------------------------------
+  registration:
+    servers:
+      - $ref: "#/servers/cluster-gateway"
+    x-channel-id: 1
+    address: registration
+    description: A channel to send new connection configuration
+    messages:
+      configure_client:
+        $ref: "#/components/messages/configure_client"
+      on_client_configured:
+        $ref: "#/components/messages/on_client_configured"
+
+  #-----------------------------------------------------------------------------
+  heartbeat:
+    servers:
+      - $ref: "#/servers/cluster-gateway"
+    x-channel-id: 11
+    address: heartbeat
+    description: Heartbeat channel between the client and the renderer
+    messages:
+      pulse_heartbeat:
+        description: This message doesn't contain any payload
+        contentType: application/octet-stream
+      on_heartbeat_received:
+        description: This message doesn't contain any payload
+        contentType: application/octet-stream
+
+  #-----------------------------------------------------------------------------
+  video-stream:
+    servers:
+      - $ref: "#/servers/cluster-gateway"
+    x-channel-id: 2
+    address: video-stream
+    description: Channel receiving video frames
+    messages:
+      on_frame_received:
+        $ref: "#/components/messages/on_frame_received"
+
+  #-----------------------------------------------------------------------------
+  viewer-control:
+    servers:
+      - $ref: "#/servers/cluster-gateway"
+    x-channel-id: 4
+    address: viewer-control
+    description: Channel sending viewer controls
+    messages:
+      set_viewports:
+        $ref: "#/components/messages/set_viewports"
+      resume:
+        description: This message doesn't contain any payload
+        contentType: application/octet-stream
+      suspend:
+        description: This message doesn't contain any payload
+        contentType: application/octet-stream
+      resize:
+        $ref: "#/components/messages/resize"
+      on_resized:
+        $ref: "#/components/messages/resize_response"
+
+  #-----------------------------------------------------------------------------
+  client-remote-operations:
+    servers:
+      - $ref: "#/servers/cluster-gateway"
+    x-channel-id: 5
+    address: client-remote-operations
+    description: All remote operations linked to a particular client
+    messages:
+      cast_screen_space_ray:
+        $ref: "#/components/messages/cast_screen_space_ray"
+      cast_screen_space_ray_result:
+        $ref: "#/components/messages/cast_screen_space_ray_result"
+      highlight_entities:
+        $ref: "#/components/messages/highlight_entities"
+
+  #-----------------------------------------------------------------------------
+  editor-remote-operations:
+    servers:
+      - $ref: "#/servers/livelink"
+    x-channel-id: 6
+    address: editor-remote-operations
+    description: All remote operations not linked to a particular client
+    messages:
+      create_entity:
+        $ref: "#/components/messages/create_entity"
+#-------------------------------------------------------------------------------
+
+#-------------------------------------------------------------------------------
+operations:
+  #-----------------------------------------------------------------------------
+  # AUTHENTICATION
+  #-----------------------------------------------------------------------------
+  authenticateClient:
+    title: Authenticate Client
+    summary: Authenticate a new client connection
+    tags:
+      - name: gateway
+    action: send
+    channel:
+      $ref: "#/channels/authentication"
+    messages:
+      - $ref: "#/channels/authentication/messages/authenticate_client"
+    reply:
+      channel:
+        $ref: "#/channels/authentication"
+      messages:
+        - $ref: "#/channels/authentication/messages/authentication_response"
+
+  #-----------------------------------------------------------------------------
+  # REGISTRATION
+  #-----------------------------------------------------------------------------
+  configureClient:
+    action: send
+    channel:
+      $ref: "#/channels/registration"
+    messages:
+      - $ref: "#/channels/registration/messages/configure_client"
+    reply:
+      channel:
+        $ref: "#/channels/registration"
+      messages:
+        - $ref: "#/channels/registration/messages/on_client_configured"
+
+  #-----------------------------------------------------------------------------
+  # HEARTBEAT
+  #-----------------------------------------------------------------------------
+  pulseHeartbeat:
+    action: send
+    channel:
+      $ref: "#/channels/heartbeat"
+    messages:
+      - $ref: "#/channels/heartbeat/messages/pulse_heartbeat"
+    reply:
+      channel:
+        $ref: "#/channels/heartbeat"
+      messages:
+        - $ref: "#/channels/heartbeat/messages/on_heartbeat_received"
+
+  #-----------------------------------------------------------------------------
+  # VIDEO STREAM
+  #-----------------------------------------------------------------------------
+  onFrameReceived:
+    action: receive
+    channel:
+      $ref: "#/channels/video-stream"
+    messages:
+      - $ref: "#/channels/video-stream/messages/on_frame_received"
+
+  #-----------------------------------------------------------------------------
+  # VIEWER CONTROL
+  #-----------------------------------------------------------------------------
+  setViewports:
+    action: send
+    x-rop-id: 5
+    channel:
+      $ref: "#/channels/viewer-control"
+    messages:
+      - $ref: "#/channels/viewer-control/messages/set_viewports"
+
+  resume:
+    action: send
+    x-rop-id: 3
+    channel:
+      $ref: "#/channels/viewer-control"
+    messages:
+      - $ref: "#/channels/viewer-control/messages/resume"
+
+  suspend:
+    action: send
+    x-rop-id: 2
+    channel:
+      $ref: "#/channels/viewer-control"
+    messages:
+      - $ref: "#/channels/viewer-control/messages/suspend"
+
+  resize:
+    action: send
+    x-rop-id: 0
+    channel:
+      $ref: "#/channels/viewer-control"
+    messages:
+      - $ref: "#/channels/viewer-control/messages/resize"
+    reply:
+      channel:
+        $ref: "#/channels/viewer-control"
+      messages:
+        - $ref: "#/channels/viewer-control/messages/on_resized"
+
+  #-----------------------------------------------------------------------------
+  # CLIENT REMOTE OPERATIONS
+  #-----------------------------------------------------------------------------
+  castScreenSpaceRay:
+    action: send
+    x-rop-id: 3
+    channel:
+      $ref: "#/channels/client-remote-operations"
+    messages:
+      - $ref: "#/channels/client-remote-operations/messages/cast_screen_space_ray"
+    reply:
+      channel:
+        $ref: "#/channels/client-remote-operations"
+      messages:
+        - $ref: "#/channels/client-remote-operations/messages/cast_screen_space_ray_result"
+
+  #-----------------------------------------------------------------------------
+  highlightEntities:
+    action: send
+    x-rop-id: 4
+    channel:
+      $ref: "#/channels/client-remote-operations"
+    messages:
+      - $ref: "#/channels/client-remote-operations/messages/highlight_entities"
+
+  #-----------------------------------------------------------------------------
+  # EDITOR REMOTE OPERATIONS
+  #-----------------------------------------------------------------------------
+  createEntity:
+    action: send
+    x-rop-id: 1
+    channel:
+      $ref: "#/channels/editor-remote-operations"
+    messages:
+      - $ref: "#/channels/editor-remote-operations/messages/create_entity"
+#-------------------------------------------------------------------------------
+
+#-------------------------------------------------------------------------------
+components:
+  #-----------------------------------------------------------------------------
+  messages:
+    $ref: "./messages.yaml"
+
+  #-----------------------------------------------------------------------------
+  schemas:
+    $ref: "./schemas.yaml"
+#-------------------------------------------------------------------------------

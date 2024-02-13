@@ -1,0 +1,23 @@
+{
+  "name": "livelink",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "build": "tsc && rollup ./_build/sources/index.js --file dist/livelink.js --format esm"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/3dverse/livelink.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/3dverse/livelink/issues"
+  },
+  "homepage": "https://github.com/3dverse/livelink#readme",
+  "devDependencies": {
+    "rollup": "^4.10.0",
+    "typescript": "^5.3.3"
+  }
+}

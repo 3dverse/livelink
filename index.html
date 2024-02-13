@@ -1,0 +1,107 @@
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <meta content="width=device-width,initial-scale=1.0" name="viewport" />
+    <style>
+      body {
+        background-color: black;
+        margin: 0;
+        padding: 0;
+      }
+
+      .canvas-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+      }
+
+      .control-panel {
+        position: fixed;
+        background-color: white;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="control-panel">
+      <button id="close">Close Session</button>
+    </div>
+    <div class="canvas-container">
+      <!-- CANVAS -->
+      <canvas
+        id="display-canvas"
+        oncontextmenu="event.preventDefault()"
+        style="width: 75vw; height: 80vh"
+        tabindex="1"
+      ></canvas>
+    </div>
+
+    <!-- APP ENTRYPOINT -->
+    <script type="module">
+      async function InitApp() {
+        const { LiveLink } = await import(
+          "http://localhost:3000/livelink.core/dist/livelink.js"
+        );
+
+        const instance = await LiveLink.start({
+          scene_id: "62b43fa8-528e-4ad9-a5ab-0994c5362529",
+          token: "public_p54ra95AMAnZdTel",
+        });
+
+        document.getElementById("close").onclick = () => {
+          console.log("close!");
+          LiveLink.instance.close();
+        };
+
+        const canvas = document.getElementById("display-canvas");
+        console.log("Canvas size:", canvas.width, canvas.height);
+        let first = true;
+        let size;
+        let timeout = null;
+
+        const observer = new ResizeObserver((e) => {
+          size = [e[0].contentRect.width, e[0].contentRect.height];
+          if (timeout !== null) {
+            clearTimeout(timeout);
+          }
+
+          timeout = setTimeout(async () => {
+            console.log(size);
+            canvas.width = size[0];
+            canvas.height = size[1];
+            if (first) {
+              const client_config = {
+                rendering_area_size: size,
+                encoder_config: {
+                  codec: 0,
+                  profile: 0,
+                  frame_rate: 30,
+                  lossy: true,
+                },
+                supported_devices: {
+                  keyboard: true,
+                  mouse: true,
+                  gamepad: true,
+                  hololens: false,
+                  touchscreen: false,
+                },
+                canvas_context: canvas.getContext("2d"),
+              };
+
+              console.log("Observer:", client_config.rendering_area_size);
+
+              LiveLink.instance.startStreaming({ client_config });
+              first = false;
+              await LiveLink.instance.createDefaultCamera();
+            } else {
+              LiveLink.instance.resize({ size });
+            }
+          }, 500);
+        });
+        observer.observe(canvas);
+      }
+      window.addEventListener("load", InitApp);
+    </script>
+  </body>
+</html>

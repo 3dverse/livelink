@@ -1,0 +1,12 @@
+{
+  "compilerOptions": {
+    "rootDir": ".",
+    "outDir": "_build",
+    "target": "ES2022",
+    "esModuleInterop": true,
+    "strict": true,
+    "sourceMap": true
+  },
+
+  "exclude": ["./*.config.js", "./*.config.cjs", "./_build/**/*", "./tests/*"]
+}

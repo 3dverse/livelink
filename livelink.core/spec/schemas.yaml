@@ -1,0 +1,284 @@
+Vec2i:
+  title: Vec2i
+  type: array
+  items:
+    type: number
+    format: int32
+  minItems: 2
+  maxItems: 2
+
+Vec3:
+  title: Vec3
+  type: array
+  items:
+    type: number
+    format: float32
+  minItems: 3
+  maxItems: 3
+
+Mat4x4:
+  title: Mat4x4
+  type: array
+  items:
+    type: number
+    format: float32
+  minItems: 16
+  maxItems: 16
+
+RTID:
+  type: integer
+  format: uint64
+
+EntityList:
+  type: array
+  items:
+    $ref: "#/RTID"
+  minItems: 1
+
+Component:
+  type: object
+  properties:
+    a:
+      type: integer
+
+Entity:
+  type: array
+  items:
+    anyOf:
+      - $ref: "#/Component"
+
+ScreenSpaceRayResult:
+  type: object
+  properties:
+    entity_rtid:
+      $ref: "#/RTID"
+    position:
+      $ref: "#/Vec3"
+    normal:
+      $ref: "#/Vec3"
+
+ScreenSpaceRayQuery:
+  type: object
+  properties:
+    camera_rtid:
+      $ref: "#/RTID"
+    x:
+      type: number
+      format: float32
+    y:
+      type: number
+      format: float32
+    mode:
+      type: integer
+      format: uint8
+
+SessionAuth:
+  type: object
+  properties:
+    session_key:
+      type: string
+    client_app:
+      type: string
+      example: "Hololens 2"
+    os:
+      type: string
+      example: "Win32"
+
+ClientConfigResponse:
+  type: object
+  properties:
+    codec:
+      type: integer
+      format: int8
+
+ClientConfig:
+  type: object
+  properties:
+    rendering_area_size:
+      type: array
+      items:
+        type: integer
+        minimum: 16
+        maximum: 3840
+        multipleOf: 4
+      minItems: 2
+      maxItems: 2
+    encoder_config:
+      type: object
+      properties:
+        codec:
+          type: integer
+          default: 0
+        profile:
+          type: integer
+          default: 0
+        frame_rate:
+          type: integer
+          default: 30
+        lossy:
+          type: boolean
+          default: true
+        mp4:
+          type: boolean
+          default: false
+    input_devices:
+      type: object
+      properties:
+        has_keyboard:
+          type: boolean
+        has_mouse:
+          type: boolean
+        has_hololens:
+          type: boolean
+        has_gamepad:
+          type: boolean
+        has_touchscreen:
+          type: boolean
+
+AuthenticationStatus:
+  oneOf:
+    - title: Unknown error
+      type: integer
+      format: int16
+      const: 0
+
+    - title: Success
+      type: integer
+      format: int16
+      const: 1
+
+    - title: Authentication failed
+      type: integer
+      format: int16
+      const: 100
+    - title: Session not found
+      type: integer
+      format: int16
+      const: 101
+    - title: Session closed
+      type: integer
+      format: int16
+      const: 102
+
+    - title: Launcher not found
+      type: integer
+      format: int16
+      const: 200
+    - title: Unknown service
+      type: integer
+      format: int16
+      const: 201
+    - title: Service boot error
+      type: integer
+      format: int16
+      const: 202
+
+    - title: Invalid request
+      type: integer
+      format: int16
+      const: 300
+    - title: Duplicated session
+      type: integer
+      format: int16
+      const: 301
+
+    - title: Client not found
+      type: integer
+      format: int16
+      const: 400
+
+AuthenticationResponse:
+  type: object
+  properties:
+    status:
+      $ref: "#/AuthenticationStatus"
+    client_id:
+      type: string
+      format: uuid
+
+VideoFrame:
+  title: VideoFrame
+  type: object
+  properties:
+    image_size:
+      type: integer
+      format: int32
+    meta_data_size:
+      type: integer
+      format: int32
+    encoded_image:
+      type: string
+      format: binary
+      x-size: image_size
+    meta_data:
+      allOf:
+        - $ref: "#/FrameMetaData"
+        - x-size: meta_data_size
+
+FrameMetaData:
+  title: FrameMetaData
+  type: object
+  properties:
+    renderer_timestamp:
+      type: integer
+      format: uint32
+    frame_counter:
+      type: integer
+      format: uint32
+    client_count:
+      type: integer
+      format: uint8
+    clients:
+      type: array
+      items:
+        $ref: "#/ClientMetaData"
+      x-size: "client_count"
+
+ClientMetaData:
+  title: ClientMetaData
+  type: object
+  properties:
+    client_id:
+      type: string
+      format: uuid
+    viewport_count:
+      type: integer
+      format: uint8
+    viewports:
+      type: array
+      items:
+        $ref: "#/ViewportMetaData"
+      minItems: 8
+      maxItems: 8
+      x-size: "viewport_count"
+
+ViewportMetaData:
+  title: ViewportMetaData
+  type: object
+  properties:
+    camera_rtid:
+      $ref: "#/RTID"
+    ws_from_ls:
+      $ref: "#/Mat4x4"
+
+ViewportsConfig:
+  title: ViewportsConfig
+  type: object
+  properties:
+    viewport_count:
+      type: integer
+      format: uint8
+
+Resize:
+  title: Resize
+  type: object
+  properties:
+    size:
+      $ref: "#/Vec2i"
+
+ResizeResponse:
+  title: ResizeResponse
+  type: object
+  properties:
+    new_size:
+      $ref: "#/Vec2i"

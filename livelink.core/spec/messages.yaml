@@ -1,0 +1,82 @@
+---
+#-----------------------------------------------------------------------------
+# AUTHENTICATION
+#-----------------------------------------------------------------------------
+authenticate_client:
+  title: Authenticate Client
+  summary: Authenticate a new client connection
+  description: |
+    The first message that a client **MUST** send right after opening the socket.
+    If the gateway receives anything but this message, it immediately closes
+    the connection.
+  contentType: application/json
+  payload:
+    $ref: "./schemas.yaml#/SessionAuth"
+authentication_response:
+  contentType: application/octet-stream
+  payload:
+    $ref: "./schemas.yaml#/AuthenticationResponse"
+
+#-----------------------------------------------------------------------------
+# REGISTRATION
+#-----------------------------------------------------------------------------
+configure_client:
+  contentType: application/json
+  payload:
+    $ref: "./schemas.yaml#/ClientConfig"
+on_client_configured:
+  contentType: application/octet-stream
+  payload:
+    $ref: "./schemas.yaml#/ClientConfigResponse"
+
+#-----------------------------------------------------------------------------
+# VIDEO STREAM
+#-----------------------------------------------------------------------------
+on_frame_received:
+  contentType: application/octet-stream
+  payload:
+    $ref: "./schemas.yaml#/VideoFrame"
+
+#-----------------------------------------------------------------------------
+# VIEWER CONTROL
+#-----------------------------------------------------------------------------
+set_viewports:
+  contentType: application/octet-stream
+  payload:
+    $ref: "./schemas.yaml#/ViewportsConfig"
+
+resize:
+  contentType: application/octet-stream
+  payload:
+    $ref: "./schemas.yaml#/Resize"
+resize_response:
+  contentType: application/octet-stream
+  payload:
+    $ref: "./schemas.yaml#/ResizeResponse"
+
+#-----------------------------------------------------------------------------
+# CLIENT REMOTE OPERATIONS
+#-----------------------------------------------------------------------------
+cast_screen_space_ray:
+  contentType: application/octet-stream
+  payload:
+    $ref: "./schemas.yaml#/ScreenSpaceRayQuery"
+cast_screen_space_ray_result:
+  contentType: application/octet-stream
+  payload:
+    $ref: "./schemas.yaml#/ScreenSpaceRayResult"
+
+highlight_entities:
+  contentType: application/octet-stream
+  payload:
+    description: Entities to highlight
+    $ref: "./schemas.yaml#/EntityList"
+
+#-----------------------------------------------------------------------------
+# EDITOR REMOTE OPERATIONS
+#-----------------------------------------------------------------------------
+create_entity:
+  contentType: application/json
+  payload:
+    description: Entity to create
+    $ref: "./schemas.yaml#/Entity"
