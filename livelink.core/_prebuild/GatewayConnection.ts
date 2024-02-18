@@ -8,10 +8,10 @@ import {
   AuthenticationStatus,
   ChannelId,
   ClientRemoteOperation,
-  UUID,
-  Vec2i,
-  Vec3,
   deserialize_FrameMetaData,
+  deserialize_Vec2ui16,
+  deserialize_Vec3,
+  deserialize_UUID,
 } from "./types";
 
 import { GatewayMessageHandler } from "./GatewayMessageHandler";
@@ -19,7 +19,32 @@ import { FTL_HEADER_SIZE, LITTLE_ENDIAN } from "./constants";
 
 /**
  * Holds the connection to the cluster gateway hosting the renderer
- * and the viewer handling the targeted session.
+ * and the viewer handling the session.
+ *
+ *                     ┌─────────┬──────────────┐
+ *                     │         │              │
+ *                     │         │ ┌──────────┐ │
+ *                     │         │ │ Renderer │ │
+ *                     │         │ └─────┬────┘ │
+ *    ┌────────┐       │         │       │      │
+ *    │ Client │◄──────► Gateway ◄───────┤      │
+ *    └────────┘       │         │       │      │
+ *                 ▲   │         │  ┌────┴───┐  │
+ *                 |   │         │  │ Viewer │  │
+ * GatewayConnection   │         │  └────────┘  │
+ *                     │         │              │
+ *                     └─────────┴──────────────┘
+ *
+ * Responsibilities of this class are threefold:
+ *  - Open, maintain, and handle any error in the connection to the gateway
+ *
+ *  - Apply the authentication protocol when the first message is received.
+ *    Note that initiating the authentication doesn't fall under this class's purview.
+ *
+ *  - Demultiplex and deserialize messages following the gateway LiveLink Protocol.
+ *    This class is only responsible for deserializing the binary data according to
+ *    the LiveLink protocol specifications; in no case is it supposed to apply any
+ *    kind of logic beyond routing messages to the appropriate handler.
  */
 export class GatewayConnection {
   /**
@@ -28,14 +53,14 @@ export class GatewayConnection {
   private _socket: WebSocket | null = null;
 
   /**
-   * Controller responsible of handling the responses to queries.
+   * Controller responsible of handling messages coming from the gateway.
    */
   private _handler: GatewayMessageHandler | null = null;
 
   /**
    * Opens a connection to the gateway.
    *
-   * @throws Socket errors
+   * @throws {Error} Socket errors
    */
   async connect({
     gateway_url,
@@ -83,15 +108,36 @@ export class GatewayConnection {
   /**
    *
    */
-  private _onSocketOpened(event: Event) {}
+  disconnect() {
+    this._socket?.close();
+  }
+
+  /**
+   *
+   */
+  private _onSocketOpened(_event: Event) {
+    console.debug(
+      "Connected to the 3dverse rendering gateway:",
+      this._socket?.url
+    );
+  }
+
+  /**
+   *
+   */
+  private _onSocketClosed(closeEvent: CloseEvent) {
+    if (closeEvent.wasClean === false) {
+      console.error("Gateway socket forcibly closed", closeEvent);
+    } else {
+      console.debug("Disconnected from the 3dverse rendering gateway");
+    }
+  }
 
   /**
    *
    */
   private _onAuthenticated(message: MessageEvent<ArrayBuffer>) {
     this._authenticateClient_response({ dataView: new DataView(message.data) });
-
-    console.log("Received authentication response");
 
     // Switch the onmessage callback to the regular multiplexed one.
     this._socket!.onmessage = (message: MessageEvent<ArrayBuffer>) =>
@@ -100,18 +146,6 @@ export class GatewayConnection {
 
   /**
    *
-   */
-  private _onSocketClosed(close_event: CloseEvent) {
-    if (close_event.wasClean === false) {
-      console.error("Socket forcibly closed");
-    } else {
-      console.log("Gateway connection closed", close_event);
-    }
-  }
-
-  /**
-   *
-   * @param message
    */
   private _onMessageReceived({
     message,
@@ -133,7 +167,7 @@ export class GatewayConnection {
         break;
 
       case ChannelId.viewer_control:
-        this._onViewerResized({ dataView });
+        this._resize_response({ dataView });
         break;
 
       case ChannelId.video_stream:
@@ -142,28 +176,45 @@ export class GatewayConnection {
 
       case ChannelId.client_remote_operations:
         this._clientRemoteOperation_response({ dataView });
+        break;
+
+      default:
+        throw new Error(`Received message on unknown channel ${channelId}`);
     }
   }
 
   /**
-   * Cluster gateway response
+   * Cluster gateway response to authentication query.
+   * See {@link GatewayRequestSender#authenticateClient}.
    */
   private _authenticateClient_response({ dataView }: { dataView: DataView }) {
-    const status = dataView.getUint16(0, LITTLE_ENDIAN) as AuthenticationStatus;
-    const client_id = deserialize_uuid(dataView, dataView.byteOffset + 2);
+    let offset = 0;
+
+    const status = dataView.getUint16(
+      offset,
+      LITTLE_ENDIAN
+    ) as AuthenticationStatus;
+    offset += 2;
+
+    const client_id = deserialize_UUID({
+      dataView,
+      offset: offset,
+    });
 
     this._handler!.on_authenticateClient_response({ status, client_id });
   }
 
   /**
-   * Cluster gateway response
+   * Cluster gateway response to pulseHearbeat query.
+   * See {@link GatewayRequestSender#pulseHeartBeat}.
    */
-  private _pulseHeartbeat_response({ dataView }: { dataView: DataView }) {
+  private _pulseHeartbeat_response({}: { dataView: DataView }) {
     this._handler!.on_pulseHeartbeat_response();
   }
 
   /**
-   * Remote viewer response
+   * Remote viewer response to configureClient query.
+   * See {@link GatewayRequestSender#configureClient}.
    */
   private _configureClient_response({ dataView }: { dataView: DataView }) {
     this._handler!.on_configureClient_response({
@@ -172,14 +223,11 @@ export class GatewayConnection {
   }
 
   /**
-   *
+   * Remote viewer response to resize query.
+   * See {@link GatewayRequestSender#resize}.
    */
-  private _onViewerResized({ dataView }: { dataView: DataView }) {
-    const size: Vec2i = [
-      dataView.getUint16(0, LITTLE_ENDIAN),
-      dataView.getUint16(2, LITTLE_ENDIAN),
-    ];
-
+  private _resize_response({ dataView }: { dataView: DataView }) {
+    const size = deserialize_Vec2ui16({ dataView, offset: 0 });
     this._handler!.on_resize_response({ size });
   }
 
@@ -236,17 +284,16 @@ export class GatewayConnection {
    * Rendering server response.
    */
   private _castScreenSpaceRay_response({ dataView }: { dataView: DataView }) {
-    const entity_rtid = dataView.getBigUint64(0, LITTLE_ENDIAN);
-    const position: Vec3 = [
-      dataView.getFloat32(8, LITTLE_ENDIAN),
-      dataView.getFloat32(12, LITTLE_ENDIAN),
-      dataView.getFloat32(16, LITTLE_ENDIAN),
-    ];
-    const normal: Vec3 = [
-      dataView.getFloat32(20, LITTLE_ENDIAN),
-      dataView.getFloat32(24, LITTLE_ENDIAN),
-      dataView.getFloat32(28, LITTLE_ENDIAN),
-    ];
+    let offset = 0;
+
+    const entity_rtid = BigInt(dataView.getUint32(offset, LITTLE_ENDIAN));
+    offset += 4;
+
+    const position = deserialize_Vec3({ dataView, offset });
+    offset += 3 * 4;
+
+    const normal = deserialize_Vec3({ dataView, offset });
+    offset += 3 * 4;
 
     this._handler!.on_castScreenSpaceRay_response({
       entity_rtid,
@@ -254,47 +301,4 @@ export class GatewayConnection {
       normal,
     });
   }
-}
-
-const byteToHex: string[] = [];
-
-for (let i = 0; i < 256; ++i) {
-  byteToHex.push((i + 0x100).toString(16).slice(1));
-}
-
-function deserialize_uuid(v: DataView, offset = 0) {
-  const arr = new Uint8Array(v.buffer, v.byteOffset + offset, 16);
-
-  var data1 = v.getUint32(offset + 0, true);
-  var data2 = v.getUint16(offset + 4, true);
-  var data3 = v.getUint16(offset + 6, true);
-
-  v.setUint32(offset + 0, data1, false);
-  v.setUint16(offset + 4, data2, false);
-  v.setUint16(offset + 6, data3, false);
-  // Note: Be careful editing this code!  It's been tuned for performance
-  // and works in ways you may not expect. See https://github.com/uuidjs/uuid/pull/434
-
-  return (
-    byteToHex[arr[0]] +
-    byteToHex[arr[1]] +
-    byteToHex[arr[2]] +
-    byteToHex[arr[3]] +
-    "-" +
-    byteToHex[arr[4]] +
-    byteToHex[arr[5]] +
-    "-" +
-    byteToHex[arr[6]] +
-    byteToHex[arr[7]] +
-    "-" +
-    byteToHex[arr[8]] +
-    byteToHex[arr[9]] +
-    "-" +
-    byteToHex[arr[10]] +
-    byteToHex[arr[11]] +
-    byteToHex[arr[12]] +
-    byteToHex[arr[13]] +
-    byteToHex[arr[14]] +
-    byteToHex[arr[15]]
-  );
 }

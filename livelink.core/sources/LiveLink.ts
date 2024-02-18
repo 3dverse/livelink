@@ -1,12 +1,12 @@
 import { ClientConfig, UUID, Vec2i } from "../_prebuild/types.js";
-import { Session } from "./Session.js";
+import { Session, SessionInfo, SessionSelector } from "./Session.js";
 import { GatewayController } from "./controllers/GatewayController.js";
 import { LiveLinkController } from "./controllers/LiveLinkController.js";
 
 /**
  *
  */
-export class LiveLink {
+export class LiveLink extends EventTarget {
   /**
    * Singleton instance
    */
@@ -46,39 +46,42 @@ export class LiveLink {
   static async join_or_start({
     scene_id,
     token,
-    session_selector,
+    session_selector = ({ sessions }: { sessions: Array<SessionInfo> }) =>
+      sessions[0],
   }: {
     scene_id: UUID;
     token: string;
-    session_selector?: (sessions: Array<{ session_id: UUID }>) => {
-      session_id: UUID;
-    };
+    session_selector: SessionSelector;
   }): Promise<LiveLink> {
+    console.debug(`Looking for sessions on scene '${scene_id}'`);
     const session = await new Session(scene_id, token).find({
       session_selector,
     });
     if (session === null) {
-      // There's no session currently running with the provided scene, start a new one
+      console.debug(
+        `There's no session currently running on scene '${scene_id}' and satisfiying the provided selector criteria`
+      );
       return await LiveLink.start({ scene_id, token });
     }
 
     try {
+      console.debug("Found session, joining...", session);
       return await LiveLink.join({ session });
     } catch {
-      // An error occurred while connecting to the selected existing session,
-      // try again with potentially another one.
-      // If need be we can encapsulate the session_selector function and add a pass that removes
-      // the faulty session:
-      // session_selector: (sessions: Array<{ session_id: UUID }>) => {
-      //   sessions = sessions.session_selector((s) => {
-      //     return s.session_id !== session.session_id;
-      //   });
-      //   return session_selector(sessions);
-      // };
+      console.error(
+        `Failed to join session '${session.session_id}', trying again with another session.`
+      );
+
       return await LiveLink.join_or_start({
         scene_id,
         token,
-        session_selector,
+        // Do not try to connect to the faulty session again.
+        session_selector: ({ sessions }: { sessions: Array<SessionInfo> }) => {
+          sessions = sessions.filter(
+            (s) => s.session_id !== session.session_id
+          );
+          return session_selector({ sessions });
+        },
       });
     }
   }
@@ -87,6 +90,7 @@ export class LiveLink {
    *
    */
   static async join({ session }: { session: Session }): Promise<LiveLink> {
+    console.debug("Joining session:", session);
     LiveLink._instance = await new LiveLink(session)._connect();
     return LiveLink._instance;
   }
@@ -104,7 +108,9 @@ export class LiveLink {
   /**
    *
    */
-  private constructor(private readonly _session: Session) {}
+  private constructor(private readonly _session: Session) {
+    super();
+  }
 
   /**
    *
@@ -116,8 +122,10 @@ export class LiveLink {
   /**
    *
    */
-  close() {
-    this._session.close();
+  async close() {
+    await this._session.close();
+    this._gateway.disconnect();
+    this._broker.disconnect();
   }
 
   /**
@@ -126,12 +134,13 @@ export class LiveLink {
   startStreaming({ client_config }: { client_config: ClientConfig }) {
     client_config.rendering_area_size[0] = this._previous_multiple_of(
       this.MULTIPLE,
-      client_config.rendering_area_size[0]
+      client_config.rendering_area_size[0] * window.devicePixelRatio
     );
     client_config.rendering_area_size[1] = this._previous_multiple_of(
       this.MULTIPLE,
-      client_config.rendering_area_size[1]
+      client_config.rendering_area_size[1] * window.devicePixelRatio
     );
+
     this._gateway.configureClient({
       client_config,
     });
@@ -145,10 +154,16 @@ export class LiveLink {
    *
    */
   resize({ size }: { size: Vec2i }) {
-    size[0] = this._previous_multiple_of(this.MULTIPLE, size[0]);
-    size[1] = this._previous_multiple_of(this.MULTIPLE, size[1]);
+    size[0] = this._previous_multiple_of(
+      this.MULTIPLE,
+      size[0] * window.devicePixelRatio
+    );
+    size[1] = this._previous_multiple_of(
+      this.MULTIPLE,
+      size[1] * window.devicePixelRatio
+    );
     this._gateway.resize({ size });
-    console.log("Resizing to", size);
+    this.dispatchEvent(new Event("resize"));
   }
 
   /**
@@ -164,8 +179,8 @@ export class LiveLink {
     });
     console.debug("Connected to session as: ", client);
 
-    // Connent LiveLink Broker
-    await this._broker.connect({ session: this._session, client });
+    // Connect to the LiveLink Broker
+    await this._broker.connectToSession({ session: this._session, client });
     return this;
   }
 

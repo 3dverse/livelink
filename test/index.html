@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <meta content="width=device-width,initial-scale=1.0" name="viewport" />
+    <link rel="stylesheet" href="./test/style.css" />
+  </head>
+
+  <body>
+    <div class="control-panel">
+      <button id="connect">Connect</button>
+      <button id="disconnect">Disconnect</button>
+    </div>
+    <div class="canvas-container">
+      <!-- CANVAS -->
+      <canvas
+        id="display-canvas"
+        oncontextmenu="event.preventDefault()"
+        style="width: 75vw; height: 80vh"
+        tabindex="1"
+      ></canvas>
+    </div>
+
+    <!-- APP ENTRYPOINT -->
+    <script type="module" src="./test/app.js"></script>
+  </body>
+</html>

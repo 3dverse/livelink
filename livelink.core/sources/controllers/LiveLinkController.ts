@@ -22,14 +22,14 @@ export class LiveLinkController
   /**
    *
    */
-  async connect({
+  async connectToSession({
     session,
     client,
   }: {
     session: Session;
     client: Client;
   }): Promise<void> {
-    if (!session.session_id) {
+    if (!session.isValid()) {
       throw new Error("Invalid session");
     }
 
@@ -43,8 +43,21 @@ export class LiveLinkController
     });
   }
 
+  /**
+   *
+   */
+  disconnect() {
+    this._livelink_connection.disconnect();
+  }
+
+  /**
+   *
+   */
   private _promises = new Array<{ resolve: (d?: any) => void }>();
 
+  /**
+   *
+   */
   createEntity({ components }: { components: any }): Promise<unknown> {
     return new Promise((resolve) => {
       super.createEntity({ components });
@@ -57,7 +70,6 @@ export class LiveLinkController
   }: {
     connect_confirmation: ConnectConfirmation;
   }): void {
-    console.log("LiveLink server says:", connect_confirmation);
     this._authentication_promise_callbacks!.resolve();
   }
   onRetrieveChildren(data: any) {
@@ -93,8 +105,14 @@ export class LiveLinkController
   onServerError(data: any) {
     console.error("onServerError:", data);
   }
-  onUnhandledMessage(data: any) {
-    throw new Error("Method not implemented.");
+  onUnhandledMessage(type: string, data: any) {
+    class UnhandledMessage extends Error {
+      constructor(msg: string) {
+        super(msg);
+        super.name = UnhandledMessage.name;
+      }
+    }
+    throw new UnhandledMessage(type);
   }
 
   on_create_entity(data: any) {

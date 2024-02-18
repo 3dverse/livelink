@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "build": "tsc && rollup ./_build/sources/index.js --file dist/livelink.js --format esm"
+    "build": "tsc && rollup ./_build/sources/index.js --file dist/livelink.core.js --format esm"
   },
   "repository": {
     "type": "git",

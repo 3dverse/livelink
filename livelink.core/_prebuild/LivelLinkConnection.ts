@@ -65,12 +65,23 @@ export class LiveLinkConnection {
   /**
    *
    */
-  private _onSocketOpened(_event: Event) {}
+  disconnect() {
+    this._socket?.close();
+  }
 
   /**
    *
    */
-  private _onSocketClosed(_close_event: CloseEvent) {}
+  private _onSocketOpened(_event: Event) {
+    console.debug("Connected to the 3dverse LiveLink broker");
+  }
+
+  /**
+   *
+   */
+  private _onSocketClosed(_close_event: CloseEvent) {
+    console.debug("Disconnected from the 3dverse LiveLink broker");
+  }
 
   /**
    *
@@ -148,7 +159,7 @@ export class LiveLinkConnection {
         break;
 
       default:
-        handler.onUnhandledMessage(payload.data);
+        handler.onUnhandledMessage(payload.type, payload.data);
         break;
     }
   }

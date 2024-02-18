@@ -1,16 +1,13 @@
-import { LITTLE_ENDIAN } from "./constants";
+import { BIG_ENDIAN, LITTLE_ENDIAN } from "./constants";
 
 /**
  *
  */
 export type Vec2 = [number, number];
 export type Vec3 = [number, number, number];
-export type Vec4 = [number, number, number, number];
 export type Vec2i = Vec2;
-export type Vec3i = Vec3;
-export type Vec4i = Vec4;
-export type Quat = [number, number, number, number];
-export type Mat4x4 = [
+export type Vec2ui16 = Vec2;
+export type Mat4 = [
   number,
   number,
   number,
@@ -32,12 +29,224 @@ export type Mat4x4 = [
 /**
  *
  */
+export function deserialize_Vec2ui16({
+  dataView,
+  offset,
+}: {
+  dataView: DataView;
+  offset: number;
+}): Vec2ui16 {
+  return [
+    dataView.getUint16(offset + 0, LITTLE_ENDIAN),
+    dataView.getUint16(offset + 2, LITTLE_ENDIAN),
+  ];
+}
+
+/**
+ *
+ */
+export function serialize_Vec2ui16({
+  dataView,
+  offset,
+  v,
+}: {
+  dataView: DataView;
+  offset: number;
+  v: Vec2ui16;
+}): number {
+  dataView.setUint16(offset + 0, v[0], LITTLE_ENDIAN);
+  dataView.setUint16(offset + 2, v[1], LITTLE_ENDIAN);
+  return 2 * 2;
+}
+
+/**
+ *
+ */
+export function serialize_Vec2({
+  dataView,
+  offset,
+  v,
+}: {
+  dataView: DataView;
+  offset: number;
+  v: Vec2;
+}): number {
+  dataView.setFloat32(offset + 0, v[0], LITTLE_ENDIAN);
+  dataView.setFloat32(offset + 4, v[1], LITTLE_ENDIAN);
+  return 2 * 4;
+}
+
+/**
+ *
+ */
+export function deserialize_Vec3({
+  dataView,
+  offset,
+}: {
+  dataView: DataView;
+  offset: number;
+}): Vec3 {
+  return [
+    dataView.getFloat32(offset + 0, LITTLE_ENDIAN),
+    dataView.getFloat32(offset + 4, LITTLE_ENDIAN),
+    dataView.getFloat32(offset + 8, LITTLE_ENDIAN),
+  ];
+}
+
+/**
+ *
+ */
+export function deserialize_Vec2i({
+  dataView,
+  offset,
+}: {
+  dataView: DataView;
+  offset: number;
+}): Vec2i {
+  return [
+    dataView.getInt32(offset + 0, LITTLE_ENDIAN),
+    dataView.getInt32(offset + 4, LITTLE_ENDIAN),
+  ];
+}
+
+/**
+ *
+ */
+export function deserialize_Mat4({
+  dataView,
+  offset,
+}: {
+  dataView: DataView;
+  offset: number;
+}): Mat4 {
+  return [
+    dataView.getFloat32(offset + 0, LITTLE_ENDIAN),
+    dataView.getFloat32(offset + 4, LITTLE_ENDIAN),
+    dataView.getFloat32(offset + 8, LITTLE_ENDIAN),
+    dataView.getFloat32(offset + 12, LITTLE_ENDIAN),
+    dataView.getFloat32(offset + 16, LITTLE_ENDIAN),
+    dataView.getFloat32(offset + 20, LITTLE_ENDIAN),
+    dataView.getFloat32(offset + 24, LITTLE_ENDIAN),
+    dataView.getFloat32(offset + 28, LITTLE_ENDIAN),
+    dataView.getFloat32(offset + 32, LITTLE_ENDIAN),
+    dataView.getFloat32(offset + 36, LITTLE_ENDIAN),
+    dataView.getFloat32(offset + 40, LITTLE_ENDIAN),
+    dataView.getFloat32(offset + 44, LITTLE_ENDIAN),
+    dataView.getFloat32(offset + 48, LITTLE_ENDIAN),
+    dataView.getFloat32(offset + 52, LITTLE_ENDIAN),
+    dataView.getFloat32(offset + 56, LITTLE_ENDIAN),
+    dataView.getFloat32(offset + 60, LITTLE_ENDIAN),
+  ];
+}
+
+/**
+ *
+ */
 export type RTID = bigint;
+/**
+ *
+ */
+export function serialize_RTID({
+  dataView,
+  offset,
+  rtid,
+}: {
+  dataView: DataView;
+  offset: number;
+  rtid: RTID;
+}): number {
+  //TODO: change me when we support 64bits RTIDs
+  dataView.setUint32(offset, Number(rtid), LITTLE_ENDIAN);
+  return 4;
+}
+/**
+ *
+ */
+export function deserialize_RTID({
+  dataView,
+  offset,
+}: {
+  dataView: DataView;
+  offset: number;
+}): RTID {
+  return BigInt(dataView.getUint32(offset, LITTLE_ENDIAN));
+}
 
 /**
  *
  */
 export type UUID = string;
+/**
+ *
+ */
+export function serialize_UUID({
+  dataView,
+  offset,
+  uuid,
+}: {
+  dataView: DataView;
+  offset: number;
+  uuid: UUID;
+}): number {
+  //dataView.setUint32(offset, Number(rtid), LITTLE_ENDIAN);
+  return 16;
+}
+
+/**
+ *
+ */
+const byteToHex: string[] = [];
+for (let i = 0; i < 256; ++i) {
+  byteToHex.push((i + 0x100).toString(16).slice(1));
+}
+export function deserialize_UUID({
+  dataView,
+  offset,
+}: {
+  dataView: DataView;
+  offset: number;
+}): UUID {
+  const arr = new Uint8Array(dataView.buffer, dataView.byteOffset + offset, 16);
+
+  dataView.setUint32(
+    offset + 0,
+    dataView.getUint32(offset + 0, LITTLE_ENDIAN),
+    BIG_ENDIAN
+  );
+  dataView.setUint16(
+    offset + 4,
+    dataView.getUint16(offset + 4, LITTLE_ENDIAN),
+    BIG_ENDIAN
+  );
+  dataView.setUint16(
+    offset + 6,
+    dataView.getUint16(offset + 6, LITTLE_ENDIAN),
+    BIG_ENDIAN
+  );
+
+  return (
+    byteToHex[arr[0]] +
+    byteToHex[arr[1]] +
+    byteToHex[arr[2]] +
+    byteToHex[arr[3]] +
+    "-" +
+    byteToHex[arr[4]] +
+    byteToHex[arr[5]] +
+    "-" +
+    byteToHex[arr[6]] +
+    byteToHex[arr[7]] +
+    "-" +
+    byteToHex[arr[8]] +
+    byteToHex[arr[9]] +
+    "-" +
+    byteToHex[arr[10]] +
+    byteToHex[arr[11]] +
+    byteToHex[arr[12]] +
+    byteToHex[arr[13]] +
+    byteToHex[arr[14]] +
+    byteToHex[arr[15]]
+  );
+}
 
 /**
  *
@@ -184,7 +393,7 @@ export enum AuthenticationStatus {
 
 type ViewportMetaData = {
   camera_rtid: RTID;
-  ws_from_ls: Mat4x4;
+  ws_from_ls: Mat4;
 };
 
 type ClientMetaData = {
@@ -205,7 +414,7 @@ export function deserialize_FrameMetaData({
   dataView: DataView;
   offset: number;
 }): FrameMetaData {
-  const meta_data: FrameMetaData = {
+  const frameMetaData: FrameMetaData = {
     renderer_timestamp: dataView.getUint32(offset, LITTLE_ENDIAN),
     frame_counter: dataView.getUint32(offset + 4, LITTLE_ENDIAN),
     clients: [],
@@ -216,8 +425,8 @@ export function deserialize_FrameMetaData({
   offset += 1;
 
   for (let i = 0; i < client_count; ++i) {
-    meta_data.clients.push({
-      client_id: "", // deserialize_uuid(dataView, offset)
+    frameMetaData.clients.push({
+      client_id: deserialize_UUID({ dataView, offset }),
       viewports: [],
     });
     offset += 16;
@@ -226,15 +435,15 @@ export function deserialize_FrameMetaData({
     offset += 1;
 
     for (let j = 0; j < viewport_count; ++j) {
-      meta_data.clients[i].viewports.push({
-        camera_rtid: dataView.getBigUint64(offset, LITTLE_ENDIAN),
-        ws_from_ls: [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1], // deserialize_mat4(dataView, offset)
+      frameMetaData.clients[i].viewports.push({
+        camera_rtid: BigInt(dataView.getUint32(offset, LITTLE_ENDIAN)),
+        ws_from_ls: deserialize_Mat4({ dataView, offset: offset + 4 }),
       });
-      offset += 8 + 16 * 4;
+      offset += 4 + 16 * 4;
     }
   }
 
-  return meta_data;
+  return frameMetaData;
 }
 
 export type ConnectConfirmation = {

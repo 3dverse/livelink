@@ -41,16 +41,14 @@ export class GatewayController
    *
    */
   async connectToSession({ session }: { session: Session }): Promise<Client> {
-    if (session.gateway_url === null || session.session_key === null) {
-      throw new Error("Invalid params");
+    if (!session.isValid()) {
+      throw new Error("Invalid session");
     }
 
     await this._cluster_gateway_connection.connect({
-      gateway_url: session.gateway_url,
+      gateway_url: session.gateway_url!,
       handler: this,
     });
-
-    console.debug("Connected to gateway:", session.gateway_url);
 
     return new Promise<Client>((resolve, reject) => {
       this._authentication_promise_callbacks = { resolve, reject };
@@ -72,6 +70,8 @@ export class GatewayController
       clearTimeout(this._heartbeat_timeout_id);
       this._heartbeat_timeout_id = 0;
     }
+
+    this._cluster_gateway_connection.disconnect();
   }
 
   /**
@@ -111,7 +111,7 @@ export class GatewayController
    */
   on_pulseHeartbeat_response(): void {
     if (this._heartbeat_sent_at === 0) {
-      console.warn("Unsolicited heartbeat");
+      console.warn("Received an unsolicited heartbeat");
     }
 
     // This effectively computes how long it takes to round-trip

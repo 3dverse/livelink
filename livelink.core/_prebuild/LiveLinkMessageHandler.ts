@@ -71,5 +71,5 @@ export interface LiveLinkMessageHandler {
 
   on_set_node_visibility(data: any): void;
 
-  onUnhandledMessage(data: any): void;
+  onUnhandledMessage(type: string, data: any): void;
 }

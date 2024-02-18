@@ -5,18 +5,32 @@
  */
 
 import { GatewayConnection } from "./GatewayConnection";
-import { FTL_HEADER_SIZE, LITTLE_ENDIAN } from "./constants";
+import {
+  FTL_CLIENT_ROP_HEADER_SIZE,
+  FTL_HEADER_SIZE,
+  LITTLE_ENDIAN,
+} from "./constants";
 import {
   ChannelId,
   ClientConfig,
+  ClientRemoteOperation,
   HighlightMode,
   RTID,
   SessionAuth,
-  Vec2i,
+  UUID,
+  Vec2ui16,
   ViewportConfig,
   ViewportControlOperation,
+  serialize_RTID,
+  serialize_UUID,
+  serialize_Vec2,
+  serialize_Vec2ui16,
 } from "./types";
 
+/**
+ *
+ * This follows the LiveLink protocol specifications for the gateway messages.
+ */
 export class GatewayRequestSender {
   /**
    *
@@ -26,8 +40,14 @@ export class GatewayRequestSender {
   /**
    *
    */
+  private _client_id: UUID | null = null;
+
+  /**
+   *
+   */
   authenticateClient({ session_auth }: { session_auth: SessionAuth }): void {
     const payload = JSON.stringify({
+      // Translate to legacy names
       sessionKey: session_auth.session_key,
       clientApp: session_auth.client_app,
       os: session_auth.os,
@@ -56,6 +76,7 @@ export class GatewayRequestSender {
    */
   configureClient({ client_config }: { client_config: ClientConfig }) {
     const payload = JSON.stringify({
+      // Translate to legacy names
       renderingAreaSize: client_config.rendering_area_size,
       encoderConfig: client_config.encoder_config,
       inputConfig: {
@@ -155,8 +176,8 @@ export class GatewayRequestSender {
   /**
    *
    */
-  resize({ size }: { size: Vec2i }) {
-    const payloadSize = 5;
+  resize({ size }: { size: Vec2ui16 }) {
+    const payloadSize = 1 + 4;
     const buffer = new ArrayBuffer(FTL_HEADER_SIZE + payloadSize);
     this._writeMultiplexerHeader({
       buffer,
@@ -168,10 +189,7 @@ export class GatewayRequestSender {
     let offset = 0;
     writer.setUint8(offset, ViewportControlOperation.resize);
     offset += 1;
-    writer.setUint16(offset, size[0], LITTLE_ENDIAN);
-    offset += 2;
-    writer.setUint16(offset, size[1], LITTLE_ENDIAN);
-    offset += 2;
+    offset += serialize_Vec2ui16({ dataView: writer, offset, v: size });
 
     this._cluster_gateway_connection.send({ data: buffer });
   }
@@ -190,21 +208,31 @@ export class GatewayRequestSender {
     y: number;
     mode: HighlightMode;
   }) {
-    const payloadSize = 8 + 4 + 4 + 1;
+    const ropDataSize = 4 + 4 + 4 + 1;
+    const payloadSize = FTL_CLIENT_ROP_HEADER_SIZE + ropDataSize;
     const buffer = new ArrayBuffer(FTL_HEADER_SIZE + payloadSize);
+
     this._writeMultiplexerHeader({
       buffer,
       channelId: ChannelId.client_remote_operations,
       size: payloadSize,
     });
 
-    // Write CLIENT ROP HEADER
+    this._writeClientRemoteOerationMultiplexerHeader({
+      buffer,
+      offset: FTL_HEADER_SIZE,
+      client_id: "",
+      request_id: 0,
+      rop_data_size: ropDataSize,
+      rop_id: ClientRemoteOperation.cast_screen_space_ray,
+    });
+
+    let offset = 0;
 
     const writer = new DataView(buffer, FTL_HEADER_SIZE);
-    writer.setBigInt64(FTL_HEADER_SIZE, camera_rtid, LITTLE_ENDIAN);
-    writer.setFloat32(FTL_HEADER_SIZE + 8, x, LITTLE_ENDIAN);
-    writer.setFloat32(FTL_HEADER_SIZE + 12, y, LITTLE_ENDIAN);
-    writer.setUint8(FTL_HEADER_SIZE + 16, mode);
+    offset += serialize_RTID({ dataView: writer, offset, rtid: camera_rtid });
+    offset += serialize_Vec2({ dataView: writer, offset, v: [x, y] });
+    writer.setUint8(offset, mode);
 
     this._cluster_gateway_connection.send({ data: buffer });
   }
@@ -226,5 +254,37 @@ export class GatewayRequestSender {
     writer.setUint8(1, 0xff & (size >> 0));
     writer.setUint8(2, 0xff & (size >> 8));
     writer.setUint8(3, 0xff & (size >> 16));
+  }
+
+  /**
+   *
+   */
+  private _writeClientRemoteOerationMultiplexerHeader({
+    buffer,
+    offset,
+    client_id,
+    request_id,
+    rop_data_size,
+    rop_id,
+  }: {
+    buffer: ArrayBuffer;
+    offset: number;
+    client_id: UUID;
+    request_id: number;
+    rop_data_size: number;
+    rop_id: ClientRemoteOperation;
+  }) {
+    const writer = new DataView(buffer);
+
+    offset += serialize_UUID({ dataView: writer, offset, uuid: client_id });
+
+    writer.setUint32(offset, request_id, LITTLE_ENDIAN);
+    offset += 4;
+
+    writer.setUint32(offset, rop_data_size, LITTLE_ENDIAN);
+    offset += 4;
+
+    writer.setUint8(offset, rop_id);
+    offset += 1;
   }
 }

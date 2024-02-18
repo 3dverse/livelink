@@ -6,7 +6,23 @@ const api_url = "https://api.3dverse.dev/app/v1";
 /**
  *
  */
-export class Session {
+export type SessionInfo = {
+  session_id: UUID;
+};
+
+/**
+ *
+ */
+export type SessionSelector = ({
+  sessions,
+}: {
+  sessions: Array<SessionInfo>;
+}) => SessionInfo;
+
+/**
+ *
+ */
+export class Session extends EventTarget {
   /**
    * The id of the session
    */
@@ -68,7 +84,16 @@ export class Session {
   constructor(
     private readonly _scene_id: UUID,
     private readonly _token: string
-  ) {}
+  ) {
+    super();
+  }
+
+  /**
+   *
+   */
+  isValid() {
+    return this._gateway_url !== null && this._session_key !== null;
+  }
 
   /**
    * @returns Selected session or null if no session has been found or selected by the selector.
@@ -76,9 +101,7 @@ export class Session {
   async find({
     session_selector,
   }: {
-    session_selector?: (sessions: Array<{ session_id: UUID }>) => {
-      session_id: UUID;
-    };
+    session_selector: SessionSelector;
   }): Promise<Session | null> {
     const res = await fetch(`${api_url}/sessions?scene_id=${this._scene_id}`, {
       method: "GET",
@@ -95,7 +118,7 @@ export class Session {
       return null;
     }
 
-    const session = session_selector ? session_selector(sessions) : sessions[0];
+    const session = session_selector({ sessions });
     if (!session) {
       return null;
     }
@@ -143,6 +166,7 @@ export class Session {
 
     this._gateway_url = `wss://${endpoint_info.ip}:${endpoint_info.ssl_port}`;
     this._session_key = session_token;
+    this.dispatchEvent(new Event("session-joined"));
   }
 
   /**

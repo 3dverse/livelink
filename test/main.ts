@@ -2,8 +2,8 @@ import {
   ClientConfig,
   CodecType,
   EncodingProfile,
-} from "./livelink.core/_prebuild/types";
-import { Canvas, Camera, LiveLink, Viewport } from "./livelink.js/sources";
+} from "../livelink.core/_prebuild/types";
+import { Canvas, Camera, LiveLink, Viewport } from "../livelink.js/sources";
 
 export async function InitializeApp() {
   await LiveLink.start({
