@@ -1,16 +1,28 @@
 import { LiveLinkConnection } from "./LivelLinkConnection";
 
+/**
+ * This follows the LiveLink protocol specifications for the broker messages.
+ */
 export class LiveLinkRequestSender {
-  protected _livelink_connection: LiveLinkConnection = new LiveLinkConnection();
+  /**
+   *
+   */
+  constructor(private _conn: LiveLinkConnection) {}
 
-  createEntity({ components }: { components: any }) {
-    this._livelink_connection!.send({
+  /**
+   *
+   */
+  spawnEntity({ components }: { components: any }) {
+    this._conn!.send({
       data: JSON.stringify({ type: "spawn-entity", data: components }),
     });
   }
 
+  /**
+   *
+   */
   attachComponents() {
-    this._livelink_connection!.send({
+    this._conn!.send({
       data: JSON.stringify({ type: "attach-components", data: {} }),
     });
   }

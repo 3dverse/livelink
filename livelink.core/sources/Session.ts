@@ -26,7 +26,7 @@ export class Session extends EventTarget {
   /**
    * The id of the session
    */
-  private _session_id: UUID | null = null;
+  private _session_info: SessionInfo | null = null;
 
   /**
    * The address of the gateway the session is running on
@@ -37,11 +37,6 @@ export class Session extends EventTarget {
    * The session key used to authenticate the client on the gateway
    */
   private _session_key: string | null = null;
-
-  /**
-   * The current client
-   */
-  private _client: Client | null = null;
 
   /**
    * A map of all connected clients
@@ -55,16 +50,13 @@ export class Session extends EventTarget {
     return this._scene_id;
   }
   get session_id() {
-    return this._session_id;
+    return this._session_info?.session_id;
   }
   get gateway_url() {
     return this._gateway_url;
   }
   get session_key() {
     return this._session_key;
-  }
-  get client() {
-    return this._client;
   }
 
   /**
@@ -96,38 +88,6 @@ export class Session extends EventTarget {
   }
 
   /**
-   * @returns Selected session or null if no session has been found or selected by the selector.
-   */
-  async find({
-    session_selector,
-  }: {
-    session_selector: SessionSelector;
-  }): Promise<Session | null> {
-    const res = await fetch(`${api_url}/sessions?scene_id=${this._scene_id}`, {
-      method: "GET",
-      headers: {
-        user_token: this._token,
-      },
-    });
-
-    const { sessions } = (await res.json()) as {
-      sessions: Array<{ session_id: UUID }>;
-    };
-
-    if (sessions.length === 0) {
-      return null;
-    }
-
-    const session = session_selector({ sessions });
-    if (!session) {
-      return null;
-    }
-
-    this._session_id = session.session_id;
-    return this;
-  }
-
-  /**
    *
    */
   async create(): Promise<Session> {
@@ -144,7 +104,40 @@ export class Session extends EventTarget {
       throw new Error("Error when creating session");
     }
 
-    this._session_id = ((await res.json()) as { session_id: UUID }).session_id;
+    this._session_info = (await res.json()) as SessionInfo;
+    return this;
+  }
+
+  /**
+   * @returns Current session or null if no session has been found or selected
+   *          by the selector.
+   */
+  async find({
+    session_selector,
+  }: {
+    session_selector: SessionSelector;
+  }): Promise<Session | null> {
+    const res = await fetch(`${api_url}/sessions?scene_id=${this._scene_id}`, {
+      method: "GET",
+      headers: {
+        user_token: this._token,
+      },
+    });
+
+    const { sessions } = (await res.json()) as {
+      sessions: Array<SessionInfo>;
+    };
+
+    if (sessions.length === 0) {
+      return null;
+    }
+
+    const session = session_selector({ sessions });
+    if (!session) {
+      return null;
+    }
+
+    this._session_info = session;
     return this;
   }
 
@@ -152,7 +145,7 @@ export class Session extends EventTarget {
    *
    */
   async createClient(): Promise<void> {
-    const res = await fetch(`${api_url}/sessions/${this._session_id}/clients`, {
+    const res = await fetch(`${api_url}/sessions/${this.session_id}/clients`, {
       method: "POST",
       headers: {
         user_token: this._token,
@@ -166,18 +159,17 @@ export class Session extends EventTarget {
 
     this._gateway_url = `wss://${endpoint_info.ip}:${endpoint_info.ssl_port}`;
     this._session_key = session_token;
-    this.dispatchEvent(new Event("session-joined"));
   }
 
   /**
    *
    */
   async close() {
-    if (this._session_id === null) {
+    if (this._session_info === null) {
       throw new Error("Cannot close session as it has not been opened yet");
     }
 
-    const res = await fetch(`${api_url}/sessions/${this._session_id}`, {
+    const res = await fetch(`${api_url}/sessions/${this.session_id}`, {
       method: "DELETE",
       headers: {
         api_key: this._token,

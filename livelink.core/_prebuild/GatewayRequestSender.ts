@@ -35,12 +35,7 @@ export class GatewayRequestSender {
   /**
    *
    */
-  protected readonly _cluster_gateway_connection = new GatewayConnection();
-
-  /**
-   *
-   */
-  private _client_id: UUID | null = null;
+  constructor(private readonly _connection: GatewayConnection) {}
 
   /**
    *
@@ -54,8 +49,8 @@ export class GatewayRequestSender {
     });
     const buffer = new ArrayBuffer(2);
     new DataView(buffer).setUint16(0, payload.length, LITTLE_ENDIAN);
-    this._cluster_gateway_connection.send({ data: buffer });
-    this._cluster_gateway_connection.send({ data: payload });
+    this._connection.send({ data: buffer });
+    this._connection.send({ data: payload });
   }
 
   /**
@@ -68,7 +63,7 @@ export class GatewayRequestSender {
       channelId: ChannelId.heartbeat,
       size: 0,
     });
-    this._cluster_gateway_connection.send({ data: buffer });
+    this._connection.send({ data: buffer });
   }
 
   /**
@@ -93,8 +88,8 @@ export class GatewayRequestSender {
       channelId: ChannelId.registration,
       size: payload.length,
     });
-    this._cluster_gateway_connection.send({ data: buffer });
-    this._cluster_gateway_connection.send({ data: payload });
+    this._connection.send({ data: buffer });
+    this._connection.send({ data: payload });
   }
 
   /**
@@ -130,7 +125,7 @@ export class GatewayRequestSender {
       offset += 4;
     }
 
-    this._cluster_gateway_connection.send({ data: buffer });
+    this._connection.send({ data: buffer });
   }
 
   /**
@@ -150,7 +145,7 @@ export class GatewayRequestSender {
     writer.setUint8(offset, ViewportControlOperation.resume);
     offset += 1;
 
-    this._cluster_gateway_connection.send({ data: buffer });
+    this._connection.send({ data: buffer });
   }
 
   /**
@@ -170,7 +165,7 @@ export class GatewayRequestSender {
     writer.setUint8(offset, ViewportControlOperation.suspend);
     offset += 1;
 
-    this._cluster_gateway_connection.send({ data: buffer });
+    this._connection.send({ data: buffer });
   }
 
   /**
@@ -191,7 +186,7 @@ export class GatewayRequestSender {
     offset += 1;
     offset += serialize_Vec2ui16({ dataView: writer, offset, v: size });
 
-    this._cluster_gateway_connection.send({ data: buffer });
+    this._connection.send({ data: buffer });
   }
 
   /**
@@ -234,7 +229,7 @@ export class GatewayRequestSender {
     offset += serialize_Vec2({ dataView: writer, offset, v: [x, y] });
     writer.setUint8(offset, mode);
 
-    this._cluster_gateway_connection.send({ data: buffer });
+    this._connection.send({ data: buffer });
   }
 
   /**

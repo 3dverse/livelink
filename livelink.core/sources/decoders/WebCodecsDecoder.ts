@@ -10,26 +10,27 @@ export class WebCodecsDecoder implements FrameDecoder {
    */
   private _decoder: VideoDecoder | null = null;
 
+  /**
+   *
+   */
   private static _first_frame: boolean = true;
-  private _canvas_context: CanvasRenderingContext2D | null = null;
 
   /**
    *
    */
-  async configure({
-    codec,
-    dimensions,
-    canvas_context,
-  }: {
-    codec: CodecType;
-    dimensions: Vec2i;
-    canvas_context: CanvasRenderingContext2D;
-  }) {
-    this._canvas_context = canvas_context;
+  constructor(
+    private _dimensions: Vec2i,
+    private readonly _canvas_context: CanvasRenderingContext2D
+  ) {}
+
+  /**
+   *
+   */
+  async configure({ codec }: { codec: CodecType }) {
     const config: VideoDecoderConfig = {
       codec: codec === CodecType.h264 ? "avc1.42002A" : "hvc1.1.6.L123.00",
-      codedWidth: dimensions[0],
-      codedHeight: dimensions[1],
+      codedWidth: this._dimensions[0],
+      codedHeight: this._dimensions[1],
       hardwareAcceleration: "prefer-hardware",
       optimizeForLatency: true,
     };

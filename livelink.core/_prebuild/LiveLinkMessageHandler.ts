@@ -1,5 +1,8 @@
 import { ConnectConfirmation } from "./types";
 
+/**
+ *
+ */
 export interface LiveLinkMessageHandler {
   onConnectConfirmation({
     connect_confirmation,

@@ -21,35 +21,33 @@ export class SoftwareDecoder implements FrameDecoder {
    *
    */
   private _yuv_canvas: any;
-  private _canvas_context: CanvasRenderingContext2D | null = null;
 
   /**
    *
    */
-  configure({
-    codec,
-    dimensions,
-    canvas_context,
-  }: {
-    codec: CodecType;
-    dimensions: Vec2i;
-    canvas_context: CanvasRenderingContext2D;
-  }) {
+  constructor(
+    private _dimensions: Vec2i,
+    private readonly _canvas_context: CanvasRenderingContext2D
+  ) {}
+
+  /**
+   *
+   */
+  configure({ codec }: { codec: CodecType }) {
     if (codec !== CodecType.h264) {
       throw new Error("Software decoder supports only h264 encoding");
     }
 
-    this._canvas_buffer.width = dimensions[0];
-    this._canvas_buffer.height = dimensions[1];
-    this._canvas_context = canvas_context;
+    this._canvas_buffer.width = this._dimensions[0];
+    this._canvas_buffer.height = this._dimensions[1];
 
     this._broadway_sw_decoder = new BWDecoder();
     this._broadway_sw_decoder.onPictureDecoded = this._onFrameDecoded;
 
     this._yuv_canvas = new YUVCanvas({
       canvas: this._canvas_buffer,
-      width: dimensions[0],
-      height: dimensions[1],
+      width: this._dimensions[0],
+      height: this._dimensions[1],
     });
   }
 

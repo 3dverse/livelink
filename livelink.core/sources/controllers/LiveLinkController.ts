@@ -1,6 +1,8 @@
 import { ConnectConfirmation } from "../../_prebuild/types.js";
-import { LiveLinkMessageHandler } from "../../_prebuild/LiveLinkMessageHandler.js";
+import { LiveLinkConnection } from "../../_prebuild/LivelLinkConnection.js";
 import { LiveLinkRequestSender } from "../../_prebuild/LiveLinkRequestSender.js";
+import { LiveLinkMessageHandler } from "../../_prebuild/LiveLinkMessageHandler.js";
+
 import { Session } from "../Session.js";
 import { Client } from "../Client.js";
 
@@ -22,6 +24,13 @@ export class LiveLinkController
   /**
    *
    */
+  constructor(private readonly _connection = new LiveLinkConnection()) {
+    super(_connection);
+  }
+
+  /**
+   *
+   */
   async connectToSession({
     session,
     client,
@@ -35,7 +44,7 @@ export class LiveLinkController
 
     return new Promise((resolve, reject) => {
       this._authentication_promise_callbacks = { resolve, reject };
-      this._livelink_connection.connect({
+      this._connection.connect({
         //livelink_url: "wss://livelink.3dverse.com",
         livelink_url: `wss://editor-backend.3dverse.dev?sessionKey=${session.session_key}&clientUUID=${client.uuid}`,
         handler: this,
@@ -47,7 +56,7 @@ export class LiveLinkController
    *
    */
   disconnect() {
-    this._livelink_connection.disconnect();
+    this._connection.disconnect();
   }
 
   /**
@@ -58,9 +67,9 @@ export class LiveLinkController
   /**
    *
    */
-  createEntity({ components }: { components: any }): Promise<unknown> {
+  spawnEntity({ components }: { components: any }): Promise<Array<unknown>> {
     return new Promise((resolve) => {
-      super.createEntity({ components });
+      super.spawnEntity({ components });
       this._promises.push({ resolve });
     });
   }
@@ -130,6 +139,7 @@ export class LiveLinkController
   on_entities_created(data: any) {
     console.log("on_entities_created", data);
     this._promises[0].resolve(data);
+    this._promises = [];
   }
   on_entity_reparented(data: any) {
     throw new Error("Method not implemented.");

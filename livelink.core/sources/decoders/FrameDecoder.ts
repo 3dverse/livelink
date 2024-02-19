@@ -7,15 +7,7 @@ export interface FrameDecoder {
   /**
    *
    */
-  configure({
-    codec,
-    dimensions,
-    canvas_context,
-  }: {
-    codec: CodecType;
-    dimensions: Vec2i;
-    canvas_context: CanvasRenderingContext2D;
-  }): void;
+  configure({ codec }: { codec: CodecType }): void;
 
   /**
    *
