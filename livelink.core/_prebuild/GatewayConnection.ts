@@ -39,12 +39,14 @@ import { FTL_HEADER_SIZE, LITTLE_ENDIAN } from "./constants";
  *  - Open, maintain, and handle any error in the connection to the gateway
  *
  *  - Apply the authentication protocol when the first message is received.
- *    Note that initiating the authentication doesn't fall under this class's purview.
+ *    Note that initiating the authentication doesn't fall under this class's
+ *    purview.
  *
- *  - Demultiplex and deserialize messages following the gateway LiveLink Protocol.
- *    This class is only responsible for deserializing the binary data according to
- *    the LiveLink protocol specifications; in no case is it supposed to apply any
- *    kind of logic beyond routing messages to the appropriate handler.
+ *  - Demultiplex and deserialize messages following the gateway LiveLink
+ *    Protocol. It is only responsible for deserializing the binary data
+ *    according to the LiveLink protocol specifications; in no case is it
+ *    supposed to apply any kind of logic beyond routing messages to the
+ *    appropriate handler.
  */
 export class GatewayConnection {
   /**
@@ -53,7 +55,7 @@ export class GatewayConnection {
   private _socket: WebSocket | null = null;
 
   /**
-   * Controller responsible of handling messages coming from the gateway.
+   * Controller responsible for handling messages coming from the gateway.
    */
   private _handler: GatewayMessageHandler | null = null;
 
@@ -93,7 +95,7 @@ export class GatewayConnection {
       // This callback handles only this authentication response message.
       // As soon as the authentication is validated, we switch to the regular
       // multiplexed message handler callback.
-      this._socket.onmessage = (message: MessageEvent<any>) =>
+      this._socket.onmessage = (message: MessageEvent<ArrayBuffer>) =>
         this._onAuthenticated(message);
     });
   }
@@ -118,7 +120,7 @@ export class GatewayConnection {
   private _onSocketOpened(_event: Event) {
     console.debug(
       "Connected to the 3dverse rendering gateway:",
-      this._socket?.url
+      this._socket!.url
     );
   }
 

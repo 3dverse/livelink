@@ -17,7 +17,7 @@ export class LiveLink extends EventTarget {
   /**
    * Singleton instance
    */
-  private static _instance: LiveLink;
+  private static _instance: LiveLink | null = null;
   static get instance() {
     return LiveLink._instance;
   }
@@ -130,6 +130,7 @@ export class LiveLink extends EventTarget {
     await this.session.close();
     this._gateway.disconnect();
     this._broker.disconnect();
+    LiveLink._instance = null;
   }
 
   /**
@@ -186,10 +187,10 @@ export class LiveLink extends EventTarget {
         components: {
           camera: {
             renderGraphRef: "398ee642-030a-45e7-95df-7147f6c43392",
-            dataJSON: { grid: true, skybox: true, gradient: false },
+            dataJSON: { grid: true, skybox: false, gradient: true },
           },
           perspective_lens: {},
-          local_transform: { position: [0, 2, -10] },
+          local_transform: { position: [0, 2, 5] },
           debug_name: { value: "MyCam" },
         },
       })

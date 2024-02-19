@@ -23,6 +23,9 @@ import { Client } from "../Client.js";
 /**
  * The gateway controller is the exposed interface of the LiveLink gateway
  * protocol.
+ * It's the object responsible of providing access to any request message the
+ * gateway exposes. Moreover it's also responsible for handling the responses
+ * to requests.
  */
 export class GatewayController implements GatewayMessageHandler {
   /**

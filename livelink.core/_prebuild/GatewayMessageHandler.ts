@@ -16,8 +16,8 @@ import {
 
 /**
  * Message handlers interface.
- * The client controller MUST implement this interface and pass the resulting handler
- * to the GatewayConnection instance.
+ * The client controller MUST implement this interface and pass the resulting
+ * handler to the GatewayConnection instance.
  * This follows the LiveLink protocol specifications for the gateway messages.
  */
 export interface GatewayMessageHandler {

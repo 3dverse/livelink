@@ -49,16 +49,29 @@ const observer = new ResizeObserver((e) => {
   }, 500);
 });
 
-document.getElementById("connect").onclick = async () => {
+document.getElementById("scene-selector").onchange = (event) => {
+  connectToSession(event.target.value);
+};
+
+document.getElementById("connect").onclick = () => {
+  connectToSession(document.getElementById("scene-selector").value);
+};
+
+document.getElementById("disconnect").onclick = disconnectFromCurrentSession;
+
+async function connectToSession(scene_id) {
+  disconnectFromCurrentSession();
   await LiveLink.start({
-    scene_id: "62b43fa8-528e-4ad9-a5ab-0994c5362529",
+    scene_id,
     token: "public_p54ra95AMAnZdTel",
   });
-
   observer.observe(canvas);
-};
+}
 
-document.getElementById("disconnect").onclick = () => {
-  observer.unobserve(canvas);
-  LiveLink.instance.close();
-};
+function disconnectFromCurrentSession() {
+  if (LiveLink.instance !== null) {
+    observer.unobserve(canvas);
+    LiveLink.instance.close();
+    first = true;
+  }
+}

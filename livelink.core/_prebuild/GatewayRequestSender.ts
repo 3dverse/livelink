@@ -28,7 +28,6 @@ import {
 } from "./types";
 
 /**
- *
  * This follows the LiveLink protocol specifications for the gateway messages.
  */
 export class GatewayRequestSender {
