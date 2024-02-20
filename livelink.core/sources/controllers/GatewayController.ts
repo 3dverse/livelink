@@ -1,5 +1,4 @@
 import { GatewayConnection } from "../../_prebuild/GatewayConnection.js";
-import { GatewayRequestSender } from "../../_prebuild/GatewayRequestSender.js";
 import { GatewayMessageHandler } from "../../_prebuild/GatewayMessageHandler.js";
 import { HEARTBEAT_PERIOD_IN_MS } from "../../_prebuild/constants.js";
 import {
@@ -8,7 +7,6 @@ import {
   CodecType,
   FrameMetaData,
   RTID,
-  UUID,
   Vec2,
   Vec3,
 } from "../../_prebuild/types.js";
@@ -27,21 +25,7 @@ import { Client } from "../Client.js";
  * gateway exposes. Moreover it's also responsible for handling the responses
  * to requests.
  */
-export class GatewayController implements GatewayMessageHandler {
-  /**
-   * Connection to the gateway.
-   */
-  private readonly _connection = new GatewayConnection();
-
-  /**
-   * Request sender that offers a list of available requests that can be sent
-   * to the gateway.
-   */
-  private readonly _req = new GatewayRequestSender(this._connection);
-  get req() {
-    return this._req;
-  }
-
+export class GatewayController extends GatewayMessageHandler {
   /**
    * Timeout that sends a hearbeat to the gateway to maintain the connection
    * alive.
@@ -62,13 +46,11 @@ export class GatewayController implements GatewayMessageHandler {
   private _decoder: FrameDecoder | null = null;
 
   /**
-   * The callbacks to trigger once we receive the authentication response
-   * from the gateway.
+   *
    */
-  private _authentication_promise_callbacks: {
-    resolve: (client: Client) => void;
-    reject: (reason?: any) => void;
-  } | null = null;
+  constructor() {
+    super(new GatewayConnection());
+  }
 
   /**
    * Opens a connection to the gateway where the provided session is running.
@@ -87,18 +69,25 @@ export class GatewayController implements GatewayMessageHandler {
       handler: this,
     });
 
-    return new Promise<Client>((resolve, reject) => {
-      // Save the callbacks before sending the request.
-      this._authentication_promise_callbacks = { resolve, reject };
-
-      this._req.authenticateClient({
-        session_auth: {
-          session_key: session.session_key!,
-          client_app: navigator.userAgent,
-          os: navigator.platform,
-        },
-      });
+    const { status, client_id } = await this.authenticateClient({
+      session_auth: {
+        session_key: session.session_key!,
+        client_app: navigator.userAgent,
+        os: navigator.platform,
+      },
     });
+
+    if (status !== AuthenticationStatus.success) {
+      throw new Error(`Authentication failed: ${AuthenticationStatus[status]}`);
+    }
+
+    // The authentication has been successful, start pulsing the heartbeat
+    // right away to maintain the connection alive.
+    this._pulseHeartbeat();
+
+    // We're good to go, the gateway provided us with a client id so we can
+    // connect to the LiveLink broker.
+    return new Client(client_id);
   }
 
   /**
@@ -114,64 +103,21 @@ export class GatewayController implements GatewayMessageHandler {
   }
 
   /**
-   * Response to the authentication request.
-   * If the status is not successful, rejects the saved promise.
-   *
-   * @throws {PromiseNotSet}  Throws if the promise wasn't properly set before
-   *                          sending the authentication request.
-   */
-  on_authenticateClient_response({
-    status,
-    client_id,
-  }: {
-    status: AuthenticationStatus;
-    client_id: UUID;
-  }): void {
-    if (this._authentication_promise_callbacks === null) {
-      throw new Error("Promise not set");
-    }
-
-    if (status !== AuthenticationStatus.success) {
-      this._authentication_promise_callbacks.reject(
-        `Authentication failed: ${AuthenticationStatus[status]}`
-      );
-    }
-
-    // The authentication has been successful, start pulsing the heartbeat
-    // right away to maintain the connection alive.
-    this._pulseHeartbeat();
-
-    // We're good to go, the gateway provided us with a client id so we can
-    // connect to the LiveLink broker.
-    this._authentication_promise_callbacks.resolve(new Client(client_id));
-  }
-
-  /**
    * Sends a heartbeat to the cluster gateway at a constant frequency
    * to signify that the client is still alive.
    */
   private _pulseHeartbeat(): void {
-    this._heartbeat_timeout_id = setTimeout(() => {
-      this._req.pulseHeartbeat();
+    this._heartbeat_timeout_id = setTimeout(async () => {
       this._heartbeat_sent_at = Date.now();
+      await this.pulseHeartbeat();
+
+      // This effectively computes how long it takes to round-trip
+      // between the client and the cluster gateway.
+      const latency = Date.now() - this._heartbeat_sent_at;
+      this._heartbeat_sent_at = 0;
+
+      this._pulseHeartbeat();
     }, HEARTBEAT_PERIOD_IN_MS);
-  }
-
-  /**
-   * The cluster gateway's response to our heartbeat.
-   * Note that it doesn't have any data.
-   */
-  on_pulseHeartbeat_response(): void {
-    if (this._heartbeat_sent_at === 0) {
-      console.warn("Received an unsolicited heartbeat");
-    }
-
-    // This effectively computes how long it takes to round-trip
-    // between the client and the cluster gateway.
-    const latency = Date.now() - this._heartbeat_sent_at;
-    this._heartbeat_sent_at = 0;
-
-    this._pulseHeartbeat();
   }
 
   /**
@@ -195,7 +141,7 @@ export class GatewayController implements GatewayMessageHandler {
             client_config.canvas_context
           );
 
-    this._req.configureClient({ client_config });
+    super.configureClient({ client_config });
   }
 
   /**

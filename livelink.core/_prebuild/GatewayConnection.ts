@@ -111,7 +111,7 @@ export class GatewayConnection {
    *
    */
   disconnect() {
-    this._socket?.close();
+    this._socket?.close(1000);
   }
 
   /**

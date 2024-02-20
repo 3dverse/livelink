@@ -252,6 +252,7 @@ export function deserialize_UUID({
  *
  */
 export enum ChannelId {
+  authentication = 0,
   registration = 1,
   video_stream = 2,
   inputs = 3,

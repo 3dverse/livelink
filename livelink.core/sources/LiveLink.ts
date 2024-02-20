@@ -156,7 +156,7 @@ export class LiveLink extends EventTarget {
   resize({ size }: { size: Vec2i }) {
     size[0] = this._previous_multiple_of_8(size[0] * window.devicePixelRatio);
     size[1] = this._previous_multiple_of_8(size[1] * window.devicePixelRatio);
-    this._gateway.req.resize({ size });
+    this._gateway.resize({ size });
   }
 
   /**
@@ -196,7 +196,7 @@ export class LiveLink extends EventTarget {
       })
     )[0] as { rtid: string };
 
-    this._gateway.req.setViewports({
+    this._gateway.setViewports({
       viewports: [
         {
           left: 0,
@@ -208,10 +208,9 @@ export class LiveLink extends EventTarget {
       ],
     });
 
-    this._gateway.req.resume();
+    this._gateway.resume();
   }
 }
-
 /**
  * Mixin
 export interface LiveLink extends LiveLinkController, GatewayController {}
