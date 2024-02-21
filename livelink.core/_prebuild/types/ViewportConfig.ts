@@ -1,4 +1,5 @@
 import { LITTLE_ENDIAN } from "../constants";
+import { RTID, serialize_RTID } from "./common";
 
 /**
  *
@@ -8,7 +9,7 @@ export type ViewportConfig = {
   top: number;
   width: number;
   height: number;
-  camera_rtid: number;
+  camera_rtid: RTID;
 };
 
 /**
@@ -24,9 +25,19 @@ export function serialize_ViewportConfig({
   viewportConfig: ViewportConfig;
 }): number {
   dataView.setFloat32(offset, viewportConfig.left, LITTLE_ENDIAN);
-  dataView.setFloat32(offset + 4, viewportConfig.top, LITTLE_ENDIAN);
-  dataView.setFloat32(offset + 8, viewportConfig.width, LITTLE_ENDIAN);
-  dataView.setFloat32(offset + 12, viewportConfig.height, LITTLE_ENDIAN);
-  dataView.setUint32(offset + 16, viewportConfig.camera_rtid, LITTLE_ENDIAN);
-  return 5 * 4;
+  offset += 4;
+  dataView.setFloat32(offset, viewportConfig.top, LITTLE_ENDIAN);
+  offset += 4;
+  dataView.setFloat32(offset, viewportConfig.width, LITTLE_ENDIAN);
+  offset += 4;
+  dataView.setFloat32(offset, viewportConfig.height, LITTLE_ENDIAN);
+  offset += 4;
+
+  offset += serialize_RTID({
+    dataView,
+    offset,
+    rtid: viewportConfig.camera_rtid,
+  });
+
+  return offset;
 }

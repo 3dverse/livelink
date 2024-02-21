@@ -189,7 +189,7 @@ export function serialize_UUID({
   offset: number;
   uuid: UUID;
 }): number {
-  //dataView.setUint32(offset, Number(rtid), LITTLE_ENDIAN);
+  //TODO
   return 16;
 }
 

@@ -24,6 +24,7 @@ const client_config = {
 
 let first = true;
 let timeout = null;
+let camera_rtid = 0;
 
 const observer = new ResizeObserver((e) => {
   if (LiveLink.instance === null) {
@@ -40,9 +41,9 @@ const observer = new ResizeObserver((e) => {
     canvas.height = size[1];
     if (first) {
       client_config.rendering_area_size = size;
-      await LiveLink.instance.startStreaming({ client_config });
+      await LiveLink.instance.configureClient({ client_config });
       first = false;
-      await LiveLink.instance.createDefaultCamera();
+      camera_rtid = await LiveLink.instance.createDefaultCamera();
     } else {
       LiveLink.instance.resize({ size });
     }
@@ -66,6 +67,8 @@ async function connectToSession(scene_id) {
     token: "public_p54ra95AMAnZdTel",
   });
   observer.observe(canvas);
+
+  canvas.addEventListener("click", onClick);
 }
 
 function disconnectFromCurrentSession() {
@@ -74,4 +77,20 @@ function disconnectFromCurrentSession() {
     LiveLink.instance.close();
     first = true;
   }
+
+  canvas.removeEventListener("click", onClick);
+}
+
+async function onClick(e) {
+  const x = e.offsetX / canvas.width;
+  const y = e.offsetY / canvas.height;
+  const res = await LiveLink.instance._gateway.castScreenSpaceRay({
+    screenSpaceRayQuery: {
+      camera_rtid: BigInt(camera_rtid),
+      pos: [x, y],
+      mode: 0,
+    },
+  });
+
+  console.log(res);
 }

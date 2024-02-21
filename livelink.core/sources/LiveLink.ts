@@ -118,7 +118,7 @@ export class LiveLink extends EventTarget {
   /**
    *
    */
-  private readonly _gateway = new GatewayController();
+  readonly _gateway = new GatewayController();
 
   /**
    * Video decoder that decodes the frames received from the remote viewer.
@@ -145,7 +145,7 @@ export class LiveLink extends EventTarget {
   /**
    *
    */
-  async startStreaming({ client_config }: { client_config: ClientConfig }) {
+  async configureClient({ client_config }: { client_config: ClientConfig }) {
     client_config.rendering_area_size[0] = this._previous_multiple_of_8(
       client_config.rendering_area_size[0] * window.devicePixelRatio
     );
@@ -189,6 +189,7 @@ export class LiveLink extends EventTarget {
     await this._broker.connectToSession({ session: this.session, client });
     return this;
   }
+
   /**
    *
    */
@@ -240,6 +241,7 @@ export class LiveLink extends EventTarget {
       })
     )[0] as { rtid: string };
 
+    const camera_rtid = BigInt(camera.rtid);
     this._gateway.setViewports({
       viewports: [
         {
@@ -247,11 +249,13 @@ export class LiveLink extends EventTarget {
           top: 0,
           width: 1,
           height: 1,
-          camera_rtid: Number.parseInt(camera.rtid),
+          camera_rtid,
         },
       ],
     });
 
     this._gateway.resume();
+
+    return camera_rtid;
   }
 }

@@ -69,6 +69,11 @@ export class GatewayMessageHandler {
   /**
    *
    */
+  private _client_id: Uint8Array | null = null;
+
+  /**
+   *
+   */
   private _makeMessageResolver<T>({
     channel_id,
     rop_id,
@@ -134,6 +139,11 @@ export class GatewayMessageHandler {
    * Reply
    */
   _on_authenticateClient_response({ dataView }: { dataView: DataView }) {
+    this._client_id = new Uint8Array(
+      dataView.buffer,
+      dataView.byteOffset + 2,
+      16
+    );
     this._getNextMessageResolver({
       channel_id: ChannelId.authentication,
     }).resolve(deserialize_AuthenticationResponse({ dataView, offset: 0 }));
@@ -333,10 +343,9 @@ export class GatewayMessageHandler {
     const request_id = this._request_id_generator++;
     const rop_id = ClientRemoteOperation.cast_screen_space_ray;
 
-    this._writeClientRemoteOerationMultiplexerHeader({
+    this._writeClientRemoteOperationMultiplexerHeader({
       buffer,
       offset: FTL_HEADER_SIZE,
-      client_id: "",
       request_id,
       rop_data_size: ropDataSize,
       rop_id,
@@ -422,24 +431,26 @@ export class GatewayMessageHandler {
   /**
    *
    */
-  private _writeClientRemoteOerationMultiplexerHeader({
+  private _writeClientRemoteOperationMultiplexerHeader({
     buffer,
     offset,
-    client_id,
     request_id,
     rop_data_size,
     rop_id,
   }: {
     buffer: ArrayBuffer;
     offset: number;
-    client_id: UUID;
     request_id: number;
     rop_data_size: number;
     rop_id: ClientRemoteOperation;
   }) {
     const writer = new DataView(buffer);
 
-    offset += serialize_UUID({ dataView: writer, offset, uuid: client_id });
+    //offset += serialize_UUID({ dataView: writer, offset, uuid: this._client_id });
+    for (let i = 0; i < 16; ++i) {
+      writer.setUint8(offset, this._client_id![i]);
+      ++offset;
+    }
 
     writer.setUint32(offset, request_id, LITTLE_ENDIAN);
     offset += 4;
