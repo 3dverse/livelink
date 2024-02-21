@@ -1,15 +1,12 @@
-import { GatewayConnection } from "../../_prebuild/GatewayConnection.js";
 import { GatewayMessageHandler } from "../../_prebuild/GatewayMessageHandler.js";
 import { HEARTBEAT_PERIOD_IN_MS } from "../../_prebuild/constants.js";
 import {
-  AuthenticationStatus,
   ClientConfig,
-  CodecType,
-  FrameMetaData,
   RTID,
   Vec2,
   Vec3,
-} from "../../_prebuild/types.js";
+} from "../../_prebuild/types/common.js";
+import { FrameMetaData } from "../../_prebuild/types/FrameMetaData.js";
 
 import { FrameDecoder } from "../decoders/FrameDecoder.js";
 import { SoftwareDecoder } from "../decoders/SoftwareDecoder.js";
@@ -17,6 +14,7 @@ import { WebCodecsDecoder } from "../decoders/WebCodecsDecoder.js";
 
 import { Session } from "../Session.js";
 import { Client } from "../Client.js";
+import { AuthenticationStatus } from "../../_prebuild/types/AuthenticationResponse.js";
 
 /**
  * The gateway controller is the exposed interface of the LiveLink gateway
@@ -39,18 +37,6 @@ export class GatewayController extends GatewayMessageHandler {
    * connection.
    */
   private _heartbeat_sent_at: number = 0;
-
-  /**
-   * Video decoder that decodes the frames received from the remote viewer.
-   */
-  private _decoder: FrameDecoder | null = null;
-
-  /**
-   *
-   */
-  constructor() {
-    super(new GatewayConnection());
-  }
 
   /**
    * Opens a connection to the gateway where the provided session is running.
@@ -123,51 +109,6 @@ export class GatewayController extends GatewayMessageHandler {
   /**
    *
    */
-  configureClient({
-    client_config,
-    decoder_type = "webcodecs",
-  }: {
-    client_config: ClientConfig;
-    decoder_type?: "webcodecs" | "broadway";
-  }) {
-    this._decoder =
-      decoder_type === "webcodecs"
-        ? new WebCodecsDecoder(
-            client_config.rendering_area_size,
-            client_config.canvas_context
-          )
-        : new SoftwareDecoder(
-            client_config.rendering_area_size,
-            client_config.canvas_context
-          );
-
-    super.configureClient({ client_config });
-  }
-
-  /**
-   *
-   */
-  async on_configureClient_response({
-    codec,
-  }: {
-    codec: CodecType;
-  }): Promise<void> {
-    if (this._decoder === null) {
-      throw new Error("Missing video decoder");
-    }
-    await this._decoder.configure({ codec });
-  }
-
-  /**
-   *
-   */
-  on_resize_response({ size }: { size: Vec2 }): void {
-    console.log("Resized to:", size);
-  }
-
-  /**
-   *
-   */
   onFrameReceived({
     encoded_frame_size,
     meta_data_size,
@@ -179,21 +120,6 @@ export class GatewayController extends GatewayMessageHandler {
     encoded_frame: DataView;
     meta_data: FrameMetaData;
   }): void {
-    this._decoder!.decodeFrame({ encoded_frame });
-  }
-
-  /**
-   *
-   */
-  on_castScreenSpaceRay_response({
-    entity_rtid,
-    position,
-    normal,
-  }: {
-    entity_rtid: RTID;
-    position: Vec3;
-    normal: Vec3;
-  }): void {
-    throw new Error("Method not implemented.");
+    //this._decoder!.decodeFrame({ encoded_frame });
   }
 }

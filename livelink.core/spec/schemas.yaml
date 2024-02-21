@@ -1,9 +1,27 @@
+Vec2:
+  title: Vec2
+  type: array
+  items:
+    type: number
+    format: float32
+  minItems: 2
+  maxItems: 2
+
 Vec2i:
   title: Vec2i
   type: array
   items:
     type: number
     format: int32
+  minItems: 2
+  maxItems: 2
+
+Vec2ui16:
+  title: Vec2ui16
+  type: array
+  items:
+    type: number
+    format: uint16
   minItems: 2
   maxItems: 2
 
@@ -62,12 +80,8 @@ ScreenSpaceRayQuery:
   properties:
     camera_rtid:
       $ref: "#/RTID"
-    x:
-      type: number
-      format: float32
-    y:
-      type: number
-      format: float32
+    pos:
+      $ref: "#/Vec2"
     mode:
       type: integer
       format: uint8
@@ -200,16 +214,16 @@ VideoFrame:
   title: VideoFrame
   type: object
   properties:
-    image_size:
+    encoded_frame_size:
       type: integer
       format: int32
     meta_data_size:
       type: integer
       format: int32
-    encoded_image:
+    encoded_frame:
       type: string
       format: binary
-      x-size: image_size
+      x-size: encoded_frame_size
     meta_data:
       allOf:
         - $ref: "#/FrameMetaData"
@@ -261,6 +275,25 @@ ViewportMetaData:
     ws_from_ls:
       $ref: "#/Mat4x4"
 
+ViewportConfig:
+  title: ViewportConfig
+  type: object
+  properties:
+    left:
+      type: number
+      format: float32
+    top:
+      type: number
+      format: float32
+    width:
+      type: number
+      format: float32
+    height:
+      type: number
+      format: float32
+    camera_rtid:
+      $ref: "#/RTID"
+
 ViewportsConfig:
   title: ViewportsConfig
   type: object
@@ -268,17 +301,21 @@ ViewportsConfig:
     viewport_count:
       type: integer
       format: uint8
+    viewports:
+      type: array
+      items:
+        $ref: "#/ViewportConfig"
 
 Resize:
   title: Resize
   type: object
   properties:
     size:
-      $ref: "#/Vec2i"
+      $ref: "#/Vec2ui16"
 
 ResizeResponse:
   title: ResizeResponse
   type: object
   properties:
     new_size:
-      $ref: "#/Vec2i"
+      $ref: "#/Vec2ui16"

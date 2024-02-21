@@ -1,4 +1,4 @@
-import { RTID, UUID } from "../_prebuild/types";
+import { RTID, UUID } from "../_prebuild/types/common";
 
 export class Entity {
   /**

@@ -40,7 +40,7 @@ const observer = new ResizeObserver((e) => {
     canvas.height = size[1];
     if (first) {
       client_config.rendering_area_size = size;
-      LiveLink.instance.startStreaming({ client_config });
+      await LiveLink.instance.startStreaming({ client_config });
       first = false;
       await LiveLink.instance.createDefaultCamera();
     } else {

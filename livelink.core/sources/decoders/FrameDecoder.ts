@@ -1,4 +1,4 @@
-import { CodecType, Vec2i } from "../../_prebuild/types";
+import { CodecType } from "../../_prebuild/types/ClientConfigResponse";
 
 /**
  *

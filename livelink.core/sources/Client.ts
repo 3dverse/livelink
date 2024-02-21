@@ -1,4 +1,4 @@
-import { UUID } from "../_prebuild/types";
+import { UUID } from "../_prebuild/types/common";
 
 /**
  * A client is the representation of a singular user in a session.

@@ -5,7 +5,7 @@
  */
 
 import { LiveLinkMessageHandler } from "./LiveLinkMessageHandler";
-import { ConnectConfirmation } from "./types";
+import { ConnectConfirmation } from "./types/common";
 
 /**
  * Holds the connection to the LiveLink Broadcast & Persistence server.

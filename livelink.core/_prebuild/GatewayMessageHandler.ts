@@ -11,26 +11,30 @@ import {
   LITTLE_ENDIAN,
 } from "./constants";
 import {
-  AuthenticationStatus,
   ChannelId,
   ClientConfig,
   ClientRemoteOperation,
-  CodecType,
-  FrameMetaData,
-  HighlightMode,
-  RTID,
-  SessionAuth,
   UUID,
-  Vec2i,
   Vec2ui16,
-  Vec3,
-  ViewportConfig,
-  ViewportControlOperation,
-  serialize_RTID,
+  ViewerControlOperation,
   serialize_UUID,
-  serialize_Vec2,
   serialize_Vec2ui16,
-} from "./types";
+  ViewportConfig,
+  serialize_ViewportConfig,
+  SessionAuth,
+  AuthenticationResponse,
+  deserialize_AuthenticationResponse,
+  ClientConfigResponse,
+  deserialize_ClientConfigResponse,
+  ResizeResponse,
+  deserialize_ResizeResponse,
+  ScreenSpaceRayResult,
+  deserialize_ScreenSpaceRayResult,
+  EncodedVideoFrame,
+  deserialize_EncodedVideoFrame,
+  ScreenSpaceRayQuery,
+  serialize_ScreenSpaceRayQuery,
+} from "./types/index";
 
 /**
  *
@@ -38,61 +42,46 @@ import {
 type MessageResolver = {
   resolve: (u?: any) => void;
   reject: (reason?: unknown) => void;
+  rop_id?: ClientRemoteOperation;
+  request_id?: number;
 };
 
 /**
  * Message handlers interface.
- * The client controller MUST implement this interface and pass the resulting
- * handler to the GatewayConnection instance.
  * This follows the LiveLink protocol specifications for the gateway messages.
  */
-export abstract class GatewayMessageHandler {
+export class GatewayMessageHandler {
   /**
    *
    */
-  private _handlers = new Map<ChannelId, Array<MessageResolver>>();
+  protected readonly _connection = new GatewayConnection();
 
   /**
    *
    */
-  constructor(protected readonly _connection: GatewayConnection) {}
+  private readonly _resolvers = new Map<ChannelId, Array<MessageResolver>>();
 
   /**
    *
    */
-  authenticateClient({ session_auth }: { session_auth: SessionAuth }): Promise<{
-    status: AuthenticationStatus;
-    client_id: UUID;
-  }> {
-    const payload = JSON.stringify({
-      // Translate to legacy names
-      sessionKey: session_auth.session_key,
-      clientApp: session_auth.client_app,
-      os: session_auth.os,
-    });
-    const buffer = new ArrayBuffer(2);
-    new DataView(buffer).setUint16(0, payload.length, LITTLE_ENDIAN);
-    this._connection.send({ data: buffer });
-    this._connection.send({ data: payload });
-
-    return this._makeHandlerPromise<{
-      status: AuthenticationStatus;
-      client_id: UUID;
-    }>({ channel_id: ChannelId.authentication });
-  }
+  private _request_id_generator = 1;
 
   /**
    *
    */
-  private _makeHandlerPromise<T>({
+  private _makeMessageResolver<T>({
     channel_id,
+    rop_id,
+    request_id,
   }: {
     channel_id: ChannelId;
+    rop_id?: ClientRemoteOperation;
+    request_id?: number;
   }): Promise<T> {
     return new Promise<T>((resolve, reject) => {
-      this._handlers.set(channel_id, [
-        ...(this._handlers.get(channel_id) ?? []),
-        { resolve, reject },
+      this._resolvers.set(channel_id, [
+        ...(this._resolvers.get(channel_id) ?? []),
+        { resolve, reject, rop_id, request_id },
       ]);
     });
   }
@@ -100,37 +89,58 @@ export abstract class GatewayMessageHandler {
   /**
    *
    */
-  private _getNextHandler({
+  private _getNextMessageResolver({
     channel_id,
   }: {
     channel_id: ChannelId;
   }): MessageResolver {
-    const handlers = this._handlers.get(channel_id);
+    const handlers = this._resolvers.get(channel_id);
     if (!handlers || handlers.length === 0) {
-      throw new Error("No handler for message");
+      throw new Error(
+        `No handler for message on channel ${ChannelId[channel_id]}`
+      );
     }
 
     return handlers.shift()!;
   }
 
   /**
-   *
+   * Request
    */
-  on_authenticateClient_response({
-    status,
-    client_id,
+  authenticateClient({
+    session_auth,
   }: {
-    status: AuthenticationStatus;
-    client_id: UUID;
-  }) {
-    this._getNextHandler({ channel_id: ChannelId.authentication }).resolve({
-      status,
-      client_id,
+    session_auth: SessionAuth;
+  }): Promise<AuthenticationResponse> {
+    const payload = JSON.stringify({
+      // Translate to legacy names
+      sessionKey: session_auth.session_key,
+      clientApp: session_auth.client_app,
+      os: session_auth.os,
+    });
+
+    const buffer = new ArrayBuffer(2);
+    new DataView(buffer).setUint16(0, payload.length, LITTLE_ENDIAN);
+
+    this._connection.send({ data: buffer });
+    this._connection.send({ data: payload });
+
+    return this._makeMessageResolver<AuthenticationResponse>({
+      channel_id: ChannelId.authentication,
     });
   }
 
   /**
-   *
+   * Reply
+   */
+  _on_authenticateClient_response({ dataView }: { dataView: DataView }) {
+    this._getNextMessageResolver({
+      channel_id: ChannelId.authentication,
+    }).resolve(deserialize_AuthenticationResponse({ dataView, offset: 0 }));
+  }
+
+  /**
+   * Request
    */
   pulseHeartbeat(): Promise<void> {
     const buffer = new ArrayBuffer(FTL_HEADER_SIZE);
@@ -141,20 +151,24 @@ export abstract class GatewayMessageHandler {
     });
     this._connection.send({ data: buffer });
 
-    return this._makeHandlerPromise<void>({ channel_id: ChannelId.heartbeat });
+    return this._makeMessageResolver<void>({ channel_id: ChannelId.heartbeat });
   }
 
   /**
-   *
+   * Reply
    */
-  on_pulseHeartbeat_response(): void {
-    this._getNextHandler({ channel_id: ChannelId.heartbeat }).resolve();
+  _on_pulseHeartbeat_response(): void {
+    this._getNextMessageResolver({ channel_id: ChannelId.heartbeat }).resolve();
   }
 
   /**
-   *
+   * Request
    */
-  configureClient({ client_config }: { client_config: ClientConfig }) {
+  configureClient({
+    client_config,
+  }: {
+    client_config: ClientConfig;
+  }): Promise<ClientConfigResponse> {
     const payload = JSON.stringify({
       // Translate to legacy names
       renderingAreaSize: client_config.rendering_area_size,
@@ -167,18 +181,33 @@ export abstract class GatewayMessageHandler {
         hasTouchscreen: client_config.supported_devices.touchscreen,
       },
     });
+
     const buffer = new ArrayBuffer(FTL_HEADER_SIZE);
     this._writeMultiplexerHeader({
       buffer,
       channelId: ChannelId.registration,
       size: payload.length,
     });
+
     this._connection.send({ data: buffer });
     this._connection.send({ data: payload });
+
+    return this._makeMessageResolver<ClientConfigResponse>({
+      channel_id: ChannelId.registration,
+    });
   }
 
   /**
-   *
+   * Reply
+   */
+  _on_configureClient_response({ dataView }: { dataView: DataView }): void {
+    this._getNextMessageResolver({
+      channel_id: ChannelId.registration,
+    }).resolve(deserialize_ClientConfigResponse({ dataView, offset: 0 }));
+  }
+
+  /**
+   * Send
    */
   setViewports({ viewports }: { viewports: Array<ViewportConfig> }) {
     const SIZE_OF_VIEWPORT_CONFIG = 20;
@@ -192,29 +221,25 @@ export abstract class GatewayMessageHandler {
 
     const writer = new DataView(buffer, FTL_HEADER_SIZE);
     let offset = 0;
-    writer.setUint8(offset, ViewportControlOperation.set_viewports);
+    writer.setUint8(offset, ViewerControlOperation.set_viewports);
     offset += 1;
+
     writer.setUint8(offset, viewports.length);
     offset += 1;
 
-    for (const viewport of viewports) {
-      writer.setFloat32(offset, viewport.left, LITTLE_ENDIAN);
-      offset += 4;
-      writer.setFloat32(offset, viewport.top, LITTLE_ENDIAN);
-      offset += 4;
-      writer.setFloat32(offset, viewport.width, LITTLE_ENDIAN);
-      offset += 4;
-      writer.setFloat32(offset, viewport.height, LITTLE_ENDIAN);
-      offset += 4;
-      writer.setUint32(offset, viewport.camera_rtid, LITTLE_ENDIAN);
-      offset += 4;
+    for (const viewportConfig of viewports) {
+      offset += serialize_ViewportConfig({
+        dataView: writer,
+        offset,
+        viewportConfig,
+      });
     }
 
     this._connection.send({ data: buffer });
   }
 
   /**
-   *
+   * Send
    */
   resume() {
     const payloadSize = 1;
@@ -227,14 +252,14 @@ export abstract class GatewayMessageHandler {
 
     const writer = new DataView(buffer, FTL_HEADER_SIZE);
     let offset = 0;
-    writer.setUint8(offset, ViewportControlOperation.resume);
+    writer.setUint8(offset, ViewerControlOperation.resume);
     offset += 1;
 
     this._connection.send({ data: buffer });
   }
 
   /**
-   *
+   * Send
    */
   suspend() {
     const payloadSize = 1;
@@ -247,14 +272,14 @@ export abstract class GatewayMessageHandler {
 
     const writer = new DataView(buffer, FTL_HEADER_SIZE);
     let offset = 0;
-    writer.setUint8(offset, ViewportControlOperation.suspend);
+    writer.setUint8(offset, ViewerControlOperation.suspend);
     offset += 1;
 
     this._connection.send({ data: buffer });
   }
 
   /**
-   *
+   * Request
    */
   resize({ size }: { size: Vec2ui16 }) {
     const payloadSize = 1 + 4;
@@ -267,26 +292,33 @@ export abstract class GatewayMessageHandler {
 
     const writer = new DataView(buffer, FTL_HEADER_SIZE);
     let offset = 0;
-    writer.setUint8(offset, ViewportControlOperation.resize);
+    writer.setUint8(offset, ViewerControlOperation.resize);
     offset += 1;
     offset += serialize_Vec2ui16({ dataView: writer, offset, v: size });
 
     this._connection.send({ data: buffer });
+
+    return this._makeMessageResolver<ResizeResponse>({
+      channel_id: ChannelId.viewer_control,
+    });
+  }
+
+  /**
+   * Reply
+   */
+  _on_resize_response({ dataView }: { dataView: DataView }) {
+    this._getNextMessageResolver({
+      channel_id: ChannelId.viewer_control,
+    }).resolve(deserialize_ResizeResponse({ dataView, offset: 0 }));
   }
 
   /**
    *
    */
   castScreenSpaceRay({
-    camera_rtid,
-    x,
-    y,
-    mode,
+    screenSpaceRayQuery,
   }: {
-    camera_rtid: RTID;
-    x: number;
-    y: number;
-    mode: HighlightMode;
+    screenSpaceRayQuery: ScreenSpaceRayQuery;
   }) {
     const ropDataSize = 4 + 4 + 4 + 1;
     const payloadSize = FTL_CLIENT_ROP_HEADER_SIZE + ropDataSize;
@@ -298,23 +330,74 @@ export abstract class GatewayMessageHandler {
       size: payloadSize,
     });
 
+    const request_id = this._request_id_generator++;
+    const rop_id = ClientRemoteOperation.cast_screen_space_ray;
+
     this._writeClientRemoteOerationMultiplexerHeader({
       buffer,
       offset: FTL_HEADER_SIZE,
       client_id: "",
-      request_id: 0,
+      request_id,
       rop_data_size: ropDataSize,
-      rop_id: ClientRemoteOperation.cast_screen_space_ray,
+      rop_id,
     });
 
-    let offset = 0;
-
-    const writer = new DataView(buffer, FTL_HEADER_SIZE);
-    offset += serialize_RTID({ dataView: writer, offset, rtid: camera_rtid });
-    offset += serialize_Vec2({ dataView: writer, offset, v: [x, y] });
-    writer.setUint8(offset, mode);
+    const dataView = new DataView(buffer, FTL_HEADER_SIZE);
+    serialize_ScreenSpaceRayQuery({ dataView, offset: 0, screenSpaceRayQuery });
 
     this._connection.send({ data: buffer });
+
+    return this._makeMessageResolver<ScreenSpaceRayResult>({
+      channel_id: ChannelId.client_remote_operations,
+      rop_id,
+      request_id,
+    });
+  }
+
+  _onFrameReceivedEvent:
+    | (({ encoded_frame }: { encoded_frame: EncodedVideoFrame }) => void)
+    | null = null;
+  /**
+   *
+   */
+  _onFrameReceived({ dataView }: { dataView: DataView }) {
+    const encoded_frame = deserialize_EncodedVideoFrame({
+      dataView,
+      offset: 0,
+    });
+
+    if (this._onFrameReceivedEvent !== null) {
+      this._onFrameReceivedEvent({ encoded_frame });
+    }
+  }
+
+  /**
+   *
+   */
+  _on_clientRemoteOperation_response({
+    request_id,
+    dataView,
+  }: {
+    request_id: number;
+    dataView: DataView;
+  }) {
+    const resolver = this._getNextMessageResolver({
+      channel_id: ChannelId.client_remote_operations,
+    });
+
+    if (resolver.request_id !== request_id) {
+      throw new Error(
+        `Expected request id ${resolver.request_id}, received ${request_id}`
+      );
+    }
+
+    switch (resolver.rop_id) {
+      case ClientRemoteOperation.cast_screen_space_ray:
+        resolver.resolve(
+          deserialize_ScreenSpaceRayResult({ dataView, offset: 0 })
+        );
+        break;
+    }
   }
 
   /**
@@ -367,42 +450,4 @@ export abstract class GatewayMessageHandler {
     writer.setUint8(offset, rop_id);
     offset += 1;
   }
-
-  /**
-   *
-   */
-  abstract on_configureClient_response({ codec }: { codec: CodecType }): void;
-
-  /**
-   *
-   */
-  abstract on_resize_response({ size }: { size: Vec2i }): void;
-
-  /**
-   *
-   */
-  abstract onFrameReceived({
-    encoded_frame_size,
-    meta_data_size,
-    encoded_frame,
-    meta_data,
-  }: {
-    encoded_frame_size: number;
-    meta_data_size: number;
-    encoded_frame: DataView;
-    meta_data: FrameMetaData;
-  }): void;
-
-  /**
-   *
-   */
-  abstract on_castScreenSpaceRay_response({
-    entity_rtid,
-    position,
-    normal,
-  }: {
-    entity_rtid: RTID;
-    position: Vec3;
-    normal: Vec3;
-  }): void;
 }

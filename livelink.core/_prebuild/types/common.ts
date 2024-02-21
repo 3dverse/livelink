@@ -1,4 +1,5 @@
-import { BIG_ENDIAN, LITTLE_ENDIAN } from "./constants";
+import { BIG_ENDIAN, LITTLE_ENDIAN } from "../constants";
+import { CodecType } from "./ClientConfigResponse";
 
 /**
  *
@@ -297,22 +298,13 @@ export enum ClientRemoteOperation {
   physics_raycast = 10,
 }
 
-export enum ViewportControlOperation {
+export enum ViewerControlOperation {
   resize = 0,
   DEPRECATED_update_action_map = 1,
   suspend = 2,
   resume = 3,
   encoder_params = 4,
   set_viewports = 5,
-}
-
-/**
- *
- */
-export enum CodecType {
-  h264 = 0,
-  h264rgb = 1,
-  h265 = 2,
 }
 
 /**
@@ -355,97 +347,15 @@ export type SupportedDevices = {
   touchscreen: boolean;
 };
 
-/**
- *
- */
-export enum HighlightMode {
-  None = 0,
-  HighlightAndKeepOldSelection = 1,
-  HighlightAndDiscardOldSelection = 2,
-}
-
-export type SessionAuth = {
-  session_key: string;
-  client_app: string;
-  os: string;
-};
-
-/**
- *
- */
-export enum AuthenticationStatus {
-  // Common
-  unknown_error = 0,
-  success = 1,
-  // Join session errors
-  authentication_failed = 100,
-  session_not_found,
-  session_closed,
-  // Launcher errors
-  launcher_not_found = 200,
-  unknown_service,
-  service_boot_error,
-  // Session creation errors
-  invalid_request = 300,
-  duplicate_session,
-  // Client errors
-  client_not_found = 400,
-}
-
 type ViewportMetaData = {
   camera_rtid: RTID;
   ws_from_ls: Mat4;
 };
 
-type ClientMetaData = {
+export type ClientMetaData = {
   client_id: UUID;
   viewports: Array<ViewportMetaData>;
 };
-
-export type FrameMetaData = {
-  renderer_timestamp: number;
-  frame_counter: number;
-  clients: Array<ClientMetaData>;
-};
-
-export function deserialize_FrameMetaData({
-  dataView,
-  offset,
-}: {
-  dataView: DataView;
-  offset: number;
-}): FrameMetaData {
-  const frameMetaData: FrameMetaData = {
-    renderer_timestamp: dataView.getUint32(offset, LITTLE_ENDIAN),
-    frame_counter: dataView.getUint32(offset + 4, LITTLE_ENDIAN),
-    clients: [],
-  };
-  offset += 8;
-
-  const client_count = dataView.getUint8(offset);
-  offset += 1;
-
-  for (let i = 0; i < client_count; ++i) {
-    frameMetaData.clients.push({
-      client_id: deserialize_UUID({ dataView, offset }),
-      viewports: [],
-    });
-    offset += 16;
-
-    const viewport_count = dataView.getUint8(offset);
-    offset += 1;
-
-    for (let j = 0; j < viewport_count; ++j) {
-      frameMetaData.clients[i].viewports.push({
-        camera_rtid: BigInt(dataView.getUint32(offset, LITTLE_ENDIAN)),
-        ws_from_ls: deserialize_Mat4({ dataView, offset: offset + 4 }),
-      });
-      offset += 4 + 16 * 4;
-    }
-  }
-
-  return frameMetaData;
-}
 
 export type ConnectConfirmation = {
   folder_id: UUID;
@@ -487,12 +397,4 @@ export type SessionInfo = {
   country_code: string;
   continent_code: string;
   clients: Array<ClientInfo>;
-};
-
-export type ViewportConfig = {
-  left: number;
-  top: number;
-  width: number;
-  height: number;
-  camera_rtid: number;
 };

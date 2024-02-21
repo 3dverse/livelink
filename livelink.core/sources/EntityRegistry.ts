@@ -1,4 +1,4 @@
-import { RTID } from "../_prebuild/types";
+import { RTID } from "../_prebuild/types/common";
 import { Entity } from "./Entity";
 
 /**

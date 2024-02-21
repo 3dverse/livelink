@@ -5,15 +5,10 @@
  */
 
 import {
-  AuthenticationStatus,
   ChannelId,
   ClientRemoteOperation,
-  deserialize_FrameMetaData,
-  deserialize_Vec2ui16,
-  deserialize_Vec3,
   deserialize_UUID,
-} from "./types";
-
+} from "./types/common";
 import { GatewayMessageHandler } from "./GatewayMessageHandler";
 import { FTL_HEADER_SIZE, LITTLE_ENDIAN } from "./constants";
 
@@ -139,7 +134,9 @@ export class GatewayConnection {
    *
    */
   private _onAuthenticated(message: MessageEvent<ArrayBuffer>) {
-    this._authenticateClient_response({ dataView: new DataView(message.data) });
+    this._handler!._on_authenticateClient_response({
+      dataView: new DataView(message.data),
+    });
 
     // Switch the onmessage callback to the regular multiplexed one.
     this._socket!.onmessage = (message: MessageEvent<ArrayBuffer>) =>
@@ -155,109 +152,43 @@ export class GatewayConnection {
     message: MessageEvent<ArrayBuffer>;
   }): void {
     // First byte is the channel id.
-    // 3 following bytes is the message total size EXCLUDING the first 4 bytes.
+    // 3 following bytes are the message total size EXCLUDING the first 4 bytes.
     const channelId = new DataView(message.data).getUint8(0) as ChannelId;
     const dataView = new DataView(message.data, FTL_HEADER_SIZE);
+    const handler = this._handler!;
 
     switch (channelId) {
       case ChannelId.registration:
-        this._configureClient_response({ dataView });
-        break;
-
-      case ChannelId.heartbeat:
-        this._pulseHeartbeat_response({ dataView });
-        break;
-
-      case ChannelId.viewer_control:
-        this._resize_response({ dataView });
+        handler._on_configureClient_response({ dataView });
         break;
 
       case ChannelId.video_stream:
-        this._onFrameReceived({ dataView });
+        handler._onFrameReceived({ dataView });
+        break;
+
+      case ChannelId.viewer_control:
+        handler._on_resize_response({ dataView });
         break;
 
       case ChannelId.client_remote_operations:
         this._clientRemoteOperation_response({ dataView });
         break;
 
+      case ChannelId.heartbeat:
+        handler._on_pulseHeartbeat_response();
+        break;
+
+      case ChannelId.audio_stream:
+      case ChannelId.broadcast_script_events:
+      case ChannelId.asset_loading_events:
+      case ChannelId.gpu_memory_profiler:
+        break;
+
       default:
-        throw new Error(`Received message on unknown channel ${channelId}`);
+        throw new Error(
+          `Received message on an unsupported channel '${ChannelId[channelId]}' (${channelId})`
+        );
     }
-  }
-
-  /**
-   * Cluster gateway response to authentication query.
-   * See {@link GatewayRequestSender#authenticateClient}.
-   */
-  private _authenticateClient_response({ dataView }: { dataView: DataView }) {
-    let offset = 0;
-
-    const status = dataView.getUint16(
-      offset,
-      LITTLE_ENDIAN
-    ) as AuthenticationStatus;
-    offset += 2;
-
-    const client_id = deserialize_UUID({
-      dataView,
-      offset: offset,
-    });
-
-    this._handler!.on_authenticateClient_response({ status, client_id });
-  }
-
-  /**
-   * Cluster gateway response to pulseHearbeat query.
-   * See {@link GatewayRequestSender#pulseHeartBeat}.
-   */
-  private _pulseHeartbeat_response({}: { dataView: DataView }) {
-    this._handler!.on_pulseHeartbeat_response();
-  }
-
-  /**
-   * Remote viewer response to configureClient query.
-   * See {@link GatewayRequestSender#configureClient}.
-   */
-  private _configureClient_response({ dataView }: { dataView: DataView }) {
-    this._handler!.on_configureClient_response({
-      codec: dataView.getUint8(0),
-    });
-  }
-
-  /**
-   * Remote viewer response to resize query.
-   * See {@link GatewayRequestSender#resize}.
-   */
-  private _resize_response({ dataView }: { dataView: DataView }) {
-    const size = deserialize_Vec2ui16({ dataView, offset: 0 });
-    this._handler!.on_resize_response({ size });
-  }
-
-  /**
-   * Remote viewer message.
-   */
-  private _onFrameReceived({ dataView }: { dataView: DataView }) {
-    let offset = 0;
-
-    const encoded_frame_size = dataView.getUint32(offset, LITTLE_ENDIAN);
-    offset += 4;
-
-    const meta_data_size = dataView.getUint32(offset, LITTLE_ENDIAN);
-    offset += 4;
-
-    const encoded_frame = new DataView(
-      dataView.buffer,
-      dataView.byteOffset + offset,
-      encoded_frame_size
-    );
-    offset += encoded_frame_size;
-
-    this._handler!.onFrameReceived({
-      encoded_frame_size,
-      meta_data_size,
-      encoded_frame,
-      meta_data: deserialize_FrameMetaData({ dataView, offset }),
-    });
   }
 
   /**
@@ -268,39 +199,17 @@ export class GatewayConnection {
   }: {
     dataView: DataView;
   }) {
-    const FTL_CLIENT_ROP_HEADER_SIZE = 24;
-    const rop_id = dataView.getUint8(0);
-    const ropDataView = new DataView(
-      dataView.buffer,
-      FTL_CLIENT_ROP_HEADER_SIZE
-    );
-
-    switch (rop_id) {
-      case ClientRemoteOperation.cast_screen_space_ray:
-        this._castScreenSpaceRay_response({ dataView: ropDataView });
-        break;
-    }
-  }
-
-  /**
-   * Rendering server response.
-   */
-  private _castScreenSpaceRay_response({ dataView }: { dataView: DataView }) {
     let offset = 0;
-
-    const entity_rtid = BigInt(dataView.getUint32(offset, LITTLE_ENDIAN));
+    //const client_id = deserialize_UUID({ dataView, offset });
+    offset += 16;
+    const request_id = dataView.getUint32(offset, LITTLE_ENDIAN);
+    offset += 4;
+    //const size = dataView.getUint32(offset, LITTLE_ENDIAN);
     offset += 4;
 
-    const position = deserialize_Vec3({ dataView, offset });
-    offset += 3 * 4;
-
-    const normal = deserialize_Vec3({ dataView, offset });
-    offset += 3 * 4;
-
-    this._handler!.on_castScreenSpaceRay_response({
-      entity_rtid,
-      position,
-      normal,
+    this._handler!._on_clientRemoteOperation_response({
+      request_id,
+      dataView: new DataView(dataView.buffer, offset),
     });
   }
 }

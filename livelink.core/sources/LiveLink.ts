@@ -1,6 +1,10 @@
-import { ClientConfig, UUID, Vec2i } from "../_prebuild/types.js";
+import { ClientConfig, UUID, Vec2i } from "../_prebuild/types/common.js";
+import { EncodedVideoFrame } from "../_prebuild/types/EncodedVideoFrame.js";
 import { GatewayController } from "./controllers/GatewayController.js";
 import { LiveLinkController } from "./controllers/LiveLinkController.js";
+import { FrameDecoder } from "./decoders/FrameDecoder.js";
+import { SoftwareDecoder } from "./decoders/SoftwareDecoder.js";
+import { WebCodecsDecoder } from "./decoders/WebCodecsDecoder.js";
 import { Session, SessionInfo, SessionSelector } from "./Session.js";
 
 /**
@@ -117,6 +121,11 @@ export class LiveLink extends EventTarget {
   private readonly _gateway = new GatewayController();
 
   /**
+   * Video decoder that decodes the frames received from the remote viewer.
+   */
+  private _decoder: FrameDecoder | null = null;
+
+  /**
    *
    */
   private constructor(public readonly session: Session) {
@@ -136,7 +145,7 @@ export class LiveLink extends EventTarget {
   /**
    *
    */
-  startStreaming({ client_config }: { client_config: ClientConfig }) {
+  async startStreaming({ client_config }: { client_config: ClientConfig }) {
     client_config.rendering_area_size[0] = this._previous_multiple_of_8(
       client_config.rendering_area_size[0] * window.devicePixelRatio
     );
@@ -144,7 +153,11 @@ export class LiveLink extends EventTarget {
       client_config.rendering_area_size[1] * window.devicePixelRatio
     );
 
-    this._gateway.configureClient({ client_config });
+    this._createDecoder({ client_config });
+
+    const res = await this._gateway.configureClient({ client_config });
+
+    await this._decoder!.configure({ codec: res.codec });
   }
 
   private _previous_multiple_of_8 = (n: number) =>
@@ -175,6 +188,37 @@ export class LiveLink extends EventTarget {
     // Connect to the LiveLink Broker
     await this._broker.connectToSession({ session: this.session, client });
     return this;
+  }
+  /**
+   *
+   */
+  private async _createDecoder({
+    client_config,
+    decoder_type = "webcodecs",
+  }: {
+    client_config: ClientConfig;
+    decoder_type?: "webcodecs" | "broadway";
+  }) {
+    this._decoder =
+      decoder_type === "webcodecs"
+        ? new WebCodecsDecoder(
+            client_config.rendering_area_size,
+            client_config.canvas_context
+          )
+        : new SoftwareDecoder(
+            client_config.rendering_area_size,
+            client_config.canvas_context
+          );
+
+    this._gateway._onFrameReceivedEvent = ({
+      encoded_frame,
+    }: {
+      encoded_frame: EncodedVideoFrame;
+    }) => {
+      this._decoder!.decodeFrame({
+        encoded_frame: encoded_frame.encoded_frame,
+      });
+    };
   }
 
   /**
@@ -211,22 +255,3 @@ export class LiveLink extends EventTarget {
     this._gateway.resume();
   }
 }
-/**
- * Mixin
-export interface LiveLink extends LiveLinkController, GatewayController {}
-
-function applyMixins(derivedCtor: any, constructors: any[]) {
-  constructors.forEach((baseCtor) => {
-    Object.getOwnPropertyNames(baseCtor.prototype).forEach((name) => {
-      Object.defineProperty(
-        derivedCtor.prototype,
-        name,
-        Object.getOwnPropertyDescriptor(baseCtor.prototype, name) ||
-        Object.create(null)
-        );
-      });
-    });
-  }
-  applyMixins(LiveLink, [LiveLinkController, GatewayController]);
-
-  */
