@@ -1,10 +1,9 @@
-import { Vec2i } from "../../_prebuild/types/common";
 import { FrameDecoder } from "./FrameDecoder";
 // @ts-ignore
 import BWDecoder from "../../external/Decoder.js";
 // @ts-ignore
 import YUVCanvas from "../../external/YUVCanvas.js";
-import { CodecType } from "../../_prebuild/types/ClientConfigResponse";
+import { CodecType, Vec2i } from "../../_prebuild/types/index";
 
 /**
  *

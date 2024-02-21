@@ -1,11 +1,4 @@
-/**
- *
- */
-export enum CodecType {
-  h264 = 0,
-  h264rgb = 1,
-  h265 = 2,
-}
+import { CodecType } from "./enums";
 
 /**
  *

@@ -1,4 +1,5 @@
-import { RTID, Vec3, deserialize_RTID, deserialize_Vec3 } from "./common";
+import { RTID, deserialize_RTID } from "./common";
+import { Vec3, deserialize_Vec3 } from "./Math";
 
 /**
  *

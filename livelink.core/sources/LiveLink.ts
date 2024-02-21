@@ -1,11 +1,10 @@
-import { ClientConfig, UUID, Vec2i } from "../_prebuild/types/common.js";
-import { EncodedVideoFrame } from "../_prebuild/types/EncodedVideoFrame.js";
 import { GatewayController } from "./controllers/GatewayController.js";
 import { LiveLinkController } from "./controllers/LiveLinkController.js";
 import { FrameDecoder } from "./decoders/FrameDecoder.js";
 import { SoftwareDecoder } from "./decoders/SoftwareDecoder.js";
 import { WebCodecsDecoder } from "./decoders/WebCodecsDecoder.js";
 import { Session, SessionInfo, SessionSelector } from "./Session.js";
+import { ClientConfig, UUID, Vec2i } from "../_prebuild/types/index";
 
 /**
  * The LiveLink interface.
@@ -211,15 +210,12 @@ export class LiveLink extends EventTarget {
             client_config.canvas_context
           );
 
-    this._gateway._onFrameReceivedEvent = ({
-      encoded_frame,
-    }: {
-      encoded_frame: EncodedVideoFrame;
-    }) => {
+    this._gateway.addEventListener("on-frame-received", (e) => {
+      const event = e as CustomEvent;
       this._decoder!.decodeFrame({
-        encoded_frame: encoded_frame.encoded_frame,
+        encoded_frame: event.detail.encoded_frame,
       });
-    };
+    });
   }
 
   /**

@@ -4,7 +4,6 @@
  * See : https://gitlab.com/3dverse/platform/libs/js/asyncapi-server-generator
  */
 
-import { GatewayConnection } from "./GatewayConnection";
 import {
   FTL_CLIENT_ROP_HEADER_SIZE,
   FTL_HEADER_SIZE,
@@ -14,10 +13,8 @@ import {
   ChannelId,
   ClientConfig,
   ClientRemoteOperation,
-  UUID,
   Vec2ui16,
   ViewerControlOperation,
-  serialize_UUID,
   serialize_Vec2ui16,
   ViewportConfig,
   serialize_ViewportConfig,
@@ -30,11 +27,14 @@ import {
   deserialize_ResizeResponse,
   ScreenSpaceRayResult,
   deserialize_ScreenSpaceRayResult,
-  EncodedVideoFrame,
-  deserialize_EncodedVideoFrame,
+  FrameData,
+  deserialize_FrameData,
   ScreenSpaceRayQuery,
   serialize_ScreenSpaceRayQuery,
+  UUID,
+  serialize_UUID,
 } from "./types/index";
+import { GatewayConnection } from "./GatewayConnection";
 
 /**
  *
@@ -50,7 +50,7 @@ type MessageResolver = {
  * Message handlers interface.
  * This follows the LiveLink protocol specifications for the gateway messages.
  */
-export class GatewayMessageHandler {
+export abstract class GatewayMessageHandler extends EventTarget {
   /**
    *
    */
@@ -69,7 +69,7 @@ export class GatewayMessageHandler {
   /**
    *
    */
-  private _client_id: Uint8Array | null = null;
+  private _client_id: UUID | null = null;
 
   /**
    *
@@ -139,14 +139,11 @@ export class GatewayMessageHandler {
    * Reply
    */
   _on_authenticateClient_response({ dataView }: { dataView: DataView }) {
-    this._client_id = new Uint8Array(
-      dataView.buffer,
-      dataView.byteOffset + 2,
-      16
-    );
+    const authRes = deserialize_AuthenticationResponse({ dataView, offset: 0 });
+    this._client_id = authRes.client_id;
     this._getNextMessageResolver({
       channel_id: ChannelId.authentication,
-    }).resolve(deserialize_AuthenticationResponse({ dataView, offset: 0 }));
+    }).resolve(authRes);
   }
 
   /**
@@ -363,41 +360,55 @@ export class GatewayMessageHandler {
     });
   }
 
-  _onFrameReceivedEvent:
-    | (({ encoded_frame }: { encoded_frame: EncodedVideoFrame }) => void)
-    | null = null;
   /**
    *
    */
   _onFrameReceived({ dataView }: { dataView: DataView }) {
-    const encoded_frame = deserialize_EncodedVideoFrame({
+    const frame_data = deserialize_FrameData({
       dataView,
       offset: 0,
     });
 
-    if (this._onFrameReceivedEvent !== null) {
-      this._onFrameReceivedEvent({ encoded_frame });
-    }
+    this.onFrameReceived({ frame_data });
   }
 
   /**
    *
    */
+  abstract onFrameReceived({ frame_data }: { frame_data: FrameData }): void;
+
+  /**
+   *
+   */
   _on_clientRemoteOperation_response({
+    client_id,
     request_id,
+    size,
     dataView,
   }: {
+    client_id: UUID;
     request_id: number;
+    size: number;
     dataView: DataView;
   }) {
+    if (client_id !== this._client_id) {
+      console.warn(
+        `Received a response from client ${client_id}, whereas we are client ${this._client_id}. Something's off.`
+      );
+    }
+
     const resolver = this._getNextMessageResolver({
       channel_id: ChannelId.client_remote_operations,
-    });
+    })!;
 
     if (resolver.request_id !== request_id) {
       throw new Error(
         `Expected request id ${resolver.request_id}, received ${request_id}`
       );
+    }
+
+    if (resolver.rop_id === undefined) {
+      throw new Error("Resolver has and undefined ROP id");
     }
 
     switch (resolver.rop_id) {
@@ -406,6 +417,13 @@ export class GatewayMessageHandler {
           deserialize_ScreenSpaceRayResult({ dataView, offset: 0 })
         );
         break;
+
+      default:
+        throw new Error(
+          `Received a response for a client remote operation on an unhandled ROP channel ${
+            ClientRemoteOperation[resolver.rop_id!]
+          }`
+        );
     }
   }
 
@@ -446,11 +464,15 @@ export class GatewayMessageHandler {
   }) {
     const writer = new DataView(buffer);
 
-    //offset += serialize_UUID({ dataView: writer, offset, uuid: this._client_id });
-    for (let i = 0; i < 16; ++i) {
-      writer.setUint8(offset, this._client_id![i]);
-      ++offset;
-    }
+    offset += serialize_UUID({
+      dataView: writer,
+      offset,
+      uuid: this._client_id!,
+    });
+    //for (let i = 0; i < 16; ++i) {
+    //  writer.setUint8(offset, this._client_id![i]);
+    //  ++offset;
+    //}
 
     writer.setUint32(offset, request_id, LITTLE_ENDIAN);
     offset += 4;

@@ -1,20 +1,9 @@
-import { GatewayMessageHandler } from "../../_prebuild/GatewayMessageHandler.js";
 import { HEARTBEAT_PERIOD_IN_MS } from "../../_prebuild/constants.js";
-import {
-  ClientConfig,
-  RTID,
-  Vec2,
-  Vec3,
-} from "../../_prebuild/types/common.js";
-import { FrameMetaData } from "../../_prebuild/types/FrameMetaData.js";
-
-import { FrameDecoder } from "../decoders/FrameDecoder.js";
-import { SoftwareDecoder } from "../decoders/SoftwareDecoder.js";
-import { WebCodecsDecoder } from "../decoders/WebCodecsDecoder.js";
+import { AuthenticationStatus, FrameData } from "../../_prebuild/types/index";
+import { GatewayMessageHandler } from "../../_prebuild/GatewayMessageHandler";
 
 import { Session } from "../Session.js";
 import { Client } from "../Client.js";
-import { AuthenticationStatus } from "../../_prebuild/types/AuthenticationResponse.js";
 
 /**
  * The gateway controller is the exposed interface of the LiveLink gateway
@@ -26,8 +15,7 @@ import { AuthenticationStatus } from "../../_prebuild/types/AuthenticationRespon
 export class GatewayController extends GatewayMessageHandler {
   /**
    * Timeout that sends a hearbeat to the gateway to maintain the connection
-   * alive.
-   * Note that the gateway should answer us back.
+   * alive. Note that the gateway should answer us back.
    */
   private _heartbeat_timeout_id: number = 0;
 
@@ -41,9 +29,13 @@ export class GatewayController extends GatewayMessageHandler {
   /**
    * Opens a connection to the gateway where the provided session is running.
    *
-   * @returns {Promise<Client>} The created client representing the current
-   *                            user encoded `in session.session_key`
-   * @throws {InvalidSession}   Thrown if the provided session is invalid
+   * @returns {Promise<Client>}     The created client representing the current
+   *                                user encoded `in session.session_key`.
+   *
+   * @throws {InvalidSession}       Thrown if the provided session is not valid.
+   *
+   * @throws {AuthenticationFailed} Thrown if the authentication to the gateway
+   *                                fails and provides the reason.
    */
   async connectToSession({ session }: { session: Session }): Promise<Client> {
     if (!session.isValid()) {
@@ -55,7 +47,7 @@ export class GatewayController extends GatewayMessageHandler {
       handler: this,
     });
 
-    const { status, client_id } = await this.authenticateClient({
+    const authRes = await this.authenticateClient({
       session_auth: {
         session_key: session.session_key!,
         client_app: navigator.userAgent,
@@ -63,8 +55,10 @@ export class GatewayController extends GatewayMessageHandler {
       },
     });
 
-    if (status !== AuthenticationStatus.success) {
-      throw new Error(`Authentication failed: ${AuthenticationStatus[status]}`);
+    if (authRes.status !== AuthenticationStatus.success) {
+      throw new Error(
+        `Authentication failed: ${AuthenticationStatus[authRes.status]}`
+      );
     }
 
     // The authentication has been successful, start pulsing the heartbeat
@@ -73,7 +67,7 @@ export class GatewayController extends GatewayMessageHandler {
 
     // We're good to go, the gateway provided us with a client id so we can
     // connect to the LiveLink broker.
-    return new Client(client_id);
+    return new Client(authRes.client_id);
   }
 
   /**
@@ -109,17 +103,9 @@ export class GatewayController extends GatewayMessageHandler {
   /**
    *
    */
-  onFrameReceived({
-    encoded_frame_size,
-    meta_data_size,
-    encoded_frame,
-    meta_data,
-  }: {
-    encoded_frame_size: number;
-    meta_data_size: number;
-    encoded_frame: DataView;
-    meta_data: FrameMetaData;
-  }): void {
-    //this._decoder!.decodeFrame({ encoded_frame });
+  onFrameReceived({ frame_data }: { frame_data: FrameData }): void {
+    this.dispatchEvent(
+      new CustomEvent("on-frame-received", { detail: frame_data })
+    );
   }
 }

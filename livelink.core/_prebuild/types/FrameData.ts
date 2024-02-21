@@ -1,6 +1,16 @@
 import { LITTLE_ENDIAN } from "../constants";
-import { ClientMetaData, deserialize_Mat4, deserialize_UUID } from "./common";
+import { Mat4, deserialize_Mat4 } from "./Math";
+import { RTID, UUID, deserialize_UUID } from "./common";
 
+/**
+ *
+ */
+export type FrameData = {
+  encoded_frame_size: number;
+  meta_data_size: number;
+  encoded_frame: DataView;
+  meta_data: FrameMetaData;
+};
 /**
  *
  */
@@ -9,6 +19,53 @@ export type FrameMetaData = {
   frame_counter: number;
   clients: Array<ClientMetaData>;
 };
+
+/**
+ *
+ */
+export type ClientMetaData = {
+  client_id: UUID;
+  viewports: Array<ViewportMetaData>;
+};
+
+/**
+ *
+ */
+type ViewportMetaData = {
+  camera_rtid: RTID;
+  ws_from_ls: Mat4;
+};
+
+/**
+ *
+ */
+export function deserialize_FrameData({
+  dataView,
+  offset,
+}: {
+  dataView: DataView;
+  offset: number;
+}): FrameData {
+  const encoded_frame_size = dataView.getUint32(offset, LITTLE_ENDIAN);
+  offset += 4;
+
+  const meta_data_size = dataView.getUint32(offset, LITTLE_ENDIAN);
+  offset += 4;
+
+  const encoded_frame = new DataView(
+    dataView.buffer,
+    dataView.byteOffset + offset,
+    encoded_frame_size
+  );
+  offset += encoded_frame_size;
+
+  return {
+    encoded_frame_size,
+    meta_data_size,
+    encoded_frame,
+    meta_data: deserialize_FrameMetaData({ dataView, offset }),
+  };
+}
 
 /**
  *

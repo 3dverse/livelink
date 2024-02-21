@@ -210,7 +210,7 @@ AuthenticationResponse:
       type: string
       format: uuid
 
-VideoFrame:
+FrameData:
   title: VideoFrame
   type: object
   properties:

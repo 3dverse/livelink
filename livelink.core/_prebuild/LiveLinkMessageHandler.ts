@@ -1,4 +1,4 @@
-import { ConnectConfirmation } from "./types/common";
+import { ConnectConfirmation } from "./types/ConnectConfirmation";
 
 /**
  *

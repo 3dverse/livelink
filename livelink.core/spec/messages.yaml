@@ -35,7 +35,7 @@ on_client_configured:
 on_frame_received:
   contentType: application/octet-stream
   payload:
-    $ref: "./schemas.yaml#/VideoFrame"
+    $ref: "./schemas.yaml#/FrameData"
 
 #-----------------------------------------------------------------------------
 # VIEWER CONTROL

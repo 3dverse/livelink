@@ -1,4 +1,4 @@
-import { Vec2ui16, deserialize_Vec2ui16 } from "./common";
+import { Vec2ui16, deserialize_Vec2ui16 } from "./Math";
 
 /**
  *

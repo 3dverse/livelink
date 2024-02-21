@@ -1,4 +1,5 @@
-import { RTID, Vec2, serialize_RTID, serialize_Vec2 } from "./common";
+import { Vec2, serialize_Vec2 } from "./Math";
+import { RTID, serialize_RTID } from "./common";
 
 /**
  *

@@ -1,4 +1,4 @@
-import { ConnectConfirmation } from "../../_prebuild/types/common.js";
+import { ConnectConfirmation } from "../../_prebuild/types/ConnectConfirmation.js";
 import { LiveLinkConnection } from "../../_prebuild/LivelLinkConnection.js";
 import { LiveLinkRequestSender } from "../../_prebuild/LiveLinkRequestSender.js";
 import { LiveLinkMessageHandler } from "../../_prebuild/LiveLinkMessageHandler.js";

@@ -1,4 +1,4 @@
-import { CodecType } from "../../_prebuild/types/ClientConfigResponse";
+import { CodecType } from "../../_prebuild/types/index";
 
 /**
  *

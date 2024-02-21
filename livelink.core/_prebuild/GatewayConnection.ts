@@ -4,13 +4,9 @@
  * See : https://gitlab.com/3dverse/platform/libs/js/asyncapi-server-generator
  */
 
-import {
-  ChannelId,
-  ClientRemoteOperation,
-  deserialize_UUID,
-} from "./types/common";
 import { GatewayMessageHandler } from "./GatewayMessageHandler";
 import { FTL_HEADER_SIZE, LITTLE_ENDIAN } from "./constants";
+import { ChannelId, deserialize_UUID } from "./types/index";
 
 /**
  * Holds the connection to the cluster gateway hosting the renderer
@@ -37,9 +33,9 @@ import { FTL_HEADER_SIZE, LITTLE_ENDIAN } from "./constants";
  *    Note that initiating the authentication doesn't fall under this class's
  *    purview.
  *
- *  - Demultiplex and deserialize messages following the gateway LiveLink
- *    Protocol. It is only responsible for deserializing the binary data
- *    according to the LiveLink protocol specifications; in no case is it
+ *  - Demultiplex messages following the gateway LiveLink Protocol.
+ *    It is only responsible for deserializing the multiplexer binary header
+ *    data according to the LiveLink protocol specifications; in no case is it
  *    supposed to apply any kind of logic beyond routing messages to the
  *    appropriate handler.
  */
@@ -200,15 +196,17 @@ export class GatewayConnection {
     dataView: DataView;
   }) {
     let offset = 0;
-    //const client_id = deserialize_UUID({ dataView, offset });
+    const client_id = deserialize_UUID({ dataView, offset });
     offset += 16;
     const request_id = dataView.getUint32(offset, LITTLE_ENDIAN);
     offset += 4;
-    //const size = dataView.getUint32(offset, LITTLE_ENDIAN);
+    const size = dataView.getUint32(offset, LITTLE_ENDIAN);
     offset += 4;
 
     this._handler!._on_clientRemoteOperation_response({
+      client_id,
       request_id,
+      size,
       dataView: new DataView(dataView.buffer, offset),
     });
   }
