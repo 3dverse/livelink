@@ -1,14 +1,16 @@
 {
   "compilerOptions": {
-    "rootDir": ".",
-    "outDir": "_build",
     "target": "ES2022",
+    "module": "esnext",
     "esModuleInterop": true,
-    "strict": true,
     "sourceMap": true,
+    "outDir": "dist",
     "declaration": true,
-    "emitDeclarationOnly": true
+    "emitDeclarationOnly": true,
+    "moduleResolution": "node",
+    "skipLibCheck": true
   },
 
-  "exclude": ["./*.config.js", "./*.config.cjs", "./_build/**/*", "./tests/*"]
+  "include": ["./sources/index.ts"],
+  "exclude": ["./_build/**/*", "./tests/*"]
 }

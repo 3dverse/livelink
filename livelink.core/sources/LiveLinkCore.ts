@@ -1,12 +1,9 @@
-import {
-  FrameReceivedEvent,
-  GatewayController,
-} from "./controllers/GatewayController.js";
-import { LiveLinkController } from "./controllers/LiveLinkController.js";
-import { FrameDecoder } from "./decoders/FrameDecoder.js";
-import { SoftwareDecoder } from "./decoders/SoftwareDecoder.js";
-import { WebCodecsDecoder } from "./decoders/WebCodecsDecoder.js";
-import { Session, SessionInfo, SessionSelector } from "./Session.js";
+import { GatewayController } from "./controllers/GatewayController";
+import { LiveLinkController } from "./controllers/LiveLinkController";
+import { FrameDecoder } from "./decoders/FrameDecoder";
+import { SoftwareDecoder } from "./decoders/SoftwareDecoder";
+import { WebCodecsDecoder } from "./decoders/WebCodecsDecoder";
+import { Session, SessionInfo, SessionSelector } from "./Session";
 import { ClientConfig, UUID, Vec2i } from "../_prebuild/types/index";
 
 /**

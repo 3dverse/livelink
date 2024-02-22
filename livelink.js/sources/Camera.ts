@@ -1,6 +1,5 @@
 import { Entity } from "./Entity";
-import { LiveLink } from "../core/sources/LiveLink";
-import { Vec2 } from "../_prebuild/types";
+import type { Vec2 } from "livelink.core";
 
 export class Camera extends Entity {
   async castScreenSpaceRay({ pos }: { pos: Vec2 }) {

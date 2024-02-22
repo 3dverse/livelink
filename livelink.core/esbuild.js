@@ -4,7 +4,7 @@ const esbuild = require("esbuild");
 
 //------------------------------------------------------------------------------
 const commonOptions = {
-  entryPoints: ["./sources/index.ts", "./_prebuild/types/index.ts"],
+  entryPoints: ["./sources/index.ts"],
   outdir: "dist",
   bundle: true,
   platform: "node",

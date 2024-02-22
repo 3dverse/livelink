@@ -1,5 +1,7 @@
-import { Components, Quat, RTID, Vec3 } from "../_prebuild/types";
-import { LiveLink } from "../core/sources/LiveLink";
+import type { RTID, Components, Vec3 } from "livelink.core";
+type Quat = [number, number, number, number];
+
+import { LiveLink } from "http://localhost:3000/livelink.core/dist/livelink.core.js";
 
 type local_transform = {
   position: Vec3;

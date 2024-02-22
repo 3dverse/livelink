@@ -1,9 +1,9 @@
 {
   "compilerOptions": {
-    "rootDir": ".",
     "outDir": "_build",
     "target": "ES2022",
     "esModuleInterop": true,
+    "moduleResolution": "NodeNext",
     "strict": true,
     "sourceMap": true
   },

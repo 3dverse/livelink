@@ -1,10 +1,10 @@
 {
-  "name": "livelink",
+  "name": "livelink.core",
   "version": "1.0.0",
   "description": "",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
-  "typings": "./dist/index.d.ts",
+  "typings": "./dist/sources/index.d.ts",
   "scripts": {
     "build": "node esbuild.js && tsc"
   },
