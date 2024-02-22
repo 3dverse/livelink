@@ -1,15 +1,12 @@
 //------------------------------------------------------------------------------
-const pkg = require("./package.json");
 const esbuild = require("esbuild");
 
 //------------------------------------------------------------------------------
 const commonOptions = {
-  entryPoints: ["./sources/index.ts"],
-  outdir: "dist",
+  entryPoints: ["./app.ts"],
+  outdir: "public/dist",
   bundle: true,
-  minify: true,
-  platform: "neutral",
-  external: [...Object.keys(pkg.peerDependencies || {})],
+  platform: "browser",
   sourcemap: true,
 };
 

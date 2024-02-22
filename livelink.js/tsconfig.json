@@ -1,12 +1,14 @@
 {
   "compilerOptions": {
-    "outDir": "_build",
+    "outDir": "dist",
     "target": "ES2022",
     "esModuleInterop": true,
-    "moduleResolution": "NodeNext",
+    "moduleResolution": "node",
     "strict": true,
-    "sourceMap": true
+    "sourceMap": true,
+    "declaration": true,
+    "emitDeclarationOnly": true
   },
 
-  "exclude": ["./*.config.js", "./*.config.cjs", "./_build/**/*", "./tests/*"]
+  "exclude": ["./dist/**/*"]
 }

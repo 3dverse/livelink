@@ -1,4 +1,11 @@
-import { LiveLinkCore } from "http://localhost:3000/livelink.core/dist/livelink.core.js";
+import {
+  LiveLinkCore,
+  Session,
+  ClientConfig,
+  SessionInfo,
+  UUID,
+  Vec2i,
+} from "@livelink.core";
 
 /**
  * The LiveLink interface.

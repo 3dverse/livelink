@@ -1,12 +1,15 @@
 {
   "compilerOptions": {
     "rootDir": ".",
-    "outDir": "public",
+    "outDir": "public/dist",
     "target": "ES2022",
     "esModuleInterop": true,
+    "moduleResolution": "node",
     "strict": true,
-    "sourceMap": true
+    "sourceMap": true,
+
+    "typeRoots": ["./node_modules/livelink.js", "./node_modules/@types"]
   },
 
-  "exclude": ["./*.config.js", "./*.config.cjs", "./_build/**/*", "./tests/*"]
+  "exclude": ["./public/dist/**/*"]
 }

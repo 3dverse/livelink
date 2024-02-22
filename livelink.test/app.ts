@@ -1,6 +1,6 @@
 import { LiveLink } from "livelink.js";
 
-const canvas = document.getElementById("display-canvas");
+const canvas = document.getElementById("display-canvas")!;
 
 const client_config = {
   rendering_area_size: [],

@@ -10,6 +10,9 @@ const commonOptions = {
   minify: true,
   platform: "neutral",
   external: [...Object.keys(pkg.peerDependencies || {})],
+  alias: {
+    "@livelink.core": "http://localhost:3000/livelink.core/dist/index.mjs",
+  },
   sourcemap: true,
 };
 
