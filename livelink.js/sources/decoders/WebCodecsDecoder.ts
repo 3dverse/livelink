@@ -1,5 +1,5 @@
 import { FrameDecoder } from "./FrameDecoder";
-import { CodecType, Vec2i } from "../../_prebuild/types/index";
+import { CodecType, Vec2i } from "@livelink.core";
 
 /**
  *

@@ -3,7 +3,7 @@ import { FrameDecoder } from "./FrameDecoder";
 import BWDecoder from "../../external/Decoder.js";
 // @ts-ignore
 import YUVCanvas from "../../external/YUVCanvas.js";
-import { CodecType, Vec2i } from "../../_prebuild/types/index";
+import { CodecType, Vec2i } from "@livelink.core";
 
 /**
  *

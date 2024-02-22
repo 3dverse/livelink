@@ -101,6 +101,11 @@ export function deserialize_Vec2ui16({
 /**
  *
  */
+export type Quat = [number, number, number, number];
+
+/**
+ *
+ */
 export type Mat4 = [
   number,
   number,

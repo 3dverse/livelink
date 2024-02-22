@@ -12,7 +12,7 @@ function initglobal() {
 }
 initglobal();
 
-const wasmBinaryFile = "https://cdn.3dverse.com/legacy/sdk/avc.wasm";
+let wasmBinaryFile = "https://cdn.3dverse.com/legacy/sdk/avc.wasm";
 
 function error(message) {
   console.error(message);
@@ -87,44 +87,7 @@ var getModule = function (
     ENVIRONMENT_IS_SHELL =
       !ENVIRONMENT_IS_WEB && !ENVIRONMENT_IS_NODE && !ENVIRONMENT_IS_WORKER;
   }
-  if (ENVIRONMENT_IS_NODE) {
-    var nodeFS;
-    var nodePath;
-    Module["read"] = function shell_read(filename, binary) {
-      var ret;
-      if (!nodeFS) nodeFS = null("fs");
-      if (!nodePath) nodePath = null("path");
-      filename = nodePath["normalize"](filename);
-      ret = nodeFS["readFileSync"](filename);
-      return binary ? ret : ret.toString();
-    };
-    Module["readBinary"] = function readBinary(filename) {
-      var ret = Module["read"](filename, true);
-      if (!ret.buffer) {
-        ret = new Uint8Array(ret);
-      }
-      assert(ret.buffer);
-      return ret;
-    };
-    if (process["argv"].length > 1) {
-      Module["thisProgram"] = process["argv"][1].replace(/\\/g, "/");
-    }
-    Module["arguments"] = process["argv"].slice(2);
-    if (typeof module !== "undefined") {
-      module["exports"] = Module;
-    }
-    process["on"]("uncaughtException", function (ex) {
-      if (!(ex instanceof ExitStatus)) {
-        throw ex;
-      }
-    });
-    process["on"]("unhandledRejection", function (reason, p) {
-      process["exit"](1);
-    });
-    Module["inspect"] = function () {
-      return "[Emscripten Module object]";
-    };
-  } else if (ENVIRONMENT_IS_SHELL) {
+  if (ENVIRONMENT_IS_SHELL) {
     if (typeof read != "undefined") {
       Module["read"] = function shell_read(f) {
         return read(f);

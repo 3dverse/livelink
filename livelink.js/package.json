@@ -13,6 +13,7 @@
   "license": "ISC",
   "devDependencies": {
     "esbuild": "^0.20.1",
-    "livelink.core": "file:../livelink.core"
+    "livelink.core": "file:../livelink.core",
+    "typescript": "^5.3.3"
   }
 }
