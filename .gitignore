@@ -2,3 +2,4 @@
 _build
 livelink.core/dist
 asyncapi-generator/dist
+livelink.test/public/dist

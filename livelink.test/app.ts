@@ -1,6 +1,4 @@
-const { LiveLink } = await import(
-  "http://localhost:3000/livelink.core/dist/livelink.core.js"
-);
+import { LiveLink } from "livelink.js";
 
 const canvas = document.getElementById("display-canvas");
 
