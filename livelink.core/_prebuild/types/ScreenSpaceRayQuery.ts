@@ -31,12 +31,13 @@ export function serialize_ScreenSpaceRayQuery({
   offset: number;
   screenSpaceRayQuery: ScreenSpaceRayQuery;
 }): number {
+  offset += serialize_Vec2({ dataView, offset, v: screenSpaceRayQuery.pos });
+  dataView.setUint8(offset, screenSpaceRayQuery.mode);
+  offset += 1;
   offset += serialize_RTID({
     dataView,
     offset,
     rtid: screenSpaceRayQuery.camera_rtid,
   });
-  offset += serialize_Vec2({ dataView, offset, v: screenSpaceRayQuery.pos });
-  dataView.setUint8(offset, screenSpaceRayQuery.mode);
-  return 4 + 2 * 4 + 1;
+  return 2 * 4 + 1 + 4;
 }

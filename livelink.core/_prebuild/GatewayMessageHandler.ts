@@ -348,7 +348,10 @@ export abstract class GatewayMessageHandler extends EventTarget {
       rop_id,
     });
 
-    const dataView = new DataView(buffer, FTL_HEADER_SIZE);
+    const dataView = new DataView(
+      buffer,
+      FTL_HEADER_SIZE + FTL_CLIENT_ROP_HEADER_SIZE
+    );
     serialize_ScreenSpaceRayQuery({ dataView, offset: 0, screenSpaceRayQuery });
 
     this._connection.send({ data: buffer });
@@ -469,10 +472,6 @@ export abstract class GatewayMessageHandler extends EventTarget {
       offset,
       uuid: this._client_id!,
     });
-    //for (let i = 0; i < 16; ++i) {
-    //  writer.setUint8(offset, this._client_id![i]);
-    //  ++offset;
-    //}
 
     writer.setUint32(offset, request_id, LITTLE_ENDIAN);
     offset += 4;

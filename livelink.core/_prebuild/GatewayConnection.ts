@@ -207,7 +207,7 @@ export class GatewayConnection {
       client_id,
       request_id,
       size,
-      dataView: new DataView(dataView.buffer, offset),
+      dataView: new DataView(dataView.buffer, dataView.byteOffset + offset),
     });
   }
 }

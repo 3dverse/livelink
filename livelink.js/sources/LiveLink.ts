@@ -6,6 +6,7 @@ import {
   UUID,
   Vec2i,
   SessionSelector,
+  ScreenSpaceRayQuery,
 } from "@livelink.core";
 
 import type { FrameDecoder } from "./decoders/FrameDecoder";
@@ -175,6 +176,17 @@ export class LiveLink extends LiveLinkCore {
         encoded_frame: event.detail.encoded_frame,
       });
     });
+  }
+
+  /**
+   *
+   */
+  async castScreenSpaceRay({
+    screenSpaceRayQuery,
+  }: {
+    screenSpaceRayQuery: ScreenSpaceRayQuery;
+  }) {
+    return this._gateway.castScreenSpaceRay({ screenSpaceRayQuery });
   }
 
   /**

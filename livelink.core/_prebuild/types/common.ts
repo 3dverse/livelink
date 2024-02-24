@@ -49,7 +49,25 @@ export function serialize_UUID({
   offset: number;
   uuid: UUID;
 }): number {
-  //TODO
+  const hexToByte = (hexOctet: string) => parseInt(hexOctet, 16);
+  const hexStringToBytes = (hexString: string) =>
+    new DataView(
+      new Uint8Array(
+        hexString
+          .replace(/[^0-9a-f]/gi, "")
+          .match(/[0-9a-f]{1,2}/gi)
+          ?.map(hexToByte) ?? []
+      ).buffer
+    );
+
+  const b = hexStringToBytes(uuid);
+  dataView.setUint32(offset + 0, b.getUint32(0, BIG_ENDIAN), LITTLE_ENDIAN);
+  dataView.setUint16(offset + 4, b.getUint16(4, BIG_ENDIAN), LITTLE_ENDIAN);
+  dataView.setUint16(offset + 6, b.getUint16(6, BIG_ENDIAN), LITTLE_ENDIAN);
+  for (let i = 8; i < 16; ++i) {
+    dataView.setUint8(offset + i, b.getUint8(i));
+  }
+
   return 16;
 }
 

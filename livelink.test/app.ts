@@ -85,8 +85,8 @@ function disconnectFromCurrentSession() {
 async function onClick(e: MouseEvent) {
   const x = e.offsetX / canvas.width;
   const y = e.offsetY / canvas.height;
-  /*
-  const res = await LiveLink.instance.castScreenSpaceRay({
+
+  const res = await LiveLink.instance!.castScreenSpaceRay({
     screenSpaceRayQuery: {
       camera_rtid: BigInt(camera_rtid),
       pos: [x, y],
@@ -95,5 +95,4 @@ async function onClick(e: MouseEvent) {
   });
 
   console.log(res);
-  */
 }
