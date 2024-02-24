@@ -1,98 +1,127 @@
-import { UUID, Vec2 } from "@livelink.core";
-import { LiveLink } from "livelink.js";
+import { RTID, UUID, Vec2 } from "@livelink.core";
+import { Canvas, LiveLink } from "livelink.js";
 
-const canvas = document.getElementById("display-canvas")! as HTMLCanvasElement;
+class ControlPanel {
+  private _instance: LiveLink | null = null;
+  private _canvas: Canvas | null = null;
+  private _camera_rtid: RTID = 0n;
 
-const client_config = {
-  rendering_area_size: [0, 0] as Vec2,
-  encoder_config: {
-    codec: 2,
-    profile: 1,
-    frame_rate: 30,
-    lossy: true,
-  },
-  supported_devices: {
-    keyboard: true,
-    mouse: true,
-    gamepad: true,
-    hololens: false,
-    touchscreen: false,
-  },
-  canvas_context: canvas.getContext("2d")!,
-};
+  /**
+   *
+   */
+  constructor(public readonly id: string) {
+    this._canvas = new Canvas({
+      canvas_element_id: "display-canvas-" + id,
+      viewports: [],
+    });
 
-let first = true;
-let timeout = 0;
-let camera_rtid = 0n;
+    document.getElementById("scene-selector-" + id)!.onchange = async () =>
+      await this._connectToSession();
 
-const observer = new ResizeObserver((e) => {
-  if (LiveLink.instance === null) {
-    return;
+    document.getElementById("connect-" + id)!.onclick = async () =>
+      await this._connectToSession();
+
+    document.getElementById("disconnect-" + id)!.onclick = () =>
+      this._disconnectFromCurrentSession();
   }
 
-  const size: Vec2 = [e[0].contentRect.width, e[0].contentRect.height];
-  if (timeout !== 0) {
-    clearTimeout(timeout);
+  /**
+   *
+   */
+  private get scene_id(): UUID {
+    return (
+      document.getElementById("scene-selector-" + this.id)! as HTMLInputElement
+    ).value;
   }
 
-  timeout = setTimeout(async () => {
-    canvas.width = size[0];
-    canvas.height = size[1];
-    if (first) {
-      client_config.rendering_area_size = size;
-      await LiveLink.instance!.configureClient({ client_config });
-      first = false;
-      camera_rtid = await LiveLink.instance!.createDefaultCamera();
-    } else {
-      LiveLink.instance!.resize({ size });
+  /**
+   *
+   */
+  private async _connectToSession() {
+    this._disconnectFromCurrentSession();
+
+    this._instance = await LiveLink.start({
+      scene_id: this.scene_id,
+      token: "public_p54ra95AMAnZdTel",
+    });
+
+    await this._configureClient();
+
+    this._canvas!.addEventListener("on-resized", (e: Event) => {
+      const event = e as CustomEvent;
+      this._onCanvasResized(event.detail.new_size);
+    });
+
+    //this._canvas!.addEventListener("click", (e) => this._onClick(e));
+  }
+
+  /**
+   *
+   */
+  private _onCanvasResized(new_size: Vec2) {
+    if (this._instance !== null) {
+      console.log("RESIZING!", new_size);
+      this._instance!.resize({ size: new_size });
     }
-  }, 500);
-});
-
-document.getElementById("scene-selector")!.onchange = (event) => {
-  connectToSession((event.target! as HTMLInputElement).value);
-};
-
-document.getElementById("connect")!.onclick = () => {
-  connectToSession(
-    (document.getElementById("scene-selector")! as HTMLInputElement).value
-  );
-};
-
-document.getElementById("disconnect")!.onclick = disconnectFromCurrentSession;
-
-async function connectToSession(scene_id: UUID) {
-  disconnectFromCurrentSession();
-  await LiveLink.start({
-    scene_id,
-    token: "public_p54ra95AMAnZdTel",
-  });
-  observer.observe(canvas);
-
-  canvas.addEventListener("click", onClick);
-}
-
-function disconnectFromCurrentSession() {
-  if (LiveLink.instance !== null) {
-    observer.unobserve(canvas);
-    LiveLink.instance.close();
-    first = true;
   }
 
-  canvas.removeEventListener("click", onClick);
+  /**
+   *
+   */
+  private async _configureClient() {
+    const client_config = {
+      rendering_area_size: [this._canvas!.width, this._canvas!.height] as Vec2,
+      encoder_config: {
+        codec: 2,
+        profile: 1,
+        frame_rate: 30,
+        lossy: true,
+      },
+      supported_devices: {
+        keyboard: true,
+        mouse: true,
+        gamepad: true,
+        hololens: false,
+        touchscreen: false,
+      },
+      canvas_context: this._canvas!.html_element.getContext("2d")!,
+    };
+
+    await this._instance!.configureClient({ client_config });
+
+    this._camera_rtid = await this._instance!.createDefaultCamera();
+  }
+
+  /**
+   *
+   */
+  private _disconnectFromCurrentSession() {
+    if (this._instance !== null) {
+      this._instance.close();
+      this._instance = null;
+    }
+
+    //this._canvas!.removeEventListener("click", (e) => this._onClick(e));
+  }
+
+  /*
+  private async _onClick(e: MouseEvent) {
+    const x = e.offsetX / this._canvas!.width;
+    const y = e.offsetY / this._canvas!.height;
+    console.log("Picking", [x, y]);
+
+    const res = await this._instance!.castScreenSpaceRay({
+      screenSpaceRayQuery: {
+        camera_rtid: BigInt(this._camera_rtid),
+        pos: [x, y],
+        mode: 0,
+      },
+    });
+
+    console.log(res);
+  }
+  */
 }
 
-async function onClick(e: MouseEvent) {
-  const x = e.offsetX / canvas.width;
-  const y = e.offsetY / canvas.height;
-
-  const res = await LiveLink.instance!.castScreenSpaceRay({
-    screenSpaceRayQuery: {
-      camera_rtid: BigInt(camera_rtid),
-      pos: [x, y],
-      mode: 0,
-    },
-  });
-
-  console.log(res);
-}
+const cp1 = new ControlPanel("1");
+const cp2 = new ControlPanel("2");

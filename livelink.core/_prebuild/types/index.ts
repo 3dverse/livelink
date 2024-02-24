@@ -1,6 +1,6 @@
-export * from "./common";
+export * from "../../sources/types/common";
+export * from "../../sources/types/math";
 export * from "./enums";
-export * from "./Math";
 
 export * from "./AuthenticationResponse";
 export * from "./SessionAuth";
@@ -13,3 +13,4 @@ export * from "./ScreenSpaceRayResult";
 export * from "./ViewportConfig";
 
 export * from "./ConnectConfirmation";
+export * from "./EditorEntity";

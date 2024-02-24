@@ -8,20 +8,37 @@
 
   <body>
     <div class="control-panel">
-      <button id="connect">Connect</button>
-      <button id="disconnect">Disconnect</button>
-      <select name="scene" id="scene-selector">
-        <option value="15e95136-f9b7-425d-8518-d73dab5589b7">Droid</option>
-        <option value="62b43fa8-528e-4ad9-a5ab-0994c5362529">Cube</option>
-        <option value="a0ce8c2c-6159-456a-9fcd-03679578e24e">Empty</option>
-      </select>
+      <div>
+        <button id="connect-1">Connect</button>
+        <button id="disconnect-1">Disconnect</button>
+        <select name="scene" id="scene-selector-1">
+          <option value="15e95136-f9b7-425d-8518-d73dab5589b7">Droid</option>
+          <option value="62b43fa8-528e-4ad9-a5ab-0994c5362529">Cube</option>
+          <option value="a0ce8c2c-6159-456a-9fcd-03679578e24e">Empty</option>
+        </select>
+      </div>
+      <div>
+        <button id="connect-2">Connect</button>
+        <button id="disconnect-2">Disconnect</button>
+        <select name="scene" id="scene-selector-2">
+          <option value="15e95136-f9b7-425d-8518-d73dab5589b7">Droid</option>
+          <option value="62b43fa8-528e-4ad9-a5ab-0994c5362529">Cube</option>
+          <option value="a0ce8c2c-6159-456a-9fcd-03679578e24e">Empty</option>
+        </select>
+      </div>
     </div>
     <div class="canvas-container">
       <!-- CANVAS -->
       <canvas
-        id="display-canvas"
+        id="display-canvas-1"
         oncontextmenu="event.preventDefault()"
-        style="width: 75vw; height: 80vh"
+        style="width: 45vw; height: 80vh"
+        tabindex="1"
+      ></canvas>
+      <canvas
+        id="display-canvas-2"
+        oncontextmenu="event.preventDefault()"
+        style="width: 45vw; height: 80vh"
         tabindex="1"
       ></canvas>
     </div>

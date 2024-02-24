@@ -1,4 +1,4 @@
-import { BIG_ENDIAN, LITTLE_ENDIAN } from "../constants";
+import { BIG_ENDIAN, LITTLE_ENDIAN } from "./constants";
 
 /**
  *

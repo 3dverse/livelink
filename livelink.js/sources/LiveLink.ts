@@ -7,6 +7,7 @@ import {
   Vec2i,
   SessionSelector,
   ScreenSpaceRayQuery,
+  FrameData,
 } from "@livelink.core";
 
 import type { FrameDecoder } from "./decoders/FrameDecoder";
@@ -108,7 +109,7 @@ export class LiveLink extends LiveLinkCore {
   static async join({ session }: { session: Session }): Promise<LiveLink> {
     console.debug("Joining session:", session);
     LiveLink._instance = new LiveLink(session);
-    LiveLink._instance._connect();
+    await LiveLink._instance._connect();
     return LiveLink._instance;
   }
 
@@ -170,8 +171,8 @@ export class LiveLink extends LiveLinkCore {
             client_config.canvas_context
           );
 
-    this._gateway.addEventListener("on-frame-received", (e: Event) => {
-      const event = e as CustomEvent;
+    this._gateway.addEventListener("on-frame-received", (e) => {
+      const event = e as CustomEvent<FrameData>;
       this._decoder!.decodeFrame({
         encoded_frame: event.detail.encoded_frame,
       });
@@ -206,7 +207,7 @@ export class LiveLink extends LiveLinkCore {
           debug_name: { value: "MyCam" },
         },
       })
-    )[0] as { rtid: string };
+    )[0] as { rtid: UUID };
 
     const camera_rtid = BigInt(camera.rtid);
     this._gateway.setViewports({

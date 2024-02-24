@@ -1,4 +1,4 @@
-import { HEARTBEAT_PERIOD_IN_MS } from "../../_prebuild/constants.js";
+import { HEARTBEAT_PERIOD_IN_MS } from "../types/constants.js";
 import { AuthenticationStatus, FrameData } from "../../_prebuild/types/index";
 import { GatewayMessageHandler } from "../../_prebuild/GatewayMessageHandler";
 

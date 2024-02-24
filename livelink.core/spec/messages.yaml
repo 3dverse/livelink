@@ -45,6 +45,13 @@ set_viewports:
   payload:
     $ref: "./schemas.yaml#/ViewportsConfig"
 
+resume:
+  description: This message doesn't contain any payload
+  contentType: application/octet-stream
+suspend:
+  description: This message doesn't contain any payload
+  contentType: application/octet-stream
+
 resize:
   contentType: application/octet-stream
   payload:

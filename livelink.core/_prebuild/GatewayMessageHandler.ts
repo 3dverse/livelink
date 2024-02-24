@@ -8,7 +8,7 @@ import {
   FTL_CLIENT_ROP_HEADER_SIZE,
   FTL_HEADER_SIZE,
   LITTLE_ENDIAN,
-} from "./constants";
+} from "../sources/types/constants";
 import {
   ChannelId,
   ClientConfig,

@@ -1,7 +1,7 @@
-import { ConnectConfirmation } from "../../_prebuild/types/ConnectConfirmation.js";
-import { LiveLinkConnection } from "../../_prebuild/LivelLinkConnection.js";
+import { LiveLinkConnection } from "../../_prebuild/LiveLinkConnection.js";
 import { LiveLinkRequestSender } from "../../_prebuild/LiveLinkRequestSender.js";
 import { LiveLinkMessageHandler } from "../../_prebuild/LiveLinkMessageHandler.js";
+import { ConnectConfirmation, EditorEntity } from "../../_prebuild/types";
 
 import { Session } from "../Session.js";
 import { Client } from "../Client.js";
@@ -67,7 +67,11 @@ export class LiveLinkController
   /**
    *
    */
-  spawnEntity({ components }: { components: any }): Promise<Array<unknown>> {
+  spawnEntity({
+    components,
+  }: {
+    components: any;
+  }): Promise<Array<EditorEntity>> {
     return new Promise((resolve) => {
       super.spawnEntity({ components });
       this._promises.push({ resolve });
@@ -136,7 +140,7 @@ export class LiveLinkController
   on_spawn_entity(data: any) {
     throw new Error("Method not implemented.");
   }
-  on_entities_created(data: any) {
+  on_entities_created(data: Array<EditorEntity>) {
     console.log("on_entities_created", data);
     this._promises[0].resolve(data);
     this._promises = [];

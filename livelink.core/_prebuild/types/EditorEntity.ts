@@ -1,0 +1,27 @@
+import { UUID } from "../../sources/types/common";
+
+/**
+ *
+ */
+type Client = {
+  clientUUID: UUID;
+  directSelection?: boolean;
+  color?: string;
+  isExternal?: boolean;
+};
+
+/**
+ *
+ */
+export type EditorEntity = {
+  rtid: string;
+  components: {}; //ComponentMap;
+  children: string[];
+  selectingClients: Client[];
+  selectedDescendants: Record<string, Client[]>;
+  isVisible: boolean;
+  isRuntime: boolean;
+  isExternal: boolean;
+  isTransient: boolean;
+  ancestors?: EditorEntity[];
+};

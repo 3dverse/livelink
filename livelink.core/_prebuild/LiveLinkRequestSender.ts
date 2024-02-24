@@ -1,4 +1,4 @@
-import { LiveLinkConnection } from "./LivelLinkConnection";
+import { LiveLinkConnection } from "./LiveLinkConnection";
 
 /**
  * This follows the LiveLink protocol specifications for the broker messages.

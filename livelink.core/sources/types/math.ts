@@ -1,4 +1,4 @@
-import { LITTLE_ENDIAN } from "../constants";
+import { LITTLE_ENDIAN } from "./constants";
 
 /**
  *

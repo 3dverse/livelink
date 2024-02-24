@@ -1,4 +1,4 @@
-import { UUID } from "../_prebuild/types/common";
+import { UUID } from "./types/common";
 import { Client } from "./Client";
 
 const api_url = "https://api.3dverse.dev/app/v1";
@@ -157,7 +157,8 @@ export class Session extends EventTarget {
       endpoint_info: { ip: string; port: number; ssl_port: number };
     };
 
-    this._gateway_url = `wss://${endpoint_info.ip}:${endpoint_info.ssl_port}`;
+    //this._gateway_url = `wss://${endpoint_info.ip}:${endpoint_info.ssl_port}`;
+    this._gateway_url = `ws://${endpoint_info.ip}:${endpoint_info.port}`;
     this._session_key = session_token;
   }
 

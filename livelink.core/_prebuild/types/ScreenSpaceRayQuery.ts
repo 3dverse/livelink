@@ -1,5 +1,5 @@
-import { Vec2, serialize_Vec2 } from "./Math";
-import { RTID, serialize_RTID } from "./common";
+import { Vec2, serialize_Vec2 } from "../../sources/types/math";
+import { RTID, serialize_RTID } from "../../sources/types/common";
 
 /**
  *

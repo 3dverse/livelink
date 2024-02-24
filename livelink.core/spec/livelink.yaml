@@ -41,12 +41,13 @@ servers:
 channels:
   #-----------------------------------------------------------------------------
   authentication:
-    title: Authentication
-    summary: Authentication channel
-    description: A single use channel that handles a single authentication message
     servers:
       - $ref: "#/servers/cluster-gateway"
     address: authentication
+    title: Authentication
+    summary: Authentication channel
+    description: A single use channel that handles a single authentication
+      message.
     messages:
       authenticate_client:
         $ref: "#/components/messages/authenticate_client"
@@ -58,9 +59,11 @@ channels:
   registration:
     servers:
       - $ref: "#/servers/cluster-gateway"
-    x-channel-id: 1
     address: registration
-    description: A channel to send new connection configuration
+    x-channel-id: 1
+    title: Registration
+    summary: Registration channel
+    description: Channel dedicacted to new connection configuration
     messages:
       configure_client:
         $ref: "#/components/messages/configure_client"
@@ -68,27 +71,23 @@ channels:
         $ref: "#/components/messages/on_client_configured"
 
   #-----------------------------------------------------------------------------
-  heartbeat:
-    servers:
-      - $ref: "#/servers/cluster-gateway"
-    x-channel-id: 11
-    address: heartbeat
-    description: Heartbeat channel between the client and the renderer
-    messages:
-      pulse_heartbeat:
-        description: This message doesn't contain any payload
-        contentType: application/octet-stream
-      on_heartbeat_received:
-        description: This message doesn't contain any payload
-        contentType: application/octet-stream
-
-  #-----------------------------------------------------------------------------
   video-stream:
     servers:
       - $ref: "#/servers/cluster-gateway"
     x-channel-id: 2
     address: video-stream
-    description: Channel receiving video frames
+    description: Channel dedicated to encoded video frames
+    messages:
+      on_frame_received:
+        $ref: "#/components/messages/on_frame_received"
+
+  #-----------------------------------------------------------------------------
+  inputs:
+    servers:
+      - $ref: "#/servers/cluster-gateway"
+    x-channel-id: 3
+    address: inputs
+    description: Channel dedicated to input devices updates
     messages:
       on_frame_received:
         $ref: "#/components/messages/on_frame_received"
@@ -99,16 +98,14 @@ channels:
       - $ref: "#/servers/cluster-gateway"
     x-channel-id: 4
     address: viewer-control
-    description: Channel sending viewer controls
+    description: Channel dedicated to viewer state updates
     messages:
       set_viewports:
         $ref: "#/components/messages/set_viewports"
       resume:
-        description: This message doesn't contain any payload
-        contentType: application/octet-stream
+        $ref: "#/components/messages/resume"
       suspend:
-        description: This message doesn't contain any payload
-        contentType: application/octet-stream
+        $ref: "#/components/messages/suspend"
       resize:
         $ref: "#/components/messages/resize"
       on_resized:
@@ -139,6 +136,21 @@ channels:
     messages:
       create_entity:
         $ref: "#/components/messages/create_entity"
+
+  #-----------------------------------------------------------------------------
+  heartbeat:
+    servers:
+      - $ref: "#/servers/cluster-gateway"
+    x-channel-id: 11
+    address: heartbeat
+    description: Heartbeat channel between the client and the renderer
+    messages:
+      pulse_heartbeat:
+        description: This message doesn't contain any payload
+        contentType: application/octet-stream
+      on_heartbeat_received:
+        description: This message doesn't contain any payload
+        contentType: application/octet-stream
 #-------------------------------------------------------------------------------
 
 #-------------------------------------------------------------------------------
@@ -205,30 +217,6 @@ operations:
   #-----------------------------------------------------------------------------
   # VIEWER CONTROL
   #-----------------------------------------------------------------------------
-  setViewports:
-    action: send
-    x-rop-id: 5
-    channel:
-      $ref: "#/channels/viewer-control"
-    messages:
-      - $ref: "#/channels/viewer-control/messages/set_viewports"
-
-  resume:
-    action: send
-    x-rop-id: 3
-    channel:
-      $ref: "#/channels/viewer-control"
-    messages:
-      - $ref: "#/channels/viewer-control/messages/resume"
-
-  suspend:
-    action: send
-    x-rop-id: 2
-    channel:
-      $ref: "#/channels/viewer-control"
-    messages:
-      - $ref: "#/channels/viewer-control/messages/suspend"
-
   resize:
     action: send
     x-rop-id: 0
@@ -241,6 +229,30 @@ operations:
         $ref: "#/channels/viewer-control"
       messages:
         - $ref: "#/channels/viewer-control/messages/on_resized"
+
+  suspend:
+    action: send
+    x-rop-id: 2
+    channel:
+      $ref: "#/channels/viewer-control"
+    messages:
+      - $ref: "#/channels/viewer-control/messages/suspend"
+
+  resume:
+    action: send
+    x-rop-id: 3
+    channel:
+      $ref: "#/channels/viewer-control"
+    messages:
+      - $ref: "#/channels/viewer-control/messages/resume"
+
+  setViewports:
+    action: send
+    x-rop-id: 5
+    channel:
+      $ref: "#/channels/viewer-control"
+    messages:
+      - $ref: "#/channels/viewer-control/messages/set_viewports"
 
   #-----------------------------------------------------------------------------
   # CLIENT REMOTE OPERATIONS

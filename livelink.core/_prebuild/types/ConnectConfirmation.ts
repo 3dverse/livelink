@@ -1,4 +1,4 @@
-import { UUID } from "./common";
+import { UUID } from "../../sources/types/common";
 
 export type ConnectConfirmation = {
   folder_id: UUID;

@@ -1,4 +1,4 @@
-import { Vec2i } from "./Math";
+import { Vec2i } from "../../sources/types/math";
 import { CodecType } from "./enums";
 
 /**

@@ -5,7 +5,7 @@
  */
 
 import { GatewayMessageHandler } from "./GatewayMessageHandler";
-import { FTL_HEADER_SIZE, LITTLE_ENDIAN } from "./constants";
+import { FTL_HEADER_SIZE, LITTLE_ENDIAN } from "../sources/types/constants";
 import { ChannelId, deserialize_UUID } from "./types/index";
 
 /**
