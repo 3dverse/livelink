@@ -61,6 +61,13 @@ export class Canvas extends EventTarget {
   }
 
   /**
+   *
+   */
+  get viewports() {
+    return this._viewports;
+  }
+
+  /**
    * @param canvas_element_id Element id of the canvas on which to display the final composited frame
    * @param viewports Array of viewports to attach to the canvas
    *

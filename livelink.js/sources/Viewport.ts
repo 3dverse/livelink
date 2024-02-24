@@ -2,6 +2,7 @@ import { Canvas } from "./Canvas";
 import { Camera } from "./Camera";
 import { Rect } from "./utils/Rect";
 import { Point2D } from "./utils/Point2D";
+import { ViewportConfig } from "@livelink.core";
 
 /**
  *
@@ -88,6 +89,23 @@ export class Viewport {
    */
   get canvas() {
     return this._canvas;
+  }
+
+  /**
+   * PRIVATE
+   */
+  get config(): ViewportConfig {
+    if (!this._camera) {
+      throw new Error("Viewport has an invalid camera attached to it.");
+    }
+
+    return {
+      left: this._relative_rect.left,
+      top: this._relative_rect.top,
+      width: this._relative_rect.width,
+      height: this._relative_rect.height,
+      camera_rtid: this._camera.rtid!,
+    };
   }
 
   /**

@@ -13,6 +13,8 @@ import {
 import type { FrameDecoder } from "./decoders/FrameDecoder";
 import { WebCodecsDecoder } from "./decoders/WebCodecsDecoder";
 import { SoftwareDecoder } from "./decoders/SoftwareDecoder";
+import { Entity } from "./Entity";
+import { Viewport } from "./Viewport";
 
 /**
  * The LiveLink interface.
@@ -193,37 +195,31 @@ export class LiveLink extends LiveLinkCore {
   /**
    *
    */
-  async createDefaultCamera() {
-    console.log("Creating default camera");
-    const camera = (
-      await this._broker.spawnEntity({
-        components: {
-          camera: {
-            renderGraphRef: "398ee642-030a-45e7-95df-7147f6c43392",
-            dataJSON: { grid: true, skybox: false, gradient: true },
-          },
-          perspective_lens: {},
-          local_transform: { position: [0, 2, 5] },
-          debug_name: { value: "MyCam" },
-        },
-      })
-    )[0] as { rtid: UUID };
+  async createEntity({ components }: { components: Entity }): Promise<Entity> {
+    const entities = await this._broker.spawnEntity({ components });
+    return new Entity(entities[0]);
+  }
 
-    const camera_rtid = BigInt(camera.rtid);
+  /**
+   *
+   */
+  setViewports({ viewports }: { viewports: Array<Viewport> }) {
     this._gateway.setViewports({
-      viewports: [
-        {
-          left: 0,
-          top: 0,
-          width: 1,
-          height: 1,
-          camera_rtid,
-        },
-      ],
+      viewports: viewports.map((v) => v.config),
     });
+  }
 
+  /**
+   *
+   */
+  resume() {
     this._gateway.resume();
+  }
 
-    return camera_rtid;
+  /**
+   *
+   */
+  suspend() {
+    this._gateway.suspend();
   }
 }

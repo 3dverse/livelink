@@ -1,10 +1,10 @@
-import { RTID, UUID, Vec2 } from "@livelink.core";
-import { Canvas, LiveLink } from "livelink.js";
+import { UUID, Vec2, Vec3 } from "@livelink.core";
+import { Camera, Canvas, LiveLink, Viewport } from "livelink.js";
 
 class ControlPanel {
   private _instance: LiveLink | null = null;
   private _canvas: Canvas | null = null;
-  private _camera_rtid: RTID = 0n;
+  private _camera: Camera | null = null;
 
   /**
    *
@@ -47,23 +47,16 @@ class ControlPanel {
 
     await this._configureClient();
 
-    this._canvas!.addEventListener("on-resized", (e: Event) => {
-      const event = e as CustomEvent;
-      this._onCanvasResized(event.detail.new_size);
-    });
-
-    //this._canvas!.addEventListener("click", (e) => this._onClick(e));
+    this._canvas!.addEventListener("on-resized", this._onCanvasResized);
   }
 
   /**
    *
    */
-  private _onCanvasResized(new_size: Vec2) {
-    if (this._instance !== null) {
-      console.log("RESIZING!", new_size);
-      this._instance!.resize({ size: new_size });
-    }
-  }
+  private _onCanvasResized = (e: Event) => {
+    const event = e as CustomEvent;
+    this._instance!.resize({ size: event.detail.new_size });
+  };
 
   /**
    *
@@ -89,7 +82,27 @@ class ControlPanel {
 
     await this._instance!.configureClient({ client_config });
 
-    this._camera_rtid = await this._instance!.createDefaultCamera();
+    const components = {
+      camera: {
+        renderGraphRef: "398ee642-030a-45e7-95df-7147f6c43392",
+        dataJSON: { grid: true, skybox: false, gradient: true },
+      },
+      perspective_lens: {},
+      local_transform: { position: [0, 2, 5] as Vec3 },
+      debug_name: { value: "MyCam" },
+      rtid: 0n,
+    };
+
+    this._camera = (await this._instance!.createEntity({
+      components,
+    })) as Camera;
+
+    this._canvas!.attachViewport({
+      viewport: new Viewport({ camera: this._camera }),
+    });
+    this._instance!.setViewports({ viewports: this._canvas!.viewports });
+    this._instance!.resume();
+    this._canvas!.html_element.addEventListener("click", this._onClick);
   }
 
   /**
@@ -99,28 +112,31 @@ class ControlPanel {
     if (this._instance !== null) {
       this._instance.close();
       this._instance = null;
+      this._canvas!.html_element.removeEventListener("click", this._onClick);
+      this._canvas!.removeEventListener("on-resized", this._onCanvasResized);
     }
-
-    //this._canvas!.removeEventListener("click", (e) => this._onClick(e));
   }
 
-  /*
-  private async _onClick(e: MouseEvent) {
+  /**
+   *
+   */
+  private _onClick = async (ev: Event) => {
+    const e = ev as MouseEvent;
+
     const x = e.offsetX / this._canvas!.width;
     const y = e.offsetY / this._canvas!.height;
     console.log("Picking", [x, y]);
 
     const res = await this._instance!.castScreenSpaceRay({
       screenSpaceRayQuery: {
-        camera_rtid: BigInt(this._camera_rtid),
+        camera_rtid: BigInt(this._camera!.rtid!),
         pos: [x, y],
         mode: 0,
       },
     });
 
     console.log(res);
-  }
-  */
+  };
 }
 
 const cp1 = new ControlPanel("1");

@@ -14,7 +14,10 @@ export class LiveLinkRequestSender {
    */
   spawnEntity({ components }: { components: any }) {
     this._conn!.send({
-      data: JSON.stringify({ type: "spawn-entity", data: components }),
+      data: JSON.stringify(
+        { type: "spawn-entity", data: components },
+        (key, value) => (typeof value === "bigint" ? value.toString() : value)
+      ),
     });
   }
 
