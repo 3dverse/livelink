@@ -69,7 +69,7 @@ export class Entity {
     if (typeof from === "string") {
       this.debug_name = { value: from };
     } else {
-      //parse editor entity
+      this._parse({ editor_entity: from });
     }
 
     return this;
@@ -86,11 +86,12 @@ export class Entity {
    *
    */
   async instantiate() {
+    if (this.isInstantiated()) {
+      throw new Error("Entity is already instantiated");
+    }
+
     const editor_entity = await this._core.createEntity({ entity: this });
-    this.euid = {
-      value: (editor_entity.components as { euid: Euid }).euid.value,
-      rtid: BigInt(editor_entity.rtid),
-    };
+    this._parse({ editor_entity });
   }
 
   /**
@@ -104,5 +105,15 @@ export class Entity {
       }
     }
     return serialized;
+  }
+
+  /**
+   *
+   */
+  private _parse({ editor_entity }: { editor_entity: EditorEntity }) {
+    this.euid = {
+      value: (editor_entity.components as { euid: Euid }).euid.value,
+      rtid: BigInt(editor_entity.rtid),
+    };
   }
 }

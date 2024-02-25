@@ -1,8 +1,5 @@
 import { EditorMessageHandler } from "../../_prebuild/EditorMessageHandler";
-import {
-  ConnectConfirmation,
-  EditorEntity,
-} from "../../_prebuild/types/index.js";
+import { ConnectConfirmation, EditorEntity, UUID } from "../../_prebuild/types";
 
 import { Session } from "../Session.js";
 import { Client } from "../Client.js";
@@ -83,9 +80,28 @@ export class EditorController extends EditorMessageHandler {
    *
    */
   on_entities_created(data: Array<EditorEntity>) {
-    console.log("on_entities_created", data);
-    this._promises[0].resolve(data);
-    this._promises = [];
+    this._promises.shift().resolve(data);
+  }
+
+  /**
+   *
+   */
+  findEntitiesByEUID({
+    entity_uuid,
+  }: {
+    entity_uuid: UUID;
+  }): Promise<Array<EditorEntity>> {
+    return new Promise((resolve) => {
+      super.findEntitiesByEUID({ entity_uuid });
+      this._promises.push({ resolve });
+    });
+  }
+
+  /**
+   *
+   */
+  onFindEntitiesByEUID(data: Array<EditorEntity>) {
+    this._promises.shift().resolve(data);
   }
 
   /**
@@ -103,9 +119,6 @@ export class EditorController extends EditorMessageHandler {
   onFindEntitiesByNames(data: any) {
     throw new Error("Method not implemented.");
   }
-  onFindEntitiesByEUID(data: any) {
-    throw new Error("Method not implemented.");
-  }
   onFilterEntities(data: any) {
     throw new Error("Method not implemented.");
   }
@@ -118,9 +131,7 @@ export class EditorController extends EditorMessageHandler {
   onClientColor(data: any) {
     throw new Error("Method not implemented.");
   }
-  onSceneStatsUpdate(data: any) {
-    console.log("onSceneStatsUpdate:", data);
-  }
+  onSceneStatsUpdate(data: any) {}
   onServerError(data: any) {
     console.error("onServerError:", data);
   }

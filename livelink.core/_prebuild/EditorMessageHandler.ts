@@ -1,6 +1,6 @@
 import { ConnectConfirmation } from "./types/ConnectConfirmation";
 import { EditorConnection } from "./EditorConnection";
-import { Entity } from "../sources";
+import { Entity, UUID } from "../sources";
 
 /**
  * This follows the LiveLink protocol specifications for the broker messages.
@@ -29,6 +29,18 @@ export abstract class EditorMessageHandler {
     });
   }
 
+  /**
+   *
+   */
+  findEntitiesByEUID({ entity_uuid }: { entity_uuid: UUID }) {
+    this._connection!.send({
+      data: JSON.stringify({ type: "get-entities-by-euid", data: entity_uuid }),
+    });
+  }
+
+  /**
+   *
+   */
   abstract onConnectConfirmation({
     connect_confirmation,
   }: {

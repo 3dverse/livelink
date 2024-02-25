@@ -190,6 +190,23 @@ export class LiveLink extends LiveLinkCore {
   /**
    *
    */
+  async findEntity({
+    entity_uuid,
+  }: {
+    entity_uuid: UUID;
+  }): Promise<Camera | null> {
+    const editor_entities = await this._editor.findEntitiesByEUID({
+      entity_uuid,
+    });
+    if (editor_entities.length === 0) {
+      return null;
+    }
+    return new Camera(this).init(editor_entities[0]);
+  }
+
+  /**
+   *
+   */
   setViewports({ viewports }: { viewports: Array<Viewport> }) {
     this._gateway.setViewports({
       viewports: viewports.map((v) => v.config),

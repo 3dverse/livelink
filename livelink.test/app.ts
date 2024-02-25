@@ -82,7 +82,10 @@ class ControlPanel {
 
     await this._instance!.configureClient({ client_config });
 
-    await this._createCamera();
+    this._camera = await this._getCamera();
+    if (this._camera === null) {
+      await this._createCamera();
+    }
 
     this._canvas!.attachViewport({
       viewport: new Viewport({ camera: this._camera! }),
@@ -90,6 +93,14 @@ class ControlPanel {
     this._instance!.setViewports({ viewports: this._canvas!.viewports });
     this._instance!.resume();
     this._canvas!.html_element.addEventListener("click", this._onClick);
+  }
+
+  /**
+   *
+   */
+  private async _getCamera(): Promise<Camera | null> {
+    const entity_uuid = "415e4e93-5d60-4ca9-b21f-5fc69b897c3c";
+    return this._instance!.findEntity({ entity_uuid });
   }
 
   /**
