@@ -176,15 +176,11 @@ export class LiveLink extends LiveLinkCore {
   /**
    *
    */
-  newEntity(name: string): Entity {
-    return new Entity(this).init(name);
-  }
-
-  /**
-   *
-   */
-  newCamera(name: string): Camera {
-    return new Camera(this).init(name);
+  newEntity<T extends Entity>(
+    type: { new (_: LiveLinkCore): T },
+    name: string
+  ): T {
+    return new type(this).init(name);
   }
 
   /**
