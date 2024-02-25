@@ -1,9 +1,12 @@
-import { LiveLinkMessageHandler } from "../../_prebuild/LiveLinkMessageHandler";
-import { ConnectConfirmation, EditorEntity } from "../../_prebuild/types";
+import { EditorMessageHandler } from "../../_prebuild/EditorMessageHandler";
+import {
+  ConnectConfirmation,
+  EditorEntity,
+} from "../../_prebuild/types/index.js";
 
 import { Session } from "../Session.js";
 import { Client } from "../Client.js";
-import { Entity } from "../Entity";
+import { Entity } from "../Entity.js";
 
 //const livelink_base_url = "wss://livelink.3dverse.com";
 const livelink_base_url = "wss://editor-backend.3dverse.dev";
@@ -11,7 +14,7 @@ const livelink_base_url = "wss://editor-backend.3dverse.dev";
 /**
  *
  */
-export class LiveLinkController extends LiveLinkMessageHandler {
+export class EditorController extends EditorMessageHandler {
   /**
    *
    */

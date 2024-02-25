@@ -4,13 +4,13 @@
  * See : https://gitlab.com/3dverse/platform/libs/js/asyncapi-server-generator
  */
 
-import { LiveLinkMessageHandler } from "./LiveLinkMessageHandler";
+import { EditorMessageHandler } from "./EditorMessageHandler";
 import { ConnectConfirmation } from "./types/ConnectConfirmation";
 
 /**
  * Holds the connection to the LiveLink Broadcast & Persistence server.
  */
-export class LiveLinkConnection {
+export class EditorConnection {
   /**
    * Socket connected to the LiveLink Broadcast & Persistence server.
    */
@@ -19,7 +19,7 @@ export class LiveLinkConnection {
   /**
    * Controller responsible of handling the responses to queries.
    */
-  private _handler: LiveLinkMessageHandler | null = null;
+  private _handler: EditorMessageHandler | null = null;
 
   /**
    * Opens a connection to the LiveLink server.
@@ -29,7 +29,7 @@ export class LiveLinkConnection {
     handler,
   }: {
     livelink_url: string;
-    handler: LiveLinkMessageHandler;
+    handler: EditorMessageHandler;
   }): Promise<void> {
     this._handler = handler;
 

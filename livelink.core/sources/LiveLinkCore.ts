@@ -1,5 +1,5 @@
 import { GatewayController } from "./controllers/GatewayController";
-import { LiveLinkController } from "./controllers/LiveLinkController";
+import { EditorController } from "./controllers/EditorController";
 import { Session } from "./Session";
 import type {
   ClientConfig,
@@ -29,7 +29,7 @@ export class LiveLinkCore extends EventTarget {
   /**
    *
    */
-  protected readonly _broker = new LiveLinkController();
+  protected readonly _editor = new EditorController();
 
   /**
    *
@@ -44,7 +44,7 @@ export class LiveLinkCore extends EventTarget {
   async close() {
     await this.session.close();
     this._gateway.disconnect();
-    this._broker.disconnect();
+    this._editor.disconnect();
   }
 
   private _previous_multiple_of_8 = (n: number) =>
@@ -92,7 +92,7 @@ export class LiveLinkCore extends EventTarget {
     console.debug("Connected to session as:", client);
 
     // Connect to the LiveLink Broker
-    await this._broker.connectToSession({ session: this.session, client });
+    await this._editor.connectToSession({ session: this.session, client });
     return this;
   }
 
@@ -111,7 +111,7 @@ export class LiveLinkCore extends EventTarget {
    *
    */
   async createEntity({ entity }: { entity: Entity }): Promise<EditorEntity> {
-    const entities = await this._broker.spawnEntity({ entity });
+    const entities = await this._editor.spawnEntity({ entity });
     return entities[0];
   }
 }

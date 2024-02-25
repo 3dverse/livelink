@@ -1,15 +1,15 @@
 import { ConnectConfirmation } from "./types/ConnectConfirmation";
-import { LiveLinkConnection } from "./LiveLinkConnection";
+import { EditorConnection } from "./EditorConnection";
 import { Entity } from "../sources";
 
 /**
  * This follows the LiveLink protocol specifications for the broker messages.
  */
-export abstract class LiveLinkMessageHandler {
+export abstract class EditorMessageHandler {
   /**
    *
    */
-  protected _connection = new LiveLinkConnection();
+  protected _connection = new EditorConnection();
 
   /**
    *
