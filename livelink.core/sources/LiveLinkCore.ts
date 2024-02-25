@@ -3,6 +3,7 @@ import { EditorController } from "./controllers/EditorController";
 import { Session } from "./Session";
 import type {
   ClientConfig,
+  ClientConfigResponse,
   CodecType,
   EditorEntity,
   ScreenSpaceRayQuery,
@@ -53,11 +54,11 @@ export class LiveLinkCore extends EventTarget {
   /**
    *
    */
-  async configureClientAux({
+  async configureClient({
     client_config,
   }: {
     client_config: ClientConfig;
-  }): Promise<CodecType> {
+  }): Promise<ClientConfigResponse> {
     client_config.rendering_area_size[0] = this._previous_multiple_of_8(
       client_config.rendering_area_size[0] * window.devicePixelRatio
     );
@@ -65,14 +66,13 @@ export class LiveLinkCore extends EventTarget {
       client_config.rendering_area_size[1] * window.devicePixelRatio
     );
 
-    const res = await this._gateway.configureClient({ client_config });
-    return res.codec;
+    return await this._gateway.configureClient({ client_config });
   }
 
   /**
    *
    */
-  resizeAux({ size }: { size: Vec2i }) {
+  resize({ size }: { size: Vec2i }) {
     size[0] = this._previous_multiple_of_8(size[0] * window.devicePixelRatio);
     size[1] = this._previous_multiple_of_8(size[1] * window.devicePixelRatio);
     this._gateway.resize({ size });

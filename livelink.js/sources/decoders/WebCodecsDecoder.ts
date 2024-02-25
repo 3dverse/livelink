@@ -26,7 +26,7 @@ export class WebCodecsDecoder implements FrameDecoder {
   /**
    *
    */
-  async configure({ codec }: { codec: CodecType }) {
+  async configure({ codec }: { codec: CodecType }): Promise<FrameDecoder> {
     const config: VideoDecoderConfig = {
       codec: codec === CodecType.h264 ? "avc1.42002A" : "hvc1.1.6.L123.00",
       codedWidth: this._dimensions[0],
@@ -47,6 +47,8 @@ export class WebCodecsDecoder implements FrameDecoder {
 
     this._decoder.configure(supportedConfig.config);
     console.log("Codec configured", supportedConfig.config);
+
+    return this;
   }
 
   /**

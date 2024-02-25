@@ -1,5 +1,11 @@
-import { UUID, Vec2, Vec3 } from "@livelink.core";
-import { Camera, Canvas, LiveLink, Viewport } from "livelink.js";
+import { ClientConfig, UUID, Vec2 } from "@livelink.core";
+import {
+  Camera,
+  Canvas,
+  LiveLink,
+  Viewport,
+  WebCodecsDecoder,
+} from "livelink.js";
 
 class ControlPanel {
   private _instance: LiveLink | null = null;
@@ -62,8 +68,13 @@ class ControlPanel {
    *
    */
   private async _configureClient() {
-    const client_config = {
-      rendering_area_size: [this._canvas!.width, this._canvas!.height] as Vec2,
+    const rendering_area_size: Vec2 = [
+      this._canvas!.width,
+      this._canvas!.height,
+    ];
+
+    const client_config: ClientConfig = {
+      rendering_area_size,
       encoder_config: {
         codec: 2,
         profile: 1,
@@ -77,16 +88,27 @@ class ControlPanel {
         hololens: false,
         touchscreen: false,
       },
-      canvas_context: this._canvas!.html_element.getContext("2d")!,
     };
 
+    // Step 1: configure the client on the renderer side, this informs the
+    //         renderer on the client canvas size and available input devices
+    //         and most importantly activates the session.
     await this._instance!.configureClient({ client_config });
 
+    // Step 1': get or create a camera to render frames (not dependent on
+    //          anything)
     this._camera = await this._getCamera();
     if (this._camera === null) {
       await this._createCamera();
     }
 
+    // Step 2: create a local decoder
+    await this._instance!.configureDecoder(WebCodecsDecoder, {
+      rendering_area_size,
+      canvas_context: this._canvas!.html_element.getContext("2d")!,
+    });
+
+    // Step 3: setup the renderer to use the camera on a full canvas viewport.
     this._canvas!.attachViewport({
       viewport: new Viewport({ camera: this._camera! }),
     });

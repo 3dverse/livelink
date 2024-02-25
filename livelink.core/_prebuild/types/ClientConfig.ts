@@ -8,7 +8,6 @@ export type ClientConfig = {
   rendering_area_size: Vec2i;
   encoder_config: EncoderConfig;
   supported_devices: SupportedDevices;
-  canvas_context: CanvasRenderingContext2D;
 };
 
 /**

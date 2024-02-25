@@ -7,7 +7,7 @@ export interface FrameDecoder {
   /**
    *
    */
-  configure({ codec }: { codec: CodecType }): void;
+  configure({ codec }: { codec: CodecType }): Promise<FrameDecoder>;
 
   /**
    *

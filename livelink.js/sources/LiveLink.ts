@@ -8,11 +8,10 @@ import {
   SessionSelector,
   FrameData,
   Entity,
+  CodecType,
 } from "@livelink.core";
 
 import type { FrameDecoder } from "./decoders/FrameDecoder";
-import { WebCodecsDecoder } from "./decoders/WebCodecsDecoder";
-import { SoftwareDecoder } from "./decoders/SoftwareDecoder";
 import { Viewport } from "./Viewport";
 import { Camera } from "./Camera";
 
@@ -108,6 +107,10 @@ export class LiveLink extends LiveLinkCore {
   }
 
   /**
+   *
+   */
+  private _codec: CodecType | null = null;
+  /**
    * Video decoder that decodes the frames received from the remote viewer.
    */
   private _decoder: FrameDecoder | null = null;
@@ -130,40 +133,41 @@ export class LiveLink extends LiveLinkCore {
    *
    */
   async configureClient({ client_config }: { client_config: ClientConfig }) {
-    await this._createDecoder({ client_config });
-
-    const codec = await super.configureClientAux({ client_config });
-
-    await this._decoder!.configure({ codec });
+    const res = await super.configureClient({ client_config });
+    this._codec = res.codec;
+    return res;
   }
 
   /**
    *
    */
   resize({ size }: { size: Vec2i }) {
-    super.resizeAux({ size });
+    super.resize({ size });
   }
 
   /**
    *
    */
-  private async _createDecoder({
-    client_config,
-    decoder_type = "webcodecs",
-  }: {
-    client_config: ClientConfig;
-    decoder_type?: "webcodecs" | "broadway";
-  }) {
-    this._decoder =
-      decoder_type === "webcodecs"
-        ? new WebCodecsDecoder(
-            client_config.rendering_area_size,
-            client_config.canvas_context
-          )
-        : new SoftwareDecoder(
-            client_config.rendering_area_size,
-            client_config.canvas_context
-          );
+  async configureDecoder<DecoderType extends FrameDecoder>(
+    decoder_type: {
+      new (_1: Vec2i, _2: CanvasRenderingContext2D): DecoderType;
+    },
+    {
+      rendering_area_size,
+      canvas_context,
+    }: {
+      rendering_area_size: Vec2i;
+      canvas_context: CanvasRenderingContext2D;
+    }
+  ) {
+    if (this._codec === null) {
+      throw new Error("Client not configured.");
+    }
+
+    this._decoder = await new decoder_type(
+      rendering_area_size,
+      canvas_context
+    ).configure({ codec: this._codec });
 
     this._gateway.addEventListener("on-frame-received", (e) => {
       const event = e as CustomEvent<FrameData>;

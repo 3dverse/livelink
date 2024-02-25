@@ -33,7 +33,7 @@ export class SoftwareDecoder implements FrameDecoder {
   /**
    *
    */
-  configure({ codec }: { codec: CodecType }) {
+  configure({ codec }: { codec: CodecType }): Promise<FrameDecoder> {
     if (codec !== CodecType.h264) {
       throw new Error("Software decoder supports only h264 encoding");
     }
@@ -49,6 +49,8 @@ export class SoftwareDecoder implements FrameDecoder {
       width: this._dimensions[0],
       height: this._dimensions[1],
     });
+
+    return Promise.resolve(this);
   }
 
   /**
