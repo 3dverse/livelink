@@ -41,6 +41,7 @@ const e = new Entity();
 */
 
 import { Components, EditorEntity, Quat, RTID, Vec3 } from "@livelink.core";
+import { LiveLink } from "./LiveLink";
 
 export type local_transform = {
   position?: Vec3;
@@ -63,18 +64,28 @@ export class Entity extends EventTarget {
   debug_name: debug_name = { value: "<unnamed>" };
 
   private _rtid?: RTID = 0n;
+  protected _livelink_instance?: LiveLink | null = null;
 
   get rtid() {
     return this._rtid;
   }
 
   constructor(c: Components);
-  constructor(e: EditorEntity);
-  constructor(e: EditorEntity | Components) {
+  constructor({
+    livelink_instance,
+    editor_entity,
+  }: {
+    livelink_instance: LiveLink;
+    editor_entity: EditorEntity;
+  });
+  constructor(
+    i: { livelink_instance: LiveLink; editor_entity: EditorEntity } | Components
+  ) {
     super();
 
-    if (!(e instanceof Map)) {
-      this._rtid = BigInt(e.rtid);
+    if (!(i instanceof Map)) {
+      this._rtid = BigInt(i.editor_entity.rtid);
+      this._livelink_instance = i.livelink_instance;
     }
   }
 }

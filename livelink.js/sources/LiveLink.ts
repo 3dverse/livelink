@@ -15,6 +15,7 @@ import { WebCodecsDecoder } from "./decoders/WebCodecsDecoder";
 import { SoftwareDecoder } from "./decoders/SoftwareDecoder";
 import { Entity } from "./Entity";
 import { Viewport } from "./Viewport";
+import { Camera } from "./Camera";
 
 /**
  * The LiveLink interface.
@@ -197,7 +198,15 @@ export class LiveLink extends LiveLinkCore {
    */
   async createEntity({ components }: { components: Entity }): Promise<Entity> {
     const entities = await this._broker.spawnEntity({ components });
-    return new Entity(entities[0]);
+    return new Entity({ livelink_instance: this, editor_entity: entities[0] });
+  }
+
+  /**
+   *
+   */
+  async createCamera({ components }: { components: Entity }): Promise<Camera> {
+    const entities = await this._broker.spawnEntity({ components });
+    return new Camera({ livelink_instance: this, editor_entity: entities[0] });
   }
 
   /**

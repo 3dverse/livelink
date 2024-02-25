@@ -1,14 +1,22 @@
-import type { EditorEntity, Vec2 } from "livelink.core";
+import { Vec2, HighlightMode, ScreenSpaceRayResult } from "@livelink.core";
 import { Entity } from "./Entity";
+import {} from "@livelink.core";
 
 export class Camera extends Entity {
-  constructor(e: EditorEntity) {
-    super(e);
-  }
-  async castScreenSpaceRay({ pos }: { pos: Vec2 }) {
-    //LiveLink.castScreenSpaceRay({
-    //  camera_rtid: this._getRTID(),
-    //  pos,
-    //});
+  /**
+   *
+   */
+  async castScreenSpaceRay({
+    pos,
+  }: {
+    pos: Vec2;
+  }): Promise<ScreenSpaceRayResult> {
+    return await this._livelink_instance!.castScreenSpaceRay({
+      screenSpaceRayQuery: {
+        camera_rtid: super.rtid!,
+        pos,
+        mode: HighlightMode.None,
+      },
+    });
   }
 }

@@ -90,12 +90,11 @@ class ControlPanel {
       perspective_lens: {},
       local_transform: { position: [0, 2, 5] as Vec3 },
       debug_name: { value: "MyCam" },
-      rtid: 0n,
     };
 
-    this._camera = (await this._instance!.createEntity({
+    this._camera = await this._instance!.createCamera({
       components,
-    })) as Camera;
+    });
 
     this._canvas!.attachViewport({
       viewport: new Viewport({ camera: this._camera }),
@@ -122,19 +121,13 @@ class ControlPanel {
    */
   private _onClick = async (ev: Event) => {
     const e = ev as MouseEvent;
+    console.log(this);
 
     const x = e.offsetX / this._canvas!.width;
     const y = e.offsetY / this._canvas!.height;
+
     console.log("Picking", [x, y]);
-
-    const res = await this._instance!.castScreenSpaceRay({
-      screenSpaceRayQuery: {
-        camera_rtid: BigInt(this._camera!.rtid!),
-        pos: [x, y],
-        mode: 0,
-      },
-    });
-
+    const res = await this._camera!.castScreenSpaceRay({ pos: [x, y] });
     console.log(res);
   };
 }

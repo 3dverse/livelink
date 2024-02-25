@@ -39,5 +39,5 @@ export function serialize_ViewportConfig({
     rtid: viewportConfig.camera_rtid,
   });
 
-  return offset;
+  return 20;
 }
