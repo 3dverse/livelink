@@ -38,7 +38,7 @@ export class GatewayController extends GatewayMessageHandler {
    *                                fails and provides the reason.
    */
   async connectToSession({ session }: { session: Session }): Promise<Client> {
-    if (!session.isValid()) {
+    if (!session.isJoinable()) {
       throw new Error("Invalid session");
     }
 

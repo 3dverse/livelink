@@ -1,18 +1,17 @@
-import { LiveLinkConnection } from "../../_prebuild/LiveLinkConnection.js";
-import { LiveLinkRequestSender } from "../../_prebuild/LiveLinkRequestSender.js";
-import { LiveLinkMessageHandler } from "../../_prebuild/LiveLinkMessageHandler.js";
+import { LiveLinkMessageHandler } from "../../_prebuild/LiveLinkMessageHandler";
 import { ConnectConfirmation, EditorEntity } from "../../_prebuild/types";
 
 import { Session } from "../Session.js";
 import { Client } from "../Client.js";
+import { Entity } from "../Entity";
+
+//const livelink_base_url = "wss://livelink.3dverse.com";
+const livelink_base_url = "wss://editor-backend.3dverse.dev";
 
 /**
  *
  */
-export class LiveLinkController
-  extends LiveLinkRequestSender
-  implements LiveLinkMessageHandler
-{
+export class LiveLinkController extends LiveLinkMessageHandler {
   /**
    *
    */
@@ -24,9 +23,7 @@ export class LiveLinkController
   /**
    *
    */
-  constructor(private readonly _connection = new LiveLinkConnection()) {
-    super(_connection);
-  }
+  private _promises = new Array<{ resolve: (d?: any) => void }>();
 
   /**
    *
@@ -38,18 +35,28 @@ export class LiveLinkController
     session: Session;
     client: Client;
   }): Promise<void> {
-    if (!session.isValid()) {
+    if (!session.isJoinable()) {
       throw new Error("Invalid session");
     }
 
     return new Promise((resolve, reject) => {
       this._authentication_promise_callbacks = { resolve, reject };
       this._connection.connect({
-        //livelink_url: "wss://livelink.3dverse.com",
-        livelink_url: `wss://editor-backend.3dverse.dev?sessionKey=${session.session_key}&clientUUID=${client.uuid}`,
+        livelink_url: `${livelink_base_url}?sessionKey=${session.session_key}&clientUUID=${client.uuid}`,
         handler: this,
       });
     });
+  }
+
+  /**
+   *
+   */
+  onConnectConfirmation({
+    connect_confirmation,
+  }: {
+    connect_confirmation: ConnectConfirmation;
+  }): void {
+    this._authentication_promise_callbacks!.resolve();
   }
 
   /**
@@ -62,29 +69,25 @@ export class LiveLinkController
   /**
    *
    */
-  private _promises = new Array<{ resolve: (d?: any) => void }>();
-
-  /**
-   *
-   */
-  spawnEntity({
-    components,
-  }: {
-    components: any;
-  }): Promise<Array<EditorEntity>> {
+  spawnEntity({ entity }: { entity: Entity }): Promise<Array<EditorEntity>> {
     return new Promise((resolve) => {
-      super.spawnEntity({ components });
+      super.spawnEntity({ entity });
       this._promises.push({ resolve });
     });
   }
 
-  onConnectConfirmation({
-    connect_confirmation,
-  }: {
-    connect_confirmation: ConnectConfirmation;
-  }): void {
-    this._authentication_promise_callbacks!.resolve();
+  /**
+   *
+   */
+  on_entities_created(data: Array<EditorEntity>) {
+    console.log("on_entities_created", data);
+    this._promises[0].resolve(data);
+    this._promises = [];
   }
+
+  /**
+   *
+   */
   onRetrieveChildren(data: any) {
     throw new Error("Method not implemented.");
   }
@@ -139,11 +142,6 @@ export class LiveLinkController
   }
   on_spawn_entity(data: any) {
     throw new Error("Method not implemented.");
-  }
-  on_entities_created(data: Array<EditorEntity>) {
-    console.log("on_entities_created", data);
-    this._promises[0].resolve(data);
-    this._promises = [];
   }
   on_entity_reparented(data: any) {
     throw new Error("Method not implemented.");

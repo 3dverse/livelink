@@ -82,26 +82,29 @@ class ControlPanel {
 
     await this._instance!.configureClient({ client_config });
 
-    const components = {
-      camera: {
-        renderGraphRef: "398ee642-030a-45e7-95df-7147f6c43392",
-        dataJSON: { grid: true, skybox: false, gradient: true },
-      },
-      perspective_lens: {},
-      local_transform: { position: [0, 2, 5] as Vec3 },
-      debug_name: { value: "MyCam" },
-    };
-
-    this._camera = await this._instance!.createCamera({
-      components,
-    });
+    await this._createCamera();
 
     this._canvas!.attachViewport({
-      viewport: new Viewport({ camera: this._camera }),
+      viewport: new Viewport({ camera: this._camera! }),
     });
     this._instance!.setViewports({ viewports: this._canvas!.viewports });
     this._instance!.resume();
     this._canvas!.html_element.addEventListener("click", this._onClick);
+  }
+
+  /**
+   *
+   */
+  private async _createCamera() {
+    this._camera = this._instance!.newCamera("MyCam");
+    this._camera.camera = {
+      renderGraphRef: "398ee642-030a-45e7-95df-7147f6c43392",
+      dataJSON: { grid: true, skybox: false, gradient: true },
+    };
+    this._camera.perspective_lens = {};
+    this._camera.local_transform = { position: [0, 2, 5] };
+
+    await this._camera.instantiate();
   }
 
   /**
@@ -121,7 +124,6 @@ class ControlPanel {
    */
   private _onClick = async (ev: Event) => {
     const e = ev as MouseEvent;
-    console.log(this);
 
     const x = e.offsetX / this._canvas!.width;
     const y = e.offsetY / this._canvas!.height;

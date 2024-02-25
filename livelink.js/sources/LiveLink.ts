@@ -6,14 +6,13 @@ import {
   UUID,
   Vec2i,
   SessionSelector,
-  ScreenSpaceRayQuery,
   FrameData,
+  Entity,
 } from "@livelink.core";
 
 import type { FrameDecoder } from "./decoders/FrameDecoder";
 import { WebCodecsDecoder } from "./decoders/WebCodecsDecoder";
 import { SoftwareDecoder } from "./decoders/SoftwareDecoder";
-import { Entity } from "./Entity";
 import { Viewport } from "./Viewport";
 import { Camera } from "./Camera";
 
@@ -23,14 +22,6 @@ import { Camera } from "./Camera";
  * This interface CAN be embedded and distributed inside applications.
  */
 export class LiveLink extends LiveLinkCore {
-  /**
-   * Singleton instance
-   */
-  private static _instance: LiveLink | null = null;
-  static get instance() {
-    return LiveLink._instance;
-  }
-
   /**
    * Start a session with the given scene id
    *
@@ -111,9 +102,9 @@ export class LiveLink extends LiveLinkCore {
    */
   static async join({ session }: { session: Session }): Promise<LiveLink> {
     console.debug("Joining session:", session);
-    LiveLink._instance = new LiveLink(session);
-    await LiveLink._instance._connect();
-    return LiveLink._instance;
+    const inst = new LiveLink(session);
+    await inst._connect();
+    return inst;
   }
 
   /**
@@ -185,28 +176,15 @@ export class LiveLink extends LiveLinkCore {
   /**
    *
    */
-  async castScreenSpaceRay({
-    screenSpaceRayQuery,
-  }: {
-    screenSpaceRayQuery: ScreenSpaceRayQuery;
-  }) {
-    return this._gateway.castScreenSpaceRay({ screenSpaceRayQuery });
+  newEntity(name: string): Entity {
+    return new Entity(this).init(name);
   }
 
   /**
    *
    */
-  async createEntity({ components }: { components: Entity }): Promise<Entity> {
-    const entities = await this._broker.spawnEntity({ components });
-    return new Entity({ livelink_instance: this, editor_entity: entities[0] });
-  }
-
-  /**
-   *
-   */
-  async createCamera({ components }: { components: Entity }): Promise<Camera> {
-    const entities = await this._broker.spawnEntity({ components });
-    return new Camera({ livelink_instance: this, editor_entity: entities[0] });
+  newCamera(name: string): Camera {
+    return new Camera(this).init(name);
   }
 
   /**

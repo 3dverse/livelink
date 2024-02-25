@@ -1,5 +1,5 @@
-import { RTID } from "../_prebuild/types/common";
-import { Entity } from "./Entity";
+import { RTID } from "./types/common";
+import { CoreEntity } from "./CoreEntity";
 
 /**
  *
@@ -8,7 +8,7 @@ class EntityRegistry {
   /**
    *
    */
-  private _entities = new Array<Entity | null>();
+  private _entities = new Array<CoreEntity | null>();
 
   /**
    *
@@ -18,18 +18,18 @@ class EntityRegistry {
   /**
    *
    */
-  add({ entity }: { entity: Entity }) {
-    if (!entity.euid) {
+  add({ entity }: { entity: CoreEntity }) {
+    if (!entity.rtid) {
       throw new Error(
         "Trying to add an entity without a EUID to the registry."
       );
     }
 
-    const entityRTID = entity.euid.rtid;
+    const entityRTID = entity.rtid!;
     if (this._entity_lut.has(entityRTID)) {
       throw new Error(
-        `Cannot add entity ${entity.euid.value} to the registry,
-        because entity ${entity.getName()} has the same RTID.`
+        `Cannot add entity ${entity.name} to the registry,
+        because entity ${entity.name} has the same RTID.`
       );
     }
 
@@ -40,14 +40,14 @@ class EntityRegistry {
   /**
    *
    */
-  remove({ entity }: { entity: Entity }) {
-    if (!entity.euid) {
+  remove({ entity }: { entity: CoreEntity }) {
+    if (!entity.rtid) {
       throw new Error(
         "Trying to remove an entity without a EUID from the registry."
       );
     }
 
-    const entityIndex = this._entity_lut.get(entity.euid.rtid);
+    const entityIndex = this._entity_lut.get(entity.rtid);
     if (entityIndex === undefined) {
       throw new Error(
         "Trying to remove entity {} which has not been registred to the registry."
@@ -55,6 +55,6 @@ class EntityRegistry {
     }
 
     this._entities[entityIndex] = null;
-    this._entity_lut.delete(entity.euid.rtid);
+    this._entity_lut.delete(entity.rtid);
   }
 }

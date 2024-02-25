@@ -57,7 +57,7 @@ User facing interface with as many helper functions as we want.
 
 # Questions
 
-- ~~Do we need to support multiple sessions in a single page?~~ NO
+- ~~Do we need to support multiple sessions in a single page?~~ YES
 - Add an option to send the depth buffer to allow better composition with WebGL?
 - Do we merge the editor connection and the renderer connection behind a single interface?
 - Use destructured objects as function params?

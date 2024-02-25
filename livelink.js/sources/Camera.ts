@@ -1,7 +1,13 @@
-import { Vec2, HighlightMode, ScreenSpaceRayResult } from "@livelink.core";
-import { Entity } from "./Entity";
-import {} from "@livelink.core";
+import {
+  Vec2,
+  HighlightMode,
+  ScreenSpaceRayResult,
+  Entity,
+} from "@livelink.core";
 
+/**
+ *
+ */
 export class Camera extends Entity {
   /**
    *
@@ -11,7 +17,7 @@ export class Camera extends Entity {
   }: {
     pos: Vec2;
   }): Promise<ScreenSpaceRayResult> {
-    return await this._livelink_instance!.castScreenSpaceRay({
+    return await this._core!.castScreenSpaceRay({
       screenSpaceRayQuery: {
         camera_rtid: super.rtid!,
         pos,

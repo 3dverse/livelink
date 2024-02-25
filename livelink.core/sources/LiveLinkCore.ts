@@ -1,17 +1,24 @@
 import { GatewayController } from "./controllers/GatewayController";
 import { LiveLinkController } from "./controllers/LiveLinkController";
 import { Session } from "./Session";
-import { ClientConfig, CodecType, Vec2i } from "../_prebuild/types/index";
+import type {
+  ClientConfig,
+  CodecType,
+  EditorEntity,
+  ScreenSpaceRayQuery,
+  Vec2i,
+} from "../_prebuild/types/index";
+import { Entity } from "./Entity";
 
 /**
  * The LiveLinkCore interface.
  *
- * This interface MUST NOT be embedded and distributed inside applications.
- * The application SHOULD embedd the @3dverse/livelink.js library that is
- * responsible for importing the current library - @3dverse/livelink.core.js.
- * @3dverse/livelink.js is versionned and MUST refer to a version to the
- * interface so that we can evolve the said interface without breaking
- * compatibility with the existing applications.
+ * This interface must not be embedded and distributed within applications.
+ * Instead, applications should embed the @3dverse/livelink.js library,
+ * responsible for importing the current library, @3dverse/livelink.core.js.
+ * The @3dverse/livelink.js library is versioned and should refer to a specific
+ * version of the interface, allowing for interface evolution without breaking
+ * compatibility with existing applications.
  */
 export class LiveLinkCore extends EventTarget {
   /**
@@ -76,7 +83,7 @@ export class LiveLinkCore extends EventTarget {
    */
   protected async _connect(): Promise<LiveLinkCore> {
     // Generate a client UUID and retrieve a session key
-    await this.session.createClient();
+    await this.session.registerClient();
     // Connect to FTL gateway
     console.debug("Connecting to session...", this.session);
     const client = await this._gateway.connectToSession({
@@ -87,5 +94,24 @@ export class LiveLinkCore extends EventTarget {
     // Connect to the LiveLink Broker
     await this._broker.connectToSession({ session: this.session, client });
     return this;
+  }
+
+  /**
+   *
+   */
+  async castScreenSpaceRay({
+    screenSpaceRayQuery,
+  }: {
+    screenSpaceRayQuery: ScreenSpaceRayQuery;
+  }) {
+    return this._gateway.castScreenSpaceRay({ screenSpaceRayQuery });
+  }
+
+  /**
+   *
+   */
+  async createEntity({ entity }: { entity: Entity }): Promise<EditorEntity> {
+    const entities = await this._broker.spawnEntity({ entity });
+    return entities[0];
   }
 }

@@ -126,10 +126,7 @@ export function deserialize_UUID({
     byteToHex[arr[15]]
   );
 }
-
-export type Component = {};
-export type Components = Map<string, Component>;
-
+/*
 export type ClientInfo = {
   client_id: UUID;
   client_type: "user" | "guest";
@@ -149,3 +146,4 @@ export type SessionInfo = {
   continent_code: string;
   clients: Array<ClientInfo>;
 };
+*/

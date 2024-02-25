@@ -7,34 +7,46 @@ const api_url = "https://api.3dverse.dev/app/v1";
  *
  */
 export type SessionInfo = {
-  session_id: UUID;
+  readonly session_id: UUID;
+  readonly scene_name: string;
+  readonly folder_id: UUID;
+  readonly max_users: number;
+  readonly created_by: UUID;
+  readonly created_at: Date;
+  readonly country_code: string;
+  readonly continent_code: string;
 };
 
 /**
+ * Session selector function type.
  *
+ * @param {Array<SessionInfo>} sessions - An array of session information
+ *    running the targeted scene.
+ *
+ * @returns {SessionInfo | null} -The selected session or null
  */
 export type SessionSelector = ({
   sessions,
 }: {
   sessions: Array<SessionInfo>;
-}) => SessionInfo;
+}) => SessionInfo | null;
 
 /**
  *
  */
 export class Session extends EventTarget {
   /**
-   * The id of the session
+   * Various info on the session.
    */
   private _session_info: SessionInfo | null = null;
 
   /**
-   * The address of the gateway the session is running on
+   * The address of the gateway the session is running on.
    */
   private _gateway_url: string | null = null;
 
   /**
-   * The session key used to authenticate the client on the gateway
+   * The session key used as an authentication method on the gateway.
    */
   private _session_key: string | null = null;
 
@@ -60,18 +72,10 @@ export class Session extends EventTarget {
   }
 
   /**
+   * @param {UUID} _scene_id - The id of the scene
+   * @param {string} _token - The authentication token
    *
-  readonly scene_name: string;
-  readonly folder_id: UUID;
-  readonly max_users: number;
-  readonly created_by: UUID;
-  readonly created_at: Date;
-  readonly country_code: string;
-  readonly continent_code: string;
-  */
-
-  /**
-   *
+   * @see https://docs.3dverse.com/api/#tag/User-Authentication/operation/generateUserToken
    */
   constructor(
     private readonly _scene_id: UUID,
@@ -81,14 +85,22 @@ export class Session extends EventTarget {
   }
 
   /**
+   * Checks if the session is eligible for joining.
+   * For it to be deemed joinable, either the [create()]{@link Session#create}
+   * or [find()]{@link Session#join} method must have been invoked.
    *
+   * @returns {boolean} True if the session can be joined, false otherwise.
    */
-  isValid() {
+  isJoinable(): boolean {
     return this._gateway_url !== null && this._session_key !== null;
   }
 
   /**
+   * Create a new session with the provided scene.
    *
+   * @returns {Session} returns the current instance
+   * @example
+   * const session = await new Session(scene_id, token).create();
    */
   async create(): Promise<Session> {
     const res = await fetch(`${api_url}/sessions`, {
@@ -109,8 +121,15 @@ export class Session extends EventTarget {
   }
 
   /**
-   * @returns Current session or null if no session has been found or selected
-   *          by the selector.
+   * Asynchronous function to find and select a session based on the specified
+   * session selector.
+   *
+   * @param {Object} options - The options object.
+   * @param {SessionSelector} options.session_selector - The function for
+   *    selecting a session from the retrieved sessions.
+   *
+   * @returns {Promise<Session | null>} - Resolves with the selected session or
+   *    null if none is found.
    */
   async find({
     session_selector,
@@ -144,7 +163,7 @@ export class Session extends EventTarget {
   /**
    *
    */
-  async createClient(): Promise<void> {
+  async registerClient(): Promise<void> {
     const res = await fetch(`${api_url}/sessions/${this.session_id}/clients`, {
       method: "POST",
       headers: {
@@ -157,8 +176,16 @@ export class Session extends EventTarget {
       endpoint_info: { ip: string; port: number; ssl_port: number };
     };
 
-    //this._gateway_url = `wss://${endpoint_info.ip}:${endpoint_info.ssl_port}`;
-    this._gateway_url = `ws://${endpoint_info.ip}:${endpoint_info.port}`;
+    //TODO: have the gateways decide whether or not they support secure
+    //      connections.
+    endpoint_info.ssl_port = 0;
+
+    const protocol = endpoint_info.ssl_port ? "wss" : "ws";
+    const port =
+      endpoint_info.ssl_port !== 0
+        ? endpoint_info.ssl_port
+        : endpoint_info.port;
+    this._gateway_url = `${protocol}://${endpoint_info.ip}:${port}`;
     this._session_key = session_token;
   }
 
@@ -181,12 +208,32 @@ export class Session extends EventTarget {
   }
 
   /**
+   * Retrieves a client based on the provided client id.
    *
-   * @param client_id The UUID of the client
-   * @returns The client if found, null otherwise
+   * @param {UUID} client_id  - The id of the client.
+   *
+   * @returns {Client | null} - The matching client or null if not found.
    */
   getClient({ client_id }: { client_id: UUID }): Client | null {
     return this._clients.get(client_id) ?? null;
+  }
+
+  /**
+   *
+   */
+  async kickClient({ client }: { client: Client | UUID }) {
+    const client_id = client instanceof Client ? client.uuid : client;
+    const res = await fetch(
+      `${api_url}/sessions/${this.session_id}/clients/${client_id}`,
+      {
+        method: "DELETE",
+        headers: {
+          user_token: this._token,
+        },
+      }
+    );
+
+    console.log(res);
   }
 
   /**
@@ -195,6 +242,7 @@ export class Session extends EventTarget {
    */
   _onClientJoined({ client }: { client: Client }): void {
     this._clients.set(client.uuid, client);
+    this.dispatchEvent(new CustomEvent("on-client-joined", { detail: client }));
   }
 
   /**
@@ -202,6 +250,10 @@ export class Session extends EventTarget {
    * @param client The client to unregister
    */
   _onClientLeft({ client_id }: { client_id: UUID }): void {
-    this._clients.delete(client_id);
+    const client = this.getClient({ client_id });
+    if (client) {
+      this._clients.delete(client_id);
+      this.dispatchEvent(new CustomEvent("on-client-left", { detail: client }));
+    }
   }
 }
