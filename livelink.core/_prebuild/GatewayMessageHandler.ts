@@ -33,7 +33,8 @@ import {
   serialize_ScreenSpaceRayQuery,
   UUID,
   serialize_UUID,
-} from "./types/index";
+  InputState,
+} from "./types";
 import { GatewayConnection } from "./GatewayConnection";
 
 /**
@@ -320,7 +321,44 @@ export abstract class GatewayMessageHandler extends EventTarget {
   }
 
   /**
-   *
+   * Send
+   */
+  sendInputState({ input_state }: { input_state: InputState }) {
+    const payloadSize = 1;
+    const buffer = new ArrayBuffer(FTL_HEADER_SIZE + payloadSize);
+    this._writeMultiplexerHeader({
+      buffer,
+      channelId: ChannelId.inputs,
+      size: payloadSize,
+    });
+
+    const writer = new DataView(buffer, FTL_HEADER_SIZE);
+    let offset = 0;
+    writer.setUint8(offset, input_state.input_operation);
+    offset += 1;
+
+    this._connection.send({ data: buffer });
+  }
+
+  /**
+   * Receive
+   */
+  _onFrameReceived({ dataView }: { dataView: DataView }) {
+    const frame_data = deserialize_FrameData({
+      dataView,
+      offset: 0,
+    });
+
+    this.onFrameReceived({ frame_data });
+  }
+
+  /**
+   * Event
+   */
+  abstract onFrameReceived({ frame_data }: { frame_data: FrameData }): void;
+
+  /**
+   * Request
    */
   castScreenSpaceRay({
     screenSpaceRayQuery,
@@ -364,24 +402,7 @@ export abstract class GatewayMessageHandler extends EventTarget {
   }
 
   /**
-   *
-   */
-  _onFrameReceived({ dataView }: { dataView: DataView }) {
-    const frame_data = deserialize_FrameData({
-      dataView,
-      offset: 0,
-    });
-
-    this.onFrameReceived({ frame_data });
-  }
-
-  /**
-   *
-   */
-  abstract onFrameReceived({ frame_data }: { frame_data: FrameData }): void;
-
-  /**
-   *
+   * Reply
    */
   _on_clientRemoteOperation_response({
     client_id,

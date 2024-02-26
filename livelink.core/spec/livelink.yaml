@@ -89,8 +89,8 @@ channels:
     address: inputs
     description: Channel dedicated to input devices updates
     messages:
-      on_frame_received:
-        $ref: "#/components/messages/on_frame_received"
+      input_state:
+        $ref: "#/components/messages/input_state"
 
   #-----------------------------------------------------------------------------
   viewer-control:
@@ -203,6 +203,16 @@ operations:
         $ref: "#/channels/heartbeat"
       messages:
         - $ref: "#/channels/heartbeat/messages/on_heartbeat_received"
+
+  #-----------------------------------------------------------------------------
+  # INPUTS
+  #-----------------------------------------------------------------------------
+  sendInputState:
+    action: send
+    channel:
+      $ref: "#/channels/inputs"
+    messages:
+      - $ref: "#/channels/inputs/messages/input_state"
 
   #-----------------------------------------------------------------------------
   # VIDEO STREAM

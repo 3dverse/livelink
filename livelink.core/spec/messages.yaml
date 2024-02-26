@@ -30,6 +30,14 @@ on_client_configured:
     $ref: "./schemas.yaml#/ClientConfigResponse"
 
 #-----------------------------------------------------------------------------
+# INPUTS
+#-----------------------------------------------------------------------------
+input_state:
+  contentType: application/octet-stream
+  payload:
+    $ref: "./schemas.yaml#/InputState"
+
+#-----------------------------------------------------------------------------
 # VIDEO STREAM
 #-----------------------------------------------------------------------------
 on_frame_received:

@@ -58,3 +58,40 @@ export enum CodecType {
   h264rgb = 1,
   h265 = 2,
 }
+
+/**
+ *
+ */
+export enum InputOperation {
+  reset = 0,
+  lbutton_down,
+  mbutton_down,
+  rbutton_down,
+  lbutton_up,
+  mbutton_up,
+  rbutton_up,
+  mouse_move,
+  on_key_down,
+  on_key_up,
+  resize,
+  disconnect,
+  touch_start,
+  touch_end,
+  touch_move,
+  touch_pinch_start,
+  touch_pinch_move,
+  window_resized,
+  send_camera,
+  input_resolution,
+  cam_matrix,
+  projection_matrix,
+  wheel,
+  hololens_tap,
+  scene_info,
+  scene_uuid,
+  gamepad_axis,
+  gamepad_buttons,
+  mouse_move_delta,
+  touch_pinch_end,
+  headset_move,
+}

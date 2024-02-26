@@ -11,6 +11,7 @@ export * from "./ResizeResponse";
 export * from "./ScreenSpaceRayQuery";
 export * from "./ScreenSpaceRayResult";
 export * from "./ViewportConfig";
+export * from "./InputState";
 
 export * from "./ConnectConfirmation";
 export * from "./EditorEntity";

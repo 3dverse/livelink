@@ -319,3 +319,14 @@ ResizeResponse:
   properties:
     new_size:
       $ref: "#/Vec2ui16"
+
+InputState:
+  title: InputState
+  type: object
+  properties:
+    input_operation:
+      type: integer
+      format: uint8
+    data:
+      type: string
+      format: binary
