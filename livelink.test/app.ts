@@ -16,11 +16,6 @@ class ControlPanel {
    *
    */
   constructor(public readonly id: string) {
-    this._canvas = new Canvas({
-      canvas_element_id: "display-canvas-" + id,
-      viewports: [],
-    });
-
     document.getElementById("scene-selector-" + id)!.onchange = async () =>
       await this._connectToSession();
 
@@ -68,6 +63,11 @@ class ControlPanel {
    *
    */
   private async _configureClient() {
+    this._canvas = await new Canvas({
+      canvas_element_id: "display-canvas-" + this.id,
+      viewports: [],
+    }).init();
+
     const rendering_area_size: Vec2 = [
       this._canvas!.width,
       this._canvas!.height,

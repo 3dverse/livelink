@@ -25,9 +25,22 @@ export class Canvas extends EventTarget {
     this._onResized(e)
   );
   /**
+   *
+   */
+  private _resized_promise_resolver: (() => void) | null = null;
+  /**
+   *
+   */
+  private _resized_promise: Promise<void>;
+  /**
    * Debounce timeout to avoid spamming the resize command.
    */
   private _resize_debounce_timeout: number = 0;
+  /**
+   * Initial debounce timeout duration that gets overridden at first resize.
+   */
+  private _resize_debounce_timeout_duration_in_ms = 0;
+
   /**
    * Canvas actual dimensions.
    */
@@ -100,7 +113,19 @@ export class Canvas extends EventTarget {
       this.attachViewport({ viewport });
     }
 
+    this._resized_promise = new Promise((resolve) => {
+      this._resized_promise_resolver = resolve;
+    });
+
     this._observer.observe(this._canvas);
+  }
+
+  /**
+   *
+   */
+  async init(): Promise<Canvas> {
+    await this._resized_promise;
+    return this;
   }
 
   /**
@@ -124,18 +149,24 @@ export class Canvas extends EventTarget {
       clearTimeout(this._resize_debounce_timeout);
     }
 
-    const RESIZE_DEBOUNCE_TIMEOUT_IN_MS = 500;
     this._resize_debounce_timeout = setTimeout(() => {
       const old_size: Vec2 = [this._canvas.width, this._canvas.height];
 
       this._canvas.width = this._dimensions[0];
       this._canvas.height = this._dimensions[1];
 
+      // Resolve the init promise.
+      this._resized_promise_resolver!();
+
       const new_size: Vec2 = [this._canvas.width, this._canvas.height];
 
       super.dispatchEvent(
         new CustomEvent("on-resized", { detail: { old_size, new_size } })
       );
-    }, RESIZE_DEBOUNCE_TIMEOUT_IN_MS);
+    }, this._resize_debounce_timeout_duration_in_ms);
+
+    // After the first timeout triggers set the following timeouts to the
+    // actual duration.
+    this._resize_debounce_timeout_duration_in_ms = 500;
   }
 }
