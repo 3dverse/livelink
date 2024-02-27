@@ -34,6 +34,8 @@ import {
   UUID,
   serialize_UUID,
   InputState,
+  serialize_HighlightEntitiesQuery,
+  HighlightEntitiesQuery,
 } from "./types";
 import { GatewayConnection } from "./GatewayConnection";
 
@@ -375,13 +377,10 @@ export abstract class GatewayMessageHandler extends EventTarget {
       size: payloadSize,
     });
 
-    const request_id = this._request_id_generator++;
     const rop_id = ClientRemoteOperation.cast_screen_space_ray;
-
-    this._writeClientRemoteOperationMultiplexerHeader({
+    const request_id = this._writeClientRemoteOperationMultiplexerHeader({
       buffer,
       offset: FTL_HEADER_SIZE,
-      request_id,
       rop_data_size: ropDataSize,
       rop_id,
     });
@@ -399,6 +398,44 @@ export abstract class GatewayMessageHandler extends EventTarget {
       rop_id,
       request_id,
     });
+  }
+
+  /**
+   * Send
+   */
+  highlightEntities({
+    highlightEntitiesQuery,
+  }: {
+    highlightEntitiesQuery: HighlightEntitiesQuery;
+  }): void {
+    const ropDataSize = 1 + highlightEntitiesQuery.entities.length * 4;
+    const payloadSize = FTL_CLIENT_ROP_HEADER_SIZE + ropDataSize;
+    const buffer = new ArrayBuffer(FTL_HEADER_SIZE + payloadSize);
+
+    this._writeMultiplexerHeader({
+      buffer,
+      channelId: ChannelId.client_remote_operations,
+      size: payloadSize,
+    });
+
+    this._writeClientRemoteOperationMultiplexerHeader({
+      buffer,
+      offset: FTL_HEADER_SIZE,
+      rop_data_size: ropDataSize,
+      rop_id: ClientRemoteOperation.select_entities,
+    });
+
+    const dataView = new DataView(
+      buffer,
+      FTL_HEADER_SIZE + FTL_CLIENT_ROP_HEADER_SIZE
+    );
+    serialize_HighlightEntitiesQuery({
+      dataView,
+      offset: 0,
+      highlightEntitiesQuery,
+    });
+
+    this._connection.send({ data: buffer });
   }
 
   /**
@@ -476,16 +513,14 @@ export abstract class GatewayMessageHandler extends EventTarget {
   private _writeClientRemoteOperationMultiplexerHeader({
     buffer,
     offset,
-    request_id,
     rop_data_size,
     rop_id,
   }: {
     buffer: ArrayBuffer;
     offset: number;
-    request_id: number;
     rop_data_size: number;
     rop_id: ClientRemoteOperation;
-  }) {
+  }): number {
     const writer = new DataView(buffer);
 
     offset += serialize_UUID({
@@ -493,6 +528,8 @@ export abstract class GatewayMessageHandler extends EventTarget {
       offset,
       uuid: this._client_id!,
     });
+
+    const request_id = this._request_id_generator++;
 
     writer.setUint32(offset, request_id, LITTLE_ENDIAN);
     offset += 4;
@@ -502,5 +539,7 @@ export abstract class GatewayMessageHandler extends EventTarget {
 
     writer.setUint8(offset, rop_id);
     offset += 1;
+
+    return request_id;
   }
 }

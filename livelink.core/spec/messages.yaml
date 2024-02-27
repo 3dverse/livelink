@@ -85,7 +85,7 @@ highlight_entities:
   contentType: application/octet-stream
   payload:
     description: Entities to highlight
-    $ref: "./schemas.yaml#/EntityList"
+    $ref: "./schemas.yaml#/HighlightEntities"
 
 #-----------------------------------------------------------------------------
 # EDITOR REMOTE OPERATIONS

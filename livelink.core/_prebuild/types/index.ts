@@ -10,6 +10,7 @@ export * from "./FrameData";
 export * from "./ResizeResponse";
 export * from "./ScreenSpaceRayQuery";
 export * from "./ScreenSpaceRayResult";
+export * from "./HighlightEntitiesQuery";
 export * from "./ViewportConfig";
 export * from "./InputState";
 

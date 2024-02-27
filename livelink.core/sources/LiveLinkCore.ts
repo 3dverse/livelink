@@ -4,9 +4,11 @@ import { Session } from "./Session";
 import type {
   ClientConfig,
   ClientConfigResponse,
-  CodecType,
   EditorEntity,
+  HighlightEntitiesQuery,
+  RTID,
   ScreenSpaceRayQuery,
+  ScreenSpaceRayResult,
   Vec2i,
 } from "../_prebuild/types/index";
 import { Entity } from "./Entity";
@@ -103,8 +105,19 @@ export class LiveLinkCore extends EventTarget {
     screenSpaceRayQuery,
   }: {
     screenSpaceRayQuery: ScreenSpaceRayQuery;
-  }) {
+  }): Promise<ScreenSpaceRayResult> {
     return this._gateway.castScreenSpaceRay({ screenSpaceRayQuery });
+  }
+
+  /**
+   *
+   */
+  highlightEntities({
+    highlightEntitiesQuery,
+  }: {
+    highlightEntitiesQuery: HighlightEntitiesQuery;
+  }): void {
+    this._gateway.highlightEntities({ highlightEntitiesQuery });
   }
 
   /**

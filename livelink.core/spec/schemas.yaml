@@ -51,7 +51,6 @@ EntityList:
   type: array
   items:
     $ref: "#/RTID"
-  minItems: 1
 
 Component:
   type: object
@@ -85,6 +84,14 @@ ScreenSpaceRayQuery:
     mode:
       type: integer
       format: uint8
+
+HighlightEntities:
+  type: object
+  properties:
+    entities:
+      $ref: "#/EntityList"
+    keep_old_selection:
+      type: boolean
 
 SessionAuth:
   type: object
