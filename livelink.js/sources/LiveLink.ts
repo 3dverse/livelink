@@ -153,10 +153,10 @@ export class LiveLink extends LiveLinkCore {
       new (_1: Vec2i, _2: CanvasRenderingContext2D): DecoderType;
     },
     {
-      rendering_area_size,
+      frame_size,
       canvas_context,
     }: {
-      rendering_area_size: Vec2i;
+      frame_size: Vec2i;
       canvas_context: CanvasRenderingContext2D;
     }
   ) {
@@ -165,7 +165,7 @@ export class LiveLink extends LiveLinkCore {
     }
 
     this._decoder = await new decoder_type(
-      rendering_area_size,
+      frame_size,
       canvas_context
     ).configure({ codec: this._codec });
 

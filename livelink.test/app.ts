@@ -1,4 +1,4 @@
-import { ClientConfig, UUID, Vec2 } from "@livelink.core";
+import { ClientConfig, HighlightMode, UUID, Vec2 } from "@livelink.core";
 import {
   Camera,
   Canvas,
@@ -7,10 +7,14 @@ import {
   WebCodecsDecoder,
 } from "livelink.js";
 
+/**
+ *
+ */
 class ControlPanel {
   private _instance: LiveLink | null = null;
   private _canvas: Canvas | null = null;
   private _camera: Camera | null = null;
+  private _animation_interval: number = 0;
 
   /**
    *
@@ -48,6 +52,8 @@ class ControlPanel {
 
     await this._configureClient();
 
+    this._animation_interval = setInterval(() => this._animate(), 3000);
+
     this._canvas!.addEventListener("on-resized", this._onCanvasResized);
   }
 
@@ -55,8 +61,7 @@ class ControlPanel {
    *
    */
   private _onCanvasResized = (e: Event) => {
-    const event = e as CustomEvent;
-    this._instance!.resize({ size: event.detail.new_size });
+    this._instance!.resize({ size: this._canvas!.remote_canvas_size });
   };
 
   /**
@@ -65,16 +70,10 @@ class ControlPanel {
   private async _configureClient() {
     this._canvas = await new Canvas({
       canvas_element_id: "display-canvas-" + this.id,
-      viewports: [],
     }).init();
 
-    const rendering_area_size: Vec2 = [
-      this._canvas!.width,
-      this._canvas!.height,
-    ];
-
     const client_config: ClientConfig = {
-      rendering_area_size,
+      remote_canvas_size: this._canvas.remote_canvas_size,
       encoder_config: {
         codec: 2,
         profile: 1,
@@ -104,17 +103,17 @@ class ControlPanel {
 
     // Step 2: create a local decoder
     await this._instance!.configureDecoder(WebCodecsDecoder, {
-      rendering_area_size,
-      canvas_context: this._canvas!.html_element.getContext("2d")!,
+      frame_size: this._canvas.remote_canvas_size,
+      canvas_context: this._canvas.html_element.getContext("2d")!,
     });
 
     // Step 3: setup the renderer to use the camera on a full canvas viewport.
     this._canvas!.attachViewport({
       viewport: new Viewport({ camera: this._camera! }),
     });
-    this._instance!.setViewports({ viewports: this._canvas!.viewports });
+    this._instance!.setViewports({ viewports: this._canvas.viewports });
     this._instance!.resume();
-    this._canvas!.html_element.addEventListener("click", this._onClick);
+    this._canvas!.addEventListener("on-clicked", this._onClick);
   }
 
   /**
@@ -122,7 +121,7 @@ class ControlPanel {
    */
   private async _getCamera(): Promise<Camera | null> {
     const entity_uuid = "415e4e93-5d60-4ca9-b21f-5fc69b897c3c";
-    return this._instance!.findEntity({ entity_uuid });
+    return await this._instance!.findEntity({ entity_uuid });
   }
 
   /**
@@ -138,6 +137,27 @@ class ControlPanel {
     this._camera.local_transform = { position: [0, 2, 5] };
 
     await this._camera.instantiate();
+    //this._instance!.instantiateEntity({entity:this._camera});
+    //this._instance!.instantiateEntities({entities:[this._camera]});
+  }
+
+  /**
+   *
+   */
+  _animate() {
+    const camera = this._camera!;
+    //camera.local_transform.position.y += Math.sin(Date.now());
+    //camera.local_transform.position = new Vec3(1,2,3);
+    //camera.local_transform.position.add(1, 2, 3);
+    //camera.local_transform = new Transform({position: new Vec3(), orientation: new Quat(), scale: new Vec3());
+    camera.local_transform!.position![1] += Math.sin(Date.now());
+    camera.local_transform = {
+      position: [
+        0,
+        camera.local_transform!.position![1] + Math.sin(Date.now()),
+        0,
+      ],
+    };
   }
 
   /**
@@ -147,8 +167,16 @@ class ControlPanel {
     if (this._instance !== null) {
       this._instance.close();
       this._instance = null;
-      this._canvas!.html_element.removeEventListener("click", this._onClick);
+    }
+
+    if (this._canvas !== null) {
+      this._canvas!.removeEventListener("on-clicked", this._onClick);
       this._canvas!.removeEventListener("on-resized", this._onCanvasResized);
+    }
+
+    if (this._animation_interval !== 0) {
+      clearInterval(this._animation_interval);
+      this._animation_interval = 0;
     }
   }
 
@@ -156,14 +184,21 @@ class ControlPanel {
    *
    */
   private _onClick = async (ev: Event) => {
-    const e = ev as MouseEvent;
+    const e = ev as CustomEvent;
 
-    const x = e.offsetX / this._canvas!.width;
-    const y = e.offsetY / this._canvas!.height;
-
-    console.log("Picking", [x, y]);
-    const res = await this._camera!.castScreenSpaceRay({ pos: [x, y] });
+    console.log("Picking", e.detail.relative_pos);
+    const res = await this._camera!.castScreenSpaceRay({
+      pos: e.detail.relative_pos,
+      mode: 2,
+    });
     console.log(res);
+
+    this._instance!.highlightEntities({
+      highlightEntitiesQuery: {
+        entities: res.entity_rtid === 0n ? [] : [res.entity_rtid],
+        keep_old_selection: false,
+      },
+    });
   };
 }
 

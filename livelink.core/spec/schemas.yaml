@@ -115,7 +115,7 @@ ClientConfigResponse:
 ClientConfig:
   type: object
   properties:
-    rendering_area_size:
+    remote_canvas_size:
       type: array
       items:
         type: integer

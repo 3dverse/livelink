@@ -50,9 +50,6 @@ export class LiveLinkCore extends EventTarget {
     this._editor.disconnect();
   }
 
-  private _previous_multiple_of_8 = (n: number) =>
-    Math.floor(n) - (Math.floor(n) % 8);
-
   /**
    *
    */
@@ -61,13 +58,7 @@ export class LiveLinkCore extends EventTarget {
   }: {
     client_config: ClientConfig;
   }): Promise<ClientConfigResponse> {
-    client_config.rendering_area_size[0] = this._previous_multiple_of_8(
-      client_config.rendering_area_size[0] * window.devicePixelRatio
-    );
-    client_config.rendering_area_size[1] = this._previous_multiple_of_8(
-      client_config.rendering_area_size[1] * window.devicePixelRatio
-    );
-
+    this._checkRemoteCanvasSize({ size: client_config.remote_canvas_size });
     return await this._gateway.configureClient({ client_config });
   }
 
@@ -75,8 +66,7 @@ export class LiveLinkCore extends EventTarget {
    *
    */
   resize({ size }: { size: Vec2i }) {
-    size[0] = this._previous_multiple_of_8(size[0] * window.devicePixelRatio);
-    size[1] = this._previous_multiple_of_8(size[1] * window.devicePixelRatio);
+    this._checkRemoteCanvasSize({ size });
     this._gateway.resize({ size });
   }
 
@@ -96,6 +86,17 @@ export class LiveLinkCore extends EventTarget {
     // Connect to the LiveLink Broker
     await this._editor.connectToSession({ session: this.session, client });
     return this;
+  }
+
+  /**
+   *
+   */
+  private _checkRemoteCanvasSize({ size }: { size: Vec2i }): void {
+    if (size[0] % 8 !== 0 || size[1] % 8 !== 0) {
+      throw new Error(
+        `Remote canvas size MUST be a multiple of 8, is [${size[0]}, ${size[1]}]`
+      );
+    }
   }
 
   /**

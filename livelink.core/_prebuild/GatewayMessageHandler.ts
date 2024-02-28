@@ -181,7 +181,7 @@ export abstract class GatewayMessageHandler extends EventTarget {
   }): Promise<ClientConfigResponse> {
     const payload = JSON.stringify({
       // Translate to legacy names
-      renderingAreaSize: client_config.rendering_area_size,
+      renderingAreaSize: client_config.remote_canvas_size,
       encoderConfig: client_config.encoder_config,
       inputConfig: {
         hasKeyboard: client_config.supported_devices.keyboard,

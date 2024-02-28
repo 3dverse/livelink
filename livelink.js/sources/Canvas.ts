@@ -2,9 +2,34 @@ import type { Vec2, Vec2i } from "livelink.core";
 import { Viewport } from "./Viewport";
 
 /**
+ * To implement this we need to extract frame blitting from the decoder
+ * and move it in the canvas.
+ */
+type RemoteCanvasSizeFitter =
+  | {
+      mode: "fit-to-size";
+      value: "closest" | "always-inferior" | "always-superior";
+    }
+  | {
+      mode: "align";
+      value:
+        | "center"
+        | "top-left"
+        | "top"
+        | "top-right"
+        | "right"
+        | "bottom-right"
+        | "bottom"
+        | "bottom-left"
+        | "left";
+    };
+
+/**
  * A canvas represents the total available area for the renderer to draw on.
- * This drawing area is then split between viewports.
- * Each viewport has an associated camera that does the actual drawing.
+ * The dimensions on this area MUST be divisble by 8 for the encoder to work
+ * properly.
+ * This drawing area is then split between viewports, each viewport must have
+ * an associated camera.
  * Note that viewports can overlap each others.
  */
 export class Canvas extends EventTarget {
@@ -16,6 +41,11 @@ export class Canvas extends EventTarget {
    * List of viewports.
    */
   private _viewports: Array<Viewport> = [];
+  /**
+   * Size fitter
+   */
+  private _size_fitter: RemoteCanvasSizeFitter;
+
   /**
    * Observer for resize events.
    */
@@ -47,6 +77,11 @@ export class Canvas extends EventTarget {
   private _dimensions: Vec2 = [350, 150];
 
   /**
+   * Canvas actual dimensions.
+   */
+  private _remote_canvas_size: Vec2 = [350, 150];
+
+  /**
    * HTML Canvas Element
    */
   get html_element() {
@@ -54,23 +89,17 @@ export class Canvas extends EventTarget {
   }
 
   /**
-   * Width of the canvas in pixels.
-   */
-  get width() {
-    return this._canvas.width;
-  }
-  /**
-   * Height of the canvas in pixels.
-   */
-  get height() {
-    return this._canvas.height;
-  }
-
-  /**
-   * Height of the canvas in pixels.
+   * Dimensions of the HTML canvas in pixels.
    */
   get dimensions(): Vec2i {
     return [this._canvas.width, this._canvas.height];
+  }
+
+  /**
+   * Dimensions of the remote canvas in pixels.
+   */
+  get remote_canvas_size(): Vec2i {
+    return this._remote_canvas_size;
   }
 
   /**
@@ -88,10 +117,10 @@ export class Canvas extends EventTarget {
    */
   constructor({
     canvas_element_id,
-    viewports = [],
+    size_fitter = { mode: "fit-to-size", value: "closest" },
   }: {
     canvas_element_id: string;
-    viewports: Array<Viewport>;
+    size_fitter?: RemoteCanvasSizeFitter;
   }) {
     super();
 
@@ -108,16 +137,13 @@ export class Canvas extends EventTarget {
     }
 
     this._canvas = canvas as HTMLCanvasElement;
-
-    for (const viewport of viewports) {
-      this.attachViewport({ viewport });
-    }
-
+    this._size_fitter = size_fitter;
     this._resized_promise = new Promise((resolve) => {
       this._resized_promise_resolver = resolve;
     });
 
     this._observer.observe(this._canvas);
+    this._canvas.addEventListener("click", this._onClicked);
   }
 
   /**
@@ -152,8 +178,7 @@ export class Canvas extends EventTarget {
     this._resize_debounce_timeout = setTimeout(() => {
       const old_size: Vec2 = [this._canvas.width, this._canvas.height];
 
-      this._canvas.width = this._dimensions[0];
-      this._canvas.height = this._dimensions[1];
+      this._updateCanvasSize();
 
       // Resolve the init promise.
       this._resized_promise_resolver!();
@@ -168,5 +193,32 @@ export class Canvas extends EventTarget {
     // After the first timeout triggers set the following timeouts to the
     // actual duration.
     this._resize_debounce_timeout_duration_in_ms = 500;
+  }
+
+  /**
+   *
+   */
+  private _onClicked = (e: MouseEvent) => {
+    const absolute_pos = [e.offsetX, e.offsetY];
+    const relative_pos = [
+      absolute_pos[0] / this._remote_canvas_size[0],
+      absolute_pos[1] / this._remote_canvas_size[1],
+    ];
+    super.dispatchEvent(
+      new CustomEvent("on-clicked", { detail: { absolute_pos, relative_pos } })
+    );
+  };
+
+  /**
+   *
+   */
+  private _updateCanvasSize() {
+    const next_multiple_of_8 = (n: number) =>
+      Math.floor(n) + (Math.floor(n) % 8 === 0 ? 0 : 8 - (Math.floor(n) % 8));
+
+    this._canvas.width = this._dimensions[0];
+    this._canvas.height = this._dimensions[1];
+    this._remote_canvas_size[0] = next_multiple_of_8(this._dimensions[0]);
+    this._remote_canvas_size[1] = next_multiple_of_8(this._dimensions[1]);
   }
 }
