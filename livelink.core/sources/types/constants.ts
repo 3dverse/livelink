@@ -1,5 +1,6 @@
 export const FTL_HEADER_SIZE = 4;
 export const FTL_CLIENT_ROP_HEADER_SIZE = 25;
+export const FTL_EDITOR_ROP_HEADER_SIZE = 25;
 export const LITTLE_ENDIAN = true;
 export const BIG_ENDIAN = false;
 

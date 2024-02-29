@@ -12,6 +12,7 @@ import type {
   Vec2i,
 } from "../_prebuild/types/index";
 import { Entity } from "./Entity";
+import { EntityRegistry } from "./EntityRegistry";
 
 /**
  * The LiveLinkCore interface.
@@ -24,6 +25,10 @@ import { Entity } from "./Entity";
  * compatibility with existing applications.
  */
 export class LiveLinkCore extends EventTarget {
+  /**
+   *
+   */
+  public readonly entity_registry = new EntityRegistry(this);
   /**
    *
    */
@@ -48,6 +53,9 @@ export class LiveLinkCore extends EventTarget {
     await this.session.close();
     this._gateway.disconnect();
     this._editor.disconnect();
+    if (this._update_interval !== 0) {
+      clearInterval(this._update_interval);
+    }
   }
 
   /**
@@ -127,5 +135,32 @@ export class LiveLinkCore extends EventTarget {
   async createEntity({ entity }: { entity: Entity }): Promise<EditorEntity> {
     const entities = await this._editor.spawnEntity({ entity });
     return entities[0];
+  }
+
+  /**
+   *
+   */
+  private _dirty_entities = new Map<string, Array<Entity>>();
+  private _update_interval = 0;
+  addEntityToUpdate({ entity }: { entity: Entity }) {
+    //this._dirty_entities.get("local_transform").push(entity);
+    this._gateway.updateEntities({
+      component_name: "local_transform",
+      entities: [entity],
+    });
+  }
+  startUpdateLoop() {
+    this._dirty_entities.set("local_transform", new Array<Entity>());
+    this._update_interval = setInterval(() => {
+      for (const [k, v] of this._dirty_entities) {
+        if (v.length !== 0) {
+          this._gateway.updateEntities({
+            component_name: "local_transform",
+            entities: v,
+          });
+          v.length = 0;
+        }
+      }
+    }, 40);
   }
 }

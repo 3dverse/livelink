@@ -52,6 +52,9 @@ export type SkeletonRef = { value: UUID };
 export type AnimationController = {
   animationGraphRef: UUID;
   animationSetRef: UUID;
+  /**
+   * Check the editor for the spec.
+   */
   dataJSON: {};
 };
 
@@ -73,10 +76,10 @@ export type SphereGeometry = {
   offset: Vec3;
 };
 export type CapsuleGeometry = {
-  radius: number;
-  height: number;
-  axis: number;
-  offset: Vec3;
+  radius?: number;
+  height?: number;
+  axis?: number;
+  offset?: Vec3;
 };
 
 /**

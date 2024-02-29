@@ -1,4 +1,10 @@
-import { ClientConfig, HighlightMode, UUID, Vec2 } from "@livelink.core";
+import {
+  ClientConfig,
+  Entity,
+  HighlightMode,
+  UUID,
+  Vec2,
+} from "@livelink.core";
 import {
   Camera,
   Canvas,
@@ -52,7 +58,8 @@ class ControlPanel {
 
     await this._configureClient();
 
-    this._animation_interval = setInterval(() => this._animate(), 3000);
+    this._animation_interval = setInterval(() => this._animate(), 30);
+    //this._instance.startUpdateLoop();
 
     this._canvas!.addEventListener("on-resized", this._onCanvasResized);
   }
@@ -121,7 +128,7 @@ class ControlPanel {
    */
   private async _getCamera(): Promise<Camera | null> {
     const entity_uuid = "415e4e93-5d60-4ca9-b21f-5fc69b897c3c";
-    return await this._instance!.findEntity({ entity_uuid });
+    return await this._instance!.findEntity(Camera, { entity_uuid });
   }
 
   /**
@@ -134,30 +141,22 @@ class ControlPanel {
       dataJSON: { grid: true, skybox: false, gradient: true },
     };
     this._camera.perspective_lens = {};
-    this._camera.local_transform = { position: [0, 2, 5] };
+    this._camera.local_transform = { position: [0, 1, 5] };
 
     await this._camera.instantiate();
     //this._instance!.instantiateEntity({entity:this._camera});
     //this._instance!.instantiateEntities({entities:[this._camera]});
   }
 
+  static t = 0;
   /**
    *
    */
   _animate() {
-    const camera = this._camera!;
-    //camera.local_transform.position.y += Math.sin(Date.now());
-    //camera.local_transform.position = new Vec3(1,2,3);
-    //camera.local_transform.position.add(1, 2, 3);
-    //camera.local_transform = new Transform({position: new Vec3(), orientation: new Quat(), scale: new Vec3());
-    camera.local_transform!.position![1] += Math.sin(Date.now());
-    camera.local_transform = {
-      position: [
-        0,
-        camera.local_transform!.position![1] + Math.sin(Date.now()),
-        0,
-      ],
-    };
+    this._camera!.local_transform!.position![1] = 1 + Math.sin(ControlPanel.t);
+
+    ControlPanel.t += 0.033;
+    //(camera.camera!.dataJSON as { grid: boolean }).grid = false;
   }
 
   /**

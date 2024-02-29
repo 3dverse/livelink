@@ -95,3 +95,35 @@ export enum InputOperation {
   touch_pinch_end,
   headset_move,
 }
+
+export enum EditorRemoteOperation {
+  update_config = 0,
+  create_entity = 1,
+  reparent_entity = 2,
+  update_entities_from_bytes = 3,
+  remove_components = 4,
+  delete_entities = 5,
+
+  set_visibility = 6,
+
+  update_material = 7,
+  update_volume_material = 8,
+  DEPRECATED__update_data_object = 9,
+  reload_asset = 10,
+  trigger_script_event = 11,
+  update_script_data_object = 12,
+  DEPRECATED__update_render_graph_data_object = 13,
+  reload_shaders = 14,
+  update_entities_from_json = 15,
+
+  set_filter = 16,
+  remove_filter = 17,
+  toggle_filter = 18,
+
+  DEPRECATED__update_animation_controller_data_object = 19,
+  assign_client_uuid_to_script = 20,
+
+  update_animation_sequence_instance = 21,
+  remove_animation_sequence_instance = 22,
+  update_animation_sequence_state = 23,
+}

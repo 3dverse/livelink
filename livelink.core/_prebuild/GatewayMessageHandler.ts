@@ -6,6 +6,7 @@
 
 import {
   FTL_CLIENT_ROP_HEADER_SIZE,
+  FTL_EDITOR_ROP_HEADER_SIZE,
   FTL_HEADER_SIZE,
   LITTLE_ENDIAN,
 } from "../sources/types/constants";
@@ -36,8 +37,12 @@ import {
   InputState,
   serialize_HighlightEntitiesQuery,
   HighlightEntitiesQuery,
+  EditorRemoteOperation,
+  serialize_RTID,
+  RTID,
 } from "./types";
 import { GatewayConnection } from "./GatewayConnection";
+import { Entity } from "../sources";
 
 /**
  *
@@ -378,7 +383,7 @@ export abstract class GatewayMessageHandler extends EventTarget {
     });
 
     const rop_id = ClientRemoteOperation.cast_screen_space_ray;
-    const request_id = this._writeClientRemoteOperationMultiplexerHeader({
+    const request_id = this._writeRemoteOperationMultiplexerHeader({
       buffer,
       offset: FTL_HEADER_SIZE,
       rop_data_size: ropDataSize,
@@ -418,7 +423,7 @@ export abstract class GatewayMessageHandler extends EventTarget {
       size: payloadSize,
     });
 
-    this._writeClientRemoteOperationMultiplexerHeader({
+    this._writeRemoteOperationMultiplexerHeader({
       buffer,
       offset: FTL_HEADER_SIZE,
       rop_data_size: ropDataSize,
@@ -436,6 +441,45 @@ export abstract class GatewayMessageHandler extends EventTarget {
     });
 
     this._connection.send({ data: buffer });
+  }
+
+  /**
+   *
+   */
+  updateEntities({
+    component_name,
+    entities,
+  }: {
+    component_name: string;
+    entities: Array<Entity>;
+  }) {
+    const json = JSON.stringify(entities[0].local_transform);
+    const ropDataSize = 4 + 8 + (4 + 4) + json.length;
+    const payloadSize = FTL_EDITOR_ROP_HEADER_SIZE + ropDataSize;
+    const buffer = new ArrayBuffer(FTL_HEADER_SIZE + payloadSize - json.length);
+
+    this._writeMultiplexerHeader({
+      buffer,
+      channelId: ChannelId.editor_remote_operations,
+      size: payloadSize,
+    });
+
+    this._writeRemoteOperationMultiplexerHeader({
+      buffer,
+      offset: FTL_HEADER_SIZE,
+      rop_data_size: ropDataSize,
+      rop_id: EditorRemoteOperation.update_entities_from_json,
+    });
+
+    const dataView = new DataView(
+      buffer,
+      FTL_HEADER_SIZE + FTL_EDITOR_ROP_HEADER_SIZE
+    );
+
+    serialize_update_entity_from_json(dataView, entities[0].rtid, json);
+
+    this._connection.send({ data: buffer });
+    this._connection.send({ data: json });
   }
 
   /**
@@ -510,7 +554,7 @@ export abstract class GatewayMessageHandler extends EventTarget {
   /**
    *
    */
-  private _writeClientRemoteOperationMultiplexerHeader({
+  private _writeRemoteOperationMultiplexerHeader({
     buffer,
     offset,
     rop_data_size,
@@ -519,7 +563,7 @@ export abstract class GatewayMessageHandler extends EventTarget {
     buffer: ArrayBuffer;
     offset: number;
     rop_data_size: number;
-    rop_id: ClientRemoteOperation;
+    rop_id: ClientRemoteOperation | EditorRemoteOperation;
   }): number {
     const writer = new DataView(buffer);
 
@@ -542,4 +586,31 @@ export abstract class GatewayMessageHandler extends EventTarget {
 
     return request_id;
   }
+}
+
+function serialize_update_entity_from_json(
+  writer: DataView,
+  rtid: RTID,
+  jsonStr: string
+) {
+  //4 + 8 + entities.size * (4 + 4) + json.length;
+  let offset = 0;
+
+  const componentCount = 1;
+  writer.setUint32(offset, componentCount, LITTLE_ENDIAN);
+  offset += 4;
+
+  const localTransformComponentHash = 64958624;
+  writer.setUint32(offset, localTransformComponentHash, LITTLE_ENDIAN);
+  offset += 4;
+
+  const entityCount = 1;
+  writer.setUint32(offset, entityCount, LITTLE_ENDIAN);
+  offset += 4;
+
+  offset += serialize_RTID({ dataView: writer, offset, rtid });
+
+  const jsonSize = jsonStr.length;
+  writer.setUint32(offset, jsonSize, LITTLE_ENDIAN);
+  offset += 4;
 }

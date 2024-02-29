@@ -1,14 +1,15 @@
 import { RTID } from "./types/common";
-import { CoreEntity } from "./CoreEntity";
+import { Entity } from "./Entity";
+import { LiveLinkCore } from "./LiveLinkCore";
 
 /**
  *
  */
-class EntityRegistry {
+export class EntityRegistry {
   /**
    *
    */
-  private _entities = new Array<CoreEntity | null>();
+  private _entities = new Array<Entity | null>();
 
   /**
    *
@@ -18,7 +19,12 @@ class EntityRegistry {
   /**
    *
    */
-  add({ entity }: { entity: CoreEntity }) {
+  constructor(private readonly _core: LiveLinkCore) {}
+
+  /**
+   *
+   */
+  add({ entity }: { entity: Entity }) {
     if (!entity.rtid) {
       throw new Error(
         "Trying to add an entity without a EUID to the registry."
@@ -40,7 +46,7 @@ class EntityRegistry {
   /**
    *
    */
-  remove({ entity }: { entity: CoreEntity }) {
+  remove({ entity }: { entity: Entity }) {
     if (!entity.rtid) {
       throw new Error(
         "Trying to remove an entity without a EUID from the registry."
@@ -57,4 +63,9 @@ class EntityRegistry {
     this._entities[entityIndex] = null;
     this._entity_lut.delete(entity.rtid);
   }
+
+  /**
+   *
+   */
+  addEntityToUpdate({ entity }: { entity: Entity }) {}
 }

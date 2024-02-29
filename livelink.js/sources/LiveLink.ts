@@ -7,13 +7,12 @@ import {
   Vec2i,
   SessionSelector,
   FrameData,
-  Entity,
   CodecType,
+  Entity,
 } from "@livelink.core";
 
 import type { FrameDecoder } from "./decoders/FrameDecoder";
 import { Viewport } from "./Viewport";
-import { Camera } from "./Camera";
 
 /**
  * The LiveLink interface.
@@ -184,24 +183,30 @@ export class LiveLink extends LiveLinkCore {
     type: { new (_: LiveLinkCore): T },
     name: string
   ): T {
-    return new type(this).init(name);
+    return new Proxy(new type(this).init(name), Entity.handler) as T;
   }
 
   /**
    *
    */
-  async findEntity({
-    entity_uuid,
-  }: {
-    entity_uuid: UUID;
-  }): Promise<Camera | null> {
+  async findEntity<T extends Entity>(
+    type: { new (_: LiveLinkCore): T },
+    {
+      entity_uuid,
+    }: {
+      entity_uuid: UUID;
+    }
+  ): Promise<T | null> {
     const editor_entities = await this._editor.findEntitiesByEUID({
       entity_uuid,
     });
     if (editor_entities.length === 0) {
       return null;
     }
-    return new Camera(this).init(editor_entities[0]);
+    return new Proxy(
+      new type(this).init(editor_entities[0]),
+      Entity.handler
+    ) as T;
   }
 
   /**
