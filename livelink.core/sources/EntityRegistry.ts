@@ -68,12 +68,12 @@ export class EntityRegistry {
   /**
    *
    */
-  advanceFrame() {
+  advanceFrame({ dt }: { dt: number }) {
     for (const entity of this._entities) {
       entity.onUpdate({ elapsed_time: this._elapsed_time });
     }
 
-    this._elapsed_time += 1 / 30;
+    this._elapsed_time += dt;
   }
 
   /**

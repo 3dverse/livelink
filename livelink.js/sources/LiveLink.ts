@@ -200,13 +200,18 @@ export class LiveLink extends LiveLinkCore {
     const editor_entities = await this._editor.findEntitiesByEUID({
       entity_uuid,
     });
+
     if (editor_entities.length === 0) {
       return null;
     }
-    return new Proxy(
+
+    const entity = new Proxy(
       new type(this).init(editor_entities[0]),
       Entity.handler
     ) as T;
+
+    this.entity_registry.add({ entity });
+    return entity;
   }
 
   /**

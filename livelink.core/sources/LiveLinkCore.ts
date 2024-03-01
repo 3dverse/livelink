@@ -46,9 +46,9 @@ export class LiveLinkCore extends EventTarget {
   protected constructor(public readonly session: Session) {
     super();
 
-    this._dirty_entities.set("local_transform", new Array<Entity>());
-    this._dirty_entities.set("perspective_lens", new Array<Entity>());
-    this._dirty_entities.set("camera", new Array<Entity>());
+    this._dirty_entities.set("local_transform", new Set<Entity>());
+    this._dirty_entities.set("perspective_lens", new Set<Entity>());
+    this._dirty_entities.set("camera", new Set<Entity>());
   }
 
   /**
@@ -145,7 +145,7 @@ export class LiveLinkCore extends EventTarget {
   /**
    *
    */
-  private _dirty_entities = new Map<string, Array<Entity>>();
+  private _dirty_entities = new Map<string, Set<Entity>>();
   private _update_interval = 0;
   addEntityToUpdate({
     component,
@@ -154,19 +154,20 @@ export class LiveLinkCore extends EventTarget {
     component: string;
     entity: Entity;
   }) {
-    this._dirty_entities.get(component).push(entity);
+    this._dirty_entities.get(component).add(entity);
   }
   /**
    *
    */
-  startUpdateLoop() {
+  static previous = Date.now();
+  startUpdateLoop({ fps }: { fps: number }) {
     this._update_interval = setInterval(() => {
-      this.entity_registry.advanceFrame();
+      this.entity_registry.advanceFrame({ dt: 1 / fps });
 
       const updateEntitiesFromJsonMessage = { components: [] };
 
       for (const [component_name, entities] of this._dirty_entities) {
-        if (entities.length !== 0) {
+        if (entities.size !== 0) {
           updateEntitiesFromJsonMessage.components =
             updateEntitiesFromJsonMessage.components ?? [];
           updateEntitiesFromJsonMessage.components.push({
@@ -181,8 +182,8 @@ export class LiveLinkCore extends EventTarget {
       }
 
       for (const [_, entities] of this._dirty_entities) {
-        entities.length = 0;
+        entities.clear();
       }
-    }, 1000 / 30);
+    }, 1000 / fps);
   }
 }

@@ -8,7 +8,7 @@ import { ComponentHash } from "./components";
 export type UpdateEntitiesFromJsonMessage = {
   components: Array<{
     component_name: string;
-    entities: Array<Entity>;
+    entities: Set<Entity>;
   }>;
 };
 
@@ -27,7 +27,7 @@ export function compute_UpdateEntitiesFromJsonMessage_size(
   //      for each component
   for (const componentUpdate of updateEntitiesFromJsonMessage.components) {
     // +        entityCount * { entityRTID (4) }
-    const entityCount = componentUpdate.entities.length;
+    const entityCount = componentUpdate.entities.size;
     msgSize += entityCount * 4;
     //          for each entity
     for (const entity of componentUpdate.entities) {
@@ -63,12 +63,10 @@ export function serialize_UpdateEntitiesFromJsonMessage({
     dataView.setUint32(offset, componentHash, LITTLE_ENDIAN);
     offset += 4;
 
-    const entityCount = componentUpdate.entities.length;
+    const entityCount = componentUpdate.entities.size;
     dataView.setUint32(offset, entityCount, LITTLE_ENDIAN);
     offset += 4;
-  }
 
-  for (const componentUpdate of updateEntitiesFromJsonMessage.components) {
     for (const entity of componentUpdate.entities) {
       // + { entityRTID (4) }
       offset += serialize_RTID({

@@ -27,7 +27,7 @@ export class CaCamera extends Camera {
    */
   onUpdate({ elapsed_time }: { elapsed_time: number }) {
     this.local_transform!.position![1] = 1 + Math.sin(elapsed_time);
-    //this.perspective_lens!.fovy = 60 + 20 * Math.sin(elapsed_time);
+    this.perspective_lens!.fovy = 60 + 20 * Math.sin(elapsed_time);
   }
 }
 
@@ -77,17 +77,8 @@ class ControlPanel {
     await this._configureClient();
 
     //this._animation_interval = setInterval(() => this._animate(), 1000 / 30);
-    this._instance.startUpdateLoop();
-
-    this._canvas!.addEventListener("on-resized", this._onCanvasResized);
+    this._instance.startUpdateLoop({ fps: 30 });
   }
-
-  /**
-   *
-   */
-  private _onCanvasResized = (e: Event) => {
-    this._instance!.resize({ size: this._canvas!.remote_canvas_size });
-  };
 
   /**
    *
@@ -96,6 +87,8 @@ class ControlPanel {
     this._canvas = await new Canvas({
       canvas_element_id: "display-canvas-" + this.id,
     }).init();
+
+    this._canvas!.addEventListener("on-resized", this._onCanvasResized);
 
     const client_config: ClientConfig = {
       remote_canvas_size: this._canvas.remote_canvas_size,
@@ -140,6 +133,13 @@ class ControlPanel {
     this._instance!.resume();
     this._canvas!.addEventListener("on-clicked", this._onClick);
   }
+
+  /**
+   *
+   */
+  private _onCanvasResized = (_: Event) => {
+    this._instance!.resize({ size: this._canvas!.remote_canvas_size });
+  };
 
   /**
    *
