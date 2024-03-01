@@ -15,6 +15,7 @@ export class EntityRegistry {
    *
    */
   private _entity_lut = new Map<RTID, number>();
+  private _elapsed_time = 0;
 
   /**
    *
@@ -62,6 +63,17 @@ export class EntityRegistry {
 
     this._entities[entityIndex] = null;
     this._entity_lut.delete(entity.rtid);
+  }
+
+  /**
+   *
+   */
+  advanceFrame() {
+    for (const entity of this._entities) {
+      entity.onUpdate({ elapsed_time: this._elapsed_time });
+    }
+
+    this._elapsed_time += 1 / 30;
   }
 
   /**

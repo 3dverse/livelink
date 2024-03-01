@@ -83,6 +83,11 @@ export class Entity {
   /**
    *
    */
+  onUpdate({ elapsed_time }: { elapsed_time: number }) {}
+
+  /**
+   *
+   */
   async instantiate() {
     if (this.isInstantiated()) {
       throw new Error("Entity is already instantiated");
@@ -90,6 +95,7 @@ export class Entity {
 
     const editor_entity = await this._core.createEntity({ entity: this });
     this._parse({ editor_entity });
+    this._core.entity_registry.add({ entity: this });
   }
 
   /**
@@ -99,14 +105,7 @@ export class Entity {
     let serialized = {};
     for (const p in this) {
       if (this[p] !== undefined && p !== "euid" && p !== "_core") {
-        const componentName =
-          (p as string)[0] === "_" ? (p as string).slice(1) : (p as string);
-        serialized[componentName] = {};
-        for (const a in this[p]) {
-          if (a !== "__dirty_flag") {
-            serialized[componentName][a as string] = this[p][a];
-          }
-        }
+        serialized[p as string] = this[p];
       }
     }
     return serialized;
@@ -115,10 +114,10 @@ export class Entity {
   /**
    *
    */
-  _tryMarkingAsDirty(component_name: string): boolean {
+  _tryMarkingAsDirty(component: string): boolean {
     if (this.isInstantiated()) {
       // Register to appropriate dirty list
-      this._core.addEntityToUpdate({ entity: this });
+      this._core.addEntityToUpdate({ component, entity: this });
       return true;
     }
 
@@ -143,30 +142,30 @@ export class Entity {
    *
    */
   static handler = {
-    get(inst: Entity, prop: PropertyKey): unknown {
+    get(entity: Entity, prop: PropertyKey): unknown {
       if (prop[0] !== "_") {
-        if (typeof inst[prop] === "object" && inst[prop] !== null) {
+        if (typeof entity[prop] === "object" && entity[prop] !== null) {
           //console.log("GET COMPONENT", prop);
           return new Proxy(
-            inst[prop],
-            new ComponentHandler(inst, prop as string)
+            entity[prop],
+            new ComponentHandler(entity, prop as string)
           );
         }
       }
-      return Reflect.get(inst, prop);
+      return Reflect.get(entity, prop);
     },
 
-    set(inst: Entity, prop: PropertyKey, v: any): boolean {
+    set(entity: Entity, prop: PropertyKey, v: any): boolean {
       if (prop[0] !== "_") {
         //console.log("SET COMPONENT", prop, v);
-        inst._tryMarkingAsDirty(prop as string);
+        entity._tryMarkingAsDirty(prop as string);
       }
-      return Reflect.set(inst, prop, v);
+      return Reflect.set(entity, prop, v);
     },
 
-    deleteProperty(inst: Entity, prop: PropertyKey): boolean {
+    deleteProperty(entity: Entity, prop: PropertyKey): boolean {
       //console.log("DELETE COMPONENT", prop);
-      return Reflect.deleteProperty(inst, prop);
+      return Reflect.deleteProperty(entity, prop);
     },
   };
 }
@@ -180,30 +179,30 @@ class ComponentHandler {
     private readonly _component_name: string
   ) {}
 
-  get(inst: object, prop: PropertyKey): unknown {
+  get(component: object, prop: PropertyKey): unknown {
     //console.log("GET ATTRIBUTE", prop);
     if (prop[0] !== "_") {
       if (
-        (typeof inst[prop] === "object" && inst[prop] !== null) ||
-        Array.isArray(inst[prop])
+        (typeof component[prop] === "object" && component[prop] !== null) ||
+        Array.isArray(component[prop])
       ) {
         return new Proxy(
-          inst[prop],
+          component[prop],
           new ComponentHandler(this._entity, this._component_name)
         );
       }
     }
-    return Reflect.get(inst, prop);
+    return Reflect.get(component, prop);
   }
 
-  set(inst: object, prop: PropertyKey, v: any): boolean {
+  set(component: object, prop: PropertyKey, v: any): boolean {
     //console.log("SET ATTRIBUTE", prop, v);
     this._entity._tryMarkingAsDirty(this._component_name);
-    return Reflect.set(inst, prop, v);
+    return Reflect.set(component, prop, v);
   }
 
-  deleteProperty(inst: object, prop: PropertyKey): boolean {
+  deleteProperty(component: object, prop: PropertyKey): boolean {
     //console.log("DELETE ATTRIBUTE", prop);
-    return Reflect.deleteProperty(inst, prop);
+    return Reflect.deleteProperty(component, prop);
   }
 }

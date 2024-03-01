@@ -10,9 +10,10 @@ export * from "./FrameData";
 export * from "./ResizeResponse";
 export * from "./ScreenSpaceRayQuery";
 export * from "./ScreenSpaceRayResult";
-export * from "./HighlightEntitiesQuery";
+export * from "./HighlightEntitiesMessage";
 export * from "./ViewportConfig";
 export * from "./InputState";
+export * from "./UpdateEntitiesFromJsonMessage";
 
 export * from "./ConnectConfirmation";
 export * from "./EditorEntity";

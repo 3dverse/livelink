@@ -1,15 +1,15 @@
-import { HEARTBEAT_PERIOD_IN_MS } from "../types/constants.js";
-import { AuthenticationStatus, FrameData } from "../../_prebuild/types/index";
+import { AuthenticationStatus } from "../../_prebuild/types";
 import { GatewayMessageHandler } from "../../_prebuild/GatewayMessageHandler";
 
+import { HEARTBEAT_PERIOD_IN_MS } from "../types/constants";
 import { Session } from "../Session.js";
 import { Client } from "../Client.js";
 
 /**
  * The gateway controller is the exposed interface of the LiveLink gateway
  * protocol.
- * It's the object responsible of providing access to any request message the
- * gateway exposes. Moreover it's also responsible for handling the responses
+ * It's the object responsible for providing access to any request message the
+ * gateway exposes. Additionally, it is responsible for handling the responses
  * to requests.
  */
 export class GatewayController extends GatewayMessageHandler {
@@ -98,14 +98,5 @@ export class GatewayController extends GatewayMessageHandler {
 
       this._pulseHeartbeat();
     }, HEARTBEAT_PERIOD_IN_MS);
-  }
-
-  /**
-   *
-   */
-  onFrameReceived({ frame_data }: { frame_data: FrameData }): void {
-    this.dispatchEvent(
-      new CustomEvent("on-frame-received", { detail: frame_data })
-    );
   }
 }

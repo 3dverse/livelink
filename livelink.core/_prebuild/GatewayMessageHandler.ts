@@ -28,18 +28,20 @@ import {
   deserialize_ResizeResponse,
   ScreenSpaceRayResult,
   deserialize_ScreenSpaceRayResult,
-  FrameData,
   deserialize_FrameData,
   ScreenSpaceRayQuery,
   serialize_ScreenSpaceRayQuery,
   UUID,
   serialize_UUID,
   InputState,
-  serialize_HighlightEntitiesQuery,
-  HighlightEntitiesQuery,
+  serialize_HighlightEntitiesMessage,
+  HighlightEntitiesMessage,
   EditorRemoteOperation,
   serialize_RTID,
   RTID,
+  serialize_UpdateEntitiesFromJsonMessage,
+  UpdateEntitiesFromJsonMessage,
+  compute_UpdateEntitiesFromJsonMessage_size,
 } from "./types";
 import { GatewayConnection } from "./GatewayConnection";
 import { Entity } from "../sources";
@@ -58,7 +60,7 @@ type MessageResolver = {
  * Message handlers interface.
  * This follows the LiveLink protocol specifications for the gateway messages.
  */
-export abstract class GatewayMessageHandler extends EventTarget {
+export class GatewayMessageHandler extends EventTarget {
   /**
    *
    */
@@ -356,13 +358,10 @@ export abstract class GatewayMessageHandler extends EventTarget {
       offset: 0,
     });
 
-    this.onFrameReceived({ frame_data });
+    this.dispatchEvent(
+      new CustomEvent("on-frame-received", { detail: frame_data })
+    );
   }
-
-  /**
-   * Event
-   */
-  abstract onFrameReceived({ frame_data }: { frame_data: FrameData }): void;
 
   /**
    * Request
@@ -409,11 +408,11 @@ export abstract class GatewayMessageHandler extends EventTarget {
    * Send
    */
   highlightEntities({
-    highlightEntitiesQuery,
+    highlightEntitiesMessage,
   }: {
-    highlightEntitiesQuery: HighlightEntitiesQuery;
+    highlightEntitiesMessage: HighlightEntitiesMessage;
   }): void {
-    const ropDataSize = 1 + highlightEntitiesQuery.entities.length * 4;
+    const ropDataSize = 1 + highlightEntitiesMessage.entities.length * 4;
     const payloadSize = FTL_CLIENT_ROP_HEADER_SIZE + ropDataSize;
     const buffer = new ArrayBuffer(FTL_HEADER_SIZE + payloadSize);
 
@@ -434,10 +433,10 @@ export abstract class GatewayMessageHandler extends EventTarget {
       buffer,
       FTL_HEADER_SIZE + FTL_CLIENT_ROP_HEADER_SIZE
     );
-    serialize_HighlightEntitiesQuery({
+    serialize_HighlightEntitiesMessage({
       dataView,
       offset: 0,
-      highlightEntitiesQuery,
+      highlightEntitiesMessage,
     });
 
     this._connection.send({ data: buffer });
@@ -447,16 +446,15 @@ export abstract class GatewayMessageHandler extends EventTarget {
    *
    */
   updateEntities({
-    component_name,
-    entities,
+    updateEntitiesFromJsonMessage,
   }: {
-    component_name: string;
-    entities: Array<Entity>;
+    updateEntitiesFromJsonMessage: UpdateEntitiesFromJsonMessage;
   }) {
-    const json = JSON.stringify(entities[0].local_transform);
-    const ropDataSize = 4 + 8 + (4 + 4) + json.length;
+    const ropDataSize = compute_UpdateEntitiesFromJsonMessage_size(
+      updateEntitiesFromJsonMessage
+    );
     const payloadSize = FTL_EDITOR_ROP_HEADER_SIZE + ropDataSize;
-    const buffer = new ArrayBuffer(FTL_HEADER_SIZE + payloadSize - json.length);
+    const buffer = new ArrayBuffer(FTL_HEADER_SIZE + payloadSize);
 
     this._writeMultiplexerHeader({
       buffer,
@@ -476,10 +474,13 @@ export abstract class GatewayMessageHandler extends EventTarget {
       FTL_HEADER_SIZE + FTL_EDITOR_ROP_HEADER_SIZE
     );
 
-    serialize_update_entity_from_json(dataView, entities[0].rtid, json);
+    serialize_UpdateEntitiesFromJsonMessage({
+      dataView,
+      offset: 0,
+      updateEntitiesFromJsonMessage,
+    });
 
     this._connection.send({ data: buffer });
-    this._connection.send({ data: json });
   }
 
   /**
@@ -586,31 +587,4 @@ export abstract class GatewayMessageHandler extends EventTarget {
 
     return request_id;
   }
-}
-
-function serialize_update_entity_from_json(
-  writer: DataView,
-  rtid: RTID,
-  jsonStr: string
-) {
-  //4 + 8 + entities.size * (4 + 4) + json.length;
-  let offset = 0;
-
-  const componentCount = 1;
-  writer.setUint32(offset, componentCount, LITTLE_ENDIAN);
-  offset += 4;
-
-  const localTransformComponentHash = 64958624;
-  writer.setUint32(offset, localTransformComponentHash, LITTLE_ENDIAN);
-  offset += 4;
-
-  const entityCount = 1;
-  writer.setUint32(offset, entityCount, LITTLE_ENDIAN);
-  offset += 4;
-
-  offset += serialize_RTID({ dataView: writer, offset, rtid });
-
-  const jsonSize = jsonStr.length;
-  writer.setUint32(offset, jsonSize, LITTLE_ENDIAN);
-  offset += 4;
 }

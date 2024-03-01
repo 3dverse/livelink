@@ -1,10 +1,4 @@
-import {
-  ClientConfig,
-  Entity,
-  HighlightMode,
-  UUID,
-  Vec2,
-} from "@livelink.core";
+import { ClientConfig, Entity, UUID } from "@livelink.core";
 import {
   Camera,
   Canvas,
@@ -13,13 +7,37 @@ import {
   WebCodecsDecoder,
 } from "livelink.js";
 
+export class CaCamera extends Camera {
+  /**
+   *
+   */
+  async setup() {
+    this.camera = {
+      renderGraphRef: "398ee642-030a-45e7-95df-7147f6c43392",
+      dataJSON: { grid: true, skybox: false, gradient: true },
+    };
+    this.perspective_lens = {};
+    this.local_transform = { position: [0, 1, 5] };
+
+    await this.instantiate();
+  }
+
+  /**
+   *
+   */
+  onUpdate({ elapsed_time }: { elapsed_time: number }) {
+    this.local_transform!.position![1] = 1 + Math.sin(elapsed_time);
+    //this.perspective_lens!.fovy = 60 + 20 * Math.sin(elapsed_time);
+  }
+}
+
 /**
  *
  */
 class ControlPanel {
   private _instance: LiveLink | null = null;
   private _canvas: Canvas | null = null;
-  private _camera: Camera | null = null;
+  private _camera: CaCamera | null = null;
   private _animation_interval: number = 0;
 
   /**
@@ -58,8 +76,8 @@ class ControlPanel {
 
     await this._configureClient();
 
-    this._animation_interval = setInterval(() => this._animate(), 30);
-    //this._instance.startUpdateLoop();
+    //this._animation_interval = setInterval(() => this._animate(), 1000 / 30);
+    this._instance.startUpdateLoop();
 
     this._canvas!.addEventListener("on-resized", this._onCanvasResized);
   }
@@ -126,38 +144,34 @@ class ControlPanel {
   /**
    *
    */
-  private async _getCamera(): Promise<Camera | null> {
+  private async _getCamera(): Promise<CaCamera | null> {
     const entity_uuid = "415e4e93-5d60-4ca9-b21f-5fc69b897c3c";
-    return await this._instance!.findEntity(Camera, { entity_uuid });
+    return await this._instance!.findEntity(CaCamera, { entity_uuid });
   }
 
   /**
    *
    */
   private async _createCamera() {
-    this._camera = this._instance!.newEntity(Camera, "MyCam");
-    this._camera.camera = {
-      renderGraphRef: "398ee642-030a-45e7-95df-7147f6c43392",
-      dataJSON: { grid: true, skybox: false, gradient: true },
-    };
-    this._camera.perspective_lens = {};
-    this._camera.local_transform = { position: [0, 1, 5] };
+    this._camera = this._instance!.newEntity(CaCamera, "MyCam");
+    await this._camera.setup();
 
-    await this._camera.instantiate();
     //this._instance!.instantiateEntity({entity:this._camera});
     //this._instance!.instantiateEntities({entities:[this._camera]});
   }
 
-  static t = 0;
   /**
    *
    */
+  /*
+  static t = 0;
   _animate() {
     this._camera!.local_transform!.position![1] = 1 + Math.sin(ControlPanel.t);
 
     ControlPanel.t += 0.033;
     //(camera.camera!.dataJSON as { grid: boolean }).grid = false;
   }
+  */
 
   /**
    *
@@ -193,7 +207,7 @@ class ControlPanel {
     console.log(res);
 
     this._instance!.highlightEntities({
-      highlightEntitiesQuery: {
+      highlightEntitiesMessage: {
         entities: res.entity_rtid === 0n ? [] : [res.entity_rtid],
         keep_old_selection: false,
       },

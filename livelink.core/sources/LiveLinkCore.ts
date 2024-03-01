@@ -5,14 +5,14 @@ import type {
   ClientConfig,
   ClientConfigResponse,
   EditorEntity,
-  HighlightEntitiesQuery,
-  RTID,
+  HighlightEntitiesMessage as HighlightEntitiesMessage,
   ScreenSpaceRayQuery,
   ScreenSpaceRayResult,
   Vec2i,
 } from "../_prebuild/types/index";
 import { Entity } from "./Entity";
 import { EntityRegistry } from "./EntityRegistry";
+import { ComponentHash } from "../_prebuild/types/components";
 
 /**
  * The LiveLinkCore interface.
@@ -28,10 +28,6 @@ export class LiveLinkCore extends EventTarget {
   /**
    *
    */
-  public readonly entity_registry = new EntityRegistry(this);
-  /**
-   *
-   */
   protected readonly _gateway = new GatewayController();
 
   /**
@@ -42,8 +38,17 @@ export class LiveLinkCore extends EventTarget {
   /**
    *
    */
+  public readonly entity_registry = new EntityRegistry(this);
+
+  /**
+   *
+   */
   protected constructor(public readonly session: Session) {
     super();
+
+    this._dirty_entities.set("local_transform", new Array<Entity>());
+    this._dirty_entities.set("perspective_lens", new Array<Entity>());
+    this._dirty_entities.set("camera", new Array<Entity>());
   }
 
   /**
@@ -122,11 +127,11 @@ export class LiveLinkCore extends EventTarget {
    *
    */
   highlightEntities({
-    highlightEntitiesQuery,
+    highlightEntitiesMessage,
   }: {
-    highlightEntitiesQuery: HighlightEntitiesQuery;
+    highlightEntitiesMessage: HighlightEntitiesMessage;
   }): void {
-    this._gateway.highlightEntities({ highlightEntitiesQuery });
+    this._gateway.highlightEntities({ highlightEntitiesMessage });
   }
 
   /**
@@ -142,25 +147,42 @@ export class LiveLinkCore extends EventTarget {
    */
   private _dirty_entities = new Map<string, Array<Entity>>();
   private _update_interval = 0;
-  addEntityToUpdate({ entity }: { entity: Entity }) {
-    //this._dirty_entities.get("local_transform").push(entity);
-    this._gateway.updateEntities({
-      component_name: "local_transform",
-      entities: [entity],
-    });
+  addEntityToUpdate({
+    component,
+    entity,
+  }: {
+    component: string;
+    entity: Entity;
+  }) {
+    this._dirty_entities.get(component).push(entity);
   }
+  /**
+   *
+   */
   startUpdateLoop() {
-    this._dirty_entities.set("local_transform", new Array<Entity>());
     this._update_interval = setInterval(() => {
-      for (const [k, v] of this._dirty_entities) {
-        if (v.length !== 0) {
-          this._gateway.updateEntities({
-            component_name: "local_transform",
-            entities: v,
+      this.entity_registry.advanceFrame();
+
+      const updateEntitiesFromJsonMessage = { components: [] };
+
+      for (const [component_name, entities] of this._dirty_entities) {
+        if (entities.length !== 0) {
+          updateEntitiesFromJsonMessage.components =
+            updateEntitiesFromJsonMessage.components ?? [];
+          updateEntitiesFromJsonMessage.components.push({
+            component_name,
+            entities,
           });
-          v.length = 0;
         }
       }
-    }, 40);
+
+      if (updateEntitiesFromJsonMessage.components.length > 0) {
+        this._gateway.updateEntities({ updateEntitiesFromJsonMessage });
+      }
+
+      for (const [_, entities] of this._dirty_entities) {
+        entities.length = 0;
+      }
+    }, 1000 / 30);
   }
 }

@@ -14,11 +14,11 @@ export class Viewport {
   private _pixel_rect: Rect | null = null;
 
   /**
-   *
-   * @param left[0] Relative position of the leftmost side of the viewport relative to its parent canvas
-   * @param top[0] Relative position of the topmost side of the viewport relative to its parent canvas
-   * @param width[1] Relative width of the viewport relative to its parent canvas
-   * @param height[1] Relative height of the viewport relative to its parent canvas
+   * @param {object} o
+   * @param {number} o.left[0] Relative position of the leftmost side of the viewport relative to its parent canvas
+   * @param {number} o.top[0] Relative position of the topmost side of the viewport relative to its parent canvas
+   * @param {number} o.width[1] Relative width of the viewport relative to its parent canvas
+   * @param {number} o.height[1] Relative height of the viewport relative to its parent canvas
    */
   constructor({
     camera,
@@ -34,16 +34,27 @@ export class Viewport {
     height?: number;
   }) {
     if (left < 0 || left >= 1) {
-      throw `left MUST be in the [0,1[ range, it is ${left}`;
+      throw new Error(`left MUST be in the [0,1[ range, it is ${left}`);
     }
     if (top < 0 || top >= 1) {
-      throw `top MUST be in the [0,1[ range, it is ${top}`;
+      throw new Error(`top MUST be in the [0,1[ range, it is ${top}`);
     }
     if (width <= 0 || width > 1) {
-      throw `width MUST be in the ]0,1] range, it is ${width}`;
+      throw new Error(`width MUST be in the ]0,1] range, it is ${width}`);
     }
     if (height <= 0 || height > 1) {
-      throw `height MUST be in the ]0,1] range, it is ${height}`;
+      throw new Error(`height MUST be in the ]0,1] range, it is ${height}`);
+    }
+    if (left + width > 1) {
+      throw new Error(`left + width MUST be <= 1, it is ${left + width}`);
+    }
+    if (top + height > 1) {
+      throw new Error(`top + height MUST be <= 1, it is ${top + height}`);
+    }
+    if (!camera.isInstantiated()) {
+      throw new Error(
+        `Camera '${camera.name}' MUST be instantiated before assigning it to a viewport`
+      );
     }
 
     this._relative_rect = { left, top, width, height };
@@ -114,13 +125,13 @@ export class Viewport {
    */
   _onAttachedToCanvas({ canvas }: { canvas: Canvas }): void {
     this._canvas = canvas;
-    this._computeViewportSize();
+    this._computeSizeInPixel();
   }
 
   /**
    *
    */
-  private _computeViewportSize(): void {
+  private _computeSizeInPixel(): void {
     this._pixel_rect = {
       left: this._relative_rect.left,
       top: this._relative_rect.top,
