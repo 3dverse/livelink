@@ -11,6 +11,7 @@ import type {
   Lineage,
   MaterialRef,
   MeshRef,
+  OrthographicLens,
   PerspectiveLens,
   RigidBody,
   SceneRef,
@@ -39,6 +40,7 @@ export class Entity {
   capsule_geometry?: CapsuleGeometry;
   rigid_body?: RigidBody;
   perspective_lens?: PerspectiveLens;
+  orthographic_lens?: OrthographicLens;
   camera?: Camera;
   local_transform?: Transform;
 

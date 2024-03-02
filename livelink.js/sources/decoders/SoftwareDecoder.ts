@@ -1,4 +1,4 @@
-import { FrameDecoder } from "./FrameDecoder";
+import { EncodedFrameConsumer } from "./EncodedFrameConsumer";
 // @ts-ignore
 import BWDecoder from "../../external/Decoder.js";
 // @ts-ignore
@@ -8,7 +8,7 @@ import { CodecType, Vec2i } from "@livelink.core";
 /**
  *
  */
-export class SoftwareDecoder implements FrameDecoder {
+export class SoftwareDecoder implements EncodedFrameConsumer {
   /**
    *
    */
@@ -33,7 +33,7 @@ export class SoftwareDecoder implements FrameDecoder {
   /**
    *
    */
-  configure({ codec }: { codec: CodecType }): Promise<FrameDecoder> {
+  configure({ codec }: { codec: CodecType }): Promise<EncodedFrameConsumer> {
     if (codec !== CodecType.h264) {
       throw new Error("Software decoder supports only h264 encoding");
     }
@@ -56,7 +56,7 @@ export class SoftwareDecoder implements FrameDecoder {
   /**
    *
    */
-  decodeFrame({ encoded_frame }: { encoded_frame: DataView }) {
+  consumeFrame({ encoded_frame }: { encoded_frame: DataView }) {
     const f = new Uint8Array(
       encoded_frame.buffer,
       encoded_frame.byteOffset,

@@ -11,7 +11,7 @@ import {
   Entity,
 } from "@livelink.core";
 
-import type { FrameDecoder } from "./decoders/FrameDecoder";
+import type { EncodedFrameConsumer } from "./decoders/EncodedFrameConsumer";
 import { Viewport } from "./Viewport";
 
 /**
@@ -110,9 +110,9 @@ export class LiveLink extends LiveLinkCore {
    */
   private _codec: CodecType | null = null;
   /**
-   * Video decoder that decodes the frames received from the remote viewer.
+   * Frame consumer designed to handle encoded frames from the remote viewer.
    */
-  private _decoder: FrameDecoder | null = null;
+  private _frame_consumer: EncodedFrameConsumer | null = null;
 
   /**
    *
@@ -140,16 +140,9 @@ export class LiveLink extends LiveLinkCore {
   /**
    *
    */
-  resize({ size }: { size: Vec2i }) {
-    super.resize({ size });
-  }
-
-  /**
-   *
-   */
-  async configureDecoder<DecoderType extends FrameDecoder>(
-    decoder_type: {
-      new (_1: Vec2i, _2: CanvasRenderingContext2D): DecoderType;
+  async configureDecoder<FrameConsumerType extends EncodedFrameConsumer>(
+    consumer_type: {
+      new (_1: Vec2i, _2: CanvasRenderingContext2D): FrameConsumerType;
     },
     {
       frame_size,
@@ -163,14 +156,14 @@ export class LiveLink extends LiveLinkCore {
       throw new Error("Client not configured.");
     }
 
-    this._decoder = await new decoder_type(
+    this._frame_consumer = await new consumer_type(
       frame_size,
       canvas_context
     ).configure({ codec: this._codec });
 
     this._gateway.addEventListener("on-frame-received", (e) => {
       const event = e as CustomEvent<FrameData>;
-      this._decoder!.decodeFrame({
+      this._frame_consumer!.consumeFrame({
         encoded_frame: event.detail.encoded_frame,
       });
     });
@@ -179,18 +172,48 @@ export class LiveLink extends LiveLinkCore {
   /**
    *
    */
+  setViewports({ viewports }: { viewports: Array<Viewport> }) {
+    this._gateway.setViewports({
+      viewports: viewports.map((v) => v.config),
+    });
+  }
+
+  /**
+   *
+   */
+  resize({ size }: { size: Vec2i }) {
+    super.resize({ size });
+  }
+
+  /**
+   *
+   */
+  resume() {
+    this._gateway.resume();
+  }
+
+  /**
+   *
+   */
+  suspend() {
+    this._gateway.suspend();
+  }
+
+  /**
+   *
+   */
   newEntity<T extends Entity>(
-    type: { new (_: LiveLinkCore): T },
+    entity_type: { new (_: LiveLinkCore): T },
     name: string
   ): T {
-    return new Proxy(new type(this).init(name), Entity.handler) as T;
+    return new Proxy(new entity_type(this).init(name), Entity.handler) as T;
   }
 
   /**
    *
    */
   async findEntity<T extends Entity>(
-    type: { new (_: LiveLinkCore): T },
+    entity_type: { new (_: LiveLinkCore): T },
     {
       entity_uuid,
     }: {
@@ -206,34 +229,11 @@ export class LiveLink extends LiveLinkCore {
     }
 
     const entity = new Proxy(
-      new type(this).init(editor_entities[0]),
+      new entity_type(this).init(editor_entities[0]),
       Entity.handler
     ) as T;
 
     this.entity_registry.add({ entity });
     return entity;
-  }
-
-  /**
-   *
-   */
-  setViewports({ viewports }: { viewports: Array<Viewport> }) {
-    this._gateway.setViewports({
-      viewports: viewports.map((v) => v.config),
-    });
-  }
-
-  /**
-   *
-   */
-  resume() {
-    this._gateway.resume();
-  }
-
-  /**
-   *
-   */
-  suspend() {
-    this._gateway.suspend();
   }
 }

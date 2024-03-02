@@ -1,10 +1,10 @@
-import { FrameDecoder } from "./FrameDecoder";
+import { EncodedFrameConsumer } from "./EncodedFrameConsumer";
 import { CodecType, Vec2i } from "@livelink.core";
 
 /**
  *
  */
-export class WebCodecsDecoder implements FrameDecoder {
+export class WebCodecsDecoder implements EncodedFrameConsumer {
   /**
    *
    */
@@ -26,7 +26,11 @@ export class WebCodecsDecoder implements FrameDecoder {
   /**
    *
    */
-  async configure({ codec }: { codec: CodecType }): Promise<FrameDecoder> {
+  async configure({
+    codec,
+  }: {
+    codec: CodecType;
+  }): Promise<EncodedFrameConsumer> {
     const config: VideoDecoderConfig = {
       codec: codec === CodecType.h264 ? "avc1.42002A" : "hvc1.1.6.L123.00",
       codedWidth: this._dimensions[0],
@@ -54,7 +58,7 @@ export class WebCodecsDecoder implements FrameDecoder {
   /**
    *
    */
-  decodeFrame({ encoded_frame }: { encoded_frame: DataView }) {
+  consumeFrame({ encoded_frame }: { encoded_frame: DataView }) {
     const chunk = new EncodedVideoChunk({
       timestamp: 0,
       type: WebCodecsDecoder._first_frame ? "key" : "delta",

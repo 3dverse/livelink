@@ -7,17 +7,17 @@ import {
   WebCodecsDecoder,
 } from "livelink.js";
 
-export class CaCamera extends Camera {
+export class MyCamera extends Camera {
   /**
    *
    */
   async setup() {
+    this.local_transform = { position: [0, 1, 5] };
     this.camera = {
       renderGraphRef: "398ee642-030a-45e7-95df-7147f6c43392",
       dataJSON: { grid: true, skybox: false, gradient: true },
     };
     this.perspective_lens = {};
-    this.local_transform = { position: [0, 1, 5] };
 
     await this.instantiate();
   }
@@ -27,7 +27,6 @@ export class CaCamera extends Camera {
    */
   onUpdate({ elapsed_time }: { elapsed_time: number }) {
     this.local_transform!.position![1] = 1 + Math.sin(elapsed_time);
-    this.perspective_lens!.fovy = 60 + 20 * Math.sin(elapsed_time);
   }
 }
 
@@ -37,7 +36,7 @@ export class CaCamera extends Camera {
 class ControlPanel {
   private _instance: LiveLink | null = null;
   private _canvas: Canvas | null = null;
-  private _camera: CaCamera | null = null;
+  private _camera: MyCamera | null = null;
   private _animation_interval: number = 0;
 
   /**
@@ -76,7 +75,6 @@ class ControlPanel {
 
     await this._configureClient();
 
-    //this._animation_interval = setInterval(() => this._animate(), 1000 / 30);
     this._instance.startUpdateLoop({ fps: 30 });
   }
 
@@ -144,34 +142,21 @@ class ControlPanel {
   /**
    *
    */
-  private async _getCamera(): Promise<CaCamera | null> {
+  private async _getCamera(): Promise<MyCamera | null> {
     const entity_uuid = "415e4e93-5d60-4ca9-b21f-5fc69b897c3c";
-    return await this._instance!.findEntity(CaCamera, { entity_uuid });
+    return await this._instance!.findEntity(MyCamera, { entity_uuid });
   }
 
   /**
    *
    */
   private async _createCamera() {
-    this._camera = this._instance!.newEntity(CaCamera, "MyCam");
+    this._camera = this._instance!.newEntity(MyCamera, "MyCam");
     await this._camera.setup();
 
     //this._instance!.instantiateEntity({entity:this._camera});
     //this._instance!.instantiateEntities({entities:[this._camera]});
   }
-
-  /**
-   *
-   */
-  /*
-  static t = 0;
-  _animate() {
-    this._camera!.local_transform!.position![1] = 1 + Math.sin(ControlPanel.t);
-
-    ControlPanel.t += 0.033;
-    //(camera.camera!.dataJSON as { grid: boolean }).grid = false;
-  }
-  */
 
   /**
    *

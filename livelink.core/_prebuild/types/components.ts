@@ -110,6 +110,15 @@ export type PerspectiveLens = Partial<{
   farPlane: number;
 }>;
 
+export type OrthographicLens = Partial<{
+  left: number;
+  right: number;
+  top: number;
+  bottom: number;
+  zNear: number;
+  zFar: number;
+}>;
+
 export enum ComponentHash {
   animation_controller = 2978761622,
   bone = 1352454807,

@@ -106,7 +106,7 @@ export class Viewport {
    * PRIVATE
    */
   get config(): ViewportConfig {
-    if (!this._camera) {
+    if (!this._camera || !this._camera.isInstantiated()) {
       throw new Error("Viewport has an invalid camera attached to it.");
     }
 
