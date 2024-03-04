@@ -85,6 +85,11 @@ export class Entity {
   /**
    *
    */
+  onCreate() {}
+
+  /**
+   *
+   */
   onUpdate({ elapsed_time }: { elapsed_time: number }) {}
 
   /**

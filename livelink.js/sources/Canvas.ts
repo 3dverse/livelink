@@ -1,5 +1,6 @@
 import type { Vec2, Vec2i } from "livelink.core";
 import { Viewport } from "./Viewport";
+import { LiveLink } from "./LiveLink";
 
 /**
  * To implement this we need to extract frame blitting from the decoder
@@ -51,7 +52,7 @@ export class Canvas extends EventTarget {
    */
   private _observer: ResizeObserver = new ResizeObserver((e) =>
     // Cannot pass this._onResized directly as it fails to properly capture
-    // this once in the callback.
+    // 'this' once in the callback.
     this._onResized(e)
   );
   /**
@@ -115,13 +116,16 @@ export class Canvas extends EventTarget {
    *
    * @throws {InvalidCanvasId} Thrown when the provided id doesn't refer to a canvas element.
    */
-  constructor({
-    canvas_element_id,
-    size_fitter = { mode: "fit-to-size", value: "closest" },
-  }: {
-    canvas_element_id: string;
-    size_fitter?: RemoteCanvasSizeFitter;
-  }) {
+  constructor(
+    private readonly _core: LiveLink,
+    {
+      canvas_element_id,
+      size_fitter = { mode: "fit-to-size", value: "closest" },
+    }: {
+      canvas_element_id: string;
+      size_fitter?: RemoteCanvasSizeFitter;
+    }
+  ) {
     super();
 
     const canvas = document.getElementById(canvas_element_id);
@@ -151,6 +155,9 @@ export class Canvas extends EventTarget {
    */
   async init(): Promise<Canvas> {
     await this._resized_promise;
+    // After the first resize, install the actual resize handler.
+    this._sendResizeCommand = () =>
+      this._core.resize({ size: this.remote_canvas_size });
     return this;
   }
 
@@ -160,9 +167,32 @@ export class Canvas extends EventTarget {
    * @param viewport The viewport to attach to the canvas
    */
   attachViewport({ viewport }: { viewport: Viewport }): void {
+    for (const v of this._viewports) {
+      if (viewport.camera?.rtid === v.camera?.rtid) {
+        throw new Error(
+          "Cannot reference the same camera in different viewports"
+        );
+      }
+    }
+
     this._viewports.push(viewport);
+    // Viewports with a higher z-index should appear first to prioritize
+    // consuming click events.
+    this.viewports.sort((a: Viewport, b: Viewport) => {
+      return a.z_index == b.z_index ? 0 : a.z_index < b.z_index ? -1 : 1;
+    });
     viewport._onAttachedToCanvas({ canvas: this });
+
+    // Send the command to the renderer.
+    console.log("VP", this._viewports);
+    this._core.setViewports({ viewports: this._viewports });
   }
+
+  /**
+   * This function will be overwritten after the first resize event that
+   * initializes the actual size of the canvas.
+   */
+  private _sendResizeCommand() {}
 
   /**
    * Callback called by the observer when the canvas is resized.
@@ -180,11 +210,12 @@ export class Canvas extends EventTarget {
 
       this._updateCanvasSize();
 
+      this._sendResizeCommand();
+
       // Resolve the init promise.
       this._resized_promise_resolver!();
 
       const new_size: Vec2 = [this._canvas.width, this._canvas.height];
-
       super.dispatchEvent(
         new CustomEvent("on-resized", { detail: { old_size, new_size } })
       );
@@ -199,14 +230,18 @@ export class Canvas extends EventTarget {
    *
    */
   private _onClicked = (e: MouseEvent) => {
-    const absolute_pos = [e.offsetX, e.offsetY];
-    const relative_pos = [
+    const absolute_pos: Vec2 = [e.offsetX, e.offsetY];
+    const relative_pos: Vec2 = [
       absolute_pos[0] / this._remote_canvas_size[0],
       absolute_pos[1] / this._remote_canvas_size[1],
     ];
-    super.dispatchEvent(
-      new CustomEvent("on-clicked", { detail: { absolute_pos, relative_pos } })
-    );
+
+    for (const viewport of this._viewports) {
+      if (viewport.isPointInside({ point: relative_pos })) {
+        viewport._onClicked({ absolute_pos, relative_pos });
+        break;
+      }
+    }
   };
 
   /**
@@ -216,6 +251,7 @@ export class Canvas extends EventTarget {
     const next_multiple_of_8 = (n: number) =>
       Math.floor(n) + (Math.floor(n) % 8 === 0 ? 0 : 8 - (Math.floor(n) % 8));
 
+    //TODO: apply size fitter logic here
     this._canvas.width = this._dimensions[0];
     this._canvas.height = this._dimensions[1];
     this._remote_canvas_size[0] = next_multiple_of_8(this._dimensions[0]);

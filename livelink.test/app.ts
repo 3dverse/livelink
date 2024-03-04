@@ -1,34 +1,6 @@
-import { ClientConfig, Entity, UUID } from "@livelink.core";
-import {
-  Camera,
-  Canvas,
-  LiveLink,
-  Viewport,
-  WebCodecsDecoder,
-} from "livelink.js";
-
-export class MyCamera extends Camera {
-  /**
-   *
-   */
-  async setup() {
-    this.local_transform = { position: [0, 1, 5] };
-    this.camera = {
-      renderGraphRef: "398ee642-030a-45e7-95df-7147f6c43392",
-      dataJSON: { grid: true, skybox: false, gradient: true },
-    };
-    this.perspective_lens = {};
-
-    await this.instantiate();
-  }
-
-  /**
-   *
-   */
-  onUpdate({ elapsed_time }: { elapsed_time: number }) {
-    this.local_transform!.position![1] = 1 + Math.sin(elapsed_time);
-  }
-}
+import { ClientConfig, UUID } from "@livelink.core";
+import { Canvas, LiveLink, Viewport, WebCodecsDecoder } from "livelink.js";
+import { MyCamera } from "./MyCamera";
 
 /**
  *
@@ -37,7 +9,7 @@ class ControlPanel {
   private _instance: LiveLink | null = null;
   private _canvas: Canvas | null = null;
   private _camera: MyCamera | null = null;
-  private _animation_interval: number = 0;
+  private _viewport: Viewport | null = null;
 
   /**
    *
@@ -82,18 +54,16 @@ class ControlPanel {
    *
    */
   private async _configureClient() {
-    this._canvas = await new Canvas({
+    this._canvas = await new Canvas(this._instance!, {
       canvas_element_id: "display-canvas-" + this.id,
     }).init();
-
-    this._canvas!.addEventListener("on-resized", this._onCanvasResized);
 
     const client_config: ClientConfig = {
       remote_canvas_size: this._canvas.remote_canvas_size,
       encoder_config: {
         codec: 2,
         profile: 1,
-        frame_rate: 30,
+        frame_rate: 60,
         lossy: true,
       },
       supported_devices: {
@@ -112,32 +82,19 @@ class ControlPanel {
 
     // Step 1': get or create a camera to render frames (not dependent on
     //          anything)
-    this._camera = await this._getCamera();
-    if (this._camera === null) {
-      await this._createCamera();
-    }
+    this._camera = (await this._getCamera()) ?? (await this._createCamera());
 
-    // Step 2: create a local decoder
-    await this._instance!.configureDecoder(WebCodecsDecoder, {
-      frame_size: this._canvas.remote_canvas_size,
-      canvas_context: this._canvas.html_element.getContext("2d")!,
+    // Step 2: decode received frames and draw them on the canvas.
+    await this._instance!.installFrameConsumer({
+      frame_consumer: new WebCodecsDecoder(this._canvas),
     });
 
     // Step 3: setup the renderer to use the camera on a full canvas viewport.
-    this._canvas!.attachViewport({
-      viewport: new Viewport({ camera: this._camera! }),
-    });
-    this._instance!.setViewports({ viewports: this._canvas.viewports });
+    this._viewport = new Viewport({ camera: this._camera });
+    this._canvas.attachViewport({ viewport: this._viewport });
     this._instance!.resume();
-    this._canvas!.addEventListener("on-clicked", this._onClick);
+    this._viewport.addEventListener("on-clicked", this._onClick);
   }
-
-  /**
-   *
-   */
-  private _onCanvasResized = (_: Event) => {
-    this._instance!.resize({ size: this._canvas!.remote_canvas_size });
-  };
 
   /**
    *
@@ -150,10 +107,8 @@ class ControlPanel {
   /**
    *
    */
-  private async _createCamera() {
-    this._camera = this._instance!.newEntity(MyCamera, "MyCam");
-    await this._camera.setup();
-
+  private async _createCamera(): Promise<MyCamera> {
+    return await this._instance!.newEntity(MyCamera, "MyCam");
     //this._instance!.instantiateEntity({entity:this._camera});
     //this._instance!.instantiateEntities({entities:[this._camera]});
   }
@@ -167,14 +122,8 @@ class ControlPanel {
       this._instance = null;
     }
 
-    if (this._canvas !== null) {
-      this._canvas!.removeEventListener("on-clicked", this._onClick);
-      this._canvas!.removeEventListener("on-resized", this._onCanvasResized);
-    }
-
-    if (this._animation_interval !== 0) {
-      clearInterval(this._animation_interval);
-      this._animation_interval = 0;
+    if (this._viewport !== null) {
+      this._viewport!.removeEventListener("on-clicked", this._onClick);
     }
   }
 

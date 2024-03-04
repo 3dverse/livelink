@@ -106,11 +106,12 @@ export class LiveLink extends LiveLinkCore {
   }
 
   /**
-   *
+   * The codec used by the renderer.
    */
   private _codec: CodecType | null = null;
   /**
-   * Frame consumer designed to handle encoded frames from the remote viewer.
+   * User provided frame consumer designed to handle encoded frames from the
+   * remote viewer.
    */
   private _frame_consumer: EncodedFrameConsumer | null = null;
 
@@ -140,26 +141,17 @@ export class LiveLink extends LiveLinkCore {
   /**
    *
    */
-  async configureDecoder<FrameConsumerType extends EncodedFrameConsumer>(
-    consumer_type: {
-      new (_1: Vec2i, _2: CanvasRenderingContext2D): FrameConsumerType;
-    },
-    {
-      frame_size,
-      canvas_context,
-    }: {
-      frame_size: Vec2i;
-      canvas_context: CanvasRenderingContext2D;
-    }
-  ) {
+  async installFrameConsumer({
+    frame_consumer,
+  }: {
+    frame_consumer: EncodedFrameConsumer;
+  }) {
     if (this._codec === null) {
       throw new Error("Client not configured.");
     }
 
-    this._frame_consumer = await new consumer_type(
-      frame_size,
-      canvas_context
-    ).configure({ codec: this._codec });
+    this._frame_consumer = frame_consumer;
+    this._frame_consumer.configure({ codec: this._codec });
 
     this._gateway.addEventListener("on-frame-received", (e) => {
       const event = e as CustomEvent<FrameData>;
@@ -202,11 +194,15 @@ export class LiveLink extends LiveLinkCore {
   /**
    *
    */
-  newEntity<T extends Entity>(
+  async newEntity<T extends Entity>(
     entity_type: { new (_: LiveLinkCore): T },
     name: string
-  ): T {
-    return new Proxy(new entity_type(this).init(name), Entity.handler) as T;
+  ): Promise<T> {
+    let entity = new entity_type(this).init(name);
+    entity.onCreate();
+    entity = new Proxy(entity, Entity.handler) as T;
+    await entity.instantiate();
+    return entity;
   }
 
   /**

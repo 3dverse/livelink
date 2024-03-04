@@ -1,17 +1,21 @@
 import { Canvas } from "./Canvas";
 import { Camera } from "./Camera";
 import { Rect } from "./utils/Rect";
-import { Point2D } from "./utils/Point2D";
-import { ViewportConfig } from "@livelink.core";
+import { Vec2, ViewportConfig } from "@livelink.core";
 
 /**
  *
  */
-export class Viewport {
+export class Viewport extends EventTarget {
   private _camera: Camera | null = null;
   private _canvas: Canvas | null = null;
   private _relative_rect: Rect;
   private _pixel_rect: Rect | null = null;
+  private _z_index = 0;
+
+  get z_index() {
+    return this._z_index;
+  }
 
   /**
    * @param {object} o
@@ -26,13 +30,17 @@ export class Viewport {
     top = 0,
     width = 1,
     height = 1,
+    z_index = 0,
   }: {
     camera: Camera;
     left?: number;
     top?: number;
     width?: number;
     height?: number;
+    z_index?: number;
   }) {
+    super();
+
     if (left < 0 || left >= 1) {
       throw new Error(`left MUST be in the [0,1[ range, it is ${left}`);
     }
@@ -58,6 +66,7 @@ export class Viewport {
     }
 
     this._relative_rect = { left, top, width, height };
+    this._z_index = z_index;
     this._camera = camera;
   }
 
@@ -67,7 +76,14 @@ export class Viewport {
    * @param point Coordinates in pixels of the point
    * @returns true if the point is inside the viewport, false otherwise
    */
-  isPointInside({ point }: { point: Point2D }): boolean {
+  isPointInside({ point }: { point: Vec2 }): boolean {
+    return (
+      point[0] >= this._relative_rect.left &&
+      point[0] <= this._relative_rect.left + this._relative_rect.width &&
+      point[1] >= this._relative_rect.top &&
+      point[1] <= this._relative_rect.top + this._relative_rect.height
+    );
+    /*
     if (this._pixel_rect === null) {
       return false;
     }
@@ -78,6 +94,7 @@ export class Viewport {
       point.y >= this._pixel_rect.top &&
       point.y <= this._pixel_rect.top + this._pixel_rect.height
     );
+    */
   }
 
   /**
@@ -117,6 +134,29 @@ export class Viewport {
       height: this._relative_rect.height,
       camera_rtid: this._camera.rtid!,
     };
+  }
+
+  /**
+   * @internal
+   */
+  _onClicked({
+    absolute_pos,
+    relative_pos,
+  }: {
+    absolute_pos: Vec2;
+    relative_pos: Vec2;
+  }) {
+    relative_pos[0] =
+      (relative_pos[0] - this._relative_rect.left) / this._relative_rect.width;
+    relative_pos[1] =
+      (relative_pos[1] - this._relative_rect.top) / this._relative_rect.height;
+
+    console.log(relative_pos);
+    this.dispatchEvent(
+      new CustomEvent("on-clicked", {
+        detail: { absolute_pos, relative_pos },
+      })
+    );
   }
 
   /**

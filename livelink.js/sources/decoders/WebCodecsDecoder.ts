@@ -1,3 +1,4 @@
+import { Canvas } from "../Canvas";
 import { EncodedFrameConsumer } from "./EncodedFrameConsumer";
 import { CodecType, Vec2i } from "@livelink.core";
 
@@ -13,15 +14,23 @@ export class WebCodecsDecoder implements EncodedFrameConsumer {
   /**
    *
    */
-  private static _first_frame: boolean = true;
+  private _context: CanvasRenderingContext2D;
 
   /**
    *
    */
-  constructor(
-    private _dimensions: Vec2i,
-    private readonly _canvas_context: CanvasRenderingContext2D
-  ) {}
+  private _first_frame: boolean = true;
+
+  /**
+   *
+   */
+  constructor(private _canvas: Canvas) {
+    const context = this._canvas.html_element.getContext("2d");
+    if (context === null) {
+      throw new Error("Cannot create a 2d context from the provided canvas");
+    }
+    this._context = context;
+  }
 
   /**
    *
@@ -31,16 +40,30 @@ export class WebCodecsDecoder implements EncodedFrameConsumer {
   }: {
     codec: CodecType;
   }): Promise<EncodedFrameConsumer> {
+    let supportedConfig: VideoDecoderSupport | null = null;
+
+    const h264_codecs = ["avc1.42002A"];
+    const h265_codecs = ["hvc1.1.6.L123.00"];
+    const codecs = codec === CodecType.h264 ? h264_codecs : h265_codecs;
     const config: VideoDecoderConfig = {
-      codec: codec === CodecType.h264 ? "avc1.42002A" : "hvc1.1.6.L123.00",
-      codedWidth: this._dimensions[0],
-      codedHeight: this._dimensions[1],
+      codec: "",
+      codedWidth: this._canvas.remote_canvas_size[0],
+      codedHeight: this._canvas.remote_canvas_size[1],
       hardwareAcceleration: "prefer-hardware",
       optimizeForLatency: true,
     };
 
-    const supportedConfig = await VideoDecoder.isConfigSupported(config);
-    if (!supportedConfig.supported || !supportedConfig.config) {
+    for (const hXXX_codec of codecs) {
+      config.codec = hXXX_codec;
+      const supported = await VideoDecoder.isConfigSupported(config);
+
+      if (supported.supported && supported.config) {
+        supportedConfig = supported;
+        break;
+      }
+    }
+
+    if (!supportedConfig || !supportedConfig.config) {
       throw new Error("Codec not supported");
     }
 
@@ -61,7 +84,7 @@ export class WebCodecsDecoder implements EncodedFrameConsumer {
   consumeFrame({ encoded_frame }: { encoded_frame: DataView }) {
     const chunk = new EncodedVideoChunk({
       timestamp: 0,
-      type: WebCodecsDecoder._first_frame ? "key" : "delta",
+      type: this._first_frame ? "key" : "delta",
       data: new Uint8Array(
         encoded_frame.buffer,
         encoded_frame.byteOffset,
@@ -69,7 +92,7 @@ export class WebCodecsDecoder implements EncodedFrameConsumer {
       ),
     });
 
-    WebCodecsDecoder._first_frame = false;
+    this._first_frame = false;
     this._decoder!.decode(chunk);
   }
 
@@ -77,7 +100,7 @@ export class WebCodecsDecoder implements EncodedFrameConsumer {
    *
    */
   private _onFrameDecoded = (decoded_frame: VideoFrame) => {
-    this._canvas_context!.drawImage(decoded_frame, 0, 0);
+    this._context.drawImage(decoded_frame, 0, 0);
     decoded_frame.close();
   };
 }

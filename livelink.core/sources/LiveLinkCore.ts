@@ -54,7 +54,7 @@ export class LiveLinkCore extends EventTarget {
   /**
    *
    */
-  async close() {
+  protected async close() {
     await this.session.close();
     this._gateway.disconnect();
     this._editor.disconnect();
@@ -66,7 +66,7 @@ export class LiveLinkCore extends EventTarget {
   /**
    *
    */
-  async configureClient({
+  protected async configureClient({
     client_config,
   }: {
     client_config: ClientConfig;
@@ -78,7 +78,7 @@ export class LiveLinkCore extends EventTarget {
   /**
    *
    */
-  resize({ size }: { size: Vec2i }) {
+  protected resize({ size }: { size: Vec2i }) {
     this._checkRemoteCanvasSize({ size });
     this._gateway.resize({ size });
   }
