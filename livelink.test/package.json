@@ -10,6 +10,7 @@
   "author": "",
   "license": "ISC",
   "devDependencies": {
+    "@types/wicg-file-system-access": "^2023.10.4",
     "esbuild": "^0.20.1",
     "typescript": "^5.3.3"
   },

@@ -103,4 +103,9 @@ export class WebCodecsDecoder implements EncodedFrameConsumer {
     this._context.drawImage(decoded_frame, 0, 0);
     decoded_frame.close();
   };
+
+  /**
+   *
+   */
+  release() {}
 }

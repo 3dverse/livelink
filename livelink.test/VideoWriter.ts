@@ -1,23 +1,22 @@
 import { CodecType } from "@livelink.core";
 import { EncodedFrameConsumer } from "livelink.js";
-import * as Mp4Muxer from "mp4-muxer";
 
 export class VideoWriter implements EncodedFrameConsumer {
-  //private _muxer: Mp4Muxer.Muxer | null = null;
+  private _file_handle: FileSystemFileHandle | null = null;
+  private _stream: FileSystemWritableFileStream | null = null;
 
-  configure({ codec }: { codec: CodecType }): Promise<VideoWriter> {
-    /*this._muxer = new Mp4Muxer.Muxer({
-      target: new Mp4Muxer.ArrayBufferTarget(),
-      video: {
-        codec: "avc",
-        width: 100,
-        height: 100,
-      },
-    });*/
-    return Promise.resolve(this);
+  async configure({ codec }: { codec: CodecType }): Promise<VideoWriter> {
+    this._file_handle = await window.showSaveFilePicker();
+    this._stream = await this._file_handle.createWritable();
+    return this;
   }
 
   consumeFrame({ encoded_frame }: { encoded_frame: DataView }): void {
-    throw new Error("Method not implemented.");
+    console.log(`writing ${encoded_frame.byteLength} bytes`);
+    this._stream?.write(encoded_frame.buffer);
+  }
+
+  release() {
+    this._stream?.close();
   }
 }

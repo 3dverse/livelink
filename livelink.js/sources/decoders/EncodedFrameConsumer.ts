@@ -13,4 +13,9 @@ export interface EncodedFrameConsumer {
    *
    */
   consumeFrame({ encoded_frame }: { encoded_frame: DataView }): void;
+
+  /**
+   *
+   */
+  release(): void;
 }

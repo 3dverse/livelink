@@ -126,6 +126,15 @@ export class LiveLink extends LiveLinkCore {
    *
    */
   async close() {
+    if (this._frame_consumer) {
+      this._gateway.removeEventListener(
+        "on-frame-received",
+        this._onFrameReceived
+      );
+
+      this._frame_consumer.release();
+    }
+
     await super.close();
   }
 
@@ -150,16 +159,22 @@ export class LiveLink extends LiveLinkCore {
       throw new Error("Client not configured.");
     }
 
-    this._frame_consumer = frame_consumer;
-    this._frame_consumer.configure({ codec: this._codec });
-
-    this._gateway.addEventListener("on-frame-received", (e) => {
-      const event = e as CustomEvent<FrameData>;
-      this._frame_consumer!.consumeFrame({
-        encoded_frame: event.detail.encoded_frame,
-      });
+    this._frame_consumer = await frame_consumer.configure({
+      codec: this._codec,
     });
+
+    this._gateway.addEventListener("on-frame-received", this._onFrameReceived);
   }
+
+  /**
+   *
+   */
+  private _onFrameReceived = (e: Event) => {
+    const event = e as CustomEvent<FrameData>;
+    this._frame_consumer!.consumeFrame({
+      encoded_frame: event.detail.encoded_frame,
+    });
+  };
 
   /**
    *

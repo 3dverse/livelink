@@ -98,4 +98,9 @@ export class SoftwareDecoder implements EncodedFrameConsumer {
 
     this._canvas_context?.drawImage(this._canvas_buffer, 0, 0);
   };
+
+  /**
+   *
+   */
+  release() {}
 }
