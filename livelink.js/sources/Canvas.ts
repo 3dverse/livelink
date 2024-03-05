@@ -184,7 +184,6 @@ export class Canvas extends EventTarget {
     viewport._onAttachedToCanvas({ canvas: this });
 
     // Send the command to the renderer.
-    console.log("VP", this._viewports);
     this._core.setViewports({ viewports: this._viewports });
   }
 

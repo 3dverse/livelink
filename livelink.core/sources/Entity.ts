@@ -124,7 +124,10 @@ export class Entity {
   _tryMarkingAsDirty(component: string): boolean {
     if (this.isInstantiated()) {
       // Register to appropriate dirty list
-      this._core.addEntityToUpdate({ component, entity: this });
+      this._core.entity_registry._addEntityToUpdate({
+        component,
+        entity: this,
+      });
       return true;
     }
 

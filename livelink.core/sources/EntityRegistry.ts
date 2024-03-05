@@ -1,6 +1,7 @@
 import { RTID } from "./types/common";
 import { Entity } from "./Entity";
 import { LiveLinkCore } from "./LiveLinkCore";
+import { UpdateEntitiesFromJsonMessage } from "../_prebuild/types";
 
 /**
  *
@@ -9,18 +10,31 @@ export class EntityRegistry {
   /**
    *
    */
-  private _entities = new Array<Entity | null>();
+  private _entities = new Set<Entity>();
 
   /**
    *
    */
-  private _entity_lut = new Map<RTID, number>();
+  private _entity_lut = new Map<RTID, Entity>();
+
+  /**
+   *
+   */
+  private _dirty_entities = new Map<string, Set<Entity>>();
+
+  /**
+   *
+   */
   private _elapsed_time = 0;
 
   /**
    *
    */
-  constructor(private readonly _core: LiveLinkCore) {}
+  constructor() {
+    this._dirty_entities.set("local_transform", new Set<Entity>());
+    this._dirty_entities.set("perspective_lens", new Set<Entity>());
+    this._dirty_entities.set("camera", new Set<Entity>());
+  }
 
   /**
    *
@@ -40,8 +54,8 @@ export class EntityRegistry {
       );
     }
 
-    const entityIndex = this._entities.push(entity) - 1;
-    this._entity_lut.set(entityRTID, entityIndex);
+    this._entities.add(entity);
+    this._entity_lut.set(entityRTID, entity);
   }
 
   /**
@@ -54,15 +68,13 @@ export class EntityRegistry {
       );
     }
 
-    const entityIndex = this._entity_lut.get(entity.rtid);
-    if (entityIndex === undefined) {
+    if (!this._entity_lut.delete(entity.rtid)) {
       throw new Error(
         "Trying to remove entity {} which has not been registred to the registry."
       );
     }
 
-    this._entities[entityIndex] = null;
-    this._entity_lut.delete(entity.rtid);
+    this._entities.delete(entity);
   }
 
   /**
@@ -77,7 +89,46 @@ export class EntityRegistry {
   }
 
   /**
-   *
+   * @internal
    */
-  addEntityToUpdate({ entity }: { entity: Entity }) {}
+  _addEntityToUpdate({
+    component,
+    entity,
+  }: {
+    component: string;
+    entity: Entity;
+  }) {
+    this._dirty_entities.get(component).add(entity);
+  }
+
+  /**
+   * @internal
+   */
+  _getEntitiesToUpdate(): UpdateEntitiesFromJsonMessage | null {
+    const updateEntitiesFromJsonMessage = { components: [] };
+
+    for (const [component_name, entities] of this._dirty_entities) {
+      if (entities.size !== 0) {
+        updateEntitiesFromJsonMessage.components =
+          updateEntitiesFromJsonMessage.components ?? [];
+        updateEntitiesFromJsonMessage.components.push({
+          component_name,
+          entities,
+        });
+      }
+    }
+
+    return updateEntitiesFromJsonMessage.components.length > 0
+      ? updateEntitiesFromJsonMessage
+      : null;
+  }
+
+  /**
+   * @internal
+   */
+  _clearDirtyList() {
+    for (const [_, entities] of this._dirty_entities) {
+      entities.clear();
+    }
+  }
 }

@@ -12,59 +12,80 @@ import type {
 } from "../_prebuild/types/index";
 import { Entity } from "./Entity";
 import { EntityRegistry } from "./EntityRegistry";
-import { ComponentHash } from "../_prebuild/types/components";
 
 /**
  * The LiveLinkCore interface.
  *
  * This interface must not be embedded and distributed within applications.
- * Instead, applications should embed the @3dverse/livelink.js library,
- * responsible for importing the current library, @3dverse/livelink.core.js.
- * The @3dverse/livelink.js library is versioned and should refer to a specific
+ * Instead, applications should embed the 3dverse/livelink.js library,
+ * responsible for importing the current library, 3dverse/livelink.core.js.
+ *
+ * The 3dverse/livelink.js library is versioned and should refer to a specific
  * version of the interface, allowing for interface evolution without breaking
  * compatibility with existing applications.
  */
 export class LiveLinkCore extends EventTarget {
   /**
-   *
+   * Registry of entities discovered until now.
+   */
+  public readonly entity_registry = new EntityRegistry();
+
+  /**
+   * Holds access to the gateway.
    */
   protected readonly _gateway = new GatewayController();
 
   /**
-   *
+   * Holds access to the editor.
    */
   protected readonly _editor = new EditorController();
 
   /**
-   *
+   * Interval
    */
-  public readonly entity_registry = new EntityRegistry(this);
+  private _update_interval = 0;
 
   /**
    *
    */
   protected constructor(public readonly session: Session) {
     super();
-
-    this._dirty_entities.set("local_transform", new Set<Entity>());
-    this._dirty_entities.set("perspective_lens", new Set<Entity>());
-    this._dirty_entities.set("camera", new Set<Entity>());
   }
 
   /**
-   *
+   * Connect to the session
+   */
+  protected async _connect(): Promise<LiveLinkCore> {
+    // Retrieve a session key
+    await this.session.registerClient();
+    // Connect to FTL gateway
+    console.debug("Connecting to session...", this.session);
+    const client = await this._gateway.connectToSession({
+      session: this.session,
+    });
+    console.debug("Connected to session as:", client);
+
+    // Connect to the LiveLink Broker
+    await this._editor.connectToSession({ session: this.session, client });
+    return this;
+  }
+
+  /**
+   * Closes the connections to the gateway and the editor.
    */
   protected async close() {
-    await this.session.close();
-    this._gateway.disconnect();
-    this._editor.disconnect();
     if (this._update_interval !== 0) {
       clearInterval(this._update_interval);
     }
+
+    await this.session.close();
+
+    this._editor.disconnect();
+    this._gateway.disconnect();
   }
 
   /**
-   *
+   * Send the configuration requested by the client.
    */
   protected async configureClient({
     client_config,
@@ -81,24 +102,6 @@ export class LiveLinkCore extends EventTarget {
   protected resize({ size }: { size: Vec2i }) {
     this._checkRemoteCanvasSize({ size });
     this._gateway.resize({ size });
-  }
-
-  /**
-   *
-   */
-  protected async _connect(): Promise<LiveLinkCore> {
-    // Generate a client UUID and retrieve a session key
-    await this.session.registerClient();
-    // Connect to FTL gateway
-    console.debug("Connecting to session...", this.session);
-    const client = await this._gateway.connectToSession({
-      session: this.session,
-    });
-    console.debug("Connected to session as:", client);
-
-    // Connect to the LiveLink Broker
-    await this._editor.connectToSession({ session: this.session, client });
-    return this;
   }
 
   /**
@@ -145,44 +148,15 @@ export class LiveLinkCore extends EventTarget {
   /**
    *
    */
-  private _dirty_entities = new Map<string, Set<Entity>>();
-  private _update_interval = 0;
-  addEntityToUpdate({
-    component,
-    entity,
-  }: {
-    component: string;
-    entity: Entity;
-  }) {
-    this._dirty_entities.get(component).add(entity);
-  }
-  /**
-   *
-   */
-  static previous = Date.now();
   startUpdateLoop({ fps }: { fps: number }) {
     this._update_interval = setInterval(() => {
       this.entity_registry.advanceFrame({ dt: 1 / fps });
 
-      const updateEntitiesFromJsonMessage = { components: [] };
-
-      for (const [component_name, entities] of this._dirty_entities) {
-        if (entities.size !== 0) {
-          updateEntitiesFromJsonMessage.components =
-            updateEntitiesFromJsonMessage.components ?? [];
-          updateEntitiesFromJsonMessage.components.push({
-            component_name,
-            entities,
-          });
-        }
-      }
-
-      if (updateEntitiesFromJsonMessage.components.length > 0) {
+      const updateEntitiesFromJsonMessage =
+        this.entity_registry._getEntitiesToUpdate();
+      if (updateEntitiesFromJsonMessage !== null) {
         this._gateway.updateEntities({ updateEntitiesFromJsonMessage });
-      }
-
-      for (const [_, entities] of this._dirty_entities) {
-        entities.clear();
+        this.entity_registry._clearDirtyList();
       }
     }, 1000 / fps);
   }
