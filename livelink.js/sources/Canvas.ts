@@ -75,12 +75,12 @@ export class Canvas extends EventTarget {
   /**
    * Canvas actual dimensions.
    */
-  private _dimensions: Vec2 = [350, 150];
+  private _dimensions: Vec2 = [300, 150];
 
   /**
    * Canvas actual dimensions.
    */
-  private _remote_canvas_size: Vec2 = [350, 150];
+  private _remote_canvas_size: Vec2 = [300, 150];
 
   /**
    * HTML Canvas Element
@@ -168,7 +168,7 @@ export class Canvas extends EventTarget {
    */
   attachViewport({ viewport }: { viewport: Viewport }): void {
     for (const v of this._viewports) {
-      if (viewport.camera?.rtid === v.camera?.rtid) {
+      if (viewport.camera.rtid === v.camera.rtid) {
         throw new Error(
           "Cannot reference the same camera in different viewports"
         );

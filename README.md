@@ -61,3 +61,17 @@ User facing interface with as many helper functions as we want.
 - Add an option to send the depth buffer to allow better composition with WebGL?
 - Do we merge the editor connection and the renderer connection behind a single interface?
 - Use destructured objects as function params?
+
+# Installation
+
+```bash
+cd livelink.core
+npm link
+--
+cd livelink.js
+npm link
+npm link livelink.core
+--
+cd livelink.test
+npm link livelink.js
+```

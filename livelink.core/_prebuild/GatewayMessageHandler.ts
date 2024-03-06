@@ -37,14 +37,11 @@ import {
   serialize_HighlightEntitiesMessage,
   HighlightEntitiesMessage,
   EditorRemoteOperation,
-  serialize_RTID,
-  RTID,
   serialize_UpdateEntitiesFromJsonMessage,
   UpdateEntitiesFromJsonMessage,
   compute_UpdateEntitiesFromJsonMessage_size,
 } from "./types";
 import { GatewayConnection } from "./GatewayConnection";
-import { Entity } from "../sources";
 
 /**
  *

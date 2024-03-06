@@ -25,7 +25,7 @@ import type {
  *
  */
 export class Entity {
-  private euid?: Euid | null = null;
+  private euid: Euid | null = null;
   debug_name?: DebugName;
   lineage?: Lineage;
   scene_ref?: SceneRef;

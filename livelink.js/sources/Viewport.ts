@@ -7,7 +7,7 @@ import { Vec2, ViewportConfig } from "@livelink.core";
  *
  */
 export class Viewport extends EventTarget {
-  private _camera: Camera | null = null;
+  private _camera: Camera;
   private _canvas: Canvas | null = null;
   private _relative_rect: Rect;
   private _pixel_rect: Rect | null = null;

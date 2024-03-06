@@ -1,6 +1,6 @@
 import { Canvas } from "../Canvas";
 import { EncodedFrameConsumer } from "./EncodedFrameConsumer";
-import { CodecType, Vec2i } from "@livelink.core";
+import { CodecType } from "@livelink.core";
 
 /**
  *

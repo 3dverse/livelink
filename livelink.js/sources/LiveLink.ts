@@ -89,7 +89,7 @@ export class LiveLink extends LiveLinkCore {
           sessions = sessions.filter(
             (s) => s.session_id !== session.session_id
           );
-          return session_selector({ sessions });
+          return sessions.length === 0 ? null : session_selector({ sessions });
         },
       });
     }
