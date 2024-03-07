@@ -66,7 +66,15 @@ export class LiveLinkCore extends EventTarget {
     console.debug("Connected to session as:", client);
 
     // Connect to the LiveLink Broker
-    await this._editor.connectToSession({ session: this.session, client });
+    const connectConfirmation = await this._editor.connectToSession({
+      session: this.session,
+      client,
+    });
+
+    this.entity_registry._configureComponentSerializer({
+      component_descriptors: connectConfirmation.components,
+    });
+
     return this;
   }
 

@@ -5,8 +5,7 @@
  */
 
 import { EditorMessageHandler } from "./EditorMessageHandler";
-import { EditorEntity } from "./types";
-import { ConnectConfirmation } from "./types/ConnectConfirmation";
+import { EditorEntity, ConnectConfirmation } from "./types";
 
 /**
  * Holds the connection to the LiveLink Broadcast & Persistence server.

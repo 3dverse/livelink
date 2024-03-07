@@ -1,7 +1,10 @@
+import {
+  ComponentDescriptor,
+  UpdateEntitiesFromJsonMessage,
+} from "../_prebuild/types";
 import { RTID } from "./types/common";
 import { Entity } from "./Entity";
-import { LiveLinkCore } from "./LiveLinkCore";
-import { UpdateEntitiesFromJsonMessage } from "../_prebuild/types";
+import { ComponentSerializer } from "./ComponentSerializer";
 
 /**
  *
@@ -26,6 +29,11 @@ export class EntityRegistry {
    *
    */
   private _elapsed_time = 0;
+
+  /**
+   *
+   */
+  private _serializer: ComponentSerializer | null = null;
 
   /**
    *
@@ -75,6 +83,17 @@ export class EntityRegistry {
     }
 
     this._entities.delete(entity);
+  }
+
+  /**
+   *
+   */
+  _configureComponentSerializer({
+    component_descriptors,
+  }: {
+    component_descriptors: Record<string, ComponentDescriptor>;
+  }) {
+    this._serializer = new ComponentSerializer(component_descriptors);
   }
 
   /**
