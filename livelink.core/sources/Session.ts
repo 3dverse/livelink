@@ -176,10 +176,7 @@ export class Session extends EventTarget {
       endpoint_info: { ip: string; port: number; ssl_port: number };
     };
 
-    //TODO: have the gateways decide whether or not they support secure
-    //      connections.
-    endpoint_info.ssl_port = 0;
-
+    // Gateways that don't support secure connections set their ssL port to 0.
     const protocol = endpoint_info.ssl_port ? "wss" : "ws";
     const port =
       endpoint_info.ssl_port !== 0
