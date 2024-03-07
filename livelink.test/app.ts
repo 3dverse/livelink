@@ -60,8 +60,8 @@ class ControlPanel {
     }).init();
 
     const client_config: ClientConfig = {
-      remote_canvas_size: this._canvas.remote_canvas_size,
       //remote_canvas_size: [3840, 2160],
+      remote_canvas_size: this._canvas.remote_canvas_size,
       encoder_config: {
         codec: 2,
         profile: 1,

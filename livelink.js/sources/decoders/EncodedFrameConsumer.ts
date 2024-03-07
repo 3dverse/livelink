@@ -1,4 +1,4 @@
-import { CodecType } from "@livelink.core";
+import { CodecType, Vec2i } from "@livelink.core";
 
 /**
  *
@@ -7,12 +7,18 @@ export interface EncodedFrameConsumer {
   /**
    *
    */
-  configure({ codec }: { codec: CodecType }): Promise<EncodedFrameConsumer>;
+  configure({
+    codec,
+    frame_dimensions,
+  }: {
+    codec: CodecType;
+    frame_dimensions: Vec2i;
+  }): Promise<EncodedFrameConsumer>;
 
   /**
    *
    */
-  consumeFrame({ encoded_frame }: { encoded_frame: DataView }): void;
+  consumeEncodedFrame({ encoded_frame }: { encoded_frame: DataView }): void;
 
   /**
    *

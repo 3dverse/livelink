@@ -110,6 +110,10 @@ export class LiveLink extends LiveLinkCore {
    */
   private _codec: CodecType | null = null;
   /**
+   *
+   */
+  private _frame_dimensions: Vec2i | null = null;
+  /**
    * User provided frame consumer designed to handle encoded frames from the
    * remote viewer.
    */
@@ -144,6 +148,7 @@ export class LiveLink extends LiveLinkCore {
   async configureClient({ client_config }: { client_config: ClientConfig }) {
     const res = await super.configureClient({ client_config });
     this._codec = res.codec;
+    this._frame_dimensions = client_config.remote_canvas_size;
     return res;
   }
 
@@ -155,12 +160,13 @@ export class LiveLink extends LiveLinkCore {
   }: {
     frame_consumer: EncodedFrameConsumer;
   }) {
-    if (this._codec === null) {
+    if (this._codec === null || this._frame_dimensions === null) {
       throw new Error("Client not configured.");
     }
 
     this._frame_consumer = await frame_consumer.configure({
       codec: this._codec,
+      frame_dimensions: this._frame_dimensions,
     });
 
     this._gateway.addEventListener("on-frame-received", this._onFrameReceived);
@@ -171,7 +177,7 @@ export class LiveLink extends LiveLinkCore {
    */
   private _onFrameReceived = (e: Event) => {
     const event = e as CustomEvent<FrameData>;
-    this._frame_consumer!.consumeFrame({
+    this._frame_consumer!.consumeEncodedFrame({
       encoded_frame: event.detail.encoded_frame,
     });
   };

@@ -16,7 +16,7 @@ export class SoftwareDecoder implements EncodedFrameConsumer {
   /**
    *
    */
-  private _canvas_buffer: HTMLCanvasElement = document.createElement("canvas");
+  private _offscreen_canvas: OffscreenCanvas | null = null;
   /**
    *
    */
@@ -25,29 +25,34 @@ export class SoftwareDecoder implements EncodedFrameConsumer {
   /**
    *
    */
-  constructor(
-    private _dimensions: Vec2i,
-    private readonly _canvas_context: CanvasRenderingContext2D
-  ) {}
+  constructor(private readonly _canvas_context: CanvasRenderingContext2D) {}
 
   /**
    *
    */
-  configure({ codec }: { codec: CodecType }): Promise<EncodedFrameConsumer> {
+  configure({
+    codec,
+    frame_dimensions,
+  }: {
+    codec: CodecType;
+    frame_dimensions: Vec2i;
+  }): Promise<EncodedFrameConsumer> {
     if (codec !== CodecType.h264) {
       throw new Error("Software decoder supports only h264 encoding");
     }
 
-    this._canvas_buffer.width = this._dimensions[0];
-    this._canvas_buffer.height = this._dimensions[1];
+    this._offscreen_canvas = new OffscreenCanvas(
+      frame_dimensions[0],
+      frame_dimensions[1]
+    );
 
     this._broadway_sw_decoder = new BWDecoder();
     this._broadway_sw_decoder.onPictureDecoded = this._onFrameDecoded;
 
     this._yuv_canvas = new YUVCanvas({
-      canvas: this._canvas_buffer,
-      width: this._dimensions[0],
-      height: this._dimensions[1],
+      canvas: this._offscreen_canvas,
+      width: frame_dimensions[0],
+      height: frame_dimensions[1],
     });
 
     return Promise.resolve(this);
@@ -56,7 +61,7 @@ export class SoftwareDecoder implements EncodedFrameConsumer {
   /**
    *
    */
-  consumeFrame({ encoded_frame }: { encoded_frame: DataView }) {
+  consumeEncodedFrame({ encoded_frame }: { encoded_frame: DataView }) {
     const f = new Uint8Array(
       encoded_frame.buffer,
       encoded_frame.byteOffset,
@@ -96,7 +101,7 @@ export class SoftwareDecoder implements EncodedFrameConsumer {
       uRowCnt,
     });
 
-    this._canvas_context?.drawImage(this._canvas_buffer, 0, 0);
+    this._canvas_context.drawImage(this._offscreen_canvas!, 0, 0);
   };
 
   /**

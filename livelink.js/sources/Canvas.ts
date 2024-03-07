@@ -1,6 +1,7 @@
 import type { Vec2, Vec2i } from "livelink.core";
 import { Viewport } from "./Viewport";
 import { LiveLink } from "./LiveLink";
+import { DecodedFrameConsumer } from "./decoders/DecodedFrameConsumer";
 
 /**
  * To implement this we need to extract frame blitting from the decoder
@@ -33,11 +34,15 @@ type RemoteCanvasSizeFitter =
  * an associated camera.
  * Note that viewports can overlap each others.
  */
-export class Canvas extends EventTarget {
+export class Canvas extends EventTarget implements DecodedFrameConsumer {
   /**
    * HTML canvas on which we display the final composited frame.
    */
   private _canvas: HTMLCanvasElement;
+  /**
+   *
+   */
+  private _context: CanvasRenderingContext2D;
   /**
    * List of viewports.
    */
@@ -139,8 +144,15 @@ export class Canvas extends EventTarget {
         `HTML element with id ${canvas_element_id} is a '${canvas.nodeName}', it MUST be CANVAS`
       );
     }
+    const context = (canvas as HTMLCanvasElement).getContext("2d");
+    if (context === null) {
+      throw new Error(
+        `Cannot create a 2d context from canvas with id ${canvas_element_id}`
+      );
+    }
 
     this._canvas = canvas as HTMLCanvasElement;
+    this._context = context;
     this._size_fitter = size_fitter;
     this._resized_promise = new Promise((resolve) => {
       this._resized_promise_resolver = resolve;
@@ -185,6 +197,13 @@ export class Canvas extends EventTarget {
 
     // Send the command to the renderer.
     this._core.setViewports({ viewports: this._viewports });
+  }
+
+  /**
+   * DecodedFrameConsumer interface
+   */
+  consumeDecodedFrame({ decoded_frame }: { decoded_frame: VideoFrame }): void {
+    this._context.drawImage(decoded_frame, 0, 0);
   }
 
   /**

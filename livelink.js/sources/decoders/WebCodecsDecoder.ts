@@ -1,6 +1,6 @@
-import { Canvas } from "../Canvas";
+import { DecodedFrameConsumer } from "./DecodedFrameConsumer";
 import { EncodedFrameConsumer } from "./EncodedFrameConsumer";
-import { CodecType } from "@livelink.core";
+import { CodecType, Vec2i } from "@livelink.core";
 
 /**
  *
@@ -14,56 +14,29 @@ export class WebCodecsDecoder implements EncodedFrameConsumer {
   /**
    *
    */
-  private _context: CanvasRenderingContext2D;
-
-  /**
-   *
-   */
   private _first_frame: boolean = true;
 
   /**
    *
    */
-  constructor(private _canvas: Canvas) {
-    const context = this._canvas.html_element.getContext("2d");
-    if (context === null) {
-      throw new Error("Cannot create a 2d context from the provided canvas");
-    }
-    this._context = context;
-  }
+  constructor(private _frame_consumer: DecodedFrameConsumer) {}
 
   /**
    *
    */
   async configure({
     codec,
+    frame_dimensions,
   }: {
     codec: CodecType;
+    frame_dimensions: Vec2i;
   }): Promise<EncodedFrameConsumer> {
-    let supportedConfig: VideoDecoderSupport | null = null;
+    const supportedConfig = await this._findSupportedConfig({
+      codec,
+      frame_dimensions,
+    });
 
-    const h264_codecs = ["avc1.42002A"];
-    const h265_codecs = ["hvc1.1.6.L123.00"];
-    const codecs = codec === CodecType.h264 ? h264_codecs : h265_codecs;
-    const config: VideoDecoderConfig = {
-      codec: "",
-      codedWidth: this._canvas.remote_canvas_size[0],
-      codedHeight: this._canvas.remote_canvas_size[1],
-      hardwareAcceleration: "prefer-hardware",
-      optimizeForLatency: true,
-    };
-
-    for (const hXXX_codec of codecs) {
-      config.codec = hXXX_codec;
-      const supported = await VideoDecoder.isConfigSupported(config);
-
-      if (supported.supported && supported.config) {
-        supportedConfig = supported;
-        break;
-      }
-    }
-
-    if (!supportedConfig || !supportedConfig.config) {
+    if (!supportedConfig) {
       throw new Error("Codec not supported");
     }
 
@@ -72,7 +45,7 @@ export class WebCodecsDecoder implements EncodedFrameConsumer {
       error: (e) => console.error(e.message),
     });
 
-    this._decoder.configure(supportedConfig.config);
+    this._decoder.configure(supportedConfig.config!);
     console.log("Codec configured", supportedConfig.config);
 
     return this;
@@ -81,7 +54,40 @@ export class WebCodecsDecoder implements EncodedFrameConsumer {
   /**
    *
    */
-  consumeFrame({ encoded_frame }: { encoded_frame: DataView }) {
+  private async _findSupportedConfig({
+    codec,
+    frame_dimensions,
+  }: {
+    codec: CodecType;
+    frame_dimensions: Vec2i;
+  }): Promise<VideoDecoderSupport | null> {
+    const h264_codecs = ["avc1.42002A"];
+    const h265_codecs = ["hvc1.1.6.L123.00"];
+    const codecs = codec === CodecType.h264 ? h264_codecs : h265_codecs;
+    const config: VideoDecoderConfig = {
+      codec: "",
+      codedWidth: frame_dimensions[0],
+      codedHeight: frame_dimensions[1],
+      hardwareAcceleration: "prefer-hardware",
+      optimizeForLatency: true,
+    };
+
+    for (const hXXX_codec of codecs) {
+      config.codec = hXXX_codec;
+      const supportedConfig = await VideoDecoder.isConfigSupported(config);
+
+      if (supportedConfig.supported && supportedConfig.config) {
+        return supportedConfig;
+      }
+    }
+
+    return null;
+  }
+
+  /**
+   *
+   */
+  consumeEncodedFrame({ encoded_frame }: { encoded_frame: DataView }) {
     const chunk = new EncodedVideoChunk({
       timestamp: 0,
       type: this._first_frame ? "key" : "delta",
@@ -100,7 +106,7 @@ export class WebCodecsDecoder implements EncodedFrameConsumer {
    *
    */
   private _onFrameDecoded = (decoded_frame: VideoFrame) => {
-    this._context.drawImage(decoded_frame, 0, 0);
+    this._frame_consumer.consumeDecodedFrame({ decoded_frame });
     decoded_frame.close();
   };
 
