@@ -5,7 +5,7 @@ import type {
   ClientConfig,
   ClientConfigResponse,
   EditorEntity,
-  HighlightEntitiesMessage as HighlightEntitiesMessage,
+  HighlightEntitiesMessage,
   ScreenSpaceRayQuery,
   ScreenSpaceRayResult,
   Vec2i,

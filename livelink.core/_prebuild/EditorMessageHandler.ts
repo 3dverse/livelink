@@ -1,11 +1,20 @@
 import { ConnectConfirmation } from "./types/ConnectConfirmation";
 import { EditorConnection } from "./EditorConnection";
-import { Entity, UUID } from "../sources";
+import { EditorEntity, Entity, UUID } from "../sources";
+import { MessageHandler } from "../sources/MessageHandler";
+
+/**
+ *
+ */
+type ResolverPayload = {};
 
 /**
  * This follows the LiveLink protocol specifications for the broker messages.
  */
-export abstract class EditorMessageHandler {
+export class EditorMessageHandler extends MessageHandler<
+  string,
+  ResolverPayload
+> {
   /**
    *
    */
@@ -18,6 +27,14 @@ export abstract class EditorMessageHandler {
     this._connection!.send({
       data: JSON.stringify({ type: "spawn-entity", data: entity }),
     });
+
+    return this._makeMessageResolver<Array<EditorEntity>>({
+      channel_id: "create",
+    });
+  }
+
+  on_entities_created(data: Array<EditorEntity>): void {
+    this._getNextMessageResolver({ channel_id: "create" }).resolve(data);
   }
 
   /**
@@ -36,80 +53,163 @@ export abstract class EditorMessageHandler {
     this._connection!.send({
       data: JSON.stringify({ type: "get-entities-by-euid", data: entity_uuid }),
     });
+
+    return this._makeMessageResolver<Array<EditorEntity>>({
+      channel_id: "find-by-euid",
+    });
+  }
+
+  onFindEntitiesByEUID(data: Array<EditorEntity>): void {
+    this._getNextMessageResolver({ channel_id: "find-by-euid" }).resolve(data);
   }
 
   /**
    *
    */
-  abstract onConnectConfirmation({
+  onConnectConfirmation({
     connect_confirmation,
   }: {
     connect_confirmation: ConnectConfirmation;
-  }): void;
+  }): void {
+    this.dispatchEvent(
+      new CustomEvent("connect-confirmation", { detail: connect_confirmation })
+    );
+  }
 
-  abstract onRetrieveChildren(data: any): void;
+  onRetrieveChildren(data: any): void {
+    throw new Error("Method not implemented.");
+  }
 
-  abstract onFindEntitiesWithComponents(data: any): void;
+  onFindEntitiesWithComponents(data: any): void {
+    throw new Error("Method not implemented.");
+  }
 
-  abstract onResolveAncestors(data: any): void;
+  onResolveAncestors(data: any): void {
+    throw new Error("Method not implemented.");
+  }
 
-  abstract onFindEntitiesByNames(data: any): void;
+  onFindEntitiesByNames(data: any): void {
+    throw new Error("Method not implemented.");
+  }
 
-  abstract onFindEntitiesByEUID(data: any): void;
+  onFilterEntities(data: any): void {
+    throw new Error("Method not implemented.");
+  }
 
-  abstract onFilterEntities(data: any): void;
+  onExportEntityToScene(data: any): void {
+    throw new Error("Method not implemented.");
+  }
 
-  abstract onExportEntityToScene(data: any): void;
+  onNextUndoRedo(data: any): void {
+    throw new Error("Method not implemented.");
+  }
 
-  abstract onNextUndoRedo(data: any): void;
+  onClientColor(data: any): void {
+    throw new Error("Method not implemented.");
+  }
 
-  abstract onClientColor(data: any): void;
+  onSceneStatsUpdate(data: any): void {}
 
-  abstract onSceneStatsUpdate(data: any): void;
-
-  abstract onServerError(data: any): void;
+  onServerError(data: any): void {
+    console.error("onServerError:", data);
+  }
 
   // Entity creation event from another user.
-  abstract on_create_entity(data: any): void;
-  abstract on_create_entities(data: any): void;
-  abstract on_restore_entities(data: any): void;
-  abstract on_spawn_entity(data: any): void;
+  on_create_entity(data: any): void {
+    throw new Error("Method not implemented.");
+  }
+  on_create_entities(data: any): void {
+    throw new Error("Method not implemented.");
+  }
+  on_restore_entities(data: any): void {
+    throw new Error("Method not implemented.");
+  }
+  on_spawn_entity(data: any): void {
+    throw new Error("Method not implemented.");
+  }
 
   // Create entity request response
-  abstract on_entities_created(data: any): void;
-  abstract on_entity_reparented(data: any): void;
-  abstract on_entities_deleted(data: any): void;
-  abstract on_animation_sequence_instance_added(data: any): void;
-  abstract on_animation_sequence_instance_updated(data: any): void;
-  abstract on_animation_sequence_instance_removed(data: any): void;
-  abstract on_node_visibility_changed(data: any): void;
+  on_entity_reparented(data: any): void {
+    throw new Error("Method not implemented.");
+  }
+  on_entities_deleted(data: any): void {
+    throw new Error("Method not implemented.");
+  }
+  on_animation_sequence_instance_added(data: any): void {
+    throw new Error("Method not implemented.");
+  }
+  on_animation_sequence_instance_updated(data: any): void {
+    throw new Error("Method not implemented.");
+  }
+  on_animation_sequence_instance_removed(data: any): void {
+    throw new Error("Method not implemented.");
+  }
+  on_node_visibility_changed(data: any): void {
+    throw new Error("Method not implemented.");
+  }
 
-  abstract on_action_error(data: any): void;
+  on_action_error(data: any): void {
+    throw new Error("Method not implemented.");
+  }
 
-  abstract on_attach_components(data: any): void;
-  abstract on_update_components(data: any): void;
+  on_attach_components(data: any): void {
+    throw new Error("Method not implemented.");
+  }
+  on_update_components(data: any): void {
+    throw new Error("Method not implemented.");
+  }
 
-  abstract on_detach_components(data: any): void;
+  on_detach_components(data: any): void {
+    throw new Error("Method not implemented.");
+  }
 
-  abstract on_delete_entities(data: any): void;
+  on_delete_entities(data: any): void {
+    throw new Error("Method not implemented.");
+  }
 
-  abstract on_delete_entities_with_rtid(data: any): void;
+  on_delete_entities_with_rtid(data: any): void {
+    throw new Error("Method not implemented.");
+  }
 
-  abstract on_reparent_entity(data: any): void;
+  on_reparent_entity(data: any): void {
+    throw new Error("Method not implemented.");
+  }
 
-  abstract on_entities_overridden(data: any): void;
+  on_entities_overridden(data: any): void {
+    throw new Error("Method not implemented.");
+  }
 
-  abstract on_update_settings(data: any): void;
+  on_update_settings(data: any): void {
+    throw new Error("Method not implemented.");
+  }
 
-  abstract on_select_entities(data: any): void;
+  on_select_entities(data: any): void {
+    throw new Error("Method not implemented.");
+  }
 
-  abstract on_add_animation_sequence_instance(data: any): void;
+  on_add_animation_sequence_instance(data: any): void {
+    throw new Error("Method not implemented.");
+  }
 
-  abstract on_update_animation_sequence_instance(data: any): void;
+  on_update_animation_sequence_instance(data: any): void {
+    throw new Error("Method not implemented.");
+  }
 
-  abstract on_remove_animation_sequence_instance(data: any): void;
+  on_remove_animation_sequence_instance(data: any): void {
+    throw new Error("Method not implemented.");
+  }
 
-  abstract on_set_node_visibility(data: any): void;
+  on_set_node_visibility(data: any): void {
+    throw new Error("Method not implemented.");
+  }
 
-  abstract onUnhandledMessage(type: string, data: any): void;
+  onUnhandledMessage(type: string, data: any): void {
+    class UnhandledMessage extends Error {
+      constructor(msg: string) {
+        super(msg);
+        super.name = UnhandledMessage.name;
+      }
+    }
+    throw new UnhandledMessage(type);
+  }
 }

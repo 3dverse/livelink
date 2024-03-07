@@ -5,6 +5,7 @@
  */
 
 import { EditorMessageHandler } from "./EditorMessageHandler";
+import { EditorEntity } from "./types";
 import { ConnectConfirmation } from "./types/ConnectConfirmation";
 
 /**
@@ -126,7 +127,7 @@ export class EditorConnection {
         break;
 
       case "get-entities-by-euid":
-        handler.onFindEntitiesByEUID(payload.data);
+        handler.onFindEntitiesByEUID(payload.data as Array<EditorEntity>);
         break;
 
       case "filter-entities":
@@ -155,7 +156,7 @@ export class EditorConnection {
 
       // ACTIONS?
       case "entities-created":
-        handler.on_entities_created(payload.data);
+        handler.on_entities_created(payload.data as Array<EditorEntity>);
         break;
 
       default:

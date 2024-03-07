@@ -1,6 +1,7 @@
 import { ClientConfig, UUID } from "@livelink.core";
 import { Canvas, LiveLink, Viewport, WebCodecsDecoder } from "livelink.js";
 import { MyCamera } from "./MyCamera";
+import { VideoWriter } from "./VideoWriter";
 
 /**
  *
@@ -47,7 +48,7 @@ class ControlPanel {
 
     await this._configureClient();
 
-    this._instance.startUpdateLoop({ fps: 30 });
+    this._instance.startUpdateLoop({ fps: 60 });
   }
 
   /**
@@ -60,6 +61,7 @@ class ControlPanel {
 
     const client_config: ClientConfig = {
       remote_canvas_size: this._canvas.remote_canvas_size,
+      //remote_canvas_size: [3840, 2160],
       encoder_config: {
         codec: 2,
         profile: 1,
@@ -86,12 +88,14 @@ class ControlPanel {
 
     // Step 2: decode received frames and draw them on the canvas.
     await this._instance!.installFrameConsumer({
+      //frame_consumer: new VideoWriter(),
       frame_consumer: new WebCodecsDecoder(this._canvas),
     });
 
     // Step 3: setup the renderer to use the camera on a full canvas viewport.
     this._viewport = new Viewport({ camera: this._camera });
     this._canvas.attachViewport({ viewport: this._viewport });
+    //this._instance!.setViewports({ viewports: [this._viewport] });
     this._instance!.resume();
     this._viewport.addEventListener("on-clicked", this._onClick);
   }
@@ -100,7 +104,8 @@ class ControlPanel {
    *
    */
   private async _getCamera(): Promise<MyCamera | null> {
-    const entity_uuid = "415e4e93-5d60-4ca9-b21f-5fc69b897c3c";
+    //const entity_uuid = "415e4e93-5d60-4ca9-b21f-5fc69b897c3c";
+    const entity_uuid = "f28e67f7-8ba4-4386-9917-dd66ed2c2fcc";
     return await this._instance!.findEntity(MyCamera, { entity_uuid });
   }
 

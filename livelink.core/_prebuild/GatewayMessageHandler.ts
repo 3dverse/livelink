@@ -41,32 +41,29 @@ import {
   UpdateEntitiesFromJsonMessage,
   compute_UpdateEntitiesFromJsonMessage_size,
 } from "./types";
+import { MessageHandler } from "../sources/MessageHandler";
 import { GatewayConnection } from "./GatewayConnection";
 
 /**
  *
  */
-type MessageResolver = {
-  resolve: (u?: any) => void;
-  reject: (reason?: unknown) => void;
-  rop_id?: ClientRemoteOperation;
-  request_id?: number;
+type ResolverPayload = {
+  rop_id: ClientRemoteOperation | EditorRemoteOperation;
+  request_id: number;
 };
 
 /**
  * Message handlers interface.
  * This follows the LiveLink protocol specifications for the gateway messages.
  */
-export class GatewayMessageHandler extends EventTarget {
+export class GatewayMessageHandler extends MessageHandler<
+  ChannelId,
+  ResolverPayload
+> {
   /**
    *
    */
   protected readonly _connection = new GatewayConnection();
-
-  /**
-   *
-   */
-  private readonly _resolvers = new Map<ChannelId, Array<MessageResolver>>();
 
   /**
    *
@@ -77,44 +74,6 @@ export class GatewayMessageHandler extends EventTarget {
    *
    */
   private _client_id: UUID | null = null;
-
-  /**
-   *
-   */
-  private _makeMessageResolver<T>({
-    channel_id,
-    rop_id,
-    request_id,
-  }: {
-    channel_id: ChannelId;
-    rop_id?: ClientRemoteOperation;
-    request_id?: number;
-  }): Promise<T> {
-    return new Promise<T>((resolve, reject) => {
-      this._resolvers.set(channel_id, [
-        ...(this._resolvers.get(channel_id) ?? []),
-        { resolve, reject, rop_id, request_id },
-      ]);
-    });
-  }
-
-  /**
-   *
-   */
-  private _getNextMessageResolver({
-    channel_id,
-  }: {
-    channel_id: ChannelId;
-  }): MessageResolver {
-    const handlers = this._resolvers.get(channel_id);
-    if (!handlers || handlers.length === 0) {
-      throw new Error(
-        `No handler for message on channel ${ChannelId[channel_id]}`
-      );
-    }
-
-    return handlers.shift()!;
-  }
 
   /**
    * Request
@@ -396,8 +355,7 @@ export class GatewayMessageHandler extends EventTarget {
 
     return this._makeMessageResolver<ScreenSpaceRayResult>({
       channel_id: ChannelId.client_remote_operations,
-      rop_id,
-      request_id,
+      payload: { rop_id, request_id },
     });
   }
 
@@ -504,17 +462,17 @@ export class GatewayMessageHandler extends EventTarget {
       channel_id: ChannelId.client_remote_operations,
     })!;
 
-    if (resolver.request_id !== request_id) {
+    if (resolver.payload.request_id !== request_id) {
       throw new Error(
-        `Expected request id ${resolver.request_id}, received ${request_id}`
+        `Expected request id ${resolver.payload.request_id}, received ${request_id}`
       );
     }
 
-    if (resolver.rop_id === undefined) {
+    if (resolver.payload.rop_id === undefined) {
       throw new Error("Resolver has and undefined ROP id");
     }
 
-    switch (resolver.rop_id) {
+    switch (resolver.payload.rop_id) {
       case ClientRemoteOperation.cast_screen_space_ray:
         resolver.resolve(
           deserialize_ScreenSpaceRayResult({ dataView, offset: 0 })
@@ -524,7 +482,7 @@ export class GatewayMessageHandler extends EventTarget {
       default:
         throw new Error(
           `Received a response for a client remote operation on an unhandled ROP channel ${
-            ClientRemoteOperation[resolver.rop_id!]
+            ClientRemoteOperation[resolver.payload.rop_id!]
           }`
         );
     }
