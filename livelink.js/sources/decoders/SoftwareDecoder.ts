@@ -4,6 +4,7 @@ import BWDecoder from "../../external/Decoder.js";
 // @ts-ignore
 import YUVCanvas from "../../external/YUVCanvas.js";
 import { CodecType, Vec2i } from "@livelink.core";
+import { DecodedFrameConsumer } from "./DecodedFrameConsumer";
 
 /**
  *
@@ -25,7 +26,7 @@ export class SoftwareDecoder implements EncodedFrameConsumer {
   /**
    *
    */
-  constructor(private readonly _canvas_context: CanvasRenderingContext2D) {}
+  constructor(private readonly _frame_consumer: DecodedFrameConsumer) {}
 
   /**
    *
@@ -101,7 +102,9 @@ export class SoftwareDecoder implements EncodedFrameConsumer {
       uRowCnt,
     });
 
-    this._canvas_context.drawImage(this._offscreen_canvas!, 0, 0);
+    this._frame_consumer.consumeDecodedFrame({
+      decoded_frame: this._offscreen_canvas! as unknown as VideoFrame,
+    });
   };
 
   /**

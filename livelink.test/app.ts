@@ -1,5 +1,11 @@
 import { ClientConfig, UUID } from "@livelink.core";
-import { Canvas, LiveLink, Viewport, WebCodecsDecoder } from "livelink.js";
+import {
+  Canvas,
+  LiveLink,
+  SoftwareDecoder,
+  Viewport,
+  WebCodecsDecoder,
+} from "livelink.js";
 import { MyCamera } from "./MyCamera";
 import { VideoWriter } from "./VideoWriter";
 
@@ -90,6 +96,7 @@ class ControlPanel {
     await this._instance!.installFrameConsumer({
       //frame_consumer: new VideoWriter(),
       frame_consumer: new WebCodecsDecoder(this._canvas),
+      //frame_consumer: new SoftwareDecoder(this._canvas),
     });
 
     // Step 3: setup the renderer to use the camera on a full canvas viewport.
