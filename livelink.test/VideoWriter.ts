@@ -26,3 +26,8 @@ export class VideoWriter implements EncodedFrameConsumer {
     this._stream?.close();
   }
 }
+
+/**
+ * Re-encode hevc raw file to mp4:
+ * ffmpeg -f hevc -i test.hevc -c copy test.mp4
+ */

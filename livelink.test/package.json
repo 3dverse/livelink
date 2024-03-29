@@ -4,6 +4,8 @@
   "description": "",
   "main": "app.js",
   "scripts": {
+    "build:core": "npm -C ../livelink.core run build && npm run build:js",
+    "build:js": "npm -C ../livelink.js run build && npm run build",
     "build": "node esbuild.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
