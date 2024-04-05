@@ -1,4 +1,4 @@
-import { Camera } from "livelink.js";
+import { Camera } from "@3dverse/livelink.js";
 
 export class MyCamera extends Camera {
   /**

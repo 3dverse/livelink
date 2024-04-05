@@ -1,6 +1,6 @@
 import { DecodedFrameConsumer } from "./DecodedFrameConsumer";
 import { EncodedFrameConsumer } from "./EncodedFrameConsumer";
-import { CodecType, Vec2i } from "@livelink.core";
+import { CodecType, Vec2i } from "@3dverse/livelink.core";
 
 /**
  *

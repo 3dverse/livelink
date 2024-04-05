@@ -1,7 +1,7 @@
 import { Canvas } from "./Canvas";
 import { Camera } from "./Camera";
 import { Rect } from "./utils/Rect";
-import { Vec2, ViewportConfig } from "@livelink.core";
+import { Vec2, ViewportConfig } from "@3dverse/livelink.core";
 
 /**
  *

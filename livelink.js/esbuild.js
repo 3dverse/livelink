@@ -9,10 +9,14 @@ const commonOptions = {
   bundle: true,
   minify: true,
   platform: "neutral",
+  mainFields: ["module", "main"],
+  // TODO: not sure what we want to do here. If platform is neutral then it may
+  // be usable from node or the browser, but for the browser we probably have to
+  // add to the upper "mainFields" option and set the "browser" field into the
+  // package.json. If it's intended to be used only from browser then set the
+  // "platform" option to "browser". see https://esbuild.github.io/api/#main-fields
+  // platform: "browser",
   external: [...Object.keys(pkg.peerDependencies || {})],
-  alias: {
-    "@livelink.core": "http://localhost:3000/livelink.core/dist/index.mjs",
-  },
   sourcemap: true,
 };
 

@@ -1,5 +1,5 @@
-import { CodecType, Vec2i } from "@livelink.core";
-import { EncodedFrameConsumer } from "livelink.js";
+import { CodecType, Vec2i } from "@3dverse/livelink.core";
+import { EncodedFrameConsumer } from "@3dverse/livelink.js";
 
 export class VideoWriter implements EncodedFrameConsumer {
   private _file_handle: FileSystemFileHandle | null = null;

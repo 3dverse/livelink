@@ -3,7 +3,7 @@ import {
   HighlightMode,
   ScreenSpaceRayResult,
   Entity,
-} from "@livelink.core";
+} from "@3dverse/livelink.core";
 
 /**
  *

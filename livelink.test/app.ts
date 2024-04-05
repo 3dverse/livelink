@@ -1,11 +1,11 @@
-import { ClientConfig, UUID } from "@livelink.core";
+import { ClientConfig, UUID } from "@3dverse/livelink.core";
 import {
   Canvas,
   LiveLink,
   SoftwareDecoder,
   Viewport,
   WebCodecsDecoder,
-} from "livelink.js";
+} from "@3dverse/livelink.js";
 import { MyCamera } from "./MyCamera";
 import { VideoWriter } from "./VideoWriter";
 

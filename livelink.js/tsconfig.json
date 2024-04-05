@@ -11,5 +11,9 @@
     "emitDeclarationOnly": true
   },
 
-  "exclude": ["./dist/**/*"]
+  "exclude": [
+    "./dist/**/*",
+    // wip class which doesn't build
+    "./sources/RemoteCanvas.ts"
+  ]
 }

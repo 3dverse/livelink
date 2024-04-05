@@ -1,0 +1,3 @@
+# dist output directories are already ignored by .gitignore
+# ignore changes of public static files which does not require to be built
+*.test/public/

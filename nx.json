@@ -1,0 +1,20 @@
+{
+  "targetDefaults": {
+    "build": {
+      "cache": true,
+      "dependsOn": [
+        "^build"
+      ],
+      "outputs": [
+        "{projectRoot}/dist",
+        "{projectRoot}/public/dist"
+      ]
+    },
+    "test": {
+      "dependsOn": []
+    },
+    "start": {
+      "dependsOn": []
+    }
+  }
+}

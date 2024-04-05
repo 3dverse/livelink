@@ -1,4 +1,16 @@
-﻿node_modules
-_build
+﻿# npm
+node_modules
+*.tgz
+
+# esbuild
 dist
+
+# vscode
 .vscode
+
+# lerna/nx
+.nx/cache
+lerna-debug.log
+
+# asyncapi-generator?
+_build

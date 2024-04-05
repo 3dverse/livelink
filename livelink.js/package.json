@@ -1,20 +1,21 @@
 {
-  "name": "livelink.js",
+  "name": "@3dverse/livelink.js",
   "version": "1.0.0",
   "description": "",
+  "files": [
+    "dist",
+    "sources"
+  ],
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
   "typings": "./dist/index.d.ts",
   "scripts": {
-    "build:core": "npm -C ../livelink.core run build && npm run build",
     "build": "node esbuild.js && tsc",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",
   "license": "ISC",
   "devDependencies": {
-    "esbuild": "^0.20.1",
-    "livelink.core": "file:../livelink.core",
-    "typescript": "^5.3.3"
+    "@3dverse/livelink.core": "file:../livelink.core"
   }
 }

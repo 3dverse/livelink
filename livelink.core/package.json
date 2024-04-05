@@ -1,7 +1,11 @@
 {
-  "name": "livelink.core",
+  "name": "@3dverse/livelink.core",
   "version": "1.0.0",
   "description": "",
+  "files": [
+    "dist",
+    "sources"
+  ],
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
   "typings": "./dist/sources/index.d.ts",
@@ -18,8 +22,5 @@
     "url": "https://github.com/3dverse/livelink/issues"
   },
   "homepage": "https://github.com/3dverse/livelink#readme",
-  "devDependencies": {
-    "esbuild": "^0.20.1",
-    "typescript": "^5.3.3"
-  }
+  "devDependencies": {}
 }

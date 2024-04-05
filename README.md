@@ -1,4 +1,7 @@
 # LiveLink protocol v1.0
+[![asyncapi](https://img.shields.io/badge/based%20on-asyncapi-975bf1)](https://github.com/asyncapi)
+[![esbuild](https://img.shields.io/badge/built%20with-esbuild-ffcf00)](https://github.com/evanw/esbuild)
+[![lerna](https://img.shields.io/badge/managed%20with-lerna-c084fc)](https://github.com/lerna/lerna)
 
 ## Spec-first development
 
@@ -62,16 +65,38 @@ User facing interface with as many helper functions as we want.
 - Do we merge the editor connection and the renderer connection behind a single interface?
 - Use destructured objects as function params?
 
-# Installation
+# Getting Started
 
 ```bash
-cd livelink.core
-npm link
---
-cd livelink.js
-npm link
-npm link livelink.core
---
-cd livelink.test
-npm link livelink.js
+npm i
+# -- run lerna build packages
+npm run build
+# -- or
+# -- run lerna build packages & watch
+npm run dev
+# -- serve the livelink.test
+npm start
 ```
+There's no live-reload of the browser so the page needs to be refreshed after
+the build is achieved by `npm run dev` each time a package file changes.
+
+# Test packages to publish
+Copy the [./livelink.test](./livelink.test) folder to test the 
+[@3dverse/livelink.core](./livelink.core) and [@3dverse/livelink.js](./livelink.js) 
+packages. For example, copy it to `../test.livelink`. Then remove the 
+`"@3dverse/livelink.js": "file:../livelink.js"` from the `dependencies` inside
+the `../test.livelink/package.json`.
+
+To pack and install the packages to `../test.livelink`:
+```bash
+npm run pack
+# copy the generated *.tgz packages to ../test.livelink
+cd ../test.livelink
+npm install *.tgz
+```
+Then run the demo to verify it runs as expected:
+```bash
+npm run build
+npm start
+```
+

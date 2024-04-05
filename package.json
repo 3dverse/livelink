@@ -1,0 +1,25 @@
+{
+  "name": "@3dverse/livelink",
+  "version": "1.0.0",
+  "description": "## The 3dverse livelink SDK",
+  "scripts": {
+    "build": "lerna run build",
+    "dev": "lerna run build && lerna watch -- lerna run build",
+    "build-asyncapi": "npm run -C ./asyncapi-generator build",
+    "start": "npm run -C ./livelink.test start",
+    "pack": "npm pack --workspace livelink.core --workspace livelink.js"
+  },
+  "author": "",
+  "license": "ISC",
+  "workspaces": [
+    "livelink.core",
+    "livelink.js",
+    "livelink.test"
+  ],
+  "dependencies": {},
+  "devDependencies": {
+    "lerna": "^8.1.2",
+    "esbuild": "^0.20.2",
+    "typescript": "^5.4.4"
+  }
+}

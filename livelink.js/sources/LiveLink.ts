@@ -9,7 +9,7 @@ import {
   FrameData,
   CodecType,
   Entity,
-} from "@livelink.core";
+} from "@3dverse/livelink.core";
 
 import type { EncodedFrameConsumer } from "./decoders/EncodedFrameConsumer";
 import { Viewport } from "./Viewport";
