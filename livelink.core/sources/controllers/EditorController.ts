@@ -5,7 +5,7 @@ import { Session } from "../Session.js";
 import { Client } from "../Client.js";
 
 //const livelink_base_url = "wss://livelink.3dverse.com";
-const livelink_base_url = "wss://editor-backend.3dverse.dev";
+const livelink_base_url = "wss://api.3dverse.dev/editor-backend";
 
 /**
  *
