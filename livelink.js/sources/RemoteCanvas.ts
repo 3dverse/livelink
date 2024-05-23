@@ -25,6 +25,11 @@ export class RemoteCanvas extends EventTarget implements DecodedFrameConsumer {
   /**
    *
    */
+  #core: LiveLink;
+
+  /**
+   *
+   */
   get viewports() {
     return this._viewports;
   }
@@ -32,8 +37,9 @@ export class RemoteCanvas extends EventTarget implements DecodedFrameConsumer {
   /**
    *
    */
-  constructor(private readonly _core: LiveLink) {
+  constructor(core: LiveLink) {
     super();
+    this.#core = core;
   }
 
   /**
@@ -60,7 +66,7 @@ export class RemoteCanvas extends EventTarget implements DecodedFrameConsumer {
     this._computeCanvasSize();
 
     // Send the command to the renderer.
-    this._core.setViewports({ viewports: this._viewports });
+    this.#core.setViewports({ viewports: this._viewports });
   }
 
   /**

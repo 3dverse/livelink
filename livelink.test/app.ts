@@ -6,7 +6,7 @@ import {
   Viewport,
   WebCodecsDecoder,
 } from "livelink.js";
-import { MyCamera } from "./MyCamera";
+import { MyCamera, MyTrigger } from "./EntityDefs";
 import { VideoWriter } from "./VideoWriter";
 
 /**
@@ -146,11 +146,16 @@ class ControlPanel {
     const e = ev as CustomEvent;
 
     console.log("Picking", e.detail.relative_pos);
-    const res = await this._camera!.castScreenSpaceRay({
+    const res = await this._canvas!.castScreenSpaceRay({
       pos: e.detail.relative_pos,
       mode: 2,
     });
+
     console.log(res);
+
+    if (!res) {
+      return;
+    }
 
     this._instance!.highlightEntities({
       highlightEntitiesMessage: {

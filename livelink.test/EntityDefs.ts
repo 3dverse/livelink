@@ -1,9 +1,9 @@
-import { Camera } from "livelink.js";
+import { Camera, Entity } from "livelink.js";
 
+/**
+ *
+ */
 export class MyCamera extends Camera {
-  /**
-   *
-   */
   onCreate() {
     this.local_transform = { position: [0, 1, 5] };
     this.camera = {
@@ -13,10 +13,20 @@ export class MyCamera extends Camera {
     this.perspective_lens = {};
   }
 
-  /**
-   *
-   */
   onUpdate({ elapsed_time }: { elapsed_time: number }) {
     this.local_transform!.position![1] = 1 + Math.sin(elapsed_time);
+  }
+}
+
+/**
+ *
+ */
+export class MyTrigger extends Entity {
+  onTriggerEntered(): void {
+    console.log("ENTERED", this);
+  }
+
+  onTriggerExited(): void {
+    console.log("EXITED", this);
   }
 }

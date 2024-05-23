@@ -1,4 +1,9 @@
-import type { Vec2, Vec2i } from "livelink.core";
+import {
+  HighlightMode,
+  ScreenSpaceRayResult,
+  type Vec2,
+  type Vec2i,
+} from "@livelink.core";
 import { Viewport } from "./Viewport";
 import { LiveLink } from "./LiveLink";
 import { DecodedFrameConsumer } from "./decoders/DecodedFrameConsumer";
@@ -35,6 +40,11 @@ type RemoteCanvasSizeFitter =
  * Note that viewports can overlap each others.
  */
 export class Canvas extends EventTarget implements DecodedFrameConsumer {
+  /**
+   * The LiveLink core used to send commands.
+   */
+  #core: LiveLink;
+
   /**
    * HTML canvas on which we display the final composited frame.
    */
@@ -122,7 +132,7 @@ export class Canvas extends EventTarget implements DecodedFrameConsumer {
    * @throws {InvalidCanvasId} Thrown when the provided id doesn't refer to a canvas element.
    */
   constructor(
-    private readonly _core: LiveLink,
+    core: LiveLink,
     {
       canvas_element_id,
       size_fitter = { mode: "fit-to-size", value: "closest" },
@@ -132,6 +142,7 @@ export class Canvas extends EventTarget implements DecodedFrameConsumer {
     }
   ) {
     super();
+    this.#core = core;
 
     const canvas = document.getElementById(canvas_element_id);
 
@@ -169,7 +180,7 @@ export class Canvas extends EventTarget implements DecodedFrameConsumer {
     await this._resized_promise;
     // After the first resize, install the actual resize handler.
     this._sendResizeCommand = () =>
-      this._core.resize({ size: this.remote_canvas_size });
+      this.#core.resize({ size: this.remote_canvas_size });
     return this;
   }
 
@@ -196,7 +207,7 @@ export class Canvas extends EventTarget implements DecodedFrameConsumer {
     viewport._onAttachedToCanvas({ canvas: this });
 
     // Send the command to the renderer.
-    this._core.setViewports({ viewports: this._viewports });
+    this.#core.setViewports({ viewports: this._viewports });
   }
 
   /**
@@ -204,6 +215,30 @@ export class Canvas extends EventTarget implements DecodedFrameConsumer {
    */
   consumeDecodedFrame({ decoded_frame }: { decoded_frame: VideoFrame }): void {
     this._context.drawImage(decoded_frame, 0, 0);
+  }
+
+  /**
+   *
+   */
+  async castScreenSpaceRay({
+    pos,
+    mode = HighlightMode.None,
+  }: {
+    pos: Vec2;
+    mode: HighlightMode;
+  }): Promise<ScreenSpaceRayResult | null> {
+    for (const viewport of this._viewports) {
+      if (viewport.isPointInside({ point: pos })) {
+        return await this.#core!.castScreenSpaceRay({
+          screenSpaceRayQuery: {
+            camera_rtid: viewport.camera.rtid!,
+            pos,
+            mode,
+          },
+        });
+      }
+    }
+    return null;
   }
 
   /**
