@@ -67,17 +67,20 @@ export class RemoteCanvas extends EventTarget implements DecodedFrameConsumer {
    * DecodedFrameConsumer interface
    */
   consumeDecodedFrame({ decoded_frame }: { decoded_frame: VideoFrame }): void {
+    /*
     let left = 0;
     for (const viewport of this._viewports) {
       viewport.consumeDecodedFrame({ decoded_frame, left });
       left += viewport.width;
     }
+    */
   }
 
   /**
    *
    */
   private _computeCanvasSize() {
+    /*
     const next_multiple_of_8 = (n: number) =>
       Math.floor(n) + (Math.floor(n) % 8 === 0 ? 0 : 8 - (Math.floor(n) % 8));
 
@@ -87,5 +90,6 @@ export class RemoteCanvas extends EventTarget implements DecodedFrameConsumer {
       width += viewport.width;
       height = Math.max(height, viewport.height);
     }
+    */
   }
 }
