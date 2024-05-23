@@ -131,11 +131,11 @@ export class Entity {
   /**
    *
    */
-  _tryMarkingAsDirty(component: string): boolean {
+  _tryMarkingAsDirty({ component_name }: { component_name: string }): boolean {
     if (this.isInstantiated()) {
       // Register to appropriate dirty list
       this._core.entity_registry._addEntityToUpdate({
-        component,
+        component_name,
         entity: this,
       });
       return true;
@@ -178,7 +178,7 @@ export class Entity {
     set(entity: Entity, prop: PropertyKey, v: any): boolean {
       if (prop[0] !== "_") {
         //console.log("SET COMPONENT", prop, v);
-        entity._tryMarkingAsDirty(prop as string);
+        entity._tryMarkingAsDirty({ component_name: prop as string });
       }
       return Reflect.set(entity, prop, v);
     },
@@ -217,7 +217,7 @@ class ComponentHandler {
 
   set(component: object, prop: PropertyKey, v: any): boolean {
     //console.log("SET ATTRIBUTE", prop, v);
-    this._entity._tryMarkingAsDirty(this._component_name);
+    this._entity._tryMarkingAsDirty({ component_name: this._component_name });
     return Reflect.set(component, prop, v);
   }
 

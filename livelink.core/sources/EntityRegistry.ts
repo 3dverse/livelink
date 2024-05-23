@@ -38,15 +38,6 @@ export class EntityRegistry {
   /**
    *
    */
-  constructor() {
-    this._dirty_entities.set("local_transform", new Set<Entity>());
-    this._dirty_entities.set("perspective_lens", new Set<Entity>());
-    this._dirty_entities.set("camera", new Set<Entity>());
-  }
-
-  /**
-   *
-   */
   add({ entity }: { entity: Entity }): void {
     if (!entity.rtid) {
       throw new Error(
@@ -101,6 +92,10 @@ export class EntityRegistry {
     component_descriptors: Record<string, ComponentDescriptor>;
   }) {
     this._serializer = new ComponentSerializer(component_descriptors);
+
+    for (const component_name of this._serializer.component_names) {
+      this._dirty_entities.set(component_name, new Set<Entity>());
+    }
   }
 
   /**
@@ -118,35 +113,28 @@ export class EntityRegistry {
    * @internal
    */
   _addEntityToUpdate({
-    component,
+    component_name,
     entity,
   }: {
-    component: string;
+    component_name: string;
     entity: Entity;
   }) {
-    this._dirty_entities.get(component).add(entity);
+    this._dirty_entities.get(component_name).add(entity);
   }
 
   /**
    * @internal
    */
   _getEntitiesToUpdate(): UpdateEntitiesFromJsonMessage | null {
-    const updateEntitiesFromJsonMessage = { components: [] };
+    const msg = { components: [] };
 
     for (const [component_name, entities] of this._dirty_entities) {
       if (entities.size !== 0) {
-        updateEntitiesFromJsonMessage.components =
-          updateEntitiesFromJsonMessage.components ?? [];
-        updateEntitiesFromJsonMessage.components.push({
-          component_name,
-          entities,
-        });
+        msg.components.push({ component_name, entities });
       }
     }
 
-    return updateEntitiesFromJsonMessage.components.length > 0
-      ? updateEntitiesFromJsonMessage
-      : null;
+    return msg.components.length > 0 ? msg : null;
   }
 
   /**
