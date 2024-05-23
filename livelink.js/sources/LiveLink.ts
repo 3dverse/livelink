@@ -9,6 +9,7 @@ import {
   FrameData,
   CodecType,
   Entity,
+  ScriptEvent,
 } from "@livelink.core";
 
 import type { EncodedFrameConsumer } from "./decoders/EncodedFrameConsumer";
@@ -124,6 +125,10 @@ export class LiveLink extends LiveLinkCore {
    */
   private constructor(public readonly session: Session) {
     super(session);
+    this._gateway.addEventListener(
+      "on-script-event-received",
+      this._onScriptEventReceived
+    );
   }
 
   /**
@@ -253,4 +258,29 @@ export class LiveLink extends LiveLinkCore {
     this.entity_registry.add({ entity });
     return entity;
   }
+
+  /**
+   *
+   */
+  private _onScriptEventReceived = (e: Event) => {
+    const event = (e as CustomEvent<ScriptEvent>).detail;
+
+    const entity = this.entity_registry.get({
+      entity_rtid: event.emitter_rtid,
+    });
+
+    if (!entity) {
+      return;
+    }
+
+    switch (event.event_name) {
+      case "7a8cc05e-8659-4b23-99d1-1352d13e2020/enter_trigger":
+        entity.onTriggerEntered();
+        break;
+
+      case "7a8cc05e-8659-4b23-99d1-1352d13e2020/exit_trigger":
+        entity.onTriggerExited();
+        break;
+    }
+  };
 }

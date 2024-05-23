@@ -47,7 +47,7 @@ export class EntityRegistry {
   /**
    *
    */
-  add({ entity }: { entity: Entity }) {
+  add({ entity }: { entity: Entity }): void {
     if (!entity.rtid) {
       throw new Error(
         "Trying to add an entity without a EUID to the registry."
@@ -69,7 +69,7 @@ export class EntityRegistry {
   /**
    *
    */
-  remove({ entity }: { entity: Entity }) {
+  remove({ entity }: { entity: Entity }): void {
     if (!entity.rtid) {
       throw new Error(
         "Trying to remove an entity without a EUID from the registry."
@@ -83,6 +83,13 @@ export class EntityRegistry {
     }
 
     this._entities.delete(entity);
+  }
+
+  /**
+   *
+   */
+  get({ entity_rtid }: { entity_rtid: RTID }): Entity | null {
+    return this._entity_lut.get(entity_rtid) ?? null;
   }
 
   /**

@@ -95,6 +95,16 @@ export class Entity {
   /**
    *
    */
+  onTriggerEntered() {}
+
+  /**
+   *
+   */
+  onTriggerExited() {}
+
+  /**
+   *
+   */
   async instantiate() {
     if (this.isInstantiated()) {
       throw new Error("Entity is already instantiated");

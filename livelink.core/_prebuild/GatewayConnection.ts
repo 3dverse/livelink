@@ -27,7 +27,7 @@ import { ChannelId, deserialize_UUID } from "./types/index";
  *                     └─────────┴──────────────┘
  *
  * Responsibilities of this class are threefold:
- *  - Open, maintain, and handle any error in the connection to the gateway
+ *  - Open, maintain, and handle any error in the connection to the gateway.
  *
  *  - Apply the authentication protocol when the first message is received.
  *    Note that initiating the authentication doesn't fall under this class's
@@ -174,8 +174,11 @@ export class GatewayConnection {
         handler._on_pulseHeartbeat_response();
         break;
 
-      case ChannelId.audio_stream:
       case ChannelId.broadcast_script_events:
+        handler._onScriptEventReceived({ dataView });
+        break;
+
+      case ChannelId.audio_stream:
       case ChannelId.asset_loading_events:
       case ChannelId.gpu_memory_profiler:
         break;

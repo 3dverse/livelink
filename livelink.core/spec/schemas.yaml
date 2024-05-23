@@ -34,6 +34,15 @@ Vec3:
   minItems: 3
   maxItems: 3
 
+Quaternion:
+  title: Quaternion
+  type: array
+  items:
+    type: number
+    format: float32
+  minItems: 4
+  maxItems: 4
+
 Mat4x4:
   title: Mat4x4
   type: array
@@ -55,8 +64,15 @@ EntityList:
 Component:
   type: object
   properties:
-    a:
-      type: integer
+    local_transform:
+      type: object
+      properties:
+        position:
+          $ref: "#/Vec3"
+        orientation:
+          $ref: "#/Quaternion"
+        scale:
+          $ref: "#/Vec3"
 
 Entity:
   type: array
@@ -337,3 +353,19 @@ InputState:
     data:
       type: string
       format: binary
+
+ScriptEvent:
+  title: ScriptEvent
+  type: object
+  properties:
+    emitter_rtid:
+      title: The entity that emitted the event
+      $ref: "#/RTID"
+    event_name:
+      type: string
+    entity_rtids:
+      type: array
+      items:
+        $ref: "#/RTID"
+    data_object:
+      type: object

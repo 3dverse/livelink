@@ -95,3 +95,11 @@ create_entity:
   payload:
     description: Entity to create
     $ref: "./schemas.yaml#/Entity"
+
+#-----------------------------------------------------------------------------
+# SCRIPT EVENTS
+#-----------------------------------------------------------------------------
+on_script_event_received:
+  contentType: application/octet-stream
+  payload:
+    $ref: "./schemas.yaml#/ScriptEvent"

@@ -40,6 +40,7 @@ import {
   serialize_UpdateEntitiesFromJsonMessage,
   UpdateEntitiesFromJsonMessage,
   compute_UpdateEntitiesFromJsonMessage_size,
+  deserialize_ScriptEvent,
 } from "./types";
 import { MessageHandler } from "../sources/MessageHandler";
 import { GatewayConnection } from "./GatewayConnection";
@@ -308,7 +309,7 @@ export class GatewayMessageHandler extends MessageHandler<
   /**
    * Receive
    */
-  _onFrameReceived({ dataView }: { dataView: DataView }) {
+  _onFrameReceived({ dataView }: { dataView: DataView }): void {
     const frame_data = deserialize_FrameData({
       dataView,
       offset: 0,
@@ -316,6 +317,17 @@ export class GatewayMessageHandler extends MessageHandler<
 
     this.dispatchEvent(
       new CustomEvent("on-frame-received", { detail: frame_data })
+    );
+  }
+
+  /**
+   * Receive
+   */
+  _onScriptEventReceived({ dataView }: { dataView: DataView }): void {
+    const script_event = deserialize_ScriptEvent({ dataView, offset: 0 });
+
+    this.dispatchEvent(
+      new CustomEvent("on-script-event-received", { detail: script_event })
     );
   }
 

@@ -151,6 +151,17 @@ channels:
       on_heartbeat_received:
         description: This message doesn't contain any payload
         contentType: application/octet-stream
+
+  #-----------------------------------------------------------------------------
+  script-events:
+    servers:
+      - $ref: "#/servers/cluster-gateway"
+    x-channel-id: 14
+    address: script-events
+    description: Channel dedicated to script events
+    messages:
+      on_script_event_received:
+        $ref: "#/components/messages/on_script_event_received"
 #-------------------------------------------------------------------------------
 
 #-------------------------------------------------------------------------------
@@ -299,6 +310,16 @@ operations:
       $ref: "#/channels/editor-remote-operations"
     messages:
       - $ref: "#/channels/editor-remote-operations/messages/create_entity"
+
+  #-----------------------------------------------------------------------------
+  # SCRIPT EVENTS
+  #-----------------------------------------------------------------------------
+  onScriptEventReceived:
+    action: receive
+    channel:
+      $ref: "#/channels/script-events"
+    messages:
+      - $ref: "#/channels/script-events/messages/on_script_event_received"
 #-------------------------------------------------------------------------------
 
 #-------------------------------------------------------------------------------
