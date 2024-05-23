@@ -136,17 +136,17 @@ export class Session extends EventTarget {
   }: {
     session_selector: SessionSelector;
   }): Promise<Session | null> {
-    const res = await fetch(`${api_url}/sessions?scene_id=${this._scene_id}`, {
-      method: "GET",
-      headers: {
-        user_token: this._token,
-      },
-    });
+    const res = await fetch(
+      `${api_url}/sessions?filters[scene_id]=${this._scene_id}`,
+      {
+        method: "GET",
+        headers: {
+          user_token: this._token,
+        },
+      }
+    );
 
-    const { sessions } = (await res.json()) as {
-      sessions: Array<SessionInfo>;
-    };
-
+    const sessions = (await res.json()) as Array<SessionInfo>;
     if (sessions.length === 0) {
       return null;
     }
