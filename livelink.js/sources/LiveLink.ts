@@ -10,10 +10,10 @@ import {
   CodecType,
   Entity,
   ScriptEvent,
+  ViewportConfig,
 } from "@livelink.core";
 
 import type { EncodedFrameConsumer } from "./decoders/EncodedFrameConsumer";
-import { Viewport } from "./Viewport";
 import { RemoteRenderingSurface } from "./RemoteRenderingSurface";
 
 /**
@@ -204,10 +204,8 @@ export class LiveLink extends LiveLinkCore {
   /**
    *
    */
-  setViewports({ viewports }: { viewports: Array<Viewport> }) {
-    this._gateway.setViewports({
-      viewports: viewports.map((v) => v.config),
-    });
+  setViewports({ viewports }: { viewports: Array<ViewportConfig> }) {
+    this._gateway.setViewports({ viewports });
   }
 
   /**

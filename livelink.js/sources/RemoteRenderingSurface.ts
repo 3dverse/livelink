@@ -49,10 +49,25 @@ export class RemoteRenderingSurface implements DecodedFrameConsumer {
   /**
    *
    */
-  get viewports(): Array<Viewport> {
-    let viewports: Array<Viewport> = [];
+  get viewports(): Array<ViewportConfig> {
+    let viewports: Array<ViewportConfig> = [];
     for (const c of this._canvases) {
-      viewports = viewports.concat(c.canvas.viewports);
+      const canvas_left = c.offset[0] / this.dimensions[0];
+      const canvas_top = c.offset[1] / this.dimensions[1];
+      const canvas_width = c.canvas.width / this.dimensions[0];
+      const canvas_height = c.canvas.height / this.dimensions[1];
+
+      viewports = viewports.concat(
+        c.canvas.viewports.map(
+          (viewport): ViewportConfig => ({
+            camera_rtid: viewport.camera.rtid!,
+            left: canvas_left + viewport.config.left * canvas_left,
+            top: canvas_top + viewport.config.top * canvas_top,
+            width: viewport.config.width * canvas_width,
+            height: viewport.config.height * canvas_height,
+          })
+        )
+      );
     }
     return viewports;
   }
