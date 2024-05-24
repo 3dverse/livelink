@@ -119,7 +119,11 @@ export class EntityRegistry {
     component_name: string;
     entity: Entity;
   }) {
-    this._dirty_entities.get(component_name).add(entity);
+    const dirty_entities = this._dirty_entities.get(component_name);
+    if (!dirty_entities) {
+      throw new Error("Component cannot be dirtied");
+    }
+    dirty_entities.add(entity);
   }
 
   /**

@@ -132,7 +132,7 @@ export class Entity {
    *
    */
   _tryMarkingAsDirty({ component_name }: { component_name: string }): boolean {
-    if (this.isInstantiated()) {
+    if (component_name !== "euid" && this.isInstantiated()) {
       // Register to appropriate dirty list
       this._core.entity_registry._addEntityToUpdate({
         component_name,
@@ -148,14 +148,31 @@ export class Entity {
    *
    */
   private _parse({ editor_entity }: { editor_entity: EditorEntity }) {
+    for (const component_name in editor_entity.components) {
+      this[component_name] = editor_entity.components[component_name];
+    }
+
+    // Remove any undefined component
+    for (const k of Object.keys(this)) {
+      if (this[k] === undefined) {
+        delete this[k];
+      }
+    }
+
+    const components = editor_entity.components as {
+      euid: Euid;
+      debug_name: DebugName;
+      local_transform: Transform;
+    };
+
     this.euid = {
-      value: (editor_entity.components as { euid: Euid }).euid.value,
+      value: components.euid.value,
       rtid: BigInt(editor_entity.rtid),
     };
 
-    this.local_transform = (
-      editor_entity.components as { local_transform: Transform }
-    ).local_transform;
+    this.local_transform = components.local_transform;
+
+    this.debug_name = components.debug_name;
   }
 
   /**

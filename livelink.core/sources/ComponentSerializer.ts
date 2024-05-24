@@ -32,7 +32,7 @@ export class ComponentSerializer {
         continue;
       }
 
-      // If all attributes have mods is equivalent to the component having mods.
+      // All attributes having mods is equivalent to the component having mods.
       if (component.attributes.every((attr) => attr.mods.length > 0)) {
         continue;
       }

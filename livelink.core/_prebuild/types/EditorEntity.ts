@@ -15,7 +15,7 @@ type Client = {
  */
 export type EditorEntity = {
   rtid: string;
-  components: {}; //ComponentMap;
+  components: Record<string, {}>; //ComponentMap;
   children: string[];
   selectingClients: Client[];
   selectedDescendants: Record<string, Client[]>;
