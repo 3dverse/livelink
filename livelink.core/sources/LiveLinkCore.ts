@@ -8,10 +8,10 @@ import type {
   HighlightEntitiesMessage,
   ScreenSpaceRayQuery,
   ScreenSpaceRayResult,
-  Vec2i,
-} from "../_prebuild/types/index";
+} from "../_prebuild/types";
 import { Entity } from "./Entity";
 import { EntityRegistry } from "./EntityRegistry";
+import { Vec2i } from "./types";
 
 /**
  * The LiveLinkCore interface.

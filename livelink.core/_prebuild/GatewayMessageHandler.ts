@@ -14,9 +14,7 @@ import {
   ChannelId,
   ClientConfig,
   ClientRemoteOperation,
-  Vec2ui16,
   ViewerControlOperation,
-  serialize_Vec2ui16,
   ViewportConfig,
   serialize_ViewportConfig,
   SessionAuth,
@@ -31,8 +29,6 @@ import {
   deserialize_FrameData,
   ScreenSpaceRayQuery,
   serialize_ScreenSpaceRayQuery,
-  UUID,
-  serialize_UUID,
   InputState,
   serialize_HighlightEntitiesMessage,
   HighlightEntitiesMessage,
@@ -44,6 +40,12 @@ import {
 } from "./types";
 import { MessageHandler } from "../sources/MessageHandler";
 import { GatewayConnection } from "./GatewayConnection";
+import {
+  UUID,
+  Vec2ui16,
+  serialize_UUID,
+  serialize_Vec2ui16,
+} from "../sources/types";
 
 /**
  *

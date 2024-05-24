@@ -1,5 +1,9 @@
-import { RTID, deserialize_RTID } from "../../sources/types/common";
-import { Vec3, deserialize_Vec3 } from "../../sources/types/math";
+import {
+  RTID,
+  Vec3,
+  deserialize_RTID,
+  deserialize_Vec3,
+} from "../../sources/types";
 
 /**
  *

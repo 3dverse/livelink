@@ -2,7 +2,7 @@ import {
   ComponentDescriptor,
   UpdateEntitiesFromJsonMessage,
 } from "../_prebuild/types";
-import { RTID } from "./types/common";
+import type { RTID } from "./types/RTID";
 import { Entity } from "./Entity";
 import { ComponentSerializer } from "./ComponentSerializer";
 
@@ -45,16 +45,15 @@ export class EntityRegistry {
       );
     }
 
-    const entityRTID = entity.rtid!;
-    if (this._entity_lut.has(entityRTID)) {
+    if (this._entity_lut.has(entity.rtid)) {
       throw new Error(
-        `Cannot add entity ${entity.name} to the registry,
-        because entity ${entity.name} has the same RTID.`
+        `Cannot add entity ${entity.name} to the registry, because entity
+        ${this._entity_lut.get(entity.rtid).name} has the same RTID.`
       );
     }
 
     this._entities.add(entity);
-    this._entity_lut.set(entityRTID, entity);
+    this._entity_lut.set(entity.rtid, entity);
   }
 
   /**
@@ -69,7 +68,7 @@ export class EntityRegistry {
 
     if (!this._entity_lut.delete(entity.rtid)) {
       throw new Error(
-        "Trying to remove entity {} which has not been registred to the registry."
+        `Trying to remove entity ${entity.rtid} which has not been registred to the registry.`
       );
     }
 
@@ -84,7 +83,7 @@ export class EntityRegistry {
   }
 
   /**
-   *
+   * @internal
    */
   _configureComponentSerializer({
     component_descriptors,
@@ -120,10 +119,9 @@ export class EntityRegistry {
     entity: Entity;
   }) {
     const dirty_entities = this._dirty_entities.get(component_name);
-    if (!dirty_entities) {
-      throw new Error("Component cannot be dirtied");
+    if (dirty_entities) {
+      dirty_entities.add(entity);
     }
-    dirty_entities.add(entity);
   }
 
   /**

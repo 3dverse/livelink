@@ -1,4 +1,4 @@
-import { UUID } from "./types/common";
+import type { UUID } from "./types";
 import { Client } from "./Client";
 
 const api_url = "https://api.3dverse.dev/app/v1";

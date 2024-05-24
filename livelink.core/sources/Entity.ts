@@ -1,5 +1,5 @@
 import { LiveLinkCore } from "./LiveLinkCore";
-import { EditorEntity, RTID } from "../_prebuild/types";
+import { EditorEntity } from "../_prebuild/types";
 import type {
   AABB,
   AnimationController,
@@ -20,6 +20,7 @@ import type {
   SphereGeometry,
   Transform,
 } from "../_prebuild/types/components";
+import { RTID } from "./types";
 
 /**
  *

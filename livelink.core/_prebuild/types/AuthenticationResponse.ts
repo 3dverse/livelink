@@ -1,5 +1,5 @@
 import { LITTLE_ENDIAN } from "../../sources/types/constants";
-import { UUID, deserialize_UUID } from "../../sources/types/common";
+import { UUID, deserialize_UUID } from "../../sources/types";
 
 /**
  *

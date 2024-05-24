@@ -244,13 +244,13 @@ export class LiveLink extends LiveLinkCore {
   /**
    *
    */
-  async newEntity<T extends Entity>(
-    entity_type: { new (_: LiveLinkCore): T },
+  async newEntity<EntityType extends Entity>(
+    entity_type: { new (_: LiveLinkCore): EntityType },
     name: string
-  ): Promise<T> {
+  ): Promise<EntityType> {
     let entity = new entity_type(this).init(name);
     entity.onCreate();
-    entity = new Proxy(entity, Entity.handler) as T;
+    entity = new Proxy(entity, Entity.handler) as EntityType;
     await entity.instantiate();
     return entity;
   }
@@ -258,14 +258,14 @@ export class LiveLink extends LiveLinkCore {
   /**
    *
    */
-  async findEntity<T extends Entity>(
-    entity_type: { new (_: LiveLinkCore): T },
+  async findEntity<EntityType extends Entity>(
+    entity_type: { new (_: LiveLinkCore): EntityType },
     {
       entity_uuid,
     }: {
       entity_uuid: UUID;
     }
-  ): Promise<T | null> {
+  ): Promise<EntityType | null> {
     const editor_entities = await this._editor.findEntitiesByEUID({
       entity_uuid,
     });
@@ -274,13 +274,16 @@ export class LiveLink extends LiveLinkCore {
       return null;
     }
 
-    const entity = new Proxy(
-      new entity_type(this).init(editor_entities[0]),
-      Entity.handler
-    ) as T;
+    const entities = editor_entities.map(
+      (e) =>
+        new Proxy(new entity_type(this).init(e), Entity.handler) as EntityType
+    );
 
-    this.entity_registry.add({ entity });
-    return entity;
+    for (const entity of entities) {
+      this.entity_registry.add({ entity });
+    }
+
+    return entities[0];
   }
 
   /**

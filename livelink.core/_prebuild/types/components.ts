@@ -1,5 +1,4 @@
-import type { RTID, UUID } from "../../sources/types/common";
-import type { Quat, Vec3 } from "../../sources/types/math";
+import type { RTID, UUID, Quat, Vec3 } from "../../sources/types";
 
 /**
  *

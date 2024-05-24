@@ -1,4 +1,4 @@
-import { Vec2ui16, deserialize_Vec2ui16 } from "../../sources/types/math";
+import { Vec2ui16, deserialize_Vec2ui16 } from "../../sources/types";
 
 /**
  *

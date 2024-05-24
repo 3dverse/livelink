@@ -1,6 +1,11 @@
 import { LITTLE_ENDIAN } from "../../sources/types/constants";
-import { Mat4, deserialize_Mat4 } from "../../sources/types/math";
-import { RTID, UUID, deserialize_UUID } from "../../sources/types/common";
+import {
+  Mat4,
+  RTID,
+  UUID,
+  deserialize_Mat4,
+  deserialize_UUID,
+} from "../../sources/types";
 
 /**
  *

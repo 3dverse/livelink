@@ -1,4 +1,5 @@
-import { Entity, serialize_RTID } from "../../sources";
+import { Entity } from "../../sources/Entity";
+import { serialize_RTID } from "../../sources/types";
 import { LITTLE_ENDIAN } from "../../sources/types/constants";
 import { ComponentHash } from "./components";
 

@@ -1,5 +1,4 @@
-export * from "../../sources/types/common";
-export * from "../../sources/types/math";
+export * from "../../sources/types";
 export * from "./enums";
 
 export * from "./AuthenticationResponse";

@@ -3,40 +3,8 @@ import { BIG_ENDIAN, LITTLE_ENDIAN } from "./constants";
 /**
  *
  */
-export type RTID = bigint;
-/**
- *
- */
-export function serialize_RTID({
-  dataView,
-  offset,
-  rtid,
-}: {
-  dataView: DataView;
-  offset: number;
-  rtid: RTID;
-}): number {
-  //TODO: change me when we support 64bits RTIDs
-  dataView.setUint32(offset, Number(rtid), LITTLE_ENDIAN);
-  return 4;
-}
-/**
- *
- */
-export function deserialize_RTID({
-  dataView,
-  offset,
-}: {
-  dataView: DataView;
-  offset: number;
-}): RTID {
-  return BigInt(dataView.getUint32(offset, LITTLE_ENDIAN));
-}
-
-/**
- *
- */
 export type UUID = string;
+
 /**
  *
  */
@@ -78,6 +46,10 @@ const byteToHex: string[] = [];
 for (let i = 0; i < 256; ++i) {
   byteToHex.push((i + 0x100).toString(16).slice(1));
 }
+
+/**
+ *
+ */
 export function deserialize_UUID({
   dataView,
   offset,
@@ -126,24 +98,3 @@ export function deserialize_UUID({
     byteToHex[arr[15]]
   );
 }
-/*
-export type ClientInfo = {
-  client_id: UUID;
-  client_type: "user" | "guest";
-  user_id: UUID;
-  username: string;
-};
-
-export type SessionInfo = {
-  session_id: UUID;
-  scene_id: UUID;
-  scene_name: string;
-  folder_id: UUID;
-  max_users: number;
-  creator_user_id: UUID;
-  created_at: Date;
-  country_code: string;
-  continent_code: string;
-  clients: Array<ClientInfo>;
-};
-*/

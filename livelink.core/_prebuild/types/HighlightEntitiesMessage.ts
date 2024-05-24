@@ -1,4 +1,4 @@
-import { RTID, serialize_RTID } from "../../sources";
+import { RTID, serialize_RTID } from "../../sources/types";
 
 /**
  *
