@@ -1,45 +1,13 @@
-import {
-  HighlightMode,
-  ScreenSpaceRayResult,
-  type Vec2,
-  type Vec2i,
-} from "@livelink.core";
+import { HighlightMode, ScreenSpaceRayResult, type Vec2 } from "@livelink.core";
 import { Viewport } from "./Viewport";
 import { LiveLink } from "./LiveLink";
+import { CanvasAutoResizer } from "./CanvasAutoResizer";
 import { DecodedFrameConsumer } from "./decoders/DecodedFrameConsumer";
 
 /**
- * To implement this we need to extract frame blitting from the decoder
- * and move it in the canvas.
+ *
  */
-type RemoteCanvasSizeFitter =
-  | {
-      mode: "fit-to-size";
-      value: "closest" | "always-inferior" | "always-superior";
-    }
-  | {
-      mode: "align";
-      value:
-        | "center"
-        | "top-left"
-        | "top"
-        | "top-right"
-        | "right"
-        | "bottom-right"
-        | "bottom"
-        | "bottom-left"
-        | "left";
-    };
-
-/**
- * A canvas represents the total available area for the renderer to draw on.
- * The dimensions on this area MUST be divisble by 8 for the encoder to work
- * properly.
- * This drawing area is then split between viewports, each viewport must have
- * an associated camera.
- * Note that viewports can overlap each others.
- */
-export class Canvas extends EventTarget implements DecodedFrameConsumer {
+export class Canvas extends EventTarget {
   /**
    * The LiveLink core used to send commands.
    */
@@ -54,48 +22,13 @@ export class Canvas extends EventTarget implements DecodedFrameConsumer {
    */
   private _context: CanvasRenderingContext2D;
   /**
+   *
+   */
+  private _auto_resizer: CanvasAutoResizer;
+  /**
    * List of viewports.
    */
   private _viewports: Array<Viewport> = [];
-  /**
-   * Size fitter
-   */
-  private _size_fitter: RemoteCanvasSizeFitter;
-
-  /**
-   * Observer for resize events.
-   */
-  private _observer: ResizeObserver = new ResizeObserver((e) =>
-    // Cannot pass this._onResized directly as it fails to properly capture
-    // 'this' once in the callback.
-    this._onResized(e)
-  );
-  /**
-   *
-   */
-  private _resized_promise_resolver: (() => void) | null = null;
-  /**
-   *
-   */
-  private _resized_promise: Promise<void>;
-  /**
-   * Debounce timeout to avoid spamming the resize command.
-   */
-  private _resize_debounce_timeout: number = 0;
-  /**
-   * Initial debounce timeout duration that gets overridden at first resize.
-   */
-  private _resize_debounce_timeout_duration_in_ms = 0;
-
-  /**
-   * Canvas actual dimensions.
-   */
-  private _dimensions: Vec2 = [300, 150];
-
-  /**
-   * Canvas actual dimensions.
-   */
-  private _remote_canvas_size: Vec2 = [300, 150];
 
   /**
    * HTML Canvas Element
@@ -107,15 +40,14 @@ export class Canvas extends EventTarget implements DecodedFrameConsumer {
   /**
    * Dimensions of the HTML canvas in pixels.
    */
-  get dimensions(): Vec2i {
-    return [this._canvas.width, this._canvas.height];
+  get width(): number {
+    return this._canvas.width;
   }
-
-  /**
-   * Dimensions of the remote canvas in pixels.
-   */
-  get remote_canvas_size(): Vec2i {
-    return this._remote_canvas_size;
+  get height(): number {
+    return this._canvas.height;
+  }
+  get dimensions(): Vec2 {
+    return [this.width, this.height];
   }
 
   /**
@@ -135,10 +67,8 @@ export class Canvas extends EventTarget implements DecodedFrameConsumer {
     core: LiveLink,
     {
       canvas_element_id,
-      size_fitter = { mode: "fit-to-size", value: "closest" },
     }: {
       canvas_element_id: string;
-      size_fitter?: RemoteCanvasSizeFitter;
     }
   ) {
     super();
@@ -163,13 +93,8 @@ export class Canvas extends EventTarget implements DecodedFrameConsumer {
     }
 
     this._canvas = canvas as HTMLCanvasElement;
+    this._auto_resizer = new CanvasAutoResizer(this);
     this._context = context;
-    this._size_fitter = size_fitter;
-    this._resized_promise = new Promise((resolve) => {
-      this._resized_promise_resolver = resolve;
-    });
-
-    this._observer.observe(this._canvas);
     this._canvas.addEventListener("click", this._onClicked);
   }
 
@@ -177,10 +102,7 @@ export class Canvas extends EventTarget implements DecodedFrameConsumer {
    *
    */
   async init(): Promise<Canvas> {
-    await this._resized_promise;
-    // After the first resize, install the actual resize handler.
-    this._sendResizeCommand = () =>
-      this.#core.resize({ size: this.remote_canvas_size });
+    await this._auto_resizer.waitForFirstResize();
     return this;
   }
 
@@ -190,15 +112,10 @@ export class Canvas extends EventTarget implements DecodedFrameConsumer {
    * @param viewport The viewport to attach to the canvas
    */
   attachViewport({ viewport }: { viewport: Viewport }): void {
-    for (const v of this._viewports) {
-      if (viewport.camera.rtid === v.camera.rtid) {
-        throw new Error(
-          "Cannot reference the same camera in different viewports"
-        );
-      }
-    }
+    this._validateCameras({ viewport });
 
     this._viewports.push(viewport);
+
     // Viewports with a higher z-index should appear first to prioritize
     // consuming click events.
     this.viewports.sort((a: Viewport, b: Viewport) => {
@@ -206,15 +123,32 @@ export class Canvas extends EventTarget implements DecodedFrameConsumer {
     });
     viewport._onAttachedToCanvas({ canvas: this });
 
-    // Send the command to the renderer.
-    this.#core.setViewports({ viewports: this._viewports });
+    this.#core.remote_rendering_surface.update();
   }
 
   /**
    * DecodedFrameConsumer interface
    */
-  consumeDecodedFrame({ decoded_frame }: { decoded_frame: VideoFrame }): void {
-    this._context.drawImage(decoded_frame, 0, 0);
+  consumeDecodedFrame({
+    decoded_frame,
+    left,
+    top,
+  }: {
+    decoded_frame: VideoFrame;
+    left: number;
+    top: number;
+  }): void {
+    this._context.drawImage(
+      decoded_frame,
+      left,
+      top,
+      this.width,
+      this.height,
+      0,
+      0,
+      this.width,
+      this.height
+    );
   }
 
   /**
@@ -242,41 +176,16 @@ export class Canvas extends EventTarget implements DecodedFrameConsumer {
   }
 
   /**
-   * This function will be overwritten after the first resize event that
-   * initializes the actual size of the canvas.
+   * Validates that all viewports reference different cameras.
    */
-  private _sendResizeCommand() {}
-
-  /**
-   * Callback called by the observer when the canvas is resized.
-   */
-  private _onResized(e: Array<ResizeObserverEntry>) {
-    this._dimensions[0] = e[0].contentRect.width;
-    this._dimensions[1] = e[0].contentRect.height;
-
-    if (this._resize_debounce_timeout !== 0) {
-      clearTimeout(this._resize_debounce_timeout);
+  private _validateCameras({ viewport }: { viewport: Viewport }): void {
+    for (const v of this._viewports) {
+      if (viewport.camera.rtid === v.camera.rtid) {
+        throw new Error(
+          "Cannot reference the same camera in different viewports"
+        );
+      }
     }
-
-    this._resize_debounce_timeout = setTimeout(() => {
-      const old_size: Vec2 = [this._canvas.width, this._canvas.height];
-
-      this._updateCanvasSize();
-
-      this._sendResizeCommand();
-
-      // Resolve the init promise.
-      this._resized_promise_resolver!();
-
-      const new_size: Vec2 = [this._canvas.width, this._canvas.height];
-      super.dispatchEvent(
-        new CustomEvent("on-resized", { detail: { old_size, new_size } })
-      );
-    }, this._resize_debounce_timeout_duration_in_ms);
-
-    // After the first timeout triggers set the following timeouts to the
-    // actual duration.
-    this._resize_debounce_timeout_duration_in_ms = 500;
   }
 
   /**
@@ -285,8 +194,8 @@ export class Canvas extends EventTarget implements DecodedFrameConsumer {
   private _onClicked = (e: MouseEvent) => {
     const absolute_pos: Vec2 = [e.offsetX, e.offsetY];
     const relative_pos: Vec2 = [
-      absolute_pos[0] / this._remote_canvas_size[0],
-      absolute_pos[1] / this._remote_canvas_size[1],
+      absolute_pos[0] / this.width,
+      absolute_pos[1] / this.height,
     ];
 
     for (const viewport of this._viewports) {
@@ -300,14 +209,7 @@ export class Canvas extends EventTarget implements DecodedFrameConsumer {
   /**
    *
    */
-  private _updateCanvasSize() {
-    const next_multiple_of_8 = (n: number) =>
-      Math.floor(n) + (Math.floor(n) % 8 === 0 ? 0 : 8 - (Math.floor(n) % 8));
-
-    //TODO: apply size fitter logic here
-    this._canvas.width = this._dimensions[0];
-    this._canvas.height = this._dimensions[1];
-    this._remote_canvas_size[0] = next_multiple_of_8(this._dimensions[0]);
-    this._remote_canvas_size[1] = next_multiple_of_8(this._dimensions[1]);
+  updateCanvasSize() {
+    this.#core.remote_rendering_surface.update();
   }
 }

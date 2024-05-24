@@ -65,9 +65,12 @@ class ControlPanel {
       canvas_element_id: "display-canvas-" + this.id,
     }).init();
 
+    this._instance!.remote_rendering_surface.addCanvas({
+      canvas: this._canvas,
+    });
+
     const client_config: ClientConfig = {
-      //remote_canvas_size: [3840, 2160],
-      remote_canvas_size: this._canvas.remote_canvas_size,
+      remote_canvas_size: this._instance!.remote_rendering_surface.dimensions,
       encoder_config: {
         codec: 2,
         profile: 1,
@@ -95,15 +98,18 @@ class ControlPanel {
     // Step 2: decode received frames and draw them on the canvas.
     await this._instance!.installFrameConsumer({
       //frame_consumer: new VideoWriter(),
-      frame_consumer: new WebCodecsDecoder(this._canvas),
-      //frame_consumer: new SoftwareDecoder(this._canvas),
+      frame_consumer: new WebCodecsDecoder(
+        this._instance!.remote_rendering_surface
+      ),
+      //frame_consumer: new SoftwareDecoder(
+      //  this._instance!.remote_rendering_surface
+      //),
     });
 
     // Step 3: setup the renderer to use the camera on a full canvas viewport.
     this._viewport = new Viewport({ camera: this._camera });
     this._canvas.attachViewport({ viewport: this._viewport });
-    //this._instance!.setViewports({ viewports: [this._viewport] });
-    this._instance!.resume();
+    this._instance!.startStreaming();
     this._viewport.addEventListener("on-clicked", this._onClick);
   }
 

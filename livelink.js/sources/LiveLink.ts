@@ -14,6 +14,7 @@ import {
 
 import type { EncodedFrameConsumer } from "./decoders/EncodedFrameConsumer";
 import { Viewport } from "./Viewport";
+import { RemoteRenderingSurface } from "./RemoteRenderingSurface";
 
 /**
  * The LiveLink interface.
@@ -113,12 +114,19 @@ export class LiveLink extends LiveLinkCore {
   /**
    *
    */
-  private _frame_dimensions: Vec2i | null = null;
+  private _remote_rendering_surface = new RemoteRenderingSurface(this);
   /**
    * User provided frame consumer designed to handle encoded frames from the
    * remote viewer.
    */
   private _frame_consumer: EncodedFrameConsumer | null = null;
+
+  /**
+   *
+   */
+  get remote_rendering_surface(): RemoteRenderingSurface {
+    return this._remote_rendering_surface;
+  }
 
   /**
    *
@@ -153,8 +161,14 @@ export class LiveLink extends LiveLinkCore {
   async configureClient({ client_config }: { client_config: ClientConfig }) {
     const res = await super.configureClient({ client_config });
     this._codec = res.codec;
-    this._frame_dimensions = client_config.remote_canvas_size;
     return res;
+  }
+
+  /**
+   *
+   */
+  isConfigured(): boolean {
+    return this._codec !== null;
   }
 
   /**
@@ -165,13 +179,13 @@ export class LiveLink extends LiveLinkCore {
   }: {
     frame_consumer: EncodedFrameConsumer;
   }) {
-    if (this._codec === null || this._frame_dimensions === null) {
+    if (this._codec === null) {
       throw new Error("Client not configured.");
     }
 
     this._frame_consumer = await frame_consumer.configure({
       codec: this._codec,
-      frame_dimensions: this._frame_dimensions,
+      frame_dimensions: this.remote_rendering_surface.dimensions,
     });
 
     this._gateway.addEventListener("on-frame-received", this._onFrameReceived);
@@ -199,22 +213,34 @@ export class LiveLink extends LiveLinkCore {
   /**
    *
    */
-  resize({ size }: { size: Vec2i }) {
+  resize({ size }: { size: Vec2i }): void {
     super.resize({ size });
   }
 
   /**
    *
    */
-  resume() {
+  resume(): void {
     this._gateway.resume();
   }
 
   /**
    *
    */
-  suspend() {
+  suspend(): void {
     this._gateway.suspend();
+  }
+
+  /**
+   *
+   */
+  startStreaming() {
+    if (!this.isConfigured()) {
+      throw new Error("The LiveLink instance is not configured yet");
+    }
+
+    //this.setViewports();
+    this.resume();
   }
 
   /**
