@@ -107,7 +107,7 @@ export class GatewayMessageHandler extends MessageHandler<
   /**
    * Reply
    */
-  _on_authenticateClient_response({ dataView }: { dataView: DataView }) {
+  _on_authenticateClient_response({ dataView }: { dataView: DataView }): void {
     const authRes = deserialize_AuthenticationResponse({ dataView, offset: 0 });
     this._client_id = authRes.client_id;
     this._getNextMessageResolver({
@@ -185,7 +185,7 @@ export class GatewayMessageHandler extends MessageHandler<
   /**
    * Send
    */
-  setViewports({ viewports }: { viewports: Array<ViewportConfig> }) {
+  setViewports({ viewports }: { viewports: Array<ViewportConfig> }): void {
     const SIZE_OF_VIEWPORT_CONFIG = 20;
     const payloadSize = 2 + viewports.length * SIZE_OF_VIEWPORT_CONFIG;
     const buffer = new ArrayBuffer(FTL_HEADER_SIZE + payloadSize);
@@ -217,7 +217,7 @@ export class GatewayMessageHandler extends MessageHandler<
   /**
    * Send
    */
-  resume() {
+  resume(): void {
     const payloadSize = 1;
     const buffer = new ArrayBuffer(FTL_HEADER_SIZE + payloadSize);
     this._writeMultiplexerHeader({
@@ -237,7 +237,7 @@ export class GatewayMessageHandler extends MessageHandler<
   /**
    * Send
    */
-  suspend() {
+  suspend(): void {
     const payloadSize = 1;
     const buffer = new ArrayBuffer(FTL_HEADER_SIZE + payloadSize);
     this._writeMultiplexerHeader({
@@ -257,7 +257,7 @@ export class GatewayMessageHandler extends MessageHandler<
   /**
    * Request
    */
-  resize({ size }: { size: Vec2ui16 }) {
+  resize({ size }: { size: Vec2ui16 }): Promise<ResizeResponse> {
     const payloadSize = 1 + 4;
     const buffer = new ArrayBuffer(FTL_HEADER_SIZE + payloadSize);
     this._writeMultiplexerHeader({
@@ -282,7 +282,7 @@ export class GatewayMessageHandler extends MessageHandler<
   /**
    * Reply
    */
-  _on_resize_response({ dataView }: { dataView: DataView }) {
+  _on_resize_response({ dataView }: { dataView: DataView }): void {
     this._getNextMessageResolver({
       channel_id: ChannelId.viewer_control,
     }).resolve(deserialize_ResizeResponse({ dataView, offset: 0 }));
@@ -291,7 +291,7 @@ export class GatewayMessageHandler extends MessageHandler<
   /**
    * Send
    */
-  sendInputState({ input_state }: { input_state: InputState }) {
+  sendInputState({ input_state }: { input_state: InputState }): void {
     const payloadSize = 1;
     const buffer = new ArrayBuffer(FTL_HEADER_SIZE + payloadSize);
     this._writeMultiplexerHeader({
@@ -340,7 +340,7 @@ export class GatewayMessageHandler extends MessageHandler<
     screenSpaceRayQuery,
   }: {
     screenSpaceRayQuery: ScreenSpaceRayQuery;
-  }) {
+  }): Promise<ScreenSpaceRayResult> {
     const ropDataSize = 4 + 4 + 4 + 1;
     const payloadSize = FTL_CLIENT_ROP_HEADER_SIZE + ropDataSize;
     const buffer = new ArrayBuffer(FTL_HEADER_SIZE + payloadSize);
@@ -418,7 +418,7 @@ export class GatewayMessageHandler extends MessageHandler<
     updateEntitiesFromJsonMessage,
   }: {
     updateEntitiesFromJsonMessage: UpdateEntitiesFromJsonMessage;
-  }) {
+  }): void {
     const ropDataSize = compute_UpdateEntitiesFromJsonMessage_size(
       updateEntitiesFromJsonMessage
     );
@@ -465,7 +465,7 @@ export class GatewayMessageHandler extends MessageHandler<
     request_id: number;
     size: number;
     dataView: DataView;
-  }) {
+  }): void {
     if (client_id !== this._client_id) {
       console.warn(
         `Received a response from client ${client_id}, whereas we are client ${this._client_id}. Something's off.`
@@ -474,7 +474,13 @@ export class GatewayMessageHandler extends MessageHandler<
 
     const resolver = this._getNextMessageResolver({
       channel_id: ChannelId.client_remote_operations,
-    })!;
+    });
+
+    if (!resolver.payload) {
+      throw new Error(
+        "Someting went wrong with the client remote operations resolver. Payload is missing."
+      );
+    }
 
     if (resolver.payload.request_id !== request_id) {
       throw new Error(

@@ -49,13 +49,13 @@ export class Entity {
    *
    */
   get rtid(): RTID | null {
-    return this.euid.rtid ?? null;
+    return this.euid?.rtid ?? null;
   }
   /**
    *
    */
   get name(): string {
-    return this.debug_name.value ?? "<unnamed>";
+    return this.debug_name?.value ?? "<unnamed>";
   }
 
   /**
