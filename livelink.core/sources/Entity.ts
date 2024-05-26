@@ -13,6 +13,7 @@ import type {
   MeshRef,
   OrthographicLens,
   PerspectiveLens,
+  PointLight,
   RigidBody,
   SceneRef,
   ScriptMap,
@@ -44,6 +45,7 @@ export class Entity {
   orthographic_lens?: OrthographicLens;
   camera?: Camera;
   local_transform?: Transform;
+  point_light: PointLight;
 
   /**
    *

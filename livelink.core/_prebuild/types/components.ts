@@ -118,6 +118,20 @@ export type OrthographicLens = Partial<{
   zFar: number;
 }>;
 
+/**
+ *
+ */
+export type PointLight = {
+  intensity: number;
+  color: Vec3;
+  range: number;
+  isDirectional: boolean;
+  isSun: boolean;
+};
+
+/**
+ *
+ */
 export enum ComponentHash {
   animation_controller = 2978761622,
   bone = 1352454807,
