@@ -5,9 +5,11 @@ import type {
   ClientConfig,
   ClientConfigResponse,
   EditorEntity,
+  EntityUpdatedEvent,
   HighlightEntitiesMessage,
   ScreenSpaceRayQuery,
   ScreenSpaceRayResult,
+  UUID,
 } from "../_prebuild/types";
 import { Entity } from "./Entity";
 import { EntityRegistry } from "./EntityRegistry";
@@ -74,6 +76,18 @@ export class LiveLinkCore extends EventTarget {
     this.entity_registry._configureComponentSerializer({
       component_descriptors: connectConfirmation.components,
     });
+
+    this._editor.addEventListener(
+      "entities-updated",
+      (e: CustomEvent<Record<UUID, EntityUpdatedEvent>>) => {
+        for (const entity_euid in e.detail) {
+          this.entity_registry._updateEntityFromEvent({
+            entity_euid,
+            updated_components: e.detail[entity_euid].updatedComponents,
+          });
+        }
+      }
+    );
 
     return this;
   }

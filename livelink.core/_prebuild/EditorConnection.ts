@@ -5,7 +5,12 @@
  */
 
 import { EditorMessageHandler } from "./EditorMessageHandler";
-import { EditorEntity, ConnectConfirmation } from "./types";
+import {
+  EditorEntity,
+  ConnectConfirmation,
+  UUID,
+  EntityUpdatedEvent,
+} from "./types";
 
 /**
  * Holds the connection to the LiveLink Broadcast & Persistence server.
@@ -156,6 +161,13 @@ export class EditorConnection {
       // ACTIONS?
       case "entities-created":
         handler.on_entities_created(payload.data as Array<EditorEntity>);
+        break;
+
+      // Events
+      case "update-components":
+        handler.on_update_components(
+          payload.data as Record<UUID, EntityUpdatedEvent>
+        );
         break;
 
       default:

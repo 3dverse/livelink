@@ -1,5 +1,6 @@
 import {
   ComponentDescriptor,
+  UUID,
   UpdateEntitiesFromJsonMessage,
 } from "../_prebuild/types";
 import type { RTID } from "./types/RTID";
@@ -18,7 +19,12 @@ export class EntityRegistry {
   /**
    *
    */
-  private _entity_lut = new Map<RTID, Entity>();
+  private _entity_rtid_lut = new Map<RTID, Entity>();
+
+  /**
+   *
+   */
+  private _entity_euid_lut = new Map<UUID, Array<Entity>>();
 
   /**
    *
@@ -45,15 +51,22 @@ export class EntityRegistry {
       );
     }
 
-    if (this._entity_lut.has(entity.rtid)) {
+    if (this._entity_rtid_lut.has(entity.rtid)) {
       throw new Error(
         `Cannot add entity ${entity.name} to the registry, because entity
-        ${this._entity_lut.get(entity.rtid).name} has the same RTID.`
+        ${this._entity_rtid_lut.get(entity.rtid).name} has the same RTID.`
       );
     }
 
     this._entities.add(entity);
-    this._entity_lut.set(entity.rtid, entity);
+    this._entity_rtid_lut.set(entity.rtid, entity);
+    const entities = this._entity_euid_lut.get(entity.id);
+
+    if (entities) {
+      entities.push(entity);
+    } else {
+      this._entity_euid_lut.set(entity.id, [entity]);
+    }
   }
 
   /**
@@ -66,7 +79,7 @@ export class EntityRegistry {
       );
     }
 
-    if (!this._entity_lut.delete(entity.rtid)) {
+    if (!this._entity_rtid_lut.delete(entity.rtid)) {
       throw new Error(
         `Trying to remove entity ${entity.rtid} which has not been registred to the registry.`
       );
@@ -79,7 +92,14 @@ export class EntityRegistry {
    *
    */
   get({ entity_rtid }: { entity_rtid: RTID }): Entity | null {
-    return this._entity_lut.get(entity_rtid) ?? null;
+    return this._entity_rtid_lut.get(entity_rtid) ?? null;
+  }
+
+  /**
+   *
+   */
+  find({ entity_euid }: { entity_euid: UUID }): Array<Entity> {
+    return this._entity_euid_lut.get(entity_euid) ?? [];
   }
 
   /**
@@ -106,6 +126,28 @@ export class EntityRegistry {
     }
 
     this._elapsed_time += dt;
+  }
+
+  /**
+   *
+   */
+  _updateEntityFromEvent({
+    entity_euid,
+    updated_components,
+  }: {
+    entity_euid: string;
+    updated_components: Record<string, unknown>;
+  }) {
+    const entities = this.find({ entity_euid });
+
+    if (entities.length === 0) {
+      console.log("Received an update for an undiscovered entity", entity_euid);
+      return;
+    }
+
+    for (const entity of entities) {
+      entity._updateFromEvent({ updated_components });
+    }
   }
 
   /**

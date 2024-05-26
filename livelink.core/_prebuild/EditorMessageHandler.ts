@@ -2,7 +2,7 @@ import { ConnectConfirmation } from "./types/ConnectConfirmation";
 import { EditorConnection } from "./EditorConnection";
 import { UUID } from "../sources/types";
 import { MessageHandler } from "../sources/MessageHandler";
-import { EditorEntity, Entity } from "../sources";
+import { EditorEntity, Entity, EntityUpdatedEvent } from "../sources";
 
 /**
  *
@@ -156,8 +156,14 @@ export class EditorMessageHandler extends MessageHandler<
   on_attach_components(data: any): void {
     throw new Error("Method not implemented.");
   }
-  on_update_components(data: any): void {
-    throw new Error("Method not implemented.");
+  on_update_components(
+    entitiesUpdatedEvent: Record<UUID, EntityUpdatedEvent>
+  ): void {
+    this.dispatchEvent(
+      new CustomEvent("entities-updated", {
+        detail: entitiesUpdatedEvent,
+      })
+    );
   }
 
   on_detach_components(data: any): void {

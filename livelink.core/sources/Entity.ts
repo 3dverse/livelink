@@ -21,7 +21,7 @@ import type {
   SphereGeometry,
   Transform,
 } from "../_prebuild/types/components";
-import { RTID } from "./types";
+import { RTID, UUID } from "./types";
 
 /**
  *
@@ -52,6 +52,12 @@ export class Entity {
    */
   get rtid(): RTID | null {
     return this.euid?.rtid ?? null;
+  }
+  /**
+   *
+   */
+  get id(): UUID | null {
+    return this.euid?.value ?? null;
   }
   /**
    *
@@ -129,6 +135,19 @@ export class Entity {
       }
     }
     return serialized;
+  }
+
+  /**
+   *
+   */
+  _updateFromEvent({
+    updated_components,
+  }: {
+    updated_components: Record<string, unknown>;
+  }) {
+    for (const key in updated_components) {
+      this[key] = updated_components[key];
+    }
   }
 
   /**

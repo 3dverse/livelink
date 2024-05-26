@@ -14,6 +14,7 @@ export * from "./ViewportConfig";
 export * from "./InputState";
 export * from "./UpdateEntitiesFromJsonMessage";
 export * from "./ScriptEvent";
+export * from "./EntityUpdatedEvent";
 
 export * from "./ConnectConfirmation";
 export * from "./EditorEntity";
