@@ -23,10 +23,12 @@ import type {
 } from "../_prebuild/types/components";
 import { RTID, UUID } from "./types";
 
+export const IDENTITY = Symbol("proxy_target_identity");
+
 /**
  *
  */
-export class Entity {
+export class Entity extends EventTarget {
   private euid: Euid | null = null;
   debug_name?: DebugName;
   lineage?: Lineage;
@@ -69,7 +71,9 @@ export class Entity {
   /**
    *
    */
-  constructor(protected readonly _core: LiveLinkCore) {}
+  constructor(protected readonly _core: LiveLinkCore) {
+    super();
+  }
 
   /**
    *
@@ -145,9 +149,13 @@ export class Entity {
   }: {
     updated_components: Record<string, unknown>;
   }) {
+    const self = this[IDENTITY];
+
     for (const key in updated_components) {
-      this[key] = updated_components[key];
+      self[key] = updated_components[key];
     }
+
+    self.dispatchEvent(new CustomEvent("entity-updated"));
   }
 
   /**
@@ -202,6 +210,10 @@ export class Entity {
    */
   static handler = {
     get(entity: Entity, prop: PropertyKey): unknown {
+      if (prop === IDENTITY) {
+        return entity;
+      }
+
       if (prop[0] !== "_") {
         if (typeof entity[prop] === "object" && entity[prop] !== null) {
           //console.log("GET COMPONENT", prop);

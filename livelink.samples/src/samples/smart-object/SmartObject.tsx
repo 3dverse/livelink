@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import Canvas from "../../components/Canvas";
 import * as LiveLink from "livelink.js";
-import { SessionInfo } from "@livelink.core";
 import { Button, Input, Range } from "react-daisyui";
 
 export class MyCamera extends LiveLink.Camera {
@@ -75,8 +74,11 @@ async function connect(canvas_id: string) {
   const instance = await LiveLink.LiveLink.join_or_start({
     scene_id: "15e95136-f9b7-425d-8518-d73dab5589b7",
     token: "public_p54ra95AMAnZdTel",
-    session_selector: ({ sessions }: { sessions: Array<SessionInfo> }) =>
-      sessions[0],
+    session_selector: ({
+      sessions,
+    }: {
+      sessions: Array<LiveLink.SessionInfo>;
+    }) => sessions[0],
   });
 
   await configureClient(instance, canvas_id);
@@ -150,6 +152,13 @@ export default function SmartObject() {
         instanceRef.current,
         "MyLight"
       );
+      if (soLight) {
+        soLight[LiveLink.IDENTITY].addEventListener("entity-updated", () => {
+          setEntity(null);
+          setTimeout(() => setEntity(soLight), 0);
+        });
+      }
+
       setEntity(soLight);
     }
   };

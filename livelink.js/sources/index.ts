@@ -1,5 +1,5 @@
 export * from "./Canvas";
-export * from "./Entity";
+export * from "./Core";
 export * from "./Viewport";
 export * from "./Camera";
 export * from "./LiveLink";
