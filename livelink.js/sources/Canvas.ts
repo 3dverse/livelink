@@ -58,7 +58,7 @@ export class Canvas extends EventTarget {
   }
 
   /**
-   * @param canvas_element_id Element id of the canvas on which to display the final composited frame
+   * @param canvas_element DOM Element or id of the canvas on which to display the final composited frame
    * @param viewports Array of viewports to attach to the canvas
    *
    * @throws {InvalidCanvasId} Thrown when the provided id doesn't refer to a canvas element.
@@ -66,29 +66,32 @@ export class Canvas extends EventTarget {
   constructor(
     core: LiveLink,
     {
-      canvas_element_id,
+      canvas_element,
     }: {
-      canvas_element_id: string;
+      canvas_element: string | HTMLCanvasElement;
     }
   ) {
     super();
     this.#core = core;
 
-    const canvas = document.getElementById(canvas_element_id);
+    const canvas =
+      typeof canvas_element === "string"
+        ? document.getElementById(canvas_element)
+        : canvas_element;
 
     if (canvas === null) {
-      throw new Error(`Cannot find canvas with id ${canvas_element_id}`);
+      throw new Error(`Cannot find canvas ${canvas_element}`);
     }
 
     if (canvas.nodeName !== "CANVAS") {
       throw new Error(
-        `HTML element with id ${canvas_element_id} is a '${canvas.nodeName}', it MUST be CANVAS`
+        `HTML element ${canvas_element} is a '${canvas.nodeName}', it MUST be CANVAS`
       );
     }
     const context = (canvas as HTMLCanvasElement).getContext("2d");
     if (context === null) {
       throw new Error(
-        `Cannot create a 2d context from canvas with id ${canvas_element_id}`
+        `Cannot create a 2d context from canvas ${canvas_element}`
       );
     }
 

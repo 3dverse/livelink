@@ -34,7 +34,7 @@ export function useLiveLinkInstance({
       }
 
       const inst = await connect(
-        canvas_refs.map((r) => r.current!.id),
+        canvas_refs.map((r) => r.current!),
         scene_id,
         token
       );
@@ -47,7 +47,7 @@ export function useLiveLinkInstance({
 
 //------------------------------------------------------------------------------
 async function connect(
-  canvas_ids: Array<string>,
+  canvas_elements: Array<HTMLCanvasElement>,
   scene_id: string,
   token: string
 ) {
@@ -61,7 +61,7 @@ async function connect(
     }) => sessions[0],
   });
 
-  await configureClient(instance, canvas_ids);
+  await configureClient(instance, canvas_elements);
 
   return instance;
 }
@@ -69,12 +69,12 @@ async function connect(
 //------------------------------------------------------------------------------
 async function configureClient(
   instance: LiveLink.LiveLink,
-  canvas_ids: Array<string>
+  canvas_elements: Array<HTMLCanvasElement>
 ) {
   const canvases = await Promise.all(
-    canvas_ids.map(async (canvas_element_id) =>
+    canvas_elements.map(async (canvas_element) =>
       new LiveLink.Canvas(instance, {
-        canvas_element_id,
+        canvas_element,
       }).init()
     )
   );

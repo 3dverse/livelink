@@ -10,7 +10,6 @@ export default function Canvas({
   return (
     <canvas
       ref={canvasRef}
-      id={crypto.randomUUID()}
       onContextMenu={(event) => event.preventDefault()}
       style={{ width: "100%", height: "100%" }}
       tabIndex={1}
