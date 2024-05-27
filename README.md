@@ -57,21 +57,40 @@ User facing interface with as many helper functions as we want.
 
 # Questions
 
-- ~~Do we need to support multiple sessions in a single page?~~ YES
-- Add an option to send the depth buffer to allow better composition with WebGL?
-- Do we merge the editor connection and the renderer connection behind a single interface?
-- Use destructured objects as function params?
+-   ~~Do we need to support multiple sessions in a single page?~~ YES
+-   Add an option to send the depth buffer to allow better composition with WebGL?
+-   Do we merge the editor connection and the renderer connection behind a single interface?
+-   Use destructured objects as function params?
 
 # Installation
 
 ```bash
 cd livelink.core
 npm link
+npm install
 --
 cd livelink.js
 npm link
 npm link livelink.core
+npm install
 --
-cd livelink.test
+cd livelink.samples
 npm link livelink.js
+npm install
+```
+
+# Dev
+
+From root:
+
+```bash
+npm run dev
+```
+
+# Build
+
+From root:
+
+```bash
+npm run build
 ```

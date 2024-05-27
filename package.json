@@ -10,7 +10,7 @@
     "build": "npm-run-all build:*",
     "clean:core": "npm -C livelink.core run clean",
     "clean:js": "npm -C livelink.js run clean",
-    "clean": "npm-run-all clean:*",
+    "clean": "npm-run-all --parallel clean:*",
     "=============== Dev =================": "",
     "predev": "npm run build",
     "dev:core": "npm -C livelink.core run dev",

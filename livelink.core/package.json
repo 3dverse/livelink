@@ -6,7 +6,9 @@
   "module": "./dist/index.mjs",
   "typings": "./dist/sources/index.d.ts",
   "scripts": {
-    "build": "tsc && node esbuild.js"
+    "build": "node esbuild.js && tsc",
+    "dev": "node esbuild.js dev & tsc -w",
+    "clean": "rimraf dist"
   },
   "repository": {
     "type": "git",
@@ -20,6 +22,7 @@
   "homepage": "https://github.com/3dverse/livelink#readme",
   "devDependencies": {
     "esbuild": "^0.20.1",
+    "rimraf": "^5.0.7",
     "typescript": "^5.3.3"
   }
 }
