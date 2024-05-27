@@ -3,6 +3,7 @@ import MultiSession from "./multi-session/MultiSession";
 import QuadrupleCanvas from "./quadruple-canvas/QuadrupleCanvas";
 import SceneSelector from "./scene-selector/SceneSelector";
 import SimpleCanvas from "./simple-canvas/SimpleCanvas";
+import SmartObjectSync from "./smart-object-sync/SmartObjectSync";
 import SmartObject from "./smart-object/SmartObject";
 
 export const SAMPLES = [
@@ -12,4 +13,5 @@ export const SAMPLES = [
     { title: "Multi-Session", path: "multi-session", element: <MultiSession /> },
     { title: "Smart Object", path: "smart-object", element: <SmartObject /> },
     { title: "Scene Selector", path: "scene-selector", element: <SceneSelector /> },
+    { title: "Smart Object Sync", path: "smart-object-sync", element: <SmartObjectSync /> },
 ];
