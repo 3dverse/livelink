@@ -1,5 +1,5 @@
 //------------------------------------------------------------------------------
-import { useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import Canvas from "../../components/Canvas";
 import { Select } from "react-daisyui";
 import { useLiveLinkInstance } from "../../hooks/useLiveLinkInstance";
@@ -12,22 +12,21 @@ const scenes = [
 //------------------------------------------------------------------------------
 export default function SceneSelector() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const [scene_id, setSceneId] = useState("default");
 
   const { instance, connect, disconnect } = useLiveLinkInstance({
     canvas_refs: [canvasRef],
     token: "public_p54ra95AMAnZdTel",
   });
 
-  const openScene = ({ scene_id }: { scene_id: string }) => {
+  useEffect(() => {
     if (instance) {
       disconnect();
     }
-    if (canvasRef.current) {
-      connect({
-        scene_id,
-      });
+    if (scene_id !== "default") {
+      connect({ scene_id });
     }
-  };
+  }, [scene_id]);
 
   return (
     <>
@@ -37,9 +36,9 @@ export default function SceneSelector() {
       <div className="flex w-full component-preview p-4 items-center justify-center gap-2 font-sans">
         <Select
           className="w-full max-w-xs"
-          value={"default"}
+          value={scene_id}
           onChange={(event) => {
-            openScene({ scene_id: event.target.value });
+            setSceneId(event.target.value);
           }}
         >
           <option value={"default"} disabled>
