@@ -1,14 +1,5 @@
 import { NavLink, Outlet, useOutlet } from "react-router-dom";
-
-const samples = [
-    { title: "Home", link: "/" },
-    { title: "Simple Canvas", link: "simple-canvas" },
-    { title: "Double Canvas", link: "double-canvas" },
-    { title: "Quadruple Canvas", link: "quadruple-canvas" },
-    { title: "Multi-Session", link: "multi-session" },
-    { title: "Smart Object", link: "smart-object" },
-    { title: "Scene Selector", link: "scene-selector" },
-];
+import { SAMPLES } from "./samples";
 
 function App() {
     const outlet = useOutlet();
@@ -25,9 +16,12 @@ function App() {
             <div className="drawer-side">
                 <label htmlFor="my-drawer-2" aria-label="close sidebar" className="drawer-overlay"></label>
                 <ul className="menu p-4 w-80 min-h-full bg-base-200 text-base-content">
-                    {samples.map((s, i) => (
+                    <li key={"HOME"}>
+                        <NavLink to={"/"}>Home</NavLink>{" "}
+                    </li>
+                    {SAMPLES.map((s, i) => (
                         <li key={i}>
-                            <NavLink to={s.link}>{s.title}</NavLink>
+                            <NavLink to={s.path}>{s.title}</NavLink>
                         </li>
                     ))}
                 </ul>
