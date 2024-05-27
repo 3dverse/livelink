@@ -8,6 +8,7 @@ import DoubleCanvas from "./samples/double-canvas/DoubleCanvas";
 import QuadrupleCanvas from "./samples/quadruple-canvas/QuadrupleCanvas";
 import MultiSession from "./samples/multi-session/MultiSession";
 import SmartObject from "./samples/smart-object/SmartObject.tsx";
+import SceneSelector from "./samples/scene-selector/SceneSelector.tsx";
 
 const router = createBrowserRouter([
   {
@@ -20,6 +21,7 @@ const router = createBrowserRouter([
       { path: "quadruple-canvas", element: <QuadrupleCanvas /> },
       { path: "multi-session", element: <MultiSession /> },
       { path: "smart-object", element: <SmartObject /> },
+      { path: "scene-selector", element: <SceneSelector /> },
     ],
   },
 ]);

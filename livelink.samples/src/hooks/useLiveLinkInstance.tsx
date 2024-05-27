@@ -5,15 +5,17 @@ import * as LiveLink from "livelink.js";
 //------------------------------------------------------------------------------
 export function useLiveLinkInstance({
   canvas_refs,
-  scene_id,
   token,
 }: {
   canvas_refs: Array<React.RefObject<HTMLCanvasElement>>;
-  scene_id: string;
   token: string;
 }): {
   instance: LiveLink.LiveLink | null;
-  connect: () => Promise<LiveLink.LiveLink | null>;
+  connect: ({
+    scene_id,
+  }: {
+    scene_id: LiveLink.UUID;
+  }) => Promise<LiveLink.LiveLink | null>;
   disconnect: () => void;
 } {
   const [instance, setInstance] = useState<LiveLink.LiveLink | null>(null);
@@ -26,7 +28,7 @@ export function useLiveLinkInstance({
 
   return {
     instance,
-    connect: async () => {
+    connect: async ({ scene_id }: { scene_id: LiveLink.UUID }) => {
       if (canvas_refs.some((r) => r.current === null)) {
         return null;
       }

@@ -12,12 +12,13 @@ export default function QuadrupleCanvas() {
 
   const { connect } = useLiveLinkInstance({
     canvas_refs: [canvasRef1, canvasRef2, canvasRef3, canvasRef4],
-    scene_id: "e7d69f14-d18e-446b-8df3-cbd24e10fa92",
     token: "public_p54ra95AMAnZdTel",
   });
 
   useEffect(() => {
-    connect();
+    connect({
+      scene_id: "e7d69f14-d18e-446b-8df3-cbd24e10fa92",
+    });
   }, []);
 
   return (

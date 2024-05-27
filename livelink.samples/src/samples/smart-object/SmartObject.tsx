@@ -55,7 +55,6 @@ export default function SmartObject() {
 
   const { instance, connect, disconnect } = useLiveLinkInstance({
     canvas_refs: [canvasRef],
-    scene_id: "15e95136-f9b7-425d-8518-d73dab5589b7",
     token: "public_p54ra95AMAnZdTel",
   });
 
@@ -64,7 +63,9 @@ export default function SmartObject() {
       setEntity(null);
       disconnect();
     } else if (canvasRef.current) {
-      const inst = await connect();
+      const inst = await connect({
+        scene_id: "15e95136-f9b7-425d-8518-d73dab5589b7",
+      });
       if (!inst) {
         return;
       }

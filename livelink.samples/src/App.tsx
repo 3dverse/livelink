@@ -7,6 +7,7 @@ const samples = [
   { title: "Quadruple Canvas", link: "quadruple-canvas" },
   { title: "Multi-Session", link: "multi-session" },
   { title: "Smart Object", link: "smart-object" },
+  { title: "Scene Selector", link: "scene-selector" },
 ];
 
 function App() {
