@@ -1,11 +1,13 @@
 import {
   ComponentDescriptor,
   UUID,
+  UpdateEntitiesCommand,
   UpdateEntitiesFromJsonMessage,
 } from "../_prebuild/types";
 import type { RTID } from "./types/RTID";
 import { Entity } from "./Entity";
 import { ComponentSerializer } from "./ComponentSerializer";
+import { ComponentType } from "../_prebuild/types/components";
 
 /**
  *
@@ -29,7 +31,8 @@ export class EntityRegistry {
   /**
    *
    */
-  private _dirty_entities = new Map<string, Set<Entity>>();
+  private _dirty_entities = new Map<ComponentType, Set<Entity>>();
+  private _dirty_entities_to_broadcast = new Map<ComponentType, Set<Entity>>();
 
   /**
    *
@@ -85,6 +88,7 @@ export class EntityRegistry {
       );
     }
 
+    this._entity_euid_lut.delete(entity.id);
     this._entities.delete(entity);
   }
 
@@ -114,6 +118,7 @@ export class EntityRegistry {
 
     for (const component_name of this._serializer.component_names) {
       this._dirty_entities.set(component_name, new Set<Entity>());
+      this._dirty_entities_to_broadcast.set(component_name, new Set<Entity>());
     }
   }
 
@@ -154,13 +159,13 @@ export class EntityRegistry {
    * @internal
    */
   _addEntityToUpdate({
-    component_name,
+    component_type,
     entity,
   }: {
-    component_name: string;
+    component_type: ComponentType;
     entity: Entity;
   }) {
-    const dirty_entities = this._dirty_entities.get(component_name);
+    const dirty_entities = this._dirty_entities.get(component_type);
     if (dirty_entities) {
       dirty_entities.add(entity);
     }
@@ -172,9 +177,9 @@ export class EntityRegistry {
   _getEntitiesToUpdate(): UpdateEntitiesFromJsonMessage | null {
     const msg = { components: [] };
 
-    for (const [component_name, entities] of this._dirty_entities) {
+    for (const [component_type, entities] of this._dirty_entities) {
       if (entities.size !== 0) {
-        msg.components.push({ component_name, entities });
+        msg.components.push({ component_type, entities });
       }
     }
 
@@ -184,8 +189,41 @@ export class EntityRegistry {
   /**
    * @internal
    */
-  _clearDirtyList() {
-    for (const [_, entities] of this._dirty_entities) {
+  _getEntitiesToBroadcast(): UpdateEntitiesCommand | null {
+    const msg: UpdateEntitiesCommand = {};
+    let hasData = false;
+
+    for (const [component_type, entities] of this
+      ._dirty_entities_to_broadcast) {
+      for (const entity of entities) {
+        msg[entity.id] = msg[entity.id] ?? {};
+        msg[entity.id][component_type] = entity[component_type];
+        hasData = true;
+      }
+    }
+
+    return hasData ? msg : null;
+  }
+
+  /**
+   * @internal
+   */
+  _clearUpdateList() {
+    for (const [component_type, entities] of this._dirty_entities) {
+      const broadcast_set =
+        this._dirty_entities_to_broadcast.get(component_type);
+      for (const entity of entities) {
+        broadcast_set.add(entity);
+      }
+      entities.clear();
+    }
+  }
+
+  /**
+   * @internal
+   */
+  _clearBroadcastList() {
+    for (const [_, entities] of this._dirty_entities_to_broadcast) {
       entities.clear();
     }
   }

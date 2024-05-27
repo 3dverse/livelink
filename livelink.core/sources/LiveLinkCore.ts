@@ -43,9 +43,14 @@ export class LiveLinkCore extends EventTarget {
   protected readonly _editor = new EditorController();
 
   /**
-   * Interval
+   * Interval between update to the renderer.
    */
   private _update_interval = 0;
+
+  /**
+   * Interval between broadcasts to the editor.
+   */
+  private _broadcast_interval = 0;
 
   /**
    *
@@ -98,6 +103,10 @@ export class LiveLinkCore extends EventTarget {
   protected async close() {
     if (this._update_interval !== 0) {
       clearInterval(this._update_interval);
+    }
+
+    if (this._broadcast_interval !== 0) {
+      clearInterval(this._broadcast_interval);
     }
 
     await this.session.close();
@@ -174,12 +183,19 @@ export class LiveLinkCore extends EventTarget {
     this._update_interval = setInterval(() => {
       this.entity_registry.advanceFrame({ dt: 1 / fps });
 
-      const updateEntitiesFromJsonMessage =
-        this.entity_registry._getEntitiesToUpdate();
-      if (updateEntitiesFromJsonMessage !== null) {
-        this._gateway.updateEntities({ updateEntitiesFromJsonMessage });
-        this.entity_registry._clearDirtyList();
+      const msg = this.entity_registry._getEntitiesToUpdate();
+      if (msg !== null) {
+        this._gateway.updateEntities({ updateEntitiesFromJsonMessage: msg });
+        this.entity_registry._clearUpdateList();
       }
     }, 1000 / fps);
+
+    this._broadcast_interval = setInterval(() => {
+      const msg = this.entity_registry._getEntitiesToBroadcast();
+      if (msg !== null) {
+        this._editor.updateComponents(msg);
+        this.entity_registry._clearBroadcastList();
+      }
+    }, 1000);
   }
 }

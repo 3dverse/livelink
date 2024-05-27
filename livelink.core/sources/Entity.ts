@@ -1,25 +1,27 @@
 import { LiveLinkCore } from "./LiveLinkCore";
 import { EditorEntity } from "../_prebuild/types";
-import type {
-  AABB,
-  AnimationController,
-  BoxGeometry,
-  Camera,
-  CapsuleGeometry,
-  DebugName,
-  Euid,
-  Lineage,
-  MaterialRef,
-  MeshRef,
-  OrthographicLens,
-  PerspectiveLens,
-  PointLight,
-  RigidBody,
-  SceneRef,
-  ScriptMap,
-  SkeletonRef,
-  SphereGeometry,
-  Transform,
+import {
+  ComponentHash,
+  type AABB,
+  type AnimationController,
+  type BoxGeometry,
+  type Camera,
+  type CapsuleGeometry,
+  type ComponentType,
+  type DebugName,
+  type Euid,
+  type Lineage,
+  type MaterialRef,
+  type MeshRef,
+  type OrthographicLens,
+  type PerspectiveLens,
+  type PointLight,
+  type RigidBody,
+  type SceneRef,
+  type ScriptMap,
+  type SkeletonRef,
+  type SphereGeometry,
+  type Transform,
 } from "../_prebuild/types/components";
 import { RTID, UUID } from "./types";
 
@@ -159,11 +161,15 @@ export class Entity extends EventTarget {
   /**
    *
    */
-  _tryMarkingAsDirty({ component_name }: { component_name: string }): boolean {
-    if (component_name !== "euid" && this.isInstantiated()) {
+  _tryMarkingAsDirty({
+    component_type,
+  }: {
+    component_type: ComponentType;
+  }): boolean {
+    if (this.isInstantiated()) {
       // Register to appropriate dirty list
       this._core.entity_registry._addEntityToUpdate({
-        component_name,
+        component_type,
         entity: this,
       });
       return true;
@@ -212,22 +218,27 @@ export class Entity extends EventTarget {
         return entity;
       }
 
-      if (prop[0] !== "_") {
-        if (typeof entity[prop] === "object" && entity[prop] !== null) {
-          //console.log("GET COMPONENT", prop);
-          return new Proxy(
-            entity[prop],
-            new ComponentHandler(entity, prop as string)
-          );
-        }
+      if (
+        typeof prop === "string" &&
+        entity[prop] !== undefined &&
+        Object.values(ComponentHash).includes(prop)
+      ) {
+        //console.log("GET COMPONENT", entity, prop);
+        return new Proxy(
+          entity[prop],
+          new ComponentHandler(entity, prop as ComponentType)
+        );
       }
       return Reflect.get(entity, prop);
     },
 
     set(entity: Entity, prop: PropertyKey, v: any): boolean {
-      if (prop[0] !== "_") {
+      if (
+        typeof prop === "string" &&
+        Object.values(ComponentHash).includes(prop)
+      ) {
         //console.log("SET COMPONENT", prop, v);
-        entity._tryMarkingAsDirty({ component_name: prop as string });
+        entity._tryMarkingAsDirty({ component_type: prop as ComponentType });
       }
       return Reflect.set(entity, prop, v);
     },
@@ -245,7 +256,7 @@ export class Entity extends EventTarget {
 class ComponentHandler {
   constructor(
     private readonly _entity: Entity,
-    private readonly _component_name: string
+    private readonly _component_name: ComponentType
   ) {}
 
   get(component: object, prop: PropertyKey): unknown {
@@ -266,7 +277,7 @@ class ComponentHandler {
 
   set(component: object, prop: PropertyKey, v: any): boolean {
     //console.log("SET ATTRIBUTE", prop, v);
-    this._entity._tryMarkingAsDirty({ component_name: this._component_name });
+    this._entity._tryMarkingAsDirty({ component_type: this._component_name });
     return Reflect.set(component, prop, v);
   }
 

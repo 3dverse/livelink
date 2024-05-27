@@ -2,7 +2,12 @@ import { ConnectConfirmation } from "./types/ConnectConfirmation";
 import { EditorConnection } from "./EditorConnection";
 import { UUID } from "../sources/types";
 import { MessageHandler } from "../sources/MessageHandler";
-import { EditorEntity, Entity, EntityUpdatedEvent } from "../sources";
+import {
+  EditorEntity,
+  Entity,
+  EntityUpdatedEvent,
+  UpdateEntitiesCommand,
+} from "../sources";
 
 /**
  *
@@ -20,6 +25,18 @@ export class EditorMessageHandler extends MessageHandler<
    *
    */
   protected _connection = new EditorConnection();
+
+  /**
+   *
+   */
+  protected _client_id: UUID | null = null;
+
+  /**
+   *
+   */
+  get client_id() {
+    return this._client_id;
+  }
 
   /**
    *
@@ -44,6 +61,15 @@ export class EditorMessageHandler extends MessageHandler<
   attachComponents() {
     this._connection!.send({
       data: JSON.stringify({ type: "attach-components", data: {} }),
+    });
+  }
+
+  /**
+   *
+   */
+  updateComponents(data: UpdateEntitiesCommand) {
+    this._connection!.send({
+      data: JSON.stringify({ type: "update-components", data }),
     });
   }
 
@@ -157,13 +183,16 @@ export class EditorMessageHandler extends MessageHandler<
     throw new Error("Method not implemented.");
   }
   on_update_components(
+    emitter_id: UUID,
     entitiesUpdatedEvent: Record<UUID, EntityUpdatedEvent>
   ): void {
-    this.dispatchEvent(
-      new CustomEvent("entities-updated", {
-        detail: entitiesUpdatedEvent,
-      })
-    );
+    if (this._client_id !== emitter_id) {
+      this.dispatchEvent(
+        new CustomEvent("entities-updated", {
+          detail: entitiesUpdatedEvent,
+        })
+      );
+    }
   }
 
   on_detach_components(data: any): void {

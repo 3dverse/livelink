@@ -3,6 +3,11 @@ import type { RTID, UUID, Quat, Vec3 } from "../../sources/types";
 /**
  *
  */
+export type ComponentType = keyof typeof ComponentHash;
+
+/**
+ *
+ */
 export type Euid = {
   value: UUID;
   rtid: RTID;
@@ -138,7 +143,7 @@ export enum ComponentHash {
   box_geometry = 3718707752,
   camera = 1515175333,
   capsule_geometry = 3996568839,
-  character_gontroller = 304568171,
+  character_controller = 304568171,
   collision_geometry = 3193374355,
   culling_geometry = 611599156,
   cylinder_geometry = 2497701877,

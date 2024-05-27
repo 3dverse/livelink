@@ -1,9 +1,5 @@
 import { ComponentDescriptor } from "../_prebuild/types";
-
-/**
- *
- */
-type ComponentName = string;
+import { ComponentType } from "../_prebuild/types/components";
 
 /**
  *
@@ -12,12 +8,12 @@ export class ComponentSerializer {
   /**
    *
    */
-  public readonly component_names: Array<ComponentName> = [];
+  public readonly component_names: Array<ComponentType> = [];
 
   /**
    *
    */
-  private readonly _descriptors = new Map<ComponentName, ComponentDescriptor>();
+  private readonly _descriptors = new Map<ComponentType, ComponentDescriptor>();
 
   /**
    *
@@ -37,8 +33,8 @@ export class ComponentSerializer {
         continue;
       }
 
-      this.component_names.push(componentName);
-      this._descriptors.set(componentName, component);
+      this.component_names.push(componentName as ComponentType);
+      this._descriptors.set(componentName as ComponentType, component);
     }
   }
 }

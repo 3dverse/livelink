@@ -8,7 +8,7 @@ import { ComponentHash } from "./components";
  */
 export type UpdateEntitiesFromJsonMessage = {
   components: Array<{
-    component_name: string;
+    component_type: string;
     entities: Set<Entity>;
   }>;
 };
@@ -35,7 +35,7 @@ export function compute_UpdateEntitiesFromJsonMessage_size(
       // +            jsonSize (4)
       msgSize += 4;
       // +            json (jsonLength)
-      msgSize += JSON.stringify(entity[componentUpdate.component_name]).length;
+      msgSize += JSON.stringify(entity[componentUpdate.component_type]).length;
     }
   }
   return msgSize;
@@ -60,7 +60,7 @@ export function serialize_UpdateEntitiesFromJsonMessage({
 
   for (const componentUpdate of updateEntitiesFromJsonMessage.components) {
     // + { componentHash (4), entityCount (4) }
-    const componentHash = ComponentHash[componentUpdate.component_name];
+    const componentHash = ComponentHash[componentUpdate.component_type];
     dataView.setUint32(offset, componentHash, LITTLE_ENDIAN);
     offset += 4;
 
@@ -78,7 +78,7 @@ export function serialize_UpdateEntitiesFromJsonMessage({
     }
 
     for (const entity of componentUpdate.entities) {
-      const jsonStr = JSON.stringify(entity[componentUpdate.component_name]);
+      const jsonStr = JSON.stringify(entity[componentUpdate.component_type]);
 
       // + jsonSize (4)
       const jsonSize = jsonStr.length;

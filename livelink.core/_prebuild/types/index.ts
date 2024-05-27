@@ -15,6 +15,7 @@ export * from "./InputState";
 export * from "./UpdateEntitiesFromJsonMessage";
 export * from "./ScriptEvent";
 export * from "./EntityUpdatedEvent";
+export * from "./UpdateComponentsCommand";
 
 export * from "./ConnectConfirmation";
 export * from "./EditorEntity";

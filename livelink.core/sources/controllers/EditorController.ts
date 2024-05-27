@@ -31,6 +31,7 @@ export class EditorController extends EditorMessageHandler {
         resolve(e.detail);
       });
 
+      this._client_id = client.uuid;
       this._connection.connect({
         livelink_url: `${livelink_base_url}?sessionKey=${session.session_key}&clientUUID=${client.uuid}`,
         handler: this,
