@@ -23,8 +23,6 @@ import type {
 } from "../_prebuild/types/components";
 import { RTID, UUID } from "./types";
 
-export const IDENTITY = Symbol("proxy_target_identity");
-
 /**
  *
  */
@@ -48,6 +46,8 @@ export class Entity extends EventTarget {
   camera?: Camera;
   local_transform?: Transform;
   point_light: PointLight;
+
+  __self: Entity = null;
 
   /**
    *
@@ -149,13 +149,11 @@ export class Entity extends EventTarget {
   }: {
     updated_components: Record<string, unknown>;
   }) {
-    const self = this[IDENTITY];
-
     for (const key in updated_components) {
-      self[key] = updated_components[key];
+      this.__self[key] = updated_components[key];
     }
 
-    self.dispatchEvent(new CustomEvent("entity-updated"));
+    this.__self.dispatchEvent(new CustomEvent("entity-updated"));
   }
 
   /**
@@ -210,7 +208,7 @@ export class Entity extends EventTarget {
    */
   static handler = {
     get(entity: Entity, prop: PropertyKey): unknown {
-      if (prop === IDENTITY) {
+      if (prop === "__self") {
         return entity;
       }
 

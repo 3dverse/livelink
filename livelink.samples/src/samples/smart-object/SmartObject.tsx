@@ -1,91 +1,10 @@
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import Canvas from "../../components/Canvas";
 import * as LiveLink from "livelink.js";
 import { Button, Input, Range } from "react-daisyui";
-
-export class MyCamera extends LiveLink.Camera {
-  onCreate() {
-    this.local_transform = { position: [0, 1, 5] };
-    this.camera = {
-      renderGraphRef: "398ee642-030a-45e7-95df-7147f6c43392",
-      dataJSON: { grid: true, skybox: false, gradient: true },
-    };
-    this.perspective_lens = {};
-  }
-
-  onUpdate({ elapsed_time }: { elapsed_time: number }) {
-    this.local_transform!.position![1] = 1 + Math.sin(elapsed_time);
-  }
-}
-
-async function configureClient(
-  instance: LiveLink.LiveLink,
-  canvas_element_id: string
-) {
-  const canvas = await new LiveLink.Canvas(instance, {
-    canvas_element_id,
-  }).init();
-
-  instance.remote_rendering_surface.addCanvas({ canvas });
-
-  const client_config = {
-    remote_canvas_size: instance.remote_rendering_surface.dimensions,
-    encoder_config: {
-      codec: 2,
-      profile: 1,
-      frame_rate: 60,
-      lossy: true,
-    },
-    supported_devices: {
-      keyboard: true,
-      mouse: true,
-      gamepad: true,
-      hololens: false,
-      touchscreen: false,
-    },
-  };
-
-  // Step 1: configure the client on the renderer side, this informs the
-  //         renderer on the client canvas size and available input devices
-  //         and most importantly activates the session.
-  await instance.configureClient({ client_config });
-
-  // Step 1': get or create a camera to render frames (not dependent on
-  //          anything)
-  const camera = await instance.newEntity(MyCamera, "MyCam");
-
-  // Step 2: decode received frames and draw them on the canvas.
-  await instance.installFrameConsumer({
-    frame_consumer: new LiveLink.WebCodecsDecoder(
-      instance.remote_rendering_surface
-    ),
-  });
-
-  // Step 3: setup the renderer to use the camera on a full canvas viewport.
-  const viewport = new LiveLink.Viewport({ camera });
-  canvas.attachViewport({ viewport });
-  instance.startStreaming();
-  instance.startUpdateLoop({ fps: 60 });
-}
+import { useLiveLinkInstance } from "../../hooks/useLiveLinkInstance";
 
 //------------------------------------------------------------------------------
-
-async function connect(canvas_id: string) {
-  const instance = await LiveLink.LiveLink.join_or_start({
-    scene_id: "15e95136-f9b7-425d-8518-d73dab5589b7",
-    token: "public_p54ra95AMAnZdTel",
-    session_selector: ({
-      sessions,
-    }: {
-      sessions: Array<LiveLink.SessionInfo>;
-    }) => sessions[0],
-  });
-
-  await configureClient(instance, canvas_id);
-
-  return instance;
-}
-
 const SmartObjectManifest: Record<string, string> = {
   MyLight: "c03314f2-c943-41be-ae17-f0d655cf1d11",
 };
@@ -132,28 +51,27 @@ function hexToRgb(h: string): [number, number, number] {
 //------------------------------------------------------------------------------
 export default function SmartObject() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const instanceRef = useRef<LiveLink.LiveLink | null>(null);
   const [entity, setEntity] = useState<LiveLink.Entity | null>(null);
 
-  useEffect(() => {
-    return () => {
-      instanceRef.current?.close();
-    };
-  }, [instanceRef]);
+  const { instance, connect, disconnect } = useLiveLinkInstance({
+    canvas_refs: [canvasRef],
+    scene_id: "15e95136-f9b7-425d-8518-d73dab5589b7",
+    token: "public_p54ra95AMAnZdTel",
+  });
 
   const toggleConnection = async () => {
-    if (instanceRef.current) {
-      await instanceRef.current.close();
-      instanceRef.current = null;
+    if (instance) {
       setEntity(null);
+      disconnect();
     } else if (canvasRef.current) {
-      instanceRef.current = await connect(canvasRef.current.id);
-      const { entity: soLight } = await findSmartObject(
-        instanceRef.current,
-        "MyLight"
-      );
+      const inst = await connect();
+      if (!inst) {
+        return;
+      }
+      const { entity: soLight } = await findSmartObject(inst, "MyLight");
+
       if (soLight) {
-        soLight[LiveLink.IDENTITY].addEventListener("entity-updated", () => {
+        soLight.__self.addEventListener("entity-updated", () => {
           setEntity(null);
           setTimeout(() => setEntity(soLight), 0);
         });
@@ -195,7 +113,7 @@ export default function SmartObject() {
       </div>
       <div className="flex items-center gap-2 pb-4">
         <Button shape="circle" variant="outline" onClick={toggleConnection}>
-          {instanceRef.current ? "Disconnect" : "Connect"}
+          {instance ? "Disconnect" : "Connect"}
         </Button>
       </div>
     </>
