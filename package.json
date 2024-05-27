@@ -3,6 +3,11 @@
   "version": "1.0.0",
   "main": "livelink.js",
   "scripts": {
+    "=============== Install =================": "",
+    "setup:core": "cd livelink.core && npm install",
+    "setup:js": "cd livelink.js && npm install",
+    "setup:samples": "cd livelink.samples && npm install",
+    "postinstall": "npm-run-all setup:*",
     "=============== Build =================": "",
     "prebuild": "npm run clean",
     "build:core": "npm -C livelink.core run build",

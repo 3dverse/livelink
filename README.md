@@ -65,31 +65,16 @@ User facing interface with as many helper functions as we want.
 # Installation
 
 ```bash
-cd livelink.core
-npm link
-npm install
---
-cd livelink.js
-npm link
-npm link livelink.core
-npm install
---
-cd livelink.samples
-npm link livelink.js
 npm install
 ```
 
 # Dev
-
-From root:
 
 ```bash
 npm run dev
 ```
 
 # Build
-
-From root:
 
 ```bash
 npm run build
