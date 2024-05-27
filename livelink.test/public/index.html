@@ -1,53 +1,53 @@
-<!DOCTYPE html>
+<!doctype html>
 <html>
-  <head>
-    <meta charset="UTF-8" />
-    <meta content="width=device-width,initial-scale=1.0" name="viewport" />
-    <link rel="stylesheet" href="./style.css" />
-  </head>
+    <head>
+        <meta charset="UTF-8" />
+        <meta content="width=device-width,initial-scale=1.0" name="viewport" />
+        <link rel="stylesheet" href="./style.css" />
+    </head>
 
-  <body>
-    <div class="control-panel">
-      <div>
-        <button id="connect-1">Connect</button>
-        <button id="disconnect-1">Disconnect</button>
-        <select name="scene" id="scene-selector-1">
-          <option value="15e95136-f9b7-425d-8518-d73dab5589b7">Droid</option>
-          <option value="62b43fa8-528e-4ad9-a5ab-0994c5362529">Cube</option>
-          <option value="a0ce8c2c-6159-456a-9fcd-03679578e24e">Empty</option>
-          <option value="e7d69f14-d18e-446b-8df3-cbd24e10fa92">No Force</option>
-          <option value="e1250c0e-fa04-4af5-a5cb-cf29fd38b78d">Sponza</option>
-        </select>
-      </div>
-      <div>
-        <button id="connect-2">Connect</button>
-        <button id="disconnect-2">Disconnect</button>
-        <select name="scene" id="scene-selector-2">
-          <option value="15e95136-f9b7-425d-8518-d73dab5589b7">Droid</option>
-          <option value="62b43fa8-528e-4ad9-a5ab-0994c5362529">Cube</option>
-          <option value="a0ce8c2c-6159-456a-9fcd-03679578e24e">Empty</option>
-          <option value="e7d69f14-d18e-446b-8df3-cbd24e10fa92">No Force</option>
-          <option value="e1250c0e-fa04-4af5-a5cb-cf29fd38b78d">Sponza</option>
-        </select>
-      </div>
-    </div>
-    <div class="canvas-container">
-      <!-- CANVAS -->
-      <canvas
-        id="display-canvas-1"
-        oncontextmenu="event.preventDefault()"
-        style="width: 45vw; height: 80vh"
-        tabindex="1"
-      ></canvas>
-      <canvas
-        id="display-canvas-2"
-        oncontextmenu="event.preventDefault()"
-        style="width: 45vw; height: 80vh"
-        tabindex="1"
-      ></canvas>
-    </div>
+    <body>
+        <div class="control-panel">
+            <div>
+                <button id="connect-1">Connect</button>
+                <button id="disconnect-1">Disconnect</button>
+                <select name="scene" id="scene-selector-1">
+                    <option value="15e95136-f9b7-425d-8518-d73dab5589b7">Droid</option>
+                    <option value="62b43fa8-528e-4ad9-a5ab-0994c5362529">Cube</option>
+                    <option value="a0ce8c2c-6159-456a-9fcd-03679578e24e">Empty</option>
+                    <option value="e7d69f14-d18e-446b-8df3-cbd24e10fa92">No Force</option>
+                    <option value="e1250c0e-fa04-4af5-a5cb-cf29fd38b78d">Sponza</option>
+                </select>
+            </div>
+            <div>
+                <button id="connect-2">Connect</button>
+                <button id="disconnect-2">Disconnect</button>
+                <select name="scene" id="scene-selector-2">
+                    <option value="15e95136-f9b7-425d-8518-d73dab5589b7">Droid</option>
+                    <option value="62b43fa8-528e-4ad9-a5ab-0994c5362529">Cube</option>
+                    <option value="a0ce8c2c-6159-456a-9fcd-03679578e24e">Empty</option>
+                    <option value="e7d69f14-d18e-446b-8df3-cbd24e10fa92">No Force</option>
+                    <option value="e1250c0e-fa04-4af5-a5cb-cf29fd38b78d">Sponza</option>
+                </select>
+            </div>
+        </div>
+        <div class="canvas-container">
+            <!-- CANVAS -->
+            <canvas
+                id="display-canvas-1"
+                oncontextmenu="event.preventDefault()"
+                style="width: 45vw; height: 80vh"
+                tabindex="1"
+            ></canvas>
+            <canvas
+                id="display-canvas-2"
+                oncontextmenu="event.preventDefault()"
+                style="width: 45vw; height: 80vh"
+                tabindex="1"
+            ></canvas>
+        </div>
 
-    <!-- APP ENTRYPOINT -->
-    <script type="module" src="./dist/app.mjs"></script>
-  </body>
+        <!-- APP ENTRYPOINT -->
+        <script type="module" src="./dist/app.mjs"></script>
+    </body>
 </html>

@@ -4,7 +4,4 @@ import { ComponentType } from "./components";
 /**
  *
  */
-export type UpdateEntitiesCommand = Record<
-  UUID,
-  Record<ComponentType, {}> | {}
->;
+export type UpdateEntitiesCommand = Record<UUID, Record<ComponentType, {}> | {}>;

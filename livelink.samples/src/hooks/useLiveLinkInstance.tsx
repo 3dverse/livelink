@@ -4,142 +4,124 @@ import * as LiveLink from "livelink.js";
 
 //------------------------------------------------------------------------------
 export function useLiveLinkInstance({
-  canvas_refs,
-  token,
-}: {
-  canvas_refs: Array<React.RefObject<HTMLCanvasElement>>;
-  token: string;
-}): {
-  instance: LiveLink.LiveLink | null;
-  connect: ({
-    scene_id,
-  }: {
-    scene_id: LiveLink.UUID;
-  }) => Promise<LiveLink.LiveLink | null>;
-  disconnect: () => void;
-} {
-  const [instance, setInstance] = useState<LiveLink.LiveLink | null>(null);
-
-  useEffect(() => {
-    return () => {
-      instance?.close();
-    };
-  }, [instance]);
-
-  return {
-    instance,
-    connect: async ({ scene_id }: { scene_id: LiveLink.UUID }) => {
-      if (canvas_refs.some((r) => r.current === null)) {
-        return null;
-      }
-
-      const inst = await connect(
-        canvas_refs.map((r) => r.current!),
-        scene_id,
-        token
-      );
-      setInstance(inst);
-      return inst;
-    },
-    disconnect: () => setInstance(null),
-  };
-}
-
-//------------------------------------------------------------------------------
-async function connect(
-  canvas_elements: Array<HTMLCanvasElement>,
-  scene_id: string,
-  token: string
-) {
-  const instance = await LiveLink.LiveLink.join_or_start({
-    scene_id,
+    canvas_refs,
     token,
-    session_selector: ({
-      sessions,
-    }: {
-      sessions: Array<LiveLink.SessionInfo>;
-    }) => sessions[0],
-  });
+}: {
+    canvas_refs: Array<React.RefObject<HTMLCanvasElement>>;
+    token: string;
+}): {
+    instance: LiveLink.LiveLink | null;
+    connect: ({ scene_id }: { scene_id: LiveLink.UUID }) => Promise<LiveLink.LiveLink | null>;
+    disconnect: () => void;
+} {
+    const [instance, setInstance] = useState<LiveLink.LiveLink | null>(null);
 
-  await configureClient(instance, canvas_elements);
+    useEffect(() => {
+        return () => {
+            instance?.close();
+        };
+    }, [instance]);
 
-  return instance;
+    return {
+        instance,
+        connect: async ({ scene_id }: { scene_id: LiveLink.UUID }) => {
+            if (canvas_refs.some(r => r.current === null)) {
+                return null;
+            }
+
+            const inst = await connect(
+                canvas_refs.map(r => r.current!),
+                scene_id,
+                token,
+            );
+            setInstance(inst);
+            return inst;
+        },
+        disconnect: () => setInstance(null),
+    };
 }
 
 //------------------------------------------------------------------------------
-async function configureClient(
-  instance: LiveLink.LiveLink,
-  canvas_elements: Array<HTMLCanvasElement>
-) {
-  const canvases = await Promise.all(
-    canvas_elements.map(async (canvas_element) =>
-      new LiveLink.Canvas(instance, {
-        canvas_element,
-      }).init()
-    )
-  );
+async function connect(canvas_elements: Array<HTMLCanvasElement>, scene_id: string, token: string) {
+    const instance = await LiveLink.LiveLink.join_or_start({
+        scene_id,
+        token,
+        session_selector: ({ sessions }: { sessions: Array<LiveLink.SessionInfo> }) => sessions[0],
+    });
 
-  for (const canvas of canvases) {
-    instance.remote_rendering_surface.addCanvas({ canvas });
-  }
+    await configureClient(instance, canvas_elements);
 
-  const client_config = {
-    remote_canvas_size: instance.remote_rendering_surface.dimensions,
-    encoder_config: {
-      codec: 2,
-      profile: 1,
-      frame_rate: 60,
-      lossy: true,
-    },
-    supported_devices: {
-      keyboard: true,
-      mouse: true,
-      gamepad: true,
-      hololens: false,
-      touchscreen: false,
-    },
-  };
+    return instance;
+}
 
-  // Step 1: configure the client on the renderer side, this informs the
-  //         renderer on the client canvas size and available input devices
-  //         and most importantly activates the session.
-  await instance.configureClient({ client_config });
+//------------------------------------------------------------------------------
+async function configureClient(instance: LiveLink.LiveLink, canvas_elements: Array<HTMLCanvasElement>) {
+    const canvases = await Promise.all(
+        canvas_elements.map(async canvas_element =>
+            new LiveLink.Canvas(instance, {
+                canvas_element,
+            }).init(),
+        ),
+    );
 
-  // Step 2: decode received frames and draw them on the canvas.
-  await instance.installFrameConsumer({
-    frame_consumer: new LiveLink.WebCodecsDecoder(
-      instance.remote_rendering_surface
-    ),
-  });
+    for (const canvas of canvases) {
+        instance.remote_rendering_surface.addCanvas({ canvas });
+    }
 
-  // Step 3: setup the renderer to use the camera on a full canvas viewport.
-  let i = 0;
-  for (const canvas of canvases) {
-    const camera = await instance.newEntity(MyCamera, "MyCam_" + i++);
-    const viewport = new LiveLink.Viewport({ camera });
-    canvas.attachViewport({ viewport });
-  }
+    const client_config = {
+        remote_canvas_size: instance.remote_rendering_surface.dimensions,
+        encoder_config: {
+            codec: 2,
+            profile: 1,
+            frame_rate: 60,
+            lossy: true,
+        },
+        supported_devices: {
+            keyboard: true,
+            mouse: true,
+            gamepad: true,
+            hololens: false,
+            touchscreen: false,
+        },
+    };
 
-  instance.startStreaming();
-  instance.startUpdateLoop({ fps: 60 });
+    // Step 1: configure the client on the renderer side, this informs the
+    //         renderer on the client canvas size and available input devices
+    //         and most importantly activates the session.
+    await instance.configureClient({ client_config });
+
+    // Step 2: decode received frames and draw them on the canvas.
+    await instance.installFrameConsumer({
+        frame_consumer: new LiveLink.WebCodecsDecoder(instance.remote_rendering_surface),
+    });
+
+    // Step 3: setup the renderer to use the camera on a full canvas viewport.
+    let i = 0;
+    for (const canvas of canvases) {
+        const camera = await instance.newEntity(MyCamera, "MyCam_" + i++);
+        const viewport = new LiveLink.Viewport({ camera });
+        canvas.attachViewport({ viewport });
+    }
+
+    instance.startStreaming();
+    instance.startUpdateLoop({ fps: 60 });
 }
 
 //------------------------------------------------------------------------------
 class MyCamera extends LiveLink.Camera {
-  private _speed = 1;
+    private _speed = 1;
 
-  onCreate() {
-    this.local_transform = { position: [0, 1, 5] };
-    this.camera = {
-      renderGraphRef: "398ee642-030a-45e7-95df-7147f6c43392",
-      dataJSON: { grid: true, skybox: false, gradient: true },
-    };
-    this.perspective_lens = {};
-    this._speed = 1 + Math.random();
-  }
+    onCreate() {
+        this.local_transform = { position: [0, 1, 5] };
+        this.camera = {
+            renderGraphRef: "398ee642-030a-45e7-95df-7147f6c43392",
+            dataJSON: { grid: true, skybox: false, gradient: true },
+        };
+        this.perspective_lens = {};
+        this._speed = 1 + Math.random();
+    }
 
-  onUpdate({ elapsed_time }: { elapsed_time: number }) {
-    this.local_transform!.position![1] =
-      1 + Math.sin(elapsed_time * this._speed);
-  }
+    onUpdate({ elapsed_time }: { elapsed_time: number }) {
+        this.local_transform!.position![1] = 1 + Math.sin(elapsed_time * this._speed);
+    }
 }

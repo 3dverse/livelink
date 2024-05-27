@@ -11,38 +11,32 @@ const livelink_base_url = "wss://api.3dverse.dev/editor-backend";
  *
  */
 export class EditorController extends EditorMessageHandler {
-  /**
-   *
-   */
-  async connectToSession({
-    session,
-    client,
-  }: {
-    session: Session;
-    client: Client;
-  }): Promise<ConnectConfirmation> {
-    if (!session.isJoinable()) {
-      throw new Error("Invalid session");
+    /**
+     *
+     */
+    async connectToSession({ session, client }: { session: Session; client: Client }): Promise<ConnectConfirmation> {
+        if (!session.isJoinable()) {
+            throw new Error("Invalid session");
+        }
+
+        return new Promise<ConnectConfirmation>(resolve => {
+            this.addEventListener("connect-confirmation", (evt: Event) => {
+                const e = evt as CustomEvent<ConnectConfirmation>;
+                resolve(e.detail);
+            });
+
+            this._client_id = client.uuid;
+            this._connection.connect({
+                livelink_url: `${livelink_base_url}?sessionKey=${session.session_key}&clientUUID=${client.uuid}`,
+                handler: this,
+            });
+        });
     }
 
-    return new Promise<ConnectConfirmation>((resolve) => {
-      this.addEventListener("connect-confirmation", (evt: Event) => {
-        const e = evt as CustomEvent<ConnectConfirmation>;
-        resolve(e.detail);
-      });
-
-      this._client_id = client.uuid;
-      this._connection.connect({
-        livelink_url: `${livelink_base_url}?sessionKey=${session.session_key}&clientUUID=${client.uuid}`,
-        handler: this,
-      });
-    });
-  }
-
-  /**
-   *
-   */
-  disconnect() {
-    this._connection.disconnect();
-  }
+    /**
+     *
+     */
+    disconnect() {
+        this._connection.disconnect();
+    }
 }

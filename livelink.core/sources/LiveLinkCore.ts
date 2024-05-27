@@ -2,14 +2,14 @@ import { GatewayController } from "./controllers/GatewayController";
 import { EditorController } from "./controllers/EditorController";
 import { Session } from "./Session";
 import type {
-  ClientConfig,
-  ClientConfigResponse,
-  EditorEntity,
-  EntityUpdatedEvent,
-  HighlightEntitiesMessage,
-  ScreenSpaceRayQuery,
-  ScreenSpaceRayResult,
-  UUID,
+    ClientConfig,
+    ClientConfigResponse,
+    EditorEntity,
+    EntityUpdatedEvent,
+    HighlightEntitiesMessage,
+    ScreenSpaceRayQuery,
+    ScreenSpaceRayResult,
+    UUID,
 } from "../_prebuild/types";
 import { Entity } from "./Entity";
 import { EntityRegistry } from "./EntityRegistry";
@@ -27,175 +27,162 @@ import { Vec2i } from "./types";
  * compatibility with existing applications.
  */
 export class LiveLinkCore extends EventTarget {
-  /**
-   * Registry of entities discovered until now.
-   */
-  public readonly entity_registry = new EntityRegistry();
+    /**
+     * Registry of entities discovered until now.
+     */
+    public readonly entity_registry = new EntityRegistry();
 
-  /**
-   * Holds access to the gateway.
-   */
-  protected readonly _gateway = new GatewayController();
+    /**
+     * Holds access to the gateway.
+     */
+    protected readonly _gateway = new GatewayController();
 
-  /**
-   * Holds access to the editor.
-   */
-  protected readonly _editor = new EditorController();
+    /**
+     * Holds access to the editor.
+     */
+    protected readonly _editor = new EditorController();
 
-  /**
-   * Interval between update to the renderer.
-   */
-  private _update_interval = 0;
+    /**
+     * Interval between update to the renderer.
+     */
+    private _update_interval = 0;
 
-  /**
-   * Interval between broadcasts to the editor.
-   */
-  private _broadcast_interval = 0;
+    /**
+     * Interval between broadcasts to the editor.
+     */
+    private _broadcast_interval = 0;
 
-  /**
-   *
-   */
-  protected constructor(public readonly session: Session) {
-    super();
-  }
+    /**
+     *
+     */
+    protected constructor(public readonly session: Session) {
+        super();
+    }
 
-  /**
-   * Connect to the session
-   */
-  protected async _connect(): Promise<LiveLinkCore> {
-    // Retrieve a session key
-    await this.session.registerClient();
-    // Connect to FTL gateway
-    console.debug("Connecting to session...", this.session);
-    const client = await this._gateway.connectToSession({
-      session: this.session,
-    });
-    console.debug("Connected to session as:", client);
+    /**
+     * Connect to the session
+     */
+    protected async _connect(): Promise<LiveLinkCore> {
+        // Retrieve a session key
+        await this.session.registerClient();
+        // Connect to FTL gateway
+        console.debug("Connecting to session...", this.session);
+        const client = await this._gateway.connectToSession({
+            session: this.session,
+        });
+        console.debug("Connected to session as:", client);
 
-    // Connect to the LiveLink Broker
-    const connectConfirmation = await this._editor.connectToSession({
-      session: this.session,
-      client,
-    });
+        // Connect to the LiveLink Broker
+        const connectConfirmation = await this._editor.connectToSession({
+            session: this.session,
+            client,
+        });
 
-    this.entity_registry._configureComponentSerializer({
-      component_descriptors: connectConfirmation.components,
-    });
+        this.entity_registry._configureComponentSerializer({
+            component_descriptors: connectConfirmation.components,
+        });
 
-    this._editor.addEventListener(
-      "entities-updated",
-      (e: CustomEvent<Record<UUID, EntityUpdatedEvent>>) => {
-        for (const entity_euid in e.detail) {
-          this.entity_registry._updateEntityFromEvent({
-            entity_euid,
-            updated_components: e.detail[entity_euid].updatedComponents,
-          });
+        this._editor.addEventListener("entities-updated", (e: CustomEvent<Record<UUID, EntityUpdatedEvent>>) => {
+            for (const entity_euid in e.detail) {
+                this.entity_registry._updateEntityFromEvent({
+                    entity_euid,
+                    updated_components: e.detail[entity_euid].updatedComponents,
+                });
+            }
+        });
+
+        return this;
+    }
+
+    /**
+     * Closes the connections to the gateway and the editor.
+     */
+    protected async close() {
+        if (this._update_interval !== 0) {
+            clearInterval(this._update_interval);
         }
-      }
-    );
 
-    return this;
-  }
+        if (this._broadcast_interval !== 0) {
+            clearInterval(this._broadcast_interval);
+        }
 
-  /**
-   * Closes the connections to the gateway and the editor.
-   */
-  protected async close() {
-    if (this._update_interval !== 0) {
-      clearInterval(this._update_interval);
+        await this.session.close();
+
+        this._editor.disconnect();
+        this._gateway.disconnect();
     }
 
-    if (this._broadcast_interval !== 0) {
-      clearInterval(this._broadcast_interval);
+    /**
+     * Send the configuration requested by the client.
+     */
+    protected async configureClient({ client_config }: { client_config: ClientConfig }): Promise<ClientConfigResponse> {
+        this._checkRemoteCanvasSize({ size: client_config.remote_canvas_size });
+        return await this._gateway.configureClient({ client_config });
     }
 
-    await this.session.close();
-
-    this._editor.disconnect();
-    this._gateway.disconnect();
-  }
-
-  /**
-   * Send the configuration requested by the client.
-   */
-  protected async configureClient({
-    client_config,
-  }: {
-    client_config: ClientConfig;
-  }): Promise<ClientConfigResponse> {
-    this._checkRemoteCanvasSize({ size: client_config.remote_canvas_size });
-    return await this._gateway.configureClient({ client_config });
-  }
-
-  /**
-   *
-   */
-  protected resize({ size }: { size: Vec2i }) {
-    this._checkRemoteCanvasSize({ size });
-    this._gateway.resize({ size });
-  }
-
-  /**
-   *
-   */
-  private _checkRemoteCanvasSize({ size }: { size: Vec2i }): void {
-    if (size[0] % 8 !== 0 || size[1] % 8 !== 0) {
-      throw new Error(
-        `Remote canvas size MUST be a multiple of 8, is [${size[0]}, ${size[1]}]`
-      );
+    /**
+     *
+     */
+    protected resize({ size }: { size: Vec2i }) {
+        this._checkRemoteCanvasSize({ size });
+        this._gateway.resize({ size });
     }
-  }
 
-  /**
-   *
-   */
-  async castScreenSpaceRay({
-    screenSpaceRayQuery,
-  }: {
-    screenSpaceRayQuery: ScreenSpaceRayQuery;
-  }): Promise<ScreenSpaceRayResult> {
-    return this._gateway.castScreenSpaceRay({ screenSpaceRayQuery });
-  }
+    /**
+     *
+     */
+    private _checkRemoteCanvasSize({ size }: { size: Vec2i }): void {
+        if (size[0] % 8 !== 0 || size[1] % 8 !== 0) {
+            throw new Error(`Remote canvas size MUST be a multiple of 8, is [${size[0]}, ${size[1]}]`);
+        }
+    }
 
-  /**
-   *
-   */
-  highlightEntities({
-    highlightEntitiesMessage,
-  }: {
-    highlightEntitiesMessage: HighlightEntitiesMessage;
-  }): void {
-    this._gateway.highlightEntities({ highlightEntitiesMessage });
-  }
+    /**
+     *
+     */
+    async castScreenSpaceRay({
+        screenSpaceRayQuery,
+    }: {
+        screenSpaceRayQuery: ScreenSpaceRayQuery;
+    }): Promise<ScreenSpaceRayResult> {
+        return this._gateway.castScreenSpaceRay({ screenSpaceRayQuery });
+    }
 
-  /**
-   *
-   */
-  async createEntity({ entity }: { entity: Entity }): Promise<EditorEntity> {
-    const entities = await this._editor.spawnEntity({ entity });
-    return entities[0];
-  }
+    /**
+     *
+     */
+    highlightEntities({ highlightEntitiesMessage }: { highlightEntitiesMessage: HighlightEntitiesMessage }): void {
+        this._gateway.highlightEntities({ highlightEntitiesMessage });
+    }
 
-  /**
-   *
-   */
-  startUpdateLoop({ fps }: { fps: number }) {
-    this._update_interval = setInterval(() => {
-      this.entity_registry.advanceFrame({ dt: 1 / fps });
+    /**
+     *
+     */
+    async createEntity({ entity }: { entity: Entity }): Promise<EditorEntity> {
+        const entities = await this._editor.spawnEntity({ entity });
+        return entities[0];
+    }
 
-      const msg = this.entity_registry._getEntitiesToUpdate();
-      if (msg !== null) {
-        this._gateway.updateEntities({ updateEntitiesFromJsonMessage: msg });
-        this.entity_registry._clearUpdateList();
-      }
-    }, 1000 / fps);
+    /**
+     *
+     */
+    startUpdateLoop({ fps }: { fps: number }) {
+        this._update_interval = setInterval(() => {
+            this.entity_registry.advanceFrame({ dt: 1 / fps });
 
-    this._broadcast_interval = setInterval(() => {
-      const msg = this.entity_registry._getEntitiesToBroadcast();
-      if (msg !== null) {
-        this._editor.updateComponents(msg);
-        this.entity_registry._clearBroadcastList();
-      }
-    }, 1000);
-  }
+            const msg = this.entity_registry._getEntitiesToUpdate();
+            if (msg !== null) {
+                this._gateway.updateEntities({ updateEntitiesFromJsonMessage: msg });
+                this.entity_registry._clearUpdateList();
+            }
+        }, 1000 / fps);
+
+        this._broadcast_interval = setInterval(() => {
+            const msg = this.entity_registry._getEntitiesToBroadcast();
+            if (msg !== null) {
+                this._editor.updateComponents(msg);
+                this.entity_registry._clearBroadcastList();
+            }
+        }, 1000);
+    }
 }

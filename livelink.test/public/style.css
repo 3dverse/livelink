@@ -1,22 +1,22 @@
 body {
-  background-color: black;
-  margin: 0;
-  padding: 0;
+    background-color: black;
+    margin: 0;
+    padding: 0;
 }
 
 .canvas-container {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 100vh;
-  gap: 5vw;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    gap: 5vw;
 }
 
 .control-panel {
-  position: fixed;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  width: 100vw;
-  gap: 5vw;
+    position: fixed;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100vw;
+    gap: 5vw;
 }

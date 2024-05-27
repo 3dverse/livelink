@@ -11,21 +11,19 @@ import SmartObject from "./samples/smart-object/SmartObject.tsx";
 import SceneSelector from "./samples/scene-selector/SceneSelector.tsx";
 
 const router = createBrowserRouter([
-  {
-    path: "/",
-    element: <App />,
-    errorElement: <ErrorPage />,
-    children: [
-      { path: "simple-canvas", element: <SimpleCanvas /> },
-      { path: "double-canvas", element: <DoubleCanvas /> },
-      { path: "quadruple-canvas", element: <QuadrupleCanvas /> },
-      { path: "multi-session", element: <MultiSession /> },
-      { path: "smart-object", element: <SmartObject /> },
-      { path: "scene-selector", element: <SceneSelector /> },
-    ],
-  },
+    {
+        path: "/",
+        element: <App />,
+        errorElement: <ErrorPage />,
+        children: [
+            { path: "simple-canvas", element: <SimpleCanvas /> },
+            { path: "double-canvas", element: <DoubleCanvas /> },
+            { path: "quadruple-canvas", element: <QuadrupleCanvas /> },
+            { path: "multi-session", element: <MultiSession /> },
+            { path: "smart-object", element: <SmartObject /> },
+            { path: "scene-selector", element: <SceneSelector /> },
+        ],
+    },
 ]);
 
-ReactDOM.createRoot(document.getElementById("root")!).render(
-  <RouterProvider router={router} />
-);
+ReactDOM.createRoot(document.getElementById("root")!).render(<RouterProvider router={router} />);
