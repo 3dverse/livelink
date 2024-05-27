@@ -1,6 +1,10 @@
 //------------------------------------------------------------------------------
 import { useEffect, useState } from "react";
 import * as LiveLink from "livelink.js";
+import CameraControls from "camera-controls";
+import * as THREE from "three";
+
+CameraControls.install({ THREE: THREE });
 
 //------------------------------------------------------------------------------
 export function useLiveLinkInstance({
@@ -99,6 +103,7 @@ async function configureClient(instance: LiveLink.LiveLink, canvas_elements: Arr
     let i = 0;
     for (const canvas of canvases) {
         const camera = await instance.newEntity(MyCamera, "MyCam_" + i++);
+        camera.canvas = canvas.html_element;
         const viewport = new LiveLink.Viewport({ camera });
         canvas.attachViewport({ viewport });
     }
@@ -108,8 +113,14 @@ async function configureClient(instance: LiveLink.LiveLink, canvas_elements: Arr
 }
 
 //------------------------------------------------------------------------------
+
 class MyCamera extends LiveLink.Camera {
-    private _speed = 1;
+    private _canvas: HTMLCanvasElement | null = null;
+    private _initialized = false;
+
+    set canvas(canvas: HTMLCanvasElement) {
+        this._canvas = canvas;
+    }
 
     onCreate() {
         this.local_transform = { position: [0, 1, 5] };
@@ -117,11 +128,42 @@ class MyCamera extends LiveLink.Camera {
             renderGraphRef: "398ee642-030a-45e7-95df-7147f6c43392",
             dataJSON: { grid: true, skybox: false, gradient: true },
         };
-        this.perspective_lens = {};
-        this._speed = 1 + Math.random();
+        this.perspective_lens = {
+            aspectRatio: 1,
+            fovy: 60,
+            nearPlane: 0.1,
+            farPlane: 10000,
+        };
     }
 
-    onUpdate({ elapsed_time }: { elapsed_time: number }) {
-        this.local_transform!.position![1] = 1 + Math.sin(elapsed_time * this._speed);
+    onUpdate() {
+        if (this._initialized || !this._canvas) return;
+        this._initialized = true;
+        const camera = new THREE.PerspectiveCamera(
+            this.perspective_lens!.fovy,
+            this.perspective_lens!.aspectRatio,
+            this.perspective_lens!.nearPlane,
+            this.perspective_lens!.farPlane,
+        );
+        const clock = new THREE.Clock();
+        // create camera controls
+        const cameraControls = new CameraControls(camera, this._canvas);
+        cameraControls.setOrbitPoint(0, 0, 0);
+        cameraControls.setPosition(...this.local_transform!.position!);
+
+        cameraControls.addEventListener("update", () => {
+            const cameraPosition = cameraControls.camera.position.toArray();
+            const cameraOrientation = new THREE.Quaternion();
+            cameraControls.camera.getWorldQuaternion(cameraOrientation);
+            const cameraOrientationArray = cameraOrientation.toArray();
+            this.local_transform!.position = cameraPosition;
+            this.local_transform!.orientation = cameraOrientationArray as LiveLink.Quat;
+        });
+        // animate the camera
+        (function anim() {
+            const delta = clock.getDelta();
+            cameraControls.update(delta);
+            requestAnimationFrame(anim);
+        })();
     }
 }
