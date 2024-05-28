@@ -106,7 +106,6 @@ export class RemoteRenderingSurface implements DecodedFrameConsumer {
      */
     update(): void {
         const need_to_resize = this._computeSurfaceSize();
-        console.log("DIM", this._dimensions);
 
         if (this.#core.isConfigured() && this._isValid()) {
             if (need_to_resize) {
