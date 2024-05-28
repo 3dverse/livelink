@@ -10,7 +10,8 @@
     "build": "node esbuild.js && tsc",
     "dev": "node esbuild.js dev & tsc -w",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "clean": "rimraf dist"
+    "clean": "rimraf dist",
+    "docs": "typedoc"
   },
   "author": "",
   "license": "ISC",
@@ -18,6 +19,8 @@
     "esbuild": "^0.20.1",
     "livelink.core": "file:../livelink.core",
     "rimraf": "^5.0.7",
+    "typedoc": "^0.25.13",
+    "typedoc-plugin-markdown": "^4.0.3",
     "typescript": "^5.3.3"
   }
 }
