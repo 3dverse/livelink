@@ -81,18 +81,6 @@ export class Viewport extends EventTarget {
             point[1] >= this._relative_rect.top &&
             point[1] <= this._relative_rect.top + this._relative_rect.height
         );
-        /*
-    if (this._pixel_rect === null) {
-      return false;
-    }
-
-    return (
-      point.x >= this._pixel_rect.left &&
-      point.x <= this._pixel_rect.left + this._pixel_rect.width &&
-      point.y >= this._pixel_rect.top &&
-      point.y <= this._pixel_rect.top + this._pixel_rect.height
-    );
-    */
     }
 
     /**
@@ -141,7 +129,6 @@ export class Viewport extends EventTarget {
         relative_pos[0] = (relative_pos[0] - this._relative_rect.left) / this._relative_rect.width;
         relative_pos[1] = (relative_pos[1] - this._relative_rect.top) / this._relative_rect.height;
 
-        console.log(relative_pos);
         this.dispatchEvent(
             new CustomEvent("on-clicked", {
                 detail: { absolute_pos, relative_pos },
