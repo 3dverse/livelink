@@ -1,11 +1,10 @@
 import type { Vec2, Vec2ui16, ViewportConfig } from "livelink.core";
-import { Viewport } from "./Viewport";
 import { Livelink } from "./Livelink";
 import { DecodedFrameConsumer } from "./decoders/DecodedFrameConsumer";
-import { Canvas } from "./Canvas";
+import { Viewport } from "./Viewport";
 
-type CanvasHolder = {
-    canvas: Canvas;
+type ViewportRect = {
+    viewport: Viewport;
     offset: Vec2;
 };
 
@@ -20,9 +19,14 @@ type CanvasHolder = {
  */
 export class RemoteRenderingSurface implements DecodedFrameConsumer {
     /**
-     * List of canvases.
+     *
      */
-    private _canvases: Array<CanvasHolder> = [];
+    #core: Livelink;
+
+    /**
+     * List of viewports.
+     */
+    private _viewports: Array<ViewportRect> = [];
 
     /**
      * Surface actual dimensions.
@@ -30,14 +34,9 @@ export class RemoteRenderingSurface implements DecodedFrameConsumer {
     private _dimensions: Vec2ui16 = [0, 0];
 
     /**
-     * Current offset to apply to the next
+     * Current offset to apply to the next viewport to be added.
      */
     private _current_offset = 0;
-
-    /**
-     *
-     */
-    #core: Livelink;
 
     /**
      *
@@ -49,27 +48,14 @@ export class RemoteRenderingSurface implements DecodedFrameConsumer {
     /**
      *
      */
-    get viewports(): Array<ViewportConfig> {
-        let viewports: Array<ViewportConfig> = [];
-        for (const c of this._canvases) {
-            const canvas_left = c.offset[0] / this.dimensions[0];
-            const canvas_top = c.offset[1] / this.dimensions[1];
-            const canvas_width = c.canvas.width / this.dimensions[0];
-            const canvas_height = c.canvas.height / this.dimensions[1];
-
-            viewports = viewports.concat(
-                c.canvas.viewports.map(
-                    (viewport): ViewportConfig => ({
-                        camera_rtid: viewport.camera.rtid!,
-                        left: canvas_left + viewport.config.left * canvas_left,
-                        top: canvas_top + viewport.config.top * canvas_top,
-                        width: viewport.config.width * canvas_width,
-                        height: viewport.config.height * canvas_height,
-                    }),
-                ),
-            );
-        }
-        return viewports;
+    private get config(): Array<ViewportConfig> {
+        return this._viewports.map(({ viewport, offset }) => ({
+            camera_rtid: viewport.camera!.rtid!,
+            left: offset[0] / this.dimensions[0],
+            top: offset[1] / this.dimensions[1],
+            width: viewport.width / this.dimensions[0],
+            height: viewport.height / this.dimensions[1],
+        }));
     }
 
     /**
@@ -83,23 +69,35 @@ export class RemoteRenderingSurface implements DecodedFrameConsumer {
      *
      */
     consumeDecodedFrame({ decoded_frame }: { decoded_frame: VideoFrame }): void {
-        for (const c of this._canvases) {
-            c.canvas.consumeDecodedFrame({
+        for (const { viewport, offset } of this._viewports) {
+            viewport.drawFrame({
                 decoded_frame,
-                left: c.offset[0],
-                top: c.offset[1],
+                left: offset[0],
+                top: offset[1],
             });
         }
     }
 
     /**
-     * Attach a canvas to the surface
+     * Attach a viewport to the surface
      *
-     * @param canvas The canvas to attach to the surface
+     * @param viewport The viewport to attach to the surface
      */
-    addCanvas({ canvas }: { canvas: Canvas }): void {
-        this._canvases.push({ canvas, offset: [this._current_offset, 0] });
-        this._current_offset += canvas.width;
+    addViewport({ viewport }: { viewport: Viewport }): void {
+        this.addViewports({ viewports: [viewport] });
+    }
+
+    /**
+     * Attach a viewports to the surface
+     *
+     * @param viewports The viewports to attach to the surface
+     */
+    addViewports({ viewports }: { viewports: Array<Viewport> }): void {
+        for (const viewport of viewports) {
+            this._viewports.push({ viewport, offset: [this._current_offset, 0] });
+            this._current_offset += viewport.width;
+        }
+
         this.update();
     }
 
@@ -108,14 +106,21 @@ export class RemoteRenderingSurface implements DecodedFrameConsumer {
      */
     update(): void {
         const need_to_resize = this._computeSurfaceSize();
+        console.log("DIM", this._dimensions);
 
-        if (this.#core.isConfigured()) {
-            this.#core.setViewports({ viewports: this.viewports });
-
+        if (this.#core.isConfigured() && this._isValid()) {
             if (need_to_resize) {
                 this.#core.resize({ size: this._dimensions });
             }
+            this.#core.setViewports({ viewports: this.config });
         }
+    }
+
+    /**
+     *
+     */
+    private _isValid(): boolean {
+        return this._viewports.every(({ viewport }) => viewport.isValid());
     }
 
     /**
@@ -128,9 +133,9 @@ export class RemoteRenderingSurface implements DecodedFrameConsumer {
         let width = 0;
         let height = 0;
 
-        for (const c of this._canvases) {
-            width += c.canvas.width;
-            height = Math.max(height, c.canvas.height);
+        for (const { viewport } of this._viewports) {
+            width += viewport.width;
+            height = Math.max(height, viewport.height);
         }
 
         const new_dimensions: Vec2 = [next_multiple_of_8(width), next_multiple_of_8(height)];

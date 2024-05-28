@@ -131,7 +131,6 @@ export class Livelink extends LivelinkCore {
     async close() {
         if (this._frame_consumer) {
             this._gateway.removeEventListener("on-frame-received", this._onFrameReceived);
-
             this._frame_consumer.release();
         }
 
@@ -216,7 +215,7 @@ export class Livelink extends LivelinkCore {
             throw new Error("The Livelink instance is not configured yet");
         }
 
-        //this.setViewports();
+        this.remote_rendering_surface.update();
         this.resume();
     }
 

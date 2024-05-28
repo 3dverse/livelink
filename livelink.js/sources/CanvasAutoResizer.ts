@@ -1,5 +1,5 @@
 import { type Vec2 } from "@livelink.core";
-import { Canvas } from "./Canvas";
+import { Viewport } from "./Viewport";
 
 /**
  * At loading time HTML Canvases are always initialized with a default size
@@ -38,7 +38,7 @@ export class CanvasAutoResizer extends EventTarget {
     /**
      * Constructs an auto resizer for the provided canvas.
      */
-    constructor(private readonly _canvas: Canvas) {
+    constructor(private readonly _viewport: Viewport) {
         super();
 
         this._resized_promise = new Promise(resolve => {
@@ -50,7 +50,7 @@ export class CanvasAutoResizer extends EventTarget {
         this._observer = new ResizeObserver(e => this._onResized(e));
 
         // My watch begins...
-        this._observer.observe(this._canvas.html_element);
+        this._observer.observe(this._viewport.canvas);
     }
 
     /**
@@ -61,14 +61,14 @@ export class CanvasAutoResizer extends EventTarget {
         await this._resized_promise;
 
         // Overwrite the notifier now that we have initialized our real size.
-        this._notifyCanvas = () => this._canvas.updateCanvasSize();
+        this._notifyViewport = () => this._viewport.updateCanvasSize();
     }
 
     /**
      * This function will be overwritten after the first resize event that
      * initializes the actual size of the canvas.
      */
-    private _notifyCanvas() {}
+    private _notifyViewport() {}
 
     /**
      * Callback called by the observer when the canvas is resized.
@@ -92,19 +92,19 @@ export class CanvasAutoResizer extends EventTarget {
      * Resize the canvas and send an event.
      */
     private _resize() {
-        const old_size: Vec2 = [this._canvas.html_element.width, this._canvas.html_element.height];
+        const old_size: Vec2 = [this._viewport.canvas.width, this._viewport.canvas.height];
 
-        this._canvas.html_element.width = this._dimensions[0];
-        this._canvas.html_element.height = this._dimensions[1];
+        this._viewport.canvas.width = this._dimensions[0];
+        this._viewport.canvas.height = this._dimensions[1];
 
-        this._notifyCanvas();
+        this._notifyViewport();
 
         // Resolve the init promise.
         this._resized_promise_resolver!();
 
         super.dispatchEvent(
             new CustomEvent("on-resized", {
-                detail: { old_size, new_size: this._canvas.dimensions },
+                detail: { old_size, new_size: this._viewport.dimensions },
             }),
         );
     }

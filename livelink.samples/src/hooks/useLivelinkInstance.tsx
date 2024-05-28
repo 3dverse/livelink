@@ -60,17 +60,15 @@ async function connect(canvas_elements: Array<HTMLCanvasElement>, scene_id: stri
 
 //------------------------------------------------------------------------------
 async function configureClient(instance: Livelink.Livelink, canvas_elements: Array<HTMLCanvasElement>) {
-    const canvases = await Promise.all(
+    const viewports = await Promise.all(
         canvas_elements.map(async canvas_element =>
-            new Livelink.Canvas(instance, {
+            new Livelink.Viewport(instance, {
                 canvas_element,
             }).init(),
         ),
     );
 
-    for (const canvas of canvases) {
-        instance.remote_rendering_surface.addCanvas({ canvas });
-    }
+    instance.remote_rendering_surface.addViewports({ viewports });
 
     const client_config = {
         remote_canvas_size: instance.remote_rendering_surface.dimensions,
@@ -101,11 +99,10 @@ async function configureClient(instance: Livelink.Livelink, canvas_elements: Arr
 
     // Step 3: setup the renderer to use the camera on a full canvas viewport.
     let i = 0;
-    for (const canvas of canvases) {
+    for (const viewport of viewports) {
         const camera = await instance.newEntity(MyCamera, "MyCam_" + i++);
-        camera.canvas = canvas.html_element;
-        const viewport = new Livelink.Viewport({ camera });
-        canvas.attachViewport({ viewport });
+        camera.setCanvas(viewport.canvas);
+        viewport.camera = camera;
     }
 
     instance.startStreaming();
@@ -118,7 +115,7 @@ class MyCamera extends Livelink.Camera {
     private _canvas: HTMLCanvasElement | null = null;
     private _initialized = false;
 
-    set canvas(canvas: HTMLCanvasElement) {
+    setCanvas(canvas: HTMLCanvasElement) {
         this._canvas = canvas;
     }
 

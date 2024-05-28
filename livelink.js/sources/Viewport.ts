@@ -1,159 +1,150 @@
-import { Canvas } from "./Canvas";
+import { HighlightMode, ScreenSpaceRayResult, type Vec2 } from "@livelink.core";
+import { Livelink } from "./Livelink";
+import { CanvasAutoResizer } from "./CanvasAutoResizer";
 import { Camera } from "./Camera";
-import { Rect } from "./utils/Rect";
-import { Vec2, ViewportConfig } from "@livelink.core";
 
 /**
  *
  */
 export class Viewport extends EventTarget {
-    private _camera: Camera;
-    private _canvas: Canvas | null = null;
-    private _relative_rect: Rect;
-    private _pixel_rect: Rect | null = null;
-    private _z_index = 0;
-
-    get z_index() {
-        return this._z_index;
-    }
+    /**
+     * The Livelink core used to send commands.
+     */
+    #core: Livelink;
 
     /**
-     * @param {object} o
-     * @param {number} o.left[0] Relative position of the leftmost side of the viewport relative to its parent canvas
-     * @param {number} o.top[0] Relative position of the topmost side of the viewport relative to its parent canvas
-     * @param {number} o.width[1] Relative width of the viewport relative to its parent canvas
-     * @param {number} o.height[1] Relative height of the viewport relative to its parent canvas
+     * HTML canvas on which we display the final composited frame.
      */
-    constructor({
-        camera,
-        left = 0,
-        top = 0,
-        width = 1,
-        height = 1,
-        z_index = 0,
-    }: {
-        camera: Camera;
-        left?: number;
-        top?: number;
-        width?: number;
-        height?: number;
-        z_index?: number;
-    }) {
-        super();
-
-        if (left < 0 || left >= 1) {
-            throw new Error(`left MUST be in the [0,1[ range, it is ${left}`);
-        }
-        if (top < 0 || top >= 1) {
-            throw new Error(`top MUST be in the [0,1[ range, it is ${top}`);
-        }
-        if (width <= 0 || width > 1) {
-            throw new Error(`width MUST be in the ]0,1] range, it is ${width}`);
-        }
-        if (height <= 0 || height > 1) {
-            throw new Error(`height MUST be in the ]0,1] range, it is ${height}`);
-        }
-        if (left + width > 1) {
-            throw new Error(`left + width MUST be <= 1, it is ${left + width}`);
-        }
-        if (top + height > 1) {
-            throw new Error(`top + height MUST be <= 1, it is ${top + height}`);
-        }
-        if (!camera.isInstantiated()) {
-            throw new Error(`Camera '${camera.name}' MUST be instantiated before assigning it to a viewport`);
-        }
-
-        this._relative_rect = { left, top, width, height };
-        this._z_index = z_index;
-        this._camera = camera;
-    }
-
-    /**
-     * Determines whether or not a point is inside the viewport.
-     *
-     * @param point Coordinates in pixels of the point
-     * @returns true if the point is inside the viewport, false otherwise
-     */
-    isPointInside({ point }: { point: Vec2 }): boolean {
-        return (
-            point[0] >= this._relative_rect.left &&
-            point[0] <= this._relative_rect.left + this._relative_rect.width &&
-            point[1] >= this._relative_rect.top &&
-            point[1] <= this._relative_rect.top + this._relative_rect.height
-        );
-    }
-
+    private _canvas: HTMLCanvasElement;
     /**
      *
-     * @param camera The camera to attach to the viewport
      */
-    attachCamera({ camera }: { camera: Camera }): void {
-        this._camera = camera;
-    }
+    private _context: CanvasRenderingContext2D;
+    /**
+     *
+     */
+    private _auto_resizer: CanvasAutoResizer;
+    /**
+     *
+     */
+    private _camera: Camera | null = null;
 
     /**
-     * The camera attached to this viewport or null if no camera is attached
-     */
-    get camera() {
-        return this._camera;
-    }
-
-    /**
-     * The canvas this viewport is attached to or null if it's not attached to any viewport
+     * HTML Canvas Element
      */
     get canvas() {
         return this._canvas;
     }
 
     /**
-     * PRIVATE
+     * Dimensions of the HTML canvas in pixels.
      */
-    get config(): ViewportConfig {
-        if (!this._camera || !this._camera.isInstantiated()) {
-            throw new Error("Viewport has an invalid camera attached to it.");
-        }
-
-        return {
-            left: this._relative_rect.left,
-            top: this._relative_rect.top,
-            width: this._relative_rect.width,
-            height: this._relative_rect.height,
-            camera_rtid: this._camera.rtid!,
-        };
+    get width(): number {
+        return this._canvas.width;
     }
-
-    /**
-     * @internal
-     */
-    _onClicked({ absolute_pos, relative_pos }: { absolute_pos: Vec2; relative_pos: Vec2 }) {
-        relative_pos[0] = (relative_pos[0] - this._relative_rect.left) / this._relative_rect.width;
-        relative_pos[1] = (relative_pos[1] - this._relative_rect.top) / this._relative_rect.height;
-
-        this.dispatchEvent(
-            new CustomEvent("on-clicked", {
-                detail: { absolute_pos, relative_pos },
-            }),
-        );
+    get height(): number {
+        return this._canvas.height;
     }
-
-    /**
-     * @internal
-     * @param canvas
-     */
-    _onAttachedToCanvas({ canvas }: { canvas: Canvas }): void {
-        this._canvas = canvas;
-        this._computeSizeInPixel();
+    get dimensions(): Vec2 {
+        return [this.width, this.height];
     }
 
     /**
      *
      */
-    private _computeSizeInPixel(): void {
-        this._pixel_rect = {
-            left: this._relative_rect.left,
-            top: this._relative_rect.top,
-            width: this._relative_rect.width,
-            height: this._relative_rect.height,
-        };
+    get camera(): Camera | null {
+        return this._camera;
+    }
+
+    /**
+     *
+     */
+    set camera(c: Camera) {
+        this._camera = c;
+    }
+
+    /**
+     * @param canvas_element DOM Element or id of the canvas on which to display the final composited frame
+     *
+     * @throws {InvalidCanvasId} Thrown when the provided id doesn't refer to a canvas element.
+     */
+    constructor(
+        core: Livelink,
+        {
+            canvas_element,
+        }: {
+            canvas_element: string | HTMLCanvasElement;
+        },
+    ) {
+        super();
+        this.#core = core;
+
+        const canvas = typeof canvas_element === "string" ? document.getElementById(canvas_element) : canvas_element;
+
+        if (canvas === null) {
+            throw new Error(`Cannot find canvas ${canvas_element}`);
+        }
+
+        if (canvas.nodeName !== "CANVAS") {
+            throw new Error(`HTML element ${canvas_element} is a '${canvas.nodeName}', it MUST be CANVAS`);
+        }
+        const context = (canvas as HTMLCanvasElement).getContext("2d");
+        if (context === null) {
+            throw new Error(`Cannot create a 2d context from canvas ${canvas_element}`);
+        }
+
+        this._canvas = canvas as HTMLCanvasElement;
+        this._auto_resizer = new CanvasAutoResizer(this);
+        this._context = context;
+    }
+
+    /**
+     *
+     */
+    async init(): Promise<Viewport> {
+        await this._auto_resizer.waitForFirstResize();
+        return this;
+    }
+
+    /**
+     *
+     */
+    isValid(): boolean {
+        return this._camera !== null && this.width > 0 && this.height > 0;
+    }
+
+    /**
+     *
+     */
+    drawFrame({ decoded_frame, left, top }: { decoded_frame: VideoFrame; left: number; top: number }): void {
+        this._context.drawImage(decoded_frame, left, top, this.width, this.height, 0, 0, this.width, this.height);
+    }
+
+    /**
+     *
+     */
+    async castScreenSpaceRay({
+        pos,
+        mode = HighlightMode.None,
+    }: {
+        pos: Vec2;
+        mode: HighlightMode;
+    }): Promise<ScreenSpaceRayResult | null> {
+        return this._camera && this._camera.rtid
+            ? await this.#core!.castScreenSpaceRay({
+                  screenSpaceRayQuery: {
+                      camera_rtid: this._camera.rtid,
+                      pos,
+                      mode,
+                  },
+              })
+            : null;
+    }
+
+    /**
+     *
+     */
+    updateCanvasSize() {
+        this.#core.remote_rendering_surface.update();
     }
 }
