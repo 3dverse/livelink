@@ -66,6 +66,9 @@ export class Session extends EventTarget {
     get session_key() {
         return this._session_key;
     }
+    get client_ids(): Array<UUID> {
+        return Array.from(this._clients.keys());
+    }
 
     /**
      * @param {UUID} _scene_id - The id of the scene
@@ -218,11 +221,28 @@ export class Session extends EventTarget {
 
     /**
      *
+     */
+    _updateClients({ client_ids }: { client_ids: Array<UUID> }): void {
+        for (const client_id of client_ids) {
+            if (!this._clients.has(client_id)) {
+                this._onClientJoined({ client: new Client(client_id) });
+            }
+        }
+
+        for (const [client_id] of this._clients) {
+            if (!client_ids.includes(client_id)) {
+                this._onClientLeft({ client_id });
+            }
+        }
+    }
+
+    /**
+     *
      * @param client The client to register
      */
     _onClientJoined({ client }: { client: Client }): void {
         this._clients.set(client.uuid, client);
-        this.dispatchEvent(new CustomEvent("on-client-joined", { detail: client }));
+        this.dispatchEvent(new CustomEvent("client-joined", { detail: client }));
     }
 
     /**
@@ -233,7 +253,7 @@ export class Session extends EventTarget {
         const client = this.getClient({ client_id });
         if (client) {
             this._clients.delete(client_id);
-            this.dispatchEvent(new CustomEvent("on-client-left", { detail: client }));
+            this.dispatchEvent(new CustomEvent("client-left", { detail: client }));
         }
     }
 }

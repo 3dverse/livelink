@@ -1,3 +1,4 @@
+import Collaborators from "./collaborators/Collaborators";
 import ControllerEffects from "./controller-effects/ControllerEffects";
 import DoubleCanvas from "./double-canvas/DoubleCanvas";
 import MultiSession from "./multi-session/MultiSession";
@@ -18,4 +19,5 @@ export const SAMPLES = [
     { title: "Smart Object Sync", path: "smart-object-sync", element: <SmartObjectSync /> },
     { title: "Trigger", path: "trigger", element: <Trigger /> },
     { title: "Controller Effects", path: "controller-effects", element: <ControllerEffects /> },
+    { title: "Collaborators", path: "collaborators", element: <Collaborators /> },
 ];

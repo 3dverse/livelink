@@ -177,6 +177,8 @@ export class Livelink extends LivelinkCore {
         this._frame_consumer!.consumeEncodedFrame({
             encoded_frame: event.detail.encoded_frame,
         });
+
+        this.session._updateClients({ client_ids: event.detail.meta_data.clients.map(client => client.client_id) });
     };
 
     /**
