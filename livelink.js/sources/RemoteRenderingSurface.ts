@@ -1,6 +1,6 @@
 import type { Vec2, Vec2ui16, ViewportConfig } from "livelink.core";
 import { Viewport } from "./Viewport";
-import { LiveLink } from "./LiveLink";
+import { Livelink } from "./Livelink";
 import { DecodedFrameConsumer } from "./decoders/DecodedFrameConsumer";
 import { Canvas } from "./Canvas";
 
@@ -37,7 +37,7 @@ export class RemoteRenderingSurface implements DecodedFrameConsumer {
     /**
      *
      */
-    #core: LiveLink;
+    #core: Livelink;
 
     /**
      *
@@ -75,7 +75,7 @@ export class RemoteRenderingSurface implements DecodedFrameConsumer {
     /**
      *
      */
-    constructor(core: LiveLink) {
+    constructor(core: Livelink) {
         this.#core = core;
     }
 

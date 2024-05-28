@@ -2,10 +2,10 @@
 #-------------------------------------------------------------------------------
 asyncapi: 3.0.0
 info:
-  title: 3dverse LiveLink Client Protocol
+  title: 3dverse Livelink Client Protocol
   version: 0.1.0
   description: |
-    This document describes the spec of the 3dverse LiveLink communication
+    This document describes the spec of the 3dverse Livelink communication
     protocol as it must be implemented on a client application.
 
     It defines operations targeted to 2 parties, and 2 subparties:

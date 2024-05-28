@@ -1,4 +1,4 @@
-import { LiveLinkCore } from "./LiveLinkCore";
+import { LivelinkCore } from "./LivelinkCore";
 import { EditorEntity } from "../_prebuild/types";
 import {
     ComponentHash,
@@ -73,7 +73,7 @@ export class Entity extends EventTarget {
     /**
      *
      */
-    constructor(protected readonly _core: LiveLinkCore) {
+    constructor(protected readonly _core: LivelinkCore) {
         super();
     }
 

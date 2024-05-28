@@ -1,5 +1,5 @@
 import {
-    LiveLinkCore,
+    LivelinkCore,
     Session,
     ClientConfig,
     SessionInfo,
@@ -17,11 +17,11 @@ import type { EncodedFrameConsumer } from "./decoders/EncodedFrameConsumer";
 import { RemoteRenderingSurface } from "./RemoteRenderingSurface";
 
 /**
- * The LiveLink interface.
+ * The Livelink interface.
  *
  * This interface CAN be embedded and distributed inside applications.
  */
-export class LiveLink extends LiveLinkCore {
+export class Livelink extends LivelinkCore {
     /**
      * Start a session with the given scene id
      *
@@ -31,17 +31,17 @@ export class LiveLink extends LiveLinkCore {
      *                                which must have at least read access to the
      *                                scene
      *
-     * @returns {Promise<LiveLink>}   A promise to a LiveLink instance holding a
+     * @returns {Promise<Livelink>}   A promise to a Livelink instance holding a
      *                                session with the specified scene
      *
      * @throws {Error} Session isues
      * @throws {Error} Gateway issues
      * @throws {Error} SEB issues
      */
-    static async start({ scene_id, token }: { scene_id: UUID; token: string }): Promise<LiveLink> {
+    static async start({ scene_id, token }: { scene_id: UUID; token: string }): Promise<Livelink> {
         console.debug(`Starting new session on scene '${scene_id}'`);
         const session = await new Session(scene_id, token).create();
-        return await LiveLink.join({ session });
+        return await Livelink.join({ session });
     }
 
     /**
@@ -55,7 +55,7 @@ export class LiveLink extends LiveLinkCore {
         scene_id: UUID;
         token: string;
         session_selector: SessionSelector;
-    }): Promise<LiveLink> {
+    }): Promise<Livelink> {
         console.debug(`Looking for sessions on scene '${scene_id}'`);
         const session = await new Session(scene_id, token).find({
             session_selector,
@@ -65,16 +65,16 @@ export class LiveLink extends LiveLinkCore {
             console.debug(
                 `There's no session currently running on scene '${scene_id}' and satisfiying the provided selector criteria`,
             );
-            return await LiveLink.start({ scene_id, token });
+            return await Livelink.start({ scene_id, token });
         }
 
         try {
             console.debug("Found session, joining...", session);
-            return await LiveLink.join({ session });
+            return await Livelink.join({ session });
         } catch {
             console.error(`Failed to join session '${session.session_id}', trying again with another session.`);
 
-            return await LiveLink.join_or_start({
+            return await Livelink.join_or_start({
                 scene_id,
                 token,
                 // Do not try to connect to the faulty session again.
@@ -89,9 +89,9 @@ export class LiveLink extends LiveLinkCore {
     /**
      *
      */
-    static async join({ session }: { session: Session }): Promise<LiveLink> {
+    static async join({ session }: { session: Session }): Promise<Livelink> {
         console.debug("Joining session:", session);
-        const inst = new LiveLink(session);
+        const inst = new Livelink(session);
         await inst._connect();
         return inst;
     }
@@ -213,7 +213,7 @@ export class LiveLink extends LiveLinkCore {
      */
     startStreaming() {
         if (!this.isConfigured()) {
-            throw new Error("The LiveLink instance is not configured yet");
+            throw new Error("The Livelink instance is not configured yet");
         }
 
         //this.setViewports();
@@ -253,7 +253,7 @@ export class LiveLink extends LiveLinkCore {
      *
      */
     async newEntity<EntityType extends Entity>(
-        entity_type: { new (_: LiveLinkCore): EntityType },
+        entity_type: { new (_: LivelinkCore): EntityType },
         name: string,
     ): Promise<EntityType> {
         let entity = new entity_type(this).init(name);
@@ -267,7 +267,7 @@ export class LiveLink extends LiveLinkCore {
      *
      */
     async findEntity<EntityType extends Entity>(
-        entity_type: { new (_: LiveLinkCore): EntityType },
+        entity_type: { new (_: LivelinkCore): EntityType },
         {
             entity_uuid,
         }: {

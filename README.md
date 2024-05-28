@@ -1,4 +1,4 @@
-# LiveLink protocol v1.0
+# Livelink protocol v1.0
 
 ## Spec-first development
 
@@ -10,13 +10,13 @@ https://blog.apideck.com/spec-driven-development-part-1
 
 https://www.asyncapi.com/docs/reference/specification/v3.0.0
 
-# LiveLink.js Core v1.0
+# Livelink.js Core v1.0
 
-Core implementation in JavaScript of the LiveLink protocol.
+Core implementation in JavaScript of the Livelink protocol.
 
 This is a module that MUST always be loaded at runtime.
 
-Handles the connection with the LiveLink Broadcast & Persistence Server and the
+Handles the connection with the Livelink Broadcast & Persistence Server and the
 connection with the Cluster Gateway hosting the session.
 
 Provides video decoding support and access to a local entity registry.
@@ -51,7 +51,7 @@ For 64 bit int support
 
 https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/BigInt
 
-# LiveLink.js v1.0
+# Livelink.js v1.0
 
 User facing interface with as many helper functions as we want.
 

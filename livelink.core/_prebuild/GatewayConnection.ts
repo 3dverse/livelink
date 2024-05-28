@@ -34,9 +34,9 @@ import { ChannelId } from "./types";
  *    Note that initiating the authentication doesn't fall under this class's
  *    purview.
  *
- *  - Demultiplex messages following the gateway LiveLink Protocol.
+ *  - Demultiplex messages following the gateway Livelink Protocol.
  *    It is only responsible for deserializing the multiplexer binary header
- *    data according to the LiveLink protocol specifications; in no case is it
+ *    data according to the Livelink protocol specifications; in no case is it
  *    supposed to apply any kind of logic beyond routing messages to the
  *    appropriate handler.
  */

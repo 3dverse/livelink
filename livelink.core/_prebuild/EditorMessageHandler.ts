@@ -10,7 +10,7 @@ import { EditorEntity, Entity, EntityUpdatedEvent, UpdateEntitiesCommand } from 
 type ResolverPayload = {};
 
 /**
- * This follows the LiveLink protocol specifications for the broker messages.
+ * This follows the Livelink protocol specifications for the broker messages.
  */
 export class EditorMessageHandler extends MessageHandler<string, ResolverPayload> {
     /**

@@ -16,7 +16,7 @@ import { EntityRegistry } from "./EntityRegistry";
 import { Vec2i } from "./types";
 
 /**
- * The LiveLinkCore interface.
+ * The LivelinkCore interface.
  *
  * This interface must not be embedded and distributed within applications.
  * Instead, applications should embed the 3dverse/livelink.js library,
@@ -26,7 +26,7 @@ import { Vec2i } from "./types";
  * version of the interface, allowing for interface evolution without breaking
  * compatibility with existing applications.
  */
-export class LiveLinkCore extends EventTarget {
+export class LivelinkCore extends EventTarget {
     /**
      * Registry of entities discovered until now.
      */
@@ -62,7 +62,7 @@ export class LiveLinkCore extends EventTarget {
     /**
      * Connect to the session
      */
-    protected async _connect(): Promise<LiveLinkCore> {
+    protected async _connect(): Promise<LivelinkCore> {
         // Retrieve a session key
         await this.session.registerClient();
         // Connect to FTL gateway
@@ -72,7 +72,7 @@ export class LiveLinkCore extends EventTarget {
         });
         console.debug("Connected to session as:", client);
 
-        // Connect to the LiveLink Broker
+        // Connect to the Livelink Broker
         const connectConfirmation = await this._editor.connectToSession({
             session: this.session,
             client,

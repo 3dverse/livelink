@@ -1,8 +1,8 @@
 import { useRef, useState } from "react";
 import Canvas from "../../components/Canvas";
-import * as LiveLink from "livelink.js";
+import * as Livelink from "livelink.js";
 import { Button, Input, Range } from "react-daisyui";
-import { useLiveLinkInstance } from "../../hooks/useLiveLinkInstance";
+import { useLivelinkInstance } from "../../hooks/useLivelinkInstance";
 
 //------------------------------------------------------------------------------
 const SmartObjectManifest: Record<string, string> = {
@@ -10,7 +10,7 @@ const SmartObjectManifest: Record<string, string> = {
 };
 
 //------------------------------------------------------------------------------
-async function findSmartObject(instance: LiveLink.LiveLink, objectName: string) {
+async function findSmartObject(instance: Livelink.Livelink, objectName: string) {
     if (!(objectName in SmartObjectManifest)) {
         throw new Error(`Unknown SmartObject ${objectName}`);
     }
@@ -19,7 +19,7 @@ async function findSmartObject(instance: LiveLink.LiveLink, objectName: string) 
         return { isLoading: true, entity: null };
     }
 
-    const entity = await instance.findEntity(LiveLink.Entity, {
+    const entity = await instance.findEntity(Livelink.Entity, {
         entity_uuid: SmartObjectManifest[objectName],
     });
 
@@ -47,14 +47,14 @@ function hexToRgb(h: string): [number, number, number] {
 export default function SmartObjectSync() {
     const canvasRef1 = useRef<HTMLCanvasElement>(null);
     const canvasRef2 = useRef<HTMLCanvasElement>(null);
-    const [entity1, setEntity1] = useState<LiveLink.Entity | null>(null);
-    const [entity2, setEntity2] = useState<LiveLink.Entity | null>(null);
+    const [entity1, setEntity1] = useState<Livelink.Entity | null>(null);
+    const [entity2, setEntity2] = useState<Livelink.Entity | null>(null);
 
     const {
         instance: instance1,
         connect: connect1,
         disconnect: disconnect1,
-    } = useLiveLinkInstance({
+    } = useLivelinkInstance({
         canvas_refs: [canvasRef1],
         token: "public_p54ra95AMAnZdTel",
     });
@@ -63,7 +63,7 @@ export default function SmartObjectSync() {
         instance: instance2,
         connect: connect2,
         disconnect: disconnect2,
-    } = useLiveLinkInstance({
+    } = useLivelinkInstance({
         canvas_refs: [canvasRef2],
         token: "public_p54ra95AMAnZdTel",
     });
@@ -141,7 +141,7 @@ function CanvasWithControl({
     light,
 }: {
     canvasRef: React.RefObject<HTMLCanvasElement>;
-    light: LiveLink.Entity | null;
+    light: Livelink.Entity | null;
 }) {
     return (
         <>

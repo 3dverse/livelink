@@ -2,13 +2,13 @@
 import { useRef } from "react";
 import Canvas from "../../components/Canvas";
 import { Button } from "react-daisyui";
-import { useLiveLinkInstance } from "../../hooks/useLiveLinkInstance";
+import { useLivelinkInstance } from "../../hooks/useLivelinkInstance";
 
 //------------------------------------------------------------------------------
 export default function SimpleCanvas() {
     const canvasRef = useRef<HTMLCanvasElement>(null);
 
-    const { instance, connect, disconnect } = useLiveLinkInstance({
+    const { instance, connect, disconnect } = useLivelinkInstance({
         canvas_refs: [canvasRef],
         token: "public_p54ra95AMAnZdTel",
     });

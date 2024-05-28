@@ -57,7 +57,7 @@ type ResolverPayload = {
 
 /**
  * Message handlers interface.
- * This follows the LiveLink protocol specifications for the gateway messages.
+ * This follows the Livelink protocol specifications for the gateway messages.
  */
 export class GatewayMessageHandler extends MessageHandler<ChannelId, ResolverPayload> {
     /**

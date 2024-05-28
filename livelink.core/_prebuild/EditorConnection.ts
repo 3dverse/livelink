@@ -8,11 +8,11 @@ import { EditorMessageHandler } from "./EditorMessageHandler";
 import { EditorEntity, ConnectConfirmation, UUID, EntityUpdatedEvent } from "./types";
 
 /**
- * Holds the connection to the LiveLink Broadcast & Persistence server.
+ * Holds the connection to the Livelink Broadcast & Persistence server.
  */
 export class EditorConnection {
     /**
-     * Socket connected to the LiveLink Broadcast & Persistence server.
+     * Socket connected to the Livelink Broadcast & Persistence server.
      */
     private _socket: WebSocket | null = null;
 
@@ -22,7 +22,7 @@ export class EditorConnection {
     private _handler: EditorMessageHandler | null = null;
 
     /**
-     * Opens a connection to the LiveLink server.
+     * Opens a connection to the Livelink server.
      */
     async connect({ livelink_url, handler }: { livelink_url: string; handler: EditorMessageHandler }): Promise<void> {
         this._handler = handler;
@@ -65,14 +65,14 @@ export class EditorConnection {
      *
      */
     private _onSocketOpened(_event: Event) {
-        console.debug("Connected to the 3dverse LiveLink broker");
+        console.debug("Connected to the 3dverse Livelink broker");
     }
 
     /**
      *
      */
     private _onSocketClosed(_close_event: CloseEvent) {
-        console.debug("Disconnected from the 3dverse LiveLink broker");
+        console.debug("Disconnected from the 3dverse Livelink broker");
     }
 
     /**

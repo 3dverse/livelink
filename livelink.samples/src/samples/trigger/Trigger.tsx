@@ -2,7 +2,7 @@
 import { useEffect, useRef, useState } from "react";
 import Canvas from "../../components/Canvas";
 import { Button, Range } from "react-daisyui";
-import { useLiveLinkInstance } from "../../hooks/useLiveLinkInstance";
+import { useLivelinkInstance } from "../../hooks/useLivelinkInstance";
 import { Manifest, useSmartObject } from "../../hooks/useSmartObject";
 
 //------------------------------------------------------------------------------
@@ -15,8 +15,9 @@ const SmartObjectManifest: Manifest = {
 export default function Trigger() {
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const [triggerState, setTriggerState] = useState("Idle");
+    const [messages, setMessages] = useState<Array<string>>([]);
 
-    const { instance, connect, disconnect } = useLiveLinkInstance({
+    const { instance, connect, disconnect } = useLivelinkInstance({
         canvas_refs: [canvasRef],
         token: "public_p54ra95AMAnZdTel",
     });
@@ -42,6 +43,11 @@ export default function Trigger() {
         });
     }, [trigger, setTriggerState]);
 
+    useEffect(() => {
+        const msgs = messages.length > 9 ? [...messages.slice(-9, 9)] : [...messages, triggerState];
+        setMessages(msgs);
+    }, [triggerState, setMessages]);
+
     const toggleConnection = async () => {
         if (instance) {
             disconnect();
@@ -54,7 +60,22 @@ export default function Trigger() {
 
     return (
         <>
-            <div className="w-full h-full flex basis-full grow p-4">
+            <div className="relative w-full h-full flex basis-full grow p-4">
+                <div className="bottom-6 right-8 absolute w-80 flex flex-col basis-full flex-grow">
+                    {messages.map((msg, i) => (
+                        <div className={`chat chat-${i % 2 ? "start" : "end"}`}>
+                            <div className="chat-image avatar">
+                                <div className="w-10 rounded-full">
+                                    <img
+                                        alt="Tailwind CSS chat bubble component"
+                                        src="https://img.daisyui.com/images/stock/photo-1534528741775-53994a69daeb.jpg"
+                                    />
+                                </div>
+                            </div>
+                            <div className="chat-bubble">{msg}</div>
+                        </div>
+                    ))}
+                </div>
                 <Canvas canvasRef={canvasRef} />
             </div>
             <div className="flex items-center gap-2 pb-4">

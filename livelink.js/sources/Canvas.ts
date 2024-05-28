@@ -1,6 +1,6 @@
 import { HighlightMode, ScreenSpaceRayResult, type Vec2 } from "@livelink.core";
 import { Viewport } from "./Viewport";
-import { LiveLink } from "./LiveLink";
+import { Livelink } from "./Livelink";
 import { CanvasAutoResizer } from "./CanvasAutoResizer";
 import { DecodedFrameConsumer } from "./decoders/DecodedFrameConsumer";
 
@@ -9,9 +9,9 @@ import { DecodedFrameConsumer } from "./decoders/DecodedFrameConsumer";
  */
 export class Canvas extends EventTarget {
     /**
-     * The LiveLink core used to send commands.
+     * The Livelink core used to send commands.
      */
-    #core: LiveLink;
+    #core: Livelink;
 
     /**
      * HTML canvas on which we display the final composited frame.
@@ -64,7 +64,7 @@ export class Canvas extends EventTarget {
      * @throws {InvalidCanvasId} Thrown when the provided id doesn't refer to a canvas element.
      */
     constructor(
-        core: LiveLink,
+        core: Livelink,
         {
             canvas_element,
         }: {

@@ -1,7 +1,7 @@
 import { useRef } from "react";
 import Canvas from "../../components/Canvas";
 import { Button, Input, Range } from "react-daisyui";
-import { useLiveLinkInstance } from "../../hooks/useLiveLinkInstance";
+import { useLivelinkInstance } from "../../hooks/useLivelinkInstance";
 import { Manifest, useSmartObject } from "../../hooks/useSmartObject";
 
 //------------------------------------------------------------------------------
@@ -30,7 +30,7 @@ function hexToRgb(h: string): [number, number, number] {
 export default function SmartObject() {
     const canvasRef = useRef<HTMLCanvasElement>(null);
 
-    const { instance, connect, disconnect } = useLiveLinkInstance({
+    const { instance, connect, disconnect } = useLivelinkInstance({
         canvas_refs: [canvasRef],
         token: "public_p54ra95AMAnZdTel",
     });

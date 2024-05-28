@@ -1,14 +1,14 @@
 //------------------------------------------------------------------------------
 import { useEffect, useRef } from "react";
 import Canvas from "../../components/Canvas";
-import { useLiveLinkInstance } from "../../hooks/useLiveLinkInstance";
+import { useLivelinkInstance } from "../../hooks/useLivelinkInstance";
 
 //------------------------------------------------------------------------------
 export default function DoubleCanvas() {
     const canvasRef1 = useRef<HTMLCanvasElement>(null);
     const canvasRef2 = useRef<HTMLCanvasElement>(null);
 
-    const { connect } = useLiveLinkInstance({
+    const { connect } = useLivelinkInstance({
         canvas_refs: [canvasRef1, canvasRef2],
         token: "public_p54ra95AMAnZdTel",
     });

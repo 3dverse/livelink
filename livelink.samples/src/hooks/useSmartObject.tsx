@@ -1,11 +1,11 @@
 //------------------------------------------------------------------------------
 import { useState } from "react";
-import * as LiveLink from "livelink.js";
+import * as Livelink from "livelink.js";
 
 //------------------------------------------------------------------------------
-export type Manifest = Record<string, LiveLink.UUID>;
+export type Manifest = Record<string, Livelink.UUID>;
 //------------------------------------------------------------------------------
-export async function findSmartObject(instance: LiveLink.LiveLink, manifest: Manifest, objectName: string) {
+export async function findSmartObject(instance: Livelink.Livelink, manifest: Manifest, objectName: string) {
     if (!(objectName in manifest)) {
         throw new Error(`Unknown SmartObject ${objectName}`);
     }
@@ -14,7 +14,7 @@ export async function findSmartObject(instance: LiveLink.LiveLink, manifest: Man
         return { isLoading: true, entity: null };
     }
 
-    const entity = await instance.findEntity(LiveLink.Entity, {
+    const entity = await instance.findEntity(Livelink.Entity, {
         entity_uuid: manifest[objectName],
     });
 
@@ -27,13 +27,13 @@ export function useSmartObject({
     manifest,
     smart_object,
 }: {
-    instance: LiveLink.LiveLink | null;
+    instance: Livelink.Livelink | null;
     manifest: Manifest;
     smart_object: string;
-}): LiveLink.Entity | null {
-    const [entity, setEntity] = useState<LiveLink.Entity | null>(null);
+}): Livelink.Entity | null {
+    const [entity, setEntity] = useState<Livelink.Entity | null>(null);
 
-    async function find(instance: LiveLink.LiveLink) {
+    async function find(instance: Livelink.Livelink) {
         if (entity) return entity;
         const { entity: e } = await findSmartObject(instance, manifest, smart_object);
         if (e) {

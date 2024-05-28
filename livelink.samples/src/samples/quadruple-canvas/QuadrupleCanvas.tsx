@@ -1,7 +1,7 @@
 //------------------------------------------------------------------------------
 import { useEffect, useRef } from "react";
 import Canvas from "../../components/Canvas";
-import { useLiveLinkInstance } from "../../hooks/useLiveLinkInstance";
+import { useLivelinkInstance } from "../../hooks/useLivelinkInstance";
 
 //------------------------------------------------------------------------------
 export default function QuadrupleCanvas() {
@@ -10,7 +10,7 @@ export default function QuadrupleCanvas() {
     const canvasRef3 = useRef<HTMLCanvasElement>(null);
     const canvasRef4 = useRef<HTMLCanvasElement>(null);
 
-    const { connect } = useLiveLinkInstance({
+    const { connect } = useLivelinkInstance({
         canvas_refs: [canvasRef1, canvasRef2, canvasRef3, canvasRef4],
         token: "public_p54ra95AMAnZdTel",
     });

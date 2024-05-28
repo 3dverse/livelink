@@ -1,24 +1,24 @@
 //------------------------------------------------------------------------------
 import { useEffect, useState } from "react";
-import * as LiveLink from "livelink.js";
+import * as Livelink from "livelink.js";
 import CameraControls from "camera-controls";
 import * as THREE from "three";
 
 CameraControls.install({ THREE: THREE });
 
 //------------------------------------------------------------------------------
-export function useLiveLinkInstance({
+export function useLivelinkInstance({
     canvas_refs,
     token,
 }: {
     canvas_refs: Array<React.RefObject<HTMLCanvasElement>>;
     token: string;
 }): {
-    instance: LiveLink.LiveLink | null;
-    connect: ({ scene_id }: { scene_id: LiveLink.UUID }) => Promise<LiveLink.LiveLink | null>;
+    instance: Livelink.Livelink | null;
+    connect: ({ scene_id }: { scene_id: Livelink.UUID }) => Promise<Livelink.Livelink | null>;
     disconnect: () => void;
 } {
-    const [instance, setInstance] = useState<LiveLink.LiveLink | null>(null);
+    const [instance, setInstance] = useState<Livelink.Livelink | null>(null);
 
     useEffect(() => {
         return () => {
@@ -28,7 +28,7 @@ export function useLiveLinkInstance({
 
     return {
         instance,
-        connect: async ({ scene_id }: { scene_id: LiveLink.UUID }) => {
+        connect: async ({ scene_id }: { scene_id: Livelink.UUID }) => {
             if (canvas_refs.some(r => r.current === null)) {
                 return null;
             }
@@ -47,10 +47,10 @@ export function useLiveLinkInstance({
 
 //------------------------------------------------------------------------------
 async function connect(canvas_elements: Array<HTMLCanvasElement>, scene_id: string, token: string) {
-    const instance = await LiveLink.LiveLink.join_or_start({
+    const instance = await Livelink.Livelink.join_or_start({
         scene_id,
         token,
-        session_selector: ({ sessions }: { sessions: Array<LiveLink.SessionInfo> }) => sessions[0],
+        session_selector: ({ sessions }: { sessions: Array<Livelink.SessionInfo> }) => sessions[0],
     });
 
     await configureClient(instance, canvas_elements);
@@ -59,10 +59,10 @@ async function connect(canvas_elements: Array<HTMLCanvasElement>, scene_id: stri
 }
 
 //------------------------------------------------------------------------------
-async function configureClient(instance: LiveLink.LiveLink, canvas_elements: Array<HTMLCanvasElement>) {
+async function configureClient(instance: Livelink.Livelink, canvas_elements: Array<HTMLCanvasElement>) {
     const canvases = await Promise.all(
         canvas_elements.map(async canvas_element =>
-            new LiveLink.Canvas(instance, {
+            new Livelink.Canvas(instance, {
                 canvas_element,
             }).init(),
         ),
@@ -96,7 +96,7 @@ async function configureClient(instance: LiveLink.LiveLink, canvas_elements: Arr
 
     // Step 2: decode received frames and draw them on the canvas.
     await instance.installFrameConsumer({
-        frame_consumer: new LiveLink.WebCodecsDecoder(instance.remote_rendering_surface),
+        frame_consumer: new Livelink.WebCodecsDecoder(instance.remote_rendering_surface),
     });
 
     // Step 3: setup the renderer to use the camera on a full canvas viewport.
@@ -104,7 +104,7 @@ async function configureClient(instance: LiveLink.LiveLink, canvas_elements: Arr
     for (const canvas of canvases) {
         const camera = await instance.newEntity(MyCamera, "MyCam_" + i++);
         camera.canvas = canvas.html_element;
-        const viewport = new LiveLink.Viewport({ camera });
+        const viewport = new Livelink.Viewport({ camera });
         canvas.attachViewport({ viewport });
     }
 
@@ -114,7 +114,7 @@ async function configureClient(instance: LiveLink.LiveLink, canvas_elements: Arr
 
 //------------------------------------------------------------------------------
 
-class MyCamera extends LiveLink.Camera {
+class MyCamera extends Livelink.Camera {
     private _canvas: HTMLCanvasElement | null = null;
     private _initialized = false;
 
@@ -157,7 +157,7 @@ class MyCamera extends LiveLink.Camera {
             cameraControls.camera.getWorldQuaternion(cameraOrientation);
             const cameraOrientationArray = cameraOrientation.toArray();
             this.local_transform!.position = cameraPosition;
-            this.local_transform!.orientation = cameraOrientationArray as LiveLink.Quat;
+            this.local_transform!.orientation = cameraOrientationArray as Livelink.Quat;
         });
         // animate the camera
         (function anim() {

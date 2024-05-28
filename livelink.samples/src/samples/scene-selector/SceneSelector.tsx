@@ -2,7 +2,7 @@
 import { useEffect, useRef, useState } from "react";
 import Canvas from "../../components/Canvas";
 import { Select } from "react-daisyui";
-import { useLiveLinkInstance } from "../../hooks/useLiveLinkInstance";
+import { useLivelinkInstance } from "../../hooks/useLivelinkInstance";
 
 //------------------------------------------------------------------------------
 const scenes = [
@@ -14,7 +14,7 @@ export default function SceneSelector() {
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const [scene_id, setSceneId] = useState("default");
 
-    const { instance, connect, disconnect } = useLiveLinkInstance({
+    const { instance, connect, disconnect } = useLivelinkInstance({
         canvas_refs: [canvasRef],
         token: "public_p54ra95AMAnZdTel",
     });

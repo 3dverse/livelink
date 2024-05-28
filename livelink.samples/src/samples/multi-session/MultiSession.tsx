@@ -1,19 +1,19 @@
 //------------------------------------------------------------------------------
 import { useEffect, useRef } from "react";
 import Canvas from "../../components/Canvas";
-import { useLiveLinkInstance } from "../../hooks/useLiveLinkInstance";
+import { useLivelinkInstance } from "../../hooks/useLivelinkInstance";
 
 //------------------------------------------------------------------------------
 export default function MultiSession() {
     const canvasRef1 = useRef<HTMLCanvasElement>(null);
     const canvasRef2 = useRef<HTMLCanvasElement>(null);
 
-    const { connect: connect1 } = useLiveLinkInstance({
+    const { connect: connect1 } = useLivelinkInstance({
         canvas_refs: [canvasRef1],
         token: "public_p54ra95AMAnZdTel",
     });
 
-    const { connect: connect2 } = useLiveLinkInstance({
+    const { connect: connect2 } = useLivelinkInstance({
         canvas_refs: [canvasRef2],
         token: "public_p54ra95AMAnZdTel",
     });

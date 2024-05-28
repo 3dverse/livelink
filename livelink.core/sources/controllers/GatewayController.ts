@@ -6,7 +6,7 @@ import { Session } from "../Session.js";
 import { Client } from "../Client.js";
 
 /**
- * The gateway controller is the exposed interface of the LiveLink gateway
+ * The gateway controller is the exposed interface of the Livelink gateway
  * protocol.
  * It's the object responsible for providing access to any request message the
  * gateway exposes. Additionally, it is responsible for handling the responses
@@ -64,7 +64,7 @@ export class GatewayController extends GatewayMessageHandler {
         this._pulseHeartbeat();
 
         // We're good to go, the gateway provided us with a client id so we can
-        // connect to the LiveLink broker.
+        // connect to the Livelink broker.
         return new Client(authRes.client_id);
     }
 
