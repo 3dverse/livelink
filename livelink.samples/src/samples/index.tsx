@@ -1,3 +1,4 @@
+import ControllerEffects from "./controller-effects/ControllerEffects";
 import DoubleCanvas from "./double-canvas/DoubleCanvas";
 import MultiSession from "./multi-session/MultiSession";
 import QuadrupleCanvas from "./quadruple-canvas/QuadrupleCanvas";
@@ -16,4 +17,5 @@ export const SAMPLES = [
     { title: "Scene Selector", path: "scene-selector", element: <SceneSelector /> },
     { title: "Smart Object Sync", path: "smart-object-sync", element: <SmartObjectSync /> },
     { title: "Trigger", path: "trigger", element: <Trigger /> },
+    { title: "Controller Effects", path: "controller-effects", element: <ControllerEffects /> },
 ];

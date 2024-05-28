@@ -73,13 +73,13 @@ export default function SmartObjectSync() {
             setEntity1(null);
             disconnect1();
         } else if (canvasRef1.current) {
-            const inst = await connect1({
+            const connection = await connect1({
                 scene_id: "15e95136-f9b7-425d-8518-d73dab5589b7",
             });
-            if (!inst) {
+            if (!connection) {
                 return;
             }
-            const { entity: soLight } = await findSmartObject(inst, "MyLight");
+            const { entity: soLight } = await findSmartObject(connection.instance, "MyLight");
 
             if (soLight) {
                 soLight.__self.addEventListener("entity-updated", () => {
@@ -97,13 +97,13 @@ export default function SmartObjectSync() {
             setEntity2(null);
             disconnect2();
         } else if (canvasRef2.current) {
-            const inst = await connect2({
+            const connection = await connect2({
                 scene_id: "15e95136-f9b7-425d-8518-d73dab5589b7",
             });
-            if (!inst) {
+            if (!connection) {
                 return;
             }
-            const { entity: soLight } = await findSmartObject(inst, "MyLight");
+            const { entity: soLight } = await findSmartObject(connection.instance, "MyLight");
 
             if (soLight) {
                 soLight.__self.addEventListener("entity-updated", () => {
