@@ -56,6 +56,13 @@ RTID:
   type: integer
   format: uint64
 
+UUID:
+  type: string
+  format: uuid
+
+DataObject:
+  type: object
+
 EntityList:
   type: array
   items:
@@ -369,3 +376,50 @@ ScriptEvent:
         $ref: "#/RTID"
     data_object:
       type: object
+
+FireEvent:
+  title: FireEvent
+  type: object
+  properties:
+    event_map_id:
+      title: The event map from where the event comes from.
+      $ref: "#/UUID"
+    event_name:
+      title: The name of the event to fire. Must exist in the event map.
+      type: string
+    entities:
+      title: |
+        The entities on which to fire the event. If empty the event fires for
+        all listening entities.
+      $ref: "#/EntityList"
+    data_object:
+      title: The data object containing the payload of the event.
+      $ref: "#/DataObject"
+
+UpdateAnimationSequenceState:
+  title: UpdateAnimationSequenceState
+  type: object
+  properties:
+    linker_rtid:
+      title: The linker under which the animation sequence is located.
+      $ref: "#/RTID"
+    animation_sequence_id:
+      title: The UUID of the target animation sequence.
+      $ref: "#/UUID"
+    state:
+      title: The state to apply to the target animation sequence.
+      oneOf:
+        - const: play
+        - const: pause
+        - const: stop
+    playback_speed:
+      title: The playback speed to apply to the target animation sequence.
+      type: number
+      format: float32
+      default: 1
+    seek_offset:
+      title: The normalized offset to seek relative to the start of the sequence.
+      type: number
+      format: float32
+      default: 0
+  required: [linker_rtid, animation_sequence_id, state, playback_speed]

@@ -96,6 +96,18 @@ create_entity:
     description: Entity to create
     $ref: "./schemas.yaml#/Entity"
 
+fire_event:
+  contentType: application/octet-stream
+  payload:
+    description: Event to fire
+    $ref: "./schemas.yaml#/FireEvent"
+
+update_animation_sequence_state:
+  contentType: application/octet-stream
+  payload:
+    description: Change the targetted animation sequence play state
+    $ref: "./schemas.yaml#/UpdateAnimationSequenceState"
+
 #-----------------------------------------------------------------------------
 # SCRIPT EVENTS
 #-----------------------------------------------------------------------------

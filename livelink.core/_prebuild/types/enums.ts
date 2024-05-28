@@ -110,7 +110,7 @@ export enum EditorRemoteOperation {
     update_volume_material = 8,
     DEPRECATED__update_data_object = 9,
     reload_asset = 10,
-    trigger_script_event = 11,
+    fire_event = 11,
     update_script_data_object = 12,
     DEPRECATED__update_render_graph_data_object = 13,
     reload_shaders = 14,

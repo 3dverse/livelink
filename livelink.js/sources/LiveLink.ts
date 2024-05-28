@@ -223,6 +223,35 @@ export class LiveLink extends LiveLinkCore {
     /**
      *
      */
+    startSimulation(): void {
+        this._gateway.fireEvent({
+            fireEventMessage: {
+                event_map_id: "00000000-0000-0000-0000-000000000000",
+                event_name: "start_simulation",
+                entities: [],
+                data_object: {},
+            },
+        });
+    }
+
+    /**
+     *
+     */
+    playAnimationSequence({
+        animation_sequence_id,
+        playback_speed = 1,
+    }: {
+        animation_sequence_id: UUID;
+        playback_speed: number;
+    }): void {
+        this._gateway.updateAnimationSequenceState({
+            updateAnimationSequenceStateMessage: { linker_rtid: 0n, animation_sequence_id, state: 0, playback_speed },
+        });
+    }
+
+    /**
+     *
+     */
     async newEntity<EntityType extends Entity>(
         entity_type: { new (_: LiveLinkCore): EntityType },
         name: string,

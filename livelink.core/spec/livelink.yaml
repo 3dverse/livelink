@@ -136,6 +136,10 @@ channels:
     messages:
       create_entity:
         $ref: "#/components/messages/create_entity"
+      fire_event:
+        $ref: "#/components/messages/fire_event"
+      update_animation_sequence_state:
+        $ref: "#/components/messages/update_animation_sequence_state"
 
   #-----------------------------------------------------------------------------
   heartbeat:
@@ -310,6 +314,22 @@ operations:
       $ref: "#/channels/editor-remote-operations"
     messages:
       - $ref: "#/channels/editor-remote-operations/messages/create_entity"
+
+  fireEvent:
+    action: send
+    x-rop-id: 11
+    channel:
+      $ref: "#/channels/editor-remote-operations"
+    messages:
+      - $ref: "#/channels/editor-remote-operations/messages/fire_event"
+
+  updateAnimationSequenceState:
+    action: send
+    x-rop-id: 23
+    channel:
+      $ref: "#/channels/editor-remote-operations"
+    messages:
+      - $ref: "#/channels/editor-remote-operations/messages/update_animation_sequence_state"
 
   #-----------------------------------------------------------------------------
   # SCRIPT EVENTS

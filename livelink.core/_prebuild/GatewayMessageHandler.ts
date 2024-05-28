@@ -37,6 +37,11 @@ import {
     UpdateEntitiesFromJsonMessage,
     compute_UpdateEntitiesFromJsonMessage_size,
     deserialize_ScriptEvent,
+    FireEventMessage,
+    compute_FireEventMessage_size,
+    serialize_FireEventMessage,
+    UpdateAnimationSequenceStateMessage,
+    serialize_UpdateAnimationSequenceStateMessage,
 } from "./types";
 import { MessageHandler } from "../sources/MessageHandler";
 import { GatewayConnection } from "./GatewayConnection";
@@ -382,7 +387,75 @@ export class GatewayMessageHandler extends MessageHandler<ChannelId, ResolverPay
     }
 
     /**
-     *
+     * Send
+     */
+    fireEvent({ fireEventMessage }: { fireEventMessage: FireEventMessage }): void {
+        const ropDataSize = compute_FireEventMessage_size(fireEventMessage);
+        const payloadSize = FTL_EDITOR_ROP_HEADER_SIZE + ropDataSize;
+        const buffer = new ArrayBuffer(FTL_HEADER_SIZE + payloadSize);
+
+        this._writeMultiplexerHeader({
+            buffer,
+            channelId: ChannelId.editor_remote_operations,
+            size: payloadSize,
+        });
+
+        this._writeRemoteOperationMultiplexerHeader({
+            buffer,
+            offset: FTL_HEADER_SIZE,
+            rop_data_size: ropDataSize,
+            rop_id: EditorRemoteOperation.fire_event,
+        });
+
+        const dataView = new DataView(buffer, FTL_HEADER_SIZE + FTL_EDITOR_ROP_HEADER_SIZE);
+
+        serialize_FireEventMessage({
+            dataView,
+            offset: 0,
+            fireEventMessage,
+        });
+
+        this._connection.send({ data: buffer });
+    }
+
+    /**
+     * Send
+     */
+    updateAnimationSequenceState({
+        updateAnimationSequenceStateMessage,
+    }: {
+        updateAnimationSequenceStateMessage: UpdateAnimationSequenceStateMessage;
+    }): void {
+        const ropDataSize = 4 + 16 + 4 + 4 + 0;
+        const payloadSize = FTL_EDITOR_ROP_HEADER_SIZE + ropDataSize;
+        const buffer = new ArrayBuffer(FTL_HEADER_SIZE + payloadSize);
+
+        this._writeMultiplexerHeader({
+            buffer,
+            channelId: ChannelId.editor_remote_operations,
+            size: payloadSize,
+        });
+
+        this._writeRemoteOperationMultiplexerHeader({
+            buffer,
+            offset: FTL_HEADER_SIZE,
+            rop_data_size: ropDataSize,
+            rop_id: EditorRemoteOperation.update_animation_sequence_state,
+        });
+
+        const dataView = new DataView(buffer, FTL_HEADER_SIZE + FTL_EDITOR_ROP_HEADER_SIZE);
+
+        serialize_UpdateAnimationSequenceStateMessage({
+            dataView,
+            offset: 0,
+            updateAnimationSequenceStateMessage,
+        });
+
+        this._connection.send({ data: buffer });
+    }
+
+    /**
+     * Send
      */
     updateEntities({
         updateEntitiesFromJsonMessage,
