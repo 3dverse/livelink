@@ -122,13 +122,10 @@ async function configureClient(
 //------------------------------------------------------------------------------
 
 export class MyCamera extends Livelink.Camera {
-    private _canvas: HTMLCanvasElement | null = null;
-    private _initialized = false;
     cameraControls: CameraControls | null = null;
 
     initCamera(viewport: Livelink.Viewport<MyCamera>) {
         const canvas = viewport.canvas;
-        this._canvas = canvas;
         this.initController(canvas);
     }
 
