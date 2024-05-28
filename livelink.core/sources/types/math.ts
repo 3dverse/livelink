@@ -92,6 +92,7 @@ export type Mat4 = [
     number,
     number,
 ];
+export const MAT4_BYTE_SIZE = 64 as const;
 /**
  *
  */

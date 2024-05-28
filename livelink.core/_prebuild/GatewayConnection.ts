@@ -6,7 +6,7 @@
 
 import { GatewayMessageHandler } from "./GatewayMessageHandler";
 import { FTL_HEADER_SIZE, LITTLE_ENDIAN } from "../sources/types/constants";
-import { deserialize_UUID } from "../sources/types";
+import { UUID_BYTE_SIZE, deserialize_UUID } from "../sources/types";
 import { ChannelId } from "./types";
 
 /**
@@ -179,7 +179,7 @@ export class GatewayConnection {
     private _clientRemoteOperation_response({ dataView }: { dataView: DataView }) {
         let offset = 0;
         const client_id = deserialize_UUID({ dataView, offset });
-        offset += 16;
+        offset += UUID_BYTE_SIZE;
         const request_id = dataView.getUint32(offset, LITTLE_ENDIAN);
         offset += 4;
         const size = dataView.getUint32(offset, LITTLE_ENDIAN);

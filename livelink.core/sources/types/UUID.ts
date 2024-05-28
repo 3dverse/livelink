@@ -8,6 +8,11 @@ export type UUID = string;
 /**
  *
  */
+export const UUID_BYTE_SIZE = 16 as const;
+
+/**
+ *
+ */
 export function serialize_UUID({ dataView, offset, uuid }: { dataView: DataView; offset: number; uuid: UUID }): number {
     const hexToByte = (hexOctet: string) => parseInt(hexOctet, 16);
     const hexStringToBytes = (hexString: string) =>
@@ -28,7 +33,7 @@ export function serialize_UUID({ dataView, offset, uuid }: { dataView: DataView;
         dataView.setUint8(offset + i, b.getUint8(i));
     }
 
-    return 16;
+    return UUID_BYTE_SIZE;
 }
 
 /**

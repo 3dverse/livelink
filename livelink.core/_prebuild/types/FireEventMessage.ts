@@ -1,4 +1,4 @@
-import { RTID, UUID, serialize_UUID } from "../../sources/types";
+import { RTID, RTID_BYTE_SIZE, UUID, UUID_BYTE_SIZE, serialize_UUID } from "../../sources/types";
 import { LITTLE_ENDIAN } from "../../sources/types/constants";
 
 /**
@@ -15,9 +15,14 @@ export type FireEventMessage = {
  *
  */
 export function compute_FireEventMessage_size(fireEventMessage: FireEventMessage) {
-    const UUID_SIZE = 16;
-    const RTID_SIZE = 4;
-    return UUID_SIZE + fireEventMessage.event_name.length + 1 + 1 + 4 + fireEventMessage.entities.length * RTID_SIZE;
+    return (
+        UUID_BYTE_SIZE +
+        fireEventMessage.event_name.length +
+        1 +
+        1 +
+        4 +
+        fireEventMessage.entities.length * RTID_BYTE_SIZE
+    );
 }
 
 /**
@@ -47,5 +52,5 @@ export function serialize_FireEventMessage({
     dataView.setUint32(offset, 0, LITTLE_ENDIAN);
     offset += 4;
 
-    return 16 + fireEventMessage.event_name.length + 1 + 1 + 4;
+    return UUID_BYTE_SIZE + fireEventMessage.event_name.length + 1 + 1 + 4;
 }

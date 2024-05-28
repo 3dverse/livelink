@@ -1,4 +1,4 @@
-import { RTID, UUID, serialize_RTID, serialize_UUID } from "../../sources/types";
+import { RTID, RTID_BYTE_SIZE, UUID, UUID_BYTE_SIZE, serialize_RTID, serialize_UUID } from "../../sources/types";
 import { LITTLE_ENDIAN } from "../../sources/types/constants";
 
 /**
@@ -36,5 +36,5 @@ export function serialize_UpdateAnimationSequenceStateMessage({
         dataView.setFloat32(offset, updateAnimationSequenceStateMessage.seek_offset!, LITTLE_ENDIAN);
     }
 
-    return 4 + 16 + 4 + 4 + s;
+    return RTID_BYTE_SIZE + UUID_BYTE_SIZE + 4 + 4 + s;
 }

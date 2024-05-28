@@ -6,6 +6,11 @@ import { LITTLE_ENDIAN } from "./constants";
 export type RTID = bigint;
 
 /**
+ * 4 for now until 64 bits is supported by backend
+ */
+export const RTID_BYTE_SIZE = 4 as const;
+
+/**
  *
  */
 export function serialize_RTID({ dataView, offset, rtid }: { dataView: DataView; offset: number; rtid: RTID }): number {
