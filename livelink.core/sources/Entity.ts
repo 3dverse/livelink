@@ -110,12 +110,16 @@ export class Entity extends EventTarget {
     /**
      *
      */
-    onTriggerEntered() {}
+    onTriggerEntered() {
+        this.__self.dispatchEvent(new CustomEvent("trigger-entered"));
+    }
 
     /**
      *
      */
-    onTriggerExited() {}
+    onTriggerExited() {
+        this.__self.dispatchEvent(new CustomEvent("trigger-exited"));
+    }
 
     /**
      *
