@@ -63,7 +63,7 @@ export default function Trigger() {
             <div className="relative w-full h-full flex basis-full grow p-4">
                 <div className="bottom-6 right-8 absolute w-80 flex flex-col basis-full flex-grow">
                     {messages.map((msg, i) => (
-                        <div className={`chat chat-${i % 2 ? "start" : "end"}`}>
+                        <div key={i} className={`chat chat-${i % 2 ? "start" : "end"}`}>
                             <div className="chat-image avatar">
                                 <div className="w-10 rounded-full">
                                     <img
