@@ -4,6 +4,7 @@ import Canvas from "../../components/Canvas";
 import { Button, Range } from "react-daisyui";
 import { useLivelinkInstance } from "../../hooks/useLivelinkInstance";
 import { Manifest, useSmartObject } from "../../hooks/useSmartObject";
+import { AnimationSequence } from "livelink.js";
 
 //------------------------------------------------------------------------------
 const SmartObjectManifest: Manifest = {
@@ -16,6 +17,7 @@ export default function Trigger() {
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const [triggerState, setTriggerState] = useState("Idle");
     const [messages, setMessages] = useState<Array<string>>([]);
+    const [animationSeq, setAnimationSeq] = useState<AnimationSequence | null>(null);
 
     const { instance, connect, disconnect } = useLivelinkInstance({
         canvas_refs: [canvasRef],
@@ -25,9 +27,11 @@ export default function Trigger() {
     const trigger = useSmartObject({ instance, manifest: SmartObjectManifest, smart_object: "MyTrigger" });
 
     useEffect(() => {
-        instance?.startSimulation();
-        instance?.playAnimationSequence({ animation_sequence_id: SmartObjectManifest.MyAnimSeq, playback_speed: 0.1 });
-    }, [instance]);
+        if (instance) {
+            instance.startSimulation();
+            setAnimationSeq(new AnimationSequence(instance, { animation_sequence_id: SmartObjectManifest.MyAnimSeq }));
+        }
+    }, [instance, setAnimationSeq]);
 
     useEffect(() => {
         if (trigger === null) {
@@ -88,13 +92,8 @@ export default function Trigger() {
                     min={-1}
                     max={1}
                     step={0.2}
-                    defaultValue={0.1}
-                    onChange={e =>
-                        instance?.playAnimationSequence({
-                            animation_sequence_id: SmartObjectManifest.MyAnimSeq,
-                            playback_speed: Number(e.target.value),
-                        })
-                    }
+                    defaultValue={0}
+                    onChange={e => animationSeq?.play({ playback_speed: Number(e.target.value) })}
                 />
             </div>
         </>
