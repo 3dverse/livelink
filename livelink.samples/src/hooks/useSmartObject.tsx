@@ -45,7 +45,7 @@ export function useSmartObject({
         setEntity(e);
     }
 
-    if (instance) {
+    if (instance && !entity) {
         find(instance);
     }
 

@@ -1,5 +1,5 @@
 //------------------------------------------------------------------------------
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Canvas from "../../components/Canvas";
 import { Button, Range } from "react-daisyui";
 import { useLivelinkInstance } from "../../hooks/useLivelinkInstance";
@@ -18,6 +18,8 @@ export default function Trigger() {
     const [triggerState, setTriggerState] = useState("Idle");
     const [messages, setMessages] = useState<Array<string>>([]);
     const [animationSeq, setAnimationSeq] = useState<AnimationSequence | null>(null);
+    const onTriggerEntered = useCallback(() => setTriggerState("Entered"), [setTriggerState]);
+    const onTriggerExited = useCallback(() => setTriggerState("Exited"), [setTriggerState]);
 
     const { instance, connect, disconnect } = useLivelinkInstance({
         canvas_refs: [canvasRef],
@@ -37,20 +39,27 @@ export default function Trigger() {
         if (trigger === null) {
             return;
         }
-
-        trigger.__self.addEventListener("trigger-entered", () => {
-            setTriggerState("Entered");
-        });
-
-        trigger.__self.addEventListener("trigger-exited", () => {
-            setTriggerState("Exited");
-        });
-    }, [trigger, setTriggerState]);
+        console.log("Add cbs");
+        trigger.__self.addEventListener("trigger-entered", onTriggerEntered);
+        trigger.__self.addEventListener("trigger-exited", onTriggerExited);
+        return () => {
+            console.log("Remove cbs");
+            trigger.__self.removeEventListener("trigger-entered", onTriggerEntered);
+            trigger.__self.removeEventListener("trigger-exited", onTriggerExited);
+        };
+    }, [trigger, onTriggerEntered, onTriggerExited]);
 
     useEffect(() => {
+        if (!instance) {
+            return;
+        }
         const msgs = messages.length > 9 ? [...messages.slice(-9, 9)] : [...messages, triggerState];
         setMessages(msgs);
-    }, [triggerState, setMessages]);
+
+        return () => {
+            setMessages([]);
+        };
+    }, [instance, triggerState, setMessages]);
 
     const toggleConnection = async () => {
         if (instance) {

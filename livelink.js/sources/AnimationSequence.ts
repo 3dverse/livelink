@@ -32,7 +32,7 @@ export class AnimationSequence {
     /**
      *
      */
-    play({ playback_speed = 1 }: { playback_speed?: number }) {
+    play({ playback_speed }: { playback_speed: number }) {
         this.#core.updateAnimationSequenceState({
             linker_rtid: this._linker_rtid,
             animation_sequence_id: this._id,
