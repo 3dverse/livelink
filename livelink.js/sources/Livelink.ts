@@ -11,6 +11,7 @@ import {
     Entity,
     ScriptEvent,
     ViewportConfig,
+    RTID,
 } from "@livelink.core";
 
 import type { EncodedFrameConsumer } from "./decoders/EncodedFrameConsumer";
@@ -238,15 +239,15 @@ export class Livelink extends LivelinkCore {
     /**
      *
      */
-    playAnimationSequence({
-        animation_sequence_id,
-        playback_speed = 1,
-    }: {
+    updateAnimationSequenceState(params: {
+        linker_rtid: RTID;
         animation_sequence_id: UUID;
+        state: 1 | 0;
         playback_speed: number;
+        seek_offset?: number;
     }): void {
         this._gateway.updateAnimationSequenceState({
-            updateAnimationSequenceStateMessage: { linker_rtid: 0n, animation_sequence_id, state: 0, playback_speed },
+            updateAnimationSequenceStateMessage: params,
         });
     }
 
