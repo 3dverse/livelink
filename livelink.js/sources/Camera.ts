@@ -8,12 +8,18 @@ export class Camera extends Entity {
     /**
      *
      */
-    constructor(protected readonly _core: LivelinkCore) {
-        super(_core);
-    }
+    private _viewport: Viewport | null = null;
 
     /**
      *
      */
-    initCamera(viewport: Viewport) {}
+    get viewport(): Viewport | null {
+        return this._viewport;
+    }
+    /**
+     *
+     */
+    set viewport(v: Viewport | null) {
+        this._viewport = v;
+    }
 }

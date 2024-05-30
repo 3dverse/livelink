@@ -28,6 +28,16 @@ import { RTID, UUID } from "./types";
 /**
  *
  */
+type EntityAutoUpdateState = "on" | "off";
+
+/**
+ *
+ */
+type EntityEventType = "entity-updated";
+
+/**
+ *
+ */
 export class Entity extends EventTarget {
     private euid: Euid | null = null;
     debug_name?: DebugName;
@@ -49,7 +59,10 @@ export class Entity extends EventTarget {
     local_transform?: Transform;
     point_light: PointLight;
 
-    __self: Entity = null;
+    /**
+     *
+     */
+    private _auto_update: EntityAutoUpdateState = "on";
 
     /**
      *
@@ -68,6 +81,19 @@ export class Entity extends EventTarget {
      */
     get name(): string {
         return this.debug_name?.value ?? "<unnamed>";
+    }
+
+    /**
+     *
+     */
+    get auto_update(): EntityAutoUpdateState {
+        return this._auto_update;
+    }
+    /**
+     *
+     */
+    set auto_update(state: EntityAutoUpdateState) {
+        this._auto_update = state;
     }
 
     /**
@@ -111,14 +137,14 @@ export class Entity extends EventTarget {
      *
      */
     onTriggerEntered() {
-        this.__self.dispatchEvent(new CustomEvent("trigger-entered"));
+        this.dispatchEvent(new CustomEvent("trigger-entered"));
     }
 
     /**
      *
      */
     onTriggerExited() {
-        this.__self.dispatchEvent(new CustomEvent("trigger-exited"));
+        this.dispatchEvent(new CustomEvent("trigger-exited"));
     }
 
     /**
@@ -140,7 +166,7 @@ export class Entity extends EventTarget {
     toJSON() {
         let serialized = {};
         for (const p in this) {
-            if (this[p] !== undefined && p !== "euid" && p !== "_core") {
+            if (this[p] !== undefined && p[0] !== "_" && p !== "euid") {
                 serialized[p as string] = this[p];
             }
         }
@@ -151,11 +177,13 @@ export class Entity extends EventTarget {
      *
      */
     _updateFromEvent({ updated_components }: { updated_components: Record<string, unknown> }) {
+        this._auto_update = "off";
         for (const key in updated_components) {
-            this.__self[key] = updated_components[key];
+            this[key] = updated_components[key];
         }
+        this._auto_update = "on";
 
-        this.__self.dispatchEvent(new CustomEvent("entity-updated"));
+        this.dispatchEvent(new CustomEvent("entity-updated"));
     }
 
     /**
@@ -209,19 +237,37 @@ export class Entity extends EventTarget {
      *
      */
     static handler = {
-        get(entity: Entity, prop: PropertyKey): unknown {
-            if (prop === "__self") {
-                return entity;
+        get(entity: Entity, prop: PropertyKey, receiver: unknown): unknown {
+            const value = Reflect.get(entity, prop, receiver);
+            if (
+                typeof value === "function" &&
+                ["addEventListener", "removeEventListener", "dispatchEvent"].includes(prop as string)
+            ) {
+                return value.bind(entity);
             }
 
-            if (typeof prop === "string" && entity[prop] !== undefined && Object.values(ComponentHash).includes(prop)) {
+            if (entity._auto_update === "off") {
+                return value;
+            }
+
+            if (
+                typeof prop === "string" &&
+                entity[prop] !== undefined &&
+                prop[0] !== "_" &&
+                Object.values(ComponentHash).includes(prop)
+            ) {
                 //console.log("GET COMPONENT", entity, prop);
                 return new Proxy(entity[prop], new ComponentHandler(entity, prop as ComponentType));
             }
-            return Reflect.get(entity, prop);
+
+            return value;
         },
 
         set(entity: Entity, prop: PropertyKey, v: any): boolean {
+            if (entity._auto_update === "off") {
+                return Reflect.set(entity, prop, v);
+            }
+
             if (typeof prop === "string" && Object.values(ComponentHash).includes(prop)) {
                 //console.log("SET COMPONENT", prop, v);
                 entity._tryMarkingAsDirty({ component_type: prop as ComponentType });

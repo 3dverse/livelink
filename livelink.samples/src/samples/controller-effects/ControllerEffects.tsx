@@ -2,7 +2,8 @@
 import { useEffect, useRef } from "react";
 import Canvas from "../../components/Canvas";
 import { Button } from "react-daisyui";
-import { MyCamera, useLivelinkInstance } from "../../hooks/useLivelinkInstance";
+import { useLivelinkInstance } from "../../hooks/useLivelinkInstance";
+import { DefaultCamera } from "../../components/DefaultCamera";
 import CameraControls from "camera-controls";
 import * as THREE from "three";
 import { Camera } from "livelink.js";
@@ -155,7 +156,7 @@ export default function ControllerEffects() {
 
     const { connect } = useLivelinkInstance({
         canvas_refs: [canvasRef1, canvasRef2],
-        camera_constructors: [MyCamera, VanillaCamera],
+        camera_constructors: [DefaultCamera, VanillaCamera],
         token: "public_p54ra95AMAnZdTel",
     });
 
@@ -165,7 +166,7 @@ export default function ControllerEffects() {
                 scene_id: "15e95136-f9b7-425d-8518-d73dab5589b7",
             });
             const { cameras } = connection!;
-            cameraControls.current = (cameras[0].__self as MyCamera).cameraControls;
+            cameraControls.current = (cameras[0] as DefaultCamera).cameraControls;
         })();
     }, []);
 

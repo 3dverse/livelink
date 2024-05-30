@@ -6,7 +6,7 @@ import { Camera } from "./Camera";
 /**
  *
  */
-export class Viewport<TCamera extends Camera = Camera> extends EventTarget {
+export class Viewport extends EventTarget {
     /**
      * The Livelink core used to send commands.
      */
@@ -27,7 +27,7 @@ export class Viewport<TCamera extends Camera = Camera> extends EventTarget {
     /**
      *
      */
-    private _camera: TCamera | null = null;
+    private _camera: Camera | null = null;
 
     /**
      * HTML Canvas Element
@@ -52,14 +52,14 @@ export class Viewport<TCamera extends Camera = Camera> extends EventTarget {
     /**
      *
      */
-    get camera(): TCamera | null {
+    get camera(): Camera | null {
         return this._camera;
     }
 
     /**
      *
      */
-    set camera(c: TCamera) {
+    set camera(c: Camera) {
         this._camera = c;
     }
 
@@ -101,7 +101,7 @@ export class Viewport<TCamera extends Camera = Camera> extends EventTarget {
     /**
      *
      */
-    async init(): Promise<Viewport<TCamera>> {
+    async init(): Promise<Viewport> {
         await this._auto_resizer.waitForFirstResize();
         return this;
     }

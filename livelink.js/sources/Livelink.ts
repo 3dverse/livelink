@@ -16,6 +16,8 @@ import {
 
 import type { EncodedFrameConsumer } from "./decoders/EncodedFrameConsumer";
 import { RemoteRenderingSurface } from "./RemoteRenderingSurface";
+import { Camera } from "./Camera";
+import { Viewport } from "./Viewport";
 
 /**
  * The Livelink interface.
@@ -259,10 +261,31 @@ export class Livelink extends LivelinkCore {
         name: string,
     ): Promise<EntityType> {
         let entity = new entity_type(this).init(name);
-        entity.onCreate();
         entity = new Proxy(entity, Entity.handler) as EntityType;
+        entity.auto_update = "off";
+        entity.onCreate();
+        entity.auto_update = "on";
         await entity.instantiate();
         return entity;
+    }
+
+    /**
+     *
+     */
+    async newCamera<CameraType extends Camera>(
+        camera_type: { new (c: LivelinkCore): CameraType },
+        name: string,
+        viewport: Viewport,
+    ): Promise<CameraType> {
+        let camera = new camera_type(this).init(name);
+        camera = new Proxy(camera, Entity.handler) as CameraType;
+        viewport.camera = camera;
+        camera.viewport = viewport;
+        camera.auto_update = "off";
+        camera.onCreate();
+        camera.auto_update = "on";
+        await camera.instantiate();
+        return camera;
     }
 
     /**

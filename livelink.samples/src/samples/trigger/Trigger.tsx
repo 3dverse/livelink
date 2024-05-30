@@ -40,12 +40,12 @@ export default function Trigger() {
             return;
         }
         console.log("Add cbs");
-        trigger.__self.addEventListener("trigger-entered", onTriggerEntered);
-        trigger.__self.addEventListener("trigger-exited", onTriggerExited);
+        trigger.addEventListener("trigger-entered", onTriggerEntered);
+        trigger.addEventListener("trigger-exited", onTriggerExited);
         return () => {
             console.log("Remove cbs");
-            trigger.__self.removeEventListener("trigger-entered", onTriggerEntered);
-            trigger.__self.removeEventListener("trigger-exited", onTriggerExited);
+            trigger.removeEventListener("trigger-entered", onTriggerEntered);
+            trigger.removeEventListener("trigger-exited", onTriggerExited);
         };
     }, [trigger, onTriggerEntered, onTriggerExited]);
 

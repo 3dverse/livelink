@@ -1,8 +1,9 @@
-import { useRef, useState } from "react";
+import { useRef } from "react";
 import Canvas from "../../components/Canvas";
 import * as Livelink from "livelink.js";
 import { Button, Input, Range } from "react-daisyui";
 import { useLivelinkInstance } from "../../hooks/useLivelinkInstance";
+import { useSmartObject } from "../../hooks/useSmartObject";
 
 //------------------------------------------------------------------------------
 const SmartObjectManifest: Record<string, string> = {
@@ -10,22 +11,6 @@ const SmartObjectManifest: Record<string, string> = {
 };
 
 //------------------------------------------------------------------------------
-async function findSmartObject(instance: Livelink.Livelink, objectName: string) {
-    if (!(objectName in SmartObjectManifest)) {
-        throw new Error(`Unknown SmartObject ${objectName}`);
-    }
-
-    if (!instance) {
-        return { isLoading: true, entity: null };
-    }
-
-    const entity = await instance.findEntity(Livelink.Entity, {
-        entity_uuid: SmartObjectManifest[objectName],
-    });
-
-    return { isLoading: false, entity };
-}
-
 function rgbToHex(c: Array<number>) {
     function componentToHex(c: number) {
         const hex = (c * 255).toString(16);
@@ -47,8 +32,6 @@ function hexToRgb(h: string): [number, number, number] {
 export default function SmartObjectSync() {
     const canvasRef1 = useRef<HTMLCanvasElement>(null);
     const canvasRef2 = useRef<HTMLCanvasElement>(null);
-    const [entity1, setEntity1] = useState<Livelink.Entity | null>(null);
-    const [entity2, setEntity2] = useState<Livelink.Entity | null>(null);
 
     const {
         instance: instance1,
@@ -68,64 +51,29 @@ export default function SmartObjectSync() {
         token: "public_p54ra95AMAnZdTel",
     });
 
-    const toggleConnection1 = async () => {
-        if (instance1) {
-            setEntity1(null);
-            disconnect1();
-        } else if (canvasRef1.current) {
-            const connection = await connect1({
-                scene_id: "15e95136-f9b7-425d-8518-d73dab5589b7",
-            });
-            if (!connection) {
-                return;
-            }
-            const { entity: soLight } = await findSmartObject(connection.instance, "MyLight");
-
-            if (soLight) {
-                soLight.__self.addEventListener("entity-updated", () => {
-                    setEntity1(null);
-                    setTimeout(() => setEntity1(soLight), 0);
-                });
-            }
-
-            setEntity1(soLight);
-        }
-    };
-
-    const toggleConnection2 = async () => {
-        if (instance2) {
-            setEntity2(null);
-            disconnect2();
-        } else if (canvasRef2.current) {
-            const connection = await connect2({
-                scene_id: "15e95136-f9b7-425d-8518-d73dab5589b7",
-            });
-            if (!connection) {
-                return;
-            }
-            const { entity: soLight } = await findSmartObject(connection.instance, "MyLight");
-
-            if (soLight) {
-                soLight.__self.addEventListener("entity-updated", () => {
-                    setEntity2(null);
-                    setTimeout(() => setEntity2(soLight), 0);
-                });
-            }
-
-            setEntity2(soLight);
-        }
-    };
+    const light1 = useSmartObject({ instance: instance1, manifest: SmartObjectManifest, smart_object: "MyLight" });
+    const light2 = useSmartObject({ instance: instance2, manifest: SmartObjectManifest, smart_object: "MyLight" });
 
     const toggleConnection = async () => {
-        toggleConnection1();
-        toggleConnection2();
+        for (const { instance, connect, disconnect } of [
+            { instance: instance1, connect: connect1, disconnect: disconnect1 },
+            { instance: instance2, connect: connect2, disconnect: disconnect2 },
+        ]) {
+            if (instance) {
+                disconnect();
+            } else {
+                await connect({
+                    scene_id: "15e95136-f9b7-425d-8518-d73dab5589b7",
+                });
+            }
+        }
     };
 
     return (
         <div className="w-full h-full flex flex-col items-center">
             <div className="flex flex-row flex-grow items-center">
-                <CanvasWithControl canvasRef={canvasRef1} light={entity1} />
-                <CanvasWithControl canvasRef={canvasRef2} light={entity2} />
+                <CanvasWithControl canvasRef={canvasRef1} light={light1} />
+                <CanvasWithControl canvasRef={canvasRef2} light={light2} />
             </div>
             <div className="flex items-center gap-2 pb-4">
                 <Button shape="circle" variant="outline" onClick={toggleConnection}>
