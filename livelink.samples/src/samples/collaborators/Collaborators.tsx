@@ -19,27 +19,20 @@ export default function Collaborators() {
         if (instance) {
             disconnect();
         } else if (canvasRef.current) {
-            const inst = await connect({
+            await connect({
                 scene_id: "15e95136-f9b7-425d-8518-d73dab5589b7",
             });
-
-            if (inst === null) {
-                return;
-            }
-
-            inst.instance.session.addEventListener("client-joined", () =>
-                setClients([...inst.instance.session.client_ids]),
-            );
-            inst.instance.session.addEventListener("client-left", () =>
-                setClients([...inst.instance.session.client_ids]),
-            );
         }
     };
 
     useEffect(() => {
-        if (instance) {
-            setClients([...instance.session.client_ids]);
+        if (instance === null) {
+            return;
         }
+
+        instance.session.addEventListener("client-joined", () => setClients([...instance.session.client_ids]));
+        instance.session.addEventListener("client-left", () => setClients([...instance.session.client_ids]));
+        setClients([...instance.session.client_ids]);
     }, [instance, setClients]);
 
     return (
