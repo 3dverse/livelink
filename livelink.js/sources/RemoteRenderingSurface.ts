@@ -13,9 +13,14 @@ type ViewportRect = {
  * renderer to draw on.
  * The dimensions of this surface MUST be divisble by 8 for the encoder to work
  * properly.
- * This drawing area is split into canvases which in turn are split into
- * viewports, each viewport must have an associated camera.
- * Note that canvases can not overlap but viewports can.
+ *
+ * This drawing area is split into viewports. Each viewport must have an
+ * associated camera.
+ * Note that viewports will be packed arbitrarily on the rendering surface.
+ *
+ * The surface is also responsible of decoding the encoded frame return by the
+ * renderer and spliting the decoded frame into areas corresponding to their
+ * respective viewports.
  */
 export class RemoteRenderingSurface implements DecodedFrameConsumer {
     /**
@@ -24,7 +29,7 @@ export class RemoteRenderingSurface implements DecodedFrameConsumer {
     #core: Livelink;
 
     /**
-     * List of viewports.
+     * List of viewports and their offsets.
      */
     private _viewports: Array<ViewportRect> = [];
 
@@ -39,7 +44,8 @@ export class RemoteRenderingSurface implements DecodedFrameConsumer {
     private _current_offset = 0;
 
     /**
-     *
+     * Returns the surface dimensions in pixels rounded up to the next multiple
+     * of 8.
      */
     get dimensions(): Vec2ui16 {
         return this._dimensions;
@@ -88,7 +94,7 @@ export class RemoteRenderingSurface implements DecodedFrameConsumer {
     }
 
     /**
-     * Attach a viewports to the surface
+     * Attach viewports to the surface
      *
      * @param viewports The viewports to attach to the surface
      */

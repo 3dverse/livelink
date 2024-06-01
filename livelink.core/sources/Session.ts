@@ -168,7 +168,7 @@ export class Session extends EventTarget {
             endpoint_info: { ip: string; port: number; ssl_port: number };
         };
 
-        // Gateways that don't support secure connections set their ssL port to 0.
+        // Gateways that don't support secure connections set their SSL port to 0.
         const protocol = endpoint_info.ssl_port ? "wss" : "ws";
         const port = endpoint_info.ssl_port !== 0 ? endpoint_info.ssl_port : endpoint_info.port;
         this._gateway_url = `${protocol}://${endpoint_info.ip}:${port}`;
