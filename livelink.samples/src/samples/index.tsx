@@ -2,6 +2,7 @@ import Collaborators from "./collaborators/Collaborators";
 import ControllerEffects from "./controller-effects/ControllerEffects";
 import DoubleCanvas from "./double-canvas/DoubleCanvas";
 import MultiSession from "./multi-session/MultiSession";
+import PictureInPicture from "./picture-in-picture/PictureInPicture";
 import QuadrupleCanvas from "./quadruple-canvas/QuadrupleCanvas";
 import SceneSelector from "./scene-selector/SceneSelector";
 import SimpleCanvas from "./simple-canvas/SimpleCanvas";
@@ -20,4 +21,5 @@ export const SAMPLES = [
     { title: "Trigger", path: "trigger", element: <Trigger /> },
     { title: "Controller Effects", path: "controller-effects", element: <ControllerEffects /> },
     { title: "Collaborators", path: "collaborators", element: <Collaborators /> },
+    { title: "Picture in Picture", path: "picture-in-picture", element: <PictureInPicture /> },
 ];

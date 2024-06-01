@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import { DefaultCamera } from "../components/DefaultCamera";
 import { Camera, Livelink, SessionInfo, UUID, Viewport, WebCodecsDecoder } from "livelink.js";
+import { viewportResolution } from "three/examples/jsm/nodes/Nodes.js";
 
 //------------------------------------------------------------------------------
 export function useLivelinkInstance({
@@ -10,11 +11,11 @@ export function useLivelinkInstance({
     token,
 }: {
     canvas_refs: Array<React.RefObject<HTMLCanvasElement>>;
-    camera_constructors?: (typeof Camera)[];
+    camera_constructors?: (typeof Camera | UUID)[];
     token: string;
 }): {
     instance: Livelink | null;
-    connect: ({ scene_id }: { scene_id: UUID }) => Promise<{ instance: Livelink; cameras: Camera[] } | null>;
+    connect: ({ scene_id }: { scene_id: UUID }) => Promise<{ instance: Livelink; cameras: (Camera | null)[] } | null>;
     disconnect: () => void;
     onConnect?: (instance: Livelink) => void;
 } {
@@ -56,7 +57,7 @@ export function useLivelinkInstance({
 async function configureClient(
     instance: Livelink,
     canvas_elements: Array<HTMLCanvasElement>,
-    camera_constructors: (typeof Camera)[],
+    camera_constructors: (typeof Camera | UUID)[],
 ) {
     const viewports = await Promise.all(
         canvas_elements.map(async canvas_element =>
@@ -96,12 +97,21 @@ async function configureClient(
     });
 
     // Step 3: inform the renderer on which camera to use with which viewport.
-    const cameras = await Promise.all(
+    const cameras = (await Promise.all(
         viewports.map(async (viewport, i) => {
-            const CameraConstructor = camera_constructors[i] || DefaultCamera;
-            return await instance.newCamera(CameraConstructor, "MyCam_" + i++, viewport);
+            if (typeof camera_constructors[i] === typeof Camera || camera_constructors[i] === undefined) {
+                const CameraConstructor = (camera_constructors[i] as typeof Camera) || DefaultCamera;
+                return await instance.newCamera(CameraConstructor, "MyCam_" + i++, viewport);
+            } else {
+                const camera = await instance.findEntity(Camera, { entity_uuid: camera_constructors[i] as UUID });
+                if (camera) {
+                    camera.viewport = viewport;
+                    viewport.camera = camera;
+                }
+                return camera;
+            }
         }),
-    );
+    )) satisfies Array<Camera | null>;
 
     instance.startStreaming();
     instance.startUpdateLoop({ fps: 60 });
