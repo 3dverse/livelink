@@ -39,11 +39,9 @@ export default function Trigger() {
         if (trigger === null) {
             return;
         }
-        console.log("Add cbs");
         trigger.addEventListener("trigger-entered", onTriggerEntered);
         trigger.addEventListener("trigger-exited", onTriggerExited);
         return () => {
-            console.log("Remove cbs");
             trigger.removeEventListener("trigger-entered", onTriggerEntered);
             trigger.removeEventListener("trigger-exited", onTriggerExited);
         };
@@ -95,7 +93,6 @@ export default function Trigger() {
                 <Button shape="circle" variant="outline" onClick={toggleConnection}>
                     {instance ? "Disconnect" : "Connect"}
                 </Button>
-                {triggerState}
 
                 <Range
                     min={-1}

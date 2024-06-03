@@ -2,7 +2,6 @@
 import { useEffect, useState } from "react";
 import { DefaultCamera } from "../components/DefaultCamera";
 import { Camera, Livelink, SessionInfo, UUID, Viewport, WebCodecsDecoder } from "livelink.js";
-import { viewportResolution } from "three/examples/jsm/nodes/Nodes.js";
 
 //------------------------------------------------------------------------------
 export function useLivelinkInstance({
@@ -96,7 +95,7 @@ async function configureClient(
         frame_consumer: new WebCodecsDecoder(instance.remote_rendering_surface),
     });
 
-    // Step 3: inform the renderer on which camera to use with which viewport.
+    // Step 3: inform the renderer of which camera to use with which viewport.
     const cameras = (await Promise.all(
         viewports.map(async (viewport, i) => {
             if (typeof camera_constructors[i] === typeof Camera || camera_constructors[i] === undefined) {
