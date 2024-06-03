@@ -194,7 +194,9 @@ export class EntityRegistry {
         for (const [component_type, entities] of this._dirty_entities) {
             const broadcast_set = this._dirty_entities_to_broadcast.get(component_type);
             for (const entity of entities) {
-                broadcast_set.add(entity);
+                if (entity.auto_broadcast === "on") {
+                    broadcast_set.add(entity);
+                }
             }
             entities.clear();
         }

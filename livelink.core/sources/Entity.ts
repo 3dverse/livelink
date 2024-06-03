@@ -33,11 +33,6 @@ type EntityAutoUpdateState = "on" | "off";
 /**
  *
  */
-type EntityEventType = "entity-updated";
-
-/**
- *
- */
 export class Entity extends EventTarget {
     private euid: Euid | null = null;
     debug_name?: DebugName;
@@ -62,7 +57,17 @@ export class Entity extends EventTarget {
     /**
      *
      */
+    private _proxy_state: EntityAutoUpdateState = "on";
+
+    /**
+     *
+     */
     private _auto_update: EntityAutoUpdateState = "on";
+
+    /**
+     *
+     */
+    private _auto_broadcast: EntityAutoUpdateState = "on";
 
     /**
      *
@@ -94,6 +99,19 @@ export class Entity extends EventTarget {
      */
     set auto_update(state: EntityAutoUpdateState) {
         this._auto_update = state;
+    }
+
+    /**
+     *
+     */
+    get auto_broadcast(): EntityAutoUpdateState {
+        return this._auto_broadcast;
+    }
+    /**
+     *
+     */
+    set auto_broadcast(state: EntityAutoUpdateState) {
+        this._auto_broadcast = state;
     }
 
     /**
@@ -166,7 +184,7 @@ export class Entity extends EventTarget {
     toJSON() {
         let serialized = {};
         for (const p in this) {
-            if (this[p] !== undefined && p[0] !== "_" && p !== "euid") {
+            if (this._isSerializableComponent(p, this[p])) {
                 serialized[p as string] = this[p];
             }
         }
@@ -177,11 +195,11 @@ export class Entity extends EventTarget {
      *
      */
     _updateFromEvent({ updated_components }: { updated_components: Record<string, unknown> }) {
-        this._auto_update = "off";
+        this._proxy_state = "off";
         for (const key in updated_components) {
             this[key] = updated_components[key];
         }
-        this._auto_update = "on";
+        this._proxy_state = "on";
 
         this.dispatchEvent(new CustomEvent("entity-updated"));
     }
@@ -192,10 +210,20 @@ export class Entity extends EventTarget {
     _tryMarkingAsDirty({ component_type }: { component_type: ComponentType }): boolean {
         if (this.isInstantiated()) {
             // Register to appropriate dirty list
-            this._core.entity_registry._addEntityToUpdate({
-                component_type,
-                entity: this,
-            });
+            this._core.entity_registry._addEntityToUpdate({ component_type, entity: this });
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     *
+     */
+    _tryMarkingAsDeleted({ component_type }: { component_type: ComponentType }): boolean {
+        if (this.isInstantiated()) {
+            // Register to appropriate dirty list
+            this._core.entity_registry._addEntityToUpdate({ component_type, entity: this });
             return true;
         }
 
@@ -236,6 +264,18 @@ export class Entity extends EventTarget {
     /**
      *
      */
+    private _isSerializableComponent(prop: PropertyKey, v: any) {
+        return (
+            typeof prop === "string" &&
+            v !== undefined &&
+            prop[0] !== "_" &&
+            Object.values(ComponentHash).includes(prop)
+        );
+    }
+
+    /**
+     *
+     */
     static handler = {
         get(entity: Entity, prop: PropertyKey, receiver: unknown): unknown {
             const value = Reflect.get(entity, prop, receiver);
@@ -246,16 +286,11 @@ export class Entity extends EventTarget {
                 return value.bind(entity);
             }
 
-            if (entity._auto_update === "off") {
+            if (entity._proxy_state === "off") {
                 return value;
             }
 
-            if (
-                typeof prop === "string" &&
-                entity[prop] !== undefined &&
-                prop[0] !== "_" &&
-                Object.values(ComponentHash).includes(prop)
-            ) {
+            if (entity._isSerializableComponent(prop, entity[prop])) {
                 //console.log("GET COMPONENT", entity, prop);
                 return new Proxy(entity[prop], new ComponentHandler(entity, prop as ComponentType));
             }
@@ -264,20 +299,25 @@ export class Entity extends EventTarget {
         },
 
         set(entity: Entity, prop: PropertyKey, v: any): boolean {
-            if (entity._auto_update === "off") {
+            if (entity._proxy_state === "off") {
                 return Reflect.set(entity, prop, v);
             }
 
-            if (typeof prop === "string" && Object.values(ComponentHash).includes(prop)) {
+            if (entity._isSerializableComponent(prop, v)) {
                 //console.log("SET COMPONENT", prop, v);
                 entity._tryMarkingAsDirty({ component_type: prop as ComponentType });
             }
+
             return Reflect.set(entity, prop, v);
         },
 
         deleteProperty(entity: Entity, prop: PropertyKey): boolean {
+            if (entity[prop] === undefined) {
+                return Reflect.deleteProperty(entity, prop);
+            }
+
             //console.log("DELETE COMPONENT", prop);
-            return Reflect.deleteProperty(entity, prop);
+            entity._tryMarkingAsDeleted({ component_type: prop as ComponentType });
         },
     };
 }
@@ -286,11 +326,17 @@ export class Entity extends EventTarget {
  *
  */
 class ComponentHandler {
+    /**
+     *
+     */
     constructor(
         private readonly _entity: Entity,
         private readonly _component_name: ComponentType,
     ) {}
 
+    /**
+     *
+     */
     get(component: object, prop: PropertyKey): unknown {
         //console.log("GET ATTRIBUTE", prop);
         if (prop[0] !== "_") {
@@ -301,13 +347,20 @@ class ComponentHandler {
         return Reflect.get(component, prop);
     }
 
+    /**
+     *
+     */
     set(component: object, prop: PropertyKey, v: any): boolean {
         //console.log("SET ATTRIBUTE", prop, v);
         this._entity._tryMarkingAsDirty({ component_type: this._component_name });
         return Reflect.set(component, prop, v);
     }
 
+    /**
+     *
+     */
     deleteProperty(component: object, prop: PropertyKey): boolean {
+        //TODO: reset to default?
         //console.log("DELETE ATTRIBUTE", prop);
         return Reflect.deleteProperty(component, prop);
     }
