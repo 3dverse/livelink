@@ -39,11 +39,6 @@ export class RemoteRenderingSurface implements DecodedFrameConsumer {
     private _dimensions: Vec2ui16 = [0, 0];
 
     /**
-     * Current offset to apply to the next viewport to be added.
-     */
-    private _current_offset = 0;
-
-    /**
      * Returns the surface dimensions in pixels rounded up to the next multiple
      * of 8.
      */
@@ -100,8 +95,7 @@ export class RemoteRenderingSurface implements DecodedFrameConsumer {
      */
     addViewports({ viewports }: { viewports: Array<Viewport> }): void {
         for (const viewport of viewports) {
-            this._viewports.push({ viewport, offset: [this._current_offset, 0] });
-            this._current_offset += viewport.width;
+            this._viewports.push({ viewport, offset: [0, 0] });
         }
 
         this.update();
@@ -137,10 +131,16 @@ export class RemoteRenderingSurface implements DecodedFrameConsumer {
 
         let width = 0;
         let height = 0;
+        let currentOffset = [0, 0];
 
-        for (const { viewport } of this._viewports) {
+        for (const { viewport, offset } of this._viewports) {
             width += viewport.width;
             height = Math.max(height, viewport.height);
+
+            offset[0] = currentOffset[0];
+            offset[1] = currentOffset[1];
+
+            currentOffset[0] += viewport.width;
         }
 
         const new_dimensions: Vec2 = [next_multiple_of_8(width), next_multiple_of_8(height)];
