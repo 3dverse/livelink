@@ -31,10 +31,12 @@ export default function PictureInPicture() {
                         grid: boolean;
                         volumetricLighting: boolean;
                         bloom: boolean;
+                        filterSpecular: boolean;
                     };
                     d.grid = false;
                     d.volumetricLighting = true;
                     d.bloom = true;
+                    d.filterSpecular = true;
                 }
             },
         );

@@ -62,6 +62,7 @@ async function configureClient(
         canvas_elements.map(async canvas_element =>
             new Viewport(instance, {
                 canvas_element,
+                context_type: "2d",
             }).init(),
         ),
     );

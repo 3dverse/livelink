@@ -2,6 +2,9 @@ import { HighlightMode, ScreenSpaceRayResult, type Vec2 } from "@livelink.core";
 import { Livelink } from "./Livelink";
 import { CanvasAutoResizer } from "./CanvasAutoResizer";
 import { Camera } from "./Camera";
+import { ContextWebGL } from "./contexts/ContextWebGL";
+import { Context2D } from "./contexts/Context2D";
+import { ContextProvider } from "./contexts/ContextProvider";
 
 /**
  *
@@ -19,7 +22,7 @@ export class Viewport extends EventTarget {
     /**
      *
      */
-    private _context: CanvasRenderingContext2D;
+    private _context: ContextProvider;
     /**
      *
      */
@@ -72,8 +75,10 @@ export class Viewport extends EventTarget {
         core: Livelink,
         {
             canvas_element,
+            context_type,
         }: {
             canvas_element: string | HTMLCanvasElement;
+            context_type: "2d" | "webgl" | "webgl2";
         },
     ) {
         super();
@@ -88,14 +93,18 @@ export class Viewport extends EventTarget {
         if (canvas.nodeName !== "CANVAS") {
             throw new Error(`HTML element ${canvas_element} is a '${canvas.nodeName}', it MUST be CANVAS`);
         }
-        const context = (canvas as HTMLCanvasElement).getContext("2d");
-        if (context === null) {
-            throw new Error(`Cannot create a 2d context from canvas ${canvas_element}`);
-        }
 
         this._canvas = canvas as HTMLCanvasElement;
+        switch (context_type) {
+            case "2d":
+                this._context = new Context2D(this._canvas);
+                break;
+            case "webgl":
+            case "webgl2":
+                this._context = new ContextWebGL(this._canvas, context_type);
+                break;
+        }
         this._auto_resizer = new CanvasAutoResizer(this);
-        this._context = context;
     }
 
     /**
@@ -103,6 +112,7 @@ export class Viewport extends EventTarget {
      */
     async init(): Promise<Viewport> {
         await this._auto_resizer.waitForFirstResize();
+        this._context.refreshSize();
         return this;
     }
 
@@ -117,7 +127,7 @@ export class Viewport extends EventTarget {
      *
      */
     drawFrame({ decoded_frame, left, top }: { decoded_frame: VideoFrame; left: number; top: number }): void {
-        this._context.drawImage(decoded_frame, left, top, this.width, this.height, 0, 0, this.width, this.height);
+        this._context.drawFrame({ frame: decoded_frame, left, top });
     }
 
     /**
@@ -131,7 +141,7 @@ export class Viewport extends EventTarget {
         mode: HighlightMode;
     }): Promise<ScreenSpaceRayResult | null> {
         return this._camera && this._camera.rtid
-            ? await this.#core!.castScreenSpaceRay({
+            ? await this.#core.castScreenSpaceRay({
                   screenSpaceRayQuery: {
                       camera_rtid: this._camera.rtid,
                       pos,
@@ -145,6 +155,7 @@ export class Viewport extends EventTarget {
      *
      */
     updateCanvasSize() {
+        this._context.refreshSize();
         this.#core.remote_rendering_surface.update();
     }
 }
