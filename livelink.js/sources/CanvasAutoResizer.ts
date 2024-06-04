@@ -50,7 +50,7 @@ export class CanvasAutoResizer extends EventTarget {
         this._observer = new ResizeObserver(e => this._onResized(e));
 
         // My watch begins...
-        this._observer.observe(this._viewport.canvas);
+        this._observer.observe(this._viewport.canvas, { box: "device-pixel-content-box" });
     }
 
     /**
@@ -74,8 +74,8 @@ export class CanvasAutoResizer extends EventTarget {
      * Callback called by the observer when the canvas is resized.
      */
     private _onResized(e: Array<ResizeObserverEntry>) {
-        this._dimensions[0] = e[0].contentRect.width;
-        this._dimensions[1] = e[0].contentRect.height;
+        this._dimensions[0] = e[0].devicePixelContentBoxSize[0].inlineSize;
+        this._dimensions[1] = e[0].devicePixelContentBoxSize[0].blockSize;
 
         if (this._resize_debounce_timeout !== 0) {
             clearTimeout(this._resize_debounce_timeout);
@@ -94,8 +94,8 @@ export class CanvasAutoResizer extends EventTarget {
     private _resize() {
         const old_size: Vec2 = [this._viewport.canvas.width, this._viewport.canvas.height];
 
-        this._viewport.canvas.width = this._dimensions[0];
-        this._viewport.canvas.height = this._dimensions[1];
+        this._viewport.canvas.width = this._dimensions[0] * devicePixelRatio;
+        this._viewport.canvas.height = this._dimensions[1] * devicePixelRatio;
 
         this._notifyViewport();
 
