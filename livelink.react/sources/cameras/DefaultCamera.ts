@@ -60,7 +60,7 @@ export class DefaultCamera extends Camera {
 
     private _initController() {
         if (this.viewport === null) {
-            return;
+            throw new Error("Attempt to initialize camera without a viewport");
         }
 
         const camera = new PerspectiveCamera(

@@ -78,10 +78,10 @@ export class RemoteRenderingSurface implements DecodedFrameConsumer {
     /**
      *
      */
-    consumeDecodedFrame({ decoded_frame }: { decoded_frame: VideoFrame }): void {
+    consumeDecodedFrame({ decoded_frame }: { decoded_frame: VideoFrame | OffscreenCanvas }): void {
         for (const { viewport, offset } of this.#viewports) {
             viewport.drawFrame({
-                decoded_frame,
+                frame: decoded_frame,
                 left: offset[0],
                 top: offset[1],
             });
@@ -183,11 +183,11 @@ export class RemoteRenderingSurface implements DecodedFrameConsumer {
         const max: Vec2i = [0, 0];
 
         for (const { viewport } of this.#viewports) {
-            const clientRect = viewport.canvas.getClientRects()[0];
-            min[0] = Math.min(min[0], clientRect.left);
-            min[1] = Math.min(min[1], clientRect.top);
-            max[0] = Math.max(max[0], clientRect.right);
-            max[1] = Math.max(max[1], clientRect.bottom);
+            const clientRect = viewport.getBoundingRect();
+            min[0] = Math.min(min[0], clientRect[0]);
+            min[1] = Math.min(min[1], clientRect[1]);
+            max[0] = Math.max(max[0], clientRect[2]);
+            max[1] = Math.max(max[1], clientRect[3]);
         }
 
         const width = max[0] - min[0];
@@ -201,9 +201,9 @@ export class RemoteRenderingSurface implements DecodedFrameConsumer {
      */
     #computeViewportsOffsets(client_rect_offset: Vec2i) {
         for (const { viewport, offset } of this.#viewports) {
-            const clientRect = viewport.canvas.getClientRects()[0];
-            offset[0] = clientRect.left - client_rect_offset[0];
-            offset[1] = clientRect.top - client_rect_offset[1];
+            const clientRect = viewport.getBoundingRect();
+            offset[0] = clientRect[0] - client_rect_offset[0];
+            offset[1] = clientRect[1] - client_rect_offset[1];
         }
     }
 }

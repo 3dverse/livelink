@@ -90,7 +90,7 @@ export class SoftwareDecoder implements EncodedFrameConsumer {
         });
 
         this._frame_consumer.consumeDecodedFrame({
-            decoded_frame: this._offscreen_canvas! as unknown as VideoFrame,
+            decoded_frame: this._offscreen_canvas!,
         });
     };
 

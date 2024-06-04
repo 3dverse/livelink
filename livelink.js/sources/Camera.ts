@@ -28,16 +28,5 @@ export class Camera extends Entity {
     /**
      *
      */
-    constructor(scene: Scene, viewport: Viewport | null = null) {
-        super(scene);
-        this._viewport = viewport;
-        if (this._viewport) {
-            this._viewport.camera = this;
-        }
-    }
-
-    /**
-     *
-     */
     onDelete() {}
 }

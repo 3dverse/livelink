@@ -5,5 +5,5 @@ export interface DecodedFrameConsumer {
     /**
      *
      */
-    consumeDecodedFrame({ decoded_frame }: { decoded_frame: VideoFrame }): void;
+    consumeDecodedFrame({ decoded_frame }: { decoded_frame: VideoFrame | OffscreenCanvas }): void;
 }

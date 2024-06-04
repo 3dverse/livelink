@@ -5,7 +5,7 @@ export abstract class ContextProvider {
     /**
      *
      */
-    abstract drawFrame({ frame, left, top }: { frame: VideoFrame; left: number; top: number }): void;
+    abstract drawFrame({ frame, left, top }: { frame: VideoFrame | OffscreenCanvas; left: number; top: number }): void;
 
     /**
      *

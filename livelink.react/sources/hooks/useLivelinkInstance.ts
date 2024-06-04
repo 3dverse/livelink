@@ -1,10 +1,34 @@
 //------------------------------------------------------------------------------
 import { useEffect, useState } from "react";
 import { DefaultCamera } from "../cameras/DefaultCamera";
-import { Camera, Livelink, SoftwareDecoder, UUID, Viewport, WebCodecsDecoder } from "@3dverse/livelink";
+import {
+    Camera,
+    CanvasContextAttributes,
+    CanvasContextType,
+    Livelink,
+    SoftwareDecoder,
+    UUID,
+    Viewport,
+    WebCodecsDecoder,
+} from "@3dverse/livelink";
 
 //------------------------------------------------------------------------------
-type View = { canvas_ref: React.RefObject<HTMLCanvasElement>; camera?: typeof Camera | UUID | null };
+type View = {
+    canvas_ref: React.RefObject<HTMLCanvasElement>;
+    camera?: typeof Camera | UUID | null;
+} & (
+    | {
+          canvas_context_type: "2d";
+          canvas_context_attributes?: CanvasRenderingContext2DSettings;
+      }
+    | {
+          canvas_context_type: "webgl";
+          canvas_context_attributes?: WebGLContextAttributes & { xrCompatible?: boolean };
+      }
+    | {
+          canvas_context_attributes?: undefined;
+      }
+);
 
 //------------------------------------------------------------------------------
 type LivelinkResponse = { instance: Livelink; cameras: Array<Camera | null> };
@@ -50,7 +74,14 @@ export function useLivelinkInstance({ views }: { views: Array<View> }): {
             const instance = await Livelink.join_or_start({ scene_id, token });
             const cameras = await configureClient(
                 instance,
-                views.map(v => v.canvas_ref.current!),
+                views.map(view => {
+                    const canvas_element = view.canvas_ref.current!;
+                    return {
+                        canvas_element,
+                        context_type: "canvas_context_type" in view ? view.canvas_context_type : "2d",
+                        context_attributes: view.canvas_context_attributes,
+                    };
+                }),
                 views.map(v => (v.camera === null ? null : v.camera || DefaultCamera)),
             );
 
@@ -69,15 +100,20 @@ export function useLivelinkInstance({ views }: { views: Array<View> }): {
 //------------------------------------------------------------------------------
 async function configureClient(
     instance: Livelink,
-    canvas_elements: Array<HTMLCanvasElement>,
+    canvas: Array<{
+        canvas_element: HTMLCanvasElement;
+        context_type: CanvasContextType;
+        context_attributes?: CanvasContextAttributes;
+    }>,
     camera_constructors: (typeof Camera | UUID | null)[],
 ) {
     // Step 1: configure the viewports that will receive the video stream.
-    const viewports = canvas_elements.map(
-        canvas_element =>
+    const viewports = canvas.map(
+        ({ canvas_element, context_type, context_attributes }) =>
             new Viewport(instance, {
                 canvas_element,
-                context_type: "2d",
+                context_type,
+                context_attributes,
             }),
     );
     instance.addViewports({ viewports });

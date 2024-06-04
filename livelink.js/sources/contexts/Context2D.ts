@@ -10,10 +10,10 @@ export class Context2D extends ContextProvider {
     /**
      *
      */
-    constructor(canvas: HTMLCanvasElement) {
+    constructor(canvas: HTMLCanvasElement, context_attributes?: CanvasRenderingContext2DSettings) {
         super();
 
-        const context = canvas.getContext("2d");
+        const context = canvas.getContext("2d", context_attributes);
         if (context === null) {
             throw new Error(`Cannot create a 2d context from canvas ${canvas}`);
         }
@@ -24,7 +24,7 @@ export class Context2D extends ContextProvider {
     /**
      *
      */
-    drawFrame({ frame, left, top }: { frame: VideoFrame; left: number; top: number }): void {
+    drawFrame({ frame, left, top }: { frame: VideoFrame | OffscreenCanvas; left: number; top: number }): void {
         this._context2D.drawImage(
             frame,
             left,

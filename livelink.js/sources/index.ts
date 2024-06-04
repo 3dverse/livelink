@@ -14,5 +14,9 @@ export * from "./decoders/SoftwareDecoder";
 export * from "./decoders/WebCodecsDecoder";
 export * from "./decoders/EncodedFrameConsumer";
 
-export * from "./inputs/Mouse";
+export * from "./contexts/ContextProvider";
+export * from "./contexts/Context2D";
+export * from "./contexts/ContextWebGL";
+
 export * from "./inputs/Keyboard";
+export * from "./inputs/Mouse";

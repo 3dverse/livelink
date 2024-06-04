@@ -12,6 +12,18 @@ import { Entity } from "./Entity";
 /**
  *
  */
+export type CanvasContextAttributes =
+    | CanvasRenderingContext2DSettings
+    | (WebGLContextAttributes & { xrCompatible?: boolean });
+
+/**
+ *
+ */
+export type CanvasContextType = "2d" | "webgl" | "webgl2";
+
+/**
+ *
+ */
 export class Viewport extends EventTarget {
     /**
      * The Livelink core used to send commands.
@@ -36,10 +48,22 @@ export class Viewport extends EventTarget {
     #camera: Camera | null = null;
 
     /**
+     *
+     */
+    #last_frame: { frame: VideoFrame | OffscreenCanvas; left: number; top: number } | null = null;
+
+    /**
      * HTML Canvas Element
      */
     get canvas() {
         return this.#canvas;
+    }
+
+    /**
+     *
+     */
+    getContext<ContextType extends ContextProvider>(): ContextType {
+        return this.#context as ContextType;
     }
 
     /**
@@ -84,10 +108,16 @@ export class Viewport extends EventTarget {
         {
             canvas_element,
             context_type,
+            context_attributes,
         }: {
             canvas_element: string | HTMLCanvasElement;
-            context_type: "2d" | "webgl" | "webgl2";
-        },
+        } & (
+            | { context_type: "2d"; context_attributes?: CanvasRenderingContext2DSettings }
+            | {
+                  context_type: "webgl" | "webgl2";
+                  context_attributes?: WebGLContextAttributes & { xrCompatible?: boolean };
+              }
+        ),
     ) {
         super();
         this.#core = core;
@@ -109,7 +139,7 @@ export class Viewport extends EventTarget {
                 break;
             case "webgl":
             case "webgl2":
-                this.#context = new ContextWebGL(this.#canvas, context_type);
+                this.#context = new ContextWebGL(this.#canvas, context_type, context_attributes);
                 break;
         }
 
@@ -137,8 +167,27 @@ export class Viewport extends EventTarget {
     /**
      *
      */
-    drawFrame({ decoded_frame, left, top }: { decoded_frame: VideoFrame; left: number; top: number }): void {
-        this.#context.drawFrame({ frame: decoded_frame, left, top });
+    drawFrame(frame: { frame: VideoFrame | OffscreenCanvas; left: number; top: number }): void {
+        this.#context.drawFrame(frame);
+        this.#last_frame = frame;
+    }
+
+    /**
+     *
+     */
+    drawLastFrame() {
+        if (this.#last_frame) {
+            this.#context.drawFrame(this.#last_frame);
+        }
+    }
+
+    /**
+     *
+     */
+    setSize(w: number, h: number) {
+        this.#canvas.width = w;
+        this.#canvas.height = h;
+        this._updateCanvasSize();
     }
 
     /**
@@ -212,5 +261,16 @@ export class Viewport extends EventTarget {
     _updateCanvasSize() {
         this.#context.refreshSize();
         this.dispatchEvent(new Event("on-resized"));
+    }
+
+    /**
+     *
+     */
+    getBoundingRect(): [number, number, number, number] {
+        const rect = this.canvas.getClientRects()[0];
+        if (!rect) {
+            return [0, 0, this.canvas.width, this.canvas.height];
+        }
+        return [rect.left, rect.top, rect.right, rect.bottom];
     }
 }

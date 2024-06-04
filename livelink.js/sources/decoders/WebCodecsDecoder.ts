@@ -138,9 +138,15 @@ export class WebCodecsDecoder implements EncodedFrameConsumer {
      *
      */
     private _onFrameDecoded = (decoded_frame: VideoFrame) => {
+        if (this.#last_frame) {
+            this.#last_frame.close();
+        }
+
         this._frame_consumer.consumeDecodedFrame({ decoded_frame });
-        decoded_frame.close();
+        this.#last_frame = decoded_frame;
     };
+
+    #last_frame: VideoFrame | null = null;
 
     /**
      *

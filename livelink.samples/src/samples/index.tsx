@@ -26,6 +26,9 @@ import Collaborators from "./collaborators/Collaborators";
 import PictureInPicture from "./picture-in-picture/PictureInPicture";
 import LiveSkeletalAnimation from "./live-skeletal-animation/LiveSkeletalAnimation";
 
+// WebXR
+import WebXR from "./web-xr/WebXR";
+
 export const SAMPLES = [
     {
         categoryName: "Core",
@@ -63,11 +66,18 @@ export const SAMPLES = [
         ],
     },
     {
+        categoryName: "WebXR",
+        list: [
+            { title: "Immersive AR Session", path: "webxr-ar", element: <WebXR key="ar" mode="immersive-ar" /> },
+            { title: "Immersive VR Session", path: "webxr-vr", element: <WebXR key="vr" mode="immersive-vr" /> },
+        ],
+    },
+    {
         categoryName: "Misc",
         list: [
             { title: "Collaborators", path: "collaborators", element: <Collaborators /> },
             { title: "Picture in Picture", path: "picture-in-picture", element: <PictureInPicture /> },
-         	{ title: "Live Skeletal Animation", path: "live-skeletal-animation", element: <LiveSkeletalAnimation /> },
+            { title: "Live Skeletal Animation", path: "live-skeletal-animation", element: <LiveSkeletalAnimation /> },
         ],
     },
 ];

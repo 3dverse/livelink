@@ -32,10 +32,28 @@ export class ContextWebGL extends ContextProvider {
     /**
      *
      */
-    constructor(canvas: HTMLCanvasElement, version: "webgl" | "webgl2" = "webgl") {
+    get native() {
+        return this._context;
+    }
+
+    /**
+     *
+     */
+    set frame_buffer(fb: WebGLFramebuffer) {
+        this._frame_buffer = fb;
+    }
+
+    /**
+     *
+     */
+    constructor(
+        canvas: HTMLCanvasElement,
+        version: "webgl" | "webgl2" = "webgl",
+        context_attributes?: WebGLContextAttributes & { xrCompatible?: boolean },
+    ) {
         super();
 
-        const context = canvas.getContext(version);
+        const context = canvas.getContext(version, context_attributes);
         if (context === null) {
             throw new Error(`Cannot create a ${version} context from canvas`);
         }
@@ -51,20 +69,23 @@ export class ContextWebGL extends ContextProvider {
     /**
      *
      */
-    drawFrame({ frame, left, top }: { frame: VideoFrame; left: number; top: number }): void {
+    drawFrame({ frame, left, top }: { frame: VideoFrame | OffscreenCanvas; left: number; top: number }): void {
         const gl = this._context;
 
         if (this._frame_buffer !== null) {
             gl.bindFramebuffer(gl.FRAMEBUFFER, this._frame_buffer);
         }
 
-        gl.clearColor(1, 1, 1, 1);
+        gl.clearColor(1, 0, 0, 1);
         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+
+        const frameWidth = (frame as OffscreenCanvas).width || (frame as VideoFrame).displayWidth;
+        const frameHeight = (frame as OffscreenCanvas).height || (frame as VideoFrame).displayHeight;
 
         const ls = gl.getUniformLocation(this._shader_program!, "size");
         const lo = gl.getUniformLocation(this._shader_program!, "offset");
-        gl.uniform2fv(ls, [this._canvas.width / frame.displayWidth, this._canvas.height / frame.displayHeight]);
-        gl.uniform2fv(lo, [left / frame.displayWidth, top / frame.displayHeight]);
+        gl.uniform2fv(ls, [this._canvas.width / frameWidth, this._canvas.height / frameHeight]);
+        gl.uniform2fv(lo, [left / frameWidth, top / frameHeight]);
 
         gl.activeTexture(gl.TEXTURE0);
         gl.bindTexture(gl.TEXTURE_2D, this._texture_ref);
