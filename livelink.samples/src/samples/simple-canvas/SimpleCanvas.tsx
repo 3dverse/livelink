@@ -1,7 +1,6 @@
 //------------------------------------------------------------------------------
 import { useRef } from "react";
 import Canvas from "../../components/Canvas";
-import { Button } from "react-daisyui";
 import { useLivelinkInstance } from "../../hooks/useLivelinkInstance";
 
 //------------------------------------------------------------------------------
@@ -24,15 +23,19 @@ export default function SimpleCanvas() {
     };
 
     return (
-        <>
-            <div className="w-full h-full flex basis-full grow p-4">
-                <Canvas canvasRef={canvasRef} />
-            </div>
-            <div className="flex items-center gap-2 pb-4">
-                <Button shape="circle" variant="outline" onClick={toggleConnection}>
+        <div className="relative h-full max-h-screen p-3">
+            <Canvas canvasRef={canvasRef} />
+            <div
+                className={`
+                    absolute left-1/2 -translate-x-1/2 -translate-y-1/2
+                    flex items-center gap-2 pb-4
+                    transition-all ${instance ? "bottom-0" : "bottom-1/2"}
+                `}
+            >
+                <button className="button button-primary" onClick={toggleConnection}>
                     {instance ? "Disconnect" : "Connect"}
-                </Button>
+                </button>
             </div>
-        </>
+        </div>
     );
 }

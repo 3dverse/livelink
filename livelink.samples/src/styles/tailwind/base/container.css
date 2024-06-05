@@ -1,0 +1,38 @@
+/* Container */
+
+@layer base {
+    .container-2xl,
+    .container-xl,
+    .container-lg,
+    .container-md,
+    .container,
+    .container-sm,
+    .container-xs {
+        @apply w-full px-4 sm:px-5 md:px-10 lg:px-14 xl:px-20 mx-auto;
+    }
+
+    .container-2xl {
+        max-width: 120rem;
+    }
+
+    .container-xl {
+        max-width: 100rem;
+    }
+
+    .container-lg {
+        max-width: 85rem;
+    }
+
+    .container,
+    .container-md {
+        max-width: 66rem;
+    }
+
+    .container-sm {
+        max-width: 60rem;
+    }
+
+    .container-xs {
+        max-width: 50rem;
+    }
+}

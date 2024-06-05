@@ -1,7 +1,7 @@
 import ReactDOM from "react-dom/client";
 import App from "./App.tsx";
 import ErrorPage from "./ErrorPage.tsx";
-import "./index.css";
+import "./styles/index.css";
 import { RouterProvider, createBrowserRouter } from "react-router-dom";
 import { SAMPLES } from "./samples";
 

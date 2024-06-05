@@ -1,0 +1,18 @@
+canvas {
+    opacity: 0;
+    touch-action: none;
+    animation: fade-in 0.45s ease 0s forwards;
+}
+
+canvas:active {
+    cursor: default;
+}
+
+@keyframes fade-in {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}

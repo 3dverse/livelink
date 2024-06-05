@@ -1,0 +1,69 @@
+@layer base {
+    .button {
+        @apply flex items-center justify-center px-4 py-2 text-color-primary text-md tracking-wide font-normal rounded-md;
+        transition-property: box-shadow, background-color, opacity;
+        transition-duration: 0.25s;
+    }
+
+    /* Variants */
+
+    .button-accent {
+        @apply bg-color-accent text-color-primary-dark;
+        box-shadow: 0px 5px 10px hsl(var(--color-accent-hsl), 0.2);
+
+        &:hover,
+        &:focus,
+        &:active {
+            box-shadow: 0px 5px 10px hsl(var(--color-accent-hsl), 0.1);
+        }
+    }
+
+    .button-primary {
+        @apply bg-[white] text-color-primary-dark;
+        box-shadow: 0px 5px 10px hsl(0, 0%, 0%, 0.2);
+
+        &:hover,
+        &:focus,
+        &:active {
+            box-shadow: 0px 5px 10px hsl(0, 0%, 0%, 0.1);
+        }
+    }
+
+    .button-secondary {
+        @apply opacity-60 bg-color-underground;
+
+        &:hover,
+        &:focus,
+        &:active {
+            @apply opacity-80;
+        }
+    }
+
+    .button-ghost {
+        &:hover,
+        &:focus,
+        &:active {
+            @apply text-color-primary bg-color-overground;
+        }
+    }
+
+    .button-outline {
+        @apply border border-color-secondary;
+    }
+
+    /* Sizes */
+
+    .button-md {
+        @apply text-sm px-4 py-2;
+    }
+
+    .button-sm {
+        @apply text-sm px-3 py-1;
+    }
+
+    /* Misc */
+
+    .button-icon {
+        @apply px-2;
+    }
+}
