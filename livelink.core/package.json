@@ -6,6 +6,7 @@
   "module": "./dist/index.mjs",
   "typings": "./dist/sources/index.d.ts",
   "scripts": {
+    "prebuild": "node ci/auto-generate.js ../external/ftl-schemas/ ci/ ./_prebuild/types/",
     "build": "node esbuild.js && tsc",
     "dev": "node esbuild.js dev & tsc -w",
     "clean": "rimraf dist"
@@ -23,6 +24,7 @@
   "devDependencies": {
     "esbuild": "^0.20.1",
     "rimraf": "^5.0.7",
-    "typescript": "^5.4.5"
+    "typescript": "^5.4.5",
+    "xxhashjs": "^0.2.2"
   }
 }
