@@ -1,4 +1,4 @@
-import { type Vec2 } from "@livelink.core";
+import { Vec2i, type Vec2 } from "@livelink.core";
 import { Viewport } from "./Viewport";
 
 /**
@@ -97,6 +97,10 @@ export class CanvasAutoResizer extends EventTarget {
         this._viewport.canvas.width = this._dimensions[0] * devicePixelRatio;
         this._viewport.canvas.height = this._dimensions[1] * devicePixelRatio;
 
+        if (!this._haveDimensionsChanged(old_size, this._viewport.dimensions)) {
+            return;
+        }
+
         this._notifyViewport();
 
         // Resolve the init promise.
@@ -107,5 +111,12 @@ export class CanvasAutoResizer extends EventTarget {
                 detail: { old_size, new_size: this._viewport.dimensions },
             }),
         );
+    }
+
+    /**
+     *
+     */
+    private _haveDimensionsChanged(old_size: Vec2i, new_size: Vec2i): boolean {
+        return old_size.some((element, i) => element !== new_size[i]);
     }
 }
