@@ -26,11 +26,7 @@ export default function SimpleCanvas() {
         <div className="relative h-full max-h-screen p-3">
             <Canvas canvasRef={canvasRef} />
             <div
-                className={`
-                    absolute left-1/2 -translate-x-1/2 -translate-y-1/2
-                    flex items-center gap-2 pb-4
-                    transition-all ${instance ? "bottom-0" : "bottom-1/2"}
-                `}
+                className={`absolute ${instance ? "top-6 left-6" : "left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2"}`}
             >
                 <button className="button button-primary" onClick={toggleConnection}>
                     {instance ? "Disconnect" : "Connect"}

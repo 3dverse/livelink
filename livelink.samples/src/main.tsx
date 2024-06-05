@@ -1,6 +1,8 @@
 import ReactDOM from "react-dom/client";
 import App from "./App.tsx";
 import ErrorPage from "./ErrorPage.tsx";
+import "@fontsource-variable/manrope";
+import "@fontsource-variable/inter";
 import "./styles/index.css";
 import { RouterProvider, createBrowserRouter } from "react-router-dom";
 import { SAMPLES } from "./samples";
