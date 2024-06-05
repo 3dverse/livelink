@@ -71,8 +71,11 @@ export default function Trigger() {
 
     return (
         <>
-            <div className="relative w-full h-full flex basis-full grow p-4">
-                <div className="bottom-6 right-8 absolute w-80 flex flex-col basis-full flex-grow">
+            <div className="relative w-full h-full">
+                <div className="w-full h-full p-4">
+                    <Canvas canvasRef={canvasRef} />
+                </div>
+                <div className="absolute bottom-8 right-8 w-80 flex flex-col basis-full flex-grow">
                     {messages.map((msg, i) => (
                         <div key={i} className={`chat chat-${i % 2 ? "start" : "end"}`}>
                             <div className="chat-image avatar">
@@ -87,20 +90,19 @@ export default function Trigger() {
                         </div>
                     ))}
                 </div>
-                <Canvas canvasRef={canvasRef} />
-            </div>
-            <div className="flex items-center gap-2 pb-4">
-                <Button shape="circle" variant="outline" onClick={toggleConnection}>
-                    {instance ? "Disconnect" : "Connect"}
-                </Button>
+                <div className="absolute flex items-center gap-2 pb-4 p-4 w-full bottom-0 bg-color-ground bg-opacity-80">
+                    <Button shape="circle" variant="outline" onClick={toggleConnection}>
+                        {instance ? "Disconnect" : "Connect"}
+                    </Button>
 
-                <Range
-                    min={-1}
-                    max={1}
-                    step={0.2}
-                    defaultValue={0}
-                    onChange={e => animationSeq?.play({ playback_speed: Number(e.target.value) })}
-                />
+                    <Range
+                        min={-1}
+                        max={1}
+                        step={0.2}
+                        defaultValue={0}
+                        onChange={e => animationSeq?.play({ playback_speed: Number(e.target.value) })}
+                    />
+                </div>
             </div>
         </>
     );

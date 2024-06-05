@@ -49,8 +49,10 @@ export default function SmartObject() {
 
     return (
         <>
-            <div className="w-full h-full flex basis-full grow p-4">
-                <Canvas canvasRef={canvasRef} />
+            <div className="w-full h-full relative">
+                <div className="w-full h-full p-4">
+                    <Canvas canvasRef={canvasRef} />
+                </div>
 
                 {light && (
                     <div className="fixed top-6 right-6">
@@ -70,11 +72,11 @@ export default function SmartObject() {
                         />
                     </div>
                 )}
-            </div>
-            <div className="flex items-center gap-2 pb-4">
-                <Button shape="circle" variant="outline" onClick={toggleConnection}>
-                    {instance ? "Disconnect" : "Connect"}
-                </Button>
+                <div className="flex items-center justify-center gap-2 pb-4 absolute bottom-4 w-full">
+                    <Button shape="circle" variant="outline" onClick={toggleConnection}>
+                        {instance ? "Disconnect" : "Connect"}
+                    </Button>
+                </div>
             </div>
         </>
     );

@@ -30,26 +30,28 @@ export default function SceneSelector() {
 
     return (
         <>
-            <div className="w-full h-full flex basis-full grow p-4">
-                <Canvas canvasRef={canvasRef} />
-            </div>
-            <div className="flex w-full component-preview p-4 items-center justify-center gap-2 font-sans">
-                <Select
-                    className="w-full max-w-xs"
-                    value={scene_id}
-                    onChange={event => {
-                        setSceneId(event.target.value);
-                    }}
-                >
-                    <option value={"default"} disabled>
-                        Pick a scene
-                    </option>
-                    {scenes.map((item, i) => (
-                        <option key={i} value={item.scene_id}>
-                            {item.name}
+            <div className="w-full h-full relative">
+                <div className="w-full h-full p-4">
+                    <Canvas canvasRef={canvasRef} />
+                </div>
+                <div className="absolute bottom-4 left-0 flex w-full component-preview p-4 items-center justify-center gap-2 font-sans">
+                    <Select
+                        className="w-full max-w-xs"
+                        value={scene_id}
+                        onChange={event => {
+                            setSceneId(event.target.value);
+                        }}
+                    >
+                        <option value={"default"} disabled>
+                            Pick a scene
                         </option>
-                    ))}
-                </Select>
+                        {scenes.map((item, i) => (
+                            <option key={i} value={item.scene_id}>
+                                {item.name}
+                            </option>
+                        ))}
+                    </Select>
+                </div>
             </div>
         </>
     );
