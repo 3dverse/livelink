@@ -1,6 +1,5 @@
 import { LivelinkCore } from "./LivelinkCore";
-import { EditorEntity } from "../_prebuild/types";
-import { EntityBase } from "./EntityBase";
+import { EditorEntity, EntityBase } from "../_prebuild/types";
 import { ComponentHash, type ComponentType } from "../_prebuild/types/components";
 
 /**

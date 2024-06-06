@@ -21,3 +21,4 @@ export * from "./UpdateAnimationSequenceStateMessage";
 
 export * from "./ConnectConfirmation";
 export * from "./EditorEntity";
+export * from "./EntityBase";
