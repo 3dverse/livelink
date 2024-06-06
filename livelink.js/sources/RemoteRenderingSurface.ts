@@ -1,11 +1,11 @@
-import type { Vec2, Vec2ui16, ViewportConfig } from "livelink.core";
+import type { Vec2i, Vec2ui16, ViewportConfig } from "livelink.core";
 import { Livelink } from "./Livelink";
 import { DecodedFrameConsumer } from "./decoders/DecodedFrameConsumer";
 import { Viewport } from "./Viewport";
 
 type ViewportRect = {
     viewport: Viewport;
-    offset: Vec2;
+    offset: Vec2i;
 };
 
 /**
@@ -126,11 +126,27 @@ export class RemoteRenderingSurface implements DecodedFrameConsumer {
      *
      */
     private _computeSurfaceSize(): boolean {
+        const { offset, width, height } = this._computeBoundingRect();
+        this._computeViewportsOffsets(offset);
+
         const next_multiple_of_8 = (n: number) =>
             Math.floor(n) + (Math.floor(n) % 8 === 0 ? 0 : 8 - (Math.floor(n) % 8));
+        const new_dimensions: Vec2i = [next_multiple_of_8(width), next_multiple_of_8(height)];
 
-        let min = [Number.MAX_VALUE, Number.MAX_VALUE];
-        let max = [0, 0];
+        const need_to_resize = new_dimensions[0] != this._dimensions[0] || new_dimensions[1] != this.dimensions[1];
+
+        this._dimensions = new_dimensions;
+
+        return need_to_resize;
+    }
+
+    /**
+     *
+     */
+    private _computeBoundingRect(): { offset: Vec2i; width: number; height: number } {
+        let min: Vec2i = [Number.MAX_VALUE, Number.MAX_VALUE];
+        let max: Vec2i = [0, 0];
+
         for (const { viewport } of this._viewports) {
             const clientRect = viewport.canvas.getClientRects()[0];
             min[0] = Math.min(min[0], clientRect.left);
@@ -139,21 +155,20 @@ export class RemoteRenderingSurface implements DecodedFrameConsumer {
             max[1] = Math.max(max[1], clientRect.bottom);
         }
 
-        for (const { viewport, offset } of this._viewports) {
-            const clientRect = viewport.canvas.getClientRects()[0];
-            offset[0] = clientRect.left - min[0];
-            offset[1] = clientRect.top - min[1];
-        }
-
         const width = max[0] - min[0];
         const height = max[1] - min[1];
 
-        const new_dimensions: Vec2 = [next_multiple_of_8(width), next_multiple_of_8(height)];
+        return { offset: min, width, height };
+    }
 
-        const need_to_resize = new_dimensions[0] != this._dimensions[0] || new_dimensions[1] != this.dimensions[1];
-
-        this._dimensions = new_dimensions;
-
-        return need_to_resize;
+    /**
+     *
+     */
+    private _computeViewportsOffsets(client_rect_offset: Vec2i) {
+        for (const { viewport, offset } of this._viewports) {
+            const clientRect = viewport.canvas.getClientRects()[0];
+            offset[0] = clientRect.left - client_rect_offset[0];
+            offset[1] = clientRect.top - client_rect_offset[1];
+        }
     }
 }

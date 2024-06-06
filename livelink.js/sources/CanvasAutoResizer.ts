@@ -97,6 +97,10 @@ export class CanvasAutoResizer extends EventTarget {
         this._viewport.canvas.width = this._dimensions[0] * devicePixelRatio;
         this._viewport.canvas.height = this._dimensions[1] * devicePixelRatio;
 
+        if (this._viewport.canvas.width === 0 || this._viewport.canvas.height === 0) {
+            return;
+        }
+
         if (!this._haveDimensionsChanged(old_size, this._viewport.dimensions)) {
             return;
         }
