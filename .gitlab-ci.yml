@@ -42,10 +42,13 @@ pages:
   artifacts:
     paths:
       - public/
+  needs:
+    - job: js:livelink:build
+      artifacts: true
   before_script:
     - mkdir public
   script:
     - cp -r livelink.samples/dist/* public/
   rules:
-    - when: always
+    - if: $CI_COMMIT_REF_NAME == $CI_DEFAULT_BRANCH
 #######################################################################################################################
