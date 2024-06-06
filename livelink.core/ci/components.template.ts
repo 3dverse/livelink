@@ -34,6 +34,9 @@ export type Euid = {
 
 {{componentTypes}}
 
+/**
+ *
+ */
 export enum ComponentHash {
     {{componentHashes}}
 };

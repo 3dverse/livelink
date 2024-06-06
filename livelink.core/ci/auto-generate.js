@@ -4,7 +4,7 @@ const path = require("path");
 const XXH = require("xxhashjs");
 
 //------------------------------------------------------------------------------
-const ftlSchemaFolder = process.argv[2] || "../../external/ftl-schemas";
+const ftlSchemaFolder = process.argv[2] || "../../ftl-schemas";
 const templateFolder = process.argv[3] || ".";
 const outputFolder = process.argv[4] || process.cwd();
 
@@ -97,6 +97,7 @@ function generateComponentsSchemas() {
     const componentFiles = fs.readdirSync(componentFolder);
     const componentClasses = [];
     const componentTypes = [];
+    const componentAttributes = [];
 
     for (const assetFileName of componentFiles) {
         const fileContent = fs.readFileSync(path.join(componentFolder, assetFileName), "utf-8");
@@ -114,11 +115,13 @@ function generateComponentsSchemas() {
 
         componentClasses.push(component.class);
 
+        const titlizedComponentClass = titlelize(component.class);
+
         //----------------------------------------------------------------------
         componentTypes.push(`/**
 * ${component.description}
 */
-export type ${titlelize(component.class)} = Partial<{
+export type ${titlizedComponentClass} = Partial<{
     ${attributes
         .map(
             attribute => `/**
@@ -128,10 +131,15 @@ export type ${titlelize(component.class)} = Partial<{
         )
         .join("\n    ")}
 }>;`);
+
+        componentAttributes.push(`    /**
+     * ${component.description}
+     */
+    ${component.class}?: Components.${titlizedComponentClass};`);
     }
 
     //--------------------------------------------------------------------------
-    applyTemplate("components.template", path.join("components.ts"), {
+    applyTemplate("components.template.ts", path.join("components.ts"), {
         componentTypes: componentTypes.join("\n\n"),
         componentHashes: componentClasses
             .map(className => `${className} = ${parseInt(XXH.h32().update(className).digest().toString())},`)
@@ -140,7 +148,12 @@ export type ${titlelize(component.class)} = Partial<{
     });
 
     //--------------------------------------------------------------------------
-    const assetTypeFile = assetTypes.map(assetType => `export type ${assetType} = {};`).join("\n");
+    applyTemplate("EntityBase.template.ts", path.join("EntityBase.ts"), {
+        componentAttributes: componentAttributes.join("\n\n"),
+    });
+
+    //--------------------------------------------------------------------------
+    const assetTypeFile = assetTypes.map(assetType => `export type ${assetType} = {};`).join("\n") + "\n";
     fs.writeFileSync(path.join(outputFolder, "assets.ts"), assetTypeFile);
 }
 
