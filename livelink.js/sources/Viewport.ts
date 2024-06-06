@@ -43,10 +43,10 @@ export class Viewport extends EventTarget {
      * Dimensions of the HTML canvas in pixels.
      */
     get width(): number {
-        return this._canvas.width;
+        return this._canvas.clientWidth;
     }
     get height(): number {
-        return this._canvas.height;
+        return this._canvas.clientHeight;
     }
     get dimensions(): Vec2 {
         return [this.width, this.height];
