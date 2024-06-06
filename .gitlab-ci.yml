@@ -50,7 +50,7 @@ js:livelink.core:deploy:
       set -e
       gcloud auth activate-service-account --key-file="${GCP_GCS_APPLICATION_CREDENTIALS}" --project="${GOOGLE_PROJECT_ID}"
 
-      SOURCE_PATH="livelink.core/dist/*.mjs"
+      SOURCE_PATH="livelink.core/dist/*.mjs*"
       TARGET_PATH="gs://$BUCKET_NAME/$BUCKET_FOLDER_NAME"
 
       echo "Uploading \"${SOURCE_PATH}\" to \"${TARGET_PATH}\""

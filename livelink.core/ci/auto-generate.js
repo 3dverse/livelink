@@ -95,7 +95,7 @@ function generateComponentsSchemas() {
 
     //--------------------------------------------------------------------------
     const componentFiles = fs.readdirSync(componentFolder);
-    const componentClasses = [];
+    const componentHashes = [];
     const componentTypes = [];
     const componentAttributes = [];
 
@@ -111,11 +111,8 @@ function generateComponentsSchemas() {
             continue;
         }
 
-        const attributes = component.attributes.filter(attribute => !attribute.mods.includes("transient"));
-
-        componentClasses.push(component.class);
-
         const titlizedComponentClass = titlelize(component.class);
+        const attributes = component.attributes.filter(attribute => !attribute.mods.includes("transient"));
 
         //----------------------------------------------------------------------
         componentTypes.push(`/**
@@ -132,6 +129,10 @@ export type ${titlizedComponentClass} = Partial<{
         .join("\n    ")}
 }>;`);
 
+        //----------------------------------------------------------------------
+        componentHashes.push(`${component.class} = ${parseInt(XXH.h32().update(component.class).digest().toString())}`);
+
+        //----------------------------------------------------------------------
         componentAttributes.push(`    /**
      * ${component.description}
      */
@@ -141,9 +142,7 @@ export type ${titlizedComponentClass} = Partial<{
     //--------------------------------------------------------------------------
     applyTemplate("components.template.ts", path.join("components.ts"), {
         componentTypes: componentTypes.join("\n\n"),
-        componentHashes: componentClasses
-            .map(className => `${className} = ${parseInt(XXH.h32().update(className).digest().toString())},`)
-            .join("\n    "),
+        componentHashes: componentHashes.join(",\n    "),
         assetTypes: assetTypes.join(", "),
     });
 
