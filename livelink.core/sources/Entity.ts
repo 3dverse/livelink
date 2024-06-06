@@ -1,29 +1,7 @@
 import { LivelinkCore } from "./LivelinkCore";
 import { EditorEntity } from "../_prebuild/types";
-import {
-    ComponentHash,
-    type AABB,
-    type AnimationController,
-    type BoxGeometry,
-    type Camera,
-    type CapsuleGeometry,
-    type ComponentType,
-    type DebugName,
-    type Euid,
-    type Lineage,
-    type MaterialRef,
-    type MeshRef,
-    type OrthographicLens,
-    type PerspectiveLens,
-    type PointLight,
-    type RigidBody,
-    type SceneRef,
-    type ScriptMap,
-    type SkeletonRef,
-    type SphereGeometry,
-    type Transform,
-} from "../_prebuild/types/components";
-import { RTID, UUID } from "./types";
+import { EntityBase } from "./EntityBase";
+import { ComponentHash, type ComponentType } from "../_prebuild/types/components";
 
 /**
  *
@@ -33,27 +11,7 @@ type EntityAutoUpdateState = "on" | "off";
 /**
  *
  */
-export class Entity extends EventTarget {
-    private euid: Euid | null = null;
-    debug_name?: DebugName;
-    lineage?: Lineage;
-    scene_ref?: SceneRef;
-    mesh_ref?: MeshRef;
-    material_ref?: MaterialRef;
-    skeleton_ref?: SkeletonRef;
-    animation_controller?: AnimationController;
-    script_map?: ScriptMap;
-    local_aabb?: AABB;
-    box_geometry?: BoxGeometry;
-    sphere_geometry?: SphereGeometry;
-    capsule_geometry?: CapsuleGeometry;
-    rigid_body?: RigidBody;
-    perspective_lens?: PerspectiveLens;
-    orthographic_lens?: OrthographicLens;
-    camera?: Camera;
-    local_transform?: Transform;
-    point_light: PointLight;
-
+export class Entity extends EntityBase {
     /**
      *
      */
@@ -68,25 +26,6 @@ export class Entity extends EventTarget {
      *
      */
     private _auto_broadcast: EntityAutoUpdateState = "on";
-
-    /**
-     *
-     */
-    get rtid(): RTID | null {
-        return this.euid?.rtid ?? null;
-    }
-    /**
-     *
-     */
-    get id(): UUID | null {
-        return this.euid?.value ?? null;
-    }
-    /**
-     *
-     */
-    get name(): string {
-        return this.debug_name?.value ?? "<unnamed>";
-    }
 
     /**
      *
@@ -132,13 +71,6 @@ export class Entity extends EventTarget {
         }
 
         return this;
-    }
-
-    /**
-     *
-     */
-    isInstantiated(): boolean {
-        return this.euid !== null;
     }
 
     /**
@@ -228,37 +160,6 @@ export class Entity extends EventTarget {
         }
 
         return false;
-    }
-
-    /**
-     *
-     */
-    private _parse({ editor_entity }: { editor_entity: EditorEntity }) {
-        for (const component_name in editor_entity.components) {
-            this[component_name] = editor_entity.components[component_name];
-        }
-
-        // Remove any undefined component
-        for (const k of Object.keys(this)) {
-            if (this[k] === undefined) {
-                delete this[k];
-            }
-        }
-
-        const components = editor_entity.components as {
-            euid: Euid;
-            debug_name: DebugName;
-            local_transform: Transform;
-        };
-
-        this.euid = {
-            value: components.euid.value,
-            rtid: BigInt(editor_entity.rtid),
-        };
-
-        this.local_transform = components.local_transform;
-
-        this.debug_name = components.debug_name;
     }
 
     /**
