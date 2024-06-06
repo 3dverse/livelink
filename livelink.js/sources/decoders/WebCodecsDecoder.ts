@@ -9,6 +9,14 @@ export class WebCodecsDecoder implements EncodedFrameConsumer {
     /**
      *
      */
+    static _codecs = new Map<CodecType, string[]>([
+        [CodecType.h265, ["hvc1.1.6.L123.00"]],
+        [CodecType.h264, ["avc1.42001E", "avc1.42002A", "avc1.42E01E"]],
+    ]);
+
+    /**
+     *
+     */
     private _decoder: VideoDecoder | null = null;
 
     /**
@@ -31,7 +39,7 @@ export class WebCodecsDecoder implements EncodedFrameConsumer {
         codec: CodecType;
         frame_dimensions: Vec2i;
     }): Promise<EncodedFrameConsumer> {
-        const supportedConfig = await this._findSupportedConfig({
+        const supportedConfig = await WebCodecsDecoder._findSupportedConfig({
             codec,
             frame_dimensions,
         });
@@ -54,21 +62,42 @@ export class WebCodecsDecoder implements EncodedFrameConsumer {
     /**
      *
      */
-    private async _findSupportedConfig({
+    static async findAppropriatedCodec({ frame_dimensions }: { frame_dimensions: Vec2i }): Promise<CodecType | null> {
+        for (const codec of this._codecs.keys()) {
+            const supportedConfig = await WebCodecsDecoder._findSupportedConfig({
+                codec,
+                frame_dimensions,
+            });
+
+            if (supportedConfig) {
+                return codec;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     *
+     */
+    private static async _findSupportedConfig({
         codec,
         frame_dimensions,
     }: {
         codec: CodecType;
         frame_dimensions: Vec2i;
     }): Promise<VideoDecoderSupport | null> {
-        const h264_codecs = ["avc1.42002A"];
-        const h265_codecs = ["hvc1.1.6.L123.00"];
-        const codecs = codec === CodecType.h264 ? h264_codecs : h265_codecs;
+        if (!WebCodecsDecoder._codecs.has(codec)) {
+            return null;
+        }
+
+        const codecs = WebCodecsDecoder._codecs.get(codec)!;
         const config: VideoDecoderConfig = {
             codec: "",
             codedWidth: frame_dimensions[0],
             codedHeight: frame_dimensions[1],
-            hardwareAcceleration: "prefer-hardware",
+            // Forcing software decoding for H264, as hardware decoding with H264 has delay issues.
+            hardwareAcceleration: CodecType.h264 ? "prefer-software" : "prefer-hardware",
             optimizeForLatency: true,
         };
 

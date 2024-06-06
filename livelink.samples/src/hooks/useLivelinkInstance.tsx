@@ -1,7 +1,16 @@
 //------------------------------------------------------------------------------
 import { useEffect, useState } from "react";
 import { DefaultCamera } from "../components/DefaultCamera";
-import { Camera, Livelink, SessionInfo, UUID, Viewport, WebCodecsDecoder } from "livelink.js";
+import {
+    Camera,
+    CodecType,
+    Livelink,
+    SessionInfo,
+    SoftwareDecoder,
+    UUID,
+    Viewport,
+    WebCodecsDecoder,
+} from "livelink.js";
 
 //------------------------------------------------------------------------------
 export function useLivelinkInstance({
@@ -69,10 +78,14 @@ async function configureClient(
 
     instance.remote_rendering_surface.addViewports({ viewports });
 
+    const webcodec = await WebCodecsDecoder.findAppropriatedCodec({
+        frame_dimensions: instance.remote_rendering_surface.dimensions,
+    });
+
     const client_config = {
         remote_canvas_size: instance.remote_rendering_surface.dimensions,
         encoder_config: {
-            codec: 2,
+            codec: webcodec || CodecType.h264,
             profile: 1,
             frame_rate: 60,
             lossy: true,
@@ -93,7 +106,9 @@ async function configureClient(
 
     // Step 2: decode received frames and draw them on the canvas.
     await instance.installFrameConsumer({
-        frame_consumer: new WebCodecsDecoder(instance.remote_rendering_surface),
+        frame_consumer: webcodec
+            ? new WebCodecsDecoder(instance.remote_rendering_surface)
+            : new SoftwareDecoder(instance.remote_rendering_surface),
     });
 
     // Step 3: inform the renderer of which camera to use with which viewport.

@@ -995,5 +995,5 @@ export enum ComponentHash {
     vehicle_controller = 1287796174,
     volume_filter = 2625356468,
     volume_material_ref = 3229245461,
-    volume_ref = 2808449574,
+    volume_ref = 2808449574
 };
