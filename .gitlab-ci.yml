@@ -54,7 +54,7 @@ js:livelink.core:deploy:
       TARGET_PATH="gs://$BUCKET_NAME/$BUCKET_FOLDER_NAME"
 
       echo "Uploading \"${SOURCE_PATH}\" to \"${TARGET_PATH}\""
-      gsutil -m -h "Cache-Control:public, max-age=0" rsync -r $SOURCE_PATH $TARGET_PATH
+      gsutil -m -h "Cache-Control:public, max-age=0" cp $SOURCE_PATH $TARGET_PATH
   rules:
     - if: $CI_COMMIT_REF_NAME == $CI_DEFAULT_BRANCH
       changes:
