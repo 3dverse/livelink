@@ -2,7 +2,7 @@ import React from "react";
 
 export default function Canvas({
     canvasRef,
-    className = "rounded-md",
+    className = "",
 }: {
     canvasRef: React.RefObject<HTMLCanvasElement>;
     className?: string;

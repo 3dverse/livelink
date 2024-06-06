@@ -12,7 +12,7 @@ const router = createBrowserRouter([
         path: "/",
         element: <App />,
         errorElement: <ErrorPage />,
-        children: SAMPLES.map(sample => ({ path: sample.path, element: sample.element })),
+        children: SAMPLES.flatMap(({ list }) => list).map(sample => ({ path: sample.path, element: sample.element })),
     },
 ]);
 

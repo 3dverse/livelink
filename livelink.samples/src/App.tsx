@@ -37,7 +37,7 @@ function App() {
                         className="relative bg-color-ground w-80 h-full px-5 py-4 shadow-2xl lg:shadow-none z-10"
                         onClick={() => setnavOpen(false)}
                     >
-                        <header className="mt-1 mb-4">
+                        <header className="mt-1 mb-6">
                             <NavLink to="/" className="flex items-center gap-3 pl-3 font-primary text-lg">
                                 <img
                                     src="https://console.3dverse.com/static/logo/3dverse-wordmark.svg"
@@ -46,22 +46,33 @@ function App() {
                                 3dverse Samples
                             </NavLink>
                         </header>
-                        <ul className="h-full text-color-secondary">
-                            {SAMPLES.map((s, i) => (
+                        <ul className="flex flex-col gap-6 h-full text-color-secondary">
+                            {SAMPLES.map((category, i) => (
                                 <li key={i}>
-                                    <NavLink
-                                        to={s.path}
-                                        className="button button-ghost text-sm justify-start rounded-xl"
-                                    >
-                                        {s.title}
-                                    </NavLink>
+                                    <p className="mb-1 pl-4 text-2xs uppercase text-color-tertiary opacity-80 tracking-wider">
+                                        {category.categoryName}
+                                    </p>
+                                    {category.list.map((s, y) => (
+                                        <NavLink
+                                            key={y}
+                                            to={s.path}
+                                            className={({ isActive }) =>
+                                                [
+                                                    "button button-ghost text-sm justify-start rounded-xl",
+                                                    isActive ? "active" : "",
+                                                ].join(" ")
+                                            }
+                                        >
+                                            {s.title}
+                                        </NavLink>
+                                    ))}
                                 </li>
                             ))}
                         </ul>
                     </div>
                 </nav>
             </div>
-            <div className="max-h-screen grow">
+            <div className="grow">
                 {outlet ? <Outlet /> : <Home />}
                 <button
                     className="button button-icon lg:hidden absolute top-4 left-5"

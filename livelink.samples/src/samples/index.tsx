@@ -11,15 +11,35 @@ import SmartObject from "./smart-object/SmartObject";
 import Trigger from "./trigger/Trigger";
 
 export const SAMPLES = [
-    { title: "Simple Canvas", path: "simple-canvas", element: <SimpleCanvas /> },
-    { title: "Double Canvas", path: "double-canvas", element: <DoubleCanvas /> },
-    { title: "Quadruple Canvas", path: "quadruple-canvas", element: <QuadrupleCanvas /> },
-    { title: "Multi-Session", path: "multi-session", element: <MultiSession /> },
-    { title: "Scene Selector", path: "scene-selector", element: <SceneSelector /> },
-    { title: "Smart Object", path: "smart-object", element: <SmartObject /> },
-    { title: "Smart Object Sync", path: "smart-object-sync", element: <SmartObjectSync /> },
-    { title: "Trigger", path: "trigger", element: <Trigger /> },
-    { title: "Controller Effects", path: "controller-effects", element: <ControllerEffects /> },
-    { title: "Collaborators", path: "collaborators", element: <Collaborators /> },
-    { title: "Picture in Picture", path: "picture-in-picture", element: <PictureInPicture /> },
+    {
+        categoryName: "Core",
+        list: [
+            { title: "Simple Canvas", path: "simple-canvas", element: <SimpleCanvas /> },
+            { title: "Double Canvas", path: "double-canvas", element: <DoubleCanvas /> },
+            { title: "Quadruple Canvas", path: "quadruple-canvas", element: <QuadrupleCanvas /> },
+            { title: "Multi-Session", path: "multi-session", element: <MultiSession /> },
+            { title: "Scene Selector", path: "scene-selector", element: <SceneSelector /> },
+        ],
+    },
+    {
+        categoryName: "Smart Object",
+        list: [
+            { title: "Smart Object", path: "smart-object", element: <SmartObject /> },
+            { title: "Smart Object Sync", path: "smart-object-sync", element: <SmartObjectSync /> },
+        ],
+    },
+    {
+        categoryName: "Control",
+        list: [
+            { title: "Trigger", path: "trigger", element: <Trigger /> },
+            { title: "Controller Effects", path: "controller-effects", element: <ControllerEffects /> },
+        ],
+    },
+    {
+        categoryName: "Misc",
+        list: [
+            { title: "Collaborators", path: "collaborators", element: <Collaborators /> },
+            { title: "Picture in Picture", path: "picture-in-picture", element: <PictureInPicture /> },
+        ],
+    },
 ];
