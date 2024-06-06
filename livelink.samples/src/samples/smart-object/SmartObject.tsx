@@ -60,15 +60,15 @@ export default function SmartObject() {
                             type="color"
                             className="p-1 h-10 w-14 block bg-white border border-gray-200 cursor-pointer rounded-lg disabled:opacity-50 disabled:pointer-events-none"
                             id="hs-color-input"
-                            defaultValue={rgbToHex(light.point_light.color)}
+                            defaultValue={rgbToHex(light.point_light!.color!)}
                             title="Choose your color"
-                            onChange={e => (light.point_light.color = hexToRgb(e.target.value.substring(1)))}
+                            onChange={e => (light.point_light!.color = hexToRgb(e.target.value.substring(1)))}
                         />
                         <Range
                             min={0}
                             max={10}
-                            defaultValue={light.point_light.intensity}
-                            onChange={e => (light.point_light.intensity = Number(e.target.value))}
+                            defaultValue={light.point_light!.intensity!}
+                            onChange={e => (light.point_light!.intensity = Number(e.target.value))}
                         />
                     </div>
                 )}
