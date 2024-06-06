@@ -17,7 +17,7 @@ export class DefaultCamera extends Camera {
             dataJSON: { grid: true, skybox: false, gradient: true },
         };
         this.perspective_lens = {
-            aspectRatio: 1,
+            aspectRatio: this.viewport ? this.viewport?.aspect_ratio : 0,
             fovy: 60,
             nearPlane: 0.1,
             farPlane: 10000,
