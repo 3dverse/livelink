@@ -1,0 +1,51 @@
+# SETTINGS ############################################################################################################
+include:
+  - project: 3dverse/platform/ci-utils/gitlab-templates
+    file:
+      - /ci/.bases/_index.yaml
+      - /ci/.bases/regcreds.yaml
+      - /ci/.bases/node/_index.yaml
+
+variables:
+  NODE_VERSION: "18"
+
+# JOBS ################################################################################################################
+# BUILD
+js:livelink:build:
+  extends:
+    - .env-dev
+    - .runner-dev
+  image: node:${NODE_VERSION}
+  before_script:
+    - !reference [.npm-regcreds, before_script]
+    - !reference [.node-cache, before_script]
+  script:
+    - npm run build
+    - cd livelink.samples
+    - npm run build
+  artifacts:
+    expire_in: 1 day
+    paths:
+      - livelink.core/dist/
+      - livelink.js/dist/
+      - livelink.samples/dist/
+  rules:
+    - when: always
+
+# GITLAB PAGE
+pages:
+  stage: deploy
+  extends:
+    - .env-dev
+    - .runner-dev
+  image: node:${NODE_VERSION}
+  artifacts:
+    paths:
+      - public/
+  before_script:
+    - mkdir public
+  script:
+    - cp -r livelink.samples/dist/* public/
+  rules:
+    - when: always
+#######################################################################################################################
