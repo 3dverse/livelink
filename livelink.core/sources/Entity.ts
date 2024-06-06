@@ -231,7 +231,7 @@ class ComponentHandler {
      */
     constructor(
         private readonly _entity: Entity,
-        private readonly _component_name: ComponentType,
+        private readonly _component_type: ComponentType,
     ) {}
 
     /**
@@ -241,7 +241,7 @@ class ComponentHandler {
         //console.log("GET ATTRIBUTE", prop);
         if (prop[0] !== "_") {
             if ((typeof component[prop] === "object" && component[prop] !== null) || Array.isArray(component[prop])) {
-                return new Proxy(component[prop], new ComponentHandler(this._entity, this._component_name));
+                return new Proxy(component[prop], new ComponentHandler(this._entity, this._component_type));
             }
         }
         return Reflect.get(component, prop);
@@ -252,7 +252,7 @@ class ComponentHandler {
      */
     set(component: object, prop: PropertyKey, v: any): boolean {
         //console.log("SET ATTRIBUTE", prop, v);
-        this._entity._tryMarkingAsDirty({ component_type: this._component_name });
+        this._entity._tryMarkingAsDirty({ component_type: this._component_type });
         return Reflect.set(component, prop, v);
     }
 

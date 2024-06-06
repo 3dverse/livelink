@@ -129,19 +129,24 @@ export class RemoteRenderingSurface implements DecodedFrameConsumer {
         const next_multiple_of_8 = (n: number) =>
             Math.floor(n) + (Math.floor(n) % 8 === 0 ? 0 : 8 - (Math.floor(n) % 8));
 
-        let width = 0;
-        let height = 0;
-        let currentOffset = [0, 0];
+        let min = [Number.MAX_VALUE, Number.MAX_VALUE];
+        let max = [0, 0];
+        for (const { viewport } of this._viewports) {
+            const clientRect = viewport.canvas.getClientRects()[0];
+            min[0] = Math.min(min[0], clientRect.left);
+            min[1] = Math.min(min[1], clientRect.top);
+            max[0] = Math.max(max[0], clientRect.right);
+            max[1] = Math.max(max[1], clientRect.bottom);
+        }
 
         for (const { viewport, offset } of this._viewports) {
-            width += viewport.width;
-            height = Math.max(height, viewport.height);
-
-            offset[0] = currentOffset[0];
-            offset[1] = currentOffset[1];
-
-            currentOffset[0] += viewport.width;
+            const clientRect = viewport.canvas.getClientRects()[0];
+            offset[0] = clientRect.left - min[0];
+            offset[1] = clientRect.top - min[1];
         }
+
+        const width = max[0] - min[0];
+        const height = max[1] - min[1];
 
         const new_dimensions: Vec2 = [next_multiple_of_8(width), next_multiple_of_8(height)];
 
