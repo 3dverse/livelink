@@ -106,19 +106,11 @@ export default function QuadrupleCanvas() {
     }, []);
 
     return (
-        <div className="w-full h-full grid grid-cols-2 gap-4 grid-rows-2 p-4">
-            <div className="flex basis-full">
-                <Canvas canvasRef={canvasRef1} />
-            </div>
-            <div className="flex basis-full">
-                <Canvas canvasRef={canvasRef2} />
-            </div>
-            <div className="flex basis-full">
-                <Canvas canvasRef={canvasRef3} />
-            </div>
-            <div className="flex basis-full">
-                <Canvas canvasRef={canvasRef4} />
-            </div>
+        <div className="w-full h-full grid grid-cols-2 gap-4 grid-rows-2 p-3">
+            <Canvas canvasRef={canvasRef1} />
+            <Canvas canvasRef={canvasRef2} />
+            <Canvas canvasRef={canvasRef3} />
+            <Canvas canvasRef={canvasRef4} />
         </div>
     );
 }

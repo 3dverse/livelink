@@ -40,6 +40,9 @@
     }
 
     .button-ghost {
+        @apply text-color-secondary;
+
+        &.active,
         &:hover,
         &:focus,
         &:active {

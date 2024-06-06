@@ -23,7 +23,7 @@ export default function SimpleCanvas() {
     };
 
     return (
-        <div className="relative h-full max-h-screen p-3">
+        <div className="relative h-full p-3">
             <Canvas canvasRef={canvasRef} />
             <div
                 className={`absolute ${instance ? "top-6 left-6" : "left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2"}`}

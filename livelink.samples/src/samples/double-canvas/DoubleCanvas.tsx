@@ -18,11 +18,11 @@ export default function DoubleCanvas() {
     }, []);
 
     return (
-        <div className="w-full h-full flex basis-full flex-row grow gap-4 p-4">
-            <div className="flex basis-full">
+        <div className="w-full h-full flex gap-4 p-3">
+            <div className="grow">
                 <Canvas canvasRef={canvasRef1} />
             </div>
-            <div className="flex basis-full">
+            <div className="grow">
                 <Canvas canvasRef={canvasRef2} />
             </div>
         </div>

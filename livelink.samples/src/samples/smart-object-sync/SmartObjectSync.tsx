@@ -70,15 +70,17 @@ export default function SmartObjectSync() {
     };
 
     return (
-        <div className="w-full h-full flex flex-col items-center">
-            <div className="flex flex-row flex-grow items-center">
+        <div className="relative h-full">
+            <div className="flex gap-4 p-3 h-full">
                 <CanvasWithControl canvasRef={canvasRef1} light={light1} />
                 <CanvasWithControl canvasRef={canvasRef2} light={light2} />
             </div>
-            <div className="flex items-center gap-2 pb-4">
-                <Button shape="circle" variant="outline" onClick={toggleConnection}>
+            <div
+                className={`absolute ${instance1 ? "top-6 left-6" : "left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2"}`}
+            >
+                <button className="button button-primary" onClick={toggleConnection}>
                     {instance1 ? "Disconnect" : "Connect"}
-                </Button>
+                </button>
             </div>
         </div>
     );
@@ -92,29 +94,27 @@ function CanvasWithControl({
     light: Livelink.Entity | null;
 }) {
     return (
-        <>
-            <div className="relative w-full h-full flex basis-full grow p-4">
-                <Canvas canvasRef={canvasRef} />
+        <div className="relative">
+            <Canvas canvasRef={canvasRef} />
 
-                {light && (
-                    <div className="absolute top-6 right-6">
-                        <Input
-                            type="color"
-                            className="p-1 h-10 w-14 block bg-white border border-gray-200 cursor-pointer rounded-lg disabled:opacity-50 disabled:pointer-events-none"
-                            id="hs-color-input"
-                            defaultValue={rgbToHex(light.point_light!.color!)}
-                            title="Choose your color"
-                            onChange={e => (light!.point_light!.color = hexToRgb(e.target.value.substring(1)))}
-                        />
-                        <Range
-                            min={0}
-                            max={10}
-                            defaultValue={light.point_light!.intensity!}
-                            onChange={e => (light.point_light!.intensity! = Number(e.target.value))}
-                        />
-                    </div>
-                )}
-            </div>
-        </>
+            {light && (
+                <div className="absolute top-6 right-6">
+                    <Input
+                        type="color"
+                        className="p-1 h-10 w-14 block bg-white border border-gray-200 cursor-pointer rounded-lg disabled:opacity-50 disabled:pointer-events-none"
+                        id="hs-color-input"
+                        defaultValue={rgbToHex(light.point_light!.color!)}
+                        title="Choose your color"
+                        onChange={e => (light!.point_light!.color = hexToRgb(e.target.value.substring(1)))}
+                    />
+                    <Range
+                        min={0}
+                        max={10}
+                        defaultValue={light.point_light!.intensity!}
+                        onChange={e => (light.point_light!.intensity! = Number(e.target.value))}
+                    />
+                </div>
+            )}
+        </div>
     );
 }
