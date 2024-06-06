@@ -3,6 +3,10 @@ const pkg = require("./package.json");
 const esbuild = require("esbuild");
 
 //------------------------------------------------------------------------------
+const localLivelinkCore = "http://localhost:3000/index.mjs";
+const productionLivelinkCore = "https://storage.googleapis.com/livelink-prod/core/index.mjs";
+
+//------------------------------------------------------------------------------
 (async () => {
     const ctx = await esbuild.context({
         entryPoints: ["./sources/index.ts"],
@@ -12,7 +16,7 @@ const esbuild = require("esbuild");
         platform: "neutral",
         external: [...Object.keys(pkg.peerDependencies || {})],
         alias: {
-            "@livelink.core": "http://localhost:3000/index.mjs",
+            "@livelink.core": process.env.CI ? productionLivelinkCore : localLivelinkCore,
         },
         sourcemap: true,
         format: "esm",

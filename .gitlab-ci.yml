@@ -14,7 +14,7 @@ variables:
 js:livelink:build:
   extends:
     - .env-dev
-    - .runner-dev
+    - .runner-onprem
   image: node:${NODE_VERSION}
   before_script:
     - !reference [.npm-regcreds, before_script]
@@ -32,13 +32,38 @@ js:livelink:build:
   rules:
     - when: always
 
+# DEPLOY
+js:livelink.core:deploy:
+  stage: deploy
+  extends:
+    - .env-prod
+    - .runner-onprem
+  image: registry.gitlab.com/3dverse/platform/ci-utils/docker-images/gcloud-kubectl-sops:latest
+  needs:
+    - job: js:livelink:build
+      artifacts: true
+  variables:
+    BUCKET_NAME: livelink-prod
+    BUCKET_FOLDER_NAME: core
+  script:
+    - |
+      set -e
+      gcloud auth activate-service-account --key-file="${GCP_GCS_APPLICATION_CREDENTIALS}" --project="${GOOGLE_PROJECT_ID}"
+
+      SOURCE_PATH="livelink.core/dist/"
+      TARGET_PATH="gs://$BUCKET_NAME/$BUCKET_FOLDER_NAME"
+
+      echo "Uploading \"${SOURCE_PATH}\" to \"${TARGET_PATH}\""
+      gsutil -m -h "Cache-Control:public, max-age=0" rsync -r $SOURCE_PATH $TARGET_PATH
+  rules:
+    - if: $CI_COMMIT_REF_NAME == $CI_DEFAULT_BRANCH
+
 # GITLAB PAGE
 pages:
   stage: deploy
   extends:
     - .env-dev
-    - .runner-dev
-  image: node:${NODE_VERSION}
+    - .runner-onprem
   artifacts:
     paths:
       - public/
