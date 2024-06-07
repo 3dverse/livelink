@@ -1,6 +1,6 @@
 import { useRef } from "react";
 import Canvas from "../../components/Canvas";
-import { Button, Input, Range } from "react-daisyui";
+import { Input, Range } from "react-daisyui";
 import { useLivelinkInstance } from "../../hooks/useLivelinkInstance";
 import { Manifest, useSmartObject } from "../../hooks/useSmartObject";
 
@@ -72,10 +72,12 @@ export default function SmartObject() {
                         />
                     </div>
                 )}
-                <div className="flex items-center justify-center gap-2 pb-4 absolute bottom-4 w-full">
-                    <Button shape="circle" variant="outline" onClick={toggleConnection}>
+                <div
+                    className={`absolute ${instance ? "top-6 left-6" : "left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2"}`}
+                >
+                    <button className="button button-primary" onClick={toggleConnection}>
                         {instance ? "Disconnect" : "Connect"}
-                    </Button>
+                    </button>
                 </div>
             </div>
         </>

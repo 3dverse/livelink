@@ -31,12 +31,12 @@ export default function SceneSelector() {
     return (
         <>
             <div className="w-full h-full relative">
-                <div className="w-full h-full p-4">
+                <div className="w-full h-full p-3">
                     <Canvas canvasRef={canvasRef} />
                 </div>
-                <div className="absolute bottom-4 left-0 flex w-full component-preview p-4 items-center justify-center gap-2 font-sans">
+                <div className="absolute bottom-8 left-1/2 -translate-x-1/2">
                     <Select
-                        className="w-full max-w-xs"
+                        className="w-full min-w-[20rem] p-4 rounded-lg cursor-pointer"
                         value={scene_id}
                         onChange={event => {
                             setSceneId(event.target.value);

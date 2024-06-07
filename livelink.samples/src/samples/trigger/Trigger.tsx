@@ -1,7 +1,7 @@
 //------------------------------------------------------------------------------
 import { useCallback, useEffect, useRef, useState } from "react";
 import Canvas from "../../components/Canvas";
-import { Button, Range } from "react-daisyui";
+import { Range } from "react-daisyui";
 import { useLivelinkInstance } from "../../hooks/useLivelinkInstance";
 import { Manifest, useSmartObject } from "../../hooks/useSmartObject";
 import { AnimationSequence } from "livelink.js";
@@ -91,9 +91,9 @@ export default function Trigger() {
                     ))}
                 </div>
                 <div className="absolute flex items-center gap-2 pb-4 p-4 w-full bottom-0 bg-color-ground bg-opacity-80">
-                    <Button shape="circle" variant="outline" onClick={toggleConnection}>
+                    <button className="button button-primary" onClick={toggleConnection}>
                         {instance ? "Disconnect" : "Connect"}
-                    </Button>
+                    </button>
 
                     <Range
                         min={-1}

@@ -1,7 +1,6 @@
 //------------------------------------------------------------------------------
 import { useEffect, useRef } from "react";
 import Canvas from "../../components/Canvas";
-import { Button } from "react-daisyui";
 import { useLivelinkInstance } from "../../hooks/useLivelinkInstance";
 import { DefaultCamera } from "../../components/DefaultCamera";
 import CameraControls from "camera-controls";
@@ -175,28 +174,34 @@ export default function ControllerEffects() {
     const cameraShake3 = cameraControls.current && new CameraShake(cameraControls.current, 5000, 2, 0.5);
 
     return (
-        <>
-            <div className="w-full h-full flex basis-full grow p-4 ">
-                <div className="relative flex basis-full">
-                    <Canvas canvasRef={canvasRef1} />
-                    <div className="flex flex-col absolute right-2 top-2 gap-2">
-                        <div className="flex gap-2">
-                            <Button onClick={() => cameraShake1?.shake()}>Shake 1</Button>
-                            <Button onClick={() => cameraShake2?.shake()}>Shake 2</Button>
-                            <Button onClick={() => cameraShake3?.shake()}>Shake 3</Button>
-                        </div>
-                        <div>
-                            <Button onClick={() => cameraControls.current?.lockPointer()}>Lock Pointer</Button>
-                        </div>
+        <div className="w-full h-full flex basis-full grow p-4 ">
+            <div className="relative flex basis-full">
+                <Canvas canvasRef={canvasRef1} />
+                <div className="absolute left-1/2 bottom-8 -translate-x-1/2 flex flex-col items-center gap-2">
+                    <div className="flex gap-2 w-max">
+                        <button className="button button-primary" onClick={() => cameraShake1?.shake()}>
+                            Shake 1
+                        </button>
+                        <button className="button button-primary" onClick={() => cameraShake2?.shake()}>
+                            Shake 2
+                        </button>
+                        <button className="button button-primary" onClick={() => cameraShake3?.shake()}>
+                            Shake 3
+                        </button>
                     </div>
-                </div>
-                <div className="relative flex basis-full">
-                    <Canvas canvasRef={canvasRef2} />
-                    <div className="absolute right-2 top-2">
-                        <p className="white">No controls</p>
+                    <div>
+                        <button className="button button-primary" onClick={() => cameraControls.current?.lockPointer()}>
+                            Lock Pointer
+                        </button>
                     </div>
                 </div>
             </div>
-        </>
+            <div className="relative flex basis-full">
+                <Canvas canvasRef={canvasRef2} />
+                <div className="absolute left-1/2 bottom-16 -translate-x-1/2">
+                    <p className="text-color-tertiary">No controls</p>
+                </div>
+            </div>
+        </div>
     );
 }

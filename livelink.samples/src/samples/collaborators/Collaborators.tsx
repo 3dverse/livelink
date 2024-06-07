@@ -44,16 +44,14 @@ export default function Collaborators() {
                     {instance ? "Disconnect" : "Connect"}
                 </button>
             </div>
-            <div className="absolute right-6 top-6">
-                <div className="avatar-group -space-x-6 rtl:space-x-reverse">
+            <div className="absolute right-8 top-6">
+                <div className="avatar-group -space-x-6 rtl:space-x-reverse ">
                     {clients.map(client_id => (
-                        <div key={client_id} className="avatar">
-                            <div className="w-12">
-                                <img
-                                    title={client_id}
-                                    src="https://img.daisyui.com/images/stock/photo-1534528741775-53994a69daeb.jpg"
-                                />
-                            </div>
+                        <div key={client_id} className="avatar w-10 rounded-full overflow-clip">
+                            <img
+                                title={client_id}
+                                src="https://img.daisyui.com/images/stock/photo-1534528741775-53994a69daeb.jpg"
+                            />
                         </div>
                     ))}
                 </div>
