@@ -8,7 +8,9 @@
     "sourceMap": true,
     "declaration": true,
     "declarationMap": true,
-    "emitDeclarationOnly": true
+    "emitDeclarationOnly": true,
+    "skipLibCheck": true,
+    "types": []
   },
 
   "exclude": ["./dist/**/*"]

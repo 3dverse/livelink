@@ -9,7 +9,6 @@
     "dist"
   ],
   "scripts": {
-    "preinstall": "npm link ../livelink.core",
     "build": "node esbuild.js && tsc",
     "dev": "node esbuild.js dev & tsc -w",
     "test": "echo \"Error: no test specified\" && exit 1",

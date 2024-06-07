@@ -7,7 +7,6 @@
     "dist"
   ],
   "scripts": {
-    "preinstall": "npm link ../livelink.js",
     "dev": "vite",
     "build": "tsc && vite build",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
@@ -16,6 +15,7 @@
   "dependencies": {
     "@fontsource-variable/manrope": "^5.0.20",
     "camera-controls": "^2.8.3",
+    "livelink.js": "file:../livelink.js",
     "react": "^18.2.0",
     "react-daisyui": "^5.0.0",
     "react-dom": "^18.2.0",
