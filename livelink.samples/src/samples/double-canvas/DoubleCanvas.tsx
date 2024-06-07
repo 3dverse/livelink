@@ -16,10 +16,10 @@ export default function DoubleCanvas() {
 
     return (
         <div className="w-full h-full flex gap-4 p-3">
-            <div className="grow">
+            <div className="flex basis-full">
                 <Canvas canvasRef={canvasRef1} />
             </div>
-            <div className="grow">
+            <div className="flex basis-full">
                 <Canvas canvasRef={canvasRef2} />
             </div>
         </div>

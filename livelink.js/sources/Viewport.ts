@@ -107,16 +107,10 @@ export class Viewport extends EventTarget {
                 this._context = new ContextWebGL(this._canvas, context_type);
                 break;
         }
-        this._auto_resizer = new CanvasAutoResizer(this);
-    }
 
-    /**
-     *
-     */
-    async init(): Promise<Viewport> {
-        await this._auto_resizer.waitForFirstResize();
-        this._context.refreshSize();
-        return this;
+        this.canvas.width = this.canvas.clientWidth;
+        this.canvas.height = this.canvas.clientHeight;
+        this._auto_resizer = new CanvasAutoResizer(this);
     }
 
     /**
@@ -124,6 +118,13 @@ export class Viewport extends EventTarget {
      */
     isValid(): boolean {
         return this._camera !== null && this.width > 0 && this.height > 0;
+    }
+
+    /**
+     *
+     */
+    cleanUp() {
+        this._auto_resizer.cleanUp();
     }
 
     /**

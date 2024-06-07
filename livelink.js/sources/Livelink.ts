@@ -129,10 +129,12 @@ export class Livelink extends LivelinkCore {
     /**
      *
      */
-    async close() {
+    async disconnect() {
         if (this._encoded_frame_consumer) {
             this._encoded_frame_consumer.release();
         }
+
+        this._remote_rendering_surface.cleanUp();
 
         await super.disconnect();
     }

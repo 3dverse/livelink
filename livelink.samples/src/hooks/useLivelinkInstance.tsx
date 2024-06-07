@@ -27,9 +27,10 @@ export function useLivelinkInstance({ views }: { views: Array<View> }): {
 } {
     const [instance, setInstance] = useState<Livelink | null>(null);
 
+    // Disconnect when unmounted
     useEffect(() => {
         return () => {
-            instance?.close();
+            instance?.disconnect();
         };
     }, [instance]);
 
@@ -66,13 +67,12 @@ async function configureClient(
     camera_constructors: (typeof Camera | UUID)[],
 ) {
     // Step 1: configure the viewports that will receive the video stream.
-    const viewports = await Promise.all(
-        canvas_elements.map(async canvas_element =>
+    const viewports = canvas_elements.map(
+        canvas_element =>
             new Viewport(instance, {
                 canvas_element,
                 context_type: "2d",
-            }).init(),
-        ),
+            }),
     );
     instance.addViewports({ viewports });
 

@@ -112,6 +112,15 @@ export class RemoteRenderingSurface implements DecodedFrameConsumer {
     /**
      *
      */
+    cleanUp() {
+        for (const v of this.#viewports) {
+            v.viewport.cleanUp();
+        }
+    }
+
+    /**
+     *
+     */
     #isValid(): boolean {
         return this.#viewports.every(({ viewport }) => viewport.isValid());
     }

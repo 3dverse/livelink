@@ -14,26 +14,18 @@ export class CanvasAutoResizer extends EventTarget {
      */
     private _observer: ResizeObserver;
     /**
-     * The promise that's getting resolved after the first initial resize event.
-     */
-    private _resized_promise: Promise<void>;
-    /**
-     * The captured resolve callback of the promise.
-     */
-    private _resized_promise_resolver: (() => void) | null = null;
-    /**
      * Debounce timeout to avoid spamming the resize command.
      */
     private _resize_debounce_timeout: number = 0;
     /**
-     * Initial debounce timeout duration that gets overridden at first resize.
+     * Debounce timeout duration.
      */
-    private _resize_debounce_timeout_duration_in_ms = 0;
+    private _resize_debounce_timeout_duration_in_ms = 500;
     /**
      * Canvas actual dimensions. As mentionned initialy all canvases have this
      * default size of 300x150 pixels.
      */
-    private _dimensions: Vec2 = [300, 150];
+    private _dimensions: Vec2;
 
     /**
      * Constructs an auto resizer for the provided canvas.
@@ -41,9 +33,7 @@ export class CanvasAutoResizer extends EventTarget {
     constructor(private readonly _viewport: Viewport) {
         super();
 
-        this._resized_promise = new Promise(resolve => {
-            this._resized_promise_resolver = resolve;
-        });
+        this._dimensions = [_viewport.canvas.clientWidth, _viewport.canvas.clientHeight];
 
         // Cannot pass this._onResized directly as it fails to properly capture
         // 'this' once in the callback.
@@ -54,21 +44,11 @@ export class CanvasAutoResizer extends EventTarget {
     }
 
     /**
-     * This promise resolves once the canvas has been properly resized to its
-     * actual initial size as defined by the web page.
+     *
      */
-    async waitForFirstResize(): Promise<void> {
-        await this._resized_promise;
-
-        // Overwrite the notifier now that we have initialized our real size.
-        this._notifyViewport = () => this._viewport.updateCanvasSize();
+    cleanUp() {
+        this._observer.disconnect();
     }
-
-    /**
-     * This function will be overwritten after the first resize event that
-     * initializes the actual size of the canvas.
-     */
-    private _notifyViewport() {}
 
     /**
      * Callback called by the observer when the canvas is resized.
@@ -82,10 +62,6 @@ export class CanvasAutoResizer extends EventTarget {
         }
 
         this._resize_debounce_timeout = setTimeout(() => this._resize(), this._resize_debounce_timeout_duration_in_ms);
-
-        // After the first timeout triggers set the following timeouts to the
-        // actual duration.
-        this._resize_debounce_timeout_duration_in_ms = 500;
     }
 
     /**
@@ -105,10 +81,7 @@ export class CanvasAutoResizer extends EventTarget {
             return;
         }
 
-        this._notifyViewport();
-
-        // Resolve the init promise.
-        this._resized_promise_resolver!();
+        this._viewport.updateCanvasSize();
 
         super.dispatchEvent(
             new CustomEvent("on-resized", {
