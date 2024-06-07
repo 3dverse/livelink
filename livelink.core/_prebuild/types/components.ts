@@ -33,8 +33,8 @@ export type Euid = {
 };
 
 /**
-* Animation controller with reference to an animation graph and an animation set. Enables skeletal animation on its skinned mesh descendents whose skeleton is compatible with the animations in the animation set.
-*/
+ * Animation controller with reference to an animation graph and an animation set. Enables skeletal animation on its skinned mesh descendents whose skeleton is compatible with the animations in the animation set.
+ */
 export type AnimationController = Partial<{
     /**
      * UUID of the referenced animation graph.
@@ -59,8 +59,8 @@ export type AnimationController = Partial<{
 }>;
 
 /**
-* Links entity to bone in skeleton.
-*/
+ * Links entity to bone in skeleton.
+ */
 export type Bone = Partial<{
     /**
      * Index of bone in skeleton.
@@ -69,8 +69,8 @@ export type Bone = Partial<{
 }>;
 
 /**
-* Box geometry.
-*/
+ * Box geometry.
+ */
 export type BoxGeometry = Partial<{
     /**
      * Width, height and depth of the box.
@@ -83,8 +83,8 @@ export type BoxGeometry = Partial<{
 }>;
 
 /**
-* Virtual camera.
-*/
+ * Virtual camera.
+ */
 export type Camera = Partial<{
     /**
      * UUID of the referenced render graph this camera should use.
@@ -101,8 +101,8 @@ export type Camera = Partial<{
 }>;
 
 /**
-* Capsule geometry.
-*/
+ * Capsule geometry.
+ */
 export type CapsuleGeometry = Partial<{
     /**
      * Radius of the spheres at each end of the capsule.
@@ -123,8 +123,8 @@ export type CapsuleGeometry = Partial<{
 }>;
 
 /**
-* Character controller used for movement constrained by collisions without having to deal with a rigid body. A character controller is kinematic, and so is not affected by forces. It uses its own tweaked collision algorithm to give a good feeling while controlling the character.
-*/
+ * Character controller used for movement constrained by collisions without having to deal with a rigid body. A character controller is kinematic, and so is not affected by forces. It uses its own tweaked collision algorithm to give a good feeling while controlling the character.
+ */
 export type CharacterController = Partial<{
     /**
      * Step offset. If the height of a step is greater than stepOffset, the controller cannot climb automatically and gets stuck.
@@ -145,8 +145,8 @@ export type CharacterController = Partial<{
 }>;
 
 /**
-* Reference to a collision geometry.
-*/
+ * Reference to a collision geometry.
+ */
 export type CollisionGeometryRef = Partial<{
     /**
      * UUID of the referenced collision geometry.
@@ -155,8 +155,8 @@ export type CollisionGeometryRef = Partial<{
 }>;
 
 /**
-* A physics constraint that can be configured along 6 degrees of freedom. In its default state it behaves as a fixed constraint - that is, it rigidly fixes the constraint frames of its two entities. However, individual degrees of freedom may be unlocked to permit any combination of rotation around the x-, y- and z- axes, and translation along these axes.
-*/
+ * A physics constraint that can be configured along 6 degrees of freedom. In its default state it behaves as a fixed constraint - that is, it rigidly fixes the constraint frames of its two entities. However, individual degrees of freedom may be unlocked to permit any combination of rotation around the x-, y- and z- axes, and translation along these axes.
+ */
 export type Constraint = Partial<{
     /**
      * Motion along the X axis
@@ -261,8 +261,8 @@ export type Constraint = Partial<{
 }>;
 
 /**
-* Culling geometry. Add this component in addition to another geometry component (e.g. box geometry, sphere geometry, etc.) to enable culling geometry.
-*/
+ * Culling geometry. Add this component in addition to another geometry component (e.g. box geometry, sphere geometry, etc.) to enable culling geometry.
+ */
 export type CullingGeometry = Partial<{
     /**
      * Additive geometry will only display elements (vertices or voxels) inside the geometry. Subtractive will only display elements outside the geometry.
@@ -271,8 +271,8 @@ export type CullingGeometry = Partial<{
 }>;
 
 /**
-* Cylinder geometry.
-*/
+ * Cylinder geometry.
+ */
 export type CylinderGeometry = Partial<{
     /**
      * Radius of the cylinder.
@@ -293,8 +293,8 @@ export type CylinderGeometry = Partial<{
 }>;
 
 /**
-* Name of the entity.
-*/
+ * Name of the entity.
+ */
 export type DebugName = Partial<{
     /**
      * Entity name.
@@ -303,8 +303,8 @@ export type DebugName = Partial<{
 }>;
 
 /**
-* Decal Projector.
-*/
+ * Decal Projector.
+ */
 export type DecalProjector = Partial<{
     /**
      * Z-Index order of the decal projection. The higher index will render on top of the lower ones.
@@ -313,8 +313,8 @@ export type DecalProjector = Partial<{
 }>;
 
 /**
-* The environment of a scene. Used to give a scene a skybox.
-*/
+ * The environment of a scene. Used to give a scene a skybox.
+ */
 export type Environment = Partial<{
     /**
      * UUID of the skybox cubemap.
@@ -331,8 +331,8 @@ export type Environment = Partial<{
 }>;
 
 /**
-* Base component of all the other joint components (revolute_joint, etc.). By itself it will lock the orientations and distances of the constrainer and constrainee.
-*/
+ * Base component of all the other joint components (revolute_joint, etc.). By itself it will lock the orientations and distances of the constrainer and constrainee.
+ */
 export type Joint = Partial<{
     /**
      * An entity that is a rigid body.
@@ -357,8 +357,8 @@ export type Joint = Partial<{
 }>;
 
 /**
-* Lineage of the entity through linkers.
-*/
+ * Lineage of the entity through linkers.
+ */
 export type Lineage = Partial<{
     /**
      * UUID of the parent of this entity (default is root).
@@ -371,8 +371,8 @@ export type Lineage = Partial<{
 }>;
 
 /**
-* Local Axis Aligned Bounding Box of the entity.
-*/
+ * Local Axis Aligned Bounding Box of the entity.
+ */
 export type LocalAabb = Partial<{
     /**
      * Minimum point of the box.
@@ -385,8 +385,8 @@ export type LocalAabb = Partial<{
 }>;
 
 /**
-* Local transform of the entity.
-*/
+ * Local transform of the entity.
+ */
 export type LocalTransform = Partial<{
     /**
      * x, y, z position of the entity.
@@ -411,8 +411,8 @@ export type LocalTransform = Partial<{
 }>;
 
 /**
-* References a shader and specifies input values if needed.
-*/
+ * References a shader and specifies input values if needed.
+ */
 export type Material = Partial<{
     /**
      * UUID of the referenced shader.
@@ -433,8 +433,8 @@ export type Material = Partial<{
 }>;
 
 /**
-* Reference to a material.
-*/
+ * Reference to a material.
+ */
 export type MaterialRef = Partial<{
     /**
      * UUID of the referenced material.
@@ -447,8 +447,8 @@ export type MaterialRef = Partial<{
 }>;
 
 /**
-* Reference to a mesh.
-*/
+ * Reference to a mesh.
+ */
 export type MeshRef = Partial<{
     /**
      * UUID of the referenced mesh.
@@ -461,8 +461,8 @@ export type MeshRef = Partial<{
 }>;
 
 /**
-* A lens that applies an orthographic projection.
-*/
+ * A lens that applies an orthographic projection.
+ */
 export type OrthographicLens = Partial<{
     /**
      * Left plane.
@@ -491,8 +491,8 @@ export type OrthographicLens = Partial<{
 }>;
 
 /**
-* Overrides a given entity in a sub scene.
-*/
+ * Overrides a given entity in a sub scene.
+ */
 export type Overrider = Partial<{
     /**
      * Mark the overridden entity as deleted.
@@ -509,8 +509,8 @@ export type Overrider = Partial<{
 }>;
 
 /**
-* A lens that applies a perspective projection.
-*/
+ * A lens that applies a perspective projection.
+ */
 export type PerspectiveLens = Partial<{
     /**
      * Aspect ratio of the viewport, usually equals width/height.
@@ -531,8 +531,8 @@ export type PerspectiveLens = Partial<{
 }>;
 
 /**
-* Physics material which represents a set of physical surface properties.
-*/
+ * Physics material which represents a set of physical surface properties.
+ */
 export type PhysicsMaterial = Partial<{
     /**
      * The friction coefficient applied between this surface and another surface if they are not moving lateral to each other. Usually a value from 0 to 1. A value of zero feels like ice, a value of 1 will make it very hard to get the object moving. Resulting static friction of a physics body colliding with another is determined by the average of both bodies' static friction coefficient.
@@ -561,8 +561,8 @@ export type PhysicsMaterial = Partial<{
 }>;
 
 /**
-* Plane geometry.
-*/
+ * Plane geometry.
+ */
 export type PlaneGeometry = Partial<{
     /**
      * Distance from the origin in the plane's normal direction.
@@ -575,8 +575,8 @@ export type PlaneGeometry = Partial<{
 }>;
 
 /**
-* Reference to a point cloud.
-*/
+ * Reference to a point cloud.
+ */
 export type PointCloudRef = Partial<{
     /**
      * UUID of the referenced point cloud.
@@ -585,8 +585,8 @@ export type PointCloudRef = Partial<{
 }>;
 
 /**
-* A light with color and intensity. A point light by default, add a spot light component to add a cutoff. Can be parameterized to simulate the atmosphere sun.
-*/
+ * A light with color and intensity. A point light by default, add a spot light component to add a cutoff. Can be parameterized to simulate the atmosphere sun.
+ */
 export type PointLight = Partial<{
     /**
      * Light color.
@@ -611,8 +611,8 @@ export type PointLight = Partial<{
 }>;
 
 /**
-* Omni directional reflection probe parameters, used for local cubemap reflection generation.
-*/
+ * Omni directional reflection probe parameters, used for local cubemap reflection generation.
+ */
 export type ReflectionProbe = Partial<{
     /**
      * x, y, z offset of the probe reflection origin.
@@ -633,8 +633,8 @@ export type ReflectionProbe = Partial<{
 }>;
 
 /**
-* Revolute joint which keeps the origins and x-axes of the frames together, and allows free rotation around this common axis.
-*/
+ * Revolute joint which keeps the origins and x-axes of the frames together, and allows free rotation around this common axis.
+ */
 export type RevoluteJoint = Partial<{
     /**
      * The minimum angle the rotation can go (in degrees).
@@ -655,8 +655,8 @@ export type RevoluteJoint = Partial<{
 }>;
 
 /**
-* Rigid body parameters.
-*/
+ * Rigid body parameters.
+ */
 export type RigidBody = Partial<{
     /**
      * Mass of the rigid body. A value of 0 is interpreted as infinite mass.
@@ -697,8 +697,8 @@ export type RigidBody = Partial<{
 }>;
 
 /**
-* Reference to a scene.
-*/
+ * Reference to a scene.
+ */
 export type SceneRef = Partial<{
     /**
      * UUID of the referenced scene.
@@ -711,8 +711,8 @@ export type SceneRef = Partial<{
 }>;
 
 /**
-* References a script and specifies input values if needed.
-*/
+ * References a script and specifies input values if needed.
+ */
 export type ScriptElement = Partial<{
     /**
      * UUID of the referenced script.
@@ -725,8 +725,8 @@ export type ScriptElement = Partial<{
 }>;
 
 /**
-* References multiple scripts.
-*/
+ * References multiple scripts.
+ */
 export type ScriptMap = Partial<{
     /**
      * List of scripts.
@@ -735,8 +735,8 @@ export type ScriptMap = Partial<{
 }>;
 
 /**
-* Enables a light to cast shadows.
-*/
+ * Enables a light to cast shadows.
+ */
 export type ShadowCaster = Partial<{
     /**
      * Bias to apply to avoid self shadowing artifacts.
@@ -769,8 +769,8 @@ export type ShadowCaster = Partial<{
 }>;
 
 /**
-* Reference to a skeleton.
-*/
+ * Reference to a skeleton.
+ */
 export type SkeletonRef = Partial<{
     /**
      * UUID of the referenced skeleton.
@@ -779,8 +779,8 @@ export type SkeletonRef = Partial<{
 }>;
 
 /**
-* Reference to a sound.
-*/
+ * Reference to a sound.
+ */
 export type SoundRef = Partial<{
     /**
      * UUID of the referenced sound.
@@ -805,8 +805,8 @@ export type SoundRef = Partial<{
 }>;
 
 /**
-* Sphere geometry.
-*/
+ * Sphere geometry.
+ */
 export type SphereGeometry = Partial<{
     /**
      * Radius of the sphere.
@@ -819,8 +819,8 @@ export type SphereGeometry = Partial<{
 }>;
 
 /**
-* Adds a cutoff to a point light to simulate a spot light.
-*/
+ * Adds a cutoff to a point light to simulate a spot light.
+ */
 export type SpotLight = Partial<{
     /**
      * Cutoff angle.
@@ -833,8 +833,8 @@ export type SpotLight = Partial<{
 }>;
 
 /**
-* A lens that applies an off-center perspective projection.
-*/
+ * A lens that applies an off-center perspective projection.
+ */
 export type StereoscopicLens = Partial<{
     /**
      * Angle of the left side of the field of view (this value is negative).
@@ -867,8 +867,8 @@ export type StereoscopicLens = Partial<{
 }>;
 
 /**
-* Tags used to filter entities.
-*/
+ * Tags used to filter entities.
+ */
 export type Tags = Partial<{
     /**
      * Tag list.
@@ -877,8 +877,8 @@ export type Tags = Partial<{
 }>;
 
 /**
-* Vehicle Controller parameters.
-*/
+ * Vehicle Controller parameters.
+ */
 export type VehicleController = Partial<{
     /**
      * The chassis.
@@ -903,8 +903,8 @@ export type VehicleController = Partial<{
 }>;
 
 /**
-* Filtering properties applied to the volume.
-*/
+ * Filtering properties applied to the volume.
+ */
 export type VolumeFilter = Partial<{
     /**
      * Voxel intensity range displayed, not applicable if outside volume material range.
@@ -929,8 +929,8 @@ export type VolumeFilter = Partial<{
 }>;
 
 /**
-* Reference to a material to use with a volume.
-*/
+ * Reference to a material to use with a volume.
+ */
 export type VolumeMaterialRef = Partial<{
     /**
      * UUID of the referenced volume material.
@@ -939,8 +939,8 @@ export type VolumeMaterialRef = Partial<{
 }>;
 
 /**
-* Reference to a volume made of voxels.
-*/
+ * Reference to a volume made of voxels.
+ */
 export type VolumeRef = Partial<{
     /**
      * UUID of the referenced 3D texture.

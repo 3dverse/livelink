@@ -6,22 +6,23 @@ const XXH = require("xxhashjs");
 //------------------------------------------------------------------------------
 const ftlSchemaFolder = process.argv[2] || "../../ftl-schemas";
 const templateFolder = process.argv[3] || ".";
-const outputFolder = process.argv[4] || process.cwd();
+const outputFolder = process.argv[4] || "../_prebuild/types";
 
 //------------------------------------------------------------------------------
 const componentFolder = path.join(ftlSchemaFolder, "components");
+const settingFolder = path.join(ftlSchemaFolder, "settings");
 const assetFolder = path.join(ftlSchemaFolder, "assets");
 
 //------------------------------------------------------------------------------
-function componentTypeToTypeScriptType(type) {
+function attributeTypeToTypeScriptType(type) {
     const arrayMatch = type.match(/array<(.+)>/);
     if (arrayMatch) {
-        return `Array<${componentTypeToTypeScriptType(arrayMatch[1])}>`;
+        return `Array<${attributeTypeToTypeScriptType(arrayMatch[1])}>`;
     }
 
     const mapMatch = type.match(/map<(.+)>/);
     if (mapMatch) {
-        return `Record<UUID, ${componentTypeToTypeScriptType(mapMatch[1])}>`;
+        return `Record<UUID, ${attributeTypeToTypeScriptType(mapMatch[1])}>`;
     }
 
     switch (type) {
@@ -87,7 +88,7 @@ function titlelize(str) {
 }
 
 //------------------------------------------------------------------------------
-function generateComponentsSchemas() {
+function generateComponentTypes() {
     const assetFiles = fs.readdirSync(assetFolder);
     const assetTypes = assetFiles
         .filter(assetFileName => !assetFileName.startsWith("common"))
@@ -116,15 +117,15 @@ function generateComponentsSchemas() {
 
         //----------------------------------------------------------------------
         componentTypes.push(`/**
-* ${component.description}
-*/
+ * ${component.description}
+ */
 export type ${titlizedComponentClass} = Partial<{
     ${attributes
         .map(
             attribute => `/**
      * ${attribute.description}
      */
-    ${attribute.name}: ${componentTypeToTypeScriptType(attribute.type)};`,
+    ${attribute.name}: ${attributeTypeToTypeScriptType(attribute.type)};`,
         )
         .join("\n    ")}
 }>;`);
@@ -157,6 +158,41 @@ export type ${titlizedComponentClass} = Partial<{
 }
 
 //------------------------------------------------------------------------------
+function generateSettingTypes() {
+    const settingFiles = fs.readdirSync(settingFolder);
+
+    const settingTypes = [];
+
+    for (const settingFileName of settingFiles) {
+        const fileContent = fs.readFileSync(path.join(settingFolder, settingFileName), "utf-8");
+        const setting = JSON.parse(fileContent);
+
+        const titlizedSettingClass = titlelize(setting.class);
+        const attributes = setting.attributes.filter(attribute => !attribute.mods?.includes("transient"));
+
+        //----------------------------------------------------------------------
+        settingTypes.push(`/**
+ * ${setting.description}
+ */
+export type ${titlizedSettingClass} = Partial<{
+    ${attributes
+        .map(
+            attribute => `/**
+     * ${attribute.description}
+     */
+    ${attribute.name}: ${attributeTypeToTypeScriptType(attribute.type)};`,
+        )
+        .join("\n    ")}
+}>;`);
+    }
+
+    //--------------------------------------------------------------------------
+    applyTemplate("settings.template.ts", path.join("settings.ts"), {
+        settingTypes: settingTypes.join("\n\n"),
+    });
+}
+
+//------------------------------------------------------------------------------
 function applyTemplate(templateFileName, outputSchemaName, dictionnary) {
     console.log("Generating", outputSchemaName);
 
@@ -169,4 +205,5 @@ function applyTemplate(templateFileName, outputSchemaName, dictionnary) {
 }
 
 //------------------------------------------------------------------------------
-generateComponentsSchemas();
+generateComponentTypes();
+generateSettingTypes();
