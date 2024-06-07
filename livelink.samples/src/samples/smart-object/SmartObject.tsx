@@ -30,7 +30,7 @@ function hexToRgb(h: string): [number, number, number] {
 export default function SmartObject() {
     const canvasRef = useRef<HTMLCanvasElement>(null);
 
-    const { instance, connect, disconnect } = useLivelinkInstance({ canvas_refs: [canvasRef] });
+    const { instance, connect, disconnect } = useLivelinkInstance({ views: [{ canvas_ref: canvasRef }] });
 
     const light = useSmartObject({ instance, manifest: SmartObjectManifest, smart_object: "MyLight" });
 

@@ -8,7 +8,7 @@ export default function DoubleCanvas() {
     const canvasRef1 = useRef<HTMLCanvasElement>(null);
     const canvasRef2 = useRef<HTMLCanvasElement>(null);
 
-    const { connect } = useLivelinkInstance({ canvas_refs: [canvasRef1, canvasRef2] });
+    const { connect } = useLivelinkInstance({ views: [{ canvas_ref: canvasRef1 }, { canvas_ref: canvasRef2 }] });
 
     useEffect(() => {
         connect({ scene_id: "e7d69f14-d18e-446b-8df3-cbd24e10fa92", token: "public_p54ra95AMAnZdTel" });

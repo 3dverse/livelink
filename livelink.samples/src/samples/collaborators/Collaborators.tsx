@@ -9,7 +9,7 @@ export default function Collaborators() {
 
     const [clients, setClients] = useState<Array<string>>([]);
 
-    const { instance, connect, disconnect } = useLivelinkInstance({ canvas_refs: [canvasRef] });
+    const { instance, connect, disconnect } = useLivelinkInstance({ views: [{ canvas_ref: canvasRef }] });
 
     const toggleConnection = async () => {
         if (instance) {

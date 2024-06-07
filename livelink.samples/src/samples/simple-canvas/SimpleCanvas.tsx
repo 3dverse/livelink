@@ -7,7 +7,7 @@ import { useLivelinkInstance } from "../../hooks/useLivelinkInstance";
 export default function SimpleCanvas() {
     const canvasRef = useRef<HTMLCanvasElement>(null);
 
-    const { instance, connect, disconnect } = useLivelinkInstance({ canvas_refs: [canvasRef] });
+    const { instance, connect, disconnect } = useLivelinkInstance({ views: [{ canvas_ref: canvasRef }] });
 
     const toggleConnection = async () => {
         if (instance) {

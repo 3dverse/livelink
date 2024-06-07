@@ -37,13 +37,13 @@ export default function SmartObjectSync() {
         instance: instance1,
         connect: connect1,
         disconnect: disconnect1,
-    } = useLivelinkInstance({ canvas_refs: [canvasRef1] });
+    } = useLivelinkInstance({ views: [{ canvas_ref: canvasRef1 }] });
 
     const {
         instance: instance2,
         connect: connect2,
         disconnect: disconnect2,
-    } = useLivelinkInstance({ canvas_refs: [canvasRef2] });
+    } = useLivelinkInstance({ views: [{ canvas_ref: canvasRef2 }] });
 
     const light1 = useSmartObject({ instance: instance1, manifest: SmartObjectManifest, smart_object: "MyLight" });
     const light2 = useSmartObject({ instance: instance2, manifest: SmartObjectManifest, smart_object: "MyLight" });

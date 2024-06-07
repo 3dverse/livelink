@@ -21,7 +21,7 @@ export default function Trigger() {
     const onTriggerEntered = useCallback(() => setTriggerState("Entered"), [setTriggerState]);
     const onTriggerExited = useCallback(() => setTriggerState("Exited"), [setTriggerState]);
 
-    const { instance, connect, disconnect } = useLivelinkInstance({ canvas_refs: [canvasRef] });
+    const { instance, connect, disconnect } = useLivelinkInstance({ views: [{ canvas_ref: canvasRef }] });
 
     const trigger = useSmartObject({ instance, manifest: SmartObjectManifest, smart_object: "MyTrigger" });
 

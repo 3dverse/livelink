@@ -94,8 +94,12 @@ export default function QuadrupleCanvas() {
     const canvasRef4 = useRef<HTMLCanvasElement>(null);
 
     const { connect } = useLivelinkInstance({
-        canvas_refs: [canvasRef1, canvasRef2, canvasRef3, canvasRef4],
-        camera_constructors: [DefaultCamera, MPRCamera, MPRCamera, MPRCamera],
+        views: [
+            { canvas_ref: canvasRef1, camera: DefaultCamera },
+            { canvas_ref: canvasRef2, camera: MPRCamera },
+            { canvas_ref: canvasRef3, camera: MPRCamera },
+            { canvas_ref: canvasRef4, camera: MPRCamera },
+        ],
     });
 
     useEffect(() => {

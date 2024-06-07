@@ -14,7 +14,7 @@ export default function SceneSelector() {
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const [scene_id, setSceneId] = useState("default");
 
-    const { instance, connect, disconnect } = useLivelinkInstance({ canvas_refs: [canvasRef] });
+    const { instance, connect, disconnect } = useLivelinkInstance({ views: [{ canvas_ref: canvasRef }] });
 
     useEffect(() => {
         if (instance) {

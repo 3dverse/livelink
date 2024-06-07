@@ -13,21 +13,15 @@ import {
 } from "livelink.js";
 
 //------------------------------------------------------------------------------
-export function useLivelinkInstance({
-    canvas_refs,
-    camera_constructors = [],
-}: {
-    canvas_refs: Array<React.RefObject<HTMLCanvasElement>>;
-    camera_constructors?: (typeof Camera | UUID)[];
-}): {
+type View = { canvas_ref: React.RefObject<HTMLCanvasElement>; camera?: typeof Camera | UUID };
+
+//------------------------------------------------------------------------------
+type LivelinkResponse = { instance: Livelink; cameras: Array<Camera | null> };
+
+//------------------------------------------------------------------------------
+export function useLivelinkInstance({ views }: { views: Array<View> }): {
     instance: Livelink | null;
-    connect: ({
-        scene_id,
-        token,
-    }: {
-        scene_id: UUID;
-        token: string;
-    }) => Promise<{ instance: Livelink; cameras: (Camera | null)[] } | null>;
+    connect: ({ scene_id, token }: { scene_id: UUID; token: string }) => Promise<LivelinkResponse | null>;
     disconnect: () => void;
     onConnect?: (instance: Livelink) => void;
 } {
@@ -42,7 +36,7 @@ export function useLivelinkInstance({
     return {
         instance,
         connect: async ({ scene_id, token }: { scene_id: UUID; token: string }) => {
-            if (canvas_refs.some(r => r.current === null)) {
+            if (views.some(v => v.canvas_ref.current === null)) {
                 return null;
             }
 
@@ -54,8 +48,8 @@ export function useLivelinkInstance({
 
             const cameras = await configureClient(
                 instance,
-                canvas_refs.map(r => r.current!),
-                camera_constructors,
+                views.map(v => v.canvas_ref.current!),
+                views.map(v => v.camera || DefaultCamera),
             );
 
             setInstance(instance);
@@ -82,11 +76,10 @@ async function configureClient(
     );
     instance.addViewports({ viewports });
 
-    const webcodec = await WebCodecsDecoder.findSupportedCodec();
-
     // Step 2: configure the client on the renderer side, this informs the
     //         renderer on the client canvas size and available input devices
     //         and most importantly activates the session.
+    const webcodec = await WebCodecsDecoder.findSupportedCodec();
     await instance.configureRemoteServer({ codec: webcodec || CodecType.h264 });
 
     // Step 3: configure the local client.
@@ -100,9 +93,8 @@ async function configureClient(
     // Step 4: inform the renderer of which camera to use with which viewport.
     const cameras = (await Promise.all(
         viewports.map(async (viewport, i) => {
-            if (typeof camera_constructors[i] === typeof Camera || camera_constructors[i] === undefined) {
-                const CameraConstructor = (camera_constructors[i] as typeof Camera) || DefaultCamera;
-                return await instance.newCamera(CameraConstructor, "MyCam_" + i++, viewport);
+            if (typeof camera_constructors[i] === typeof Camera) {
+                return await instance.newCamera(camera_constructors[i] as typeof Camera, "MyCam_" + i++, viewport);
             } else {
                 const camera = await instance.scene.findEntity(Camera, { entity_uuid: camera_constructors[i] as UUID });
                 if (camera) {

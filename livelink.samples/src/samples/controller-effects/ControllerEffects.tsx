@@ -154,8 +154,10 @@ export default function ControllerEffects() {
     const cameraControls = useRef<CameraControls | null>(null);
 
     const { connect } = useLivelinkInstance({
-        canvas_refs: [canvasRef1, canvasRef2],
-        camera_constructors: [DefaultCamera, VanillaCamera],
+        views: [
+            { canvas_ref: canvasRef1, camera: DefaultCamera },
+            { canvas_ref: canvasRef2, camera: VanillaCamera },
+        ],
     });
 
     useEffect(() => {

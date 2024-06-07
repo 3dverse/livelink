@@ -18,8 +18,10 @@ export default function PictureInPicture() {
     const [animationSeq, setAnimationSeq] = useState<AnimationSequence | null>(null);
 
     const { instance, connect } = useLivelinkInstance({
-        canvas_refs: [canvasRef1, canvasRef2],
-        camera_constructors: [DefaultCamera, "b6f3ddc0-cd50-4ab1-be71-4c28772dc540"],
+        views: [
+            { canvas_ref: canvasRef1, camera: DefaultCamera },
+            { canvas_ref: canvasRef2, camera: "b6f3ddc0-cd50-4ab1-be71-4c28772dc540" },
+        ],
     });
 
     useEffect(() => {
