@@ -44,7 +44,9 @@ export default function PictureInPicture() {
 
     useEffect(() => {
         if (instance) {
-            setAnimationSeq(new AnimationSequence(instance, { animation_sequence_id: SmartObjectManifest.MyAnimSeq }));
+            setAnimationSeq(
+                instance.scene.getAnimationSequence({ animation_sequence_id: SmartObjectManifest.MyAnimSeq }),
+            );
         }
     }, [instance]);
 

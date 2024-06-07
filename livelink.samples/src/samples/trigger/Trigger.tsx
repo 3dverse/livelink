@@ -31,7 +31,9 @@ export default function Trigger() {
     useEffect(() => {
         if (instance) {
             instance.startSimulation();
-            setAnimationSeq(new AnimationSequence(instance, { animation_sequence_id: SmartObjectManifest.MyAnimSeq }));
+            setAnimationSeq(
+                instance.scene.getAnimationSequence({ animation_sequence_id: SmartObjectManifest.MyAnimSeq }),
+            );
         }
     }, [instance, setAnimationSeq]);
 

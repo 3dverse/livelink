@@ -2,6 +2,7 @@ import { EditorEntity, RTID, ScriptEvent, UUID } from "../_prebuild/types";
 import { LivelinkCore } from "./LivelinkCore";
 import { EntityRegistry } from "./EntityRegistry";
 import { Entity } from "./Entity";
+import { AnimationSequence } from "./AnimationSequence";
 
 /**
  *
@@ -30,6 +31,13 @@ export class Scene extends EventTarget {
      */
     getEntity({ entity_rtid }: { entity_rtid: RTID }): Entity | null {
         return this.entity_registry.get({ entity_rtid });
+    }
+
+    /**
+     *
+     */
+    getAnimationSequence({ animation_sequence_id }: { animation_sequence_id: UUID }) {
+        return new AnimationSequence(this.#core, { animation_sequence_id });
     }
 
     /**

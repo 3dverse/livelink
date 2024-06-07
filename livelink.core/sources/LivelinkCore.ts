@@ -4,6 +4,7 @@ import type {
     EditorEntity,
     EntityUpdatedEvent,
     HighlightEntitiesMessage,
+    RTID,
     ScreenSpaceRayQuery,
     ScreenSpaceRayResult,
     UUID,
@@ -174,6 +175,21 @@ export class LivelinkCore extends EventTarget {
      */
     async _findEntitiesByEUID({ entity_uuid }: { entity_uuid: UUID }): Promise<Array<EditorEntity>> {
         return this._editor.findEntitiesByEUID({ entity_uuid });
+    }
+
+    /**
+     *
+     */
+    updateAnimationSequenceState(params: {
+        linker_rtid: RTID;
+        animation_sequence_id: UUID;
+        state: 1 | 0;
+        playback_speed: number;
+        seek_offset?: number;
+    }): void {
+        this._gateway.updateAnimationSequenceState({
+            updateAnimationSequenceStateMessage: params,
+        });
     }
 
     /**

@@ -242,21 +242,6 @@ export class Livelink extends LivelinkCore {
     /**
      *
      */
-    updateAnimationSequenceState(params: {
-        linker_rtid: RTID;
-        animation_sequence_id: UUID;
-        state: 1 | 0;
-        playback_speed: number;
-        seek_offset?: number;
-    }): void {
-        this._gateway.updateAnimationSequenceState({
-            updateAnimationSequenceStateMessage: params,
-        });
-    }
-
-    /**
-     *
-     */
     async newCamera<CameraType extends Camera>(
         camera_type: { new (_: Scene): CameraType },
         name: string,
