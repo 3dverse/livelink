@@ -5,6 +5,9 @@
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
   "typings": "./dist/sources/index.d.ts",
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "prebuild": "node ci/auto-generate.js ../ftl-schemas/ ci/ ./_prebuild/types/",
     "build": "node esbuild.js && tsc",
