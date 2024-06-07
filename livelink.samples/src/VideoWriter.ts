@@ -1,4 +1,4 @@
-import { EncodedFrameConsumer } from "livelink.js";
+import { EncodedFrameConsumer } from "@3dverse/livelink";
 
 export class VideoWriter implements EncodedFrameConsumer {
     private _file_handle: FileSystemFileHandle | null = null;

@@ -1,5 +1,5 @@
 //------------------------------------------------------------------------------
-import { Entity, Livelink, UUID } from "livelink.js";
+import { Entity, Livelink, UUID } from "@3dverse/livelink";
 import { useEffect, useState } from "react";
 
 //------------------------------------------------------------------------------

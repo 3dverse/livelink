@@ -2,7 +2,7 @@
 import { useEffect, useRef } from "react";
 import Canvas from "../../components/Canvas";
 import { useLivelinkInstance } from "../../hooks/useLivelinkInstance";
-import { Camera, Quat } from "livelink.js";
+import { Camera, Quat } from "@3dverse/livelink";
 import { DefaultCamera } from "../../components/DefaultCamera";
 import CameraControls from "camera-controls";
 import * as THREE from "three";

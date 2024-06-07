@@ -10,7 +10,7 @@ import {
     UUID,
     Viewport,
     WebCodecsDecoder,
-} from "livelink.js";
+} from "@3dverse/livelink";
 
 //------------------------------------------------------------------------------
 type View = { canvas_ref: React.RefObject<HTMLCanvasElement>; camera?: typeof Camera | UUID };

@@ -2,7 +2,7 @@
 import { useEffect, useRef, useState } from "react";
 import Canvas from "../../components/Canvas";
 import { useLivelinkInstance } from "../../hooks/useLivelinkInstance";
-import { AnimationSequence, Camera, Livelink } from "livelink.js";
+import { AnimationSequence, Camera, Livelink } from "@3dverse/livelink";
 import { Manifest } from "../../hooks/useSmartObject";
 import { DefaultCamera } from "../../components/DefaultCamera";
 

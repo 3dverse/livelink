@@ -4,7 +4,7 @@ import Canvas from "../../components/Canvas";
 import { Range } from "react-daisyui";
 import { useLivelinkInstance } from "../../hooks/useLivelinkInstance";
 import { Manifest, useSmartObject } from "../../hooks/useSmartObject";
-import { AnimationSequence } from "livelink.js";
+import { AnimationSequence } from "@3dverse/livelink";
 
 //------------------------------------------------------------------------------
 const SmartObjectManifest: Manifest = {

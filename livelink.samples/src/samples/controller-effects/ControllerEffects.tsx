@@ -5,7 +5,7 @@ import { useLivelinkInstance } from "../../hooks/useLivelinkInstance";
 import { DefaultCamera } from "../../components/DefaultCamera";
 import CameraControls from "camera-controls";
 import * as THREE from "three";
-import { Camera } from "livelink.js";
+import { Camera } from "@3dverse/livelink";
 
 //------------------------------------------------------------------------------
 

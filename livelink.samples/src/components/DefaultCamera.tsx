@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 import CameraControls from "camera-controls";
-import { Camera, Quat } from "livelink.js";
+import { Camera, Quat } from "@3dverse/livelink";
 import * as THREE from "three";
 
 //------------------------------------------------------------------------------
