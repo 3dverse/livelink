@@ -125,7 +125,6 @@ export class Livelink extends LivelinkCore {
      */
     private constructor(public readonly session: Session) {
         super(session);
-        this._gateway.addEventListener("on-script-event-received", this.scene._onScriptEventReceived);
     }
 
     /**
@@ -133,12 +132,17 @@ export class Livelink extends LivelinkCore {
      */
     async close() {
         if (this._frame_consumer) {
-            this._gateway.removeEventListener("on-frame-received", this._onFrameReceived);
             this._frame_consumer.release();
         }
-        this._gateway.removeEventListener("on-script-event-received", this.scene._onScriptEventReceived);
 
         await super.close();
+    }
+
+    /**
+     *
+     */
+    addViewports({ viewports }: { viewports: Array<Viewport> }) {
+        this.remote_rendering_surface.addViewports({ viewports });
     }
 
     /**
@@ -169,49 +173,16 @@ export class Livelink extends LivelinkCore {
             codec: this._codec,
             frame_dimensions: this.remote_rendering_surface.dimensions,
         });
-
-        this._gateway.addEventListener("on-frame-received", this._onFrameReceived);
     }
 
     /**
      *
      */
-    private _onFrameReceived = (e: Event) => {
-        const event = e as CustomEvent<FrameData>;
+    protected onFrameReceived = ({ frame_data }: { frame_data: FrameData }) => {
         this._frame_consumer!.consumeEncodedFrame({
-            encoded_frame: event.detail.encoded_frame,
+            encoded_frame: frame_data.encoded_frame,
         });
-
-        this.session._updateClients({ client_ids: event.detail.meta_data.clients.map(client => client.client_id) });
     };
-
-    /**
-     *
-     */
-    setViewports({ viewports }: { viewports: Array<ViewportConfig> }) {
-        this._gateway.setViewports({ viewports });
-    }
-
-    /**
-     *
-     */
-    resize({ size }: { size: Vec2i }): void {
-        super.resize({ size });
-    }
-
-    /**
-     *
-     */
-    resume(): void {
-        this._gateway.resume();
-    }
-
-    /**
-     *
-     */
-    suspend(): void {
-        this._gateway.suspend();
-    }
 
     /**
      *
@@ -221,7 +192,7 @@ export class Livelink extends LivelinkCore {
             throw new Error("The Livelink instance is not configured yet");
         }
 
-        this.remote_rendering_surface.update();
+        this.remote_rendering_surface.init();
         this.resume();
     }
 
@@ -229,13 +200,11 @@ export class Livelink extends LivelinkCore {
      *
      */
     startSimulation(): void {
-        this._gateway.fireEvent({
-            fireEventMessage: {
-                event_map_id: "00000000-0000-0000-0000-000000000000",
-                event_name: "start_simulation",
-                entities: [],
-                data_object: {},
-            },
+        this.fireEvent({
+            event_map_id: "00000000-0000-0000-0000-000000000000",
+            event_name: "start_simulation",
+            entities: [],
+            data_object: {},
         });
     }
 

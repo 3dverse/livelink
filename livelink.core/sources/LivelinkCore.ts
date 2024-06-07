@@ -3,11 +3,14 @@ import type {
     ClientConfigResponse,
     EditorEntity,
     EntityUpdatedEvent,
+    FireEventMessage,
+    FrameData,
     HighlightEntitiesMessage,
     RTID,
     ScreenSpaceRayQuery,
     ScreenSpaceRayResult,
     UUID,
+    ViewportConfig,
 } from "../_prebuild/types";
 import { Vec2i } from "./types";
 import { GatewayController } from "./controllers/GatewayController";
@@ -27,7 +30,7 @@ import { Entity } from "./Entity";
  * version of the interface, allowing for interface evolution without breaking
  * compatibility with existing applications.
  */
-export class LivelinkCore extends EventTarget {
+export abstract class LivelinkCore extends EventTarget {
     /**
      *
      */
@@ -41,22 +44,22 @@ export class LivelinkCore extends EventTarget {
     /**
      * Holds access to the gateway.
      */
-    protected readonly _gateway = new GatewayController();
+    readonly #gateway = new GatewayController();
 
     /**
      * Holds access to the editor.
      */
-    protected readonly _editor = new EditorController();
+    readonly #editor = new EditorController();
 
     /**
      * Interval between update to the renderer.
      */
-    private _update_interval = 0;
+    #update_interval = 0;
 
     /**
      * Interval between broadcasts to the editor.
      */
-    private _broadcast_interval = 0;
+    #broadcast_interval = 0;
 
     /**
      *
@@ -64,6 +67,7 @@ export class LivelinkCore extends EventTarget {
     protected constructor(session: Session) {
         super();
         this.session = session;
+        this.#gateway.addEventListener("on-script-event-received", this.scene._onScriptEventReceived);
     }
 
     /**
@@ -74,13 +78,13 @@ export class LivelinkCore extends EventTarget {
         await this.session.registerClient();
         // Connect to FTL gateway
         console.debug("Connecting to session...", this.session);
-        const client = await this._gateway.connectToSession({
+        const client = await this.#gateway.connectToSession({
             session: this.session,
         });
         console.debug("Connected to session as:", client);
 
         // Connect to the Livelink Broker
-        const connectConfirmation = await this._editor.connectToSession({
+        const connectConfirmation = await this.#editor.connectToSession({
             session: this.session,
             client,
         });
@@ -89,7 +93,7 @@ export class LivelinkCore extends EventTarget {
             component_descriptors: connectConfirmation.components,
         });
 
-        this._editor.addEventListener("entities-updated", (e: CustomEvent<Record<UUID, EntityUpdatedEvent>>) => {
+        this.#editor.addEventListener("entities-updated", (e: CustomEvent<Record<UUID, EntityUpdatedEvent>>) => {
             for (const entity_euid in e.detail) {
                 this.scene.entity_registry._updateEntityFromEvent({
                     entity_euid,
@@ -98,6 +102,8 @@ export class LivelinkCore extends EventTarget {
             }
         });
 
+        this.#gateway.addEventListener("on-frame-received", this.#onFrameReceived);
+
         return this;
     }
 
@@ -105,40 +111,57 @@ export class LivelinkCore extends EventTarget {
      * Closes the connections to the gateway and the editor.
      */
     protected async close() {
-        if (this._update_interval !== 0) {
-            clearInterval(this._update_interval);
+        if (this.#update_interval !== 0) {
+            clearInterval(this.#update_interval);
         }
 
-        if (this._broadcast_interval !== 0) {
-            clearInterval(this._broadcast_interval);
+        if (this.#broadcast_interval !== 0) {
+            clearInterval(this.#broadcast_interval);
         }
+
+        this.#gateway.removeEventListener("on-script-event-received", this.scene._onScriptEventReceived);
+        this.#gateway.removeEventListener("on-frame-received", this.#onFrameReceived);
 
         await this.session.close();
 
-        this._editor.disconnect();
-        this._gateway.disconnect();
+        this.#editor.disconnect();
+        this.#gateway.disconnect();
     }
 
     /**
      * Send the configuration requested by the client.
      */
     protected async configureClient({ client_config }: { client_config: ClientConfig }): Promise<ClientConfigResponse> {
-        this._checkRemoteCanvasSize({ size: client_config.remote_canvas_size });
-        return await this._gateway.configureClient({ client_config });
+        this.#checkRemoteCanvasSize({ size: client_config.remote_canvas_size });
+        return await this.#gateway.configureClient({ client_config });
     }
 
     /**
      *
      */
-    protected resize({ size }: { size: Vec2i }) {
-        this._checkRemoteCanvasSize({ size });
-        this._gateway.resize({ size });
+    #onFrameReceived = (e: Event) => {
+        const event = e as CustomEvent<FrameData>;
+        this.session._updateClients({ client_ids: event.detail.meta_data.clients.map(client => client.client_id) });
+        this.onFrameReceived({ frame_data: event.detail });
+    };
+
+    /**
+     *
+     */
+    protected abstract onFrameReceived({ frame_data }: { frame_data: FrameData });
+
+    /**
+     *
+     */
+    resize({ size }: { size: Vec2i }) {
+        this.#checkRemoteCanvasSize({ size });
+        this.#gateway.resize({ size });
     }
 
     /**
      *
      */
-    private _checkRemoteCanvasSize({ size }: { size: Vec2i }): void {
+    #checkRemoteCanvasSize({ size }: { size: Vec2i }): void {
         if (size[0] % 8 !== 0 || size[1] % 8 !== 0) {
             throw new Error(`Remote canvas size MUST be a multiple of 8, is [${size[0]}, ${size[1]}]`);
         }
@@ -152,21 +175,28 @@ export class LivelinkCore extends EventTarget {
     }: {
         screenSpaceRayQuery: ScreenSpaceRayQuery;
     }): Promise<ScreenSpaceRayResult> {
-        return this._gateway.castScreenSpaceRay({ screenSpaceRayQuery });
+        return this.#gateway.castScreenSpaceRay({ screenSpaceRayQuery });
     }
 
     /**
      *
      */
     highlightEntities({ highlightEntitiesMessage }: { highlightEntitiesMessage: HighlightEntitiesMessage }): void {
-        this._gateway.highlightEntities({ highlightEntitiesMessage });
+        this.#gateway.highlightEntities({ highlightEntitiesMessage });
+    }
+
+    /**
+     *
+     */
+    fireEvent(fireEventMessage: FireEventMessage) {
+        this.#gateway.fireEvent({ fireEventMessage });
     }
 
     /**
      *
      */
     async createEntity({ entity }: { entity: Entity }): Promise<EditorEntity> {
-        const entities = await this._editor.spawnEntity({ entity });
+        const entities = await this.#editor.spawnEntity({ entity });
         return entities[0];
     }
 
@@ -174,7 +204,7 @@ export class LivelinkCore extends EventTarget {
      *
      */
     async _findEntitiesByEUID({ entity_uuid }: { entity_uuid: UUID }): Promise<Array<EditorEntity>> {
-        return this._editor.findEntitiesByEUID({ entity_uuid });
+        return this.#editor.findEntitiesByEUID({ entity_uuid });
     }
 
     /**
@@ -187,7 +217,7 @@ export class LivelinkCore extends EventTarget {
         playback_speed: number;
         seek_offset?: number;
     }): void {
-        this._gateway.updateAnimationSequenceState({
+        this.#gateway.updateAnimationSequenceState({
             updateAnimationSequenceStateMessage: params,
         });
     }
@@ -195,21 +225,42 @@ export class LivelinkCore extends EventTarget {
     /**
      *
      */
+    setViewports({ viewports }: { viewports: Array<ViewportConfig> }) {
+        this.#gateway.setViewports({ viewports });
+    }
+
+    /**
+     *
+     */
+    resume(): void {
+        this.#gateway.resume();
+    }
+
+    /**
+     *
+     */
+    suspend(): void {
+        this.#gateway.suspend();
+    }
+
+    /**
+     *
+     */
     startUpdateLoop({ fps }: { fps: number }) {
-        this._update_interval = setInterval(() => {
+        this.#update_interval = setInterval(() => {
             this.scene.entity_registry.advanceFrame({ dt: 1 / fps });
 
             const msg = this.scene.entity_registry._getEntitiesToUpdate();
             if (msg !== null) {
-                this._gateway.updateEntities({ updateEntitiesFromJsonMessage: msg });
+                this.#gateway.updateEntities({ updateEntitiesFromJsonMessage: msg });
                 this.scene.entity_registry._clearUpdateList();
             }
         }, 1000 / fps);
 
-        this._broadcast_interval = setInterval(() => {
+        this.#broadcast_interval = setInterval(() => {
             const msg = this.scene.entity_registry._getEntitiesToBroadcast();
             if (msg !== null) {
-                this._editor.updateComponents(msg);
+                this.#editor.updateComponents(msg);
                 this.scene.entity_registry._clearBroadcastList();
             }
         }, 1000);

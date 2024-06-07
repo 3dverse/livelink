@@ -31,26 +31,26 @@ export class RemoteRenderingSurface implements DecodedFrameConsumer {
     /**
      * List of viewports and their offsets.
      */
-    private _viewports: Array<ViewportRect> = [];
+    #viewports: Array<ViewportRect> = [];
 
     /**
      * Surface actual dimensions.
      */
-    private _dimensions: Vec2ui16 = [0, 0];
+    #dimensions: Vec2ui16 = [0, 0];
 
     /**
      * Returns the surface dimensions in pixels rounded up to the next multiple
      * of 8.
      */
     get dimensions(): Vec2ui16 {
-        return this._dimensions;
+        return this.#dimensions;
     }
 
     /**
      *
      */
     private get config(): Array<ViewportConfig> {
-        return this._viewports.map(({ viewport, offset }) => ({
+        return this.#viewports.map(({ viewport, offset }) => ({
             camera_rtid: viewport.camera!.rtid!,
             left: offset[0] / this.dimensions[0],
             top: offset[1] / this.dimensions[1],
@@ -70,7 +70,7 @@ export class RemoteRenderingSurface implements DecodedFrameConsumer {
      *
      */
     consumeDecodedFrame({ decoded_frame }: { decoded_frame: VideoFrame }): void {
-        for (const { viewport, offset } of this._viewports) {
+        for (const { viewport, offset } of this.#viewports) {
             viewport.drawFrame({
                 decoded_frame,
                 left: offset[0],
@@ -95,47 +95,55 @@ export class RemoteRenderingSurface implements DecodedFrameConsumer {
      */
     addViewports({ viewports }: { viewports: Array<Viewport> }): void {
         for (const viewport of viewports) {
-            this._viewports.push({ viewport, offset: [0, 0] });
+            this.#viewports.push({ viewport, offset: [0, 0] });
+            viewport.addEventListener("on-resized", this.#onViewportResized);
         }
 
-        this.update();
+        this.#onViewportResized();
     }
 
     /**
      *
      */
-    update(): void {
-        const need_to_resize = this._computeSurfaceSize();
+    init() {
+        this.#onViewportResized();
+    }
 
-        if (this.#core.isConfigured() && this._isValid()) {
+    /**
+     *
+     */
+    #isValid(): boolean {
+        return this.#viewports.every(({ viewport }) => viewport.isValid());
+    }
+
+    /**
+     *
+     */
+    #onViewportResized = () => {
+        const need_to_resize = this.#computeSurfaceSize();
+
+        if (this.#core.isConfigured() && this.#isValid()) {
             if (need_to_resize) {
-                this.#core.resize({ size: this._dimensions });
+                this.#core.resize({ size: this.#dimensions });
             }
             this.#core.setViewports({ viewports: this.config });
         }
-    }
+    };
 
     /**
      *
      */
-    private _isValid(): boolean {
-        return this._viewports.every(({ viewport }) => viewport.isValid());
-    }
-
-    /**
-     *
-     */
-    private _computeSurfaceSize(): boolean {
-        const { offset, width, height } = this._computeBoundingRect();
-        this._computeViewportsOffsets(offset);
+    #computeSurfaceSize(): boolean {
+        const { offset, width, height } = this.#computeBoundingRect();
+        this.#computeViewportsOffsets(offset);
 
         const next_multiple_of_8 = (n: number) =>
             Math.floor(n) + (Math.floor(n) % 8 === 0 ? 0 : 8 - (Math.floor(n) % 8));
         const new_dimensions: Vec2i = [next_multiple_of_8(width), next_multiple_of_8(height)];
 
-        const need_to_resize = new_dimensions[0] != this._dimensions[0] || new_dimensions[1] != this.dimensions[1];
+        const need_to_resize = new_dimensions[0] != this.#dimensions[0] || new_dimensions[1] != this.dimensions[1];
 
-        this._dimensions = new_dimensions;
+        this.#dimensions = new_dimensions;
 
         return need_to_resize;
     }
@@ -143,11 +151,11 @@ export class RemoteRenderingSurface implements DecodedFrameConsumer {
     /**
      *
      */
-    private _computeBoundingRect(): { offset: Vec2i; width: number; height: number } {
+    #computeBoundingRect(): { offset: Vec2i; width: number; height: number } {
         let min: Vec2i = [Number.MAX_VALUE, Number.MAX_VALUE];
         let max: Vec2i = [0, 0];
 
-        for (const { viewport } of this._viewports) {
+        for (const { viewport } of this.#viewports) {
             const clientRect = viewport.canvas.getClientRects()[0];
             min[0] = Math.min(min[0], clientRect.left);
             min[1] = Math.min(min[1], clientRect.top);
@@ -164,8 +172,8 @@ export class RemoteRenderingSurface implements DecodedFrameConsumer {
     /**
      *
      */
-    private _computeViewportsOffsets(client_rect_offset: Vec2i) {
-        for (const { viewport, offset } of this._viewports) {
+    #computeViewportsOffsets(client_rect_offset: Vec2i) {
+        for (const { viewport, offset } of this.#viewports) {
             const clientRect = viewport.canvas.getClientRects()[0];
             offset[0] = clientRect.left - client_rect_offset[0];
             offset[1] = clientRect.top - client_rect_offset[1];

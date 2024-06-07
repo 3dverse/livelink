@@ -159,6 +159,6 @@ export class Viewport extends EventTarget {
      */
     updateCanvasSize() {
         this._context.refreshSize();
-        this.#core.remote_rendering_surface.update();
+        this.dispatchEvent(new Event("on-resized"));
     }
 }

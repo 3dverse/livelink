@@ -76,7 +76,7 @@ async function configureClient(
         ),
     );
 
-    instance.remote_rendering_surface.addViewports({ viewports });
+    instance.addViewports({ viewports });
 
     const webcodec = await WebCodecsDecoder.findAppropriatedCodec({
         frame_dimensions: instance.remote_rendering_surface.dimensions,
