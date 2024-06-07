@@ -16,62 +16,54 @@ variables:
     - .env-dev
     - .runner-onprem
   image: node:${NODE_VERSION}
+  artifacts:
+    expire_in: 1 day
+    paths:
+      - $PACKAGE_DIR/$PACKAGE_DIR-*.tgz
+  before_script:
+    - !reference [.npm-regcreds, before_script]
+    - cd $PACKAGE_DIR
+    - !reference [.node-cache, before_script]
   script:
-    - npm install
     - npm run build
     - npm pack
+  rules:
+    - when: always
 
 # JOBS ################################################################################################################
 # BUILD
 js:livelink.core:build:
   extends:
     - .build
-  before_script:
-    - !reference [.npm-regcreds, before_script]
-    - cd livelink.core
-  artifacts:
-    expire_in: 1 day
-    paths:
-      - livelink.core/livelink.core-*.tgz
-  rules:
-    - when: always
+  variables:
+    PACKAGE_DIR: livelink.core
 
 js:livelink.js:build:
   extends:
     - .build
+  variables:
+    PACKAGE_DIR: livelink.js
   needs:
     - job: js:livelink.core:build
       artifacts: true
   before_script:
-    - !reference [.npm-regcreds, before_script]
     - tar -zxf livelink.core/livelink.core-*.tgz --strip-components=1 -C livelink.core
-    - cd livelink.js
-  artifacts:
-    expire_in: 1 day
-    paths:
-      - livelink.js/livelink.js-*.tgz
-  rules:
-    - when: always
+    - !reference [.build, before_script]
 
 js:livelink.samples:build:
   extends:
     - .build
+  variables:
+    PACKAGE_DIR: livelink.samples
   needs:
     - job: js:livelink.core:build
       artifacts: true
     - job: js:livelink.js:build
       artifacts: true
   before_script:
-    - !reference [.npm-regcreds, before_script]
     - tar -zxf livelink.core/livelink.core-*.tgz --strip-components=1 -C livelink.core
     - tar -zxf livelink.js/livelink.js-*.tgz --strip-components=1 -C livelink.js
-    - cd livelink.samples
-  artifacts:
-    expire_in: 1 day
-    paths:
-      - livelink.samples/livelink.samples-*.tgz
-  rules:
-    - when: always
+    - !reference [.build, before_script]
 
 # DEPLOY
 js:livelink.core:deploy:
@@ -113,12 +105,11 @@ js:livelink.js:publish:
     - job: js:livelink.js:build
       artifacts: true
   before_script:
-    - tar -zxf livelink.js/livelink.js-*.tgz --strip-components=1 -C livelink.js
-    - cd livelink.js
     - !reference [.npm-regcreds, before_script]
     - npm config set @3dverse:registry="https://gitlab.com/api/v4/projects/${CI_PROJECT_ID}/packages/npm/" --userconfig=".npmrc"
     - npm config set //gitlab.com/api/v4/projects/${CI_PROJECT_ID}/packages/npm/:_authToken="${CI_JOB_TOKEN}" --userconfig=".npmrc"
-    - npm pkg delete scripts.preinstall
+    - tar -zxf livelink.js/livelink.js-*.tgz --strip-components=1 -C livelink.js
+    - cd livelink.js
     - npm pkg delete private
   script:
     - npm publish
