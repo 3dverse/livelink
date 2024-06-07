@@ -87,6 +87,10 @@ export class WebCodecsDecoder implements EncodedFrameConsumer {
         codec: CodecType;
         frame_dimensions: Vec2i;
     }): Promise<VideoDecoderSupport | null> {
+        if (typeof VideoDecoder === "undefined") {
+            return null;
+        }
+
         if (!WebCodecsDecoder._codecs.has(codec)) {
             return null;
         }
