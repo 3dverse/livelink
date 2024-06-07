@@ -1,7 +1,7 @@
 import { useRef } from "react";
 import Canvas from "../../components/Canvas";
 import * as Livelink from "livelink.js";
-import { Button, Input, Range } from "react-daisyui";
+import { Input, Range } from "react-daisyui";
 import { useLivelinkInstance } from "../../hooks/useLivelinkInstance";
 import { useSmartObject } from "../../hooks/useSmartObject";
 

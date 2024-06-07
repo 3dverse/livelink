@@ -14,7 +14,7 @@ export async function findSmartObject(instance: Livelink, manifest: Manifest, ob
         return { isLoading: true, entity: null };
     }
 
-    const entity = await instance.findEntity(Entity, {
+    const entity = await instance.scene.findEntity(Entity, {
         entity_uuid: manifest[objectName],
     });
 

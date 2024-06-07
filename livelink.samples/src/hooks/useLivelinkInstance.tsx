@@ -118,7 +118,7 @@ async function configureClient(
                 const CameraConstructor = (camera_constructors[i] as typeof Camera) || DefaultCamera;
                 return await instance.newCamera(CameraConstructor, "MyCam_" + i++, viewport);
             } else {
-                const camera = await instance.findEntity(Camera, { entity_uuid: camera_constructors[i] as UUID });
+                const camera = await instance.scene.findEntity(Camera, { entity_uuid: camera_constructors[i] as UUID });
                 if (camera) {
                     camera.viewport = viewport;
                     viewport.camera = camera;

@@ -1,6 +1,6 @@
-import { LivelinkCore } from "./LivelinkCore";
 import { EditorEntity, EntityBase } from "../_prebuild/types";
 import { ComponentHash, type ComponentType } from "../_prebuild/types/components";
+import { Scene } from "./Scene";
 
 /**
  *
@@ -55,7 +55,7 @@ export class Entity extends EntityBase {
     /**
      *
      */
-    constructor(protected readonly _core: LivelinkCore) {
+    constructor(private readonly _scene: Scene) {
         super();
     }
 
@@ -104,9 +104,9 @@ export class Entity extends EntityBase {
             throw new Error("Entity is already instantiated");
         }
 
-        const editor_entity = await this._core.createEntity({ entity: this });
+        const editor_entity = await this._scene._createEntity({ entity: this });
         this._parse({ editor_entity });
-        this._core.entity_registry.add({ entity: this });
+        this._scene.entity_registry.add({ entity: this });
     }
 
     /**
@@ -141,7 +141,7 @@ export class Entity extends EntityBase {
     _tryMarkingAsDirty({ component_type }: { component_type: ComponentType }): boolean {
         if (this.isInstantiated()) {
             // Register to appropriate dirty list
-            this._core.entity_registry._addEntityToUpdate({ component_type, entity: this });
+            this._scene.entity_registry._addEntityToUpdate({ component_type, entity: this });
             return true;
         }
 
@@ -154,7 +154,7 @@ export class Entity extends EntityBase {
     _tryMarkingAsDeleted({ component_type }: { component_type: ComponentType }): boolean {
         if (this.isInstantiated()) {
             // Register to appropriate dirty list
-            this._core.entity_registry._addEntityToUpdate({ component_type, entity: this });
+            this._scene.entity_registry._addEntityToUpdate({ component_type, entity: this });
             return true;
         }
 

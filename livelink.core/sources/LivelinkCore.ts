@@ -1,6 +1,3 @@
-import { GatewayController } from "./controllers/GatewayController";
-import { EditorController } from "./controllers/EditorController";
-import { Session } from "./Session";
 import type {
     ClientConfig,
     ClientConfigResponse,
@@ -11,9 +8,12 @@ import type {
     ScreenSpaceRayResult,
     UUID,
 } from "../_prebuild/types";
-import { Entity } from "./Entity";
-import { EntityRegistry } from "./EntityRegistry";
 import { Vec2i } from "./types";
+import { GatewayController } from "./controllers/GatewayController";
+import { EditorController } from "./controllers/EditorController";
+import { Session } from "./Session";
+import { Scene } from "./Scene";
+import { Entity } from "./Entity";
 
 /**
  * The LivelinkCore interface.
@@ -28,9 +28,14 @@ import { Vec2i } from "./types";
  */
 export class LivelinkCore extends EventTarget {
     /**
-     * Registry of entities discovered until now.
+     *
      */
-    public readonly entity_registry = new EntityRegistry();
+    public readonly session: Session;
+
+    /**
+     *
+     */
+    public readonly scene = new Scene(this);
 
     /**
      * Holds access to the gateway.
@@ -55,8 +60,9 @@ export class LivelinkCore extends EventTarget {
     /**
      *
      */
-    protected constructor(public readonly session: Session) {
+    protected constructor(session: Session) {
         super();
+        this.session = session;
     }
 
     /**
@@ -78,13 +84,13 @@ export class LivelinkCore extends EventTarget {
             client,
         });
 
-        this.entity_registry._configureComponentSerializer({
+        this.scene.entity_registry._configureComponentSerializer({
             component_descriptors: connectConfirmation.components,
         });
 
         this._editor.addEventListener("entities-updated", (e: CustomEvent<Record<UUID, EntityUpdatedEvent>>) => {
             for (const entity_euid in e.detail) {
-                this.entity_registry._updateEntityFromEvent({
+                this.scene.entity_registry._updateEntityFromEvent({
                     entity_euid,
                     updated_components: e.detail[entity_euid].updatedComponents,
                 });
@@ -166,22 +172,29 @@ export class LivelinkCore extends EventTarget {
     /**
      *
      */
+    async _findEntitiesByEUID({ entity_uuid }: { entity_uuid: UUID }): Promise<Array<EditorEntity>> {
+        return this._editor.findEntitiesByEUID({ entity_uuid });
+    }
+
+    /**
+     *
+     */
     startUpdateLoop({ fps }: { fps: number }) {
         this._update_interval = setInterval(() => {
-            this.entity_registry.advanceFrame({ dt: 1 / fps });
+            this.scene.entity_registry.advanceFrame({ dt: 1 / fps });
 
-            const msg = this.entity_registry._getEntitiesToUpdate();
+            const msg = this.scene.entity_registry._getEntitiesToUpdate();
             if (msg !== null) {
                 this._gateway.updateEntities({ updateEntitiesFromJsonMessage: msg });
-                this.entity_registry._clearUpdateList();
+                this.scene.entity_registry._clearUpdateList();
             }
         }, 1000 / fps);
 
         this._broadcast_interval = setInterval(() => {
-            const msg = this.entity_registry._getEntitiesToBroadcast();
+            const msg = this.scene.entity_registry._getEntitiesToBroadcast();
             if (msg !== null) {
                 this._editor.updateComponents(msg);
-                this.entity_registry._clearBroadcastList();
+                this.scene.entity_registry._clearBroadcastList();
             }
         }, 1000);
     }

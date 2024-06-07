@@ -9,9 +9,9 @@ import {
     FrameData,
     CodecType,
     Entity,
-    ScriptEvent,
     ViewportConfig,
     RTID,
+    Scene,
 } from "@livelink.core";
 
 import type { EncodedFrameConsumer } from "./decoders/EncodedFrameConsumer";
@@ -37,7 +37,7 @@ export class Livelink extends LivelinkCore {
      * @returns {Promise<Livelink>}   A promise to a Livelink instance holding a
      *                                session with the specified scene
      *
-     * @throws {Error} Session isues
+     * @throws {Error} Session issues
      * @throws {Error} Gateway issues
      * @throws {Error} SEB issues
      */
@@ -125,7 +125,7 @@ export class Livelink extends LivelinkCore {
      */
     private constructor(public readonly session: Session) {
         super(session);
-        this._gateway.addEventListener("on-script-event-received", this._onScriptEventReceived);
+        this._gateway.addEventListener("on-script-event-received", this.scene._onScriptEventReceived);
     }
 
     /**
@@ -136,6 +136,7 @@ export class Livelink extends LivelinkCore {
             this._gateway.removeEventListener("on-frame-received", this._onFrameReceived);
             this._frame_consumer.release();
         }
+        this._gateway.removeEventListener("on-script-event-received", this.scene._onScriptEventReceived);
 
         await super.close();
     }
@@ -256,28 +257,12 @@ export class Livelink extends LivelinkCore {
     /**
      *
      */
-    async newEntity<EntityType extends Entity>(
-        entity_type: { new (_: LivelinkCore): EntityType },
-        name: string,
-    ): Promise<EntityType> {
-        let entity = new entity_type(this).init(name);
-        entity = new Proxy(entity, Entity.handler) as EntityType;
-        entity.auto_update = "off";
-        entity.onCreate();
-        entity.auto_update = "on";
-        await entity.instantiate();
-        return entity;
-    }
-
-    /**
-     *
-     */
     async newCamera<CameraType extends Camera>(
-        camera_type: { new (c: LivelinkCore): CameraType },
+        camera_type: { new (_: Scene): CameraType },
         name: string,
         viewport: Viewport,
     ): Promise<CameraType> {
-        let camera = new camera_type(this).init(name);
+        let camera = new camera_type(this.scene).init(name);
         camera = new Proxy(camera, Entity.handler) as CameraType;
         viewport.camera = camera;
         camera.viewport = viewport;
@@ -287,59 +272,4 @@ export class Livelink extends LivelinkCore {
         await camera.instantiate();
         return camera;
     }
-
-    /**
-     *
-     */
-    async findEntity<EntityType extends Entity>(
-        entity_type: { new (_: LivelinkCore): EntityType },
-        {
-            entity_uuid,
-        }: {
-            entity_uuid: UUID;
-        },
-    ): Promise<EntityType | null> {
-        const editor_entities = await this._editor.findEntitiesByEUID({
-            entity_uuid,
-        });
-
-        if (editor_entities.length === 0) {
-            return null;
-        }
-
-        const entities = editor_entities.map(
-            e => new Proxy(new entity_type(this).init(e), Entity.handler) as EntityType,
-        );
-
-        for (const entity of entities) {
-            this.entity_registry.add({ entity });
-        }
-
-        return entities[0];
-    }
-
-    /**
-     *
-     */
-    private _onScriptEventReceived = (e: Event) => {
-        const event = (e as CustomEvent<ScriptEvent>).detail;
-
-        const entity = this.entity_registry.get({
-            entity_rtid: event.emitter_rtid,
-        });
-
-        if (!entity) {
-            return;
-        }
-
-        switch (event.event_name) {
-            case "7a8cc05e-8659-4b23-99d1-1352d13e2020/enter_trigger":
-                entity.onTriggerEntered();
-                break;
-
-            case "7a8cc05e-8659-4b23-99d1-1352d13e2020/exit_trigger":
-                entity.onTriggerExited();
-                break;
-        }
-    };
 }
