@@ -94,15 +94,12 @@ export default function QuadrupleCanvas() {
     const canvasRef4 = useRef<HTMLCanvasElement>(null);
 
     const { connect } = useLivelinkInstance({
-        token: "public_p54ra95AMAnZdTel",
         canvas_refs: [canvasRef1, canvasRef2, canvasRef3, canvasRef4],
         camera_constructors: [DefaultCamera, MPRCamera, MPRCamera, MPRCamera],
     });
 
     useEffect(() => {
-        connect({
-            scene_id: "34bddfef-cb5c-45ce-b4e4-5d271ba0dcf1",
-        });
+        connect({ scene_id: "34bddfef-cb5c-45ce-b4e4-5d271ba0dcf1", token: "public_p54ra95AMAnZdTel" });
     }, []);
 
     return (

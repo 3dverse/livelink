@@ -21,10 +21,7 @@ export default function Trigger() {
     const onTriggerEntered = useCallback(() => setTriggerState("Entered"), [setTriggerState]);
     const onTriggerExited = useCallback(() => setTriggerState("Exited"), [setTriggerState]);
 
-    const { instance, connect, disconnect } = useLivelinkInstance({
-        canvas_refs: [canvasRef],
-        token: "public_p54ra95AMAnZdTel",
-    });
+    const { instance, connect, disconnect } = useLivelinkInstance({ canvas_refs: [canvasRef] });
 
     const trigger = useSmartObject({ instance, manifest: SmartObjectManifest, smart_object: "MyTrigger" });
 
@@ -65,9 +62,7 @@ export default function Trigger() {
         if (instance) {
             disconnect();
         } else if (canvasRef.current) {
-            connect({
-                scene_id: "730bed3e-b4d3-48eb-8cf7-65a86fe68a42",
-            });
+            connect({ scene_id: "730bed3e-b4d3-48eb-8cf7-65a86fe68a42", token: "public_p54ra95AMAnZdTel" });
         }
     };
 

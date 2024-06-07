@@ -156,13 +156,13 @@ export default function ControllerEffects() {
     const { connect } = useLivelinkInstance({
         canvas_refs: [canvasRef1, canvasRef2],
         camera_constructors: [DefaultCamera, VanillaCamera],
-        token: "public_p54ra95AMAnZdTel",
     });
 
     useEffect(() => {
         (async () => {
             const connection = await connect({
                 scene_id: "15e95136-f9b7-425d-8518-d73dab5589b7",
+                token: "public_p54ra95AMAnZdTel",
             });
             const { cameras } = connection!;
             cameraControls.current = (cameras[0] as DefaultCamera).cameraControls;

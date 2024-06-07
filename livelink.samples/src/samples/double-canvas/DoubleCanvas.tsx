@@ -8,13 +8,10 @@ export default function DoubleCanvas() {
     const canvasRef1 = useRef<HTMLCanvasElement>(null);
     const canvasRef2 = useRef<HTMLCanvasElement>(null);
 
-    const { connect } = useLivelinkInstance({
-        canvas_refs: [canvasRef1, canvasRef2],
-        token: "public_p54ra95AMAnZdTel",
-    });
+    const { connect } = useLivelinkInstance({ canvas_refs: [canvasRef1, canvasRef2] });
 
     useEffect(() => {
-        connect({ scene_id: "e7d69f14-d18e-446b-8df3-cbd24e10fa92" });
+        connect({ scene_id: "e7d69f14-d18e-446b-8df3-cbd24e10fa92", token: "public_p54ra95AMAnZdTel" });
     }, []);
 
     return (

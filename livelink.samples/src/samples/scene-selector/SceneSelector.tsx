@@ -14,17 +14,14 @@ export default function SceneSelector() {
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const [scene_id, setSceneId] = useState("default");
 
-    const { instance, connect, disconnect } = useLivelinkInstance({
-        canvas_refs: [canvasRef],
-        token: "public_p54ra95AMAnZdTel",
-    });
+    const { instance, connect, disconnect } = useLivelinkInstance({ canvas_refs: [canvasRef] });
 
     useEffect(() => {
         if (instance) {
             disconnect();
         }
         if (scene_id !== "default") {
-            connect({ scene_id });
+            connect({ scene_id, token: "public_p54ra95AMAnZdTel" });
         }
     }, [scene_id]);
 

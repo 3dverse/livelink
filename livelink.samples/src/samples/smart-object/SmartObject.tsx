@@ -30,10 +30,7 @@ function hexToRgb(h: string): [number, number, number] {
 export default function SmartObject() {
     const canvasRef = useRef<HTMLCanvasElement>(null);
 
-    const { instance, connect, disconnect } = useLivelinkInstance({
-        canvas_refs: [canvasRef],
-        token: "public_p54ra95AMAnZdTel",
-    });
+    const { instance, connect, disconnect } = useLivelinkInstance({ canvas_refs: [canvasRef] });
 
     const light = useSmartObject({ instance, manifest: SmartObjectManifest, smart_object: "MyLight" });
 
@@ -41,9 +38,7 @@ export default function SmartObject() {
         if (instance) {
             disconnect();
         } else {
-            await connect({
-                scene_id: "15e95136-f9b7-425d-8518-d73dab5589b7",
-            });
+            await connect({ scene_id: "15e95136-f9b7-425d-8518-d73dab5589b7", token: "public_p54ra95AMAnZdTel" });
         }
     };
 

@@ -9,18 +9,13 @@ export default function Collaborators() {
 
     const [clients, setClients] = useState<Array<string>>([]);
 
-    const { instance, connect, disconnect } = useLivelinkInstance({
-        canvas_refs: [canvasRef],
-        token: "public_p54ra95AMAnZdTel",
-    });
+    const { instance, connect, disconnect } = useLivelinkInstance({ canvas_refs: [canvasRef] });
 
     const toggleConnection = async () => {
         if (instance) {
             disconnect();
         } else if (canvasRef.current) {
-            await connect({
-                scene_id: "15e95136-f9b7-425d-8518-d73dab5589b7",
-            });
+            await connect({ scene_id: "15e95136-f9b7-425d-8518-d73dab5589b7", token: "public_p54ra95AMAnZdTel" });
         }
     };
 

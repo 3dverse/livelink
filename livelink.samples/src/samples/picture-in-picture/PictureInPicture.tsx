@@ -19,12 +19,11 @@ export default function PictureInPicture() {
 
     const { instance, connect } = useLivelinkInstance({
         canvas_refs: [canvasRef1, canvasRef2],
-        token: "public_p54ra95AMAnZdTel",
         camera_constructors: [DefaultCamera, "b6f3ddc0-cd50-4ab1-be71-4c28772dc540"],
     });
 
     useEffect(() => {
-        connect({ scene_id: "7e408a29-6982-4e2b-a93c-fb3872075033" }).then(
+        connect({ scene_id: "7e408a29-6982-4e2b-a93c-fb3872075033", token: "public_p54ra95AMAnZdTel" }).then(
             (v: { instance: Livelink; cameras: Array<Camera | null> } | null) => {
                 if (v && v.cameras[0] !== null) {
                     const d = v.cameras[0].camera?.dataJSON as {

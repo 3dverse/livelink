@@ -7,18 +7,13 @@ import { useLivelinkInstance } from "../../hooks/useLivelinkInstance";
 export default function SimpleCanvas() {
     const canvasRef = useRef<HTMLCanvasElement>(null);
 
-    const { instance, connect, disconnect } = useLivelinkInstance({
-        canvas_refs: [canvasRef],
-        token: "public_p54ra95AMAnZdTel",
-    });
+    const { instance, connect, disconnect } = useLivelinkInstance({ canvas_refs: [canvasRef] });
 
     const toggleConnection = async () => {
         if (instance) {
             disconnect();
         } else if (canvasRef.current) {
-            connect({
-                scene_id: "15e95136-f9b7-425d-8518-d73dab5589b7",
-            });
+            connect({ scene_id: "15e95136-f9b7-425d-8518-d73dab5589b7", token: "public_p54ra95AMAnZdTel" });
         }
     };
 

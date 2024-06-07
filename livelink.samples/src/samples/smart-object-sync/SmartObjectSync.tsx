@@ -37,19 +37,13 @@ export default function SmartObjectSync() {
         instance: instance1,
         connect: connect1,
         disconnect: disconnect1,
-    } = useLivelinkInstance({
-        canvas_refs: [canvasRef1],
-        token: "public_p54ra95AMAnZdTel",
-    });
+    } = useLivelinkInstance({ canvas_refs: [canvasRef1] });
 
     const {
         instance: instance2,
         connect: connect2,
         disconnect: disconnect2,
-    } = useLivelinkInstance({
-        canvas_refs: [canvasRef2],
-        token: "public_p54ra95AMAnZdTel",
-    });
+    } = useLivelinkInstance({ canvas_refs: [canvasRef2] });
 
     const light1 = useSmartObject({ instance: instance1, manifest: SmartObjectManifest, smart_object: "MyLight" });
     const light2 = useSmartObject({ instance: instance2, manifest: SmartObjectManifest, smart_object: "MyLight" });
@@ -62,9 +56,7 @@ export default function SmartObjectSync() {
             if (instance) {
                 disconnect();
             } else {
-                await connect({
-                    scene_id: "15e95136-f9b7-425d-8518-d73dab5589b7",
-                });
+                await connect({ scene_id: "15e95136-f9b7-425d-8518-d73dab5589b7", token: "public_p54ra95AMAnZdTel" });
             }
         }
     };
