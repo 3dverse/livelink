@@ -78,37 +78,18 @@ async function configureClient(
 
     instance.addViewports({ viewports });
 
-    const webcodec = await WebCodecsDecoder.findAppropriatedCodec({
-        frame_dimensions: instance.remote_rendering_surface.dimensions,
-    });
-
-    const client_config = {
-        remote_canvas_size: instance.remote_rendering_surface.dimensions,
-        encoder_config: {
-            codec: webcodec || CodecType.h264,
-            profile: 1,
-            frame_rate: 60,
-            lossy: true,
-        },
-        supported_devices: {
-            keyboard: true,
-            mouse: true,
-            gamepad: true,
-            hololens: false,
-            touchscreen: false,
-        },
-    };
+    const webcodec = await WebCodecsDecoder.findSupportedCodec();
 
     // Step 1: configure the client on the renderer side, this informs the
     //         renderer on the client canvas size and available input devices
     //         and most importantly activates the session.
-    await instance.configureClient({ client_config });
+    await instance.configureRemoteServer({ codec: webcodec || CodecType.h264 });
 
     // Step 2: decode received frames and draw them on the canvas.
     await instance.installFrameConsumer({
         frame_consumer: webcodec
-            ? new WebCodecsDecoder(instance.remote_rendering_surface)
-            : new SoftwareDecoder(instance.remote_rendering_surface),
+            ? new WebCodecsDecoder(instance.default_decoded_frame_consumer)
+            : new SoftwareDecoder(instance.default_decoded_frame_consumer),
     });
 
     // Step 3: inform the renderer of which camera to use with which viewport.

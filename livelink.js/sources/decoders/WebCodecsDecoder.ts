@@ -62,13 +62,9 @@ export class WebCodecsDecoder implements EncodedFrameConsumer {
     /**
      *
      */
-    static async findAppropriatedCodec({ frame_dimensions }: { frame_dimensions: Vec2i }): Promise<CodecType | null> {
+    static async findSupportedCodec(): Promise<CodecType | null> {
         for (const codec of this._codecs.keys()) {
-            const supportedConfig = await WebCodecsDecoder._findSupportedConfig({
-                codec,
-                frame_dimensions,
-            });
-
+            const supportedConfig = await WebCodecsDecoder._findSupportedConfig({ codec });
             if (supportedConfig) {
                 return codec;
             }
@@ -85,7 +81,7 @@ export class WebCodecsDecoder implements EncodedFrameConsumer {
         frame_dimensions,
     }: {
         codec: CodecType;
-        frame_dimensions: Vec2i;
+        frame_dimensions?: Vec2i;
     }): Promise<VideoDecoderSupport | null> {
         if (typeof VideoDecoder === "undefined") {
             return null;
@@ -98,8 +94,8 @@ export class WebCodecsDecoder implements EncodedFrameConsumer {
         const codecs = WebCodecsDecoder._codecs.get(codec)!;
         const config: VideoDecoderConfig = {
             codec: "",
-            codedWidth: frame_dimensions[0],
-            codedHeight: frame_dimensions[1],
+            codedWidth: frame_dimensions?.[0],
+            codedHeight: frame_dimensions?.[1],
             // Forcing software decoding for H264, as hardware decoding with H264 has delay issues.
             hardwareAcceleration: CodecType.h264 ? "prefer-software" : "prefer-hardware",
             optimizeForLatency: true,

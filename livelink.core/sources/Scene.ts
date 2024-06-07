@@ -113,6 +113,6 @@ export class Scene extends EventTarget {
      * @internal
      */
     async _createEntity({ entity }: { entity: Entity }): Promise<EditorEntity> {
-        return this.#core.createEntity({ entity });
+        return this.#core._createEntity({ entity });
     }
 }

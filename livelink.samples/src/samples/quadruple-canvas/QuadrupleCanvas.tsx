@@ -26,8 +26,8 @@ class MPRCamera extends Camera {
             dataJSON: {},
         };
         this.orthographic_lens = {
-            bottom: -1,
-            top: 1,
+            bottom: 1,
+            top: -1,
             left: -ar,
             right: ar,
             zNear: -100,
@@ -46,8 +46,8 @@ class MPRCamera extends Camera {
         const camera = new THREE.OrthographicCamera(
             this.orthographic_lens!.left,
             this.orthographic_lens!.right,
-            this.orthographic_lens!.bottom,
             this.orthographic_lens!.top,
+            this.orthographic_lens!.bottom,
             this.orthographic_lens!.zNear,
             this.orthographic_lens!.zFar,
         );

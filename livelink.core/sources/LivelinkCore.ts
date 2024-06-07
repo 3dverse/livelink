@@ -110,7 +110,7 @@ export abstract class LivelinkCore extends EventTarget {
     /**
      * Closes the connections to the gateway and the editor.
      */
-    protected async close() {
+    protected async disconnect() {
         if (this.#update_interval !== 0) {
             clearInterval(this.#update_interval);
         }
@@ -129,6 +129,35 @@ export abstract class LivelinkCore extends EventTarget {
     }
 
     /**
+     *
+     */
+    protected startUpdateLoop({
+        updatesPerSecond = 30,
+        broadcastsPerSecond = 1,
+    }: {
+        updatesPerSecond?: number;
+        broadcastsPerSecond?: number;
+    }) {
+        this.#update_interval = setInterval(() => {
+            this.scene.entity_registry.advanceFrame({ dt: 1 / updatesPerSecond });
+
+            const msg = this.scene.entity_registry._getEntitiesToUpdate();
+            if (msg !== null) {
+                this.#gateway.updateEntities({ updateEntitiesFromJsonMessage: msg });
+                this.scene.entity_registry._clearUpdateList();
+            }
+        }, 1000 / updatesPerSecond);
+
+        this.#broadcast_interval = setInterval(() => {
+            const msg = this.scene.entity_registry._getEntitiesToBroadcast();
+            if (msg !== null) {
+                this.#editor.updateComponents(msg);
+                this.scene.entity_registry._clearBroadcastList();
+            }
+        }, 1000 / broadcastsPerSecond);
+    }
+
+    /**
      * Send the configuration requested by the client.
      */
     protected async configureClient({ client_config }: { client_config: ClientConfig }): Promise<ClientConfigResponse> {
@@ -142,6 +171,7 @@ export abstract class LivelinkCore extends EventTarget {
     #onFrameReceived = (e: Event) => {
         const event = e as CustomEvent<FrameData>;
         this.session._updateClients({ client_ids: event.detail.meta_data.clients.map(client => client.client_id) });
+        //TODO: pass only the frame and not the meta data
         this.onFrameReceived({ frame_data: event.detail });
     };
 
@@ -195,7 +225,7 @@ export abstract class LivelinkCore extends EventTarget {
     /**
      *
      */
-    async createEntity({ entity }: { entity: Entity }): Promise<EditorEntity> {
+    async _createEntity({ entity }: { entity: Entity }): Promise<EditorEntity> {
         const entities = await this.#editor.spawnEntity({ entity });
         return entities[0];
     }
@@ -246,23 +276,12 @@ export abstract class LivelinkCore extends EventTarget {
     /**
      *
      */
-    startUpdateLoop({ fps }: { fps: number }) {
-        this.#update_interval = setInterval(() => {
-            this.scene.entity_registry.advanceFrame({ dt: 1 / fps });
-
-            const msg = this.scene.entity_registry._getEntitiesToUpdate();
-            if (msg !== null) {
-                this.#gateway.updateEntities({ updateEntitiesFromJsonMessage: msg });
-                this.scene.entity_registry._clearUpdateList();
-            }
-        }, 1000 / fps);
-
-        this.#broadcast_interval = setInterval(() => {
-            const msg = this.scene.entity_registry._getEntitiesToBroadcast();
-            if (msg !== null) {
-                this.#editor.updateComponents(msg);
-                this.scene.entity_registry._clearBroadcastList();
-            }
-        }, 1000);
+    startSimulation(): void {
+        this.fireEvent({
+            event_map_id: "00000000-0000-0000-0000-000000000000",
+            event_name: "start_simulation",
+            entities: [],
+            data_object: {},
+        });
     }
 }

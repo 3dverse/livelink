@@ -32,6 +32,11 @@ export type SessionSelector = ({ sessions }: { sessions: Array<SessionInfo> }) =
  */
 export class Session extends EventTarget {
     /**
+     *
+     */
+    private _created: boolean = false;
+
+    /**
      * Various info on the session.
      */
     private _session_info: SessionInfo | null = null;
@@ -54,6 +59,9 @@ export class Session extends EventTarget {
     /**
      *
      */
+    get has_been_created() {
+        return this._created;
+    }
     get scene_id() {
         return this._scene_id;
     }
@@ -116,6 +124,7 @@ export class Session extends EventTarget {
         }
 
         this._session_info = (await res.json()) as SessionInfo;
+        this._created = true;
         return this;
     }
 

@@ -4,20 +4,19 @@ import {
     ClientConfig,
     SessionInfo,
     UUID,
-    Vec2i,
     SessionSelector,
     FrameData,
     CodecType,
     Entity,
-    ViewportConfig,
-    RTID,
     Scene,
+    ClientConfigResponse,
 } from "@livelink.core";
 
 import type { EncodedFrameConsumer } from "./decoders/EncodedFrameConsumer";
 import { RemoteRenderingSurface } from "./RemoteRenderingSurface";
 import { Camera } from "./Camera";
 import { Viewport } from "./Viewport";
+import { DecodedFrameConsumer } from "./decoders/DecodedFrameConsumer";
 
 /**
  * The Livelink interface.
@@ -111,12 +110,12 @@ export class Livelink extends LivelinkCore {
      * User provided frame consumer designed to handle encoded frames from the
      * remote viewer.
      */
-    private _frame_consumer: EncodedFrameConsumer | null = null;
+    private _encoded_frame_consumer: EncodedFrameConsumer | null = null;
 
     /**
      *
      */
-    get remote_rendering_surface(): RemoteRenderingSurface {
+    get default_decoded_frame_consumer(): DecodedFrameConsumer {
         return this._remote_rendering_surface;
     }
 
@@ -131,25 +130,42 @@ export class Livelink extends LivelinkCore {
      *
      */
     async close() {
-        if (this._frame_consumer) {
-            this._frame_consumer.release();
+        if (this._encoded_frame_consumer) {
+            this._encoded_frame_consumer.release();
         }
 
-        await super.close();
+        await super.disconnect();
     }
 
     /**
      *
      */
     addViewports({ viewports }: { viewports: Array<Viewport> }) {
-        this.remote_rendering_surface.addViewports({ viewports });
+        this._remote_rendering_surface.addViewports({ viewports });
     }
 
     /**
      *
      */
-    async configureClient({ client_config }: { client_config: ClientConfig }) {
-        const res = await super.configureClient({ client_config });
+    async configureRemoteServer({ codec }: { codec: CodecType }): Promise<ClientConfigResponse> {
+        const client_config: ClientConfig = {
+            remote_canvas_size: this._remote_rendering_surface.dimensions,
+            encoder_config: {
+                codec,
+                profile: 1,
+                frame_rate: 60,
+                lossy: true,
+            },
+            supported_devices: {
+                keyboard: true,
+                mouse: true,
+                gamepad: true,
+                hololens: false,
+                touchscreen: false,
+            },
+        };
+
+        const res = await this.configureClient({ client_config });
         this._codec = res.codec;
         return res;
     }
@@ -169,9 +185,9 @@ export class Livelink extends LivelinkCore {
             throw new Error("Client not configured.");
         }
 
-        this._frame_consumer = await frame_consumer.configure({
+        this._encoded_frame_consumer = await frame_consumer.configure({
             codec: this._codec,
-            frame_dimensions: this.remote_rendering_surface.dimensions,
+            frame_dimensions: this._remote_rendering_surface.dimensions,
         });
     }
 
@@ -179,7 +195,7 @@ export class Livelink extends LivelinkCore {
      *
      */
     protected onFrameReceived = ({ frame_data }: { frame_data: FrameData }) => {
-        this._frame_consumer!.consumeEncodedFrame({
+        this._encoded_frame_consumer!.consumeEncodedFrame({
             encoded_frame: frame_data.encoded_frame,
         });
     };
@@ -192,20 +208,9 @@ export class Livelink extends LivelinkCore {
             throw new Error("The Livelink instance is not configured yet");
         }
 
-        this.remote_rendering_surface.init();
+        this._remote_rendering_surface.init();
         this.resume();
-    }
-
-    /**
-     *
-     */
-    startSimulation(): void {
-        this.fireEvent({
-            event_map_id: "00000000-0000-0000-0000-000000000000",
-            event_name: "start_simulation",
-            entities: [],
-            data_object: {},
-        });
+        this.startUpdateLoop({});
     }
 
     /**
