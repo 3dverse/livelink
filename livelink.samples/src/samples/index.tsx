@@ -1,5 +1,6 @@
 import Collaborators from "./collaborators/Collaborators";
 import ControllerEffects from "./controller-effects/ControllerEffects";
+import ConveyorBelt from "./conveyor-belt/ConveyorBelt";
 import DoubleCanvas from "./double-canvas/DoubleCanvas";
 import MultiSession from "./multi-session/MultiSession";
 import PictureInPicture from "./picture-in-picture/PictureInPicture";
@@ -33,6 +34,7 @@ export const SAMPLES = [
         list: [
             { title: "Trigger", path: "trigger", element: <Trigger /> },
             { title: "Controller Effects", path: "controller-effects", element: <ControllerEffects /> },
+            { title: "Conveyor Belt", path: "conveyor-belt", element: <ConveyorBelt /> },
         ],
     },
     {
