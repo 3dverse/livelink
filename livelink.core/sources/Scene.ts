@@ -78,6 +78,11 @@ export class Scene extends EventTarget {
             entity_uuid: UUID;
         },
     ): Promise<EntityType | null> {
+        const foundEntities = this.entity_registry.find({ entity_euid: entity_uuid });
+        if (foundEntities.length > 0) {
+            return foundEntities[0] as EntityType;
+        }
+
         const editor_entities = await this.#core._findEntitiesByEUID({
             entity_uuid,
         });
@@ -100,18 +105,21 @@ export class Scene extends EventTarget {
             return;
         }
 
-        const entity = await this.getEntity({ entity_rtid: event.emitter_rtid });
-        if (!entity) {
+        const emitter = await this.getEntity({ entity_rtid: event.emitter_rtid });
+        if (!emitter) {
             return;
         }
 
+        const dataObject = event.data_object as { hEntity: { linkage: Array<UUID>; originalEUID: UUID } };
+        const entity = await this.findEntity(Entity, { entity_uuid: dataObject.hEntity.originalEUID });
+
         switch (event.event_name) {
             case "7a8cc05e-8659-4b23-99d1-1352d13e2020/enter_trigger":
-                entity.onTriggerEntered();
+                emitter.onTriggerEntered({ entity });
                 break;
 
             case "7a8cc05e-8659-4b23-99d1-1352d13e2020/exit_trigger":
-                entity.onTriggerExited();
+                emitter.onTriggerExited({ entity });
                 break;
         }
     };

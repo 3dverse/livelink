@@ -85,15 +85,15 @@ export class Entity extends EntityBase {
     /**
      *
      */
-    onTriggerEntered() {
-        this.dispatchEvent(new CustomEvent("trigger-entered"));
+    onTriggerEntered({ entity }: { entity: Entity }) {
+        this.dispatchEvent(new CustomEvent("trigger-entered", { detail: { entity } }));
     }
 
     /**
      *
      */
-    onTriggerExited() {
-        this.dispatchEvent(new CustomEvent("trigger-exited"));
+    onTriggerExited({ entity }: { entity: Entity }) {
+        this.dispatchEvent(new CustomEvent("trigger-exited", { detail: { entity } }));
     }
 
     /**
