@@ -37,7 +37,6 @@ export class ContextWebGL extends ContextProvider {
 
         const context = canvas.getContext(version);
         if (context === null) {
-            console.log(canvas);
             throw new Error(`Cannot create a ${version} context from canvas`);
         }
 
@@ -78,6 +77,14 @@ export class ContextWebGL extends ContextProvider {
      */
     refreshSize(): void {
         this._context.viewport(0, 0, this._canvas.width, this._canvas.height);
+    }
+
+    /**
+     *
+     */
+    release(): void {
+        const gl = this._context;
+        gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
     }
 
     /**

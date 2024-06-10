@@ -134,7 +134,7 @@ export class Livelink extends LivelinkCore {
             this._encoded_frame_consumer.release();
         }
 
-        this._remote_rendering_surface.cleanUp();
+        this._remote_rendering_surface.release();
 
         await super.disconnect();
     }

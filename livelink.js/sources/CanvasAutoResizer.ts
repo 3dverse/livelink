@@ -46,7 +46,7 @@ export class CanvasAutoResizer extends EventTarget {
     /**
      *
      */
-    cleanUp() {
+    release() {
         this._observer.disconnect();
     }
 

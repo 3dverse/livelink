@@ -123,8 +123,9 @@ export class Viewport extends EventTarget {
     /**
      *
      */
-    cleanUp() {
-        this._auto_resizer.cleanUp();
+    release() {
+        this._auto_resizer.release();
+        this._context.release();
     }
 
     /**

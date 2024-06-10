@@ -105,16 +105,16 @@ export class RemoteRenderingSurface implements DecodedFrameConsumer {
     /**
      *
      */
-    init() {
+    init(): void {
         this.#onViewportResized();
     }
 
     /**
      *
      */
-    cleanUp() {
+    release(): void {
         for (const v of this.#viewports) {
-            v.viewport.cleanUp();
+            v.viewport.release();
         }
     }
 

@@ -37,4 +37,11 @@ export class Context2D extends ContextProvider {
             this._canvas.height,
         );
     }
+
+    /**
+     *
+     */
+    release(): void {
+        this._context2D.reset();
+    }
 }

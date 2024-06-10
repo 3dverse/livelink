@@ -11,4 +11,9 @@ export abstract class ContextProvider {
      *
      */
     refreshSize(): void {}
+
+    /**
+     *
+     */
+    abstract release(): void;
 }
