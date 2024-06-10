@@ -240,6 +240,13 @@ export abstract class LivelinkCore extends EventTarget {
     /**
      *
      */
+    async _resolveAncestors({ entity_rtid }: { entity_rtid: RTID }): Promise<Array<EditorEntity>> {
+        return this.#editor.resolveAncestors({ entity_rtid });
+    }
+
+    /**
+     *
+     */
     updateAnimationSequenceState(params: {
         linker_rtid: RTID;
         animation_sequence_id: UUID;

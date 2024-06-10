@@ -29,7 +29,18 @@ export class Scene extends EventTarget {
     /**
      *
      */
-    getEntity({ entity_rtid }: { entity_rtid: RTID }): Entity | null {
+    async getEntity({ entity_rtid }: { entity_rtid: RTID }): Promise<Entity | null> {
+        if (entity_rtid === 0n) {
+            return null;
+        }
+
+        const entity = this.entity_registry.get({ entity_rtid });
+        if (entity) {
+            return entity;
+        }
+
+        const editor_entities = await this.#core._resolveAncestors({ entity_rtid });
+        this.#addEditorEntities(Entity, { editor_entities });
         return this.entity_registry.get({ entity_rtid });
     }
 
@@ -75,25 +86,21 @@ export class Scene extends EventTarget {
             return null;
         }
 
-        const entities = editor_entities.map(
-            e => new Proxy(new entity_type(this).init(e), Entity.handler) as EntityType,
-        );
-
-        for (const entity of entities) {
-            this.entity_registry.add({ entity });
-        }
-
+        const entities = this.#addEditorEntities(entity_type, { editor_entities });
         return entities[0];
     }
 
     /**
      * @internal
      */
-    _onScriptEventReceived = (e: Event) => {
+    _onScriptEventReceived = async (e: Event) => {
         const event = (e as CustomEvent<ScriptEvent>).detail;
 
-        const entity = this.getEntity({ entity_rtid: event.emitter_rtid });
+        if (event.emitter_rtid === 0n) {
+            return;
+        }
 
+        const entity = await this.getEntity({ entity_rtid: event.emitter_rtid });
         if (!entity) {
             return;
         }
@@ -114,5 +121,23 @@ export class Scene extends EventTarget {
      */
     async _createEntity({ entity }: { entity: Entity }): Promise<EditorEntity> {
         return this.#core._createEntity({ entity });
+    }
+
+    /**
+     *
+     */
+    #addEditorEntities<EntityType extends Entity>(
+        entity_type: { new (_: Scene): EntityType },
+        { editor_entities }: { editor_entities: Array<EditorEntity> },
+    ): Array<EntityType> {
+        const entities = editor_entities
+            .filter(editor_entity => this.entity_registry.get({ entity_rtid: BigInt(editor_entity.rtid) }) === null)
+            .map(e => new Proxy(new entity_type(this).init(e), Entity.handler) as EntityType);
+
+        for (const entity of entities) {
+            this.entity_registry.add({ entity });
+        }
+
+        return entities;
     }
 }

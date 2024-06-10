@@ -157,9 +157,9 @@ export class Viewport extends EventTarget {
     }
 
     /**
-     *
+     * @internal
      */
-    updateCanvasSize() {
+    _updateCanvasSize() {
         this._context.refreshSize();
         this.dispatchEvent(new Event("on-resized"));
     }

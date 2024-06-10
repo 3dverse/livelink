@@ -81,7 +81,7 @@ export class CanvasAutoResizer extends EventTarget {
             return;
         }
 
-        this._viewport.updateCanvasSize();
+        this._viewport._updateCanvasSize();
 
         super.dispatchEvent(
             new CustomEvent("on-resized", {

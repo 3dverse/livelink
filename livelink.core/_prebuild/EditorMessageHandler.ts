@@ -1,6 +1,6 @@
 import { ConnectConfirmation } from "./types/ConnectConfirmation";
 import { EditorConnection } from "./EditorConnection";
-import { UUID } from "../sources/types";
+import { RTID, UUID } from "../sources/types";
 import { MessageHandler } from "../sources/MessageHandler";
 import { EditorEntity, Entity, EntityUpdatedEvent, UpdateEntitiesCommand } from "../sources";
 
@@ -68,7 +68,7 @@ export class EditorMessageHandler extends MessageHandler<string, ResolverPayload
     /**
      *
      */
-    findEntitiesByEUID({ entity_uuid }: { entity_uuid: UUID }) {
+    findEntitiesByEUID({ entity_uuid }: { entity_uuid: UUID }): Promise<Array<EditorEntity>> {
         this._connection!.send({
             data: JSON.stringify({ type: "get-entities-by-euid", data: entity_uuid }),
         });
@@ -97,8 +97,21 @@ export class EditorMessageHandler extends MessageHandler<string, ResolverPayload
         throw new Error("Method not implemented.");
     }
 
+    /**
+     *
+     */
+    resolveAncestors({ entity_rtid }: { entity_rtid: RTID }): Promise<Array<EditorEntity>> {
+        this._connection!.send({
+            data: JSON.stringify({ type: "resolve-ancestors", data: entity_rtid.toString() }),
+        });
+
+        return this._makeMessageResolver<Array<EditorEntity>>({
+            channel_id: "resolve-ancestors",
+        });
+    }
+
     onResolveAncestors(data: any): void {
-        throw new Error("Method not implemented.");
+        this._getNextMessageResolver({ channel_id: "resolve-ancestors" }).resolve(data);
     }
 
     onFindEntitiesByNames(data: any): void {
