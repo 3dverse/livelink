@@ -21,9 +21,16 @@ type LivelinkResponse = { instance: Livelink; cameras: Array<Camera | null> };
 //------------------------------------------------------------------------------
 export function useLivelinkInstance({ views }: { views: Array<View> }): {
     instance: Livelink | null;
-    connect: ({ scene_id, token }: { scene_id: UUID; token: string }) => Promise<LivelinkResponse | null>;
+    connect: ({
+        scene_id,
+        token,
+        onConnected,
+    }: {
+        scene_id: UUID;
+        token: string;
+        onConnected?: ({ instance, cameras }: { instance: Livelink; cameras: Array<Camera | null> }) => void;
+    }) => Promise<LivelinkResponse | null>;
     disconnect: () => void;
-    onConnect?: (instance: Livelink) => void;
 } {
     const [instance, setInstance] = useState<Livelink | null>(null);
 
@@ -36,7 +43,15 @@ export function useLivelinkInstance({ views }: { views: Array<View> }): {
 
     return {
         instance,
-        connect: async ({ scene_id, token }: { scene_id: UUID; token: string }) => {
+        connect: async ({
+            scene_id,
+            token,
+            onConnected,
+        }: {
+            scene_id: UUID;
+            token: string;
+            onConnected?: ({ instance, cameras }: { instance: Livelink; cameras: Array<Camera | null> }) => void;
+        }): Promise<LivelinkResponse | null> => {
             if (views.some(v => v.canvas_ref.current === null)) {
                 return null;
             }
@@ -54,6 +69,7 @@ export function useLivelinkInstance({ views }: { views: Array<View> }): {
             );
 
             setInstance(instance);
+            onConnected?.({ instance, cameras });
             return { instance, cameras };
         },
         disconnect: () => setInstance(null),

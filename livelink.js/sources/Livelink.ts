@@ -149,6 +149,13 @@ export class Livelink extends LivelinkCore {
     /**
      *
      */
+    get viewports(): Array<Viewport> {
+        return this._remote_rendering_surface.viewports;
+    }
+
+    /**
+     *
+     */
     async configureRemoteServer({ codec }: { codec: CodecType }): Promise<ClientConfigResponse> {
         const client_config: ClientConfig = {
             remote_canvas_size: this._remote_rendering_surface.dimensions,

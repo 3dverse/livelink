@@ -49,6 +49,13 @@ export class RemoteRenderingSurface implements DecodedFrameConsumer {
     /**
      *
      */
+    get viewports(): Array<Viewport> {
+        return this.#viewports.map(v => v.viewport);
+    }
+
+    /**
+     *
+     */
     private get config(): Array<ViewportConfig> {
         return this.#viewports.map(({ viewport, offset }) => ({
             camera_rtid: viewport.camera!.rtid!,

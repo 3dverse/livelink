@@ -1,4 +1,4 @@
-import { HighlightMode, ScreenSpaceRayResult, type Vec2 } from "@livelink.core";
+import { HighlightMode, ScreenSpaceRayResult, type Vec2, Entity } from "@livelink.core";
 import { Livelink } from "./Livelink";
 import { CanvasAutoResizer } from "./CanvasAutoResizer";
 import { Camera } from "./Camera";
@@ -124,6 +124,7 @@ export class Viewport extends EventTarget {
      *
      */
     release() {
+        this.deactivatePicking();
         this._auto_resizer.release();
         this._context.release();
     }
@@ -138,22 +139,61 @@ export class Viewport extends EventTarget {
     /**
      *
      */
+    activatePicking() {
+        this._canvas.addEventListener("click", this.#onCanvasClicked);
+    }
+
+    /**
+     *
+     */
+    deactivatePicking() {
+        this._canvas.removeEventListener("click", this.#onCanvasClicked);
+    }
+
+    /**
+     *
+     */
+    #onCanvasClicked = async (e: MouseEvent) => {
+        const pos: Vec2 = [
+            e.offsetX / (this._canvas.clientWidth - this._canvas.clientLeft),
+            e.offsetY / (this._canvas.clientHeight - this._canvas.clientTop),
+        ];
+
+        const picked_entity = await this.castScreenSpaceRay({
+            pos,
+            mode: HighlightMode.HighlightAndDiscardOldSelection,
+        });
+
+        this.dispatchEvent(new CustomEvent("on-entity-picked", { detail: { picked_entity } }));
+    };
+
+    /**
+     *
+     */
     async castScreenSpaceRay({
         pos,
         mode = HighlightMode.None,
     }: {
         pos: Vec2;
         mode: HighlightMode;
-    }): Promise<ScreenSpaceRayResult | null> {
-        return this._camera && this._camera.rtid
-            ? await this.#core.castScreenSpaceRay({
-                  screenSpaceRayQuery: {
-                      camera_rtid: this._camera.rtid,
-                      pos,
-                      mode,
-                  },
-              })
-            : null;
+    }): Promise<Entity | null> {
+        if (!this._camera || !this._camera.rtid) {
+            return null;
+        }
+
+        const res = await this.#core.castScreenSpaceRay({
+            screenSpaceRayQuery: {
+                camera_rtid: this._camera.rtid,
+                pos,
+                mode,
+            },
+        });
+
+        if (res.entity_rtid === null) {
+            return null;
+        }
+
+        return await this.#core.scene.getEntity({ entity_rtid: res.entity_rtid });
     }
 
     /**
