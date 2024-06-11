@@ -1,4 +1,4 @@
-import { EditorEntity, RTID, ScriptEvent, UUID } from "../_prebuild/types";
+import { EditorEntity, EntityCreationOptions, RTID, ScriptEvent, UUID } from "../_prebuild/types";
 import { LivelinkCore } from "./LivelinkCore";
 import { EntityRegistry } from "./EntityRegistry";
 import { Entity } from "./Entity";
@@ -57,13 +57,14 @@ export class Scene extends EventTarget {
     async newEntity<EntityType extends Entity>(
         entity_type: { new (_: Scene): EntityType },
         name: string,
+        options?: EntityCreationOptions,
     ): Promise<EntityType> {
         let entity = new entity_type(this).init(name);
         entity = new Proxy(entity, Entity.handler) as EntityType;
         entity.auto_update = "off";
         entity.onCreate();
         entity.auto_update = "on";
-        await entity.instantiate();
+        await entity._instantiate(options);
         return entity;
     }
 
@@ -93,6 +94,18 @@ export class Scene extends EventTarget {
 
         const entities = this.#addEditorEntities(entity_type, { editor_entities });
         return entities[0];
+    }
+
+    /**
+     *
+     */
+    async deleteEntity({ entity }: { entity: Entity }): Promise<void> {
+        if (!entity.isInstantiated()) {
+            throw new Error("Cannot delete an entity that hasn't been instantiated");
+        }
+
+        await this.#core._deleteEntity({ entity_uuids: [entity.id] });
+        this.entity_registry.remove({ entity });
     }
 
     /**
@@ -127,8 +140,14 @@ export class Scene extends EventTarget {
     /**
      * @internal
      */
-    async _createEntity({ entity }: { entity: Entity }): Promise<EditorEntity> {
-        return this.#core._createEntity({ entity });
+    async _createEntity({
+        entity,
+        options,
+    }: {
+        entity: Entity;
+        options?: EntityCreationOptions;
+    }): Promise<EditorEntity> {
+        return this.#core._createEntity({ entity, options });
     }
 
     /**

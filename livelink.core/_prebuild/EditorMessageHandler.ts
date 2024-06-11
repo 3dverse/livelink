@@ -2,7 +2,8 @@ import { ConnectConfirmation } from "./types/ConnectConfirmation";
 import { EditorConnection } from "./EditorConnection";
 import { RTID, UUID } from "../sources/types";
 import { MessageHandler } from "../sources/MessageHandler";
-import { EditorEntity, Entity, EntityUpdatedEvent, UpdateEntitiesCommand } from "../sources";
+import { EditorEntity, EntityCreationOptions, EntityUpdatedEvent, UpdateEntitiesCommand } from "./types";
+import { Entity } from "../sources";
 
 /**
  *
@@ -33,18 +34,21 @@ export class EditorMessageHandler extends MessageHandler<string, ResolverPayload
     /**
      *
      */
-    spawnEntity({ entity }: { entity: Entity }) {
+    spawnEntity({ entity, options }: { entity: Entity; options: EntityCreationOptions }) {
         this._connection!.send({
-            data: JSON.stringify({ type: "spawn-entity", data: entity }),
+            data: JSON.stringify({
+                type: "spawn-entity",
+                data: { entity, options: { deleteOnClientDisconnection: options.delete_on_client_disconnection } },
+            }),
         });
 
         return this._makeMessageResolver<Array<EditorEntity>>({
-            channel_id: "create",
+            channel_id: "spawn",
         });
     }
 
     on_entities_created(data: Array<EditorEntity>): void {
-        this._getNextMessageResolver({ channel_id: "create" }).resolve(data);
+        this._getNextMessageResolver({ channel_id: "spawn" }).resolve(data);
     }
 
     /**
@@ -100,7 +104,7 @@ export class EditorMessageHandler extends MessageHandler<string, ResolverPayload
             channel_id: "retrieve-children",
         });
     }
-    onRetrieveChildren(data: any): void {
+    onRetrieveChildren(data: Record<string, EditorEntity>): void {
         this._getNextMessageResolver({ channel_id: "retrieve-children" }).resolve(data);
     }
 
@@ -121,7 +125,7 @@ export class EditorMessageHandler extends MessageHandler<string, ResolverPayload
         });
     }
 
-    onResolveAncestors(data: any): void {
+    onResolveAncestors(data: Array<EditorEntity>): void {
         this._getNextMessageResolver({ channel_id: "resolve-ancestors" }).resolve(data);
     }
 
@@ -169,9 +173,21 @@ export class EditorMessageHandler extends MessageHandler<string, ResolverPayload
     on_entity_reparented(data: any): void {
         throw new Error("Method not implemented.");
     }
-    on_entities_deleted(data: any): void {
-        throw new Error("Method not implemented.");
+
+    deleteEntities({ entity_uuids }: { entity_uuids: Array<UUID> }) {
+        this._connection!.send({
+            data: JSON.stringify({ type: "delete-entities", data: entity_uuids }),
+        });
+
+        return this._makeMessageResolver<Array<UUID>>({
+            channel_id: "delete",
+        });
     }
+
+    on_entities_deleted(data: Array<UUID>): void {
+        this._getNextMessageResolver({ channel_id: "delete" }).resolve(data);
+    }
+
     on_animation_sequence_instance_added(data: any): void {
         throw new Error("Method not implemented.");
     }
@@ -192,7 +208,7 @@ export class EditorMessageHandler extends MessageHandler<string, ResolverPayload
     on_attach_components(data: any): void {
         throw new Error("Method not implemented.");
     }
-    on_update_components(emitter_id: UUID, entitiesUpdatedEvent: Record<UUID, EntityUpdatedEvent>): void {
+    on_update_components(emitter_id: UUID | null, entitiesUpdatedEvent: Record<UUID, EntityUpdatedEvent>): void {
         if (this._client_id !== emitter_id) {
             this.dispatchEvent(
                 new CustomEvent("entities-updated", {

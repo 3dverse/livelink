@@ -2,6 +2,7 @@ import type {
     ClientConfig,
     ClientConfigResponse,
     EditorEntity,
+    EntityCreationOptions,
     EntityUpdatedEvent,
     FireEventMessage,
     FrameData,
@@ -226,9 +227,22 @@ export abstract class LivelinkCore extends EventTarget {
     /**
      *
      */
-    async _createEntity({ entity }: { entity: Entity }): Promise<EditorEntity> {
-        const entities = await this.#editor.spawnEntity({ entity });
+    async _createEntity({
+        entity,
+        options,
+    }: {
+        entity: Entity;
+        options?: EntityCreationOptions;
+    }): Promise<EditorEntity> {
+        const entities = await this.#editor.spawnEntity({ entity, options });
         return entities[0];
+    }
+
+    /**
+     *
+     */
+    async _deleteEntity({ entity_uuids }: { entity_uuids: Array<UUID> }): Promise<void> {
+        await this.#editor.deleteEntities({ entity_uuids });
     }
 
     /**

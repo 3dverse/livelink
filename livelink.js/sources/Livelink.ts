@@ -243,7 +243,7 @@ export class Livelink extends LivelinkCore {
         camera.auto_update = "off";
         camera.onCreate();
         camera.auto_update = "on";
-        await camera.instantiate();
+        await camera._instantiate();
         return camera;
     }
 

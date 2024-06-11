@@ -87,7 +87,7 @@ export class EditorConnection {
     private _onMessageReceived({ message }: { message: MessageEvent<string> }): void {
         const payload = JSON.parse(message.data) as {
             type: string;
-            emitter: { clientUUID: UUID };
+            emitter?: { clientUUID: UUID };
             data: {};
         };
         const handler = this._handler!;
@@ -112,7 +112,7 @@ export class EditorConnection {
                 break;
 
             case "resolve-ancestors":
-                handler.onResolveAncestors(payload.data);
+                handler.onResolveAncestors(payload.data as Array<EditorEntity>);
                 break;
 
             case "find-entities-by-names":
@@ -152,10 +152,14 @@ export class EditorConnection {
                 handler.on_entities_created(payload.data as Array<EditorEntity>);
                 break;
 
+            case "entities-deleted":
+                handler.on_entities_deleted(payload.data as Array<UUID>);
+                break;
+
             // Events
             case "update-components":
                 handler.on_update_components(
-                    payload.emitter.clientUUID,
+                    payload.emitter?.clientUUID ?? null,
                     payload.data as Record<UUID, EntityUpdatedEvent>,
                 );
                 break;

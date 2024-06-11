@@ -19,6 +19,7 @@ export * from "./UpdateComponentsCommand";
 export * from "./FireEventMessage";
 export * from "./UpdateAnimationSequenceStateMessage";
 export * from "./AssignClientToScriptMessage";
+export * from "./EntityCreationOptions";
 
 export * from "./ConnectConfirmation";
 export * from "./EditorEntity";

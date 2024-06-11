@@ -1,4 +1,4 @@
-import { EditorEntity, EntityBase, UUID } from "../_prebuild/types";
+import { EditorEntity, EntityBase, EntityCreationOptions, UUID } from "../_prebuild/types";
 import { ComponentHash, type ComponentType } from "../_prebuild/types/components";
 import { Scene } from "./Scene";
 
@@ -97,14 +97,14 @@ export class Entity extends EntityBase {
     }
 
     /**
-     *
+     * @internal
      */
-    async instantiate() {
+    async _instantiate(options?: EntityCreationOptions) {
         if (this.isInstantiated()) {
             throw new Error("Entity is already instantiated");
         }
 
-        const editor_entity = await this._scene._createEntity({ entity: this });
+        const editor_entity = await this._scene._createEntity({ entity: this, options });
         this._parse({ editor_entity });
         this._scene.entity_registry.add({ entity: this });
     }
