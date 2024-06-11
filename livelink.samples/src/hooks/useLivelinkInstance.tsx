@@ -13,7 +13,7 @@ import {
 } from "@3dverse/livelink";
 
 //------------------------------------------------------------------------------
-type View = { canvas_ref: React.RefObject<HTMLCanvasElement>; camera?: typeof Camera | UUID };
+type View = { canvas_ref: React.RefObject<HTMLCanvasElement>; camera?: typeof Camera | UUID | null };
 
 //------------------------------------------------------------------------------
 type LivelinkResponse = { instance: Livelink; cameras: Array<Camera | null> };
@@ -65,7 +65,7 @@ export function useLivelinkInstance({ views }: { views: Array<View> }): {
             const cameras = await configureClient(
                 instance,
                 views.map(v => v.canvas_ref.current!),
-                views.map(v => v.camera || DefaultCamera),
+                views.map(v => (v.camera === null ? null : v.camera || DefaultCamera)),
             );
 
             setInstance(instance);
@@ -80,7 +80,7 @@ export function useLivelinkInstance({ views }: { views: Array<View> }): {
 async function configureClient(
     instance: Livelink,
     canvas_elements: Array<HTMLCanvasElement>,
-    camera_constructors: (typeof Camera | UUID)[],
+    camera_constructors: (typeof Camera | UUID | null)[],
 ) {
     // Step 1: configure the viewports that will receive the video stream.
     const viewports = canvas_elements.map(
@@ -109,7 +109,9 @@ async function configureClient(
     // Step 4: inform the renderer of which camera to use with which viewport.
     const cameras = (await Promise.all(
         viewports.map(async (viewport, i) => {
-            if (typeof camera_constructors[i] === typeof Camera) {
+            if (camera_constructors[i] === null) {
+                return null;
+            } else if (typeof camera_constructors[i] === typeof Camera) {
                 return await instance.newCamera(camera_constructors[i] as typeof Camera, "MyCam_" + i++, viewport);
             } else {
                 const camera = await instance.scene.findEntity(Camera, { entity_uuid: camera_constructors[i] as UUID });
