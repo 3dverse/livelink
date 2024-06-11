@@ -148,4 +148,27 @@ export class Scene extends EventTarget {
 
         return entities;
     }
+
+    /**
+     * @internal
+     */
+    async _getChildren({ entity_rtid }: { entity_rtid: RTID }): Promise<Array<Entity>> {
+        const editor_entities = await this.#core._getChildren({ entity_rtid });
+        return this.#addEditorEntities(Entity, { editor_entities });
+    }
+
+    /**
+     * @internal
+     */
+    async _assignClientToScripts({
+        client_uuid,
+        entity_rtid,
+        script_uuid,
+    }: {
+        client_uuid: UUID;
+        entity_rtid: RTID;
+        script_uuid: UUID;
+    }): Promise<void> {
+        return this.#core.assignClientToScript({ client_uuid, script_uuid, entity_rtid });
+    }
 }

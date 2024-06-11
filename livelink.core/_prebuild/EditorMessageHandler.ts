@@ -89,8 +89,19 @@ export class EditorMessageHandler extends MessageHandler<string, ResolverPayload
         this.dispatchEvent(new CustomEvent("connect-confirmation", { detail: connect_confirmation }));
     }
 
+    /**
+     *
+     */
+    retrieveChildren({ entity_rtid }: { entity_rtid: RTID }) {
+        this._connection!.send({
+            data: JSON.stringify({ type: "retrieve-children", data: entity_rtid.toString() }),
+        });
+        return this._makeMessageResolver<Record<string, EditorEntity>>({
+            channel_id: "retrieve-children",
+        });
+    }
     onRetrieveChildren(data: any): void {
-        throw new Error("Method not implemented.");
+        this._getNextMessageResolver({ channel_id: "retrieve-children" }).resolve(data);
     }
 
     onFindEntitiesWithComponents(data: any): void {

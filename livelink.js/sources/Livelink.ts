@@ -240,4 +240,11 @@ export class Livelink extends LivelinkCore {
         await camera.instantiate();
         return camera;
     }
+
+    /**
+     *
+     */
+    refreshViewports() {
+        this._remote_rendering_surface.init();
+    }
 }

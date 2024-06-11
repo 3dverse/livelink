@@ -247,6 +247,14 @@ export abstract class LivelinkCore extends EventTarget {
     /**
      *
      */
+    async _getChildren({ entity_rtid }: { entity_rtid: RTID }): Promise<Array<EditorEntity>> {
+        const editor_entities_by_rtid = await this.#editor.retrieveChildren({ entity_rtid });
+        return Object.values(editor_entities_by_rtid);
+    }
+
+    /**
+     *
+     */
     updateAnimationSequenceState(params: {
         linker_rtid: RTID;
         animation_sequence_id: UUID;
@@ -262,7 +270,22 @@ export abstract class LivelinkCore extends EventTarget {
     /**
      *
      */
-    setViewports({ viewports }: { viewports: Array<ViewportConfig> }) {
+    assignClientToScript({
+        client_uuid,
+        script_uuid,
+        entity_rtid,
+    }: {
+        client_uuid: UUID;
+        script_uuid: UUID;
+        entity_rtid: RTID;
+    }): void {
+        this.#gateway.assignClientToScript({ assignClientToScriptMessage: { client_uuid, script_uuid, entity_rtid } });
+    }
+
+    /**
+     *
+     */
+    setViewports({ viewports }: { viewports: Array<ViewportConfig> }): void {
         this.#gateway.setViewports({ viewports });
     }
 

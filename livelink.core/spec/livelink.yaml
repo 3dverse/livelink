@@ -140,6 +140,8 @@ channels:
         $ref: "#/components/messages/fire_event"
       update_animation_sequence_state:
         $ref: "#/components/messages/update_animation_sequence_state"
+      assign_client_uuid_to_script:
+        $ref: "#/components/messages/assign_client_uuid_to_script"
 
   #-----------------------------------------------------------------------------
   heartbeat:
@@ -322,6 +324,14 @@ operations:
       $ref: "#/channels/editor-remote-operations"
     messages:
       - $ref: "#/channels/editor-remote-operations/messages/fire_event"
+
+  assignClientToScript:
+    action: send
+    x-rop-id: 20
+    channel:
+      $ref: "#/channels/editor-remote-operations"
+    messages:
+      - $ref: "#/channels/editor-remote-operations/messages/assign_client_uuid_to_script"
 
   updateAnimationSequenceState:
     action: send

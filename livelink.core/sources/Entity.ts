@@ -1,4 +1,4 @@
-import { EditorEntity, EntityBase } from "../_prebuild/types";
+import { EditorEntity, EntityBase, UUID } from "../_prebuild/types";
 import { ComponentHash, type ComponentType } from "../_prebuild/types/components";
 import { Scene } from "./Scene";
 
@@ -107,6 +107,28 @@ export class Entity extends EntityBase {
         const editor_entity = await this._scene._createEntity({ entity: this });
         this._parse({ editor_entity });
         this._scene.entity_registry.add({ entity: this });
+    }
+
+    /**
+     *
+     */
+    async getChildren(): Promise<Entity[]> {
+        return await this._scene._getChildren({ entity_rtid: this.rtid });
+    }
+
+    /**
+     *
+     */
+    async assignClientToScripts({ client_uuid }: { client_uuid: UUID }): Promise<void> {
+        if (!this.script_map || !this.script_map.elements) {
+            throw new Error("Entity has no scripts");
+        }
+        const script_ids = Object.keys(this.script_map.elements);
+        await Promise.all(
+            script_ids.map(script_id =>
+                this._scene._assignClientToScripts({ client_uuid, entity_rtid: this.rtid, script_uuid: script_id }),
+            ),
+        );
     }
 
     /**

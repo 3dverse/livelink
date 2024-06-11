@@ -108,6 +108,12 @@ update_animation_sequence_state:
     description: Change the targetted animation sequence play state
     $ref: "./schemas.yaml#/UpdateAnimationSequenceState"
 
+assign_client_uuid_to_script:
+  contentType: application/octet-stream
+  payload:
+    description: Assign a client UUID to a script
+    $ref: "./schemas.yaml#/AssignClientUuidToScript"
+
 #-----------------------------------------------------------------------------
 # SCRIPT EVENTS
 #-----------------------------------------------------------------------------

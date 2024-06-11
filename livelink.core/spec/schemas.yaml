@@ -423,3 +423,18 @@ UpdateAnimationSequenceState:
       format: float32
       default: 0
   required: [linker_rtid, animation_sequence_id, state, playback_speed]
+
+AssignClientUuidToScript:
+  title: AssignClientUuidToScript
+  type: object
+  properties:
+    client_uuid:
+      title: The client UUID to assign to the script.
+      $ref: "#/UUID"
+    script_uuid:
+      title: The script to which to assign the client UUID.
+      $ref: "#/UUID"
+    entity_rtid:
+      title: The entity to which the script is attached.
+      $ref: "#/RTID"
+  required: [client_uuid, script_uuid, entity_rtid]

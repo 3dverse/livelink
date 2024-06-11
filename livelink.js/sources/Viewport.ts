@@ -67,6 +67,8 @@ export class Viewport extends EventTarget {
      */
     set camera(c: Camera) {
         this._camera = c;
+        c.viewport = this;
+        this.#core.refreshViewports();
     }
 
     /**

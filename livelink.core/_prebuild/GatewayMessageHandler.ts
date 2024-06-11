@@ -42,6 +42,8 @@ import {
     serialize_FireEventMessage,
     UpdateAnimationSequenceStateMessage,
     serialize_UpdateAnimationSequenceStateMessage,
+    AssignClientToScriptMessage,
+    serialize_assignClientToScriptMessage,
 } from "./types";
 import { MessageHandler } from "../sources/MessageHandler";
 import { GatewayConnection } from "./GatewayConnection";
@@ -449,6 +451,45 @@ export class GatewayMessageHandler extends MessageHandler<ChannelId, ResolverPay
             dataView,
             offset: 0,
             updateAnimationSequenceStateMessage,
+        });
+
+        this._connection.send({ data: buffer });
+    }
+
+    /**
+     * Send
+     */
+    assignClientToScript({
+        assignClientToScriptMessage,
+    }: {
+        assignClientToScriptMessage: AssignClientToScriptMessage;
+    }): void {
+        console.log({
+            assignClientToScriptMessage,
+        });
+        const ropDataSize = 16 + 16 + 4;
+        const payloadSize = FTL_EDITOR_ROP_HEADER_SIZE + ropDataSize;
+        const buffer = new ArrayBuffer(FTL_HEADER_SIZE + payloadSize);
+
+        this._writeMultiplexerHeader({
+            buffer,
+            channelId: ChannelId.editor_remote_operations,
+            size: payloadSize,
+        });
+
+        this._writeRemoteOperationMultiplexerHeader({
+            buffer,
+            offset: FTL_HEADER_SIZE,
+            rop_data_size: ropDataSize,
+            rop_id: EditorRemoteOperation.assign_client_uuid_to_script,
+        });
+
+        const dataView = new DataView(buffer, FTL_HEADER_SIZE + FTL_EDITOR_ROP_HEADER_SIZE);
+
+        serialize_assignClientToScriptMessage({
+            dataView,
+            offset: 0,
+            assignClientToScriptMessage,
         });
 
         this._connection.send({ data: buffer });
