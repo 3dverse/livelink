@@ -1,7 +1,7 @@
 import type { UUID } from "./types";
 import { Client } from "./Client";
 
-const api_url = "https://api.3dverse.com/app/v1";
+const api_url = "https://api.3dverse.dev/app/v1";
 
 /**
  *
