@@ -20,7 +20,7 @@ class FPController extends Entity {
 export default function FirstPersonController() {
     const canvasRef = useRef<HTMLCanvasElement>(null);
 
-    const { instance, connect, disconnect } = useLivelinkInstance({ views: [{ canvas_ref: canvasRef, camera: null }] });
+    const { instance, connect, disconnect } = useLivelinkInstance({ views: [{ canvas_ref: canvasRef }] });
 
     const toggleConnection = async () => {
         if (instance) {
