@@ -12,6 +12,7 @@ const SmartObjectManifest: Manifest = {
     DirectionChanger: "6807984c-c682-422b-9a4e-ab2c26b60833",
     Trigger: "82f075ac-0b40-40c5-b570-b7421c3fb967",
     Sensor: "5c8659ec-ba10-4969-861d-26fe6c609176",
+    SensorLight: "570d40df-6162-4da5-a1ec-66b1ebed4d51",
     FallDetector: "c5317ff8-0b3a-4275-a0d8-6eceba2c5edd",
 };
 
@@ -27,6 +28,7 @@ export default function ConveyorBeltSorting() {
     const trigger = useSmartObject({ instance, manifest: SmartObjectManifest, smart_object: "Trigger" });
     const sensor = useSmartObject({ instance, manifest: SmartObjectManifest, smart_object: "Sensor" });
     const fallDetector = useSmartObject({ instance, manifest: SmartObjectManifest, smart_object: "FallDetector" });
+    const sensorLight = useSmartObject({ instance, manifest: SmartObjectManifest, smart_object: "SensorLight" });
 
     const onFallDetected = useCallback(() => {
         setScore(p => [p[0], p[1], p[2] + 1]);
@@ -36,25 +38,35 @@ export default function ConveyorBeltSorting() {
         (e: Event) => {
             const event = e as CustomEvent<{ entity: Entity }>;
             const entity = event.detail.entity;
-            if (!changer || !sensor) return;
+            if (!changer || !sensor || !sensorLight) return;
             const color = (entity.material?.dataJSON as { albedo: Vec3 }).albedo;
 
-            changer.physics_material!.contactVelocity![0] = color[0] > 0 ? -1 : 1;
+            changer.physics_material!.contactVelocity![0] = color[0] > 0 ? -2 : 2;
             (changer.material!.dataJSON! as { scale: Vec2 }).scale = [
                 -changer.physics_material!.contactVelocity![0],
                 1,
             ];
             (changer.material!.dataJSON! as { albedo: Vec3 }).albedo = color;
-            (sensor.material!.dataJSON! as { albedo: Vec3 }).albedo = color;
+            (sensor.material!.dataJSON! as { albedo: Vec3 }).albedo = [0.5, 0.5, 0.5];
+            (sensor.material!.dataJSON! as { emission: Vec3 }).emission = [0, 0, 0];
+            sensorLight.point_light!.color = [0, 0, 0];
 
             setScore(p => [p[0] + 1, p[1], p[2]]);
         },
-        [changer, sensor, setScore],
+        [changer, sensor, sensorLight, setScore],
     );
-    const onTriggerEntered = useCallback(() => {
-        if (!sensor) return;
-        (sensor.material!.dataJSON! as { albedo: Vec3 }).albedo = [1, 1, 1];
-    }, [sensor]);
+    const onTriggerEntered = useCallback(
+        (e: Event) => {
+            const event = e as CustomEvent<{ entity: Entity }>;
+            const entity = event.detail.entity;
+            if (!sensor || !sensorLight) return;
+            const color = (entity.material?.dataJSON as { albedo: Vec3 }).albedo;
+            (sensor.material!.dataJSON! as { albedo: Vec3 }).albedo = color;
+            (sensor.material!.dataJSON! as { emission: Vec3 }).emission = color;
+            sensorLight.point_light!.color = color;
+        },
+        [sensor, sensorLight],
+    );
 
     const onClick = useCallback(
         async (e: Event) => {
@@ -80,10 +92,21 @@ export default function ConveyorBeltSorting() {
             bloom: boolean;
             filterSpecular: boolean;
             transparentGroundPlane: boolean;
+            skybox: boolean;
+            bloomStrength: number;
+            bloomThreshold: number;
+            brightness: number;
+            skyboxGrounded: boolean;
         };
         d.grid = false;
         d.filterSpecular = true;
         d.transparentGroundPlane = true;
+        d.skybox = true;
+        d.bloom = true;
+        d.bloomStrength = 1;
+        d.bloomThreshold = 1;
+        d.brightness = 0.1;
+        d.skyboxGrounded = true;
 
         camera.cameraControls.setPosition(5, 3, 0);
         camera.viewport.activatePicking();
@@ -135,7 +158,8 @@ export default function ConveyorBeltSorting() {
     useEffect(() => {
         if (changer) changer.auto_broadcast = "off";
         if (sensor) sensor.auto_broadcast = "off";
-    }, [changer, sensor]);
+        if (sensorLight) sensorLight.auto_broadcast = "off";
+    }, [changer, sensor, sensorLight]);
 
     return (
         <div className="relative w-full h-full">
