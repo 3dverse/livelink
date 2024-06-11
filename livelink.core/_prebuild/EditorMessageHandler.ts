@@ -34,11 +34,16 @@ export class EditorMessageHandler extends MessageHandler<string, ResolverPayload
     /**
      *
      */
-    spawnEntity({ entity, options }: { entity: Entity; options: EntityCreationOptions }) {
+    spawnEntity({ entity, options }: { entity: Entity; options?: EntityCreationOptions }) {
         this._connection!.send({
             data: JSON.stringify({
                 type: "spawn-entity",
-                data: { entity, options: { deleteOnClientDisconnection: options.delete_on_client_disconnection } },
+                data: {
+                    entity,
+                    options: options
+                        ? { deleteOnClientDisconnection: options.delete_on_client_disconnection }
+                        : undefined,
+                },
             }),
         });
 
