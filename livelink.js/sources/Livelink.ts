@@ -141,6 +141,7 @@ export class Livelink extends LivelinkCore {
         }
 
         this._remote_rendering_surface.release();
+        this._input_devices.forEach(d => d.teardown());
 
         await super.disconnect();
     }
