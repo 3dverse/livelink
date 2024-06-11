@@ -3,7 +3,7 @@ import ControllerEffects from "./controller-effects/ControllerEffects";
 import ConveyorBeltSorting from "./conveyor-belt-sorting/ConveyorBeltSorting";
 import ConveyorBelt from "./conveyor-belt/ConveyorBelt";
 import DoubleCanvas from "./double-canvas/DoubleCanvas";
-import FirstPersonController from "./first-person-controller/FirstPersonController";
+import ThirdPersonController from "./third-person-controller/ThirdPersonController";
 import MultiSession from "./multi-session/MultiSession";
 import PictureInPicture from "./picture-in-picture/PictureInPicture";
 import QuadrupleCanvas from "./quadruple-canvas/QuadrupleCanvas";
@@ -38,7 +38,7 @@ export const SAMPLES = [
             { title: "Controller Effects", path: "controller-effects", element: <ControllerEffects /> },
             { title: "Conveyor Belt", path: "conveyor-belt", element: <ConveyorBelt /> },
             { title: "Conveyor Belt Sorting", path: "conveyor-belt-sorting", element: <ConveyorBeltSorting /> },
-            { title: "First Person Controller", path: "first-person-controller", element: <FirstPersonController /> },
+            { title: "Third Person Controller", path: "third-person-controller", element: <ThirdPersonController /> },
         ],
     },
     {

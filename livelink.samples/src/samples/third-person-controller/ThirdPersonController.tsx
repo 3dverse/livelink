@@ -5,7 +5,7 @@ import { useLivelinkInstance } from "../../hooks/useLivelinkInstance";
 import { Camera, Entity, Livelink } from "@3dverse/livelink";
 
 const manifest = {
-    charCtlSceneUUID: "3bf25e2f-f38d-44f1-a932-c60b9aae0985",
+    charCtlSceneUUID: "a8b0086e-f89b-43fd-8e8e-2a5188fe3056",
 };
 
 class FPController extends Entity {
@@ -17,30 +17,31 @@ class FPController extends Entity {
 }
 
 //------------------------------------------------------------------------------
-export default function FirstPersonController() {
+export default function ThirdPersonController() {
     const canvasRef = useRef<HTMLCanvasElement>(null);
 
-    const { instance, connect, disconnect } = useLivelinkInstance({ views: [{ canvas_ref: canvasRef }] });
+    const { instance, connect, disconnect } = useLivelinkInstance({ views: [{ canvas_ref: canvasRef, camera: null }] });
 
     const toggleConnection = async () => {
         if (instance) {
             disconnect();
         } else if (canvasRef.current) {
-            connect({ scene_id: "f408b7c1-4a98-4aa2-b490-009232607616", token: "public_qywgE6ratPJlLQ0l" }).then(
+            connect({ scene_id: "5bd6f2b0-183f-4a63-a720-293b575fc439", token: "public_p54ra95AMAnZdTel" }).then(
                 async (v: { instance: Livelink } | null) => {
                     const instance = v?.instance;
 
-                    if (!instance || !instance.session.client_id) return;
+                    if (!instance || !instance.session.client_id || instance.viewports.length === 0) return;
 
                     const playerSceneEntity = await instance.scene.newEntity(FPController, "PlayerSceneEntity");
-                    const firstPersonController = (await playerSceneEntity.getChildren())[0];
-                    const children = await firstPersonController.getChildren();
+                    const children = await playerSceneEntity.getChildren();
+                    const firstPersonController = children.find(child => child.script_map !== undefined);
                     const firstPersonCameraEntity = children.find(child => child.camera !== undefined);
                     const viewport = instance.viewports[0];
-                    if (viewport && firstPersonCameraEntity) {
+                    if (firstPersonController && firstPersonCameraEntity) {
                         const firstPersonCamera = firstPersonCameraEntity as Camera;
                         viewport.camera = firstPersonCamera;
                         firstPersonController.assignClientToScripts({ client_uuid: instance.session.client_id });
+                        instance.startSimulation();
                     }
                 },
             );
