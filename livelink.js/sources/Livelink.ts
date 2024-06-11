@@ -17,6 +17,7 @@ import { RemoteRenderingSurface } from "./RemoteRenderingSurface";
 import { Camera } from "./Camera";
 import { Viewport } from "./Viewport";
 import { DecodedFrameConsumer } from "./decoders/DecodedFrameConsumer";
+import { InputDevice } from "./inputs/InputDevice";
 
 /**
  * The Livelink interface.
@@ -111,6 +112,11 @@ export class Livelink extends LivelinkCore {
      * remote viewer.
      */
     private _encoded_frame_consumer: EncodedFrameConsumer | null = null;
+
+    /**
+     * List of input devices.
+     */
+    private _input_devices: Array<InputDevice> = [];
 
     /**
      *
@@ -246,5 +252,27 @@ export class Livelink extends LivelinkCore {
      */
     refreshViewports() {
         this._remote_rendering_surface.init();
+    }
+
+    /**
+     *
+     */
+
+    addInputDevice<DeviceType extends InputDevice>(device_type: { new (_: Livelink): DeviceType }) {
+        const device = new device_type(this);
+        device.setup();
+        this._input_devices.push(device);
+    }
+
+    /**
+     *
+     */
+    removeInputDevice({ device_name }: { device_name: string }) {
+        const device = this._input_devices.find(d => d.name === device_name);
+        if (!device) {
+            throw new Error(`Input device with name '${device_name}' not found`);
+        }
+        device.teardown();
+        this._input_devices = this._input_devices.filter(d => d.name !== device_name);
     }
 }

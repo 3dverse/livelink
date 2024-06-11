@@ -2,7 +2,7 @@
 import { useRef } from "react";
 import Canvas from "../../components/Canvas";
 import { useLivelinkInstance } from "../../hooks/useLivelinkInstance";
-import { Camera, Entity, Livelink } from "@3dverse/livelink";
+import { Camera, Entity, Livelink, Keyboard } from "@3dverse/livelink";
 
 const manifest = {
     charCtlSceneUUID: "a8b0086e-f89b-43fd-8e8e-2a5188fe3056",
@@ -42,6 +42,7 @@ export default function ThirdPersonController() {
                         viewport.camera = firstPersonCamera;
                         firstPersonController.assignClientToScripts({ client_uuid: instance.session.client_id });
                         instance.startSimulation();
+                        instance.addInputDevice(Keyboard);
                     }
                 },
             );

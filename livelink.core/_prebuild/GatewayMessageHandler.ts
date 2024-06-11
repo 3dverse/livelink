@@ -283,8 +283,13 @@ export class GatewayMessageHandler extends MessageHandler<ChannelId, ResolverPay
      * Send
      */
     sendInputState({ input_state }: { input_state: InputState }): void {
-        const payloadSize = 1;
+        const INPUT_HEADER_SIZE = 1;
+        const inputDataSize = input_state.input_data.length || 0;
+
+        const payloadSize = INPUT_HEADER_SIZE + inputDataSize;
+
         const buffer = new ArrayBuffer(FTL_HEADER_SIZE + payloadSize);
+
         this._writeMultiplexerHeader({
             buffer,
             channelId: ChannelId.inputs,
@@ -295,6 +300,10 @@ export class GatewayMessageHandler extends MessageHandler<ChannelId, ResolverPay
         let offset = 0;
         writer.setUint8(offset, input_state.input_operation);
         offset += 1;
+
+        for (var a = 0; a < inputDataSize; a++) {
+            writer.setUint8(offset++, input_state.input_data[a]);
+        }
 
         this._connection.send({ data: buffer });
     }
@@ -464,9 +473,6 @@ export class GatewayMessageHandler extends MessageHandler<ChannelId, ResolverPay
     }: {
         assignClientToScriptMessage: AssignClientToScriptMessage;
     }): void {
-        console.log({
-            assignClientToScriptMessage,
-        });
         const ropDataSize = 16 + 16 + 4;
         const payloadSize = FTL_EDITOR_ROP_HEADER_SIZE + ropDataSize;
         const buffer = new ArrayBuffer(FTL_HEADER_SIZE + payloadSize);

@@ -6,6 +6,7 @@ import type {
     FireEventMessage,
     FrameData,
     HighlightEntitiesMessage,
+    InputState,
     RTID,
     ScreenSpaceRayQuery,
     ScreenSpaceRayResult,
@@ -250,6 +251,13 @@ export abstract class LivelinkCore extends EventTarget {
     async _getChildren({ entity_rtid }: { entity_rtid: RTID }): Promise<Array<EditorEntity>> {
         const editor_entities_by_rtid = await this.#editor.retrieveChildren({ entity_rtid });
         return Object.values(editor_entities_by_rtid);
+    }
+
+    /**
+     *
+     */
+    _sendInput({ input_state }: { input_state: InputState }) {
+        this.#gateway.sendInputState({ input_state });
     }
 
     /**
