@@ -104,9 +104,12 @@ export class Entity extends EntityBase {
             throw new Error("Entity is already instantiated");
         }
 
+        this._proxy_state = "off";
+        this.onCreate();
         const editor_entity = await this._scene._createEntity({ entity: this, options });
         this._parse({ editor_entity });
         this._scene.entity_registry.add({ entity: this });
+        this._proxy_state = "on";
     }
 
     /**

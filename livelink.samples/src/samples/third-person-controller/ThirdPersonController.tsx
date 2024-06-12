@@ -79,8 +79,7 @@ export default function ThirdPersonController() {
 
     useEffect(() => {
         return () => {
-            if (instance && player) {
-                instance?.scene.deleteEntity({ entity: player });
+            if (instance) {
                 setPlayer(null);
             }
         };

@@ -241,7 +241,7 @@ export abstract class LivelinkCore extends EventTarget {
     /**
      *
      */
-    async _deleteEntity({ entity_uuids }: { entity_uuids: Array<UUID> }): Promise<void> {
+    async _deleteEntities({ entity_uuids }: { entity_uuids: Array<UUID> }): Promise<void> {
         await this.#editor.deleteEntities({ entity_uuids });
     }
 

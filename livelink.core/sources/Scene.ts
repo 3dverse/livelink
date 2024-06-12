@@ -61,9 +61,6 @@ export class Scene extends EventTarget {
     ): Promise<EntityType> {
         let entity = new entity_type(this).init(name);
         entity = new Proxy(entity, Entity.handler) as EntityType;
-        entity.auto_update = "off";
-        entity.onCreate();
-        entity.auto_update = "on";
         await entity._instantiate(options);
         return entity;
     }
@@ -99,13 +96,11 @@ export class Scene extends EventTarget {
     /**
      *
      */
-    async deleteEntity({ entity }: { entity: Entity }): Promise<void> {
-        if (!entity.isInstantiated()) {
-            throw new Error("Cannot delete an entity that hasn't been instantiated");
+    async deleteEntities({ entities }: { entities: Array<Entity> }): Promise<void> {
+        await this.#core._deleteEntities({ entity_uuids: entities.map(e => e.id) });
+        for (const entity of entities) {
+            this.entity_registry.remove({ entity });
         }
-
-        await this.#core._deleteEntity({ entity_uuids: [entity.id] });
-        this.entity_registry.remove({ entity });
     }
 
     /**

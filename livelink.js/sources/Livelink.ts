@@ -233,17 +233,12 @@ export class Livelink extends LivelinkCore {
      *
      */
     async newCamera<CameraType extends Camera>(
-        camera_type: { new (_: Scene): CameraType },
+        camera_type: { new (_s: Scene, _v: Viewport | null): CameraType },
         name: string,
         viewport: Viewport,
     ): Promise<CameraType> {
-        let camera = new camera_type(this.scene).init(name);
+        let camera = new camera_type(this.scene, viewport).init(name);
         camera = new Proxy(camera, Entity.handler) as CameraType;
-        viewport.camera = camera;
-        camera.viewport = viewport;
-        camera.auto_update = "off";
-        camera.onCreate();
-        camera.auto_update = "on";
         await camera._instantiate();
         return camera;
     }
