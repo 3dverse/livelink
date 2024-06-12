@@ -4,10 +4,10 @@ import { Livelink } from "../Livelink";
 
 export class Keyboard implements InputDevice {
     name: string;
-    private _instance: Livelink;
+    #instance: Livelink;
 
     constructor(instance: Livelink) {
-        this._instance = instance;
+        this.#instance = instance;
         this.name = "keyboard";
     }
 
@@ -15,8 +15,8 @@ export class Keyboard implements InputDevice {
      *
      */
     setup() {
-        window.addEventListener("keydown", e => this._onKeyDown(e));
-        window.addEventListener("keyup", e => this._onKeyUp(e));
+        window.addEventListener("keydown", this.#onKeyDown);
+        window.addEventListener("keyup", this.#onKeyUp);
     }
 
     /**
@@ -24,40 +24,40 @@ export class Keyboard implements InputDevice {
      */
 
     teardown() {
-        window.removeEventListener("keydown", this._onKeyDown);
-        window.removeEventListener("keyup", this._onKeyUp);
+        window.removeEventListener("keydown", this.#onKeyDown);
+        window.removeEventListener("keyup", this.#onKeyUp);
     }
 
     /**
      *
      */
 
-    _onKeyDown(event: KeyboardEvent) {
-        const keyData = this._getKeyData(event);
-        this._instance._sendInput({
+    #onKeyDown = (event: KeyboardEvent) => {
+        const keyData = this.#getKeyData(event);
+        this.#instance._sendInput({
             input_state: {
                 input_operation: InputOperation.on_key_down,
                 input_data: keyData,
             },
         });
-    }
+    };
 
     /**
      *
      */
 
-    _onKeyUp(event: KeyboardEvent) {
-        const keyData = this._getKeyData(event);
-        this._instance._sendInput({
+    #onKeyUp = (event: KeyboardEvent) => {
+        const keyData = this.#getKeyData(event);
+        this.#instance._sendInput({
             input_state: {
                 input_operation: InputOperation.on_key_up,
                 input_data: keyData,
             },
         });
-    }
+    };
 
-    _getKeyData(event: KeyboardEvent) {
-        const keyCode = this._getLayoutAgnosticKeyCode(event);
+    #getKeyData(event: KeyboardEvent) {
+        const keyCode = this.#getLayoutAgnosticKeyCode(event);
         const KeyData = new Uint8Array(4);
         KeyData[0] = keyCode & 0xff;
         KeyData[1] = (keyCode >> 8) & 0xff;
@@ -66,7 +66,7 @@ export class Keyboard implements InputDevice {
         return KeyData;
     }
 
-    _getLayoutAgnosticKeyCode(event: KeyboardEvent) {
+    #getLayoutAgnosticKeyCode(event: KeyboardEvent) {
         const { code, key } = event;
 
         // If the code is not a key letter, then it's a special key.
