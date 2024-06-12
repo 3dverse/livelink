@@ -3,9 +3,8 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import Canvas from "../../components/Canvas";
 import { useLivelinkInstance } from "../../hooks/useLivelinkInstance";
 import { Manifest, useSmartObject } from "../../hooks/useSmartObject";
-import { Camera, Livelink, Vec2, Vec3 } from "@3dverse/livelink";
+import { Camera, Entity, Livelink, Vec2, Vec3 } from "@3dverse/livelink";
 import { DefaultCamera } from "../../components/DefaultCamera";
-import { Entity } from "@livelink.core";
 
 //------------------------------------------------------------------------------
 const SmartObjectManifest: Manifest = {
@@ -14,13 +13,18 @@ const SmartObjectManifest: Manifest = {
     Sensor: "5c8659ec-ba10-4969-861d-26fe6c609176",
     SensorLight: "570d40df-6162-4da5-a1ec-66b1ebed4d51",
     FallDetector: "c5317ff8-0b3a-4275-a0d8-6eceba2c5edd",
+    Spawn1: "255cab6b-1824-4eae-9aae-705a1c47055a",
+    Spawn2: "4378b417-058e-491b-a90c-b9eb547b558a",
 };
+
+let i = 0;
 
 //------------------------------------------------------------------------------
 export default function ConveyorBeltSorting() {
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const [score, setScore] = useState([0, 0, 0]);
     const [selectedEntity, setSelectedEntity] = useState<Entity | null>(null);
+    const packages: Array<Entity> = [];
 
     const { instance, connect, disconnect } = useLivelinkInstance({ views: [{ canvas_ref: canvasRef }] });
 
@@ -29,6 +33,8 @@ export default function ConveyorBeltSorting() {
     const sensor = useSmartObject({ instance, manifest: SmartObjectManifest, smart_object: "Sensor" });
     const fallDetector = useSmartObject({ instance, manifest: SmartObjectManifest, smart_object: "FallDetector" });
     const sensorLight = useSmartObject({ instance, manifest: SmartObjectManifest, smart_object: "SensorLight" });
+    const spawn1 = useSmartObject({ instance, manifest: SmartObjectManifest, smart_object: "Spawn1" });
+    const spawn2 = useSmartObject({ instance, manifest: SmartObjectManifest, smart_object: "Spawn2" });
 
     const onFallDetected = useCallback(() => {
         setScore(p => [p[0], p[1], p[2] + 1]);
@@ -115,6 +121,7 @@ export default function ConveyorBeltSorting() {
 
     const toggleConnection = async () => {
         if (instance) {
+            deletePackages();
             instance.viewports[0].removeEventListener("on-entity-picked", onClick);
             disconnect();
         } else if (canvasRef.current) {
@@ -161,6 +168,34 @@ export default function ConveyorBeltSorting() {
         if (sensorLight) sensorLight.auto_broadcast = "off";
     }, [changer, sensor, sensorLight]);
 
+    async function spawnPackage() {
+        console.log(spawn1?.local_transform?.position);
+        if (!instance || !spawn1) return;
+
+        class Package extends Entity {
+            onCreate() {
+                const albedo = Math.floor(Math.random() * 2) == 0 ? [1, 0, 0] : [0, 1, 0];
+                this.local_transform =
+                    Math.floor(Math.random() * 2) == 0 ? spawn1!.local_transform : spawn2!.local_transform;
+                this.local_transform!.scale = [0.5, 0.5, 0.5];
+                this.mesh_ref = { value: "8adbbf0e-912e-41b1-b2d5-e70dabe28189" };
+                this.material = { shaderRef: "744556b0-67b5-4329-ba4f-a04c04f92b1c", dataJSON: { albedo } };
+                this.box_geometry = { dimension: [0.5, 0.5, 0.5], offset: [0.25, 0.25, 0.25] };
+                this.physics_material = {};
+                this.rigid_body = { mass: 100, centerOfMass: [0.25, 0.2, 0.25] };
+            }
+        }
+
+        const p = await instance.scene.newEntity(Package, "MyPackage_" + i++);
+        packages.push(p);
+    }
+
+    function deletePackages() {
+        if (!instance) return;
+
+        instance.scene.deleteEntities({ entities: packages });
+    }
+
     return (
         <div className="relative w-full h-full">
             <div className="w-full h-full p-4">
@@ -170,10 +205,20 @@ export default function ConveyorBeltSorting() {
                 <button className="button button-primary" onClick={toggleConnection}>
                     {instance ? "Disconnect" : "Connect"}
                 </button>
-                <span>Left: {score[0]} | </span>
-                <span>Right: {score[1]} | </span>
-                <span>Fallen Comrades: {score[2]}</span>
-                {selectedEntity && <span>| Selected: {selectedEntity.name}</span>}
+                {instance && (
+                    <>
+                        <button className="button button-primary" onClick={spawnPackage}>
+                            Spawn
+                        </button>
+                        <button className="button button-primary" onClick={deletePackages}>
+                            Reset
+                        </button>
+                        <span>Left: {score[0]} | </span>
+                        <span>Right: {score[1]} | </span>
+                        <span>Fallen Comrades: {score[2]}</span>
+                        {selectedEntity && <span>| Selected: {selectedEntity.name}</span>}
+                    </>
+                )}
             </div>
         </div>
     );
