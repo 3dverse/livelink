@@ -180,6 +180,10 @@ export class EditorMessageHandler extends MessageHandler<string, ResolverPayload
     }
 
     deleteEntities({ entity_uuids }: { entity_uuids: Array<UUID> }) {
+        if (entity_uuids.length === 0) {
+            return;
+        }
+
         this._connection!.send({
             data: JSON.stringify({ type: "delete-entities", data: entity_uuids }),
         });
