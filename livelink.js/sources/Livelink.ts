@@ -259,8 +259,11 @@ export class Livelink extends LivelinkCore {
      *
      */
 
-    addInputDevice<DeviceType extends InputDevice>(device_type: { new (_: Livelink): DeviceType }) {
-        const device = new device_type(this);
+    addInputDevice<DeviceType extends InputDevice>(
+        device_type: { new (_: Livelink, viewport?: Viewport): DeviceType },
+        viewport?: Viewport,
+    ) {
+        const device = new device_type(this, viewport);
         device.setup();
         this._input_devices.push(device);
     }

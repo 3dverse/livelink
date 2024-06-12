@@ -1,6 +1,6 @@
+import { InputOperation } from "@livelink.core";
 import { InputDevice } from "./InputDevice";
 import { Livelink } from "../Livelink";
-import { InputOperation } from "@livelink.core";
 
 export class Keyboard implements InputDevice {
     name: string;

@@ -2,7 +2,7 @@
 import { useEffect, useRef, useState } from "react";
 import Canvas from "../../components/Canvas";
 import { useLivelinkInstance } from "../../hooks/useLivelinkInstance";
-import { Camera, Entity, Keyboard, Livelink, UUID, Viewport } from "@3dverse/livelink";
+import { Camera, Entity, Keyboard, Mouse, Livelink, UUID, Viewport } from "@3dverse/livelink";
 
 const manifest = {
     charCtlSceneUUID: "a8b0086e-f89b-43fd-8e8e-2a5188fe3056",
@@ -21,7 +21,12 @@ export default function ThirdPersonController() {
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const [player, setPlayer] = useState<TPController | null>(null);
 
-    const { instance, connect, disconnect } = useLivelinkInstance({ views: [{ canvas_ref: canvasRef, camera: null }] });
+    const { instance, connect, disconnect } = useLivelinkInstance({ views: [{ canvas_ref: canvasRef }] });
+
+    const [mode, setMode] = useState<"fly" | "thirdPerson">("thirdPerson");
+
+    const flyCameraRef = useRef<Camera | null>(null);
+    const thirdPersonCameraRef = useRef<Camera | null>(null);
 
     async function setupController(instance: Livelink, viewport: Viewport, client_uuid: UUID) {
         const playerSceneEntity = await instance.scene.newEntity(TPController, "PlayerSceneEntity", {
@@ -33,6 +38,7 @@ export default function ThirdPersonController() {
         if (firstPersonController && firstPersonCameraEntity) {
             const firstPersonCamera = firstPersonCameraEntity as Camera;
             viewport.camera = firstPersonCamera;
+            thirdPersonCameraRef.current = firstPersonCamera;
             firstPersonController.assignClientToScripts({ client_uuid });
             instance.startSimulation();
         }
@@ -48,11 +54,27 @@ export default function ThirdPersonController() {
                     const instance = v?.instance;
                     if (!instance || !instance.session.client_id || instance.viewports.length === 0) return;
                     const viewport = instance.viewports[0];
+                    flyCameraRef.current = viewport.camera;
                     instance.addInputDevice(Keyboard);
+                    instance.addInputDevice(Mouse, viewport);
                     setupController(instance, viewport, instance.session.client_id);
                 },
             );
         }
+    };
+
+    const toggleCamera = () => {
+        if (!instance) return;
+        const viewport = instance.viewports[0];
+        setMode(mode => {
+            if (mode === "fly" && thirdPersonCameraRef.current) {
+                viewport.camera = thirdPersonCameraRef.current;
+            }
+            if (mode === "thirdPerson" && flyCameraRef.current) {
+                viewport.camera = flyCameraRef.current;
+            }
+            return mode === "fly" ? "thirdPerson" : "fly";
+        });
     };
 
     useEffect(() => {
@@ -74,6 +96,13 @@ export default function ThirdPersonController() {
                     {instance ? "Disconnect" : "Connect"}
                 </button>
             </div>
+            {instance && (
+                <div className="absolute top-6 right-6">
+                    <button className="button button-secondary" onClick={toggleCamera}>
+                        {mode === "fly" ? "Switch to 3rd Person" : "Switch to Fly"}
+                    </button>
+                </div>
+            )}
         </div>
     );
 }

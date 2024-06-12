@@ -5,4 +5,5 @@ export * from "./decoders/SoftwareDecoder";
 export * from "./decoders/WebCodecsDecoder";
 export * from "./decoders/EncodedFrameConsumer";
 export * from "@livelink.core";
+export * from "./inputs/Mouse";
 export * from "./inputs/Keyboard";
