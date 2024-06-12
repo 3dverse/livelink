@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import Canvas from "../../components/Canvas";
 import { useLivelinkInstance } from "../../hooks/useLivelinkInstance";
 import { Camera, Entity, Keyboard, Mouse, Livelink, UUID, Viewport } from "@3dverse/livelink";
+import { connectButtonContainerClassName } from "../../styles/specific";
 
 const manifest = {
     charCtlSceneUUID: "a8b0086e-f89b-43fd-8e8e-2a5188fe3056",
@@ -88,20 +89,16 @@ export default function ThirdPersonController() {
     return (
         <div className="relative h-full p-3">
             <Canvas canvasRef={canvasRef} />
-            <div
-                className={`absolute ${instance ? "top-6 left-6" : "left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2"}`}
-            >
+            <div className={`flex gap-4 ${connectButtonContainerClassName(!!instance)}`}>
                 <button className="button button-primary" onClick={toggleConnection}>
                     {instance ? "Disconnect" : "Connect"}
                 </button>
-            </div>
-            {instance && (
-                <div className="absolute top-6 right-6">
-                    <button className="button button-secondary" onClick={toggleCamera}>
+                {instance && (
+                    <button className="button button-primary" onClick={toggleCamera}>
                         {mode === "fly" ? "Switch to 3rd Person" : "Switch to Fly"}
                     </button>
-                </div>
-            )}
+                )}
+            </div>
         </div>
     );
 }

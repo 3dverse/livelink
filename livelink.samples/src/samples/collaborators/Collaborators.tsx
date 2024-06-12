@@ -2,6 +2,7 @@
 import { useEffect, useRef, useState } from "react";
 import Canvas from "../../components/Canvas";
 import { useLivelinkInstance } from "../../hooks/useLivelinkInstance";
+import { connectButtonContainerClassName } from "../../styles/specific";
 
 //------------------------------------------------------------------------------
 export default function Collaborators() {
@@ -32,9 +33,7 @@ export default function Collaborators() {
     return (
         <div className="relative h-full max-h-screen p-3">
             <Canvas canvasRef={canvasRef} />
-            <div
-                className={`absolute ${instance ? "top-6 left-6" : "left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2"}`}
-            >
+            <div className={connectButtonContainerClassName(!!instance)}>
                 <button className="button button-primary" onClick={toggleConnection}>
                     {instance ? "Disconnect" : "Connect"}
                 </button>

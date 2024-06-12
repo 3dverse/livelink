@@ -5,6 +5,7 @@ import { Range } from "react-daisyui";
 import { useLivelinkInstance } from "../../hooks/useLivelinkInstance";
 import { Manifest, useSmartObject } from "../../hooks/useSmartObject";
 import { AnimationSequence } from "@3dverse/livelink";
+import { connectButtonContainerClassName } from "../../styles/specific";
 
 //------------------------------------------------------------------------------
 const SmartObjectManifest: Manifest = {
@@ -87,18 +88,19 @@ export default function Trigger() {
                         </div>
                     ))}
                 </div>
-                <div className="absolute flex items-center gap-2 pb-4 p-4 w-full bottom-0 bg-color-ground bg-opacity-80">
+                <div className={`flex items-center gap-4 ${connectButtonContainerClassName(!!instance)}`}>
                     <button className="button button-primary" onClick={toggleConnection}>
                         {instance ? "Disconnect" : "Connect"}
                     </button>
-
-                    <Range
-                        min={-1}
-                        max={1}
-                        step={0.2}
-                        defaultValue={0}
-                        onChange={e => animationSeq?.play({ playback_speed: Number(e.target.value) })}
-                    />
+                    {instance && (
+                        <Range
+                            min={-1}
+                            max={1}
+                            step={0.2}
+                            defaultValue={0}
+                            onChange={e => animationSeq?.play({ playback_speed: Number(e.target.value) })}
+                        />
+                    )}
                 </div>
             </div>
         </>

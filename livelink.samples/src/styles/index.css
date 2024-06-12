@@ -6,6 +6,7 @@
 
 /* Base */
 @import "./tailwind/base/button.css";
+@import "./tailwind/base/select.css";
 @import "./tailwind/base/core.css";
 @import "./tailwind/base/container.css";
 

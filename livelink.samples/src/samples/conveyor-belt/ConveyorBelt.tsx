@@ -6,6 +6,7 @@ import { Manifest, useSmartObject } from "../../hooks/useSmartObject";
 import { Camera, Livelink, Vec2, Vec3 } from "@3dverse/livelink";
 import { DefaultCamera } from "../../components/DefaultCamera";
 import { Entity } from "@livelink.core";
+import { connectButtonContainerClassName } from "../../styles/specific";
 
 //------------------------------------------------------------------------------
 const SmartObjectManifest: Manifest = {
@@ -162,14 +163,34 @@ export default function ConveyorBelt() {
             <div className="w-full h-full p-4">
                 <Canvas canvasRef={canvasRef} />
             </div>
-            <div className="absolute flex items-center gap-2 pb-4 p-4 w-full bottom-0 bg-color-ground bg-opacity-80">
+            <div className={`flex gap-4 ${connectButtonContainerClassName(!!instance)}`}>
                 <button className="button button-primary" onClick={toggleConnection}>
                     {instance ? "Disconnect" : "Connect"}
                 </button>
-                <span>Left: {score[0]} | </span>
-                <span>Right: {score[1]} | </span>
-                <span>Fallen Comrades: {score[2]}</span>
-                {selectedEntity && <span>| Selected: {selectedEntity.name}</span>}
+                {instance && (
+                    <output className="flex items-center bg-color-underground bg-opacity-50 rounded-lg text-sm text-[#FFFFFFCC] divide-x divide-[#ffffff20] border border-[#ffffff20] backdrop-blur-xl">
+                        <p className="h-full flex items-center gap-2 px-4">
+                            Left
+                            <span className="inline-block text-right w-10 tabular-nums text-[#FFFFFF]">{score[0]}</span>
+                        </p>
+                        <p className="h-full flex items-center gap-2 px-4">
+                            Right
+                            <span className="inline-block text-right w-10 tabular-nums text-[#FFFFFF]">{score[1]}</span>
+                        </p>
+                        <p className="h-full flex items-center gap-2 px-4">
+                            Fallen Comrades
+                            <span className="inline-block text-right w-10 tabular-nums text-[#FFFFFF]">{score[2]}</span>
+                        </p>
+                        {selectedEntity && (
+                            <p className="h-full flex items-center gap-2 px-4">
+                                Selected:{" "}
+                                <span className="inline-block text-right text-[#FFFFFF] capitalize">
+                                    {selectedEntity.name}
+                                </span>
+                            </p>
+                        )}
+                    </output>
+                )}
             </div>
         </div>
     );

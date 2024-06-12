@@ -1,7 +1,8 @@
 //------------------------------------------------------------------------------
 import { useEffect, useRef, useState } from "react";
+
+//------------------------------------------------------------------------------
 import Canvas from "../../components/Canvas";
-import { Select } from "react-daisyui";
 import { useLivelinkInstance } from "../../hooks/useLivelinkInstance";
 
 //------------------------------------------------------------------------------
@@ -9,6 +10,7 @@ const scenes = [
     { name: "Droid", scene_id: "15e95136-f9b7-425d-8518-d73dab5589b7" },
     { name: "Sponza", scene_id: "e1250c0e-fa04-4af5-a5cb-cf29fd38b78d" },
 ];
+
 //------------------------------------------------------------------------------
 export default function SceneSelector() {
     const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -31,9 +33,9 @@ export default function SceneSelector() {
                 <div className="w-full h-full p-3">
                     <Canvas canvasRef={canvasRef} />
                 </div>
-                <div className="absolute bottom-8 left-1/2 -translate-x-1/2">
-                    <Select
-                        className="w-full min-w-[20rem] p-4 rounded-lg cursor-pointer"
+                <div className="absolute bottom-16 left-1/2 -translate-x-1/2">
+                    <select
+                        className="select select-primary w-full min-w-[20rem]"
                         value={scene_id}
                         onChange={event => {
                             setSceneId(event.target.value);
@@ -47,7 +49,7 @@ export default function SceneSelector() {
                                 {item.name}
                             </option>
                         ))}
-                    </Select>
+                    </select>
                 </div>
             </div>
         </>

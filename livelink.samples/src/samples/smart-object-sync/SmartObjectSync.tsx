@@ -1,9 +1,10 @@
 import { useRef } from "react";
-import Canvas from "../../components/Canvas";
 import * as Livelink from "@3dverse/livelink";
 import { Input, Range } from "react-daisyui";
+import Canvas from "../../components/Canvas";
 import { useLivelinkInstance } from "../../hooks/useLivelinkInstance";
 import { useSmartObject } from "../../hooks/useSmartObject";
+import { connectButtonContainerClassName } from "../../styles/specific";
 
 //------------------------------------------------------------------------------
 const SmartObjectManifest: Record<string, string> = {
@@ -67,9 +68,7 @@ export default function SmartObjectSync() {
                 <CanvasWithControl canvasRef={canvasRef1} light={light1} />
                 <CanvasWithControl canvasRef={canvasRef2} light={light2} />
             </div>
-            <div
-                className={`absolute ${instance1 ? "top-6 left-6" : "left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2"}`}
-            >
+            <div className={connectButtonContainerClassName(!!instance1)}>
                 <button className="button button-primary" onClick={toggleConnection}>
                     {instance1 ? "Disconnect" : "Connect"}
                 </button>
@@ -78,6 +77,7 @@ export default function SmartObjectSync() {
     );
 }
 
+//------------------------------------------------------------------------------
 function CanvasWithControl({
     canvasRef,
     light,

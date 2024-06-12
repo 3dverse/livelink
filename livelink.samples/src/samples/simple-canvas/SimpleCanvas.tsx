@@ -2,6 +2,7 @@
 import { useRef } from "react";
 import Canvas from "../../components/Canvas";
 import { useLivelinkInstance } from "../../hooks/useLivelinkInstance";
+import { connectButtonContainerClassName } from "../../styles/specific";
 
 //------------------------------------------------------------------------------
 export default function SimpleCanvas() {
@@ -20,9 +21,8 @@ export default function SimpleCanvas() {
     return (
         <div className="relative h-full p-3">
             <Canvas canvasRef={canvasRef} />
-            <div
-                className={`absolute ${instance ? "top-6 left-6" : "left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2"}`}
-            >
+
+            <div className={connectButtonContainerClassName(!!instance)}>
                 <button className="button button-primary" onClick={toggleConnection}>
                     {instance ? "Disconnect" : "Connect"}
                 </button>

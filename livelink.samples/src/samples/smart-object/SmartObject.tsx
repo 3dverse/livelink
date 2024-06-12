@@ -3,6 +3,7 @@ import Canvas from "../../components/Canvas";
 import { Input, Range } from "react-daisyui";
 import { useLivelinkInstance } from "../../hooks/useLivelinkInstance";
 import { Manifest, useSmartObject } from "../../hooks/useSmartObject";
+import { connectButtonContainerClassName } from "../../styles/specific";
 
 //------------------------------------------------------------------------------
 const SmartObjectManifest: Manifest = {
@@ -67,9 +68,7 @@ export default function SmartObject() {
                         />
                     </div>
                 )}
-                <div
-                    className={`absolute ${instance ? "top-6 left-6" : "left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2"}`}
-                >
+                <div className={connectButtonContainerClassName(!!instance)}>
                     <button className="button button-primary" onClick={toggleConnection}>
                         {instance ? "Disconnect" : "Connect"}
                     </button>
