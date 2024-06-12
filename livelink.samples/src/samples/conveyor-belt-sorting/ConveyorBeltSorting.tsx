@@ -20,13 +20,13 @@ const SmartObjectManifest: Manifest = {
 };
 
 let i = 0;
+const packages: Array<Entity> = [];
 
 //------------------------------------------------------------------------------
 export default function ConveyorBeltSorting() {
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const [score, setScore] = useState([0, 0, 0]);
     const [selectedEntity, setSelectedEntity] = useState<Entity | null>(null);
-    const packages: Array<Entity> = [];
 
     const { instance, connect, disconnect } = useLivelinkInstance({ views: [{ canvas_ref: canvasRef }] });
 
@@ -78,8 +78,8 @@ export default function ConveyorBeltSorting() {
 
     const onClick = useCallback(
         async (e: Event) => {
-            const event = e as CustomEvent<{ picked_entity: Entity | null }>;
-            setSelectedEntity(event.detail.picked_entity);
+            const event = e as CustomEvent<{ entity: Entity } | null>;
+            setSelectedEntity(event.detail?.entity ?? null);
         },
         [setSelectedEntity],
     );
@@ -112,8 +112,8 @@ export default function ConveyorBeltSorting() {
         d.skybox = true;
         d.bloom = true;
         d.bloomStrength = 1;
-        d.bloomThreshold = 1;
-        d.brightness = 0.1;
+        d.bloomThreshold = 2;
+        d.brightness = 0.5;
         d.skyboxGrounded = true;
 
         camera.cameraControls.setPosition(5, 3, 0);
@@ -171,7 +171,6 @@ export default function ConveyorBeltSorting() {
     }, [changer, sensor, sensorLight]);
 
     async function spawnPackage() {
-        console.log(spawn1?.local_transform?.position);
         if (!instance || !spawn1) return;
 
         class Package extends Entity {
@@ -194,8 +193,8 @@ export default function ConveyorBeltSorting() {
 
     function deletePackages() {
         if (!instance) return;
-
         instance.scene.deleteEntities({ entities: packages });
+        packages.length = 0;
     }
 
     return (

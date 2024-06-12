@@ -1,4 +1,4 @@
-import { HighlightMode, ScreenSpaceRayResult, type Vec2, Entity } from "@livelink.core";
+import { HighlightMode, type Vec2, type Vec3, Entity } from "@livelink.core";
 import { Livelink } from "./Livelink";
 import { CanvasAutoResizer } from "./CanvasAutoResizer";
 import { Camera } from "./Camera";
@@ -161,12 +161,14 @@ export class Viewport extends EventTarget {
             e.offsetY / (this._canvas.clientHeight - this._canvas.clientTop),
         ];
 
-        const picked_entity = await this.castScreenSpaceRay({
+        const res = await this.castScreenSpaceRay({
             pos,
             mode: HighlightMode.HighlightAndDiscardOldSelection,
         });
 
-        this.dispatchEvent(new CustomEvent("on-entity-picked", { detail: { picked_entity } }));
+        console.log({ res });
+
+        this.dispatchEvent(new CustomEvent("on-entity-picked", { detail: res }));
     };
 
     /**
@@ -178,7 +180,7 @@ export class Viewport extends EventTarget {
     }: {
         pos: Vec2;
         mode: HighlightMode;
-    }): Promise<Entity | null> {
+    }): Promise<{ entity: Entity; ws_position: Vec3; ws_normal: Vec3 } | null> {
         if (!this._camera || !this._camera.rtid) {
             return null;
         }
@@ -195,7 +197,12 @@ export class Viewport extends EventTarget {
             return null;
         }
 
-        return await this.#core.scene.getEntity({ entity_rtid: res.entity_rtid });
+        const entity = await this.#core.scene.getEntity({ entity_rtid: res.entity_rtid });
+        if (entity === null) {
+            return null;
+        }
+
+        return { entity, ws_position: res.position, ws_normal: res.normal };
     }
 
     /**
