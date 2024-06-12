@@ -5,6 +5,8 @@ import { useLivelinkInstance } from "../../hooks/useLivelinkInstance";
 import { Manifest, useSmartObject } from "../../hooks/useSmartObject";
 import { Camera, Entity, Livelink, Vec2, Vec3 } from "@3dverse/livelink";
 import { DefaultCamera } from "../../components/DefaultCamera";
+import { connectButtonContainerClassName } from "../../styles/specific";
+import { Output, OutputItem, OutputValue } from "../../styles/components/output";
 
 //------------------------------------------------------------------------------
 const SmartObjectManifest: Manifest = {
@@ -201,7 +203,7 @@ export default function ConveyorBeltSorting() {
             <div className="w-full h-full p-4">
                 <Canvas canvasRef={canvasRef} />
             </div>
-            <div className="absolute flex items-center gap-2 pb-4 p-4 w-full bottom-0 bg-color-ground bg-opacity-80">
+            <div className={`flex gap-1 ${connectButtonContainerClassName(!!instance)}`}>
                 <button className="button button-primary" onClick={toggleConnection}>
                     {instance ? "Disconnect" : "Connect"}
                 </button>
@@ -213,10 +215,26 @@ export default function ConveyorBeltSorting() {
                         <button className="button button-primary" onClick={deletePackages}>
                             Reset
                         </button>
-                        <span>Left: {score[0]} | </span>
-                        <span>Right: {score[1]} | </span>
-                        <span>Fallen Comrades: {score[2]}</span>
-                        {selectedEntity && <span>| Selected: {selectedEntity.name}</span>}
+
+                        <Output>
+                            <OutputItem>
+                                Left
+                                <OutputValue isNumber>{score[0]}</OutputValue>
+                            </OutputItem>
+                            <OutputItem>
+                                Right
+                                <OutputValue isNumber>{score[1]}</OutputValue>
+                            </OutputItem>
+                            <OutputItem>
+                                Fallen Comrades
+                                <OutputValue isNumber>{score[2]}</OutputValue>
+                            </OutputItem>
+                            {selectedEntity && (
+                                <OutputItem>
+                                    Selected: <OutputValue className="capitalize">{selectedEntity.name}</OutputValue>
+                                </OutputItem>
+                            )}
+                        </Output>
                     </>
                 )}
             </div>

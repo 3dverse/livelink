@@ -1,4 +1,3 @@
-//------------------------------------------------------------------------------
 import { useCallback, useEffect, useRef, useState } from "react";
 import Canvas from "../../components/Canvas";
 import { useLivelinkInstance } from "../../hooks/useLivelinkInstance";
@@ -7,6 +6,7 @@ import { Camera, Livelink, Vec2, Vec3 } from "@3dverse/livelink";
 import { DefaultCamera } from "../../components/DefaultCamera";
 import { Entity } from "@livelink.core";
 import { connectButtonContainerClassName } from "../../styles/specific";
+import { Output, OutputItem, OutputValue } from "../../styles/components/output";
 
 //------------------------------------------------------------------------------
 const SmartObjectManifest: Manifest = {
@@ -163,33 +163,30 @@ export default function ConveyorBelt() {
             <div className="w-full h-full p-4">
                 <Canvas canvasRef={canvasRef} />
             </div>
-            <div className={`flex gap-4 ${connectButtonContainerClassName(!!instance)}`}>
+            <div className={`flex gap-4 w-fit ${connectButtonContainerClassName(!!instance)}`}>
                 <button className="button button-primary" onClick={toggleConnection}>
                     {instance ? "Disconnect" : "Connect"}
                 </button>
                 {instance && (
-                    <output className="flex items-center bg-color-underground bg-opacity-50 rounded-lg text-sm text-[#FFFFFFCC] divide-x divide-[#ffffff20] border border-[#ffffff20] backdrop-blur-xl">
-                        <p className="h-full flex items-center gap-2 px-4">
+                    <Output>
+                        <OutputItem>
                             Left
-                            <span className="inline-block text-right w-10 tabular-nums text-[#FFFFFF]">{score[0]}</span>
-                        </p>
-                        <p className="h-full flex items-center gap-2 px-4">
+                            <OutputValue isNumber>{score[0]}</OutputValue>
+                        </OutputItem>
+                        <OutputItem>
                             Right
-                            <span className="inline-block text-right w-10 tabular-nums text-[#FFFFFF]">{score[1]}</span>
-                        </p>
-                        <p className="h-full flex items-center gap-2 px-4">
+                            <OutputValue isNumber>{score[1]}</OutputValue>
+                        </OutputItem>
+                        <OutputItem>
                             Fallen Comrades
-                            <span className="inline-block text-right w-10 tabular-nums text-[#FFFFFF]">{score[2]}</span>
-                        </p>
+                            <OutputValue isNumber>{score[2]}</OutputValue>
+                        </OutputItem>
                         {selectedEntity && (
-                            <p className="h-full flex items-center gap-2 px-4">
-                                Selected:{" "}
-                                <span className="inline-block text-right text-[#FFFFFF] capitalize">
-                                    {selectedEntity.name}
-                                </span>
-                            </p>
+                            <OutputItem>
+                                Selected: <OutputValue className="capitalize">{selectedEntity.name}</OutputValue>
+                            </OutputItem>
                         )}
-                    </output>
+                    </Output>
                 )}
             </div>
         </div>
