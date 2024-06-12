@@ -1,17 +1,24 @@
-import Collaborators from "./collaborators/Collaborators";
-import ControllerEffects from "./controller-effects/ControllerEffects";
-import ConveyorBeltSorting from "./conveyor-belt-sorting/ConveyorBeltSorting";
-import ConveyorBelt from "./conveyor-belt/ConveyorBelt";
-import DoubleCanvas from "./double-canvas/DoubleCanvas";
-import ThirdPersonController from "./third-person-controller/ThirdPersonController";
-import MultiSession from "./multi-session/MultiSession";
-import PictureInPicture from "./picture-in-picture/PictureInPicture";
-import QuadrupleCanvas from "./quadruple-canvas/QuadrupleCanvas";
-import SceneSelector from "./scene-selector/SceneSelector";
+// Core
 import SimpleCanvas from "./simple-canvas/SimpleCanvas";
+import DoubleCanvas from "./double-canvas/DoubleCanvas";
+import QuadrupleCanvas from "./quadruple-canvas/QuadrupleCanvas";
+import MultiSession from "./multi-session/MultiSession";
+import SceneSelector from "./scene-selector/SceneSelector";
+
+// Smart Object
 import SmartObjectSync from "./smart-object-sync/SmartObjectSync";
 import SmartObject from "./smart-object/SmartObject";
+
+// Control
 import Trigger from "./trigger/Trigger";
+import ControllerEffects from "./controller-effects/ControllerEffects";
+import ConveyorBelt from "./conveyor-belt/ConveyorBelt";
+import ConveyorBeltSorting from "./conveyor-belt-sorting/ConveyorBeltSorting";
+import ThirdPersonController from "./third-person-controller/ThirdPersonController";
+
+// Misc
+import Collaborators from "./collaborators/Collaborators";
+import PictureInPicture from "./picture-in-picture/PictureInPicture";
 
 export const SAMPLES = [
     {
