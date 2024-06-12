@@ -13,11 +13,13 @@
     "dev": "node esbuild.js dev & tsc -w",
     "test": "echo \"Error: no test specified\" && exit 1",
     "clean": "rimraf dist",
-    "docs": "typedoc"
+    "docs": "typedoc",
+    "postversion": "cross-env-shell \"git commit -am v$npm_package_version && git tag -a v$npm_package_version -m v$npm_package_version\""
   },
   "author": "",
   "license": "ISC",
   "devDependencies": {
+    "cross-env": "^7.0.3",
     "esbuild": "^0.20.1",
     "livelink.core": "file:../livelink.core",
     "rimraf": "^5.0.7",
