@@ -57,7 +57,7 @@ export class Livelink extends LivelinkCore {
     }: {
         scene_id: UUID;
         token: string;
-        session_selector: SessionSelector;
+        session_selector?: SessionSelector;
     }): Promise<Livelink> {
         console.debug(`Looking for sessions on scene '${scene_id}'`);
         const session = await new Session(scene_id, token).find({
