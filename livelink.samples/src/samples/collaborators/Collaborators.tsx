@@ -2,7 +2,7 @@
 import { useEffect, useRef, useState } from "react";
 import Canvas from "../../components/Canvas";
 import { useLivelinkInstance } from "../../hooks/useLivelinkInstance";
-import { connectButtonContainerClassName } from "../../styles/specific";
+import { CanvasActionBar } from "../../styles/components/CanvasActionBar";
 
 //------------------------------------------------------------------------------
 export default function Collaborators() {
@@ -33,11 +33,11 @@ export default function Collaborators() {
     return (
         <div className="relative h-full max-h-screen p-3">
             <Canvas canvasRef={canvasRef} />
-            <div className={connectButtonContainerClassName(!!instance)}>
+            <CanvasActionBar isCentered={!instance}>
                 <button className="button button-primary" onClick={toggleConnection}>
                     {instance ? "Disconnect" : "Connect"}
                 </button>
-            </div>
+            </CanvasActionBar>
             <div className="absolute right-8 top-6">
                 <div className="avatar-group -space-x-6 rtl:space-x-reverse ">
                     {clients.map(client_id => (

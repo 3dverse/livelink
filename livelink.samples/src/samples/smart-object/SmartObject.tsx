@@ -1,9 +1,9 @@
 import { useRef } from "react";
-import Canvas from "../../components/Canvas";
 import { Input, Range } from "react-daisyui";
+import Canvas from "../../components/Canvas";
 import { useLivelinkInstance } from "../../hooks/useLivelinkInstance";
 import { Manifest, useSmartObject } from "../../hooks/useSmartObject";
-import { connectButtonContainerClassName } from "../../styles/specific";
+import { CanvasActionBar } from "../../styles/components/CanvasActionBar";
 
 //------------------------------------------------------------------------------
 const SmartObjectManifest: Manifest = {
@@ -68,11 +68,11 @@ export default function SmartObject() {
                         />
                     </div>
                 )}
-                <div className={connectButtonContainerClassName(!!instance)}>
+                <CanvasActionBar isCentered={!instance}>
                     <button className="button button-primary" onClick={toggleConnection}>
                         {instance ? "Disconnect" : "Connect"}
                     </button>
-                </div>
+                </CanvasActionBar>
             </div>
         </>
     );

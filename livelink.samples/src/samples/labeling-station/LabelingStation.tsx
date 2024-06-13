@@ -1,11 +1,11 @@
 //------------------------------------------------------------------------------
 import { useCallback, useEffect, useRef } from "react";
-import Canvas from "../../components/Canvas";
+import { Camera, Entity, Livelink } from "@3dverse/livelink";
 import { useLivelinkInstance } from "../../hooks/useLivelinkInstance";
 import { Manifest, useSmartObject } from "../../hooks/useSmartObject";
-import { Camera, Entity, Livelink } from "@3dverse/livelink";
+import Canvas from "../../components/Canvas";
 import { DefaultCamera } from "../../components/DefaultCamera";
-import { connectButtonContainerClassName } from "../../styles/specific";
+import { CanvasActionBar } from "../../styles/components/CanvasActionBar";
 
 //------------------------------------------------------------------------------
 const SmartObjectManifest: Manifest = {
@@ -220,7 +220,7 @@ export default function LabelingStation() {
             <div className="w-full h-full p-4">
                 <Canvas canvasRef={canvasRef} />
             </div>
-            <div className={`flex gap-1 ${connectButtonContainerClassName(!!instance)}`}>
+            <CanvasActionBar isCentered={!instance}>
                 <button className="button button-primary" onClick={toggleConnection}>
                     {instance ? "Disconnect" : "Connect"}
                 </button>
@@ -234,7 +234,7 @@ export default function LabelingStation() {
                         </button>
                     </>
                 )}
-            </div>
+            </CanvasActionBar>
         </div>
     );
 }

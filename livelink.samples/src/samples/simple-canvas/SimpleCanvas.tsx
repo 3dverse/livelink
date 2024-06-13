@@ -1,8 +1,8 @@
 //------------------------------------------------------------------------------
 import { useRef } from "react";
-import Canvas from "../../components/Canvas";
 import { useLivelinkInstance } from "../../hooks/useLivelinkInstance";
-import { connectButtonContainerClassName } from "../../styles/specific";
+import Canvas from "../../components/Canvas";
+import { CanvasActionBar } from "../../styles/components/CanvasActionBar";
 
 //------------------------------------------------------------------------------
 export default function SimpleCanvas() {
@@ -22,11 +22,11 @@ export default function SimpleCanvas() {
         <div className="relative h-full p-3">
             <Canvas canvasRef={canvasRef} />
 
-            <div className={connectButtonContainerClassName(!!instance)}>
+            <CanvasActionBar isCentered={!instance}>
                 <button className="button button-primary" onClick={toggleConnection}>
                     {instance ? "Disconnect" : "Connect"}
                 </button>
-            </div>
+            </CanvasActionBar>
         </div>
     );
 }

@@ -4,7 +4,7 @@ import { Input, Range } from "react-daisyui";
 import Canvas from "../../components/Canvas";
 import { useLivelinkInstance } from "../../hooks/useLivelinkInstance";
 import { useSmartObject } from "../../hooks/useSmartObject";
-import { connectButtonContainerClassName } from "../../styles/specific";
+import { CanvasActionBar } from "../../styles/components/CanvasActionBar";
 
 //------------------------------------------------------------------------------
 const SmartObjectManifest: Record<string, string> = {
@@ -68,11 +68,11 @@ export default function SmartObjectSync() {
                 <CanvasWithControl canvasRef={canvasRef1} light={light1} />
                 <CanvasWithControl canvasRef={canvasRef2} light={light2} />
             </div>
-            <div className={connectButtonContainerClassName(!!instance1)}>
+            <CanvasActionBar isCentered={!instance1}>
                 <button className="button button-primary" onClick={toggleConnection}>
                     {instance1 ? "Disconnect" : "Connect"}
                 </button>
-            </div>
+            </CanvasActionBar>
         </div>
     );
 }

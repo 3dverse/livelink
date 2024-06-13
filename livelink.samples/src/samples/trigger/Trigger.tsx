@@ -1,11 +1,11 @@
 //------------------------------------------------------------------------------
 import { useCallback, useEffect, useRef, useState } from "react";
-import Canvas from "../../components/Canvas";
+import { AnimationSequence } from "@3dverse/livelink";
 import { Range } from "react-daisyui";
+import Canvas from "../../components/Canvas";
 import { useLivelinkInstance } from "../../hooks/useLivelinkInstance";
 import { Manifest, useSmartObject } from "../../hooks/useSmartObject";
-import { AnimationSequence } from "@3dverse/livelink";
-import { connectButtonContainerClassName } from "../../styles/specific";
+import { CanvasActionBar } from "../../styles/components/CanvasActionBar";
 
 //------------------------------------------------------------------------------
 const SmartObjectManifest: Manifest = {
@@ -88,7 +88,7 @@ export default function Trigger() {
                         </div>
                     ))}
                 </div>
-                <div className={`flex items-center gap-4 ${connectButtonContainerClassName(!!instance)}`}>
+                <CanvasActionBar isCentered={!instance}>
                     <button className="button button-primary" onClick={toggleConnection}>
                         {instance ? "Disconnect" : "Connect"}
                     </button>
@@ -101,7 +101,7 @@ export default function Trigger() {
                             onChange={e => animationSeq?.play({ playback_speed: Number(e.target.value) })}
                         />
                     )}
-                </div>
+                </CanvasActionBar>
             </div>
         </>
     );
