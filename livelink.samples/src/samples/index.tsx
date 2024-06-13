@@ -12,9 +12,12 @@ import SmartObject from "./smart-object/SmartObject";
 // Control
 import Trigger from "./trigger/Trigger";
 import ControllerEffects from "./controller-effects/ControllerEffects";
+import ThirdPersonController from "./third-person-controller/ThirdPersonController";
+
+// Factory
 import ConveyorBelt from "./conveyor-belt/ConveyorBelt";
 import ConveyorBeltSorting from "./conveyor-belt-sorting/ConveyorBeltSorting";
-import ThirdPersonController from "./third-person-controller/ThirdPersonController";
+import LabelingStation from "./labeling-station/LabelingStation";
 
 // Misc
 import Collaborators from "./collaborators/Collaborators";
@@ -43,9 +46,15 @@ export const SAMPLES = [
         list: [
             { title: "Trigger", path: "trigger", element: <Trigger /> },
             { title: "Controller Effects", path: "controller-effects", element: <ControllerEffects /> },
-            { title: "Conveyor Belt", path: "conveyor-belt", element: <ConveyorBelt /> },
-            { title: "Conveyor Belt Sorting", path: "conveyor-belt-sorting", element: <ConveyorBeltSorting /> },
             { title: "Third Person Controller", path: "third-person-controller", element: <ThirdPersonController /> },
+        ],
+    },
+    {
+        categoryName: "Factory",
+        list: [
+            { title: "Conveyor Belt", path: "conveyor-belt", element: <ConveyorBelt /> },
+            { title: "Sorting Station", path: "conveyor-belt-sorting", element: <ConveyorBeltSorting /> },
+            { title: "Labeling Station", path: "labeling-station", element: <LabelingStation /> },
         ],
     },
     {
