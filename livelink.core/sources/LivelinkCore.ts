@@ -1,13 +1,10 @@
 import type {
     ClientConfig,
     ClientConfigResponse,
-    ComponentDescriptor,
     EditorEntity,
     EntityBase,
     EntityCreationOptions,
-    EntityUpdatedEvent,
     FireEventMessage,
-    FrameData,
     HighlightEntitiesMessage,
     InputState,
     RTID,
@@ -17,10 +14,11 @@ import type {
     UpdateEntitiesCommand,
     UpdateEntitiesFromJsonMessage,
     ViewportConfig,
+    Vec2i,
 } from "../_prebuild/types";
-import { Vec2i } from "./types";
-import { GatewayController } from "./controllers/GatewayController";
 import { EditorController } from "./controllers/EditorController";
+import { GatewayController } from "./controllers/GatewayController";
+import { ComponentSerializer } from "./ComponentSerializer";
 import { Session } from "./Session";
 
 /**
@@ -34,12 +32,7 @@ import { Session } from "./Session";
  * version of the interface, allowing for interface evolution without breaking
  * compatibility with existing applications.
  */
-export abstract class LivelinkCore extends EventTarget {
-    /**
-     *
-     */
-    public readonly session: Session;
-
+export class LivelinkCore extends EventTarget {
     /**
      * Holds access to the gateway.
      */
@@ -51,56 +44,25 @@ export abstract class LivelinkCore extends EventTarget {
     readonly #editor = new EditorController();
 
     /**
-     *
-     */
-    protected constructor(session: Session) {
-        super();
-        this.session = session;
-    }
-
-    /**
      * Connect to the session
      */
-    protected async _connect(): Promise<LivelinkCore> {
+    async _connect({ session }: { session: Session }): Promise<ComponentSerializer> {
         // Retrieve a session key
-        await this.session.registerClient();
+        await session.registerClient();
         // Connect to FTL gateway
-        console.debug("Connecting to session...", this.session);
-        const client = await this.#gateway.connectToSession({
-            session: this.session,
-        });
+        console.debug("Connecting to session...", session);
+        const client = await this.#gateway.connectToSession({ session });
         console.debug("Connected to session as:", client);
 
         // Connect to the Livelink Broker
-        const connectConfirmation = await this.#editor.connectToSession({
-            session: this.session,
-            client,
-        });
-
-        this._installComponentSerializer({ component_descriptors: connectConfirmation.components });
-
-        this.#gateway.addEventListener("on-frame-received", this.#onFrameReceived);
-
-        return this;
+        const connectConfirmation = await this.#editor.connectToSession({ session, client });
+        return new ComponentSerializer(connectConfirmation.components);
     }
-
-    /**
-     *
-     */
-    protected abstract _installComponentSerializer({
-        component_descriptors,
-    }: {
-        component_descriptors: Record<string, ComponentDescriptor>;
-    }): void;
 
     /**
      * Closes the connections to the gateway and the editor.
      */
-    protected async disconnect(): Promise<void> {
-        this.#gateway.removeEventListener("on-frame-received", this.#onFrameReceived);
-
-        await this.session.close();
-
+    async _disconnect(): Promise<void> {
         this.#editor.disconnect();
         this.#gateway.disconnect();
     }
@@ -108,7 +70,7 @@ export abstract class LivelinkCore extends EventTarget {
     /**
      *
      */
-    protected _addEventListener({
+    _addEventListener({
         target,
         event_name,
         handler,
@@ -127,7 +89,7 @@ export abstract class LivelinkCore extends EventTarget {
     /**
      *
      */
-    protected _removeEventListener({
+    _removeEventListener({
         target,
         event_name,
         handler,
@@ -146,7 +108,7 @@ export abstract class LivelinkCore extends EventTarget {
     /**
      * Send the configuration requested by the client.
      */
-    protected async configureClient({ client_config }: { client_config: ClientConfig }): Promise<ClientConfigResponse> {
+    async configureClient({ client_config }: { client_config: ClientConfig }): Promise<ClientConfigResponse> {
         this.#checkRemoteCanvasSize({ size: client_config.remote_canvas_size });
         return await this.#gateway.configureClient({ client_config });
     }
@@ -154,22 +116,7 @@ export abstract class LivelinkCore extends EventTarget {
     /**
      *
      */
-    #onFrameReceived = (e: Event) => {
-        const event = e as CustomEvent<FrameData>;
-        this.session._updateClients({ client_ids: event.detail.meta_data.clients.map(client => client.client_id) });
-        //TODO: pass only the frame and not the meta data
-        this.onFrameReceived({ frame_data: event.detail });
-    };
-
-    /**
-     *
-     */
-    protected abstract onFrameReceived({ frame_data }: { frame_data: FrameData }): void;
-
-    /**
-     *
-     */
-    resize({ size }: { size: Vec2i }) {
+    _resize({ size }: { size: Vec2i }) {
         this.#checkRemoteCanvasSize({ size });
         this.#gateway.resize({ size });
     }
@@ -186,7 +133,7 @@ export abstract class LivelinkCore extends EventTarget {
     /**
      *
      */
-    async castScreenSpaceRay({
+    async _castScreenSpaceRay({
         screenSpaceRayQuery,
     }: {
         screenSpaceRayQuery: ScreenSpaceRayQuery;
@@ -291,7 +238,7 @@ export abstract class LivelinkCore extends EventTarget {
     /**
      *
      */
-    setViewports({ viewports }: { viewports: Array<ViewportConfig> }): void {
+    _setViewports({ viewports }: { viewports: Array<ViewportConfig> }): void {
         this.#gateway.setViewports({ viewports });
     }
 
@@ -324,14 +271,14 @@ export abstract class LivelinkCore extends EventTarget {
     /**
      *
      */
-    protected _updateEntities(updateEntitiesFromJsonMessage: UpdateEntitiesFromJsonMessage) {
+    _updateEntities(updateEntitiesFromJsonMessage: UpdateEntitiesFromJsonMessage) {
         this.#gateway.updateEntities({ updateEntitiesFromJsonMessage });
     }
 
     /**
      *
      */
-    protected _updateComponents(updateEntitiesCommand: UpdateEntitiesCommand) {
+    _updateComponents(updateEntitiesCommand: UpdateEntitiesCommand) {
         this.#editor.updateComponents(updateEntitiesCommand);
     }
 }

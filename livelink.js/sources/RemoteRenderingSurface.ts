@@ -140,9 +140,9 @@ export class RemoteRenderingSurface implements DecodedFrameConsumer {
 
         if (this.#core.isConfigured() && this.#isValid()) {
             if (need_to_resize) {
-                this.#core.resize({ size: this.#dimensions });
+                this.#core._resize({ size: this.#dimensions });
             }
-            this.#core.setViewports({ viewports: this.config });
+            this.#core._setViewports({ viewports: this.config });
         }
     };
 

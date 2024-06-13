@@ -103,12 +103,8 @@ export class EntityRegistry {
     /**
      * @internal
      */
-    _configureComponentSerializer({
-        component_descriptors,
-    }: {
-        component_descriptors: Record<string, ComponentDescriptor>;
-    }) {
-        this._serializer = new ComponentSerializer(component_descriptors);
+    _configureComponentSerializer({ component_serializer }: { component_serializer: ComponentSerializer }) {
+        this._serializer = component_serializer;
 
         for (const component_name of this._serializer.component_names) {
             this._dirty_entities.set(component_name, new Set<Entity>());

@@ -9,12 +9,16 @@ import {
     CodecType,
     ClientConfigResponse,
     EntityUpdatedEvent,
-    ComponentDescriptor,
+    InputState,
+    Vec2i,
+    ViewportConfig,
+    ScreenSpaceRayQuery,
+    ScreenSpaceRayResult,
 } from "@livelink.core";
 
 import { EncodedFrameConsumer } from "./decoders/EncodedFrameConsumer";
-import { RemoteRenderingSurface } from "./RemoteRenderingSurface";
 import { DecodedFrameConsumer } from "./decoders/DecodedFrameConsumer";
+import { RemoteRenderingSurface } from "./RemoteRenderingSurface";
 import { InputDevice } from "./inputs/InputDevice";
 import { Scene } from "./Scene";
 import { Camera } from "./Camera";
@@ -26,7 +30,7 @@ import { Entity } from "./Entity";
  *
  * This interface CAN be embedded and distributed inside applications.
  */
-export class Livelink extends LivelinkCore {
+export class Livelink {
     /**
      * Start a session with the given scene id
      *
@@ -97,14 +101,24 @@ export class Livelink extends LivelinkCore {
     static async join({ session }: { session: Session }): Promise<Livelink> {
         console.debug("Joining session:", session);
         const inst = new Livelink(session);
-        await inst._connect();
+        await inst.#connect();
         return inst;
     }
 
     /**
      *
      */
-    public readonly scene = new Scene(this);
+    public readonly session: Session;
+
+    /**
+     *
+     */
+    public readonly scene: Scene;
+
+    /**
+     *
+     */
+    #core = new LivelinkCore();
 
     /**
      * The codec used by the renderer.
@@ -114,6 +128,7 @@ export class Livelink extends LivelinkCore {
      *
      */
     #remote_rendering_surface = new RemoteRenderingSurface(this);
+
     /**
      * User provided frame consumer designed to handle encoded frames from the
      * remote viewer.
@@ -145,12 +160,19 @@ export class Livelink extends LivelinkCore {
     /**
      *
      */
-    private constructor(public readonly session: Session) {
-        super(session);
+    private constructor(session: Session) {
+        this.session = session;
+        this.scene = new Scene(this.#core);
     }
 
-    async _connect(): Promise<LivelinkCore> {
-        this._addEventListener({
+    /**
+     *
+     */
+    async #connect(): Promise<Livelink> {
+        const component_serializer = await this.#core._connect({ session: this.session });
+        this.scene.entity_registry._configureComponentSerializer({ component_serializer });
+
+        this.#core._addEventListener({
             target: "editor",
             event_name: "entities-updated",
             handler: (event: Event) => {
@@ -164,23 +186,35 @@ export class Livelink extends LivelinkCore {
             },
         });
 
-        this._addEventListener({
+        this.#core._addEventListener({
             target: "gateway",
             event_name: "on-script-event-received",
             handler: this.scene._onScriptEventReceived,
         });
 
-        return super._connect();
+        this.#core._addEventListener({
+            target: "gateway",
+            event_name: "on-frame-received",
+            handler: this.#onFrameReceived,
+        });
+
+        return this;
     }
 
     /**
      *
      */
     async disconnect() {
-        this._removeEventListener({
+        this.#core._removeEventListener({
             target: "gateway",
             event_name: "on-script-event-received",
             handler: this.scene._onScriptEventReceived,
+        });
+
+        this.#core._removeEventListener({
+            target: "gateway",
+            event_name: "on-frame-received",
+            handler: this.#onFrameReceived,
         });
 
         if (this.#update_interval !== 0) {
@@ -195,10 +229,12 @@ export class Livelink extends LivelinkCore {
             this.#encoded_frame_consumer.release();
         }
 
+        await this.session.close();
+
         this.#remote_rendering_surface.release();
         this.#input_devices.forEach(d => d.teardown());
 
-        await super.disconnect();
+        await this.#core._disconnect();
     }
 
     /**
@@ -236,7 +272,7 @@ export class Livelink extends LivelinkCore {
             },
         };
 
-        const res = await this.configureClient({ client_config });
+        const res = await this.#core.configureClient({ client_config });
         this.#codec = res.codec;
         return res;
     }
@@ -265,22 +301,14 @@ export class Livelink extends LivelinkCore {
     /**
      *
      */
-    protected onFrameReceived = ({ frame_data }: { frame_data: FrameData }) => {
+    #onFrameReceived = (e: Event) => {
+        const frame_data = (e as CustomEvent<FrameData>).detail;
+        this.session._updateClients({ client_ids: frame_data.meta_data.clients.map(client => client.client_id) });
+
         this.#encoded_frame_consumer!.consumeEncodedFrame({
             encoded_frame: frame_data.encoded_frame,
         });
     };
-
-    /**
-     *
-     */
-    protected _installComponentSerializer({
-        component_descriptors,
-    }: {
-        component_descriptors: Record<string, ComponentDescriptor>;
-    }): void {
-        this.scene.entity_registry._configureComponentSerializer({ component_descriptors });
-    }
 
     /**
      *
@@ -291,7 +319,7 @@ export class Livelink extends LivelinkCore {
         }
 
         this.#remote_rendering_surface.init();
-        this.resume();
+        this.#core.resume();
         this.#startUpdateLoop({});
     }
 
@@ -344,6 +372,13 @@ export class Livelink extends LivelinkCore {
     /**
      *
      */
+    startSimulation(): void {
+        this.#core.startSimulation();
+    }
+
+    /**
+     *
+     */
     #startUpdateLoop({
         updatesPerSecond = 30,
         broadcastsPerSecond = 1,
@@ -356,7 +391,7 @@ export class Livelink extends LivelinkCore {
 
             const msg = this.scene.entity_registry._getEntitiesToUpdate();
             if (msg !== null) {
-                this._updateEntities(msg);
+                this.#core._updateEntities(msg);
                 this.scene.entity_registry._clearUpdateList();
             }
         }, 1000 / updatesPerSecond);
@@ -364,9 +399,41 @@ export class Livelink extends LivelinkCore {
         this.#broadcast_interval = setInterval(() => {
             const msg = this.scene.entity_registry._getEntitiesToBroadcast();
             if (msg !== null) {
-                this._updateComponents(msg);
+                this.#core._updateComponents(msg);
                 this.scene.entity_registry._clearBroadcastList();
             }
         }, 1000 / broadcastsPerSecond);
+    }
+
+    /**
+     *
+     */
+    _sendInput({ input_state }: { input_state: InputState }) {
+        this.#core._sendInput({ input_state });
+    }
+
+    /**
+     *
+     */
+    _resize({ size }: { size: Vec2i }) {
+        this.#core._resize({ size });
+    }
+
+    /**
+     *
+     */
+    _setViewports({ viewports }: { viewports: Array<ViewportConfig> }): void {
+        this.#core._setViewports({ viewports });
+    }
+
+    /**
+     *
+     */
+    async _castScreenSpaceRay({
+        screenSpaceRayQuery,
+    }: {
+        screenSpaceRayQuery: ScreenSpaceRayQuery;
+    }): Promise<ScreenSpaceRayResult> {
+        return this.#core._castScreenSpaceRay({ screenSpaceRayQuery });
     }
 }

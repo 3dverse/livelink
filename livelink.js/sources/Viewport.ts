@@ -184,7 +184,7 @@ export class Viewport extends EventTarget {
             return null;
         }
 
-        const res = await this.#core.castScreenSpaceRay({
+        const res = await this.#core._castScreenSpaceRay({
             screenSpaceRayQuery: {
                 camera_rtid: this._camera.rtid,
                 pos,
