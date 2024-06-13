@@ -200,6 +200,21 @@ export default function LabelingStation() {
         packages.push(p);
     }
 
+    let interval = 0;
+
+    function toggleSpawner() {
+        if (interval !== 0) {
+            clearInterval(interval);
+            interval = 0;
+            return;
+        }
+
+        interval = setInterval(() => {
+            console.log({ interval });
+            spawnPackage();
+        }, 5000);
+    }
+
     return (
         <div className="relative w-full h-full">
             <div className="w-full h-full p-4">
@@ -211,6 +226,9 @@ export default function LabelingStation() {
                 </button>
                 {instance && (
                     <>
+                        <button className="button button-primary" onClick={toggleSpawner}>
+                            Start
+                        </button>
                         <button className="button button-primary" onClick={spawnPackage}>
                             Spawn
                         </button>
