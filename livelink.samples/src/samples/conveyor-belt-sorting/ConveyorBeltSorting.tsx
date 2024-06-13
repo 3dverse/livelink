@@ -256,14 +256,12 @@ export default function ConveyorBeltSorting() {
                                             max={10}
                                             defaultValue={selectedEntity.physics_material!.contactVelocity![0]}
                                             onChange={e => {
-                                                const speed = Number(e.target.value);
+                                                const speed = Number(e.target.value) * 0.5;
                                                 selectedEntity.physics_material!.contactVelocity![0] = speed;
                                                 const d = selectedEntity.material?.dataJSON as {
                                                     speed: number;
-                                                    velocity: number;
                                                 };
-                                                d.speed = speed;
-                                                d.velocity = speed * 2;
+                                                d.speed = speed * 2;
                                             }}
                                             className="w-full"
                                         />
