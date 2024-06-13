@@ -3,7 +3,7 @@
  * This file has been generated automatically from ftl-schemas
  */
 
-import type { RTID, UUID, Quat, Vec3, Vec2, Int32, UInt32, Float, Int8} from "@livelink.core";
+import type { RTID, UUID, Quat, Vec3, Vec2, Int32, UInt32, Float, Int8} from "../../sources/types";
 import type * as Assets from "./assets";
 
 /**

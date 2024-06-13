@@ -1,9 +1,5 @@
 import { UUID } from "../../sources";
-
-/**
- *
- */
-type ComponentType = string;
+import { ComponentType } from "./components";
 
 /**
  *

@@ -23,3 +23,6 @@ export * from "./ConnectConfirmation";
 export * from "./EditorEntity";
 export * from "./IEntity";
 export * from "./EntityCreationOptions";
+
+export { type ComponentType, ComponentHash } from "./components";
+export * as Components from "./components";

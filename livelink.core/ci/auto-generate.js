@@ -10,6 +10,8 @@ const outputFolder = process.argv[4] || "../_prebuild/types";
 
 //------------------------------------------------------------------------------
 const componentFolder = path.join(ftlSchemaFolder, "components");
+const settingFolder = path.join(ftlSchemaFolder, "settings");
+const assetFolder = path.join(ftlSchemaFolder, "assets");
 
 //------------------------------------------------------------------------------
 function attributeTypeToTypeScriptType(type) {
@@ -86,7 +88,12 @@ function titlelize(str) {
 }
 
 //------------------------------------------------------------------------------
-function generateEntityBase() {
+function generateComponentTypes() {
+    const assetFiles = fs.readdirSync(assetFolder);
+    const assetTypes = assetFiles
+        .filter(assetFileName => !assetFileName.startsWith("common"))
+        .map(assetFileName => titlelize(assetFileName.replace(".asset.schema.json", "")));
+
     //--------------------------------------------------------------------------
     const componentFiles = fs.readdirSync(componentFolder);
     const componentHashes = [];
@@ -134,8 +141,49 @@ export type ${titlizedComponentClass} = Partial<{
     }
 
     //--------------------------------------------------------------------------
-    applyTemplate("EntityBase.template.ts", path.join("EntityBase.ts"), {
-        componentAttributes: componentAttributes.join("\n\n"),
+    applyTemplate("components.template.ts", path.join("components.ts"), {
+        componentTypes: componentTypes.join("\n\n"),
+        componentHashes: componentHashes.join(",\n    "),
+        assetTypes: assetTypes.join(", "),
+    });
+
+    //--------------------------------------------------------------------------
+    const assetTypeFile = assetTypes.map(assetType => `export type ${assetType} = {};`).join("\n") + "\n";
+    fs.writeFileSync(path.join(outputFolder, "assets.ts"), assetTypeFile);
+}
+
+//------------------------------------------------------------------------------
+function generateSettingTypes() {
+    const settingFiles = fs.readdirSync(settingFolder);
+
+    const settingTypes = [];
+
+    for (const settingFileName of settingFiles) {
+        const fileContent = fs.readFileSync(path.join(settingFolder, settingFileName), "utf-8");
+        const setting = JSON.parse(fileContent);
+
+        const titlizedSettingClass = titlelize(setting.class);
+        const attributes = setting.attributes.filter(attribute => !attribute.mods?.includes("transient"));
+
+        //----------------------------------------------------------------------
+        settingTypes.push(`/**
+ * ${setting.description}
+ */
+export type ${titlizedSettingClass} = Partial<{
+    ${attributes
+        .map(
+            attribute => `/**
+     * ${attribute.description}
+     */
+    ${attribute.name}: ${attributeTypeToTypeScriptType(attribute.type)};`,
+        )
+        .join("\n    ")}
+}>;`);
+    }
+
+    //--------------------------------------------------------------------------
+    applyTemplate("settings.template.ts", path.join("settings.ts"), {
+        settingTypes: settingTypes.join("\n\n"),
     });
 }
 
@@ -152,4 +200,5 @@ function applyTemplate(templateFileName, outputSchemaName, dictionnary) {
 }
 
 //------------------------------------------------------------------------------
-generateEntityBase();
+generateComponentTypes();
+generateSettingTypes();

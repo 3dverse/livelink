@@ -9,6 +9,7 @@
     "dist"
   ],
   "scripts": {
+    "prebuild": "node ci/auto-generate.js ../ftl-schemas/ ci/ ./_prebuild/types/",
     "build": "node esbuild.js && tsc",
     "dev": "node esbuild.js dev & tsc -w",
     "clean": "rimraf dist"

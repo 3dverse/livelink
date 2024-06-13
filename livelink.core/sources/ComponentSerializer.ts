@@ -1,9 +1,4 @@
-import { ComponentDescriptor } from "../_prebuild/types";
-
-/**
- *
- */
-type ComponentType = string;
+import { ComponentDescriptor, ComponentType } from "../_prebuild/types";
 
 /**
  *
