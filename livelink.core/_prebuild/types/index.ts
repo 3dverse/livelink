@@ -21,6 +21,8 @@ export * from "./UpdateAnimationSequenceStateMessage";
 export * from "./AssignClientToScriptMessage";
 export * from "./EntityCreationOptions";
 
+export { type ComponentType, ComponentHash } from "./components";
+
 export * from "./ConnectConfirmation";
 export * from "./EditorEntity";
 export * from "./EntityBase";

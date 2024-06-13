@@ -7,17 +7,19 @@ import {
     SessionSelector,
     FrameData,
     CodecType,
-    Entity,
-    Scene,
     ClientConfigResponse,
+    EntityUpdatedEvent,
+    ComponentDescriptor,
 } from "@livelink.core";
 
-import type { EncodedFrameConsumer } from "./decoders/EncodedFrameConsumer";
+import { EncodedFrameConsumer } from "./decoders/EncodedFrameConsumer";
 import { RemoteRenderingSurface } from "./RemoteRenderingSurface";
-import { Camera } from "./Camera";
-import { Viewport } from "./Viewport";
 import { DecodedFrameConsumer } from "./decoders/DecodedFrameConsumer";
 import { InputDevice } from "./inputs/InputDevice";
+import { Scene } from "./Scene";
+import { Camera } from "./Camera";
+import { Viewport } from "./Viewport";
+import { Entity } from "./Entity";
 
 /**
  * The Livelink interface.
@@ -100,29 +102,44 @@ export class Livelink extends LivelinkCore {
     }
 
     /**
+     *
+     */
+    public readonly scene = new Scene(this);
+
+    /**
      * The codec used by the renderer.
      */
-    private _codec: CodecType | null = null;
+    #codec: CodecType | null = null;
     /**
      *
      */
-    private _remote_rendering_surface = new RemoteRenderingSurface(this);
+    #remote_rendering_surface = new RemoteRenderingSurface(this);
     /**
      * User provided frame consumer designed to handle encoded frames from the
      * remote viewer.
      */
-    private _encoded_frame_consumer: EncodedFrameConsumer | null = null;
+    #encoded_frame_consumer: EncodedFrameConsumer | null = null;
 
     /**
      * List of input devices.
      */
-    private _input_devices: Array<InputDevice> = [];
+    #input_devices: Array<InputDevice> = [];
+
+    /**
+     * Interval between update to the renderer.
+     */
+    #update_interval = 0;
+
+    /**
+     * Interval between broadcasts to the editor.
+     */
+    #broadcast_interval = 0;
 
     /**
      *
      */
     get default_decoded_frame_consumer(): DecodedFrameConsumer {
-        return this._remote_rendering_surface;
+        return this.#remote_rendering_surface;
     }
 
     /**
@@ -132,16 +149,54 @@ export class Livelink extends LivelinkCore {
         super(session);
     }
 
+    async _connect(): Promise<LivelinkCore> {
+        this._addEventListener({
+            target: "editor",
+            event_name: "entities-updated",
+            handler: (event: Event) => {
+                const e = event as CustomEvent<Record<UUID, EntityUpdatedEvent>>;
+                for (const entity_euid in e.detail) {
+                    this.scene.entity_registry._updateEntityFromEvent({
+                        entity_euid,
+                        updated_components: e.detail[entity_euid].updatedComponents,
+                    });
+                }
+            },
+        });
+
+        this._addEventListener({
+            target: "gateway",
+            event_name: "on-script-event-received",
+            handler: this.scene._onScriptEventReceived,
+        });
+
+        return super._connect();
+    }
+
     /**
      *
      */
     async disconnect() {
-        if (this._encoded_frame_consumer) {
-            this._encoded_frame_consumer.release();
+        this._removeEventListener({
+            target: "gateway",
+            event_name: "on-script-event-received",
+            handler: this.scene._onScriptEventReceived,
+        });
+
+        if (this.#update_interval !== 0) {
+            clearInterval(this.#update_interval);
         }
 
-        this._remote_rendering_surface.release();
-        this._input_devices.forEach(d => d.teardown());
+        if (this.#broadcast_interval !== 0) {
+            clearInterval(this.#broadcast_interval);
+        }
+
+        if (this.#encoded_frame_consumer !== null) {
+            this.#encoded_frame_consumer.release();
+        }
+
+        this.#remote_rendering_surface.release();
+        this.#input_devices.forEach(d => d.teardown());
 
         await super.disconnect();
     }
@@ -150,14 +205,14 @@ export class Livelink extends LivelinkCore {
      *
      */
     addViewports({ viewports }: { viewports: Array<Viewport> }) {
-        this._remote_rendering_surface.addViewports({ viewports });
+        this.#remote_rendering_surface.addViewports({ viewports });
     }
 
     /**
      *
      */
     get viewports(): Array<Viewport> {
-        return this._remote_rendering_surface.viewports;
+        return this.#remote_rendering_surface.viewports;
     }
 
     /**
@@ -165,7 +220,7 @@ export class Livelink extends LivelinkCore {
      */
     async configureRemoteServer({ codec }: { codec: CodecType }): Promise<ClientConfigResponse> {
         const client_config: ClientConfig = {
-            remote_canvas_size: this._remote_rendering_surface.dimensions,
+            remote_canvas_size: this.#remote_rendering_surface.dimensions,
             encoder_config: {
                 codec,
                 profile: 1,
@@ -182,7 +237,7 @@ export class Livelink extends LivelinkCore {
         };
 
         const res = await this.configureClient({ client_config });
-        this._codec = res.codec;
+        this.#codec = res.codec;
         return res;
     }
 
@@ -190,20 +245,20 @@ export class Livelink extends LivelinkCore {
      *
      */
     isConfigured(): boolean {
-        return this._codec !== null;
+        return this.#codec !== null;
     }
 
     /**
      *
      */
     async installFrameConsumer({ frame_consumer }: { frame_consumer: EncodedFrameConsumer }) {
-        if (this._codec === null) {
+        if (this.#codec === null) {
             throw new Error("Client not configured.");
         }
 
-        this._encoded_frame_consumer = await frame_consumer.configure({
-            codec: this._codec,
-            frame_dimensions: this._remote_rendering_surface.dimensions,
+        this.#encoded_frame_consumer = await frame_consumer.configure({
+            codec: this.#codec,
+            frame_dimensions: this.#remote_rendering_surface.dimensions,
         });
     }
 
@@ -211,10 +266,21 @@ export class Livelink extends LivelinkCore {
      *
      */
     protected onFrameReceived = ({ frame_data }: { frame_data: FrameData }) => {
-        this._encoded_frame_consumer!.consumeEncodedFrame({
+        this.#encoded_frame_consumer!.consumeEncodedFrame({
             encoded_frame: frame_data.encoded_frame,
         });
     };
+
+    /**
+     *
+     */
+    protected _installComponentSerializer({
+        component_descriptors,
+    }: {
+        component_descriptors: Record<string, ComponentDescriptor>;
+    }): void {
+        this.scene.entity_registry._configureComponentSerializer({ component_descriptors });
+    }
 
     /**
      *
@@ -224,9 +290,9 @@ export class Livelink extends LivelinkCore {
             throw new Error("The Livelink instance is not configured yet");
         }
 
-        this._remote_rendering_surface.init();
+        this.#remote_rendering_surface.init();
         this.resume();
-        this.startUpdateLoop({});
+        this.#startUpdateLoop({});
     }
 
     /**
@@ -247,7 +313,7 @@ export class Livelink extends LivelinkCore {
      *
      */
     refreshViewports() {
-        this._remote_rendering_surface.init();
+        this.#remote_rendering_surface.init();
     }
 
     /**
@@ -260,18 +326,47 @@ export class Livelink extends LivelinkCore {
     ) {
         const device = new device_type(this, viewport);
         device.setup();
-        this._input_devices.push(device);
+        this.#input_devices.push(device);
     }
 
     /**
      *
      */
     removeInputDevice({ device_name }: { device_name: string }) {
-        const device = this._input_devices.find(d => d.name === device_name);
+        const device = this.#input_devices.find(d => d.name === device_name);
         if (!device) {
             throw new Error(`Input device with name '${device_name}' not found`);
         }
         device.teardown();
-        this._input_devices = this._input_devices.filter(d => d.name !== device_name);
+        this.#input_devices = this.#input_devices.filter(d => d.name !== device_name);
+    }
+
+    /**
+     *
+     */
+    #startUpdateLoop({
+        updatesPerSecond = 30,
+        broadcastsPerSecond = 1,
+    }: {
+        updatesPerSecond?: number;
+        broadcastsPerSecond?: number;
+    }) {
+        this.#update_interval = setInterval(() => {
+            this.scene.entity_registry.advanceFrame({ dt: 1 / updatesPerSecond });
+
+            const msg = this.scene.entity_registry._getEntitiesToUpdate();
+            if (msg !== null) {
+                this._updateEntities(msg);
+                this.scene.entity_registry._clearUpdateList();
+            }
+        }, 1000 / updatesPerSecond);
+
+        this.#broadcast_interval = setInterval(() => {
+            const msg = this.scene.entity_registry._getEntitiesToBroadcast();
+            if (msg !== null) {
+                this._updateComponents(msg);
+                this.scene.entity_registry._clearBroadcastList();
+            }
+        }, 1000 / broadcastsPerSecond);
     }
 }

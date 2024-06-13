@@ -277,12 +277,15 @@ export class EntityBase extends EventTarget {
         delete components.euid;
 
         for (const component_type in components) {
+            //@ts-ignore
             this[component_type] = components[component_type];
         }
 
         // Remove any undefined component
         for (const k of Object.keys(this)) {
+            //@ts-ignore
             if (this[k] === undefined) {
+                //@ts-ignore
                 delete this[k];
             }
         }

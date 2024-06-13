@@ -2,9 +2,8 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import Canvas from "../../components/Canvas";
 import { useLivelinkInstance } from "../../hooks/useLivelinkInstance";
 import { Manifest, useSmartObject } from "../../hooks/useSmartObject";
-import { Camera, Livelink, Vec2, Vec3 } from "@3dverse/livelink";
+import { Camera, Entity, Livelink, Vec2, Vec3 } from "@3dverse/livelink";
 import { DefaultCamera } from "../../components/DefaultCamera";
-import { Entity } from "@livelink.core";
 import { connectButtonContainerClassName } from "../../styles/specific";
 import { Output, OutputItem, OutputValue } from "../../styles/components/output";
 
@@ -66,8 +65,8 @@ export default function ConveyorBelt() {
 
     const onClick = useCallback(
         async (e: Event) => {
-            const event = e as CustomEvent<{ picked_entity: Entity | null }>;
-            setSelectedEntity(event.detail.picked_entity);
+            const event = (e as CustomEvent<{ picked_entity: Entity | null }>).detail;
+            setSelectedEntity(event?.picked_entity || null);
         },
         [setSelectedEntity],
     );

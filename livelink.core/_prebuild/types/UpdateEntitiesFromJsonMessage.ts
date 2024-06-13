@@ -1,6 +1,6 @@
-import { Entity } from "../../sources/Entity";
 import { serialize_RTID } from "../../sources/types";
 import { LITTLE_ENDIAN } from "../../sources/types/constants";
+import { EntityBase } from "./EntityBase";
 import { ComponentHash } from "./components";
 
 /**
@@ -9,7 +9,7 @@ import { ComponentHash } from "./components";
 export type UpdateEntitiesFromJsonMessage = {
     components: Array<{
         component_type: string;
-        entities: Set<Entity>;
+        entities: Set<EntityBase>;
     }>;
 };
 
@@ -35,6 +35,7 @@ export function compute_UpdateEntitiesFromJsonMessage_size(
             // +            jsonSize (4)
             msgSize += 4;
             // +            json (jsonLength)
+            //@ts-ignore
             msgSize += JSON.stringify(entity[componentUpdate.component_type]).length;
         }
     }
@@ -60,6 +61,7 @@ export function serialize_UpdateEntitiesFromJsonMessage({
 
     for (const componentUpdate of updateEntitiesFromJsonMessage.components) {
         // + { componentHash (4), entityCount (4) }
+        //@ts-ignore
         const componentHash = ComponentHash[componentUpdate.component_type];
         dataView.setUint32(offset, componentHash, LITTLE_ENDIAN);
         offset += 4;
@@ -73,11 +75,12 @@ export function serialize_UpdateEntitiesFromJsonMessage({
             offset += serialize_RTID({
                 dataView: dataView,
                 offset,
-                rtid: entity.rtid,
+                rtid: entity.rtid!,
             });
         }
 
         for (const entity of componentUpdate.entities) {
+            //@ts-ignore
             const jsonStr = JSON.stringify(entity[componentUpdate.component_type]);
 
             // + jsonSize (4)

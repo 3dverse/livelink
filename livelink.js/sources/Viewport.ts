@@ -1,10 +1,11 @@
-import { HighlightMode, type Vec2, type Vec3, Entity } from "@livelink.core";
+import { HighlightMode, type Vec2, type Vec3 } from "@livelink.core";
 import { Livelink } from "./Livelink";
+import { Context2D } from "./contexts/Context2D";
+import { ContextWebGL } from "./contexts/ContextWebGL";
+import { ContextProvider } from "./contexts/ContextProvider";
 import { CanvasAutoResizer } from "./CanvasAutoResizer";
 import { Camera } from "./Camera";
-import { ContextWebGL } from "./contexts/ContextWebGL";
-import { Context2D } from "./contexts/Context2D";
-import { ContextProvider } from "./contexts/ContextProvider";
+import { Entity } from "./Entity";
 
 /**
  *
@@ -165,8 +166,6 @@ export class Viewport extends EventTarget {
             pos,
             mode: HighlightMode.HighlightAndDiscardOldSelection,
         });
-
-        console.log({ res });
 
         this.dispatchEvent(new CustomEvent("on-entity-picked", { detail: res }));
     };

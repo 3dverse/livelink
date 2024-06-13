@@ -1,7 +1,9 @@
 import type {
     ClientConfig,
     ClientConfigResponse,
+    ComponentDescriptor,
     EditorEntity,
+    EntityBase,
     EntityCreationOptions,
     EntityUpdatedEvent,
     FireEventMessage,
@@ -12,14 +14,14 @@ import type {
     ScreenSpaceRayQuery,
     ScreenSpaceRayResult,
     UUID,
+    UpdateEntitiesCommand,
+    UpdateEntitiesFromJsonMessage,
     ViewportConfig,
 } from "../_prebuild/types";
 import { Vec2i } from "./types";
 import { GatewayController } from "./controllers/GatewayController";
 import { EditorController } from "./controllers/EditorController";
 import { Session } from "./Session";
-import { Scene } from "./Scene";
-import { Entity } from "./Entity";
 
 /**
  * The LivelinkCore interface.
@@ -39,11 +41,6 @@ export abstract class LivelinkCore extends EventTarget {
     public readonly session: Session;
 
     /**
-     *
-     */
-    public readonly scene = new Scene(this);
-
-    /**
      * Holds access to the gateway.
      */
     readonly #gateway = new GatewayController();
@@ -54,22 +51,11 @@ export abstract class LivelinkCore extends EventTarget {
     readonly #editor = new EditorController();
 
     /**
-     * Interval between update to the renderer.
-     */
-    #update_interval = 0;
-
-    /**
-     * Interval between broadcasts to the editor.
-     */
-    #broadcast_interval = 0;
-
-    /**
      *
      */
     protected constructor(session: Session) {
         super();
         this.session = session;
-        this.#gateway.addEventListener("on-script-event-received", this.scene._onScriptEventReceived);
     }
 
     /**
@@ -91,18 +77,7 @@ export abstract class LivelinkCore extends EventTarget {
             client,
         });
 
-        this.scene.entity_registry._configureComponentSerializer({
-            component_descriptors: connectConfirmation.components,
-        });
-
-        this.#editor.addEventListener("entities-updated", (e: CustomEvent<Record<UUID, EntityUpdatedEvent>>) => {
-            for (const entity_euid in e.detail) {
-                this.scene.entity_registry._updateEntityFromEvent({
-                    entity_euid,
-                    updated_components: e.detail[entity_euid].updatedComponents,
-                });
-            }
-        });
+        this._installComponentSerializer({ component_descriptors: connectConfirmation.components });
 
         this.#gateway.addEventListener("on-frame-received", this.#onFrameReceived);
 
@@ -110,18 +85,18 @@ export abstract class LivelinkCore extends EventTarget {
     }
 
     /**
+     *
+     */
+    protected abstract _installComponentSerializer({
+        component_descriptors,
+    }: {
+        component_descriptors: Record<string, ComponentDescriptor>;
+    }): void;
+
+    /**
      * Closes the connections to the gateway and the editor.
      */
-    protected async disconnect() {
-        if (this.#update_interval !== 0) {
-            clearInterval(this.#update_interval);
-        }
-
-        if (this.#broadcast_interval !== 0) {
-            clearInterval(this.#broadcast_interval);
-        }
-
-        this.#gateway.removeEventListener("on-script-event-received", this.scene._onScriptEventReceived);
+    protected async disconnect(): Promise<void> {
         this.#gateway.removeEventListener("on-frame-received", this.#onFrameReceived);
 
         await this.session.close();
@@ -133,30 +108,39 @@ export abstract class LivelinkCore extends EventTarget {
     /**
      *
      */
-    protected startUpdateLoop({
-        updatesPerSecond = 30,
-        broadcastsPerSecond = 1,
+    protected _addEventListener({
+        target,
+        event_name,
+        handler,
     }: {
-        updatesPerSecond?: number;
-        broadcastsPerSecond?: number;
-    }) {
-        this.#update_interval = setInterval(() => {
-            this.scene.entity_registry.advanceFrame({ dt: 1 / updatesPerSecond });
+        target: "gateway" | "editor";
+        event_name: string;
+        handler: EventListenerOrEventListenerObject;
+    }): void {
+        if (target === "gateway") {
+            this.#gateway.addEventListener(event_name, handler);
+        } else {
+            this.#editor.addEventListener(event_name, handler);
+        }
+    }
 
-            const msg = this.scene.entity_registry._getEntitiesToUpdate();
-            if (msg !== null) {
-                this.#gateway.updateEntities({ updateEntitiesFromJsonMessage: msg });
-                this.scene.entity_registry._clearUpdateList();
-            }
-        }, 1000 / updatesPerSecond);
-
-        this.#broadcast_interval = setInterval(() => {
-            const msg = this.scene.entity_registry._getEntitiesToBroadcast();
-            if (msg !== null) {
-                this.#editor.updateComponents(msg);
-                this.scene.entity_registry._clearBroadcastList();
-            }
-        }, 1000 / broadcastsPerSecond);
+    /**
+     *
+     */
+    protected _removeEventListener({
+        target,
+        event_name,
+        handler,
+    }: {
+        target: "gateway" | "editor";
+        event_name: string;
+        handler: EventListenerOrEventListenerObject;
+    }): void {
+        if (target === "gateway") {
+            this.#gateway.removeEventListener(event_name, handler);
+        } else {
+            this.#editor.removeEventListener(event_name, handler);
+        }
     }
 
     /**
@@ -180,7 +164,7 @@ export abstract class LivelinkCore extends EventTarget {
     /**
      *
      */
-    protected abstract onFrameReceived({ frame_data }: { frame_data: FrameData });
+    protected abstract onFrameReceived({ frame_data }: { frame_data: FrameData }): void;
 
     /**
      *
@@ -227,11 +211,11 @@ export abstract class LivelinkCore extends EventTarget {
     /**
      *
      */
-    async _createEntity({
+    async _spawnEntity({
         entity,
         options,
     }: {
-        entity: Entity;
+        entity: EntityBase;
         options?: EntityCreationOptions;
     }): Promise<EditorEntity> {
         const entities = await this.#editor.spawnEntity({ entity, options });
@@ -335,5 +319,19 @@ export abstract class LivelinkCore extends EventTarget {
             entities: [],
             data_object: {},
         });
+    }
+
+    /**
+     *
+     */
+    protected _updateEntities(updateEntitiesFromJsonMessage: UpdateEntitiesFromJsonMessage) {
+        this.#gateway.updateEntities({ updateEntitiesFromJsonMessage });
+    }
+
+    /**
+     *
+     */
+    protected _updateComponents(updateEntitiesCommand: UpdateEntitiesCommand) {
+        this.#editor.updateComponents(updateEntitiesCommand);
     }
 }

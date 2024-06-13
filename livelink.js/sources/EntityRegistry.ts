@@ -1,8 +1,13 @@
-import { ComponentDescriptor, UUID, UpdateEntitiesCommand, UpdateEntitiesFromJsonMessage } from "../_prebuild/types";
-import type { RTID } from "./types/RTID";
+import {
+    RTID,
+    UUID,
+    ComponentType,
+    ComponentSerializer,
+    ComponentDescriptor,
+    UpdateEntitiesFromJsonMessage,
+    UpdateEntitiesCommand,
+} from "@livelink.core";
 import { Entity } from "./Entity";
-import { ComponentSerializer } from "./ComponentSerializer";
-import { ComponentType } from "../_prebuild/types/components";
 
 /**
  *
@@ -43,14 +48,14 @@ export class EntityRegistry {
      *
      */
     add({ entity }: { entity: Entity }): void {
-        if (!entity.rtid) {
+        if (!entity.rtid || !entity.id) {
             throw new Error("Trying to add an entity without a EUID to the registry.");
         }
 
-        if (this._entity_rtid_lut.has(entity.rtid)) {
+        const existingEntity = this._entity_rtid_lut.get(entity.rtid);
+        if (existingEntity) {
             throw new Error(
-                `Cannot add entity ${entity.name} to the registry, because entity
-        ${this._entity_rtid_lut.get(entity.rtid).name} has the same RTID.`,
+                `Cannot add entity ${entity.name} to the registry, because entity ${existingEntity.name} has the same RTID.`,
             );
         }
 
@@ -69,7 +74,7 @@ export class EntityRegistry {
      *
      */
     remove({ entity }: { entity: Entity }): void {
-        if (!entity.rtid) {
+        if (!entity.rtid || !entity.id) {
             throw new Error("Trying to remove an entity without a EUID from the registry.");
         }
 
@@ -158,7 +163,7 @@ export class EntityRegistry {
      * @internal
      */
     _getEntitiesToUpdate(): UpdateEntitiesFromJsonMessage | null {
-        const msg = { components: [] };
+        const msg = { components: [] as Array<{ component_type: ComponentType; entities: Set<Entity> }> };
 
         for (const [component_type, entities] of this._dirty_entities) {
             if (entities.size !== 0) {
@@ -178,8 +183,9 @@ export class EntityRegistry {
 
         for (const [component_type, entities] of this._dirty_entities_to_broadcast) {
             for (const entity of entities) {
-                msg[entity.id] = msg[entity.id] ?? {};
-                msg[entity.id][component_type] = entity[component_type];
+                msg[entity.id!] = msg[entity.id!] ?? {};
+                //@ts-ignore
+                msg[entity.id!][component_type] = entity[component_type];
                 hasData = true;
             }
         }
@@ -195,7 +201,7 @@ export class EntityRegistry {
             const broadcast_set = this._dirty_entities_to_broadcast.get(component_type);
             for (const entity of entities) {
                 if (entity.auto_broadcast === "on") {
-                    broadcast_set.add(entity);
+                    broadcast_set!.add(entity);
                 }
             }
             entities.clear();

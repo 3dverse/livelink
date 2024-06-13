@@ -1,8 +1,14 @@
-import { EditorEntity, EntityCreationOptions, RTID, ScriptEvent, UUID } from "../_prebuild/types";
-import { LivelinkCore } from "./LivelinkCore";
-import { EntityRegistry } from "./EntityRegistry";
+import {
+    LivelinkCore,
+    RTID,
+    UUID,
+    AnimationSequence,
+    EntityCreationOptions,
+    ScriptEvent,
+    EditorEntity,
+} from "@livelink.core";
 import { Entity } from "./Entity";
-import { AnimationSequence } from "./AnimationSequence";
+import { EntityRegistry } from "./EntityRegistry";
 
 /**
  *
@@ -97,7 +103,7 @@ export class Scene extends EventTarget {
      *
      */
     async deleteEntities({ entities }: { entities: Array<Entity> }): Promise<void> {
-        await this.#core._deleteEntities({ entity_uuids: entities.map(e => e.id) });
+        await this.#core._deleteEntities({ entity_uuids: entities.map(e => e.id!) });
         for (const entity of entities) {
             this.entity_registry.remove({ entity });
         }
@@ -121,6 +127,10 @@ export class Scene extends EventTarget {
         const dataObject = event.data_object as { hEntity: { linkage: Array<UUID>; originalEUID: UUID } };
         const entity = await this.findEntity(Entity, { entity_uuid: dataObject.hEntity.originalEUID });
 
+        if (!entity) {
+            return;
+        }
+
         switch (event.event_name) {
             case "7a8cc05e-8659-4b23-99d1-1352d13e2020/enter_trigger":
                 emitter.onTriggerEntered({ entity });
@@ -142,7 +152,7 @@ export class Scene extends EventTarget {
         entity: Entity;
         options?: EntityCreationOptions;
     }): Promise<EditorEntity> {
-        return this.#core._createEntity({ entity, options });
+        return this.#core._spawnEntity({ entity, options });
     }
 
     /**

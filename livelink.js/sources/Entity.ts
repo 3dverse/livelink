@@ -1,11 +1,15 @@
-import { EditorEntity, EntityBase, EntityCreationOptions, UUID } from "../_prebuild/types";
-import { ComponentHash, type ComponentType } from "../_prebuild/types/components";
+import { ComponentHash, ComponentType, EditorEntity, EntityBase, EntityCreationOptions, UUID } from "@livelink.core";
 import { Scene } from "./Scene";
 
 /**
  *
  */
 type EntityAutoUpdateState = "on" | "off";
+
+/**
+ *
+ */
+class InvalidEntityError extends Error {}
 
 /**
  *
@@ -116,6 +120,10 @@ export class Entity extends EntityBase {
      *
      */
     async getChildren(): Promise<Entity[]> {
+        if (!this.rtid) {
+            throw new InvalidEntityError();
+        }
+
         return await this._scene._getChildren({ entity_rtid: this.rtid });
     }
 
@@ -123,13 +131,17 @@ export class Entity extends EntityBase {
      *
      */
     async assignClientToScripts({ client_uuid }: { client_uuid: UUID }): Promise<void> {
+        if (!this.rtid) {
+            throw new InvalidEntityError();
+        }
+
         if (!this.script_map || !this.script_map.elements) {
             throw new Error("Entity has no scripts");
         }
         const script_ids = Object.keys(this.script_map.elements);
         await Promise.all(
             script_ids.map(script_id =>
-                this._scene._assignClientToScripts({ client_uuid, entity_rtid: this.rtid, script_uuid: script_id }),
+                this._scene._assignClientToScripts({ client_uuid, entity_rtid: this.rtid!, script_uuid: script_id }),
             ),
         );
     }
@@ -138,7 +150,7 @@ export class Entity extends EntityBase {
      *
      */
     toJSON() {
-        let serialized = {};
+        let serialized: Record<string, unknown> = {};
         for (const p in this) {
             if (this._isSerializableComponent(p, this[p])) {
                 serialized[p as string] = this[p];
@@ -153,6 +165,7 @@ export class Entity extends EntityBase {
     _updateFromEvent({ updated_components }: { updated_components: Record<string, unknown> }) {
         this._proxy_state = "off";
         for (const key in updated_components) {
+            //@ts-ignore: the update message is guaranteed to contain only valid components
             this[key] = updated_components[key];
         }
         this._proxy_state = "on";
@@ -215,8 +228,10 @@ export class Entity extends EntityBase {
                 return value;
             }
 
+            //@ts-ignore
             if (entity._isSerializableComponent(prop, entity[prop])) {
                 //console.log("GET COMPONENT", entity, prop);
+                //@ts-ignore
                 return new Proxy(entity[prop], new ComponentHandler(entity, prop as ComponentType));
             }
 
@@ -237,12 +252,13 @@ export class Entity extends EntityBase {
         },
 
         deleteProperty(entity: Entity, prop: PropertyKey): boolean {
+            //@ts-ignore
             if (entity[prop] === undefined) {
                 return Reflect.deleteProperty(entity, prop);
             }
 
             //console.log("DELETE COMPONENT", prop);
-            entity._tryMarkingAsDeleted({ component_type: prop as ComponentType });
+            return entity._tryMarkingAsDeleted({ component_type: prop as ComponentType });
         },
     };
 }
@@ -264,8 +280,11 @@ class ComponentHandler {
      */
     get(component: object, prop: PropertyKey): unknown {
         //console.log("GET ATTRIBUTE", prop);
+        //@ts-ignore
         if (prop[0] !== "_") {
+            //@ts-ignore
             if ((typeof component[prop] === "object" && component[prop] !== null) || Array.isArray(component[prop])) {
+                //@ts-ignore
                 return new Proxy(component[prop], new ComponentHandler(this._entity, this._component_type));
             }
         }
