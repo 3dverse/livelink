@@ -5,7 +5,7 @@ import { useLivelinkInstance } from "../../hooks/useLivelinkInstance";
 import { Manifest, useSmartObject } from "../../hooks/useSmartObject";
 import { Camera, Entity, Livelink, Vec2, Vec3 } from "@3dverse/livelink";
 import { DefaultCamera } from "../../components/DefaultCamera";
-import { Output, OutputDivider, OutputItem, OutputValue } from "../../styles/components/output";
+import { Output, OutputDivider, OutputItem, OutputTitle, OutputValue } from "../../styles/components/output";
 import { CanvasActionBar } from "../../styles/components/CanvasActionBar";
 import { Range } from "react-daisyui";
 
@@ -224,6 +224,7 @@ export default function ConveyorBeltSorting() {
 
             {instance && (
                 <Output>
+                    <OutputTitle>Output</OutputTitle>
                     <OutputItem>
                         Left
                         <OutputValue isNumber>{score[0]}</OutputValue>
@@ -239,21 +240,32 @@ export default function ConveyorBeltSorting() {
                     {selectedEntity && (
                         <>
                             <OutputDivider />
-                            <div className="flex flex-col px-3 pt-2">
-                                Selected entity:
+                            <OutputTitle>Selected entity</OutputTitle>
+                            <div className="flex flex-col px-3">
                                 <span className="font-medium text-[white] capitalize">{selectedEntity.name}</span>
                                 {selectedEntity.name === "conveyor belt" && (
                                     <div className="mt-1">
-                                        <p>Speed</p>
+                                        <div className="flex justify-between">
+                                            <p>Speed</p>
+                                            <span className="text-xs text-color-tertiary">
+                                                {selectedEntity.physics_material!.contactVelocity![0]}
+                                            </span>
+                                        </div>
                                         <Range
                                             min={0}
                                             max={10}
                                             defaultValue={selectedEntity.physics_material!.contactVelocity![0]}
-                                            onChange={e =>
-                                                (selectedEntity.physics_material!.contactVelocity![0] = Number(
-                                                    e.target.value,
-                                                ))
-                                            }
+                                            onChange={e => {
+                                                const speed = Number(e.target.value);
+                                                selectedEntity.physics_material!.contactVelocity![0] = speed;
+                                                const d = selectedEntity.material?.dataJSON as {
+                                                    speed: number;
+                                                    velocity: number;
+                                                };
+                                                d.speed = speed;
+                                                d.velocity = speed * 2;
+                                            }}
+                                            className="w-full"
                                         />
                                     </div>
                                 )}

@@ -10,6 +10,11 @@ export const Output = ({ children }: { children: ReactNode }) => {
 };
 
 //------------------------------------------------------------------------------
+export const OutputTitle = ({ children }: { children: ReactNode }) => {
+    return <header className="px-3 py-1 text-3xs font-semibold tracking-wider uppercase opacity-90">{children}</header>;
+};
+
+//------------------------------------------------------------------------------
 export const OutputItem = ({ children }: { children: ReactNode }) => {
     return <p className="h-full flex items-center justify-between gap-1 px-3">{children}</p>;
 };
