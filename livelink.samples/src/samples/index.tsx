@@ -13,6 +13,7 @@ import SmartObject from "./smart-object/SmartObject";
 import Trigger from "./trigger/Trigger";
 import ControllerEffects from "./controller-effects/ControllerEffects";
 import ThirdPersonController from "./third-person-controller/ThirdPersonController";
+import PointAndClick from "./point-and-click/PointAndClick";
 
 // Factory
 import ConveyorBelt from "./conveyor-belt/ConveyorBelt";
@@ -47,6 +48,7 @@ export const SAMPLES = [
             { title: "Trigger", path: "trigger", element: <Trigger /> },
             { title: "Controller Effects", path: "controller-effects", element: <ControllerEffects /> },
             { title: "Third Person Controller", path: "third-person-controller", element: <ThirdPersonController /> },
+            { title: "Point and Click", path: "point-and-click", element: <PointAndClick /> },
         ],
     },
     {
