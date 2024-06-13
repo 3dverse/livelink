@@ -2,7 +2,7 @@ import { ConnectConfirmation } from "./types/ConnectConfirmation";
 import { EditorConnection } from "./EditorConnection";
 import { RTID, UUID } from "../sources/types";
 import { MessageHandler } from "../sources/MessageHandler";
-import { EditorEntity, EntityBase, EntityCreationOptions, EntityUpdatedEvent, UpdateEntitiesCommand } from "./types";
+import { EditorEntity, EntityCreationOptions, EntityUpdatedEvent, IEntity, UpdateEntitiesCommand } from "./types";
 
 /**
  *
@@ -33,7 +33,7 @@ export class EditorMessageHandler extends MessageHandler<string, ResolverPayload
     /**
      *
      */
-    spawnEntity({ entity, options }: { entity: EntityBase; options?: EntityCreationOptions }) {
+    spawnEntity({ entity, options }: { entity: IEntity; options?: EntityCreationOptions }) {
         this._connection!.send({
             data: JSON.stringify({
                 type: "spawn-entity",

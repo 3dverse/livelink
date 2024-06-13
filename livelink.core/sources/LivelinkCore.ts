@@ -2,7 +2,6 @@ import type {
     ClientConfig,
     ClientConfigResponse,
     EditorEntity,
-    EntityBase,
     EntityCreationOptions,
     FireEventMessage,
     HighlightEntitiesMessage,
@@ -15,6 +14,7 @@ import type {
     UpdateEntitiesFromJsonMessage,
     ViewportConfig,
     Vec2i,
+    IEntity,
 } from "../_prebuild/types";
 import { EditorController } from "./controllers/EditorController";
 import { GatewayController } from "./controllers/GatewayController";
@@ -162,7 +162,7 @@ export class LivelinkCore extends EventTarget {
         entity,
         options,
     }: {
-        entity: EntityBase;
+        entity: IEntity;
         options?: EntityCreationOptions;
     }): Promise<EditorEntity> {
         const entities = await this.#editor.spawnEntity({ entity, options });

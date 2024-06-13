@@ -8,3 +8,5 @@ export * from "./decoders/WebCodecsDecoder";
 export * from "./decoders/EncodedFrameConsumer";
 export * from "./inputs/Mouse";
 export * from "./inputs/Keyboard";
+
+export * from "../_prebuild/types";

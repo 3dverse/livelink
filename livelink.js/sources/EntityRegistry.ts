@@ -1,12 +1,5 @@
-import {
-    RTID,
-    UUID,
-    ComponentType,
-    ComponentSerializer,
-    ComponentDescriptor,
-    UpdateEntitiesFromJsonMessage,
-    UpdateEntitiesCommand,
-} from "@livelink.core";
+import { RTID, UUID, ComponentSerializer, UpdateEntitiesFromJsonMessage, UpdateEntitiesCommand } from "@livelink.core";
+import { ComponentType } from "../_prebuild/types/components";
 import { Entity } from "./Entity";
 
 /**
@@ -107,8 +100,8 @@ export class EntityRegistry {
         this._serializer = component_serializer;
 
         for (const component_name of this._serializer.component_names) {
-            this._dirty_entities.set(component_name, new Set<Entity>());
-            this._dirty_entities_to_broadcast.set(component_name, new Set<Entity>());
+            this._dirty_entities.set(component_name as ComponentType, new Set<Entity>());
+            this._dirty_entities_to_broadcast.set(component_name as ComponentType, new Set<Entity>());
         }
     }
 

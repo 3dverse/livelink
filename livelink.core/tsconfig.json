@@ -15,5 +15,5 @@
   },
 
   "include": ["./sources/index.ts"],
-  "exclude": ["./dist/**/*", "./tests/*", "./ci/**"]
+  "exclude": ["./dist/**/*", "./tests/*"]
 }

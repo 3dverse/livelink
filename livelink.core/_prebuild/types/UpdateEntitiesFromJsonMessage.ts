@@ -1,7 +1,6 @@
 import { serialize_RTID } from "../../sources/types";
 import { LITTLE_ENDIAN } from "../../sources/types/constants";
-import { EntityBase } from "./EntityBase";
-import { ComponentHash } from "./components";
+import { IEntity } from "./IEntity";
 
 /**
  *
@@ -9,7 +8,7 @@ import { ComponentHash } from "./components";
 export type UpdateEntitiesFromJsonMessage = {
     components: Array<{
         component_type: string;
-        entities: Set<EntityBase>;
+        entities: Set<IEntity>;
     }>;
 };
 
