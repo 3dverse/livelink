@@ -3,7 +3,7 @@ import { ReactNode } from "react";
 //------------------------------------------------------------------------------
 export const Output = ({ children }: { children: ReactNode }) => {
     return (
-        <output className="flex items-center bg-color-underground bg-opacity-50 rounded-lg text-sm text-[#FFFFFFCC] divide-x divide-[#ffffff20] border border-[#ffffff20] backdrop-blur-xl">
+        <output className="absolute top-5 right-5 py-2 flex flex-col gap-1 bg-color-underground bg-opacity-50 rounded-lg text-xs text-[#FFFFFFCC] divide-x divide-[#ffffff20] border border-[#ffffff20] backdrop-blur-xl">
             {children}
         </output>
     );
@@ -11,7 +11,12 @@ export const Output = ({ children }: { children: ReactNode }) => {
 
 //------------------------------------------------------------------------------
 export const OutputItem = ({ children }: { children: ReactNode }) => {
-    return <p className="h-full flex items-center gap-2 px-4">{children}</p>;
+    return <p className="h-full flex items-center justify-between gap-1 px-3">{children}</p>;
+};
+
+//------------------------------------------------------------------------------
+export const OutputDivider = () => {
+    return <hr />;
 };
 
 //------------------------------------------------------------------------------
@@ -25,9 +30,7 @@ export const OutputValue = ({
     children: ReactNode;
 }) => {
     return (
-        <span
-            className={`inline-block text-right w-10 text-[#FFFFFF] ${isNumber ? "tabular-nums" : ""} ${className} }`}
-        >
+        <span className={`inline-block text-right w-8 text-[white] ${isNumber ? "tabular-nums" : ""} ${className} }`}>
             {children}
         </span>
     );

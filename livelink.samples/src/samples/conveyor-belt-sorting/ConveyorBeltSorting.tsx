@@ -5,8 +5,9 @@ import { useLivelinkInstance } from "../../hooks/useLivelinkInstance";
 import { Manifest, useSmartObject } from "../../hooks/useSmartObject";
 import { Camera, Entity, Livelink, Vec2, Vec3 } from "@3dverse/livelink";
 import { DefaultCamera } from "../../components/DefaultCamera";
-import { connectButtonContainerClassName } from "../../styles/specific";
-import { Output, OutputItem, OutputValue } from "../../styles/components/output";
+import { Output, OutputDivider, OutputItem, OutputValue } from "../../styles/components/output";
+import { CanvasActionBar } from "../../styles/components/CanvasActionBar";
+import { Range } from "react-daisyui";
 
 //------------------------------------------------------------------------------
 const SmartObjectManifest: Manifest = {
@@ -202,41 +203,65 @@ export default function ConveyorBeltSorting() {
             <div className="w-full h-full p-4">
                 <Canvas canvasRef={canvasRef} />
             </div>
-            <div className={`flex gap-1 ${connectButtonContainerClassName(!!instance)}`}>
-                <button className="button button-primary" onClick={toggleConnection}>
+            <CanvasActionBar isCentered={!instance}>
+                <button
+                    className={`button ${instance ? "button-outline" : "button-primary"}`}
+                    onClick={toggleConnection}
+                >
                     {instance ? "Disconnect" : "Connect"}
                 </button>
                 {instance && (
                     <>
                         <button className="button button-primary" onClick={spawnPackage}>
-                            Spawn
+                            Spawn box
                         </button>
                         <button className="button button-primary" onClick={deletePackages}>
                             Reset
                         </button>
-
-                        <Output>
-                            <OutputItem>
-                                Left
-                                <OutputValue isNumber>{score[0]}</OutputValue>
-                            </OutputItem>
-                            <OutputItem>
-                                Right
-                                <OutputValue isNumber>{score[1]}</OutputValue>
-                            </OutputItem>
-                            <OutputItem>
-                                Fallen Comrades
-                                <OutputValue isNumber>{score[2]}</OutputValue>
-                            </OutputItem>
-                            {selectedEntity && (
-                                <OutputItem>
-                                    Selected: <OutputValue className="capitalize">{selectedEntity.name}</OutputValue>
-                                </OutputItem>
-                            )}
-                        </Output>
                     </>
                 )}
-            </div>
+            </CanvasActionBar>
+
+            {instance && (
+                <Output>
+                    <OutputItem>
+                        Left
+                        <OutputValue isNumber>{score[0]}</OutputValue>
+                    </OutputItem>
+                    <OutputItem>
+                        Right
+                        <OutputValue isNumber>{score[1]}</OutputValue>
+                    </OutputItem>
+                    <OutputItem>
+                        Fallen Comrades
+                        <OutputValue isNumber>{score[2]}</OutputValue>
+                    </OutputItem>
+                    {selectedEntity && (
+                        <>
+                            <OutputDivider />
+                            <div className="flex flex-col px-3 pt-2">
+                                Selected entity:
+                                <span className="font-medium text-[white] capitalize">{selectedEntity.name}</span>
+                                {selectedEntity.name === "conveyor belt" && (
+                                    <div className="mt-1">
+                                        <p>Speed</p>
+                                        <Range
+                                            min={0}
+                                            max={10}
+                                            defaultValue={selectedEntity.physics_material!.contactVelocity![0]}
+                                            onChange={e =>
+                                                (selectedEntity.physics_material!.contactVelocity![0] = Number(
+                                                    e.target.value,
+                                                ))
+                                            }
+                                        />
+                                    </div>
+                                )}
+                            </div>
+                        </>
+                    )}
+                </Output>
+            )}
         </div>
     );
 }
