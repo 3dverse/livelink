@@ -3,9 +3,6 @@ import { ConnectConfirmation } from "../../_prebuild/messages/editor";
 import { SessionInterface } from "../interfaces/SessionInterface";
 import { UUID } from "../types";
 
-//const livelink_base_url = "wss://livelink.3dverse.com";
-const livelink_base_url = "wss://api.3dverse.dev/editor-backend";
-
 /**
  *
  */
@@ -16,9 +13,11 @@ export class EditorController extends EditorMessageHandler {
     async connectToSession({
         session,
         client_id,
+        editor_url,
     }: {
         session: SessionInterface;
         client_id: UUID;
+        editor_url: string;
     }): Promise<ConnectConfirmation> {
         if (!session.isJoinable()) {
             throw new Error("Invalid session");
@@ -33,7 +32,7 @@ export class EditorController extends EditorMessageHandler {
             this._client_id = client_id;
             session.client_id = client_id;
             this._connection.connect({
-                livelink_url: `${livelink_base_url}?sessionKey=${session.session_key}&clientUUID=${client_id}`,
+                livelink_url: `${editor_url}?sessionKey=${session.session_key}&clientUUID=${client_id}`,
                 handler: this,
             });
         });

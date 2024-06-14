@@ -44,14 +44,20 @@ export class LivelinkCore extends EventTarget {
     /**
      * Connect to the session
      */
-    async _connect({ session }: { session: SessionInterface }): Promise<ComponentSerializer> {
+    async _connect({
+        session,
+        editor_url,
+    }: {
+        session: SessionInterface;
+        editor_url: string;
+    }): Promise<ComponentSerializer> {
         // Connect to FTL gateway
         console.debug("Connecting to session...", session);
         const client_id = await this.#gateway.connectToSession({ session });
         console.debug("Connected to session with id:", client_id);
 
         // Connect to the Livelink Broker
-        const connectConfirmation = await this.#editor.connectToSession({ session, client_id });
+        const connectConfirmation = await this.#editor.connectToSession({ session, client_id, editor_url });
         return new ComponentSerializer(connectConfirmation.components);
     }
 

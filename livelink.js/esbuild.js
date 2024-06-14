@@ -18,6 +18,8 @@ const commonBuildOptions = {
     define: {
         LIVELINK_CORE_URL: `"${productionLivelinkCore}"`,
         API_HOSTNAME: `"api.3dverse.dev"`,
+        //EDITOR_URL : `"wss://livelink.3dverse.com"`;
+        EDITOR_URL: `"wss://api.3dverse.dev/editor-backend"`,
     },
 };
 

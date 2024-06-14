@@ -175,7 +175,11 @@ export class Livelink {
         // Retrieve a session key
         await this.session.registerClient();
 
-        const component_serializer = await this.#core._connect({ session: this.session });
+        const component_serializer = await this.#core._connect({
+            session: this.session,
+            editor_url: EDITOR_URL,
+        });
+
         this.scene.entity_registry._configureComponentSerializer({ component_serializer });
 
         this.#core._addEventListener({
