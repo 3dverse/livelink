@@ -2,7 +2,7 @@
   "name": "@3dverse/livelink",
   "version": "0.1.0",
   "description": "",
-  "main": "./dist/index.js",
+  "main": "./dist/index.cjs",
   "module": "./dist/index.mjs",
   "typings": "./dist/sources/index.d.ts",
   "files": [
