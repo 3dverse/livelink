@@ -39,7 +39,7 @@ export default function Collaborators() {
                 </button>
             </CanvasActionBar>
             <div className="absolute right-8 top-6">
-                <div className="avatar-group -space-x-6 rtl:space-x-reverse ">
+                <div className="avatar-group flex -space-x-6 rtl:space-x-reverse ">
                     {clients.map(client_id => (
                         <div key={client_id} className="avatar w-10 rounded-full overflow-clip">
                             <img
