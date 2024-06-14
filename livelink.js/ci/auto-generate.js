@@ -1,7 +1,6 @@
 //------------------------------------------------------------------------------
 const fs = require("fs");
 const path = require("path");
-const XXH = require("xxhashjs");
 
 //------------------------------------------------------------------------------
 const ftlSchemaFolder = process.argv[2] || "../../ftl-schemas";
@@ -10,71 +9,6 @@ const outputFolder = process.argv[4] || "../_prebuild/types";
 
 //------------------------------------------------------------------------------
 const componentFolder = path.join(ftlSchemaFolder, "components");
-
-//------------------------------------------------------------------------------
-function attributeTypeToTypeScriptType(type) {
-    const arrayMatch = type.match(/array<(.+)>/);
-    if (arrayMatch) {
-        return `Array<${attributeTypeToTypeScriptType(arrayMatch[1])}>`;
-    }
-
-    const mapMatch = type.match(/map<(.+)>/);
-    if (mapMatch) {
-        return `Record<UUID, ${attributeTypeToTypeScriptType(mapMatch[1])}>`;
-    }
-
-    switch (type) {
-        case "int":
-            return "Int32";
-        case "float":
-            return "Float";
-        case "double":
-            return "Double";
-
-        case "int8_t":
-        case "int16_t":
-        case "int32_t":
-            return type.slice(0, 1).toUpperCase() + type.slice(1, -2);
-
-        case "uint8_t":
-        case "uint16_t":
-        case "uint32_t":
-            return type.slice(0, 2).toUpperCase() + type.slice(2, -2);
-
-        case "bool":
-            return "boolean";
-
-        case "vec2":
-        case "vec3":
-        case "vec4":
-            return type.slice(0, 1).toUpperCase() + type.slice(1);
-
-        case "ivec2":
-        case "ivec3":
-        case "ivec4":
-            return type.slice(0, 1).toUpperCase() + type.slice(1) + "i";
-
-        case "quaternion":
-            return "Quat";
-
-        case "json":
-            return "Record<string, unknown>";
-        case "script_element":
-            return "ScriptElement";
-
-        case "uuid":
-            return "UUID";
-
-        case "entity_ref":
-            return "EntityRef";
-    }
-
-    if (type.endsWith("_ref")) {
-        return `AssetRef<Assets.${titlelize(type.replace("_ref", "").replace("texture2d", "texture"))}>`;
-    }
-
-    return type;
-}
 
 //------------------------------------------------------------------------------
 function titlelize(str) {
@@ -89,8 +23,6 @@ function titlelize(str) {
 function generateEntityBase() {
     //--------------------------------------------------------------------------
     const componentFiles = fs.readdirSync(componentFolder);
-    const componentHashes = [];
-    const componentTypes = [];
     const componentAttributes = [];
 
     for (const assetFileName of componentFiles) {
@@ -106,25 +38,6 @@ function generateEntityBase() {
         }
 
         const titlizedComponentClass = titlelize(component.class);
-        const attributes = component.attributes.filter(attribute => !attribute.mods.includes("transient"));
-
-        //----------------------------------------------------------------------
-        componentTypes.push(`/**
- * ${component.description}
- */
-export type ${titlizedComponentClass} = Partial<{
-    ${attributes
-        .map(
-            attribute => `/**
-     * ${attribute.description}
-     */
-    ${attribute.name}: ${attributeTypeToTypeScriptType(attribute.type)};`,
-        )
-        .join("\n    ")}
-}>;`);
-
-        //----------------------------------------------------------------------
-        componentHashes.push(`${component.class} = ${parseInt(XXH.h32().update(component.class).digest().toString())}`);
 
         //----------------------------------------------------------------------
         componentAttributes.push(`    /**
