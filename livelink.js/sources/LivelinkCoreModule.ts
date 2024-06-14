@@ -1,4 +1,14 @@
-import type { LivelinkCore as LivelinkCoreType, CoreEnums as CoreEnumsType } from "livelink.core";
+import type { LivelinkCore, CoreEnums } from "livelink.core";
+
+/**
+ *
+ */
+type LivelinkCoreType = typeof LivelinkCore;
+
+/**
+ *
+ */
+type CoreEnumsType = typeof CoreEnums;
 
 /**
  *
@@ -7,12 +17,12 @@ export class LivelinkCoreModule {
     /**
      *
      */
-    static #core: typeof LivelinkCoreType | null = null;
+    static #core: LivelinkCoreType | null = null;
 
     /**
      *
      */
-    static #enums: typeof CoreEnumsType | null = null;
+    static #enums: CoreEnumsType | null = null;
 
     /**
      *
@@ -22,13 +32,12 @@ export class LivelinkCoreModule {
             return;
         }
 
-        //@ts-ignore
         // Force webpack keep the dynamic import
-        const dynamicImport = new Function("return import('" + LIVELINK_CORE_URL + "');");
-        const { LivelinkCore, CoreEnums } = (await dynamicImport()) as {
-            LivelinkCore: typeof LivelinkCoreType;
-            CoreEnums: typeof CoreEnumsType;
-        };
+        const dynamicImport = new Function("return import('" + LIVELINK_CORE_URL + "');") as () => Promise<{
+            LivelinkCore: LivelinkCoreType;
+            CoreEnums: CoreEnumsType;
+        }>;
+        const { LivelinkCore, CoreEnums } = await dynamicImport();
 
         LivelinkCoreModule.#core = LivelinkCore;
         LivelinkCoreModule.#enums = CoreEnums;
@@ -39,7 +48,7 @@ export class LivelinkCoreModule {
     /**
      *
      */
-    static get Core(): typeof LivelinkCoreType {
+    static get Core(): LivelinkCoreType {
         if (!LivelinkCoreModule.#core) {
             throw new Error("Livelink core not initialized");
         }
@@ -49,7 +58,7 @@ export class LivelinkCoreModule {
     /**
      *
      */
-    static get Enums(): typeof CoreEnumsType {
+    static get Enums(): CoreEnumsType {
         if (!LivelinkCoreModule.#enums) {
             throw new Error("Livelink core not initialized");
         }
