@@ -466,3 +466,25 @@ UpdateEntitiesFromJson:
               minItems: 1
               type: object
               $ref: "#/Entity"
+
+RemoveComponents:
+  title: RemoveComponents
+  type: object
+  properties:
+    component_count:
+      type: number
+      format: uint32
+    components:
+      type: array
+      items:
+        minItems: 1
+        type: object
+        properties:
+          component_hash:
+            type: number
+            format: uint32
+          entity_count:
+            type: number
+            format: uint32
+          entity_rtids:
+            $ref: "#/EntityList"

@@ -6,6 +6,7 @@ export * from "./FireEventMessage";
 export * from "./FrameData";
 export * from "./HighlightEntitiesMessage";
 export * from "./InputState";
+export * from "./RemoveComponentsCommand";
 export * from "./ResizeResponse";
 export * from "./ScreenSpaceRayQuery";
 export * from "./ScreenSpaceRayResult";

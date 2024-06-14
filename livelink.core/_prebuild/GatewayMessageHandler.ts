@@ -21,6 +21,7 @@ import {
     FireEventMessage,
     HighlightEntitiesMessage,
     InputState,
+    RemoveComponentsCommand,
     ResizeResponse,
     ScreenSpaceRayQuery,
     ScreenSpaceRayResult,
@@ -30,6 +31,7 @@ import {
     ViewportConfig,
     compute_FireEventMessage_size,
     compute_InputState_size,
+    compute_RemoveComponentsCommand_size,
     compute_UpdateEntitiesFromJsonMessage_size,
     deserialize_AuthenticationResponse,
     deserialize_ClientConfigResponse,
@@ -40,6 +42,7 @@ import {
     serialize_FireEventMessage,
     serialize_HighlightEntitiesMessage,
     serialize_InputState,
+    serialize_RemoveComponentsCommand,
     serialize_ScreenSpaceRayQuery,
     serialize_UpdateAnimationSequenceStateMessage,
     serialize_UpdateEntitiesFromJsonMessage,
@@ -527,6 +530,38 @@ export class GatewayMessageHandler extends MessageHandler<ChannelId, ResolverPay
             dataView,
             offset: 0,
             updateEntitiesFromJsonMessage,
+        });
+
+        this._connection.send({ data: buffer });
+    }
+
+    /**
+     * Send
+     */
+    removeComponents({ removeComponentsCommand }: { removeComponentsCommand: RemoveComponentsCommand }): void {
+        const ropDataSize = compute_RemoveComponentsCommand_size(removeComponentsCommand);
+        const payloadSize = FTL_EDITOR_ROP_HEADER_SIZE + ropDataSize;
+        const buffer = new ArrayBuffer(FTL_HEADER_SIZE + payloadSize);
+
+        this._writeMultiplexerHeader({
+            buffer,
+            channelId: ChannelId.editor_remote_operations,
+            size: payloadSize,
+        });
+
+        this._writeRemoteOperationMultiplexerHeader({
+            buffer,
+            offset: FTL_HEADER_SIZE,
+            rop_data_size: ropDataSize,
+            rop_id: EditorRemoteOperation.remove_components,
+        });
+
+        const dataView = new DataView(buffer, FTL_HEADER_SIZE + FTL_EDITOR_ROP_HEADER_SIZE);
+
+        serialize_RemoveComponentsCommand({
+            dataView,
+            offset: 0,
+            removeComponentsCommand,
         });
 
         this._connection.send({ data: buffer });

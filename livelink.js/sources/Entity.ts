@@ -194,7 +194,8 @@ export class Entity extends EntityBase {
     _tryMarkingAsDeleted({ component_type }: { component_type: ComponentType }): boolean {
         if (this.isInstantiated()) {
             // Register to appropriate dirty list
-            this._scene.entity_registry._addEntityToUpdate({ component_type, entity: this });
+            this._scene.entity_registry._detachComponentFromEntity({ component_type, entity: this });
+            this.dispatchEvent(new CustomEvent("entity-updated"));
             return true;
         }
 
@@ -255,12 +256,12 @@ export class Entity extends EntityBase {
 
         deleteProperty(entity: Entity, prop: PropertyKey): boolean {
             //@ts-ignore
-            if (entity[prop] === undefined) {
-                return Reflect.deleteProperty(entity, prop);
+            if (entity[prop] !== undefined) {
+                //console.log("DELETE COMPONENT", prop);
+                entity._tryMarkingAsDeleted({ component_type: prop as ComponentType });
             }
 
-            //console.log("DELETE COMPONENT", prop);
-            return entity._tryMarkingAsDeleted({ component_type: prop as ComponentType });
+            return Reflect.deleteProperty(entity, prop);
         },
     };
 }

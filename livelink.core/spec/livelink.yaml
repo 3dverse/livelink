@@ -144,6 +144,8 @@ channels:
         $ref: "#/components/messages/assign_client_to_script"
       update_entities_from_json:
         $ref: "#/components/messages/update_entities_from_json"
+      remove_components:
+        $ref: "#/components/messages/remove_components"
 
   #-----------------------------------------------------------------------------
   heartbeat:
@@ -350,6 +352,14 @@ operations:
       $ref: "#/channels/editor-remote-operations"
     messages:
       - $ref: "#/channels/editor-remote-operations/messages/update_entities_from_json"
+
+  removeComponents:
+    action: send
+    x-rod-id: 4
+    channel:
+      $ref: "#/channels/editor-remote-operations"
+    messages:
+      - $ref: "#/channels/editor-remote-operations/messages/remove_components"
 
   #-----------------------------------------------------------------------------
   # SCRIPT EVENTS

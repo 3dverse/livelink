@@ -5,6 +5,7 @@ import type {
     UpdateEntitiesFromJsonMessage,
     UpdateEntitiesCommand,
     ComponentType,
+    RemoveComponentsCommand,
 } from "livelink.core";
 import { Entity } from "./Entity";
 
@@ -31,6 +32,7 @@ export class EntityRegistry {
      *
      */
     private _dirty_entities = new Map<ComponentType, Set<Entity>>();
+    private _detached_entities = new Map<ComponentType, Set<Entity>>();
     private _dirty_entities_to_broadcast = new Map<ComponentType, Set<Entity>>();
 
     /**
@@ -107,6 +109,7 @@ export class EntityRegistry {
 
         for (const component_name of this._serializer.component_names) {
             this._dirty_entities.set(component_name, new Set<Entity>());
+            this._detached_entities.set(component_name, new Set<Entity>());
             this._dirty_entities_to_broadcast.set(component_name, new Set<Entity>());
         }
     }
@@ -157,10 +160,35 @@ export class EntityRegistry {
     /**
      * @internal
      */
+    _detachComponentFromEntity({ component_type, entity }: { component_type: ComponentType; entity: Entity }) {
+        const detached_entities = this._detached_entities.get(component_type);
+        if (detached_entities) {
+            detached_entities.add(entity);
+        }
+    }
+
+    /**
+     * @internal
+     */
     _getEntitiesToUpdate(): UpdateEntitiesFromJsonMessage | null {
         const msg = { components: [] as Array<{ component_type: ComponentType; entities: Set<Entity> }> };
 
         for (const [component_type, entities] of this._dirty_entities) {
+            if (entities.size !== 0) {
+                msg.components.push({ component_type, entities });
+            }
+        }
+
+        return msg.components.length > 0 ? msg : null;
+    }
+
+    /**
+     * @internal
+     */
+    _getEntitiesToDetach(): RemoveComponentsCommand | null {
+        const msg = { components: [] as Array<{ component_type: ComponentType; entities: Set<Entity> }> };
+
+        for (const [component_type, entities] of this._detached_entities) {
             if (entities.size !== 0) {
                 msg.components.push({ component_type, entities });
             }
@@ -199,6 +227,15 @@ export class EntityRegistry {
                     broadcast_set!.add(entity);
                 }
             }
+            entities.clear();
+        }
+    }
+
+    /**
+     * @internal
+     */
+    _clearDetachList() {
+        for (const [_, entities] of this._detached_entities) {
             entities.clear();
         }
     }

@@ -11,6 +11,7 @@ import { CanvasActionBar } from "../../styles/components/CanvasActionBar";
 const SmartObjectManifest: Manifest = {
     Character: "209d5e32-8936-4b03-844e-ce8d4d9b194b",
     Ground: "da7d111b-1841-4190-b4de-b30754ec4ef8",
+    Cube: "a17889ab-e6c1-47e8-860a-491948cf7158",
 };
 
 //------------------------------------------------------------------------------
@@ -20,6 +21,7 @@ export default function PointAndClick() {
     const { instance, connect, disconnect } = useLivelinkInstance({ views: [{ canvas_ref: canvasRef }] });
     const character = useSmartObject({ instance, manifest: SmartObjectManifest, smart_object: "Character" });
     const ground = useSmartObject({ instance, manifest: SmartObjectManifest, smart_object: "Ground" });
+    const cube = useSmartObject({ instance, manifest: SmartObjectManifest, smart_object: "Cube" });
 
     const toggleConnection = async () => {
         if (instance) {
@@ -50,11 +52,12 @@ export default function PointAndClick() {
     useEffect(() => {
         if (!ground) return;
         ground!.local_transform!.position = [0, 0.01, 0];
-    }, [ground]);
+    }, []);
 
     // On click on ground
     const onClick = useCallback((e: Event, _character: Entity) => {
         const event = e as CustomEvent<{ entity: Entity | null; ws_normal: Vec3; ws_position: Vec3 }>;
+        if (!event.detail) return;
         const { entity, ws_position } = event.detail;
         if (entity?.debug_name?.value !== "Ground") return;
         _character!.local_transform!.position = [ws_position[0], 0.01, ws_position[2]];
@@ -67,6 +70,16 @@ export default function PointAndClick() {
         }
     }, [instance, character, onClick]);
 
+    function toggleComponent() {
+        if (!cube) return;
+
+        if (cube.point_light) {
+            delete cube.point_light;
+        } else {
+            cube.point_light = { color: [Math.random(), Math.random(), Math.random()], intensity: 1 };
+        }
+    }
+
     // UI
     return (
         <div className="relative h-full p-3">
@@ -76,6 +89,13 @@ export default function PointAndClick() {
                 <button className="button button-primary" onClick={toggleConnection}>
                     {instance ? "Disconnect" : "Connect"}
                 </button>
+                {instance && (
+                    <>
+                        <button className="button button-primary" onClick={toggleComponent}>
+                            {cube?.point_light ? "Detach" : "Attach"}
+                        </button>
+                    </>
+                )}
             </CanvasActionBar>
         </div>
     );

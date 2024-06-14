@@ -403,10 +403,16 @@ export class Livelink {
         this.#update_interval = setInterval(() => {
             this.scene.entity_registry.advanceFrame({ dt: 1 / updatesPerSecond });
 
-            const msg = this.scene.entity_registry._getEntitiesToUpdate();
-            if (msg !== null) {
-                this.#core._updateEntities(msg);
+            const updateMsg = this.scene.entity_registry._getEntitiesToUpdate();
+            if (updateMsg !== null) {
+                this.#core._updateEntities(updateMsg);
                 this.scene.entity_registry._clearUpdateList();
+            }
+
+            const detachMsg = this.scene.entity_registry._getEntitiesToDetach();
+            if (detachMsg !== null) {
+                this.#core._removeComponents(detachMsg);
+                this.scene.entity_registry._clearDetachList();
             }
         }, 1000 / updatesPerSecond);
 

@@ -1,5 +1,5 @@
 //------------------------------------------------------------------------------
-import { useCallback, useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Camera, Entity, Livelink } from "@3dverse/livelink";
 import { useLivelinkInstance } from "../../hooks/useLivelinkInstance";
 import { Manifest, useSmartObject } from "../../hooks/useSmartObject";
@@ -200,20 +200,27 @@ export default function LabelingStation() {
         packages.push(p);
     }
 
-    let interval = 0;
+    const [spawnInterval, setSpawnInterval] = useState(0);
 
-    function toggleSpawner() {
-        if (interval !== 0) {
-            clearInterval(interval);
-            interval = 0;
+    const toggleSpawner = () => {
+        if (spawnInterval !== 0 || instance == null) {
+            clearInterval(spawnInterval);
+            setSpawnInterval(0);
             return;
         }
 
-        interval = setInterval(() => {
-            console.log({ interval });
+        const int = setInterval(() => {
             spawnPackage();
-        }, 5000);
-    }
+        }, 3500);
+
+        setSpawnInterval(int);
+    };
+
+    useEffect(() => {
+        return () => {
+            clearInterval(spawnInterval);
+        };
+    });
 
     return (
         <div className="relative w-full h-full">
@@ -227,7 +234,7 @@ export default function LabelingStation() {
                 {instance && (
                     <>
                         <button className="button button-primary" onClick={toggleSpawner}>
-                            Start
+                            {spawnInterval === 0 ? "Start" : "Stop"}
                         </button>
                         <button className="button button-primary" onClick={spawnPackage}>
                             Spawn

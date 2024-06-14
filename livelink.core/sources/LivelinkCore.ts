@@ -4,6 +4,7 @@ import type {
     FireEventMessage,
     HighlightEntitiesMessage,
     InputState,
+    RemoveComponentsCommand,
     ScreenSpaceRayQuery,
     ScreenSpaceRayResult,
     UpdateEntitiesFromJsonMessage,
@@ -282,5 +283,12 @@ export class LivelinkCore extends EventTarget {
      */
     _updateComponents(updateEntitiesCommand: UpdateEntitiesCommand) {
         this.#editor.updateComponents(updateEntitiesCommand);
+    }
+
+    /**
+     *
+     */
+    _removeComponents(removeComponentsCommand: RemoveComponentsCommand) {
+        this.#gateway.removeComponents({ removeComponentsCommand });
     }
 }

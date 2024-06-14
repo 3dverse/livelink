@@ -1,14 +1,14 @@
-import { serialize_RTID } from "../../../sources/types";
+import { RTID_BYTE_SIZE, serialize_RTID } from "../../../sources/types";
 import { LITTLE_ENDIAN } from "../../../sources/types/constants";
-import { ComponentHash } from "../../types/components";
 import { EntityInterface } from "../../../sources/interfaces/EntityInterface";
+import { ComponentHash, ComponentType } from "../../types/components";
 
 /**
  *
  */
 export type UpdateEntitiesFromJsonMessage = {
     components: Array<{
-        component_type: string;
+        component_type: ComponentType;
         entities: Set<EntityInterface>;
     }>;
 };
@@ -27,9 +27,9 @@ export function compute_UpdateEntitiesFromJsonMessage_size(
     msgSize += componentCount * (4 + 4);
     //      for each component
     for (const componentUpdate of updateEntitiesFromJsonMessage.components) {
-        // +        entityCount * { entityRTID (4) }
+        // +        entityCount * { entityRTID }
         const entityCount = componentUpdate.entities.size;
-        msgSize += entityCount * 4;
+        msgSize += entityCount * RTID_BYTE_SIZE;
         //          for each entity
         for (const entity of componentUpdate.entities) {
             // +            jsonSize (4)
@@ -61,7 +61,6 @@ export function serialize_UpdateEntitiesFromJsonMessage({
 
     for (const componentUpdate of updateEntitiesFromJsonMessage.components) {
         // + { componentHash (4), entityCount (4) }
-        //@ts-ignore
         const componentHash = ComponentHash[componentUpdate.component_type];
         dataView.setUint32(offset, componentHash, LITTLE_ENDIAN);
         offset += 4;

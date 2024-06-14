@@ -120,6 +120,12 @@ update_entities_from_json:
     description: Update entity components
     $ref: "./schemas.yaml#/UpdateEntitiesFromJson"
 
+remove_components:
+  contentType: application/octet-stream
+  payload:
+    description: Remove components from entities
+    $ref: "./schemas.yaml#/RemoveComponents"
+
 #-----------------------------------------------------------------------------
 # SCRIPT EVENTS
 #-----------------------------------------------------------------------------
