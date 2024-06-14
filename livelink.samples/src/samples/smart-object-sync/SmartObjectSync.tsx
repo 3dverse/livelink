@@ -2,8 +2,7 @@ import { useRef } from "react";
 import * as Livelink from "@3dverse/livelink";
 import { Input, Range } from "react-daisyui";
 import Canvas from "../../components/Canvas";
-import { useLivelinkInstance } from "../../hooks/useLivelinkInstance";
-import { useSmartObject } from "../../hooks/useSmartObject";
+import { useLivelinkInstance, useSmartObject } from "@3dverse/livelink-react";
 import { CanvasActionBar } from "../../styles/components/CanvasActionBar";
 
 //------------------------------------------------------------------------------

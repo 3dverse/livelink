@@ -1,7 +1,7 @@
 //------------------------------------------------------------------------------
 import { useEffect, useRef } from "react";
 import Canvas from "../../components/Canvas";
-import { useLivelinkInstance } from "../../hooks/useLivelinkInstance";
+import { useLivelinkInstance } from "@3dverse/livelink-react";
 
 //------------------------------------------------------------------------------
 export default function MultiSession() {

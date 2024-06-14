@@ -1,8 +1,7 @@
 import { useRef } from "react";
 import { Input, Range } from "react-daisyui";
 import Canvas from "../../components/Canvas";
-import { useLivelinkInstance } from "../../hooks/useLivelinkInstance";
-import { Manifest, useSmartObject } from "../../hooks/useSmartObject";
+import { useLivelinkInstance, Manifest, useSmartObject } from "@3dverse/livelink-react";
 import { CanvasActionBar } from "../../styles/components/CanvasActionBar";
 
 //------------------------------------------------------------------------------

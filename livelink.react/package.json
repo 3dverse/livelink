@@ -1,0 +1,40 @@
+{
+  "name": "@3dverse/livelink-react",
+  "version": "0.1.0",
+  "description": "",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.mjs",
+  "typings": "./dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "node esbuild.js && tsc",
+    "dev": "node esbuild.js dev & tsc -w",
+    "clean": "rimraf dist"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/3dverse/livelink.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/3dverse/livelink/issues"
+  },
+  "homepage": "https://github.com/3dverse/livelink#readme",
+  "dependencies": {
+    "camera-controls": "^2.8.5",
+    "three": "^0.165.0"
+  },
+  "devDependencies": {
+    "@types/react": "^18.3.3",
+    "@types/three": "^0.165.0",
+    "esbuild": "^0.20.1",
+    "typescript": "^5.4.5"
+  },
+  "peerDependencies": {
+    "@3dverse/livelink": "^0.2.0",
+    "react": "^18.2.0"
+  }
+}

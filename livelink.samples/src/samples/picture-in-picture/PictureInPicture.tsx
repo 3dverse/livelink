@@ -1,10 +1,8 @@
 //------------------------------------------------------------------------------
 import { useEffect, useRef, useState } from "react";
 import Canvas from "../../components/Canvas";
-import { useLivelinkInstance } from "../../hooks/useLivelinkInstance";
+import { useLivelinkInstance, Manifest, DefaultCamera } from "@3dverse/livelink-react";
 import { AnimationSequence, Camera, Livelink } from "@3dverse/livelink";
-import { Manifest } from "../../hooks/useSmartObject";
-import { DefaultCamera } from "../../components/DefaultCamera";
 
 //------------------------------------------------------------------------------
 const SmartObjectManifest: Manifest = {

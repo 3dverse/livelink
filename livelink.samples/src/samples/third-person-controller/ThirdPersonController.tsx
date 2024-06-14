@@ -2,7 +2,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Camera, Entity, Keyboard, Mouse, Livelink, UUID, Viewport } from "@3dverse/livelink";
 import Canvas from "../../components/Canvas";
-import { useLivelinkInstance } from "../../hooks/useLivelinkInstance";
+import { useLivelinkInstance } from "@3dverse/livelink-react";
 import { CanvasActionBar } from "../../styles/components/CanvasActionBar";
 
 const manifest = {

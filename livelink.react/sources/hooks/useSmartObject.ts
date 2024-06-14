@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 
 //------------------------------------------------------------------------------
 export type Manifest = Record<string, UUID>;
+
 //------------------------------------------------------------------------------
 export async function findSmartObject(instance: Livelink, manifest: Manifest, objectName: string) {
     if (!(objectName in manifest)) {

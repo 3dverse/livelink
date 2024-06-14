@@ -1,10 +1,8 @@
 //------------------------------------------------------------------------------
 import { useCallback, useEffect, useRef, useState } from "react";
 import Canvas from "../../components/Canvas";
-import { useLivelinkInstance } from "../../hooks/useLivelinkInstance";
-import { Manifest, useSmartObject } from "../../hooks/useSmartObject";
+import { useLivelinkInstance, Manifest, useSmartObject, DefaultCamera } from "@3dverse/livelink-react";
 import { Camera, Entity, Livelink, Vec2, Vec3 } from "@3dverse/livelink";
-import { DefaultCamera } from "../../components/DefaultCamera";
 import { Output, OutputDivider, OutputItem, OutputTitle, OutputValue } from "../../styles/components/output";
 import { CanvasActionBar } from "../../styles/components/CanvasActionBar";
 import { Range } from "react-daisyui";

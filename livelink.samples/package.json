@@ -14,20 +14,18 @@
   },
   "dependencies": {
     "@3dverse/livelink": "file:../livelink.js",
+    "@3dverse/livelink-react": "file:../livelink.react",
     "@fontsource-variable/manrope": "^5.0.20",
-    "camera-controls": "^2.8.3",
     "react": "^18.2.0",
     "react-daisyui": "^5.0.0",
     "react-dom": "^18.2.0",
-    "react-router-dom": "^6.23.1",
-    "three": "^0.164.1"
+    "react-router-dom": "^6.23.1"
   },
   "devDependencies": {
     "@fontsource-variable/inter": "^5.0.18",
     "@types/react": "^18.2.66",
     "@types/react-dom": "^18.2.22",
     "@types/react-router-dom": "^5.3.3",
-    "@types/three": "^0.164.1",
     "@types/wicg-file-system-access": "^2023.10.5",
     "@typescript-eslint/eslint-plugin": "^7.2.0",
     "@typescript-eslint/parser": "^7.2.0",

@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from "react";
 
 //------------------------------------------------------------------------------
 import Canvas from "../../components/Canvas";
-import { useLivelinkInstance } from "../../hooks/useLivelinkInstance";
+import { useLivelinkInstance } from "@3dverse/livelink-react";
 
 //------------------------------------------------------------------------------
 const scenes = [

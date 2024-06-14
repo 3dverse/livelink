@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 import { useEffect, useState } from "react";
-import { DefaultCamera } from "../components/DefaultCamera";
+import { DefaultCamera } from "../cameras/DefaultCamera";
 import { Camera, Livelink, SessionInfo, SoftwareDecoder, UUID, Viewport, WebCodecsDecoder } from "@3dverse/livelink";
 
 //------------------------------------------------------------------------------

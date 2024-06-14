@@ -1,9 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Camera, Entity, Livelink, Vec2, Vec3 } from "@3dverse/livelink";
 import Canvas from "../../components/Canvas";
-import { useLivelinkInstance } from "../../hooks/useLivelinkInstance";
-import { Manifest, useSmartObject } from "../../hooks/useSmartObject";
-import { DefaultCamera } from "../../components/DefaultCamera";
+import { useLivelinkInstance, DefaultCamera, useSmartObject, Manifest } from "@3dverse/livelink-react";
 import { Output, OutputItem, OutputValue } from "../../styles/components/output";
 import { CanvasActionBar } from "../../styles/components/CanvasActionBar";
 

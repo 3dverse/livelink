@@ -5,6 +5,7 @@
   "workspaces": [
     "livelink.js",
     "livelink.core",
+    "livelink.react",
     "livelink.samples"
   ],
   "scripts": {
@@ -12,14 +13,17 @@
     "prebuild": "npm run clean",
     "build:core": "npm -C livelink.core run build",
     "build:js": "npm -C livelink.js run build",
+    "build:react": "npm -C livelink.react run build",
     "build": "npm-run-all build:*",
     "clean:core": "npm -C livelink.core run clean",
     "clean:js": "npm -C livelink.js run clean",
+    "clean:react": "npm -C livelink.react run clean",
     "clean": "npm-run-all --parallel clean:*",
     "=============== Dev =================": "",
     "predev": "npm run build",
     "dev:core": "npm -C livelink.core run dev",
     "dev:js": "npm -C livelink.js run dev",
+    "dev:react": "npm -C livelink.react run dev",
     "dev:samples": "npm -C livelink.samples run dev",
     "dev": "npm-run-all --parallel dev:*",
     "=============== Test =================": "",

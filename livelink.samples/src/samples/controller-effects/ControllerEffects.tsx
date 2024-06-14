@@ -1,8 +1,7 @@
 //------------------------------------------------------------------------------
 import { useEffect, useRef } from "react";
 import Canvas from "../../components/Canvas";
-import { useLivelinkInstance } from "../../hooks/useLivelinkInstance";
-import { DefaultCamera } from "../../components/DefaultCamera";
+import { useLivelinkInstance, DefaultCamera } from "@3dverse/livelink-react";
 import CameraControls from "camera-controls";
 import * as THREE from "three";
 import { Camera } from "@3dverse/livelink";

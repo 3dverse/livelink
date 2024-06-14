@@ -1,7 +1,7 @@
 //------------------------------------------------------------------------------
 import { useEffect, useRef, useState } from "react";
+import { useLivelinkInstance } from "@3dverse/livelink-react";
 import Canvas from "../../components/Canvas";
-import { useLivelinkInstance } from "../../hooks/useLivelinkInstance";
 import { CanvasActionBar } from "../../styles/components/CanvasActionBar";
 
 //------------------------------------------------------------------------------
