@@ -36,6 +36,21 @@ variables:
   rules:
     - when: always
 
+.publish:
+  stage: deploy
+  extends:
+    - .runner-onprem
+  image: node:${NODE_VERSION}
+  before_script:
+    - !reference [.npm-regcreds, before_script]
+    - npm config set @3dverse:registry="https://registry.npmjs.org" --userconfig=".npmrc"
+    - npm config set //registry.npmjs.org/:_authToken="${NPMJS_ACCESS_TOKEN}" --userconfig=".npmrc"
+    - tar -zxf ${PACKAGE_NAME}-*.tgz --strip-components=1 -C $PACKAGE_DIR
+    - cd $PACKAGE_DIR
+    - npm pkg delete private
+  script:
+    - npm publish --access public
+
 # JOBS ################################################################################################################
 # BUILD
 js:livelink.core:build:
@@ -129,22 +144,42 @@ js:livelink.core:deploy:
 js:livelink.js:publish:
   stage: deploy
   extends:
-    - .runner-onprem
-  image: node:${NODE_VERSION}
+    - .publish
   needs:
     - job: js:livelink.js:build
       artifacts: true
-  before_script:
-    - !reference [.npm-regcreds, before_script]
-    - npm config set @3dverse:registry="https://registry.npmjs.org" --userconfig=".npmrc"
-    - npm config set //registry.npmjs.org/:_authToken="${NPMJS_ACCESS_TOKEN}" --userconfig=".npmrc"
-    - tar -zxf ${LIVELINK_JS_PACKAGE}-*.tgz --strip-components=1 -C livelink.js
-    - cd livelink.js
-    - npm pkg delete private
-  script:
-    - npm publish --access public
+  variables:
+    PACKAGE_DIR: livelink.js
+    PACKAGE_NAME: $LIVELINK_JS_PACKAGE
   rules:
     - if: $CI_COMMIT_TAG != null
+
+js:livelink.react:publish:
+  stage: deploy
+  extends:
+    - .publish
+  needs:
+    - job: js:livelink.react:build
+      artifacts: true
+  variables:
+    PACKAGE_DIR: livelink.react
+    PACKAGE_NAME: $LIVELINK_REACT_PACKAGE
+  script:
+    - |
+      set -e
+      latest_published_version=$(npm show @3dverse/livelink-react version)
+      current_version=$(node -e "console.log(require('./package.json').version)")
+
+      if [ "$latest_published_version" != "$current_version" ]; then
+        npm version $latest_published_version --no-git-tag-version
+      fi
+      npm version patch --no-git-tag-version
+    - !reference [.publish, script]
+  rules:
+    - if: $CI_COMMIT_REF_NAME == $CI_DEFAULT_BRANCH
+      changes:
+        - livelink.react/**/*
+        - livelink.react/*
 
 # GITLAB PAGE
 pages:
