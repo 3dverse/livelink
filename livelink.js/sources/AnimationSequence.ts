@@ -1,4 +1,4 @@
-import type { LivelinkCore, UUID } from "@livelink.core";
+import type { LivelinkCore, UUID } from "livelink.core";
 import { Entity } from "./Entity";
 
 /**

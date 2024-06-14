@@ -4,7 +4,7 @@ import BWDecoder from "../../external/Decoder.js";
 // @ts-ignore
 import YUVCanvas from "../../external/YUVCanvas.js";
 
-import type { CodecType, Vec2i } from "@livelink.core";
+import type { CodecType, Vec2i } from "livelink.core";
 import { LivelinkCoreModule } from "../LivelinkCoreModule";
 import { DecodedFrameConsumer } from "./DecodedFrameConsumer";
 

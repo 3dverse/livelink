@@ -1,4 +1,4 @@
-import type { Vec2i, Vec2ui16, ViewportConfig } from "@livelink.core";
+import type { Vec2i, Vec2ui16, ViewportConfig } from "livelink.core";
 import { Livelink } from "./Livelink";
 import { DecodedFrameConsumer } from "./decoders/DecodedFrameConsumer";
 import { Viewport } from "./Viewport";

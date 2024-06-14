@@ -1,6 +1,6 @@
 import { EncodedFrameConsumer } from "./EncodedFrameConsumer";
 
-import type { CodecType, Vec2i } from "@livelink.core";
+import type { CodecType, Vec2i } from "livelink.core";
 import { LivelinkCoreModule } from "../LivelinkCoreModule";
 import { DecodedFrameConsumer } from "./DecodedFrameConsumer";
 
@@ -103,7 +103,8 @@ export class WebCodecsDecoder implements EncodedFrameConsumer {
             codedWidth: frame_dimensions?.[0],
             codedHeight: frame_dimensions?.[1],
             // Forcing software decoding for H264, as hardware decoding with H264 has delay issues.
-            hardwareAcceleration: LivelinkCoreModule.Enums.CodecType.h264 ? "prefer-software" : "prefer-hardware",
+            hardwareAcceleration:
+                codec === LivelinkCoreModule.Enums.CodecType.h264 ? "prefer-software" : "prefer-hardware",
             optimizeForLatency: true,
         };
 

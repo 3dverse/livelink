@@ -1,4 +1,4 @@
-import type { ClientInterface, UUID } from "@livelink.core";
+import type { ClientInterface, UUID } from "livelink.core";
 
 /**
  * A client is the representation of a singular user in a session.

@@ -1,4 +1,4 @@
-import type { Vec2i, Vec2 } from "@livelink.core";
+import type { Vec2i, Vec2 } from "livelink.core";
 import { Viewport } from "./Viewport";
 
 /**

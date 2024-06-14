@@ -1,4 +1,4 @@
-import type { HighlightMode, Vec2, Vec3 } from "@livelink.core";
+import type { HighlightMode, Vec2, Vec3 } from "livelink.core";
 import { Livelink } from "./Livelink";
 import { Context2D } from "./contexts/Context2D";
 import { ContextWebGL } from "./contexts/ContextWebGL";

@@ -1,4 +1,4 @@
-import type { SessionInterface, UUID } from "@livelink.core";
+import type { SessionInterface, UUID } from "livelink.core";
 import { Client } from "./Client";
 
 /**

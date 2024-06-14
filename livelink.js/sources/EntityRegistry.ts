@@ -1,11 +1,11 @@
-import {
+import type {
     RTID,
     UUID,
     ComponentSerializer,
     UpdateEntitiesFromJsonMessage,
     UpdateEntitiesCommand,
     ComponentType,
-} from "@livelink.core";
+} from "livelink.core";
 import { Entity } from "./Entity";
 
 /**
