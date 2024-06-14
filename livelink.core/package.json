@@ -26,6 +26,7 @@
   "homepage": "https://github.com/3dverse/livelink#readme",
   "devDependencies": {
     "esbuild": "^0.20.1",
+    "http-server": "^14.1.1",
     "rimraf": "^5.0.7",
     "typescript": "^5.4.5",
     "xxhashjs": "^0.2.2"

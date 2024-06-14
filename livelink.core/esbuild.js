@@ -1,6 +1,7 @@
 //------------------------------------------------------------------------------
 const pkg = require("./package.json");
 const esbuild = require("esbuild");
+const httpServer = require("http-server");
 
 //------------------------------------------------------------------------------
 (async () => {
@@ -17,9 +18,14 @@ const esbuild = require("esbuild");
 
     if (process.argv.includes("dev")) {
         await ctx.watch();
-        await ctx.serve({
-            port: 3000,
-            servedir: "dist",
+        await ctx.serve({ servedir: "dist" }).then(server => {
+            httpServer
+                .createServer({
+                    root: "dist",
+                    cors: true,
+                    proxy: `http://localhost:${server.port}`,
+                })
+                .listen(3000);
         });
     } else {
         await ctx.rebuild();
