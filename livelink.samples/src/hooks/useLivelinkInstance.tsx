@@ -1,16 +1,7 @@
 //------------------------------------------------------------------------------
 import { useEffect, useState } from "react";
 import { DefaultCamera } from "../components/DefaultCamera";
-import {
-    Camera,
-    CodecType,
-    Livelink,
-    SessionInfo,
-    SoftwareDecoder,
-    UUID,
-    Viewport,
-    WebCodecsDecoder,
-} from "@3dverse/livelink";
+import { Camera, Livelink, SessionInfo, SoftwareDecoder, UUID, Viewport, WebCodecsDecoder } from "@3dverse/livelink";
 
 //------------------------------------------------------------------------------
 type View = { canvas_ref: React.RefObject<HTMLCanvasElement>; camera?: typeof Camera | UUID | null };
@@ -96,7 +87,7 @@ async function configureClient(
     //         renderer on the client canvas size and available input devices
     //         and most importantly activates the session.
     const webcodec = await WebCodecsDecoder.findSupportedCodec();
-    await instance.configureRemoteServer({ codec: webcodec || CodecType.h264 });
+    await instance.configureRemoteServer({ codec: webcodec || undefined });
 
     // Step 3: configure the local client.
     await instance.installFrameConsumer({

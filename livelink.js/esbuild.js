@@ -7,26 +7,50 @@ const localLivelinkCore = "http://localhost:3000/index.mjs";
 const productionLivelinkCore = "https://storage.googleapis.com/livelink-prod/core/index.mjs";
 
 //------------------------------------------------------------------------------
-(async () => {
-    const ctx = await esbuild.context({
-        entryPoints: ["./sources/index.ts"],
-        outdir: "dist",
-        bundle: true,
-        minify: true,
-        platform: "neutral",
-        external: [...Object.keys(pkg.peerDependencies || {})],
-        alias: {
-            "@livelink.core": process.env.CI ? productionLivelinkCore : localLivelinkCore,
-        },
-        sourcemap: true,
+const commonBuildOptions = {
+    entryPoints: ["./sources/index.ts"],
+    outdir: "dist",
+    bundle: true,
+    minify: true,
+    platform: "neutral",
+    external: [...Object.keys(pkg.peerDependencies || {})],
+    sourcemap: true,
+    define: {
+        LIVELINK_CORE_URL: `"${productionLivelinkCore}"`,
+    },
+};
+
+//------------------------------------------------------------------------------
+const buildOptions = [
+    {
         format: "esm",
         outExtension: { ".js": ".mjs" },
-    });
+    },
+    {
+        format: "cjs",
+        outExtension: { ".js": ".cjs" },
+    },
+];
 
+//------------------------------------------------------------------------------
+const devBuildOptions = {
+    ...commonBuildOptions,
+    ...buildOptions[0],
+    define: {
+        LIVELINK_CORE_URL: `"${localLivelinkCore}"`,
+    },
+};
+
+//------------------------------------------------------------------------------
+(async () => {
     if (process.argv.includes("dev")) {
+        const ctx = await esbuild.context(devBuildOptions);
         await ctx.watch();
-    } else {
-        await ctx.rebuild();
-        ctx.dispose();
+        return;
+    }
+
+    for (const options of buildOptions) {
+        console.log(`Building ${options.format}...`);
+        await esbuild.build({ ...commonBuildOptions, ...options });
     }
 })();

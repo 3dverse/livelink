@@ -1,7 +1,7 @@
 import type { ComponentType, EditorEntity, EntityCreationOptions, UUID } from "@livelink.core";
-import { ComponentHash } from "@livelink.core";
 import { EntityBase } from "../_prebuild/types/EntityBase";
 import { Scene } from "./Scene";
+import { LivelinkCoreModule } from "./LivelinkCoreModule";
 
 /**
  *
@@ -209,7 +209,7 @@ export class Entity extends EntityBase {
             typeof prop === "string" &&
             v !== undefined &&
             prop[0] !== "_" &&
-            Object.values(ComponentHash).includes(prop)
+            Object.values(LivelinkCoreModule.Enums.ComponentHash).includes(prop)
         );
     }
 

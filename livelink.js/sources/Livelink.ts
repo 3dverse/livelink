@@ -1,4 +1,4 @@
-import {
+import type {
     LivelinkCore,
     ClientConfig,
     UUID,
@@ -23,6 +23,7 @@ import { Camera } from "./Camera";
 import { Viewport } from "./Viewport";
 import { Entity } from "./Entity";
 import { Session, SessionInfo, SessionSelector } from "./Session";
+import { LivelinkCoreModule } from "./LivelinkCoreModule";
 
 /**
  * The Livelink interface.
@@ -98,6 +99,8 @@ export class Livelink {
      *
      */
     static async join({ session }: { session: Session }): Promise<Livelink> {
+        await LivelinkCoreModule.init();
+
         console.debug("Joining session:", session);
         const inst = new Livelink(session);
         await inst.#connect();
@@ -117,7 +120,7 @@ export class Livelink {
     /**
      *
      */
-    #core = new LivelinkCore();
+    #core: LivelinkCore;
 
     /**
      * The codec used by the renderer.
@@ -161,6 +164,7 @@ export class Livelink {
      */
     private constructor(session: Session) {
         this.session = session;
+        this.#core = new LivelinkCoreModule.Core();
         this.scene = new Scene(this.#core);
     }
 
@@ -256,7 +260,11 @@ export class Livelink {
     /**
      *
      */
-    async configureRemoteServer({ codec }: { codec: CodecType }): Promise<ClientConfigResponse> {
+    async configureRemoteServer({
+        codec = LivelinkCoreModule.Enums.CodecType.h264,
+    }: {
+        codec?: CodecType;
+    }): Promise<ClientConfigResponse> {
         const client_config: ClientConfig = {
             remote_canvas_size: this.#remote_rendering_surface.dimensions,
             encoder_config: {

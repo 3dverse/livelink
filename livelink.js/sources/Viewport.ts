@@ -1,5 +1,4 @@
-import type { Vec2, Vec3 } from "@livelink.core";
-import { HighlightMode } from "@livelink.core";
+import type { HighlightMode, Vec2, Vec3 } from "@livelink.core";
 import { Livelink } from "./Livelink";
 import { Context2D } from "./contexts/Context2D";
 import { ContextWebGL } from "./contexts/ContextWebGL";
@@ -7,6 +6,7 @@ import { ContextProvider } from "./contexts/ContextProvider";
 import { CanvasAutoResizer } from "./CanvasAutoResizer";
 import { Camera } from "./Camera";
 import { Entity } from "./Entity";
+import { LivelinkCoreModule } from "./LivelinkCoreModule";
 
 /**
  *
@@ -165,7 +165,7 @@ export class Viewport extends EventTarget {
 
         const res = await this.castScreenSpaceRay({
             pos,
-            mode: HighlightMode.HighlightAndDiscardOldSelection,
+            mode: LivelinkCoreModule.Enums.HighlightMode.HighlightAndDiscardOldSelection,
         });
 
         this.dispatchEvent(new CustomEvent("on-entity-picked", { detail: res }));
@@ -176,7 +176,7 @@ export class Viewport extends EventTarget {
      */
     async castScreenSpaceRay({
         pos,
-        mode = HighlightMode.None,
+        mode = LivelinkCoreModule.Enums.HighlightMode.None,
     }: {
         pos: Vec2;
         mode: HighlightMode;

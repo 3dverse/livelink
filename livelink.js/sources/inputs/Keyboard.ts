@@ -1,6 +1,6 @@
-import { InputOperation } from "@livelink.core";
 import { InputDevice } from "./InputDevice";
 import { Livelink } from "../Livelink";
+import { LivelinkCoreModule } from "../LivelinkCoreModule";
 
 export class Keyboard implements InputDevice {
     name: string;
@@ -36,7 +36,7 @@ export class Keyboard implements InputDevice {
         const keyData = this.#getKeyData(event);
         this.#instance._sendInput({
             input_state: {
-                input_operation: InputOperation.on_key_down,
+                input_operation: LivelinkCoreModule.Enums.InputOperation.on_key_down,
                 input_data: keyData,
             },
         });
@@ -50,7 +50,7 @@ export class Keyboard implements InputDevice {
         const keyData = this.#getKeyData(event);
         this.#instance._sendInput({
             input_state: {
-                input_operation: InputOperation.on_key_up,
+                input_operation: LivelinkCoreModule.Enums.InputOperation.on_key_up,
                 input_data: keyData,
             },
         });

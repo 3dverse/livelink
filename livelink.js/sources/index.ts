@@ -1,4 +1,4 @@
-export * from "@livelink.core";
+export type * from "@livelink.core";
 
 export * from "../_prebuild/types";
 

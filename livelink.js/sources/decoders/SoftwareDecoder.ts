@@ -3,8 +3,9 @@ import { EncodedFrameConsumer } from "./EncodedFrameConsumer";
 import BWDecoder from "../../external/Decoder.js";
 // @ts-ignore
 import YUVCanvas from "../../external/YUVCanvas.js";
-import type { Vec2i } from "@livelink.core";
-import { CodecType } from "@livelink.core";
+
+import type { CodecType, Vec2i } from "@livelink.core";
+import { LivelinkCoreModule } from "../LivelinkCoreModule";
 import { DecodedFrameConsumer } from "./DecodedFrameConsumer";
 
 /**
@@ -39,7 +40,7 @@ export class SoftwareDecoder implements EncodedFrameConsumer {
         codec: CodecType;
         frame_dimensions: Vec2i;
     }): Promise<EncodedFrameConsumer> {
-        if (codec !== CodecType.h264) {
+        if (codec !== LivelinkCoreModule.Enums.CodecType.h264) {
             throw new Error("Software decoder supports only h264 encoding");
         }
 

@@ -1,10 +1,11 @@
 import { InputOperation } from "@livelink.core";
 import { Livelink } from "../Livelink";
+import { LivelinkCoreModule } from "../LivelinkCoreModule";
 import { Viewport } from "../Viewport";
 
-const MOUSE_DOWN_OPERATIONS = [InputOperation.lbutton_down, InputOperation.mbutton_down, InputOperation.rbutton_down];
-const MOUSE_UP_OPERATIONS = [InputOperation.lbutton_up, InputOperation.mbutton_up, InputOperation.rbutton_up];
-
+/**
+ *
+ */
 export class Mouse {
     name: string;
     #instance: Livelink;
@@ -12,6 +13,11 @@ export class Mouse {
     #lastMousePosition = { x: 0, y: 0 };
     #viewport: Viewport;
     #offset: DOMRect;
+
+    static #operations: {
+        down: [InputOperation, InputOperation, InputOperation];
+        up: [InputOperation, InputOperation, InputOperation];
+    } | null = null;
 
     constructor(instance: Livelink, viewport?: Viewport) {
         if (!viewport) {
@@ -21,6 +27,21 @@ export class Mouse {
         this.#viewport = viewport;
         this.name = "Mouse";
         this.#offset = this.#viewport.canvas.getClientRects()[0];
+
+        if (!Mouse.#operations) {
+            Mouse.#operations = {
+                down: [
+                    LivelinkCoreModule.Enums.InputOperation.lbutton_down,
+                    LivelinkCoreModule.Enums.InputOperation.mbutton_down,
+                    LivelinkCoreModule.Enums.InputOperation.rbutton_down,
+                ],
+                up: [
+                    LivelinkCoreModule.Enums.InputOperation.lbutton_up,
+                    LivelinkCoreModule.Enums.InputOperation.mbutton_up,
+                    LivelinkCoreModule.Enums.InputOperation.rbutton_up,
+                ],
+            };
+        }
     }
 
     setup() {
@@ -42,7 +63,7 @@ export class Mouse {
         }
         const position = this.#getMousePosition(event);
         const input_data = this.#getMouseData(this.#offset, position.x, position.y);
-        const input_operation = MOUSE_DOWN_OPERATIONS[event.button];
+        const input_operation = Mouse.#operations!.down[event.button];
         this.#instance._sendInput({
             input_state: {
                 input_operation,
@@ -58,7 +79,7 @@ export class Mouse {
         }
         const position = this.#getMousePosition(event);
         const input_data = this.#getMouseData(this.#offset, position.x, position.y);
-        const input_operation = MOUSE_UP_OPERATIONS[event.button];
+        const input_operation = Mouse.#operations!.up[event.button];
         this.#instance._sendInput({
             input_state: {
                 input_operation,
@@ -70,7 +91,7 @@ export class Mouse {
     #onMouseMove = (event: MouseEvent) => {
         const position = this.#getMousePosition(event);
         const input_data = this.#getMouseData(this.#offset, position.x, position.y);
-        const input_operation = InputOperation.mouse_move;
+        const input_operation = LivelinkCoreModule.Enums.InputOperation.mouse_move;
         this.#instance._sendInput({
             input_state: {
                 input_operation,
