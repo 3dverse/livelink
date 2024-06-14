@@ -1,25 +1,23 @@
 import type {
     ClientConfig,
     ClientConfigResponse,
-    EditorEntity,
-    EntityCreationOptions,
     FireEventMessage,
     HighlightEntitiesMessage,
     InputState,
-    RTID,
     ScreenSpaceRayQuery,
     ScreenSpaceRayResult,
-    UUID,
-    UpdateEntitiesCommand,
     UpdateEntitiesFromJsonMessage,
     ViewportConfig,
-    Vec2i,
-    IEntity,
-} from "../_prebuild/types";
+} from "../_prebuild/messages/gateway";
+
 import { EditorController } from "./controllers/EditorController";
 import { GatewayController } from "./controllers/GatewayController";
 import { ComponentSerializer } from "./ComponentSerializer";
+
 import { Session } from "./Session";
+import { RTID, UUID, Vec2i } from "./types";
+import { IEntity } from "./types/IEntity";
+import { EditorEntity, EntityCreationOptions, UpdateEntitiesCommand } from "../_prebuild/messages/editor";
 
 /**
  * The LivelinkCore interface.

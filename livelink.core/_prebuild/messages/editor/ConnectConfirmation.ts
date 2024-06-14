@@ -1,4 +1,4 @@
-import { UUID } from "../../sources/types";
+import type { UUID } from "../../../sources/types";
 
 /**
  *

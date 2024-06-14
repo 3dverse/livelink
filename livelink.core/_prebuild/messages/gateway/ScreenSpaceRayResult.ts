@@ -1,4 +1,4 @@
-import { RTID, Vec3, deserialize_RTID, deserialize_Vec3 } from "../../sources/types";
+import { RTID, Vec3, deserialize_RTID, deserialize_Vec3 } from "../../../sources/types";
 
 /**
  *

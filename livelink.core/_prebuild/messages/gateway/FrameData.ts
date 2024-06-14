@@ -1,4 +1,4 @@
-import { LITTLE_ENDIAN } from "../../sources/types/constants";
+import { LITTLE_ENDIAN } from "../../../sources/types/constants";
 import {
     MAT4_BYTE_SIZE,
     Mat4,
@@ -8,7 +8,7 @@ import {
     UUID_BYTE_SIZE,
     deserialize_Mat4,
     deserialize_UUID,
-} from "../../sources/types";
+} from "../../../sources/types";
 
 /**
  *

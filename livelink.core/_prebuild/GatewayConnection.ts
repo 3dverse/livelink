@@ -7,7 +7,7 @@
 import { GatewayMessageHandler } from "./GatewayMessageHandler";
 import { FTL_HEADER_SIZE, LITTLE_ENDIAN } from "../sources/types/constants";
 import { UUID_BYTE_SIZE, deserialize_UUID } from "../sources/types";
-import { ChannelId } from "./types";
+import { ChannelId } from "./messages/gateway/enums";
 
 /**
  * Holds the connection to the cluster gateway hosting the renderer

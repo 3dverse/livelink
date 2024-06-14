@@ -1,4 +1,4 @@
-import type { UUID } from "./types/UUID";
+import type { UUID } from "./types";
 
 /**
  * A client is the representation of a singular user in a session.

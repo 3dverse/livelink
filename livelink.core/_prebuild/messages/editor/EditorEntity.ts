@@ -1,9 +1,9 @@
-import { UUID } from "../../sources/types";
+import type { UUID } from "../../../sources/types";
 
 /**
  *
  */
-type Client = {
+type ClientSelection = {
     clientUUID: UUID;
     directSelection?: boolean;
     color?: string;
@@ -17,8 +17,8 @@ export type EditorEntity = {
     rtid: string;
     components: Record<string, {}>; //ComponentMap;
     children: string[];
-    selectingClients: Client[];
-    selectedDescendants: Record<string, Client[]>;
+    selectingClients: ClientSelection[];
+    selectedDescendants: Record<string, ClientSelection[]>;
     isVisible: boolean;
     isRuntime: boolean;
     isExternal: boolean;

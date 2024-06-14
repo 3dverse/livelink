@@ -1,5 +1,5 @@
-import { RTID, RTID_BYTE_SIZE, UUID, UUID_BYTE_SIZE, serialize_UUID } from "../../sources/types";
-import { LITTLE_ENDIAN } from "../../sources/types/constants";
+import { RTID, RTID_BYTE_SIZE, UUID, UUID_BYTE_SIZE, serialize_UUID } from "../../../sources/types";
+import { LITTLE_ENDIAN } from "../../../sources/types/constants";
 
 /**
  *

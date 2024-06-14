@@ -4,8 +4,9 @@
  * See : https://gitlab.com/3dverse/platform/libs/js/asyncapi-server-generator
  */
 
+import { UUID } from "../sources/types";
 import { EditorMessageHandler } from "./EditorMessageHandler";
-import { EditorEntity, ConnectConfirmation, UUID, EntityUpdatedEvent } from "./types";
+import { ConnectConfirmation, EditorEntity, EntityUpdatedEvent } from "./messages/editor";
 
 /**
  * Holds the connection to the Livelink Broadcast & Persistence server.

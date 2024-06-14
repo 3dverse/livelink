@@ -1,5 +1,5 @@
-import { RTID, deserialize_RTID } from "../../sources/types";
-import { LITTLE_ENDIAN } from "../../sources/types/constants";
+import { RTID, deserialize_RTID } from "../../../sources/types";
+import { LITTLE_ENDIAN } from "../../../sources/types/constants";
 
 /**
  *

@@ -1,4 +1,5 @@
-import { ComponentDescriptor, ComponentType } from "../_prebuild/types";
+import { ComponentDescriptor } from "../_prebuild/messages/editor";
+import { ComponentType } from "../_prebuild/types/components";
 
 /**
  *

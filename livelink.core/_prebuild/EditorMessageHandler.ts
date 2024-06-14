@@ -1,8 +1,15 @@
-import { ConnectConfirmation } from "./types/ConnectConfirmation";
-import { EditorConnection } from "./EditorConnection";
+import { IEntity } from "../sources/types/IEntity";
 import { RTID, UUID } from "../sources/types";
 import { MessageHandler } from "../sources/MessageHandler";
-import { EditorEntity, EntityCreationOptions, EntityUpdatedEvent, IEntity, UpdateEntitiesCommand } from "./types";
+
+import { EditorConnection } from "./EditorConnection";
+import {
+    ConnectConfirmation,
+    EditorEntity,
+    EntityCreationOptions,
+    EntityUpdatedEvent,
+    UpdateEntitiesCommand,
+} from "./messages/editor";
 
 /**
  *

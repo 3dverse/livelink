@@ -1,5 +1,5 @@
 import { EditorMessageHandler } from "../../_prebuild/EditorMessageHandler";
-import { ConnectConfirmation } from "../../_prebuild/types";
+import { ConnectConfirmation } from "../../_prebuild/messages/editor";
 
 import { Session } from "../Session.js";
 import { Client } from "../Client.js";

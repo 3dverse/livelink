@@ -1,5 +1,5 @@
-import { AuthenticationStatus } from "../../_prebuild/types";
 import { GatewayMessageHandler } from "../../_prebuild/GatewayMessageHandler";
+import { AuthenticationStatus } from "../../_prebuild/messages/gateway";
 
 import { HEARTBEAT_PERIOD_IN_MS } from "../types/constants";
 import { Session } from "../Session.js";

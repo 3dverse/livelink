@@ -1,7 +1,7 @@
-import { serialize_RTID } from "../../sources/types";
-import { LITTLE_ENDIAN } from "../../sources/types/constants";
-import { ComponentHash } from "./components";
-import { IEntity } from "./IEntity";
+import { serialize_RTID } from "../../../sources/types";
+import { LITTLE_ENDIAN } from "../../../sources/types/constants";
+import { ComponentHash } from "../../types/components";
+import { IEntity } from "../../../sources/types/IEntity";
 
 /**
  *
