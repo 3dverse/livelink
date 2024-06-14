@@ -317,7 +317,7 @@ export class Livelink {
      */
     #onFrameReceived = (e: Event) => {
         const frame_data = (e as CustomEvent<FrameData>).detail;
-        this.session._updateClients({ client_ids: frame_data.meta_data.clients.map(client => client.client_id) });
+        this.session._updateClients({ client_data: frame_data.meta_data.clients });
 
         this.#encoded_frame_consumer!.consumeEncodedFrame({
             encoded_frame: frame_data.encoded_frame,

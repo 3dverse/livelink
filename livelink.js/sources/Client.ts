@@ -1,4 +1,4 @@
-import type { ClientInterface, UUID } from "livelink.core";
+import type { ClientInterface, ClientMetaData, RTID, UUID } from "livelink.core";
 
 /**
  * A client is the representation of a singular user in a session.
@@ -13,8 +13,21 @@ export class Client implements ClientInterface {
     /**
      *
      */
-    constructor(uuid: UUID) {
-        this.#uuid = uuid;
+    #camera_rtids: Array<RTID> = [];
+
+    /**
+     *
+     */
+    get camera_rtids(): Array<RTID> {
+        return this.#camera_rtids;
+    }
+
+    /**
+     *
+     */
+    constructor(data: ClientMetaData) {
+        this.#uuid = data.client_id;
+        this.#camera_rtids = data.viewports.map(v => v.camera_rtid);
     }
 
     /**

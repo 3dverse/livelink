@@ -1,4 +1,4 @@
-import type { SessionInterface, UUID } from "livelink.core";
+import type { ClientMetaData, SessionInterface, UUID } from "livelink.core";
 import { Client } from "./Client";
 
 /**
@@ -84,6 +84,9 @@ export class Session extends EventTarget implements SessionInterface {
     }
     get client_ids(): Array<UUID> {
         return Array.from(this._clients.keys());
+    }
+    get clients(): Array<Client> {
+        return Array.from(this._clients.values());
     }
 
     /**
@@ -239,13 +242,14 @@ export class Session extends EventTarget implements SessionInterface {
     /**
      *
      */
-    _updateClients({ client_ids }: { client_ids: Array<UUID> }): void {
-        for (const client_id of client_ids) {
-            if (!this._clients.has(client_id)) {
-                this._onClientJoined({ client: new Client(client_id) });
+    _updateClients({ client_data }: { client_data: Array<ClientMetaData> }): void {
+        for (const data of client_data) {
+            if (!this._clients.has(data.client_id)) {
+                this._onClientJoined({ client: new Client(data) });
             }
         }
 
+        const client_ids = client_data.map(d => d.client_id);
         for (const [client_id] of this._clients) {
             if (!client_ids.includes(client_id)) {
                 this._onClientLeft({ client_id });
