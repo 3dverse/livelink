@@ -1,4 +1,4 @@
-import { UUID } from "../../sources";
+import { UUID } from "../../sources/types";
 import { ComponentType } from "./components";
 
 /**

@@ -1,4 +1,4 @@
-import { RTID } from "../../sources";
+import { RTID } from "../../sources/types";
 
 /**
  *
