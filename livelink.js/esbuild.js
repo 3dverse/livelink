@@ -17,6 +17,7 @@ const commonBuildOptions = {
     sourcemap: true,
     define: {
         LIVELINK_CORE_URL: `"${productionLivelinkCore}"`,
+        API_HOSTNAME: `"api.3dverse.dev"`,
     },
 };
 
@@ -37,6 +38,7 @@ const devBuildOptions = {
     ...commonBuildOptions,
     ...buildOptions[0],
     define: {
+        ...commonBuildOptions.define,
         LIVELINK_CORE_URL: `"${localLivelinkCore}"`,
     },
 };

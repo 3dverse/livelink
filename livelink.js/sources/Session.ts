@@ -4,7 +4,7 @@ import { Client } from "./Client";
 /**
  *
  */
-const api_url = "https://api.3dverse.dev/app/v1";
+const api_url = `https://${API_HOSTNAME}/app/v1`;
 
 /**
  *
