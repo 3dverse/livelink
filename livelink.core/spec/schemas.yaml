@@ -424,8 +424,8 @@ UpdateAnimationSequenceState:
       default: 0
   required: [linker_rtid, animation_sequence_id, state, playback_speed]
 
-AssignClientUuidToScript:
-  title: AssignClientUuidToScript
+AssignClientToScript:
+  title: AssignClientToScript
   type: object
   properties:
     client_uuid:
@@ -438,3 +438,31 @@ AssignClientUuidToScript:
       title: The entity to which the script is attached.
       $ref: "#/RTID"
   required: [client_uuid, script_uuid, entity_rtid]
+
+UpdateEntitiesFromJson:
+  title: UpdateEntitiesFromJson
+  type: object
+  properties:
+    component_count:
+      type: number
+      format: uint32
+    components:
+      type: array
+      items:
+        minItems: 1
+        type: object
+        properties:
+          component_hash:
+            type: number
+            format: uint32
+          entity_count:
+            type: number
+            format: uint32
+          entity_rtids:
+            $ref: "#/EntityList"
+          entities:
+            type: array
+            items:
+              minItems: 1
+              type: object
+              $ref: "#/Entity"

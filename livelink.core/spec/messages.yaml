@@ -91,7 +91,7 @@ highlight_entities:
 # EDITOR REMOTE OPERATIONS
 #-----------------------------------------------------------------------------
 create_entity:
-  contentType: application/json
+  contentType: application/octet-stream
   payload:
     description: Entity to create
     $ref: "./schemas.yaml#/Entity"
@@ -108,11 +108,17 @@ update_animation_sequence_state:
     description: Change the targetted animation sequence play state
     $ref: "./schemas.yaml#/UpdateAnimationSequenceState"
 
-assign_client_uuid_to_script:
+assign_client_to_script:
   contentType: application/octet-stream
   payload:
-    description: Assign a client UUID to a script
-    $ref: "./schemas.yaml#/AssignClientUuidToScript"
+    description: Assign a client to a script
+    $ref: "./schemas.yaml#/AssignClientToScript"
+
+update_entities_from_json:
+  contentType: application/octet-stream
+  payload:
+    description: Update entity components
+    $ref: "./schemas.yaml#/UpdateEntitiesFromJson"
 
 #-----------------------------------------------------------------------------
 # SCRIPT EVENTS
