@@ -1,4 +1,5 @@
-import { ComponentHash, ComponentType, EditorEntity, EntityCreationOptions, UUID } from "@livelink.core";
+import type { ComponentType, EditorEntity, EntityCreationOptions, UUID } from "@livelink.core";
+import { ComponentHash } from "@livelink.core";
 import { EntityBase } from "../_prebuild/types/EntityBase";
 import { Scene } from "./Scene";
 

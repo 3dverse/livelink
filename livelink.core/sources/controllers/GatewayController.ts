@@ -1,9 +1,9 @@
 import { GatewayMessageHandler } from "../../_prebuild/GatewayMessageHandler";
 import { AuthenticationStatus } from "../../_prebuild/messages/gateway";
+import { SessionInterface } from "../interfaces/SessionInterface";
 
 import { HEARTBEAT_PERIOD_IN_MS } from "../types/constants";
-import { Session } from "../Session.js";
-import { Client } from "../Client.js";
+import { UUID } from "../types";
 
 /**
  * The gateway controller is the exposed interface of the Livelink gateway
@@ -29,15 +29,15 @@ export class GatewayController extends GatewayMessageHandler {
     /**
      * Opens a connection to the gateway where the provided session is running.
      *
-     * @returns {Promise<Client>}     The created client representing the current
-     *                                user encoded `in session.session_key`.
+     * @returns {Promise<UUID>}       The created client UUID representing the current
+     *                                user encoded in `session.session_key`.
      *
      * @throws {InvalidSession}       Thrown if the provided session is not valid.
      *
      * @throws {AuthenticationFailed} Thrown if the authentication to the gateway
      *                                fails and provides the reason.
      */
-    async connectToSession({ session }: { session: Session }): Promise<Client> {
+    async connectToSession({ session }: { session: SessionInterface }): Promise<UUID> {
         if (!session.isJoinable()) {
             throw new Error("Invalid session");
         }
@@ -65,7 +65,7 @@ export class GatewayController extends GatewayMessageHandler {
 
         // We're good to go, the gateway provided us with a client id so we can
         // connect to the Livelink broker.
-        return new Client(authRes.client_id);
+        return authRes.client_id;
     }
 
     /**

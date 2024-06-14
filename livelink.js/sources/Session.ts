@@ -1,6 +1,9 @@
-import type { UUID } from "./types";
+import type { SessionInterface, UUID } from "@livelink.core";
 import { Client } from "./Client";
 
+/**
+ *
+ */
 const api_url = "https://api.3dverse.dev/app/v1";
 
 /**
@@ -30,8 +33,12 @@ export type SessionSelector = ({ sessions }: { sessions: Array<SessionInfo> }) =
 /**
  *
  */
-export class Session extends EventTarget {
-    client_id: UUID | null = null;
+export class Session extends EventTarget implements SessionInterface {
+    /**
+     *
+     */
+    public client_id: UUID | null = null;
+
     /**
      *
      */
@@ -218,7 +225,7 @@ export class Session extends EventTarget {
      *
      */
     async kickClient({ client }: { client: Client | UUID }) {
-        const client_id = client instanceof Client ? client.uuid : client;
+        const client_id = client instanceof Client ? client.id : client;
         const res = await fetch(`${api_url}/sessions/${this.session_id}/clients/${client_id}`, {
             method: "DELETE",
             headers: {
@@ -251,7 +258,7 @@ export class Session extends EventTarget {
      * @param client The client to register
      */
     _onClientJoined({ client }: { client: Client }): void {
-        this._clients.set(client.uuid, client);
+        this._clients.set(client.id, client);
         this.dispatchEvent(new CustomEvent("client-joined", { detail: client }));
     }
 

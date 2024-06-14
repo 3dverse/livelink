@@ -1,4 +1,4 @@
-import { IEntity } from "../sources/types/IEntity";
+import { EntityInterface } from "../sources/interfaces/EntityInterface";
 import { RTID, UUID } from "../sources/types";
 import { MessageHandler } from "../sources/MessageHandler";
 
@@ -40,7 +40,7 @@ export class EditorMessageHandler extends MessageHandler<string, ResolverPayload
     /**
      *
      */
-    spawnEntity({ entity, options }: { entity: IEntity; options?: EntityCreationOptions }) {
+    spawnEntity({ entity, options }: { entity: EntityInterface; options?: EntityCreationOptions }) {
         this._connection!.send({
             data: JSON.stringify({
                 type: "spawn-entity",

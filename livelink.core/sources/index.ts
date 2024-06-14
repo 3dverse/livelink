@@ -1,10 +1,8 @@
-export * from "./Client";
-export * from "./Session";
-export * from "./AnimationSequence";
 export * from "./LivelinkCore";
 export * from "./ComponentSerializer";
 
 export * from "./types";
+export * from "./interfaces";
 
 export { ComponentHash, ComponentType } from "../_prebuild/types/components";
 export * as Components from "../_prebuild/types/components";

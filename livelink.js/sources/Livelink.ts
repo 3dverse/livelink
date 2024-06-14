@@ -1,10 +1,7 @@
 import {
     LivelinkCore,
-    Session,
     ClientConfig,
-    SessionInfo,
     UUID,
-    SessionSelector,
     FrameData,
     CodecType,
     ClientConfigResponse,
@@ -14,6 +11,7 @@ import {
     ViewportConfig,
     ScreenSpaceRayQuery,
     ScreenSpaceRayResult,
+    RTID,
 } from "@livelink.core";
 
 import { EncodedFrameConsumer } from "./decoders/EncodedFrameConsumer";
@@ -24,6 +22,7 @@ import { Scene } from "./Scene";
 import { Camera } from "./Camera";
 import { Viewport } from "./Viewport";
 import { Entity } from "./Entity";
+import { Session, SessionInfo, SessionSelector } from "./Session";
 
 /**
  * The Livelink interface.
@@ -169,6 +168,9 @@ export class Livelink {
      *
      */
     async #connect(): Promise<Livelink> {
+        // Retrieve a session key
+        await this.session.registerClient();
+
         const component_serializer = await this.#core._connect({ session: this.session });
         this.scene.entity_registry._configureComponentSerializer({ component_serializer });
 
@@ -435,5 +437,18 @@ export class Livelink {
         screenSpaceRayQuery: ScreenSpaceRayQuery;
     }): Promise<ScreenSpaceRayResult> {
         return this.#core._castScreenSpaceRay({ screenSpaceRayQuery });
+    }
+
+    /**
+     *
+     */
+    _updateAnimationSequenceState(params: {
+        linker_rtid: RTID;
+        animation_sequence_id: UUID;
+        state: 1 | 0;
+        playback_speed: number;
+        seek_offset?: number;
+    }): void {
+        this.#core._updateAnimationSequenceState(params);
     }
 }

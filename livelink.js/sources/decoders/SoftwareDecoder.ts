@@ -3,7 +3,8 @@ import { EncodedFrameConsumer } from "./EncodedFrameConsumer";
 import BWDecoder from "../../external/Decoder.js";
 // @ts-ignore
 import YUVCanvas from "../../external/YUVCanvas.js";
-import { CodecType, Vec2i } from "@livelink.core";
+import type { Vec2i } from "@livelink.core";
+import { CodecType } from "@livelink.core";
 import { DecodedFrameConsumer } from "./DecodedFrameConsumer";
 
 /**

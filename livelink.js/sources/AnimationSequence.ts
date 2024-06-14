@@ -1,5 +1,5 @@
-import { LivelinkCore } from "./LivelinkCore";
-import { RTID, UUID } from "./types";
+import type { LivelinkCore, UUID } from "@livelink.core";
+import { Entity } from "./Entity";
 
 /**
  *
@@ -18,18 +18,18 @@ export class AnimationSequence {
     /**
      *
      */
-    private _linker_rtid: RTID;
+    private _linker: Entity | null;
 
     /**
      *
      */
     constructor(
         core: LivelinkCore,
-        { animation_sequence_id, linker_rtid = 0n }: { animation_sequence_id: UUID; linker_rtid?: RTID },
+        { animation_sequence_id, linker_entity = null }: { animation_sequence_id: UUID; linker_entity?: Entity | null },
     ) {
         this.#core = core;
         this._id = animation_sequence_id;
-        this._linker_rtid = linker_rtid;
+        this._linker = linker_entity;
     }
 
     /**
@@ -62,8 +62,8 @@ export class AnimationSequence {
      *
      */
     private _updateState({ playback_speed, seek_offset }: { playback_speed: number; seek_offset?: number }) {
-        this.#core.updateAnimationSequenceState({
-            linker_rtid: this._linker_rtid,
+        this.#core._updateAnimationSequenceState({
+            linker_rtid: this._linker?.rtid ?? 0n,
             animation_sequence_id: this._id,
             state: 0,
             playback_speed,

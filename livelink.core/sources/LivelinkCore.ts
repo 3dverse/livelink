@@ -14,9 +14,9 @@ import { EditorController } from "./controllers/EditorController";
 import { GatewayController } from "./controllers/GatewayController";
 import { ComponentSerializer } from "./ComponentSerializer";
 
-import { Session } from "./Session";
 import { RTID, UUID, Vec2i } from "./types";
-import { IEntity } from "./types/IEntity";
+import { EntityInterface } from "./interfaces/EntityInterface";
+import { SessionInterface } from "./interfaces/SessionInterface";
 import { EditorEntity, EntityCreationOptions, UpdateEntitiesCommand } from "../_prebuild/messages/editor";
 
 /**
@@ -44,16 +44,14 @@ export class LivelinkCore extends EventTarget {
     /**
      * Connect to the session
      */
-    async _connect({ session }: { session: Session }): Promise<ComponentSerializer> {
-        // Retrieve a session key
-        await session.registerClient();
+    async _connect({ session }: { session: SessionInterface }): Promise<ComponentSerializer> {
         // Connect to FTL gateway
         console.debug("Connecting to session...", session);
-        const client = await this.#gateway.connectToSession({ session });
-        console.debug("Connected to session as:", client);
+        const client_id = await this.#gateway.connectToSession({ session });
+        console.debug("Connected to session with id:", client_id);
 
         // Connect to the Livelink Broker
-        const connectConfirmation = await this.#editor.connectToSession({ session, client });
+        const connectConfirmation = await this.#editor.connectToSession({ session, client_id });
         return new ComponentSerializer(connectConfirmation.components);
     }
 
@@ -160,7 +158,7 @@ export class LivelinkCore extends EventTarget {
         entity,
         options,
     }: {
-        entity: IEntity;
+        entity: EntityInterface;
         options?: EntityCreationOptions;
     }): Promise<EditorEntity> {
         const entities = await this.#editor.spawnEntity({ entity, options });
@@ -206,7 +204,7 @@ export class LivelinkCore extends EventTarget {
     /**
      *
      */
-    updateAnimationSequenceState(params: {
+    _updateAnimationSequenceState(params: {
         linker_rtid: RTID;
         animation_sequence_id: UUID;
         state: 1 | 0;

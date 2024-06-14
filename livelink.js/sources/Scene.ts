@@ -1,14 +1,7 @@
-import {
-    LivelinkCore,
-    RTID,
-    UUID,
-    AnimationSequence,
-    EntityCreationOptions,
-    ScriptEvent,
-    EditorEntity,
-} from "@livelink.core";
+import type { LivelinkCore, RTID, UUID, EntityCreationOptions, ScriptEvent, EditorEntity } from "@livelink.core";
 import { Entity } from "./Entity";
 import { EntityRegistry } from "./EntityRegistry";
+import { AnimationSequence } from "./AnimationSequence";
 
 /**
  *
