@@ -24,12 +24,12 @@ import { EditorEntity, EntityCreationOptions, UpdateEntitiesCommand } from "../_
  * The LivelinkCore interface.
  *
  * This interface must not be embedded and distributed within applications.
- * Instead, applications should embed the 3dverse/livelink.js library,
- * responsible for importing the current library, 3dverse/livelink.core.js.
+ * Instead, applications should embed the 3dverse/livelink.js library, responsible for importing the
+ * current library, 3dverse/livelink.core.js.
  *
- * The 3dverse/livelink.js library is versioned and should refer to a specific
- * version of the interface, allowing for interface evolution without breaking
- * compatibility with existing applications.
+ * The 3dverse/livelink.js library is versioned and should refer to a specific version of the
+ * interface, allowing for interface evolution without breaking compatibility with existing
+ * applications.
  */
 export class LivelinkCore extends EventTarget {
     /**

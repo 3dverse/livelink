@@ -16,34 +16,34 @@ export class EntityRegistry {
     /**
      *
      */
-    private _entities = new Set<Entity>();
+    #entities = new Set<Entity>();
 
     /**
      *
      */
-    private _entity_rtid_lut = new Map<RTID, Entity>();
+    #entity_rtid_lut = new Map<RTID, Entity>();
 
     /**
      *
      */
-    private _entity_euid_lut = new Map<UUID, Array<Entity>>();
+    #entity_euid_lut = new Map<UUID, Array<Entity>>();
 
     /**
      *
      */
-    private _dirty_entities = new Map<ComponentType, Set<Entity>>();
-    private _detached_entities = new Map<ComponentType, Set<Entity>>();
-    private _dirty_entities_to_broadcast = new Map<ComponentType, Set<Entity>>();
+    #dirty_entities = new Map<ComponentType, Set<Entity>>();
+    #detached_entities = new Map<ComponentType, Set<Entity>>();
+    #dirty_entities_to_broadcast = new Map<ComponentType, Set<Entity>>();
 
     /**
      *
      */
-    private _elapsed_time = 0;
+    #elapsed_time = 0;
 
     /**
      *
      */
-    private _serializer: ComponentSerializer | null = null;
+    #serializer: ComponentSerializer | null = null;
 
     /**
      *
@@ -53,21 +53,21 @@ export class EntityRegistry {
             throw new Error("Trying to add an entity without a EUID to the registry.");
         }
 
-        const existingEntity = this._entity_rtid_lut.get(entity.rtid);
+        const existingEntity = this.#entity_rtid_lut.get(entity.rtid);
         if (existingEntity) {
             throw new Error(
                 `Cannot add entity ${entity.name} to the registry, because entity ${existingEntity.name} has the same RTID.`,
             );
         }
 
-        this._entities.add(entity);
-        this._entity_rtid_lut.set(entity.rtid, entity);
-        const entities = this._entity_euid_lut.get(entity.id);
+        this.#entities.add(entity);
+        this.#entity_rtid_lut.set(entity.rtid, entity);
+        const entities = this.#entity_euid_lut.get(entity.id);
 
         if (entities) {
             entities.push(entity);
         } else {
-            this._entity_euid_lut.set(entity.id, [entity]);
+            this.#entity_euid_lut.set(entity.id, [entity]);
         }
     }
 
@@ -79,38 +79,38 @@ export class EntityRegistry {
             throw new Error("Trying to remove an entity without a EUID from the registry.");
         }
 
-        if (!this._entity_rtid_lut.delete(entity.rtid)) {
+        if (!this.#entity_rtid_lut.delete(entity.rtid)) {
             throw new Error(`Trying to remove entity ${entity.rtid} which has not been registred to the registry.`);
         }
 
-        this._entity_euid_lut.delete(entity.id);
-        this._entities.delete(entity);
+        this.#entity_euid_lut.delete(entity.id);
+        this.#entities.delete(entity);
     }
 
     /**
      *
      */
     get({ entity_rtid }: { entity_rtid: RTID }): Entity | null {
-        return this._entity_rtid_lut.get(entity_rtid) ?? null;
+        return this.#entity_rtid_lut.get(entity_rtid) ?? null;
     }
 
     /**
      *
      */
     find({ entity_euid }: { entity_euid: UUID }): Array<Entity> {
-        return this._entity_euid_lut.get(entity_euid) ?? [];
+        return this.#entity_euid_lut.get(entity_euid) ?? [];
     }
 
     /**
      * @internal
      */
     _configureComponentSerializer({ component_serializer }: { component_serializer: ComponentSerializer }) {
-        this._serializer = component_serializer;
+        this.#serializer = component_serializer;
 
-        for (const component_name of this._serializer.component_names) {
-            this._dirty_entities.set(component_name, new Set<Entity>());
-            this._detached_entities.set(component_name, new Set<Entity>());
-            this._dirty_entities_to_broadcast.set(component_name, new Set<Entity>());
+        for (const component_name of this.#serializer.component_names) {
+            this.#dirty_entities.set(component_name, new Set<Entity>());
+            this.#detached_entities.set(component_name, new Set<Entity>());
+            this.#dirty_entities_to_broadcast.set(component_name, new Set<Entity>());
         }
     }
 
@@ -118,11 +118,11 @@ export class EntityRegistry {
      *
      */
     advanceFrame({ dt }: { dt: number }) {
-        for (const entity of this._entities) {
-            entity.onUpdate({ elapsed_time: this._elapsed_time });
+        for (const entity of this.#entities) {
+            entity.onUpdate({ elapsed_time: this.#elapsed_time });
         }
 
-        this._elapsed_time += dt;
+        this.#elapsed_time += dt;
     }
 
     /**
@@ -151,7 +151,7 @@ export class EntityRegistry {
      * @internal
      */
     _addEntityToUpdate({ component_type, entity }: { component_type: ComponentType; entity: Entity }) {
-        const dirty_entities = this._dirty_entities.get(component_type);
+        const dirty_entities = this.#dirty_entities.get(component_type);
         if (dirty_entities) {
             dirty_entities.add(entity);
         }
@@ -161,7 +161,7 @@ export class EntityRegistry {
      * @internal
      */
     _detachComponentFromEntity({ component_type, entity }: { component_type: ComponentType; entity: Entity }) {
-        const detached_entities = this._detached_entities.get(component_type);
+        const detached_entities = this.#detached_entities.get(component_type);
         if (detached_entities) {
             detached_entities.add(entity);
         }
@@ -173,7 +173,7 @@ export class EntityRegistry {
     _getEntitiesToUpdate(): UpdateEntitiesFromJsonMessage | null {
         const msg = { components: [] as Array<{ component_type: ComponentType; entities: Set<Entity> }> };
 
-        for (const [component_type, entities] of this._dirty_entities) {
+        for (const [component_type, entities] of this.#dirty_entities) {
             if (entities.size !== 0) {
                 msg.components.push({ component_type, entities });
             }
@@ -188,7 +188,7 @@ export class EntityRegistry {
     _getEntitiesToDetach(): RemoveComponentsCommand | null {
         const msg = { components: [] as Array<{ component_type: ComponentType; entities: Set<Entity> }> };
 
-        for (const [component_type, entities] of this._detached_entities) {
+        for (const [component_type, entities] of this.#detached_entities) {
             if (entities.size !== 0) {
                 msg.components.push({ component_type, entities });
             }
@@ -204,7 +204,7 @@ export class EntityRegistry {
         const msg: UpdateEntitiesCommand = {};
         let hasData = false;
 
-        for (const [component_type, entities] of this._dirty_entities_to_broadcast) {
+        for (const [component_type, entities] of this.#dirty_entities_to_broadcast) {
             for (const entity of entities) {
                 msg[entity.id!] = msg[entity.id!] ?? {};
                 //@ts-ignore
@@ -220,8 +220,8 @@ export class EntityRegistry {
      * @internal
      */
     _clearUpdateList() {
-        for (const [component_type, entities] of this._dirty_entities) {
-            const broadcast_set = this._dirty_entities_to_broadcast.get(component_type);
+        for (const [component_type, entities] of this.#dirty_entities) {
+            const broadcast_set = this.#dirty_entities_to_broadcast.get(component_type);
             for (const entity of entities) {
                 if (entity.auto_broadcast === "on") {
                     broadcast_set!.add(entity);
@@ -235,7 +235,7 @@ export class EntityRegistry {
      * @internal
      */
     _clearDetachList() {
-        for (const [_, entities] of this._detached_entities) {
+        for (const [_, entities] of this.#detached_entities) {
             entities.clear();
         }
     }
@@ -244,7 +244,7 @@ export class EntityRegistry {
      * @internal
      */
     _clearBroadcastList() {
-        for (const [_, entities] of this._dirty_entities_to_broadcast) {
+        for (const [_, entities] of this.#dirty_entities_to_broadcast) {
             entities.clear();
         }
     }

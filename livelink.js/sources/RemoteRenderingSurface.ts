@@ -39,8 +39,7 @@ export class RemoteRenderingSurface implements DecodedFrameConsumer {
     #dimensions: Vec2ui16 = [0, 0];
 
     /**
-     * Returns the surface dimensions in pixels rounded up to the next multiple
-     * of 8.
+     * Returns the surface dimensions in pixels rounded up to the next multiple of 8.
      */
     get dimensions(): Vec2ui16 {
         return this.#dimensions;
@@ -56,7 +55,7 @@ export class RemoteRenderingSurface implements DecodedFrameConsumer {
     /**
      *
      */
-    private get config(): Array<ViewportConfig> {
+    get #config(): Array<ViewportConfig> {
         return this.#viewports.map(({ viewport, offset }) => ({
             camera_rtid: viewport.camera!.rtid!,
             left: offset[0] / this.dimensions[0],
@@ -142,7 +141,7 @@ export class RemoteRenderingSurface implements DecodedFrameConsumer {
             if (need_to_resize) {
                 this.#core._resize({ size: this.#dimensions });
             }
-            this.#core._setViewports({ viewports: this.config });
+            this.#core._setViewports({ viewports: this.#config });
         }
     };
 
