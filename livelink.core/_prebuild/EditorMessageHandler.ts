@@ -1,6 +1,6 @@
 import { EntityInterface } from "../sources/interfaces/EntityInterface";
 import { RTID, UUID } from "../sources/types";
-import { MessageHandler } from "../sources/MessageHandler";
+import { RequestHandler } from "../sources/RequestHandler";
 
 import { EditorConnection } from "./EditorConnection";
 import {
@@ -19,7 +19,7 @@ type ResolverPayload = {};
 /**
  * This follows the Livelink protocol specifications for the broker messages.
  */
-export class EditorMessageHandler extends MessageHandler<string, ResolverPayload> {
+export class EditorMessageHandler extends EventTarget {
     /**
      *
      */
@@ -29,6 +29,11 @@ export class EditorMessageHandler extends MessageHandler<string, ResolverPayload
      *
      */
     protected _client_id: UUID | null = null;
+
+    /**
+     *
+     */
+    readonly #request_handler = new RequestHandler<string, ResolverPayload>();
 
     /**
      *
@@ -53,13 +58,13 @@ export class EditorMessageHandler extends MessageHandler<string, ResolverPayload
             }),
         });
 
-        return this._makeMessageResolver<Array<EditorEntity>>({
+        return this.#request_handler.makeRequestResolver<Array<EditorEntity>>({
             channel_id: "spawn",
         });
     }
 
     on_entities_created(data: Array<EditorEntity>): void {
-        this._getNextMessageResolver({ channel_id: "spawn" }).resolve(data);
+        this.#request_handler.getNextRequestResolver({ channel_id: "spawn" }).resolve(data);
     }
 
     /**
@@ -88,13 +93,13 @@ export class EditorMessageHandler extends MessageHandler<string, ResolverPayload
             data: JSON.stringify({ type: "get-entities-by-euid", data: entity_uuid }),
         });
 
-        return this._makeMessageResolver<Array<EditorEntity>>({
+        return this.#request_handler.makeRequestResolver<Array<EditorEntity>>({
             channel_id: "find-by-euid",
         });
     }
 
     onFindEntitiesByEUID(data: Array<EditorEntity>): void {
-        this._getNextMessageResolver({ channel_id: "find-by-euid" }).resolve(data);
+        this.#request_handler.getNextRequestResolver({ channel_id: "find-by-euid" }).resolve(data);
     }
 
     /**
@@ -111,12 +116,12 @@ export class EditorMessageHandler extends MessageHandler<string, ResolverPayload
         this._connection!.send({
             data: JSON.stringify({ type: "retrieve-children", data: entity_rtid.toString() }),
         });
-        return this._makeMessageResolver<Record<string, EditorEntity>>({
+        return this.#request_handler.makeRequestResolver<Record<string, EditorEntity>>({
             channel_id: "retrieve-children",
         });
     }
     onRetrieveChildren(data: Record<string, EditorEntity>): void {
-        this._getNextMessageResolver({ channel_id: "retrieve-children" }).resolve(data);
+        this.#request_handler.getNextRequestResolver({ channel_id: "retrieve-children" }).resolve(data);
     }
 
     onFindEntitiesWithComponents(data: any): void {
@@ -131,13 +136,13 @@ export class EditorMessageHandler extends MessageHandler<string, ResolverPayload
             data: JSON.stringify({ type: "resolve-ancestors", data: entity_rtid.toString() }),
         });
 
-        return this._makeMessageResolver<Array<EditorEntity>>({
+        return this.#request_handler.makeRequestResolver<Array<EditorEntity>>({
             channel_id: "resolve-ancestors",
         });
     }
 
     onResolveAncestors(data: Array<EditorEntity>): void {
-        this._getNextMessageResolver({ channel_id: "resolve-ancestors" }).resolve(data);
+        this.#request_handler.getNextRequestResolver({ channel_id: "resolve-ancestors" }).resolve(data);
     }
 
     onFindEntitiesByNames(data: any): void {
@@ -194,13 +199,13 @@ export class EditorMessageHandler extends MessageHandler<string, ResolverPayload
             data: JSON.stringify({ type: "delete-entities", data: entity_uuids }),
         });
 
-        return this._makeMessageResolver<Array<UUID>>({
+        return this.#request_handler.makeRequestResolver<Array<UUID>>({
             channel_id: "delete",
         });
     }
 
     on_entities_deleted(data: Array<UUID>): void {
-        this._getNextMessageResolver({ channel_id: "delete" }).resolve(data);
+        this.#request_handler.getNextRequestResolver({ channel_id: "delete" }).resolve(data);
     }
 
     on_animation_sequence_instance_added(data: any): void {

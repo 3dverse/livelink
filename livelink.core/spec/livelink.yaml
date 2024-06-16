@@ -9,10 +9,10 @@ info:
     protocol as it must be implemented on a client application.
 
     It defines operations targeted to 2 parties, and 2 subparties:
-      - the cluster gateway
+      - the cluster gateway which in turn communicates with:
         - the rendering server
         - the remote viewer
-      - the livelink broadcast/persistence server
+      - the livelink broadcast/persistence server aka the editor
 
 #-------------------------------------------------------------------------------
 servers:
@@ -21,7 +21,7 @@ servers:
     description: |
       Gateway server handling the client connection to a rendering server that
       handles real-time remote operations and a remote viewer that handles
-      streaming frames and receveiving input devices states.
+      streaming frames and receveiving input devices state updates.
 
       Note that the gateway abstracts those behind-the-scenes servers under a
       common interface.
@@ -33,7 +33,7 @@ servers:
     description: |
       Livelink server handling the persistence of data and broadcasting changes
       as they occur cross sessions.
-    host: "livelink.3dverse.com"
+    host: "api.3dverse.dev/editor-backend"
     protocol: wss
 #-------------------------------------------------------------------------------
 
@@ -45,9 +45,7 @@ channels:
       - $ref: "#/servers/cluster-gateway"
     address: authentication
     title: Authentication
-    summary: Authentication channel
-    description: A single use channel that handles a single authentication
-      message.
+    description: Authentication channel
     messages:
       authenticate_client:
         $ref: "#/components/messages/authenticate_client"
@@ -182,8 +180,17 @@ operations:
   authenticateClient:
     title: Authenticate Client
     summary: Authenticate a new client connection
-    tags:
-      - name: gateway
+    description: |
+      Right after opening a socket with the gateway, the client **MUST** send an
+      authentication message in order to establish a valid connection.
+
+      This message **MUST** contain a valid session key to join and various
+      details on the client like the OS and the device they use.
+      Note that the message doesn't need any header.
+
+      The client **MUST** read the response which contains the client uuid that
+      is used to uniquely identify the client in the scope of the session.
+
     action: send
     channel:
       $ref: "#/channels/authentication"
@@ -261,6 +268,7 @@ operations:
       messages:
         - $ref: "#/channels/viewer-control/messages/on_resized"
 
+  #-----------------------------------------------------------------------------
   suspend:
     action: send
     x-rop-id: 2
@@ -269,6 +277,7 @@ operations:
     messages:
       - $ref: "#/channels/viewer-control/messages/suspend"
 
+  #-----------------------------------------------------------------------------
   resume:
     action: send
     x-rop-id: 3
@@ -277,6 +286,7 @@ operations:
     messages:
       - $ref: "#/channels/viewer-control/messages/resume"
 
+  #-----------------------------------------------------------------------------
   setViewports:
     action: send
     x-rop-id: 5
@@ -321,6 +331,7 @@ operations:
     messages:
       - $ref: "#/channels/editor-remote-operations/messages/create_entity"
 
+  #-----------------------------------------------------------------------------
   fireEvent:
     action: send
     x-rop-id: 11
@@ -329,6 +340,7 @@ operations:
     messages:
       - $ref: "#/channels/editor-remote-operations/messages/fire_event"
 
+  #-----------------------------------------------------------------------------
   assignClientToScript:
     action: send
     x-rop-id: 20
@@ -337,6 +349,7 @@ operations:
     messages:
       - $ref: "#/channels/editor-remote-operations/messages/assign_client_to_script"
 
+  #-----------------------------------------------------------------------------
   updateAnimationSequenceState:
     action: send
     x-rop-id: 23
@@ -345,6 +358,7 @@ operations:
     messages:
       - $ref: "#/channels/editor-remote-operations/messages/update_animation_sequence_state"
 
+  #-----------------------------------------------------------------------------
   updateEntitiesFromJson:
     action: send
     x-rod-id: 15
@@ -353,6 +367,7 @@ operations:
     messages:
       - $ref: "#/channels/editor-remote-operations/messages/update_entities_from_json"
 
+  #-----------------------------------------------------------------------------
   removeComponents:
     action: send
     x-rod-id: 4

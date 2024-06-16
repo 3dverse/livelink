@@ -10,7 +10,7 @@ import {
     FTL_HEADER_SIZE,
     LITTLE_ENDIAN,
 } from "../sources/types/constants";
-import { MessageHandler } from "../sources/MessageHandler";
+import { RequestHandler } from "../sources/RequestHandler";
 import { GatewayConnection } from "./GatewayConnection";
 import { UUID, Vec2ui16, serialize_UUID, serialize_Vec2ui16 } from "../sources/types";
 import {
@@ -60,7 +60,7 @@ import {
 /**
  *
  */
-type ResolverPayload = {
+type ResolverMetaData = {
     rop_id: ClientRemoteOperation | EditorRemoteOperation;
     request_id: number;
 };
@@ -69,7 +69,7 @@ type ResolverPayload = {
  * Message handlers interface.
  * This follows the Livelink protocol specifications for the gateway messages.
  */
-export class GatewayMessageHandler extends MessageHandler<ChannelId, ResolverPayload> {
+export class GatewayMessageHandler extends EventTarget {
     /**
      *
      */
@@ -78,13 +78,21 @@ export class GatewayMessageHandler extends MessageHandler<ChannelId, ResolverPay
     /**
      *
      */
-    private _request_id_generator = 1;
+    readonly #request_handler = new RequestHandler<ChannelId, ResolverMetaData>();
 
     /**
      *
      */
-    private _client_id: UUID | null = null;
+    #request_id_generator = 1;
 
+    /**
+     *
+     */
+    #client_id: UUID | null = null;
+
+    /***************************************************************************
+     * AUTHENTICATION
+     **************************************************************************/
     /**
      * Request
      */
@@ -102,7 +110,7 @@ export class GatewayMessageHandler extends MessageHandler<ChannelId, ResolverPay
         this._connection.send({ data: buffer });
         this._connection.send({ data: payload });
 
-        return this._makeMessageResolver<AuthenticationResponse>({
+        return this.#request_handler.makeRequestResolver<AuthenticationResponse>({
             channel_id: ChannelId.authentication,
         });
     }
@@ -112,34 +120,42 @@ export class GatewayMessageHandler extends MessageHandler<ChannelId, ResolverPay
      */
     _on_authenticateClient_response({ dataView }: { dataView: DataView }): void {
         const authRes = deserialize_AuthenticationResponse({ dataView, offset: 0 });
-        this._client_id = authRes.client_id;
-        this._getNextMessageResolver({
-            channel_id: ChannelId.authentication,
-        }).resolve(authRes);
+        this.#client_id = authRes.client_id;
+        this.#request_handler
+            .getNextRequestResolver({
+                channel_id: ChannelId.authentication,
+            })
+            .resolve(authRes);
     }
 
+    /***************************************************************************
+     * HEARTBEAT
+     **************************************************************************/
     /**
      * Request
      */
     pulseHeartbeat(): Promise<void> {
         const buffer = new ArrayBuffer(FTL_HEADER_SIZE);
-        this._writeMultiplexerHeader({
+        this.#writeMultiplexerHeader({
             buffer,
             channelId: ChannelId.heartbeat,
             size: 0,
         });
         this._connection.send({ data: buffer });
 
-        return this._makeMessageResolver<void>({ channel_id: ChannelId.heartbeat });
+        return this.#request_handler.makeRequestResolver<void>({ channel_id: ChannelId.heartbeat });
     }
 
     /**
      * Reply
      */
     _on_pulseHeartbeat_response(): void {
-        this._getNextMessageResolver({ channel_id: ChannelId.heartbeat }).resolve();
+        this.#request_handler.getNextRequestResolver({ channel_id: ChannelId.heartbeat }).resolve();
     }
 
+    /***************************************************************************
+     * REGISTRATION
+     **************************************************************************/
     /**
      * Request
      */
@@ -158,7 +174,7 @@ export class GatewayMessageHandler extends MessageHandler<ChannelId, ResolverPay
         });
 
         const buffer = new ArrayBuffer(FTL_HEADER_SIZE);
-        this._writeMultiplexerHeader({
+        this.#writeMultiplexerHeader({
             buffer,
             channelId: ChannelId.registration,
             size: payload.length,
@@ -167,7 +183,7 @@ export class GatewayMessageHandler extends MessageHandler<ChannelId, ResolverPay
         this._connection.send({ data: buffer });
         this._connection.send({ data: payload });
 
-        return this._makeMessageResolver<ClientConfigResponse>({
+        return this.#request_handler.makeRequestResolver<ClientConfigResponse>({
             channel_id: ChannelId.registration,
         });
     }
@@ -176,11 +192,16 @@ export class GatewayMessageHandler extends MessageHandler<ChannelId, ResolverPay
      * Reply
      */
     _on_configureClient_response({ dataView }: { dataView: DataView }): void {
-        this._getNextMessageResolver({
-            channel_id: ChannelId.registration,
-        }).resolve(deserialize_ClientConfigResponse({ dataView, offset: 0 }));
+        this.#request_handler
+            .getNextRequestResolver({
+                channel_id: ChannelId.registration,
+            })
+            .resolve(deserialize_ClientConfigResponse({ dataView, offset: 0 }));
     }
 
+    /***************************************************************************
+     * VIEWER CONTROL
+     **************************************************************************/
     /**
      * Send
      */
@@ -188,7 +209,7 @@ export class GatewayMessageHandler extends MessageHandler<ChannelId, ResolverPay
         const SIZE_OF_VIEWPORT_CONFIG = 20;
         const payloadSize = 2 + viewports.length * SIZE_OF_VIEWPORT_CONFIG;
         const buffer = new ArrayBuffer(FTL_HEADER_SIZE + payloadSize);
-        this._writeMultiplexerHeader({
+        this.#writeMultiplexerHeader({
             buffer,
             channelId: ChannelId.viewer_control,
             size: payloadSize,
@@ -219,7 +240,7 @@ export class GatewayMessageHandler extends MessageHandler<ChannelId, ResolverPay
     resume(): void {
         const payloadSize = 1;
         const buffer = new ArrayBuffer(FTL_HEADER_SIZE + payloadSize);
-        this._writeMultiplexerHeader({
+        this.#writeMultiplexerHeader({
             buffer,
             channelId: ChannelId.viewer_control,
             size: payloadSize,
@@ -239,7 +260,7 @@ export class GatewayMessageHandler extends MessageHandler<ChannelId, ResolverPay
     suspend(): void {
         const payloadSize = 1;
         const buffer = new ArrayBuffer(FTL_HEADER_SIZE + payloadSize);
-        this._writeMultiplexerHeader({
+        this.#writeMultiplexerHeader({
             buffer,
             channelId: ChannelId.viewer_control,
             size: payloadSize,
@@ -259,7 +280,7 @@ export class GatewayMessageHandler extends MessageHandler<ChannelId, ResolverPay
     resize({ size }: { size: Vec2ui16 }): Promise<ResizeResponse> {
         const payloadSize = 1 + 4;
         const buffer = new ArrayBuffer(FTL_HEADER_SIZE + payloadSize);
-        this._writeMultiplexerHeader({
+        this.#writeMultiplexerHeader({
             buffer,
             channelId: ChannelId.viewer_control,
             size: payloadSize,
@@ -273,7 +294,7 @@ export class GatewayMessageHandler extends MessageHandler<ChannelId, ResolverPay
 
         this._connection.send({ data: buffer });
 
-        return this._makeMessageResolver<ResizeResponse>({
+        return this.#request_handler.makeRequestResolver<ResizeResponse>({
             channel_id: ChannelId.viewer_control,
         });
     }
@@ -282,11 +303,16 @@ export class GatewayMessageHandler extends MessageHandler<ChannelId, ResolverPay
      * Reply
      */
     _on_resize_response({ dataView }: { dataView: DataView }): void {
-        this._getNextMessageResolver({
-            channel_id: ChannelId.viewer_control,
-        }).resolve(deserialize_ResizeResponse({ dataView, offset: 0 }));
+        this.#request_handler
+            .getNextRequestResolver({
+                channel_id: ChannelId.viewer_control,
+            })
+            .resolve(deserialize_ResizeResponse({ dataView, offset: 0 }));
     }
 
+    /***************************************************************************
+     * INPUTS
+     **************************************************************************/
     /**
      * Send
      */
@@ -294,7 +320,7 @@ export class GatewayMessageHandler extends MessageHandler<ChannelId, ResolverPay
         const payloadSize = compute_InputState_size({ input_state });
         const buffer = new ArrayBuffer(FTL_HEADER_SIZE + payloadSize);
 
-        this._writeMultiplexerHeader({
+        this.#writeMultiplexerHeader({
             buffer,
             channelId: ChannelId.inputs,
             size: payloadSize,
@@ -306,6 +332,9 @@ export class GatewayMessageHandler extends MessageHandler<ChannelId, ResolverPay
         this._connection.send({ data: buffer });
     }
 
+    /***************************************************************************
+     * VIDEO STREAM
+     **************************************************************************/
     /**
      * Receive
      */
@@ -318,6 +347,9 @@ export class GatewayMessageHandler extends MessageHandler<ChannelId, ResolverPay
         this.dispatchEvent(new CustomEvent("on-frame-received", { detail: frame_data }));
     }
 
+    /***************************************************************************
+     * SCRIPT EVENTS
+     **************************************************************************/
     /**
      * Receive
      */
@@ -327,6 +359,9 @@ export class GatewayMessageHandler extends MessageHandler<ChannelId, ResolverPay
         this.dispatchEvent(new CustomEvent("on-script-event-received", { detail: script_event }));
     }
 
+    /***************************************************************************
+     * CLIENT REMOTE OPERATIONS
+     **************************************************************************/
     /**
      * Request
      */
@@ -339,14 +374,14 @@ export class GatewayMessageHandler extends MessageHandler<ChannelId, ResolverPay
         const payloadSize = FTL_CLIENT_ROP_HEADER_SIZE + ropDataSize;
         const buffer = new ArrayBuffer(FTL_HEADER_SIZE + payloadSize);
 
-        this._writeMultiplexerHeader({
+        this.#writeMultiplexerHeader({
             buffer,
             channelId: ChannelId.client_remote_operations,
             size: payloadSize,
         });
 
         const rop_id = ClientRemoteOperation.cast_screen_space_ray;
-        const request_id = this._writeRemoteOperationMultiplexerHeader({
+        const request_id = this.#writeRemoteOperationMultiplexerHeader({
             buffer,
             offset: FTL_HEADER_SIZE,
             rop_data_size: ropDataSize,
@@ -358,9 +393,9 @@ export class GatewayMessageHandler extends MessageHandler<ChannelId, ResolverPay
 
         this._connection.send({ data: buffer });
 
-        return this._makeMessageResolver<ScreenSpaceRayResult>({
+        return this.#request_handler.makeRequestResolver<ScreenSpaceRayResult>({
             channel_id: ChannelId.client_remote_operations,
-            payload: { rop_id, request_id },
+            meta_data: { rop_id, request_id },
         });
     }
 
@@ -372,13 +407,13 @@ export class GatewayMessageHandler extends MessageHandler<ChannelId, ResolverPay
         const payloadSize = FTL_CLIENT_ROP_HEADER_SIZE + ropDataSize;
         const buffer = new ArrayBuffer(FTL_HEADER_SIZE + payloadSize);
 
-        this._writeMultiplexerHeader({
+        this.#writeMultiplexerHeader({
             buffer,
             channelId: ChannelId.client_remote_operations,
             size: payloadSize,
         });
 
-        this._writeRemoteOperationMultiplexerHeader({
+        this.#writeRemoteOperationMultiplexerHeader({
             buffer,
             offset: FTL_HEADER_SIZE,
             rop_data_size: ropDataSize,
@@ -396,6 +431,59 @@ export class GatewayMessageHandler extends MessageHandler<ChannelId, ResolverPay
     }
 
     /**
+     * Reply
+     */
+    _on_clientRemoteOperation_response({
+        client_id,
+        request_id,
+        size,
+        dataView,
+    }: {
+        client_id: UUID;
+        request_id: number;
+        size: number;
+        dataView: DataView;
+    }): void {
+        if (client_id !== this.#client_id) {
+            console.warn(
+                `Received a response from client ${client_id}, whereas we are client ${this.#client_id}. Something's off.`,
+            );
+        }
+
+        const resolver = this.#request_handler.getNextRequestResolver({
+            channel_id: ChannelId.client_remote_operations,
+        });
+
+        if (!resolver.meta_data) {
+            throw new Error("Someting went wrong with the client remote operations resolver. Meta data is missing.");
+        }
+
+        if (resolver.meta_data.request_id !== request_id) {
+            throw new Error(`Expected request id ${resolver.meta_data.request_id}, received ${request_id}`);
+        }
+
+        if (resolver.meta_data.rop_id === undefined) {
+            throw new Error("Resolver has and undefined ROP id");
+        }
+
+        switch (resolver.meta_data.rop_id) {
+            case ClientRemoteOperation.cast_screen_space_ray:
+                resolver.resolve(deserialize_ScreenSpaceRayResult({ dataView, offset: 0 }));
+                break;
+
+            default:
+                throw new Error(
+                    `Received a response for a client remote operation on an unhandled ROP channel ${
+                        ClientRemoteOperation[resolver.meta_data.rop_id!]
+                    }`,
+                );
+        }
+    }
+
+    /***************************************************************************
+     * EDITOR REMOTE OPERATIONS
+     **************************************************************************/
+    /**
      * Send
      */
     fireEvent({ fireEventMessage }: { fireEventMessage: FireEventMessage }): void {
@@ -403,13 +491,13 @@ export class GatewayMessageHandler extends MessageHandler<ChannelId, ResolverPay
         const payloadSize = FTL_EDITOR_ROP_HEADER_SIZE + ropDataSize;
         const buffer = new ArrayBuffer(FTL_HEADER_SIZE + payloadSize);
 
-        this._writeMultiplexerHeader({
+        this.#writeMultiplexerHeader({
             buffer,
             channelId: ChannelId.editor_remote_operations,
             size: payloadSize,
         });
 
-        this._writeRemoteOperationMultiplexerHeader({
+        this.#writeRemoteOperationMultiplexerHeader({
             buffer,
             offset: FTL_HEADER_SIZE,
             rop_data_size: ropDataSize,
@@ -439,13 +527,13 @@ export class GatewayMessageHandler extends MessageHandler<ChannelId, ResolverPay
         const payloadSize = FTL_EDITOR_ROP_HEADER_SIZE + ropDataSize;
         const buffer = new ArrayBuffer(FTL_HEADER_SIZE + payloadSize);
 
-        this._writeMultiplexerHeader({
+        this.#writeMultiplexerHeader({
             buffer,
             channelId: ChannelId.editor_remote_operations,
             size: payloadSize,
         });
 
-        this._writeRemoteOperationMultiplexerHeader({
+        this.#writeRemoteOperationMultiplexerHeader({
             buffer,
             offset: FTL_HEADER_SIZE,
             rop_data_size: ropDataSize,
@@ -475,13 +563,13 @@ export class GatewayMessageHandler extends MessageHandler<ChannelId, ResolverPay
         const payloadSize = FTL_EDITOR_ROP_HEADER_SIZE + ropDataSize;
         const buffer = new ArrayBuffer(FTL_HEADER_SIZE + payloadSize);
 
-        this._writeMultiplexerHeader({
+        this.#writeMultiplexerHeader({
             buffer,
             channelId: ChannelId.editor_remote_operations,
             size: payloadSize,
         });
 
-        this._writeRemoteOperationMultiplexerHeader({
+        this.#writeRemoteOperationMultiplexerHeader({
             buffer,
             offset: FTL_HEADER_SIZE,
             rop_data_size: ropDataSize,
@@ -511,13 +599,13 @@ export class GatewayMessageHandler extends MessageHandler<ChannelId, ResolverPay
         const payloadSize = FTL_EDITOR_ROP_HEADER_SIZE + ropDataSize;
         const buffer = new ArrayBuffer(FTL_HEADER_SIZE + payloadSize);
 
-        this._writeMultiplexerHeader({
+        this.#writeMultiplexerHeader({
             buffer,
             channelId: ChannelId.editor_remote_operations,
             size: payloadSize,
         });
 
-        this._writeRemoteOperationMultiplexerHeader({
+        this.#writeRemoteOperationMultiplexerHeader({
             buffer,
             offset: FTL_HEADER_SIZE,
             rop_data_size: ropDataSize,
@@ -543,13 +631,13 @@ export class GatewayMessageHandler extends MessageHandler<ChannelId, ResolverPay
         const payloadSize = FTL_EDITOR_ROP_HEADER_SIZE + ropDataSize;
         const buffer = new ArrayBuffer(FTL_HEADER_SIZE + payloadSize);
 
-        this._writeMultiplexerHeader({
+        this.#writeMultiplexerHeader({
             buffer,
             channelId: ChannelId.editor_remote_operations,
             size: payloadSize,
         });
 
-        this._writeRemoteOperationMultiplexerHeader({
+        this.#writeRemoteOperationMultiplexerHeader({
             buffer,
             offset: FTL_HEADER_SIZE,
             rop_data_size: ropDataSize,
@@ -568,67 +656,9 @@ export class GatewayMessageHandler extends MessageHandler<ChannelId, ResolverPay
     }
 
     /**
-     * Reply
-     */
-    _on_clientRemoteOperation_response({
-        client_id,
-        request_id,
-        size,
-        dataView,
-    }: {
-        client_id: UUID;
-        request_id: number;
-        size: number;
-        dataView: DataView;
-    }): void {
-        if (client_id !== this._client_id) {
-            console.warn(
-                `Received a response from client ${client_id}, whereas we are client ${this._client_id}. Something's off.`,
-            );
-        }
-
-        const resolver = this._getNextMessageResolver({
-            channel_id: ChannelId.client_remote_operations,
-        });
-
-        if (!resolver.payload) {
-            throw new Error("Someting went wrong with the client remote operations resolver. Payload is missing.");
-        }
-
-        if (resolver.payload.request_id !== request_id) {
-            throw new Error(`Expected request id ${resolver.payload.request_id}, received ${request_id}`);
-        }
-
-        if (resolver.payload.rop_id === undefined) {
-            throw new Error("Resolver has and undefined ROP id");
-        }
-
-        switch (resolver.payload.rop_id) {
-            case ClientRemoteOperation.cast_screen_space_ray:
-                resolver.resolve(deserialize_ScreenSpaceRayResult({ dataView, offset: 0 }));
-                break;
-
-            default:
-                throw new Error(
-                    `Received a response for a client remote operation on an unhandled ROP channel ${
-                        ClientRemoteOperation[resolver.payload.rop_id!]
-                    }`,
-                );
-        }
-    }
-
-    /**
      *
      */
-    private _writeMultiplexerHeader({
-        buffer,
-        channelId,
-        size,
-    }: {
-        buffer: ArrayBuffer;
-        channelId: ChannelId;
-        size: number;
-    }) {
+    #writeMultiplexerHeader({ buffer, channelId, size }: { buffer: ArrayBuffer; channelId: ChannelId; size: number }) {
         const writer = new DataView(buffer);
         writer.setUint8(0, channelId);
         writer.setUint8(1, 0xff & (size >> 0));
@@ -639,7 +669,7 @@ export class GatewayMessageHandler extends MessageHandler<ChannelId, ResolverPay
     /**
      *
      */
-    private _writeRemoteOperationMultiplexerHeader({
+    #writeRemoteOperationMultiplexerHeader({
         buffer,
         offset,
         rop_data_size,
@@ -655,10 +685,10 @@ export class GatewayMessageHandler extends MessageHandler<ChannelId, ResolverPay
         offset += serialize_UUID({
             dataView: writer,
             offset,
-            uuid: this._client_id!,
+            uuid: this.#client_id!,
         });
 
-        const request_id = this._request_id_generator++;
+        const request_id = this.#request_id_generator++;
 
         writer.setUint32(offset, request_id, LITTLE_ENDIAN);
         offset += 4;
