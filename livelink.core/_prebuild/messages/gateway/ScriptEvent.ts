@@ -14,31 +14,37 @@ export type ScriptEvent = {
 /**
  *
  */
-export function deserialize_ScriptEvent({ dataView, offset }: { dataView: DataView; offset: number }): ScriptEvent {
-    const emitter_rtid = deserialize_RTID({ dataView, offset });
+export function deserialize_ScriptEvent({
+    data_view,
+    offset = 0,
+}: {
+    data_view: DataView;
+    offset?: number;
+}): ScriptEvent {
+    const emitter_rtid = deserialize_RTID({ data_view, offset });
     offset += 4;
 
-    const event_name_size = dataView.getUint16(offset, LITTLE_ENDIAN);
+    const event_name_size = data_view.getUint16(offset, LITTLE_ENDIAN);
     offset += 2;
 
     const event_name = new TextDecoder().decode(
-        new DataView(dataView.buffer, dataView.byteOffset + offset, event_name_size),
+        new DataView(data_view.buffer, data_view.byteOffset + offset, event_name_size),
     );
     offset += event_name_size;
 
-    const entity_count = dataView.getUint16(offset, LITTLE_ENDIAN);
+    const entity_count = data_view.getUint16(offset, LITTLE_ENDIAN);
     offset += 2;
 
     const entity_rtids = Array(entity_count).map((_, index) =>
-        deserialize_RTID({ dataView, offset: offset + index * 4 }),
+        deserialize_RTID({ data_view, offset: offset + index * 4 }),
     );
     offset += 4 * entity_count;
 
-    const json_size = dataView.getUint16(offset, LITTLE_ENDIAN);
+    const json_size = data_view.getUint16(offset, LITTLE_ENDIAN);
     offset += 2;
 
     const data_object_str = new TextDecoder().decode(
-        new DataView(dataView.buffer, dataView.byteOffset + offset, json_size),
+        new DataView(data_view.buffer, data_view.byteOffset + offset, json_size),
     );
 
     return {

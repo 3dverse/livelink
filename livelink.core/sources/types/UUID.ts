@@ -13,7 +13,15 @@ export const UUID_BYTE_SIZE = 16 as const;
 /**
  *
  */
-export function serialize_UUID({ dataView, offset, uuid }: { dataView: DataView; offset: number; uuid: UUID }): number {
+export function serialize_UUID({
+    data_view,
+    offset,
+    uuid,
+}: {
+    data_view: DataView;
+    offset: number;
+    uuid: UUID;
+}): number {
     const hexToByte = (hexOctet: string) => parseInt(hexOctet, 16);
     const hexStringToBytes = (hexString: string) =>
         new DataView(
@@ -26,11 +34,11 @@ export function serialize_UUID({ dataView, offset, uuid }: { dataView: DataView;
         );
 
     const b = hexStringToBytes(uuid);
-    dataView.setUint32(offset + 0, b.getUint32(0, BIG_ENDIAN), LITTLE_ENDIAN);
-    dataView.setUint16(offset + 4, b.getUint16(4, BIG_ENDIAN), LITTLE_ENDIAN);
-    dataView.setUint16(offset + 6, b.getUint16(6, BIG_ENDIAN), LITTLE_ENDIAN);
+    data_view.setUint32(offset + 0, b.getUint32(0, BIG_ENDIAN), LITTLE_ENDIAN);
+    data_view.setUint16(offset + 4, b.getUint16(4, BIG_ENDIAN), LITTLE_ENDIAN);
+    data_view.setUint16(offset + 6, b.getUint16(6, BIG_ENDIAN), LITTLE_ENDIAN);
     for (let i = 8; i < 16; ++i) {
-        dataView.setUint8(offset + i, b.getUint8(i));
+        data_view.setUint8(offset + i, b.getUint8(i));
     }
 
     return UUID_BYTE_SIZE;
@@ -47,12 +55,12 @@ for (let i = 0; i < 256; ++i) {
 /**
  *
  */
-export function deserialize_UUID({ dataView, offset }: { dataView: DataView; offset: number }): UUID {
-    const arr = new Uint8Array(dataView.buffer, dataView.byteOffset + offset, 16);
+export function deserialize_UUID({ data_view, offset }: { data_view: DataView; offset: number }): UUID {
+    const arr = new Uint8Array(data_view.buffer, data_view.byteOffset + offset, 16);
 
-    dataView.setUint32(offset + 0, dataView.getUint32(offset + 0, LITTLE_ENDIAN), BIG_ENDIAN);
-    dataView.setUint16(offset + 4, dataView.getUint16(offset + 4, LITTLE_ENDIAN), BIG_ENDIAN);
-    dataView.setUint16(offset + 6, dataView.getUint16(offset + 6, LITTLE_ENDIAN), BIG_ENDIAN);
+    data_view.setUint32(offset + 0, data_view.getUint32(offset + 0, LITTLE_ENDIAN), BIG_ENDIAN);
+    data_view.setUint16(offset + 4, data_view.getUint16(offset + 4, LITTLE_ENDIAN), BIG_ENDIAN);
+    data_view.setUint16(offset + 6, data_view.getUint16(offset + 6, LITTLE_ENDIAN), BIG_ENDIAN);
 
     return (
         byteToHex[arr[0]] +

@@ -71,7 +71,7 @@ export class GatewayConnection {
                 resolve();
             };
 
-            this.#socket.onclose = (close_event: CloseEvent) => this.#onSocketClosed(close_event);
+            this.#socket.onclose = this.#onSocketClosed;
 
             this.#socket.onerror = () => {
                 throw new Error("Gateway socket error");
@@ -83,7 +83,7 @@ export class GatewayConnection {
             // This callback handles only this authentication response message.
             // As soon as the authentication is validated, we switch to the regular multiplexed
             // message handler callback.
-            this.#socket.onmessage = (message: MessageEvent<ArrayBuffer>) => this.#onAuthenticated(message);
+            this.#socket.onmessage = this.#onAuthenticated;
         });
     }
 
@@ -97,64 +97,64 @@ export class GatewayConnection {
     /**
      *
      */
-    disconnect() {
+    disconnect(): void {
         this.#socket?.close(1000);
     }
 
     /**
      *
      */
-    #onSocketOpened(_: Event) {
+    #onSocketOpened = (_: Event): void => {
         console.debug("Connected to the 3dverse rendering gateway:", this.#socket!.url);
-    }
+    };
 
     /**
      *
      */
-    #onSocketClosed(closeEvent: CloseEvent) {
+    #onSocketClosed = (closeEvent: CloseEvent): void => {
         if (closeEvent.wasClean === false) {
             console.error("Gateway socket forcibly closed", closeEvent);
         } else {
             console.debug("Disconnected from the 3dverse rendering gateway");
         }
-    }
+    };
 
     /**
      *
      */
-    #onAuthenticated(message: MessageEvent<ArrayBuffer>) {
+    #onAuthenticated = (message: MessageEvent<ArrayBuffer>): void => {
         this.#handler._on_authenticateClient_response({
-            dataView: new DataView(message.data),
+            data_view: new DataView(message.data),
         });
 
         // Switch the onmessage callback to the regular multiplexed one.
-        this.#socket!.onmessage = (message: MessageEvent<ArrayBuffer>) => this.#onMessageReceived({ message });
-    }
+        this.#socket!.onmessage = this.#onMessageReceived;
+    };
 
     /**
      *
      */
-    #onMessageReceived({ message }: { message: MessageEvent<ArrayBuffer> }): void {
+    #onMessageReceived = (message: MessageEvent<ArrayBuffer>): void => {
         // First byte is the channel id.
         // 3 following bytes are the message total size EXCLUDING the first 4 bytes.
         const channelId = new DataView(message.data).getUint8(0) as ChannelId;
-        const dataView = new DataView(message.data, FTL_HEADER_SIZE);
+        const data_view = new DataView(message.data, FTL_HEADER_SIZE);
 
         switch (channelId) {
             case ChannelId.registration:
-                this.#handler._on_configureClient_response({ dataView });
+                this.#handler._on_configureClient_response({ data_view });
                 break;
 
             case ChannelId.video_stream:
-                this.#handler._onFrameReceived({ dataView });
+                this.#handler._onFrameReceived({ data_view });
                 break;
 
             case ChannelId.viewer_control:
-                this.#handler._on_resize_response({ dataView });
+                this.#handler._on_resize_response({ data_view });
                 break;
 
             case ChannelId.client_remote_operations:
-                this.#clientRemoteOperation_response({ dataView });
+                this.#clientRemoteOperation_response({ data_view });
                 break;
 
             case ChannelId.heartbeat:
@@ -162,7 +162,7 @@ export class GatewayConnection {
                 break;
 
             case ChannelId.broadcast_script_events:
-                this.#handler._onScriptEventReceived({ dataView });
+                this.#handler._onScriptEventReceived({ data_view });
                 break;
 
             case ChannelId.audio_stream:
@@ -173,25 +173,25 @@ export class GatewayConnection {
             default:
                 throw new Error(`Received message on an unsupported channel '${ChannelId[channelId]}' (${channelId})`);
         }
-    }
+    };
 
     /**
      * Rendering server response.
      */
-    #clientRemoteOperation_response({ dataView }: { dataView: DataView }) {
+    #clientRemoteOperation_response({ data_view }: { data_view: DataView }): void {
         let offset = 0;
-        const client_id = deserialize_UUID({ dataView, offset });
+        const client_id = deserialize_UUID({ data_view: data_view, offset });
         offset += UUID_BYTE_SIZE;
-        const request_id = dataView.getUint32(offset, LITTLE_ENDIAN);
+        const request_id = data_view.getUint32(offset, LITTLE_ENDIAN);
         offset += 4;
-        const size = dataView.getUint32(offset, LITTLE_ENDIAN);
+        const size = data_view.getUint32(offset, LITTLE_ENDIAN);
         offset += 4;
 
         this.#handler._on_clientRemoteOperation_response({
             client_id,
             request_id,
             size,
-            dataView: new DataView(dataView.buffer, dataView.byteOffset + offset),
+            data_view: new DataView(data_view.buffer, data_view.byteOffset + offset),
         });
     }
 }

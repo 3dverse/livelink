@@ -10,8 +10,8 @@ export type ClientConfigResponse = {
 /**
  *
  */
-export function deserialize_ClientConfigResponse({ dataView, offset }: { dataView: DataView; offset: number }): {
+export function deserialize_ClientConfigResponse({ data_view, offset }: { data_view: DataView; offset: number }): {
     codec: number;
 } {
-    return { codec: dataView.getUint8(0) };
+    return { codec: data_view.getUint8(0) };
 }

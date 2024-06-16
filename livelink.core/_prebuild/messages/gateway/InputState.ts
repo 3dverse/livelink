@@ -20,20 +20,20 @@ export function compute_InputState_size({ input_state }: { input_state: InputSta
  *
  */
 export function serialize_InputState({
-    dataView,
-    offset,
+    data_view,
+    offset = 0,
     input_state,
 }: {
-    dataView: DataView;
-    offset: number;
+    data_view: DataView;
+    offset?: number;
     input_state: InputState;
 }): number {
-    dataView.setUint8(offset, input_state.input_operation);
+    data_view.setUint8(offset, input_state.input_operation);
     offset += 1;
 
     if (input_state.input_data) {
         for (let i = 0; i < input_state.input_data.length; ++i) {
-            dataView.setUint8(offset++, input_state.input_data[i]);
+            data_view.setUint8(offset++, input_state.input_data[i]);
         }
     }
 

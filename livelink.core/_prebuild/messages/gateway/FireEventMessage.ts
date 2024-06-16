@@ -29,18 +29,18 @@ export function compute_FireEventMessage_size(fireEventMessage: FireEventMessage
  *
  */
 export function serialize_FireEventMessage({
-    dataView,
-    offset,
+    data_view,
+    offset = 0,
     fireEventMessage,
 }: {
-    dataView: DataView;
-    offset: number;
+    data_view: DataView;
+    offset?: number;
     fireEventMessage: FireEventMessage;
 }): number {
-    offset += serialize_UUID({ dataView, offset, uuid: fireEventMessage.event_map_id });
+    offset += serialize_UUID({ data_view, offset, uuid: fireEventMessage.event_map_id });
 
     for (let i = 0; i < fireEventMessage.event_name.length; i++) {
-        dataView.setUint8(offset++, fireEventMessage.event_name.charCodeAt(i));
+        data_view.setUint8(offset++, fireEventMessage.event_name.charCodeAt(i));
     }
 
     // Null terminate event name.
@@ -49,7 +49,7 @@ export function serialize_FireEventMessage({
     // Null terminate data object.
     ++offset;
 
-    dataView.setUint32(offset, 0, LITTLE_ENDIAN);
+    data_view.setUint32(offset, 0, LITTLE_ENDIAN);
     offset += 4;
 
     return UUID_BYTE_SIZE + fireEventMessage.event_name.length + 1 + 1 + 4;

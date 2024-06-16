@@ -33,34 +33,34 @@ export function compute_RemoveComponentsCommand_size(removeComponentsCommand: Re
  *
  */
 export function serialize_RemoveComponentsCommand({
-    dataView,
-    offset,
+    data_view,
+    offset = 0,
     removeComponentsCommand,
 }: {
-    dataView: DataView;
-    offset: number;
+    data_view: DataView;
+    offset?: number;
     removeComponentsCommand: RemoveComponentsCommand;
 }) {
     // + componentCount (4)
     const componentCount = removeComponentsCommand.components.length;
-    dataView.setUint32(offset, componentCount, LITTLE_ENDIAN);
+    data_view.setUint32(offset, componentCount, LITTLE_ENDIAN);
     offset += 4;
 
     for (const componentUpdate of removeComponentsCommand.components) {
         // + componentHash (4)
         const componentHash = ComponentHash[componentUpdate.component_type];
-        dataView.setUint32(offset, componentHash, LITTLE_ENDIAN);
+        data_view.setUint32(offset, componentHash, LITTLE_ENDIAN);
         offset += 4;
 
         // + entityCount (4)
         const entityCount = componentUpdate.entities.size;
-        dataView.setUint32(offset, entityCount, LITTLE_ENDIAN);
+        data_view.setUint32(offset, entityCount, LITTLE_ENDIAN);
         offset += 4;
 
         for (const entity of componentUpdate.entities) {
             // + { entityRTID (4) }
             offset += serialize_RTID({
-                dataView: dataView,
+                data_view: data_view,
                 offset,
                 rtid: entity.rtid!,
             });

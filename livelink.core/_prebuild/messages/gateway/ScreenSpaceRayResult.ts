@@ -13,15 +13,15 @@ export type ScreenSpaceRayResult = {
  *
  */
 export function deserialize_ScreenSpaceRayResult({
-    dataView,
+    data_view,
     offset,
 }: {
-    dataView: DataView;
+    data_view: DataView;
     offset: number;
 }): ScreenSpaceRayResult {
     return {
-        entity_rtid: deserialize_RTID({ dataView, offset: offset + 0 }),
-        position: deserialize_Vec3({ dataView, offset: offset + 4 }),
-        normal: deserialize_Vec3({ dataView, offset: offset + 4 + 3 * 4 }),
+        entity_rtid: deserialize_RTID({ data_view, offset: offset + 0 }),
+        position: deserialize_Vec3({ data_view, offset: offset + 4 }),
+        normal: deserialize_Vec3({ data_view, offset: offset + 4 + 3 * 4 }),
     };
 }

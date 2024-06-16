@@ -1,4 +1,4 @@
-import { RTID, Vec2, serialize_RTID, serialize_Vec2 } from "../../../sources/types";
+import { RTID, RTID_BYTE_SIZE, Vec2, serialize_RTID, serialize_Vec2 } from "../../../sources/types";
 
 /**
  *
@@ -19,24 +19,29 @@ export type ScreenSpaceRayQuery = {
 };
 
 /**
+ * 8 + 1 + 4
+ */
+export const SCREEN_SPACE_QUERY_BYTE_SIZE = 13 as const;
+
+/**
  *
  */
 export function serialize_ScreenSpaceRayQuery({
-    dataView,
-    offset,
+    data_view,
+    offset = 0,
     screenSpaceRayQuery,
 }: {
-    dataView: DataView;
-    offset: number;
+    data_view: DataView;
+    offset?: number;
     screenSpaceRayQuery: ScreenSpaceRayQuery;
 }): number {
-    offset += serialize_Vec2({ dataView, offset, v: screenSpaceRayQuery.pos });
-    dataView.setUint8(offset, screenSpaceRayQuery.mode);
+    offset += serialize_Vec2({ data_view, offset, v: screenSpaceRayQuery.pos });
+    data_view.setUint8(offset, screenSpaceRayQuery.mode);
     offset += 1;
     offset += serialize_RTID({
-        dataView,
+        data_view,
         offset,
         rtid: screenSpaceRayQuery.camera_rtid,
     });
-    return 2 * 4 + 1 + 4;
+    return 8 + 1 + RTID_BYTE_SIZE;
 }

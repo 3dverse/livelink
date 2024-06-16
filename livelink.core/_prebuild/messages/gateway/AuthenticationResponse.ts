@@ -35,17 +35,17 @@ export type AuthenticationResponse = {
  *
  */
 export function deserialize_AuthenticationResponse({
-    dataView,
+    data_view,
     offset,
 }: {
-    dataView: DataView;
+    data_view: DataView;
     offset: number;
 }): AuthenticationResponse {
-    const status = dataView.getUint16(offset, LITTLE_ENDIAN) as AuthenticationStatus;
+    const status = data_view.getUint16(offset, LITTLE_ENDIAN) as AuthenticationStatus;
     offset += 2;
 
     const client_id = deserialize_UUID({
-        dataView,
+        data_view,
         offset,
     });
 

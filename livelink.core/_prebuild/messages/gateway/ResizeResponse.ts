@@ -11,11 +11,11 @@ export type ResizeResponse = {
  *
  */
 export function deserialize_ResizeResponse({
-    dataView,
+    data_view,
     offset,
 }: {
-    dataView: DataView;
+    data_view: DataView;
     offset: number;
 }): ResizeResponse {
-    return { size: deserialize_Vec2ui16({ dataView, offset }) };
+    return { size: deserialize_Vec2ui16({ data_view, offset }) };
 }

@@ -46,33 +46,33 @@ export function compute_UpdateEntitiesFromJsonMessage_size(
  *
  */
 export function serialize_UpdateEntitiesFromJsonMessage({
-    dataView,
-    offset,
+    data_view,
+    offset = 0,
     updateEntitiesFromJsonMessage,
 }: {
-    dataView: DataView;
-    offset: number;
+    data_view: DataView;
+    offset?: number;
     updateEntitiesFromJsonMessage: UpdateEntitiesFromJsonMessage;
 }) {
     // + componentCount (4)
     const componentCount = updateEntitiesFromJsonMessage.components.length;
-    dataView.setUint32(offset, componentCount, LITTLE_ENDIAN);
+    data_view.setUint32(offset, componentCount, LITTLE_ENDIAN);
     offset += 4;
 
     for (const componentUpdate of updateEntitiesFromJsonMessage.components) {
         // + { componentHash (4), entityCount (4) }
         const componentHash = ComponentHash[componentUpdate.component_type];
-        dataView.setUint32(offset, componentHash, LITTLE_ENDIAN);
+        data_view.setUint32(offset, componentHash, LITTLE_ENDIAN);
         offset += 4;
 
         const entityCount = componentUpdate.entities.size;
-        dataView.setUint32(offset, entityCount, LITTLE_ENDIAN);
+        data_view.setUint32(offset, entityCount, LITTLE_ENDIAN);
         offset += 4;
 
         for (const entity of componentUpdate.entities) {
             // + { entityRTID (4) }
             offset += serialize_RTID({
-                dataView: dataView,
+                data_view: data_view,
                 offset,
                 rtid: entity.rtid!,
             });
@@ -84,12 +84,12 @@ export function serialize_UpdateEntitiesFromJsonMessage({
 
             // + jsonSize (4)
             const jsonSize = jsonStr.length;
-            dataView.setUint32(offset, jsonSize, LITTLE_ENDIAN);
+            data_view.setUint32(offset, jsonSize, LITTLE_ENDIAN);
             offset += 4;
 
             // + json (jsonLength)
             for (let i = 0; i < jsonSize; ++i) {
-                dataView.setUint8(offset, jsonStr.charCodeAt(i));
+                data_view.setUint8(offset, jsonStr.charCodeAt(i));
                 offset += 1;
             }
         }

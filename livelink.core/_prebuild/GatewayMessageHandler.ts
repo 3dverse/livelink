@@ -8,11 +8,10 @@ import {
     FTL_CLIENT_ROP_HEADER_SIZE,
     FTL_EDITOR_ROP_HEADER_SIZE,
     FTL_HEADER_SIZE,
+    FTL_VIEWER_CONTROL_ROP_HEADER_SIZE,
     LITTLE_ENDIAN,
 } from "../sources/types/constants";
-import { RequestHandler } from "../sources/RequestHandler";
-import { GatewayConnection } from "./GatewayConnection";
-import { UUID, Vec2ui16, serialize_UUID, serialize_Vec2ui16 } from "../sources/types";
+
 import {
     AssignClientToScriptMessage,
     AuthenticationResponse,
@@ -23,13 +22,17 @@ import {
     InputState,
     RemoveComponentsCommand,
     ResizeResponse,
+    SCREEN_SPACE_QUERY_BYTE_SIZE,
     ScreenSpaceRayQuery,
     ScreenSpaceRayResult,
     SessionAuth,
     UpdateAnimationSequenceStateMessage,
     UpdateEntitiesFromJsonMessage,
+    VIEWPORT_CONFIG_BYTE_SIZE,
     ViewportConfig,
+    comppute_UpdateAnimationSequenceStateMessage_size,
     compute_FireEventMessage_size,
+    compute_HighlightEntitiesMessage_size,
     compute_InputState_size,
     compute_RemoveComponentsCommand_size,
     compute_UpdateEntitiesFromJsonMessage_size,
@@ -47,7 +50,8 @@ import {
     serialize_UpdateAnimationSequenceStateMessage,
     serialize_UpdateEntitiesFromJsonMessage,
     serialize_ViewportConfig,
-    serialize_assignClientToScriptMessage,
+    serialize_AssignClientToScriptMessage,
+    ASSIGN_CLIENT_TO_SCRIPT_MESSAGE_BYTE_SIZE,
 } from "./messages/gateway";
 
 import {
@@ -57,8 +61,13 @@ import {
     ViewerControlOperation,
 } from "./messages/gateway/enums";
 
+import { GatewayConnection } from "./GatewayConnection";
+
+import { RequestHandler } from "../sources/RequestHandler";
+import { UUID, Vec2ui16, serialize_UUID, serialize_Vec2ui16 } from "../sources/types";
+
 /**
- *
+ * Meta data added to request resolvers to keep track of the rop and request id.
  */
 type ResolverMetaData = {
     rop_id: ClientRemoteOperation | EditorRemoteOperation;
@@ -71,34 +80,35 @@ type ResolverMetaData = {
  */
 export class GatewayMessageHandler extends EventTarget {
     /**
-     *
+     * The actual connection to the gateway.
      */
     readonly #connection = new GatewayConnection({ handler: this });
 
     /**
-     *
+     * Handles messages that expect a response (requests).
      */
     readonly #request_handler = new RequestHandler<ChannelId, ResolverMetaData>();
 
     /**
-     *
+     * A unique id generator for requests so that we can match which response corresponds to which
+     * request.
      */
     #request_id_generator = 1;
 
     /**
-     *
+     * The id of the current client, generated once we are authenticated.
      */
     #client_id: UUID | null = null;
 
     /**
-     *
+     * Opens the connection to the specified gateway.
      */
     protected _connect({ gateway_url }: { gateway_url: string }): Promise<void> {
         return this.#connection.connect({ gateway_url });
     }
 
     /**
-     *
+     * Closes any ongoing connection with the gateway.
      */
     protected _disconnect(): void {
         this.#connection.disconnect();
@@ -132,8 +142,8 @@ export class GatewayMessageHandler extends EventTarget {
     /**
      * Reply
      */
-    _on_authenticateClient_response({ dataView }: { dataView: DataView }): void {
-        const authRes = deserialize_AuthenticationResponse({ dataView, offset: 0 });
+    _on_authenticateClient_response({ data_view }: { data_view: DataView }): void {
+        const authRes = deserialize_AuthenticationResponse({ data_view, offset: 0 });
         this.#client_id = authRes.client_id;
         this.#request_handler.getNextRequestResolver({ channel_id: ChannelId.authentication }).resolve(authRes);
     }
@@ -191,10 +201,10 @@ export class GatewayMessageHandler extends EventTarget {
     /**
      * Reply
      */
-    _on_configureClient_response({ dataView }: { dataView: DataView }): void {
+    _on_configureClient_response({ data_view }: { data_view: DataView }): void {
         this.#request_handler
             .getNextRequestResolver({ channel_id: ChannelId.registration })
-            .resolve(deserialize_ClientConfigResponse({ dataView, offset: 0 }));
+            .resolve(deserialize_ClientConfigResponse({ data_view, offset: 0 }));
     }
 
     /***************************************************************************
@@ -204,9 +214,8 @@ export class GatewayMessageHandler extends EventTarget {
      * Send
      */
     setViewports({ viewports }: { viewports: Array<ViewportConfig> }): void {
-        const SIZE_OF_VIEWPORT_CONFIG = 20;
-        const payloadSize = 2 + viewports.length * SIZE_OF_VIEWPORT_CONFIG;
-        const buffer = new ArrayBuffer(FTL_HEADER_SIZE + payloadSize);
+        const payloadSize = 1 + viewports.length * VIEWPORT_CONFIG_BYTE_SIZE;
+        const buffer = new ArrayBuffer(FTL_HEADER_SIZE + FTL_VIEWER_CONTROL_ROP_HEADER_SIZE + payloadSize);
         this.#writeMultiplexerHeader({ buffer, channelId: ChannelId.viewer_control, size: payloadSize });
 
         const writer = new DataView(buffer, FTL_HEADER_SIZE);
@@ -218,7 +227,7 @@ export class GatewayMessageHandler extends EventTarget {
         offset += 1;
 
         for (const viewportConfig of viewports) {
-            offset += serialize_ViewportConfig({ dataView: writer, offset, viewportConfig });
+            offset += serialize_ViewportConfig({ data_view: writer, offset, viewportConfig });
         }
 
         this.#connection.send({ data: buffer });
@@ -228,7 +237,7 @@ export class GatewayMessageHandler extends EventTarget {
      * Send
      */
     resume(): void {
-        const payloadSize = 1;
+        const payloadSize = FTL_VIEWER_CONTROL_ROP_HEADER_SIZE;
         const buffer = new ArrayBuffer(FTL_HEADER_SIZE + payloadSize);
         this.#writeMultiplexerHeader({ buffer, channelId: ChannelId.viewer_control, size: payloadSize });
 
@@ -244,7 +253,7 @@ export class GatewayMessageHandler extends EventTarget {
      * Send
      */
     suspend(): void {
-        const payloadSize = 1;
+        const payloadSize = FTL_VIEWER_CONTROL_ROP_HEADER_SIZE;
         const buffer = new ArrayBuffer(FTL_HEADER_SIZE + payloadSize);
         this.#writeMultiplexerHeader({ buffer, channelId: ChannelId.viewer_control, size: payloadSize });
 
@@ -260,7 +269,7 @@ export class GatewayMessageHandler extends EventTarget {
      * Request
      */
     resize({ size }: { size: Vec2ui16 }): Promise<ResizeResponse> {
-        const payloadSize = 1 + 4;
+        const payloadSize = FTL_VIEWER_CONTROL_ROP_HEADER_SIZE + 4;
         const buffer = new ArrayBuffer(FTL_HEADER_SIZE + payloadSize);
         this.#writeMultiplexerHeader({ buffer, channelId: ChannelId.viewer_control, size: payloadSize });
 
@@ -268,7 +277,9 @@ export class GatewayMessageHandler extends EventTarget {
         let offset = 0;
         writer.setUint8(offset, ViewerControlOperation.resize);
         offset += 1;
-        offset += serialize_Vec2ui16({ dataView: writer, offset, v: size });
+
+        offset += serialize_Vec2ui16({ data_view: writer, offset, v: size });
+        offset += 4;
 
         this.#connection.send({ data: buffer });
 
@@ -278,10 +289,10 @@ export class GatewayMessageHandler extends EventTarget {
     /**
      * Reply
      */
-    _on_resize_response({ dataView }: { dataView: DataView }): void {
+    _on_resize_response({ data_view }: { data_view: DataView }): void {
         this.#request_handler
             .getNextRequestResolver({ channel_id: ChannelId.viewer_control })
-            .resolve(deserialize_ResizeResponse({ dataView, offset: 0 }));
+            .resolve(deserialize_ResizeResponse({ data_view, offset: 0 }));
     }
 
     /***************************************************************************
@@ -296,8 +307,7 @@ export class GatewayMessageHandler extends EventTarget {
 
         this.#writeMultiplexerHeader({ buffer, channelId: ChannelId.inputs, size: payloadSize });
 
-        const dataView = new DataView(buffer, FTL_HEADER_SIZE);
-        serialize_InputState({ dataView, offset: 0, input_state });
+        serialize_InputState({ data_view: new DataView(buffer, FTL_HEADER_SIZE), input_state });
 
         this.#connection.send({ data: buffer });
     }
@@ -308,8 +318,8 @@ export class GatewayMessageHandler extends EventTarget {
     /**
      * Receive
      */
-    _onFrameReceived({ dataView }: { dataView: DataView }): void {
-        const frame_data = deserialize_FrameData({ dataView, offset: 0 });
+    _onFrameReceived({ data_view }: { data_view: DataView }): void {
+        const frame_data = deserialize_FrameData({ data_view });
         this.dispatchEvent(new CustomEvent("on-frame-received", { detail: frame_data }));
     }
 
@@ -319,8 +329,8 @@ export class GatewayMessageHandler extends EventTarget {
     /**
      * Receive
      */
-    _onScriptEventReceived({ dataView }: { dataView: DataView }): void {
-        const script_event = deserialize_ScriptEvent({ dataView, offset: 0 });
+    _onScriptEventReceived({ data_view }: { data_view: DataView }): void {
+        const script_event = deserialize_ScriptEvent({ data_view });
         this.dispatchEvent(new CustomEvent("on-script-event-received", { detail: script_event }));
     }
 
@@ -335,7 +345,7 @@ export class GatewayMessageHandler extends EventTarget {
     }: {
         screenSpaceRayQuery: ScreenSpaceRayQuery;
     }): Promise<ScreenSpaceRayResult> {
-        const ropDataSize = 4 + 4 + 4 + 1;
+        const ropDataSize = SCREEN_SPACE_QUERY_BYTE_SIZE;
         const payloadSize = FTL_CLIENT_ROP_HEADER_SIZE + ropDataSize;
         const buffer = new ArrayBuffer(FTL_HEADER_SIZE + payloadSize);
 
@@ -349,8 +359,10 @@ export class GatewayMessageHandler extends EventTarget {
             rop_id,
         });
 
-        const dataView = new DataView(buffer, FTL_HEADER_SIZE + FTL_CLIENT_ROP_HEADER_SIZE);
-        serialize_ScreenSpaceRayQuery({ dataView, offset: 0, screenSpaceRayQuery });
+        serialize_ScreenSpaceRayQuery({
+            data_view: new DataView(buffer, FTL_HEADER_SIZE + FTL_CLIENT_ROP_HEADER_SIZE),
+            screenSpaceRayQuery,
+        });
 
         this.#connection.send({ data: buffer });
 
@@ -364,7 +376,7 @@ export class GatewayMessageHandler extends EventTarget {
      * Send
      */
     highlightEntities({ highlightEntitiesMessage }: { highlightEntitiesMessage: HighlightEntitiesMessage }): void {
-        const ropDataSize = 1 + highlightEntitiesMessage.entities.length * 4;
+        const ropDataSize = compute_HighlightEntitiesMessage_size({ highlightEntitiesMessage });
         const payloadSize = FTL_CLIENT_ROP_HEADER_SIZE + ropDataSize;
         const buffer = new ArrayBuffer(FTL_HEADER_SIZE + payloadSize);
 
@@ -377,8 +389,10 @@ export class GatewayMessageHandler extends EventTarget {
             rop_id: ClientRemoteOperation.select_entities,
         });
 
-        const dataView = new DataView(buffer, FTL_HEADER_SIZE + FTL_CLIENT_ROP_HEADER_SIZE);
-        serialize_HighlightEntitiesMessage({ dataView, offset: 0, highlightEntitiesMessage });
+        serialize_HighlightEntitiesMessage({
+            data_view: new DataView(buffer, FTL_HEADER_SIZE + FTL_CLIENT_ROP_HEADER_SIZE),
+            highlightEntitiesMessage,
+        });
 
         this.#connection.send({ data: buffer });
     }
@@ -390,12 +404,12 @@ export class GatewayMessageHandler extends EventTarget {
         client_id,
         request_id,
         size,
-        dataView,
+        data_view,
     }: {
         client_id: UUID;
         request_id: number;
         size: number;
-        dataView: DataView;
+        data_view: DataView;
     }): void {
         if (client_id !== this.#client_id) {
             console.warn(
@@ -421,7 +435,7 @@ export class GatewayMessageHandler extends EventTarget {
 
         switch (resolver.meta_data.rop_id) {
             case ClientRemoteOperation.cast_screen_space_ray:
-                resolver.resolve(deserialize_ScreenSpaceRayResult({ dataView, offset: 0 }));
+                resolver.resolve(deserialize_ScreenSpaceRayResult({ data_view, offset: 0 }));
                 break;
 
             default:
@@ -453,9 +467,10 @@ export class GatewayMessageHandler extends EventTarget {
             rop_id: EditorRemoteOperation.fire_event,
         });
 
-        const dataView = new DataView(buffer, FTL_HEADER_SIZE + FTL_EDITOR_ROP_HEADER_SIZE);
-
-        serialize_FireEventMessage({ dataView, offset: 0, fireEventMessage });
+        serialize_FireEventMessage({
+            data_view: new DataView(buffer, FTL_HEADER_SIZE + FTL_EDITOR_ROP_HEADER_SIZE),
+            fireEventMessage,
+        });
 
         this.#connection.send({ data: buffer });
     }
@@ -468,7 +483,7 @@ export class GatewayMessageHandler extends EventTarget {
     }: {
         updateAnimationSequenceStateMessage: UpdateAnimationSequenceStateMessage;
     }): void {
-        const ropDataSize = 4 + 16 + 4 + 4 + 0;
+        const ropDataSize = comppute_UpdateAnimationSequenceStateMessage_size({ updateAnimationSequenceStateMessage });
         const payloadSize = FTL_EDITOR_ROP_HEADER_SIZE + ropDataSize;
         const buffer = new ArrayBuffer(FTL_HEADER_SIZE + payloadSize);
 
@@ -481,9 +496,10 @@ export class GatewayMessageHandler extends EventTarget {
             rop_id: EditorRemoteOperation.update_animation_sequence_state,
         });
 
-        const dataView = new DataView(buffer, FTL_HEADER_SIZE + FTL_EDITOR_ROP_HEADER_SIZE);
-
-        serialize_UpdateAnimationSequenceStateMessage({ dataView, offset: 0, updateAnimationSequenceStateMessage });
+        serialize_UpdateAnimationSequenceStateMessage({
+            data_view: new DataView(buffer, FTL_HEADER_SIZE + FTL_EDITOR_ROP_HEADER_SIZE),
+            updateAnimationSequenceStateMessage,
+        });
 
         this.#connection.send({ data: buffer });
     }
@@ -496,7 +512,7 @@ export class GatewayMessageHandler extends EventTarget {
     }: {
         assignClientToScriptMessage: AssignClientToScriptMessage;
     }): void {
-        const ropDataSize = 16 + 16 + 4;
+        const ropDataSize = ASSIGN_CLIENT_TO_SCRIPT_MESSAGE_BYTE_SIZE;
         const payloadSize = FTL_EDITOR_ROP_HEADER_SIZE + ropDataSize;
         const buffer = new ArrayBuffer(FTL_HEADER_SIZE + payloadSize);
 
@@ -509,9 +525,10 @@ export class GatewayMessageHandler extends EventTarget {
             rop_id: EditorRemoteOperation.assign_client_uuid_to_script,
         });
 
-        const dataView = new DataView(buffer, FTL_HEADER_SIZE + FTL_EDITOR_ROP_HEADER_SIZE);
-
-        serialize_assignClientToScriptMessage({ dataView, offset: 0, assignClientToScriptMessage });
+        serialize_AssignClientToScriptMessage({
+            data_view: new DataView(buffer, FTL_HEADER_SIZE + FTL_EDITOR_ROP_HEADER_SIZE),
+            assignClientToScriptMessage,
+        });
 
         this.#connection.send({ data: buffer });
     }
@@ -537,9 +554,10 @@ export class GatewayMessageHandler extends EventTarget {
             rop_id: EditorRemoteOperation.update_entities_from_json,
         });
 
-        const dataView = new DataView(buffer, FTL_HEADER_SIZE + FTL_EDITOR_ROP_HEADER_SIZE);
-
-        serialize_UpdateEntitiesFromJsonMessage({ dataView, offset: 0, updateEntitiesFromJsonMessage });
+        serialize_UpdateEntitiesFromJsonMessage({
+            data_view: new DataView(buffer, FTL_HEADER_SIZE + FTL_EDITOR_ROP_HEADER_SIZE),
+            updateEntitiesFromJsonMessage,
+        });
 
         this.#connection.send({ data: buffer });
     }
@@ -561,9 +579,10 @@ export class GatewayMessageHandler extends EventTarget {
             rop_id: EditorRemoteOperation.remove_components,
         });
 
-        const dataView = new DataView(buffer, FTL_HEADER_SIZE + FTL_EDITOR_ROP_HEADER_SIZE);
-
-        serialize_RemoveComponentsCommand({ dataView, offset: 0, removeComponentsCommand });
+        serialize_RemoveComponentsCommand({
+            data_view: new DataView(buffer, FTL_HEADER_SIZE + FTL_EDITOR_ROP_HEADER_SIZE),
+            removeComponentsCommand,
+        });
 
         this.#connection.send({ data: buffer });
     }
@@ -595,7 +614,7 @@ export class GatewayMessageHandler extends EventTarget {
     }): number {
         const writer = new DataView(buffer);
 
-        offset += serialize_UUID({ dataView: writer, offset, uuid: this.#client_id! });
+        offset += serialize_UUID({ data_view: writer, offset, uuid: this.#client_id! });
 
         const request_id = this.#request_id_generator++;
 

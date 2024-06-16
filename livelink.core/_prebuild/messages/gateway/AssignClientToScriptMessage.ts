@@ -10,22 +10,27 @@ export type AssignClientToScriptMessage = {
 };
 
 /**
+ * UUID_BYTE_SIZE * 2 + RTID_BYTE_SIZE;
+ */
+export const ASSIGN_CLIENT_TO_SCRIPT_MESSAGE_BYTE_SIZE = 36 as const;
+
+/**
  *
  */
-export function serialize_assignClientToScriptMessage({
-    dataView,
-    offset,
+export function serialize_AssignClientToScriptMessage({
+    data_view,
+    offset = 0,
     assignClientToScriptMessage,
 }: {
-    dataView: DataView;
-    offset: number;
+    data_view: DataView;
+    offset?: number;
     assignClientToScriptMessage: AssignClientToScriptMessage;
 }) {
     const { client_uuid, script_uuid, entity_rtid } = assignClientToScriptMessage;
 
-    offset += serialize_UUID({ dataView, offset, uuid: client_uuid });
-    offset += serialize_UUID({ dataView, offset, uuid: script_uuid });
-    offset += serialize_RTID({ dataView, offset, rtid: entity_rtid });
+    offset += serialize_UUID({ data_view, offset, uuid: client_uuid });
+    offset += serialize_UUID({ data_view, offset, uuid: script_uuid });
+    offset += serialize_RTID({ data_view, offset, rtid: entity_rtid });
 
     return UUID_BYTE_SIZE * 2 + RTID_BYTE_SIZE;
 }

@@ -15,26 +15,31 @@ export type ViewportConfig = {
 /**
  *
  */
+export const VIEWPORT_CONFIG_BYTE_SIZE = 20 as const;
+
+/**
+ *
+ */
 export function serialize_ViewportConfig({
-    dataView,
+    data_view,
     offset,
     viewportConfig,
 }: {
-    dataView: DataView;
+    data_view: DataView;
     offset: number;
     viewportConfig: ViewportConfig;
 }): number {
-    dataView.setFloat32(offset, viewportConfig.left, LITTLE_ENDIAN);
+    data_view.setFloat32(offset, viewportConfig.left, LITTLE_ENDIAN);
     offset += 4;
-    dataView.setFloat32(offset, viewportConfig.top, LITTLE_ENDIAN);
+    data_view.setFloat32(offset, viewportConfig.top, LITTLE_ENDIAN);
     offset += 4;
-    dataView.setFloat32(offset, viewportConfig.width, LITTLE_ENDIAN);
+    data_view.setFloat32(offset, viewportConfig.width, LITTLE_ENDIAN);
     offset += 4;
-    dataView.setFloat32(offset, viewportConfig.height, LITTLE_ENDIAN);
+    data_view.setFloat32(offset, viewportConfig.height, LITTLE_ENDIAN);
     offset += 4;
 
     offset += serialize_RTID({
-        dataView,
+        data_view,
         offset,
         rtid: viewportConfig.camera_rtid,
     });
