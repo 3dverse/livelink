@@ -73,7 +73,7 @@ export class GatewayMessageHandler extends EventTarget {
     /**
      *
      */
-    protected readonly _connection = new GatewayConnection();
+    readonly #connection = new GatewayConnection({ handler: this });
 
     /**
      *
@@ -89,6 +89,20 @@ export class GatewayMessageHandler extends EventTarget {
      *
      */
     #client_id: UUID | null = null;
+
+    /**
+     *
+     */
+    protected _connect({ gateway_url }: { gateway_url: string }): Promise<void> {
+        return this.#connection.connect({ gateway_url });
+    }
+
+    /**
+     *
+     */
+    protected _disconnect(): void {
+        this.#connection.disconnect();
+    }
 
     /***************************************************************************
      * AUTHENTICATION
@@ -107,8 +121,8 @@ export class GatewayMessageHandler extends EventTarget {
         const buffer = new ArrayBuffer(2);
         new DataView(buffer).setUint16(0, payload.length, LITTLE_ENDIAN);
 
-        this._connection.send({ data: buffer });
-        this._connection.send({ data: payload });
+        this.#connection.send({ data: buffer });
+        this.#connection.send({ data: payload });
 
         return this.#request_handler.makeRequestResolver<AuthenticationResponse>({
             channel_id: ChannelId.authentication,
@@ -121,11 +135,7 @@ export class GatewayMessageHandler extends EventTarget {
     _on_authenticateClient_response({ dataView }: { dataView: DataView }): void {
         const authRes = deserialize_AuthenticationResponse({ dataView, offset: 0 });
         this.#client_id = authRes.client_id;
-        this.#request_handler
-            .getNextRequestResolver({
-                channel_id: ChannelId.authentication,
-            })
-            .resolve(authRes);
+        this.#request_handler.getNextRequestResolver({ channel_id: ChannelId.authentication }).resolve(authRes);
     }
 
     /***************************************************************************
@@ -136,12 +146,8 @@ export class GatewayMessageHandler extends EventTarget {
      */
     pulseHeartbeat(): Promise<void> {
         const buffer = new ArrayBuffer(FTL_HEADER_SIZE);
-        this.#writeMultiplexerHeader({
-            buffer,
-            channelId: ChannelId.heartbeat,
-            size: 0,
-        });
-        this._connection.send({ data: buffer });
+        this.#writeMultiplexerHeader({ buffer, channelId: ChannelId.heartbeat, size: 0 });
+        this.#connection.send({ data: buffer });
 
         return this.#request_handler.makeRequestResolver<void>({ channel_id: ChannelId.heartbeat });
     }
@@ -174,18 +180,12 @@ export class GatewayMessageHandler extends EventTarget {
         });
 
         const buffer = new ArrayBuffer(FTL_HEADER_SIZE);
-        this.#writeMultiplexerHeader({
-            buffer,
-            channelId: ChannelId.registration,
-            size: payload.length,
-        });
+        this.#writeMultiplexerHeader({ buffer, channelId: ChannelId.registration, size: payload.length });
 
-        this._connection.send({ data: buffer });
-        this._connection.send({ data: payload });
+        this.#connection.send({ data: buffer });
+        this.#connection.send({ data: payload });
 
-        return this.#request_handler.makeRequestResolver<ClientConfigResponse>({
-            channel_id: ChannelId.registration,
-        });
+        return this.#request_handler.makeRequestResolver<ClientConfigResponse>({ channel_id: ChannelId.registration });
     }
 
     /**
@@ -193,9 +193,7 @@ export class GatewayMessageHandler extends EventTarget {
      */
     _on_configureClient_response({ dataView }: { dataView: DataView }): void {
         this.#request_handler
-            .getNextRequestResolver({
-                channel_id: ChannelId.registration,
-            })
+            .getNextRequestResolver({ channel_id: ChannelId.registration })
             .resolve(deserialize_ClientConfigResponse({ dataView, offset: 0 }));
     }
 
@@ -209,11 +207,7 @@ export class GatewayMessageHandler extends EventTarget {
         const SIZE_OF_VIEWPORT_CONFIG = 20;
         const payloadSize = 2 + viewports.length * SIZE_OF_VIEWPORT_CONFIG;
         const buffer = new ArrayBuffer(FTL_HEADER_SIZE + payloadSize);
-        this.#writeMultiplexerHeader({
-            buffer,
-            channelId: ChannelId.viewer_control,
-            size: payloadSize,
-        });
+        this.#writeMultiplexerHeader({ buffer, channelId: ChannelId.viewer_control, size: payloadSize });
 
         const writer = new DataView(buffer, FTL_HEADER_SIZE);
         let offset = 0;
@@ -224,14 +218,10 @@ export class GatewayMessageHandler extends EventTarget {
         offset += 1;
 
         for (const viewportConfig of viewports) {
-            offset += serialize_ViewportConfig({
-                dataView: writer,
-                offset,
-                viewportConfig,
-            });
+            offset += serialize_ViewportConfig({ dataView: writer, offset, viewportConfig });
         }
 
-        this._connection.send({ data: buffer });
+        this.#connection.send({ data: buffer });
     }
 
     /**
@@ -240,18 +230,14 @@ export class GatewayMessageHandler extends EventTarget {
     resume(): void {
         const payloadSize = 1;
         const buffer = new ArrayBuffer(FTL_HEADER_SIZE + payloadSize);
-        this.#writeMultiplexerHeader({
-            buffer,
-            channelId: ChannelId.viewer_control,
-            size: payloadSize,
-        });
+        this.#writeMultiplexerHeader({ buffer, channelId: ChannelId.viewer_control, size: payloadSize });
 
         const writer = new DataView(buffer, FTL_HEADER_SIZE);
         let offset = 0;
         writer.setUint8(offset, ViewerControlOperation.resume);
         offset += 1;
 
-        this._connection.send({ data: buffer });
+        this.#connection.send({ data: buffer });
     }
 
     /**
@@ -260,18 +246,14 @@ export class GatewayMessageHandler extends EventTarget {
     suspend(): void {
         const payloadSize = 1;
         const buffer = new ArrayBuffer(FTL_HEADER_SIZE + payloadSize);
-        this.#writeMultiplexerHeader({
-            buffer,
-            channelId: ChannelId.viewer_control,
-            size: payloadSize,
-        });
+        this.#writeMultiplexerHeader({ buffer, channelId: ChannelId.viewer_control, size: payloadSize });
 
         const writer = new DataView(buffer, FTL_HEADER_SIZE);
         let offset = 0;
         writer.setUint8(offset, ViewerControlOperation.suspend);
         offset += 1;
 
-        this._connection.send({ data: buffer });
+        this.#connection.send({ data: buffer });
     }
 
     /**
@@ -280,11 +262,7 @@ export class GatewayMessageHandler extends EventTarget {
     resize({ size }: { size: Vec2ui16 }): Promise<ResizeResponse> {
         const payloadSize = 1 + 4;
         const buffer = new ArrayBuffer(FTL_HEADER_SIZE + payloadSize);
-        this.#writeMultiplexerHeader({
-            buffer,
-            channelId: ChannelId.viewer_control,
-            size: payloadSize,
-        });
+        this.#writeMultiplexerHeader({ buffer, channelId: ChannelId.viewer_control, size: payloadSize });
 
         const writer = new DataView(buffer, FTL_HEADER_SIZE);
         let offset = 0;
@@ -292,11 +270,9 @@ export class GatewayMessageHandler extends EventTarget {
         offset += 1;
         offset += serialize_Vec2ui16({ dataView: writer, offset, v: size });
 
-        this._connection.send({ data: buffer });
+        this.#connection.send({ data: buffer });
 
-        return this.#request_handler.makeRequestResolver<ResizeResponse>({
-            channel_id: ChannelId.viewer_control,
-        });
+        return this.#request_handler.makeRequestResolver<ResizeResponse>({ channel_id: ChannelId.viewer_control });
     }
 
     /**
@@ -304,9 +280,7 @@ export class GatewayMessageHandler extends EventTarget {
      */
     _on_resize_response({ dataView }: { dataView: DataView }): void {
         this.#request_handler
-            .getNextRequestResolver({
-                channel_id: ChannelId.viewer_control,
-            })
+            .getNextRequestResolver({ channel_id: ChannelId.viewer_control })
             .resolve(deserialize_ResizeResponse({ dataView, offset: 0 }));
     }
 
@@ -320,16 +294,12 @@ export class GatewayMessageHandler extends EventTarget {
         const payloadSize = compute_InputState_size({ input_state });
         const buffer = new ArrayBuffer(FTL_HEADER_SIZE + payloadSize);
 
-        this.#writeMultiplexerHeader({
-            buffer,
-            channelId: ChannelId.inputs,
-            size: payloadSize,
-        });
+        this.#writeMultiplexerHeader({ buffer, channelId: ChannelId.inputs, size: payloadSize });
 
         const dataView = new DataView(buffer, FTL_HEADER_SIZE);
         serialize_InputState({ dataView, offset: 0, input_state });
 
-        this._connection.send({ data: buffer });
+        this.#connection.send({ data: buffer });
     }
 
     /***************************************************************************
@@ -339,11 +309,7 @@ export class GatewayMessageHandler extends EventTarget {
      * Receive
      */
     _onFrameReceived({ dataView }: { dataView: DataView }): void {
-        const frame_data = deserialize_FrameData({
-            dataView,
-            offset: 0,
-        });
-
+        const frame_data = deserialize_FrameData({ dataView, offset: 0 });
         this.dispatchEvent(new CustomEvent("on-frame-received", { detail: frame_data }));
     }
 
@@ -355,7 +321,6 @@ export class GatewayMessageHandler extends EventTarget {
      */
     _onScriptEventReceived({ dataView }: { dataView: DataView }): void {
         const script_event = deserialize_ScriptEvent({ dataView, offset: 0 });
-
         this.dispatchEvent(new CustomEvent("on-script-event-received", { detail: script_event }));
     }
 
@@ -374,11 +339,7 @@ export class GatewayMessageHandler extends EventTarget {
         const payloadSize = FTL_CLIENT_ROP_HEADER_SIZE + ropDataSize;
         const buffer = new ArrayBuffer(FTL_HEADER_SIZE + payloadSize);
 
-        this.#writeMultiplexerHeader({
-            buffer,
-            channelId: ChannelId.client_remote_operations,
-            size: payloadSize,
-        });
+        this.#writeMultiplexerHeader({ buffer, channelId: ChannelId.client_remote_operations, size: payloadSize });
 
         const rop_id = ClientRemoteOperation.cast_screen_space_ray;
         const request_id = this.#writeRemoteOperationMultiplexerHeader({
@@ -391,7 +352,7 @@ export class GatewayMessageHandler extends EventTarget {
         const dataView = new DataView(buffer, FTL_HEADER_SIZE + FTL_CLIENT_ROP_HEADER_SIZE);
         serialize_ScreenSpaceRayQuery({ dataView, offset: 0, screenSpaceRayQuery });
 
-        this._connection.send({ data: buffer });
+        this.#connection.send({ data: buffer });
 
         return this.#request_handler.makeRequestResolver<ScreenSpaceRayResult>({
             channel_id: ChannelId.client_remote_operations,
@@ -407,11 +368,7 @@ export class GatewayMessageHandler extends EventTarget {
         const payloadSize = FTL_CLIENT_ROP_HEADER_SIZE + ropDataSize;
         const buffer = new ArrayBuffer(FTL_HEADER_SIZE + payloadSize);
 
-        this.#writeMultiplexerHeader({
-            buffer,
-            channelId: ChannelId.client_remote_operations,
-            size: payloadSize,
-        });
+        this.#writeMultiplexerHeader({ buffer, channelId: ChannelId.client_remote_operations, size: payloadSize });
 
         this.#writeRemoteOperationMultiplexerHeader({
             buffer,
@@ -421,13 +378,9 @@ export class GatewayMessageHandler extends EventTarget {
         });
 
         const dataView = new DataView(buffer, FTL_HEADER_SIZE + FTL_CLIENT_ROP_HEADER_SIZE);
-        serialize_HighlightEntitiesMessage({
-            dataView,
-            offset: 0,
-            highlightEntitiesMessage,
-        });
+        serialize_HighlightEntitiesMessage({ dataView, offset: 0, highlightEntitiesMessage });
 
-        this._connection.send({ data: buffer });
+        this.#connection.send({ data: buffer });
     }
 
     /**
@@ -491,11 +444,7 @@ export class GatewayMessageHandler extends EventTarget {
         const payloadSize = FTL_EDITOR_ROP_HEADER_SIZE + ropDataSize;
         const buffer = new ArrayBuffer(FTL_HEADER_SIZE + payloadSize);
 
-        this.#writeMultiplexerHeader({
-            buffer,
-            channelId: ChannelId.editor_remote_operations,
-            size: payloadSize,
-        });
+        this.#writeMultiplexerHeader({ buffer, channelId: ChannelId.editor_remote_operations, size: payloadSize });
 
         this.#writeRemoteOperationMultiplexerHeader({
             buffer,
@@ -506,13 +455,9 @@ export class GatewayMessageHandler extends EventTarget {
 
         const dataView = new DataView(buffer, FTL_HEADER_SIZE + FTL_EDITOR_ROP_HEADER_SIZE);
 
-        serialize_FireEventMessage({
-            dataView,
-            offset: 0,
-            fireEventMessage,
-        });
+        serialize_FireEventMessage({ dataView, offset: 0, fireEventMessage });
 
-        this._connection.send({ data: buffer });
+        this.#connection.send({ data: buffer });
     }
 
     /**
@@ -527,11 +472,7 @@ export class GatewayMessageHandler extends EventTarget {
         const payloadSize = FTL_EDITOR_ROP_HEADER_SIZE + ropDataSize;
         const buffer = new ArrayBuffer(FTL_HEADER_SIZE + payloadSize);
 
-        this.#writeMultiplexerHeader({
-            buffer,
-            channelId: ChannelId.editor_remote_operations,
-            size: payloadSize,
-        });
+        this.#writeMultiplexerHeader({ buffer, channelId: ChannelId.editor_remote_operations, size: payloadSize });
 
         this.#writeRemoteOperationMultiplexerHeader({
             buffer,
@@ -542,13 +483,9 @@ export class GatewayMessageHandler extends EventTarget {
 
         const dataView = new DataView(buffer, FTL_HEADER_SIZE + FTL_EDITOR_ROP_HEADER_SIZE);
 
-        serialize_UpdateAnimationSequenceStateMessage({
-            dataView,
-            offset: 0,
-            updateAnimationSequenceStateMessage,
-        });
+        serialize_UpdateAnimationSequenceStateMessage({ dataView, offset: 0, updateAnimationSequenceStateMessage });
 
-        this._connection.send({ data: buffer });
+        this.#connection.send({ data: buffer });
     }
 
     /**
@@ -563,11 +500,7 @@ export class GatewayMessageHandler extends EventTarget {
         const payloadSize = FTL_EDITOR_ROP_HEADER_SIZE + ropDataSize;
         const buffer = new ArrayBuffer(FTL_HEADER_SIZE + payloadSize);
 
-        this.#writeMultiplexerHeader({
-            buffer,
-            channelId: ChannelId.editor_remote_operations,
-            size: payloadSize,
-        });
+        this.#writeMultiplexerHeader({ buffer, channelId: ChannelId.editor_remote_operations, size: payloadSize });
 
         this.#writeRemoteOperationMultiplexerHeader({
             buffer,
@@ -578,13 +511,9 @@ export class GatewayMessageHandler extends EventTarget {
 
         const dataView = new DataView(buffer, FTL_HEADER_SIZE + FTL_EDITOR_ROP_HEADER_SIZE);
 
-        serialize_assignClientToScriptMessage({
-            dataView,
-            offset: 0,
-            assignClientToScriptMessage,
-        });
+        serialize_assignClientToScriptMessage({ dataView, offset: 0, assignClientToScriptMessage });
 
-        this._connection.send({ data: buffer });
+        this.#connection.send({ data: buffer });
     }
 
     /**
@@ -599,11 +528,7 @@ export class GatewayMessageHandler extends EventTarget {
         const payloadSize = FTL_EDITOR_ROP_HEADER_SIZE + ropDataSize;
         const buffer = new ArrayBuffer(FTL_HEADER_SIZE + payloadSize);
 
-        this.#writeMultiplexerHeader({
-            buffer,
-            channelId: ChannelId.editor_remote_operations,
-            size: payloadSize,
-        });
+        this.#writeMultiplexerHeader({ buffer, channelId: ChannelId.editor_remote_operations, size: payloadSize });
 
         this.#writeRemoteOperationMultiplexerHeader({
             buffer,
@@ -614,13 +539,9 @@ export class GatewayMessageHandler extends EventTarget {
 
         const dataView = new DataView(buffer, FTL_HEADER_SIZE + FTL_EDITOR_ROP_HEADER_SIZE);
 
-        serialize_UpdateEntitiesFromJsonMessage({
-            dataView,
-            offset: 0,
-            updateEntitiesFromJsonMessage,
-        });
+        serialize_UpdateEntitiesFromJsonMessage({ dataView, offset: 0, updateEntitiesFromJsonMessage });
 
-        this._connection.send({ data: buffer });
+        this.#connection.send({ data: buffer });
     }
 
     /**
@@ -631,11 +552,7 @@ export class GatewayMessageHandler extends EventTarget {
         const payloadSize = FTL_EDITOR_ROP_HEADER_SIZE + ropDataSize;
         const buffer = new ArrayBuffer(FTL_HEADER_SIZE + payloadSize);
 
-        this.#writeMultiplexerHeader({
-            buffer,
-            channelId: ChannelId.editor_remote_operations,
-            size: payloadSize,
-        });
+        this.#writeMultiplexerHeader({ buffer, channelId: ChannelId.editor_remote_operations, size: payloadSize });
 
         this.#writeRemoteOperationMultiplexerHeader({
             buffer,
@@ -646,13 +563,9 @@ export class GatewayMessageHandler extends EventTarget {
 
         const dataView = new DataView(buffer, FTL_HEADER_SIZE + FTL_EDITOR_ROP_HEADER_SIZE);
 
-        serialize_RemoveComponentsCommand({
-            dataView,
-            offset: 0,
-            removeComponentsCommand,
-        });
+        serialize_RemoveComponentsCommand({ dataView, offset: 0, removeComponentsCommand });
 
-        this._connection.send({ data: buffer });
+        this.#connection.send({ data: buffer });
     }
 
     /**
@@ -682,11 +595,7 @@ export class GatewayMessageHandler extends EventTarget {
     }): number {
         const writer = new DataView(buffer);
 
-        offset += serialize_UUID({
-            dataView: writer,
-            offset,
-            uuid: this.#client_id!,
-        });
+        offset += serialize_UUID({ dataView: writer, offset, uuid: this.#client_id! });
 
         const request_id = this.#request_id_generator++;
 

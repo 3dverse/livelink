@@ -4,14 +4,14 @@
  * See : https://gitlab.com/3dverse/platform/libs/js/asyncapi-server-generator
  */
 
-import { GatewayMessageHandler } from "./GatewayMessageHandler";
 import { FTL_HEADER_SIZE, LITTLE_ENDIAN } from "../sources/types/constants";
 import { UUID_BYTE_SIZE, deserialize_UUID } from "../sources/types";
+import { GatewayMessageHandler } from "./GatewayMessageHandler";
 import { ChannelId } from "./messages/gateway/enums";
 
 /**
- * Holds the connection to the cluster gateway hosting the renderer
- * and the viewer handling the session.
+ * Holds the connection to the cluster gateway hosting the renderer and the viewer handling the
+ * session.
  *
  *                     ┌─────────┬──────────────┐
  *                     │         │              │
@@ -31,56 +31,59 @@ import { ChannelId } from "./messages/gateway/enums";
  *  - Open, maintain, and handle any error in the connection to the gateway.
  *
  *  - Apply the authentication protocol when the first message is received.
- *    Note that initiating the authentication doesn't fall under this class's
- *    purview.
+ *    Note that initiating the authentication doesn't fall under this class's purview.
  *
  *  - Demultiplex messages following the gateway Livelink Protocol.
- *    It is only responsible for deserializing the multiplexer binary header
- *    data according to the Livelink protocol specifications; in no case is it
- *    supposed to apply any kind of logic beyond routing messages to the
- *    appropriate handler.
+ *    It is only responsible for deserializing the multiplexer binary header data according to the
+ *    Livelink protocol specifications; in no case is it supposed to apply any kind of logic beyond
+ *    routing messages to the appropriate handler.
  */
 export class GatewayConnection {
     /**
      * Socket connected to the cluster gateway.
      */
-    private _socket: WebSocket | null = null;
+    #socket: WebSocket | null = null;
 
     /**
      * Controller responsible for handling messages coming from the gateway.
      */
-    private _handler: GatewayMessageHandler | null = null;
+    #handler: GatewayMessageHandler;
+
+    /**
+     * Constructs a connection linked to the specified message handler.
+     */
+    constructor({ handler }: { handler: GatewayMessageHandler }) {
+        this.#handler = handler;
+    }
 
     /**
      * Opens a connection to the gateway.
      *
      * @throws {Error} Socket errors
      */
-    async connect({ gateway_url, handler }: { gateway_url: string; handler: GatewayMessageHandler }): Promise<void> {
-        this._handler = handler;
-
+    async connect({ gateway_url }: { gateway_url: string }): Promise<void> {
         return new Promise(resolve => {
-            this._socket = new WebSocket(gateway_url);
-            this._socket.binaryType = "arraybuffer";
+            this.#socket = new WebSocket(gateway_url);
+            this.#socket.binaryType = "arraybuffer";
 
-            this._socket.onopen = (event: Event) => {
-                this._onSocketOpened(event);
+            this.#socket.onopen = (event: Event) => {
+                this.#onSocketOpened(event);
                 resolve();
             };
 
-            this._socket.onclose = (close_event: CloseEvent) => this._onSocketClosed(close_event);
+            this.#socket.onclose = (close_event: CloseEvent) => this.#onSocketClosed(close_event);
 
-            this._socket.onerror = () => {
+            this.#socket.onerror = () => {
                 throw new Error("Gateway socket error");
             };
 
             // Temporary onmessage that handles only authentication response message.
-            // When the socket is opened we send a message to authenticate the client,
-            // then the renderer sends us back the confirmation (or an error).
+            // When the socket is opened we send a message to authenticate the client, then the
+            // renderer sends us back the confirmation (or an error).
             // This callback handles only this authentication response message.
-            // As soon as the authentication is validated, we switch to the regular
-            // multiplexed message handler callback.
-            this._socket.onmessage = (message: MessageEvent<ArrayBuffer>) => this._onAuthenticated(message);
+            // As soon as the authentication is validated, we switch to the regular multiplexed
+            // message handler callback.
+            this.#socket.onmessage = (message: MessageEvent<ArrayBuffer>) => this.#onAuthenticated(message);
         });
     }
 
@@ -88,27 +91,27 @@ export class GatewayConnection {
      *
      */
     send({ data }: { data: ArrayBufferLike | string }): void {
-        this._socket?.send(data);
+        this.#socket?.send(data);
     }
 
     /**
      *
      */
     disconnect() {
-        this._socket?.close(1000);
+        this.#socket?.close(1000);
     }
 
     /**
      *
      */
-    private _onSocketOpened(_event: Event) {
-        console.debug("Connected to the 3dverse rendering gateway:", this._socket!.url);
+    #onSocketOpened(_: Event) {
+        console.debug("Connected to the 3dverse rendering gateway:", this.#socket!.url);
     }
 
     /**
      *
      */
-    private _onSocketClosed(closeEvent: CloseEvent) {
+    #onSocketClosed(closeEvent: CloseEvent) {
         if (closeEvent.wasClean === false) {
             console.error("Gateway socket forcibly closed", closeEvent);
         } else {
@@ -119,48 +122,47 @@ export class GatewayConnection {
     /**
      *
      */
-    private _onAuthenticated(message: MessageEvent<ArrayBuffer>) {
-        this._handler!._on_authenticateClient_response({
+    #onAuthenticated(message: MessageEvent<ArrayBuffer>) {
+        this.#handler._on_authenticateClient_response({
             dataView: new DataView(message.data),
         });
 
         // Switch the onmessage callback to the regular multiplexed one.
-        this._socket!.onmessage = (message: MessageEvent<ArrayBuffer>) => this._onMessageReceived({ message });
+        this.#socket!.onmessage = (message: MessageEvent<ArrayBuffer>) => this.#onMessageReceived({ message });
     }
 
     /**
      *
      */
-    private _onMessageReceived({ message }: { message: MessageEvent<ArrayBuffer> }): void {
+    #onMessageReceived({ message }: { message: MessageEvent<ArrayBuffer> }): void {
         // First byte is the channel id.
         // 3 following bytes are the message total size EXCLUDING the first 4 bytes.
         const channelId = new DataView(message.data).getUint8(0) as ChannelId;
         const dataView = new DataView(message.data, FTL_HEADER_SIZE);
-        const handler = this._handler!;
 
         switch (channelId) {
             case ChannelId.registration:
-                handler._on_configureClient_response({ dataView });
+                this.#handler._on_configureClient_response({ dataView });
                 break;
 
             case ChannelId.video_stream:
-                handler._onFrameReceived({ dataView });
+                this.#handler._onFrameReceived({ dataView });
                 break;
 
             case ChannelId.viewer_control:
-                handler._on_resize_response({ dataView });
+                this.#handler._on_resize_response({ dataView });
                 break;
 
             case ChannelId.client_remote_operations:
-                this._clientRemoteOperation_response({ dataView });
+                this.#clientRemoteOperation_response({ dataView });
                 break;
 
             case ChannelId.heartbeat:
-                handler._on_pulseHeartbeat_response();
+                this.#handler._on_pulseHeartbeat_response();
                 break;
 
             case ChannelId.broadcast_script_events:
-                handler._onScriptEventReceived({ dataView });
+                this.#handler._onScriptEventReceived({ dataView });
                 break;
 
             case ChannelId.audio_stream:
@@ -176,7 +178,7 @@ export class GatewayConnection {
     /**
      * Rendering server response.
      */
-    private _clientRemoteOperation_response({ dataView }: { dataView: DataView }) {
+    #clientRemoteOperation_response({ dataView }: { dataView: DataView }) {
         let offset = 0;
         const client_id = deserialize_UUID({ dataView, offset });
         offset += UUID_BYTE_SIZE;
@@ -185,7 +187,7 @@ export class GatewayConnection {
         const size = dataView.getUint32(offset, LITTLE_ENDIAN);
         offset += 4;
 
-        this._handler!._on_clientRemoteOperation_response({
+        this.#handler._on_clientRemoteOperation_response({
             client_id,
             request_id,
             size,

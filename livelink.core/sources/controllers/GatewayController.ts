@@ -42,10 +42,7 @@ export class GatewayController extends GatewayMessageHandler {
             throw new Error("Invalid session");
         }
 
-        await this._connection.connect({
-            gateway_url: session.gateway_url!,
-            handler: this,
-        });
+        await this._connect({ gateway_url: session.gateway_url! });
 
         const authRes = await this.authenticateClient({
             session_auth: {
@@ -77,7 +74,7 @@ export class GatewayController extends GatewayMessageHandler {
             this._heartbeat_timeout_id = 0;
         }
 
-        this._connection.disconnect();
+        this._disconnect();
     }
 
     /**

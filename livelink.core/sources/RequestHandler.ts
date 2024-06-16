@@ -17,12 +17,12 @@ type RequestResolver<MetaDataType> = {
  * Usage:
  *
  * Start by sending the request message on a specific channel.
- * Then call _makeRequestResolver<ResponseType>() generic function specifiying the channel,
+ * Then call makeRequestResolver<ResponseType>() generic function specifiying the channel,
  * an optional meta data associated with the request, and the type of the expected response.
  *
- * When receiving a message on the same channel call _getNextRequestResolver() specifing the
- * channel, which will return the instance of MessageResolver<MetaDataType> containing the pair or
- * resolve/reject function and the provided meta data associated with the request.
+ * When receiving a message on the same channel call getNextRequestResolver() specifing the channel,
+ * which will return the instance of MessageResolver<MetaDataType> containing the pair of
+ * resolve/reject functions and the provided meta data associated with the request.
  *
  * From there you can call either resolver.resolve() providing the expected response or
  * resolver.reject().
@@ -54,7 +54,7 @@ export class RequestHandler<ChannelType, MetaDataType> {
     }
 
     /**
-     * Retrieves and removes the next request resolver from the list of resolvers of a given channel.
+     * Retrieves and removes the next request resolver from the list of resolvers for a given channel.
      */
     getNextRequestResolver({ channel_id }: { channel_id: ChannelType }): RequestResolver<MetaDataType> {
         const resolvers = this.#resolvers.get(channel_id);
