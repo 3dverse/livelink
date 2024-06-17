@@ -1,6 +1,6 @@
 import { InputOperation } from "@3dverse/livelink.core";
 import { Livelink } from "../Livelink";
-import { LivelinkCoreModule } from "../LivelinkCoreModule";
+import { LivelinkCoreModule } from "@3dverse/livelink.core";
 import { Viewport } from "../Viewport";
 
 /**

@@ -3,19 +3,16 @@ const pkg = require("./package.json");
 const esbuild = require("esbuild");
 
 //------------------------------------------------------------------------------
-const productionLivelinkCore = "https://storage.googleapis.com/livelink-prod/core/index.mjs";
-
-//------------------------------------------------------------------------------
 const commonBuildOptions = {
     entryPoints: ["./sources/index.ts"],
     outdir: "dist",
     bundle: true,
     minify: true,
     platform: "neutral",
+    mainFields: ["browser", "module", "main"],
     external: [...Object.keys(pkg.peerDependencies || {})],
     sourcemap: true,
     define: {
-        LIVELINK_CORE_URL: `"${productionLivelinkCore}"`,
         API_HOSTNAME: `"api.3dverse.dev"`,
         //EDITOR_URL : `"wss://livelink.3dverse.com"`;
         EDITOR_URL: `"wss://api.3dverse.dev/editor-backend"`,
@@ -38,19 +35,12 @@ const buildOptions = [
 const devBuildOptions = {
     ...commonBuildOptions,
     ...buildOptions[0],
-    define: {
-        ...commonBuildOptions.define,
-        LIVELINK_CORE_URL: process.env.LIVELINK_CORE_URL
-            ? `"${process.env.LIVELINK_CORE_URL}"`
-            : `"${productionLivelinkCore}"`,
-    },
 };
 
 //------------------------------------------------------------------------------
 (async () => {
     if (process.argv.includes("dev")) {
-        console.log(process.env.LIVELINK_CORE_URL);
-        const ctx = await esbuild.context(devBuildOptions);
+        const ctx = await esbuild.context(commonBuildOptions);
         await ctx.watch();
         return;
     }

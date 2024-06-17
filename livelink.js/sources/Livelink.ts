@@ -23,7 +23,7 @@ import { Camera } from "./Camera";
 import { Viewport } from "./Viewport";
 import { Entity } from "./Entity";
 import { Session, SessionInfo, SessionSelector } from "./Session";
-import { LivelinkCoreModule } from "./LivelinkCoreModule";
+import { LivelinkCoreModule } from "@3dverse/livelink.core";
 
 /**
  * The Livelink interface.

@@ -22,7 +22,7 @@
     "dev:react": "npm -C livelink.react run dev",
     "dev:samples": "npm -C livelink.samples run dev",
     "dev": "npm-run-all --parallel dev:*",
-    "dev-core": "npm link @3dverse/livelink.core && cross-env LIVELINK_CORE_URL=http://localhost:3000/index.mjs npm run dev",
+    "dev-core": "npm link @3dverse/livelink.core && npm run dev",
     "=============== Test =================": "",
     "test": "echo \"Error: no test specified\" && exit 1"
   },

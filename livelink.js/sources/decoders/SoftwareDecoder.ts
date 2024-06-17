@@ -5,7 +5,7 @@ import BWDecoder from "../../external/Decoder.js";
 import YUVCanvas from "../../external/YUVCanvas.js";
 
 import type { CodecType, Vec2i } from "@3dverse/livelink.core";
-import { LivelinkCoreModule } from "../LivelinkCoreModule";
+import { LivelinkCoreModule } from "@3dverse/livelink.core";
 import { DecodedFrameConsumer } from "./DecodedFrameConsumer";
 
 /**

@@ -1,4 +1,6 @@
 import type { HighlightMode, Vec2, Vec3 } from "@3dverse/livelink.core";
+import { LivelinkCoreModule } from "@3dverse/livelink.core";
+
 import { Livelink } from "./Livelink";
 import { Context2D } from "./contexts/Context2D";
 import { ContextWebGL } from "./contexts/ContextWebGL";
@@ -6,7 +8,6 @@ import { ContextProvider } from "./contexts/ContextProvider";
 import { CanvasAutoResizer } from "./CanvasAutoResizer";
 import { Camera } from "./Camera";
 import { Entity } from "./Entity";
-import { LivelinkCoreModule } from "./LivelinkCoreModule";
 
 /**
  *
