@@ -44,5 +44,5 @@ export function serialize_ViewportConfig({
         rtid: viewportConfig.camera_rtid,
     });
 
-    return 20;
+    return VIEWPORT_CONFIG_BYTE_SIZE;
 }

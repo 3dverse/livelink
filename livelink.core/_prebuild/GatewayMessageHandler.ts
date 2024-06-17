@@ -214,8 +214,9 @@ export class GatewayMessageHandler extends EventTarget {
      * Send
      */
     setViewports({ viewports }: { viewports: Array<ViewportConfig> }): void {
-        const payloadSize = 1 + viewports.length * VIEWPORT_CONFIG_BYTE_SIZE;
-        const buffer = new ArrayBuffer(FTL_HEADER_SIZE + FTL_VIEWER_CONTROL_ROP_HEADER_SIZE + payloadSize);
+        const ropDataSize = 1 + viewports.length * VIEWPORT_CONFIG_BYTE_SIZE;
+        const payloadSize = FTL_VIEWER_CONTROL_ROP_HEADER_SIZE + ropDataSize;
+        const buffer = new ArrayBuffer(FTL_HEADER_SIZE + payloadSize);
         this.#writeMultiplexerHeader({ buffer, channelId: ChannelId.viewer_control, size: payloadSize });
 
         const writer = new DataView(buffer, FTL_HEADER_SIZE);
