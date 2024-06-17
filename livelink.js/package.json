@@ -17,10 +17,11 @@
     "docs": "typedoc",
     "postversion": "cross-env-shell \"git commit -am v$npm_package_version && git tag -a v$npm_package_version -m v$npm_package_version\""
   },
-  "author": "",
   "license": "ISC",
+  "dependencies": {
+    "@3dverse/livelink.core": "^0.1.0"
+  },
   "devDependencies": {
-    "@3dverse/livelink.core": "^0.1.0",
     "cross-env": "^7.0.3",
     "esbuild": "^0.20.1",
     "rimraf": "^5.0.7",
