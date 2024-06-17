@@ -1,25 +1,4 @@
-# Livelink protocol v1.0
-
-## Spec-first development
-
-https://www.atlassian.com/blog/technology/spec-first-api-development
-
-https://blog.apideck.com/spec-driven-development-part-1
-
-## AsyncAPI 3.0
-
-https://www.asyncapi.com/docs/reference/specification/v3.0.0
-
-# Livelink.js Core v1.0
-
-Core implementation in JavaScript of the Livelink protocol.
-
-This is a module that MUST always be loaded at runtime.
-
-Handles the connection with the Livelink Broadcast & Persistence Server and the
-connection with the Cluster Gateway hosting the session.
-
-Provides video decoding support and access to a local entity registry.
+# Livelink
 
 ## WebTransport
 

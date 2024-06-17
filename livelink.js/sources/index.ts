@@ -1,4 +1,4 @@
-export type * from "livelink.core";
+export type * from "@3dverse/livelink.core";
 
 export * from "../_prebuild/types";
 

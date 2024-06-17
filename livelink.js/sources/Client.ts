@@ -1,4 +1,4 @@
-import type { ClientInterface, ClientMetaData, RTID, UUID } from "livelink.core";
+import type { ClientInterface, ClientMetaData, RTID, UUID } from "@3dverse/livelink.core";
 
 /**
  * A client is the representation of a singular user in a session.

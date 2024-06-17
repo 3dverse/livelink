@@ -1,4 +1,4 @@
-import type { ClientMetaData, SessionInterface, UUID } from "livelink.core";
+import type { ClientMetaData, SessionInterface, UUID } from "@3dverse/livelink.core";
 import { Client } from "./Client";
 
 /**

@@ -3,7 +3,6 @@ const pkg = require("./package.json");
 const esbuild = require("esbuild");
 
 //------------------------------------------------------------------------------
-const localLivelinkCore = "http://localhost:3000/index.mjs";
 const productionLivelinkCore = "https://storage.googleapis.com/livelink-prod/core/index.mjs";
 
 //------------------------------------------------------------------------------
@@ -41,13 +40,16 @@ const devBuildOptions = {
     ...buildOptions[0],
     define: {
         ...commonBuildOptions.define,
-        LIVELINK_CORE_URL: `"${localLivelinkCore}"`,
+        LIVELINK_CORE_URL: process.env.LIVELINK_CORE_URL
+            ? `"${process.env.LIVELINK_CORE_URL}"`
+            : `"${productionLivelinkCore}"`,
     },
 };
 
 //------------------------------------------------------------------------------
 (async () => {
     if (process.argv.includes("dev")) {
+        console.log(process.env.LIVELINK_CORE_URL);
         const ctx = await esbuild.context(devBuildOptions);
         await ctx.watch();
         return;

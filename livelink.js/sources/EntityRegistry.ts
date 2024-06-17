@@ -6,7 +6,7 @@ import type {
     UpdateEntitiesCommand,
     ComponentType,
     RemoveComponentsCommand,
-} from "livelink.core";
+} from "@3dverse/livelink.core";
 import { Entity } from "./Entity";
 
 /**

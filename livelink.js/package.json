@@ -20,9 +20,9 @@
   "author": "",
   "license": "ISC",
   "devDependencies": {
+    "@3dverse/livelink.core": "^0.1.0",
     "cross-env": "^7.0.3",
     "esbuild": "^0.20.1",
-    "livelink.core": "file:../livelink.core",
     "rimraf": "^5.0.7",
     "typedoc": "^0.25.13",
     "typedoc-plugin-markdown": "^4.0.3",

@@ -8,7 +8,6 @@ include:
 
 variables:
   NODE_VERSION: "18"
-  LIVELINK_CORE_PACKAGE: livelink.core/livelink.core
   LIVELINK_JS_PACKAGE: livelink.js/3dverse-livelink
   LIVELINK_REACT_PACKAGE: livelink.react/3dverse-livelink-react
   LIVELINK_SAMPLES_PACKAGE: livelink.samples/livelink.samples
@@ -53,24 +52,12 @@ variables:
 
 # JOBS ################################################################################################################
 # BUILD
-js:livelink.core:build:
-  extends:
-    - .build
-  variables:
-    PACKAGE_DIR: livelink.core
-
 js:livelink.js:build:
   extends:
     - .build
   variables:
     PACKAGE_DIR: livelink.js
     PACKAGE_NAME: 3dverse-livelink
-  needs:
-    - job: js:livelink.core:build
-      artifacts: true
-  before_script:
-    - tar -zxf ${LIVELINK_CORE_PACKAGE}-*.tgz --strip-components=1 -C livelink.core
-    - !reference [.build, before_script]
 
 js:livelink.react:build:
   extends:
@@ -79,12 +66,9 @@ js:livelink.react:build:
     PACKAGE_DIR: livelink.react
     PACKAGE_NAME: 3dverse-livelink-react
   needs:
-    - job: js:livelink.core:build
-      artifacts: true
     - job: js:livelink.js:build
       artifacts: true
   before_script:
-    - tar -zxf ${LIVELINK_CORE_PACKAGE}-*.tgz --strip-components=1 -C livelink.core
     - tar -zxf ${LIVELINK_JS_PACKAGE}-*.tgz --strip-components=1 -C livelink.js
     - !reference [.build, before_script]
 
@@ -94,14 +78,11 @@ js:livelink.samples:build:
   variables:
     PACKAGE_DIR: livelink.samples
   needs:
-    - job: js:livelink.core:build
-      artifacts: true
     - job: js:livelink.js:build
       artifacts: true
     - job: js:livelink.react:build
       artifacts: true
   before_script:
-    - tar -zxf ${LIVELINK_CORE_PACKAGE}-*.tgz --strip-components=1 -C livelink.core
     - tar -zxf ${LIVELINK_JS_PACKAGE}-*.tgz --strip-components=1 -C livelink.js
     - tar -zxf ${LIVELINK_REACT_PACKAGE}-*.tgz --strip-components=1 -C livelink.react
     - !reference [.build, before_script]
@@ -109,38 +90,6 @@ js:livelink.samples:build:
     - if: $CI_COMMIT_TAG == null
 
 # DEPLOY
-js:livelink.core:deploy:
-  stage: deploy
-  extends:
-    - .env-prod
-    - .runner-onprem
-  image: registry.gitlab.com/3dverse/platform/ci-utils/docker-images/gcloud-kubectl-sops:latest
-  needs:
-    - job: js:livelink.core:build
-      artifacts: true
-  variables:
-    BUCKET_NAME: livelink-prod
-    BUCKET_FOLDER_NAME: core
-  script:
-    - |
-      set -e
-      gcloud auth activate-service-account --key-file="${GCP_GCS_APPLICATION_CREDENTIALS}" --project="${GOOGLE_PROJECT_ID}"
-
-      tar -zxf ${LIVELINK_CORE_PACKAGE}-*.tgz --strip-components=1 -C livelink.core
-
-      SOURCE_PATH="livelink.core/dist/*.mjs*"
-      TARGET_PATH="gs://$BUCKET_NAME/$BUCKET_FOLDER_NAME"
-
-      echo "Uploading \"${SOURCE_PATH}\" to \"${TARGET_PATH}\""
-      gsutil -m -h "Cache-Control:public, max-age=0" cp $SOURCE_PATH $TARGET_PATH
-  rules:
-    - if: $CI_COMMIT_TAG != null
-      when: never
-    - if: $CI_COMMIT_REF_NAME == $CI_DEFAULT_BRANCH
-      changes:
-        - livelink.core/**/*
-        - livelink.core/*
-
 js:livelink.js:publish:
   stage: deploy
   extends:

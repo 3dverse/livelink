@@ -1,4 +1,4 @@
-import type { ComponentType, EditorEntity, EntityCreationOptions, UUID } from "livelink.core";
+import type { ComponentType, EditorEntity, EntityCreationOptions, UUID } from "@3dverse/livelink.core";
 import { EntityBase } from "../_prebuild/types/EntityBase";
 import { Scene } from "./Scene";
 import { LivelinkCoreModule } from "./LivelinkCoreModule";

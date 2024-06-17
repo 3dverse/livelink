@@ -12,7 +12,7 @@ import type {
     ScreenSpaceRayQuery,
     ScreenSpaceRayResult,
     RTID,
-} from "livelink.core";
+} from "@3dverse/livelink.core";
 
 import { EncodedFrameConsumer } from "./decoders/EncodedFrameConsumer";
 import { DecodedFrameConsumer } from "./decoders/DecodedFrameConsumer";

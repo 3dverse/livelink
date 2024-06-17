@@ -1,4 +1,4 @@
-import type { LivelinkCore, CoreEnums } from "livelink.core";
+import type { LivelinkCore, CoreEnums } from "@3dverse/livelink.core";
 
 /**
  *
