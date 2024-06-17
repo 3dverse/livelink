@@ -24,6 +24,7 @@ const httpServer = require("http-server");
                     root: "dist",
                     cors: true,
                     proxy: `http://localhost:${server.port}`,
+                    cache: -1,
                 })
                 .listen(3000);
         });
