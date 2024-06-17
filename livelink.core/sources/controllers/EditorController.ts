@@ -31,9 +31,8 @@ export class EditorController extends EditorMessageHandler {
 
             this._client_id = client_id;
             session.client_id = client_id;
-            this._connection.connect({
+            this._connect({
                 livelink_url: `${editor_url}?sessionKey=${session.session_key}&clientUUID=${client_id}`,
-                handler: this,
             });
         });
     }
@@ -41,7 +40,7 @@ export class EditorController extends EditorMessageHandler {
     /**
      *
      */
-    disconnect() {
-        this._connection.disconnect();
+    disconnect(): void {
+        this._disconnect();
     }
 }

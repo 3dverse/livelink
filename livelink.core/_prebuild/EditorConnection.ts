@@ -15,36 +15,41 @@ export class EditorConnection {
     /**
      * Socket connected to the Livelink Broadcast & Persistence server.
      */
-    private _socket: WebSocket | null = null;
+    #socket: WebSocket | null = null;
 
     /**
      * Controller responsible of handling the responses to queries.
      */
-    private _handler: EditorMessageHandler | null = null;
+    #handler: EditorMessageHandler;
+
+    /**
+     * Constructs a connection linked to the specified message handler.
+     */
+    constructor({ handler }: { handler: EditorMessageHandler }) {
+        this.#handler = handler;
+    }
 
     /**
      * Opens a connection to the Livelink server.
      */
-    async connect({ livelink_url, handler }: { livelink_url: string; handler: EditorMessageHandler }): Promise<void> {
-        this._handler = handler;
-
+    async connect({ livelink_url }: { livelink_url: string }): Promise<void> {
         return new Promise((resolve, reject) => {
-            this._socket = new WebSocket(livelink_url);
-            this._socket.binaryType = "arraybuffer";
+            this.#socket = new WebSocket(livelink_url);
+            this.#socket.binaryType = "arraybuffer";
 
-            this._socket.onopen = (event: Event) => {
-                this._onSocketOpened(event);
+            this.#socket.onopen = (event: Event) => {
+                this.#onSocketOpened(event);
                 resolve();
             };
 
-            this._socket.onclose = (close_event: CloseEvent) => this._onSocketClosed(close_event);
+            this.#socket.onclose = this.#onSocketClosed;
 
-            this._socket.onerror = (event: Event) => {
-                this._onSocketError(event);
+            this.#socket.onerror = (event: Event) => {
+                this.#onSocketError(event);
                 reject();
             };
 
-            this._socket.onmessage = (message: MessageEvent<string>) => this._onMessageReceived({ message });
+            this.#socket.onmessage = this.#onMessageReceived;
         });
     }
 
@@ -52,46 +57,46 @@ export class EditorConnection {
      *
      */
     send({ data }: { data: ArrayBufferLike | string }): void {
-        this._socket!.send(data);
+        this.#socket!.send(data);
     }
 
     /**
      *
      */
     disconnect() {
-        this._socket?.close();
+        this.#socket?.close();
     }
 
     /**
      *
      */
-    private _onSocketOpened(_event: Event) {
+    #onSocketOpened = (_event: Event): void => {
         console.debug("Connected to the 3dverse Livelink broker");
-    }
+    };
 
     /**
      *
      */
-    private _onSocketClosed(_close_event: CloseEvent) {
+    #onSocketClosed = (_close_event: CloseEvent): void => {
         console.debug("Disconnected from the 3dverse Livelink broker");
-    }
+    };
 
     /**
      *
      */
-    private _onSocketError(_event: Event) {}
+    #onSocketError = (_event: Event): void => {};
 
     /**
      *
      * @param message
      */
-    private _onMessageReceived({ message }: { message: MessageEvent<string> }): void {
+    #onMessageReceived = (message: MessageEvent<string>): void => {
         const payload = JSON.parse(message.data) as {
             type: string;
             emitter?: { clientUUID: UUID };
             data: {};
         };
-        const handler = this._handler!;
+        const handler = this.#handler!;
 
         if (!payload.emitter || handler.client_id !== payload.emitter.clientUUID) {
             console.log(`RECEIVED [${payload.type}]`, payload.emitter, payload.data);
@@ -169,5 +174,5 @@ export class EditorConnection {
                 handler.onUnhandledMessage(payload.type, payload.data);
                 break;
         }
-    }
+    };
 }

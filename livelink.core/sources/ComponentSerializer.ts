@@ -13,7 +13,7 @@ export class ComponentSerializer {
     /**
      *
      */
-    private readonly _descriptors = new Map<ComponentType, ComponentDescriptor>();
+    readonly #descriptors = new Map<ComponentType, ComponentDescriptor>();
 
     /**
      *
@@ -34,7 +34,7 @@ export class ComponentSerializer {
             }
 
             this.component_names.push(componentName as ComponentType);
-            this._descriptors.set(componentName as ComponentType, component);
+            this.#descriptors.set(componentName as ComponentType, component);
         }
     }
 }

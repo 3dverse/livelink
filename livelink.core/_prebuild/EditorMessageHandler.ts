@@ -1,8 +1,7 @@
-import { EntityInterface } from "../sources/interfaces/EntityInterface";
 import { RTID, UUID } from "../sources/types";
 import { RequestHandler } from "../sources/RequestHandler";
+import { EntityInterface } from "../sources/interfaces/EntityInterface";
 
-import { EditorConnection } from "./EditorConnection";
 import {
     ConnectConfirmation,
     EditorEntity,
@@ -11,10 +10,12 @@ import {
     UpdateEntitiesCommand,
 } from "./messages/editor";
 
+import { EditorConnection } from "./EditorConnection";
+
 /**
  *
  */
-type ResolverPayload = {};
+type ResolverMetaData = {};
 
 /**
  * This follows the Livelink protocol specifications for the broker messages.
@@ -23,17 +24,17 @@ export class EditorMessageHandler extends EventTarget {
     /**
      *
      */
-    protected _connection = new EditorConnection();
+    readonly #connection = new EditorConnection({ handler: this });
+
+    /**
+     *
+     */
+    readonly #request_handler = new RequestHandler<string, ResolverMetaData>();
 
     /**
      *
      */
     protected _client_id: UUID | null = null;
-
-    /**
-     *
-     */
-    readonly #request_handler = new RequestHandler<string, ResolverPayload>();
 
     /**
      *
@@ -45,8 +46,22 @@ export class EditorMessageHandler extends EventTarget {
     /**
      *
      */
+    protected _connect({ livelink_url }: { livelink_url: string }): void {
+        this.#connection.connect({ livelink_url });
+    }
+
+    /**
+     *
+     */
+    protected _disconnect(): void {
+        this.#connection.disconnect();
+    }
+
+    /**
+     *
+     */
     spawnEntity({ entity, options }: { entity: EntityInterface; options?: EntityCreationOptions }) {
-        this._connection!.send({
+        this.#connection!.send({
             data: JSON.stringify({
                 type: "spawn-entity",
                 data: {
@@ -71,7 +86,7 @@ export class EditorMessageHandler extends EventTarget {
      *
      */
     attachComponents() {
-        this._connection!.send({
+        this.#connection!.send({
             data: JSON.stringify({ type: "attach-components", data: {} }),
         });
     }
@@ -80,7 +95,7 @@ export class EditorMessageHandler extends EventTarget {
      *
      */
     updateComponents(data: UpdateEntitiesCommand) {
-        this._connection!.send({
+        this.#connection!.send({
             data: JSON.stringify({ type: "update-components", data }),
         });
     }
@@ -89,7 +104,7 @@ export class EditorMessageHandler extends EventTarget {
      *
      */
     findEntitiesByEUID({ entity_uuid }: { entity_uuid: UUID }): Promise<Array<EditorEntity>> {
-        this._connection!.send({
+        this.#connection!.send({
             data: JSON.stringify({ type: "get-entities-by-euid", data: entity_uuid }),
         });
 
@@ -113,7 +128,7 @@ export class EditorMessageHandler extends EventTarget {
      *
      */
     retrieveChildren({ entity_rtid }: { entity_rtid: RTID }) {
-        this._connection!.send({
+        this.#connection!.send({
             data: JSON.stringify({ type: "retrieve-children", data: entity_rtid.toString() }),
         });
         return this.#request_handler.makeRequestResolver<Record<string, EditorEntity>>({
@@ -132,7 +147,7 @@ export class EditorMessageHandler extends EventTarget {
      *
      */
     resolveAncestors({ entity_rtid }: { entity_rtid: RTID }): Promise<Array<EditorEntity>> {
-        this._connection!.send({
+        this.#connection!.send({
             data: JSON.stringify({ type: "resolve-ancestors", data: entity_rtid.toString() }),
         });
 
@@ -195,7 +210,7 @@ export class EditorMessageHandler extends EventTarget {
             return;
         }
 
-        this._connection!.send({
+        this.#connection!.send({
             data: JSON.stringify({ type: "delete-entities", data: entity_uuids }),
         });
 
