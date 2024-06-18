@@ -3,14 +3,14 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { AnimationSequence } from "@3dverse/livelink";
 import { Range } from "react-daisyui";
 import Canvas from "../../components/Canvas";
-import { useLivelinkInstance, Manifest, useSmartObject } from "@3dverse/livelink-react";
+import { useLivelinkInstance, useEntity } from "@3dverse/livelink-react";
 import { CanvasActionBar } from "../../styles/components/CanvasActionBar";
 
 //------------------------------------------------------------------------------
-const SmartObjectManifest: Manifest = {
+const SmartObjectManifest = {
     MyTrigger: "40908492-100c-4749-8670-7df1148b818d",
     MyAnimSeq: "b540a665-4598-424f-ac6b-4147220c2df0",
-};
+} as const;
 
 //------------------------------------------------------------------------------
 export default function Trigger() {
@@ -23,7 +23,7 @@ export default function Trigger() {
 
     const { instance, connect, disconnect } = useLivelinkInstance({ views: [{ canvas_ref: canvasRef }] });
 
-    const trigger = useSmartObject({ instance, manifest: SmartObjectManifest, smart_object: "MyTrigger" });
+    const trigger = useEntity({ instance, entity_uuid: SmartObjectManifest.MyTrigger });
 
     useEffect(() => {
         if (instance) {

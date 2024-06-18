@@ -1,19 +1,19 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Camera, Entity, Livelink, Vec2, Vec3 } from "@3dverse/livelink";
 import Canvas from "../../components/Canvas";
-import { useLivelinkInstance, DefaultCamera, useSmartObject, Manifest } from "@3dverse/livelink-react";
+import { useLivelinkInstance, DefaultCamera, useEntity } from "@3dverse/livelink-react";
 import { Output, OutputItem, OutputValue } from "../../styles/components/output";
 import { CanvasActionBar } from "../../styles/components/CanvasActionBar";
 
 //------------------------------------------------------------------------------
-const SmartObjectManifest: Manifest = {
+const SmartObjectManifest = {
     DirectionChanger: "a5bab943-615d-4db6-b5e5-f1c8ff6df10f",
     TriggerL: "cadefc48-3360-42aa-8b33-eba85c10a2ec",
     TriggerR: "01d1c785-0e23-4264-8393-e780c2a10df6",
     SensorL: "be7bd2e4-bb62-4042-bc53-dc7396dfeafa",
     SensorR: "9d4fc837-210d-4904-acb2-6f8553c59346",
     FallDetector: "49b2ddf9-94c6-4dfc-8350-7df64bd8e0eb",
-};
+} as const;
 
 //------------------------------------------------------------------------------
 export default function ConveyorBelt() {
@@ -23,12 +23,12 @@ export default function ConveyorBelt() {
 
     const { instance, connect, disconnect } = useLivelinkInstance({ views: [{ canvas_ref: canvasRef }] });
 
-    const changer = useSmartObject({ instance, manifest: SmartObjectManifest, smart_object: "DirectionChanger" });
-    const triggerL = useSmartObject({ instance, manifest: SmartObjectManifest, smart_object: "TriggerL" });
-    const triggerR = useSmartObject({ instance, manifest: SmartObjectManifest, smart_object: "TriggerR" });
-    const sensorL = useSmartObject({ instance, manifest: SmartObjectManifest, smart_object: "SensorL" });
-    const sensorR = useSmartObject({ instance, manifest: SmartObjectManifest, smart_object: "SensorR" });
-    const fallDetector = useSmartObject({ instance, manifest: SmartObjectManifest, smart_object: "FallDetector" });
+    const changer = useEntity({ instance, entity_uuid: SmartObjectManifest.DirectionChanger });
+    const triggerL = useEntity({ instance, entity_uuid: SmartObjectManifest.TriggerL });
+    const triggerR = useEntity({ instance, entity_uuid: SmartObjectManifest.TriggerR });
+    const sensorL = useEntity({ instance, entity_uuid: SmartObjectManifest.SensorL });
+    const sensorR = useEntity({ instance, entity_uuid: SmartObjectManifest.SensorR });
+    const fallDetector = useEntity({ instance, entity_uuid: SmartObjectManifest.FallDetector });
 
     const onFallDetected = useCallback(() => {
         setScore(p => [p[0], p[1], p[2] + 1]);

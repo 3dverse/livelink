@@ -1,13 +1,13 @@
 import { useRef } from "react";
 import { Input, Range } from "react-daisyui";
 import Canvas from "../../components/Canvas";
-import { useLivelinkInstance, Manifest, useSmartObject } from "@3dverse/livelink-react";
+import { useLivelinkInstance, useEntity } from "@3dverse/livelink-react";
 import { CanvasActionBar } from "../../styles/components/CanvasActionBar";
 
 //------------------------------------------------------------------------------
-const SmartObjectManifest: Manifest = {
+const SmartObjectManifest = {
     MyLight: "c03314f2-c943-41be-ae17-f0d655cf1d11",
-};
+} as const;
 
 function rgbToHex(c: Array<number>) {
     function componentToHex(c: number) {
@@ -32,7 +32,7 @@ export default function SmartObject() {
 
     const { instance, connect, disconnect } = useLivelinkInstance({ views: [{ canvas_ref: canvasRef }] });
 
-    const light = useSmartObject({ instance, manifest: SmartObjectManifest, smart_object: "MyLight" });
+    const light = useEntity({ instance, entity_uuid: SmartObjectManifest.MyLight });
 
     const toggleConnection = async () => {
         if (instance) {

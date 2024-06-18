@@ -1,13 +1,13 @@
 //------------------------------------------------------------------------------
 import { useEffect, useRef, useState } from "react";
 import Canvas from "../../components/Canvas";
-import { useLivelinkInstance, Manifest, DefaultCamera } from "@3dverse/livelink-react";
+import { useLivelinkInstance, DefaultCamera } from "@3dverse/livelink-react";
 import { AnimationSequence, Camera, Livelink } from "@3dverse/livelink";
 
 //------------------------------------------------------------------------------
-const SmartObjectManifest: Manifest = {
+const SmartObjectManifest = {
     MyAnimSeq: "cb52924a-b2d5-47b2-b6c7-17d50a9a3209",
-};
+} as const;
 
 //------------------------------------------------------------------------------
 export default function PictureInPicture() {

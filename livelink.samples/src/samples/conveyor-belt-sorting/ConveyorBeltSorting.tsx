@@ -1,14 +1,14 @@
 //------------------------------------------------------------------------------
 import { useCallback, useEffect, useRef, useState } from "react";
 import Canvas from "../../components/Canvas";
-import { useLivelinkInstance, Manifest, useSmartObject, DefaultCamera } from "@3dverse/livelink-react";
+import { useLivelinkInstance, useEntity, DefaultCamera } from "@3dverse/livelink-react";
 import { Camera, Entity, Livelink, Vec2, Vec3 } from "@3dverse/livelink";
 import { Output, OutputDivider, OutputItem, OutputTitle, OutputValue } from "../../styles/components/output";
 import { CanvasActionBar } from "../../styles/components/CanvasActionBar";
 import { Range } from "react-daisyui";
 
 //------------------------------------------------------------------------------
-const SmartObjectManifest: Manifest = {
+const SmartObjectManifest = {
     DirectionChanger: "6807984c-c682-422b-9a4e-ab2c26b60833",
     Trigger: "82f075ac-0b40-40c5-b570-b7421c3fb967",
     Sensor: "5c8659ec-ba10-4969-861d-26fe6c609176",
@@ -16,7 +16,7 @@ const SmartObjectManifest: Manifest = {
     FallDetector: "c5317ff8-0b3a-4275-a0d8-6eceba2c5edd",
     Spawn1: "255cab6b-1824-4eae-9aae-705a1c47055a",
     Spawn2: "4378b417-058e-491b-a90c-b9eb547b558a",
-};
+} as const;
 
 let i = 0;
 const packages: Array<Entity> = [];
@@ -29,13 +29,13 @@ export default function ConveyorBeltSorting() {
 
     const { instance, connect, disconnect } = useLivelinkInstance({ views: [{ canvas_ref: canvasRef }] });
 
-    const changer = useSmartObject({ instance, manifest: SmartObjectManifest, smart_object: "DirectionChanger" });
-    const trigger = useSmartObject({ instance, manifest: SmartObjectManifest, smart_object: "Trigger" });
-    const sensor = useSmartObject({ instance, manifest: SmartObjectManifest, smart_object: "Sensor" });
-    const fallDetector = useSmartObject({ instance, manifest: SmartObjectManifest, smart_object: "FallDetector" });
-    const sensorLight = useSmartObject({ instance, manifest: SmartObjectManifest, smart_object: "SensorLight" });
-    const spawn1 = useSmartObject({ instance, manifest: SmartObjectManifest, smart_object: "Spawn1" });
-    const spawn2 = useSmartObject({ instance, manifest: SmartObjectManifest, smart_object: "Spawn2" });
+    const changer = useEntity({ instance, entity_uuid: SmartObjectManifest.DirectionChanger });
+    const trigger = useEntity({ instance, entity_uuid: SmartObjectManifest.Trigger });
+    const sensor = useEntity({ instance, entity_uuid: SmartObjectManifest.Sensor });
+    const fallDetector = useEntity({ instance, entity_uuid: SmartObjectManifest.FallDetector });
+    const sensorLight = useEntity({ instance, entity_uuid: SmartObjectManifest.SensorLight });
+    const spawn1 = useEntity({ instance, entity_uuid: SmartObjectManifest.Spawn1 });
+    const spawn2 = useEntity({ instance, entity_uuid: SmartObjectManifest.Spawn2 });
 
     const onFallDetected = useCallback(() => {
         setScore(p => [p[0], p[1], p[2] + 1]);

@@ -47,12 +47,7 @@ export function useLivelinkInstance({ views }: { views: Array<View> }): {
                 return null;
             }
 
-            const instance = await Livelink.join_or_start({
-                scene_id,
-                token,
-                session_selector: ({ sessions }: { sessions: Array<SessionInfo> }) => sessions[0],
-            });
-
+            const instance = await Livelink.join_or_start({ scene_id, token });
             const cameras = await configureClient(
                 instance,
                 views.map(v => v.canvas_ref.current!),

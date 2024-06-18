@@ -2,24 +2,24 @@
 import { useCallback, useEffect, useRef } from "react";
 import { Camera, Entity, Vec3 } from "@3dverse/livelink";
 import Canvas from "../../components/Canvas";
-import { useLivelinkInstance, DefaultCamera, Manifest, useSmartObject } from "@3dverse/livelink-react";
+import { useLivelinkInstance, DefaultCamera, useEntity } from "@3dverse/livelink-react";
 import { CanvasActionBar } from "../../styles/components/CanvasActionBar";
 
 //------------------------------------------------------------------------------
-const SmartObjectManifest: Manifest = {
+const SmartObjectManifest = {
     Character: "209d5e32-8936-4b03-844e-ce8d4d9b194b",
     Ground: "da7d111b-1841-4190-b4de-b30754ec4ef8",
     Cube: "a17889ab-e6c1-47e8-860a-491948cf7158",
-};
+} as const;
 
 //------------------------------------------------------------------------------
 export default function PointAndClick() {
     const canvasRef = useRef<HTMLCanvasElement>(null);
 
     const { instance, connect, disconnect } = useLivelinkInstance({ views: [{ canvas_ref: canvasRef }] });
-    const character = useSmartObject({ instance, manifest: SmartObjectManifest, smart_object: "Character" });
-    const ground = useSmartObject({ instance, manifest: SmartObjectManifest, smart_object: "Ground" });
-    const cube = useSmartObject({ instance, manifest: SmartObjectManifest, smart_object: "Cube" });
+    const character = useEntity({ instance, entity_uuid: SmartObjectManifest.Character });
+    const ground = useEntity({ instance, entity_uuid: SmartObjectManifest.Ground });
+    const cube = useEntity({ instance, entity_uuid: SmartObjectManifest.Cube });
 
     const toggleConnection = async () => {
         if (instance) {

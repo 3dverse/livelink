@@ -1,19 +1,19 @@
 //------------------------------------------------------------------------------
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Camera, Entity, Livelink } from "@3dverse/livelink";
-import { useLivelinkInstance, DefaultCamera, Manifest, useSmartObject } from "@3dverse/livelink-react";
+import { useLivelinkInstance, DefaultCamera, useEntity } from "@3dverse/livelink-react";
 import Canvas from "../../components/Canvas";
 import { CanvasActionBar } from "../../styles/components/CanvasActionBar";
 
 //------------------------------------------------------------------------------
-const SmartObjectManifest: Manifest = {
+const SmartObjectManifest = {
     Spawn: "448c4254-f965-4107-9f55-3fd9d95fdf0b",
     Despawn: "99d110d1-9f53-4640-8eb6-7a728022bfa3",
     LabelPrinter: "cbd366c8-22a2-4f54-8a8d-2afcf4aaf8ff",
     LabelingCB: "601962fe-1cb3-49b0-8b99-395a1eabb8dc",
     LabelingSensor: "38777c4c-9bc8-4759-93eb-d8148cab39a7",
     Barriers: "09c6e5d5-9619-42db-90d2-479b6d3ed50b",
-};
+} as const;
 
 let i = 0;
 const packages: Array<Entity> = [];
@@ -24,12 +24,12 @@ export default function LabelingStation() {
 
     const { instance, connect, disconnect } = useLivelinkInstance({ views: [{ canvas_ref: canvasRef }] });
 
-    const spawn = useSmartObject({ instance, manifest: SmartObjectManifest, smart_object: "Spawn" });
-    const despawn = useSmartObject({ instance, manifest: SmartObjectManifest, smart_object: "Despawn" });
-    const printer = useSmartObject({ instance, manifest: SmartObjectManifest, smart_object: "LabelPrinter" });
-    const labelingCB = useSmartObject({ instance, manifest: SmartObjectManifest, smart_object: "LabelingCB" });
-    const labelingSensor = useSmartObject({ instance, manifest: SmartObjectManifest, smart_object: "LabelingSensor" });
-    const barriers = useSmartObject({ instance, manifest: SmartObjectManifest, smart_object: "Barriers" });
+    const spawn = useEntity({ instance, entity_uuid: SmartObjectManifest.Spawn });
+    const despawn = useEntity({ instance, entity_uuid: SmartObjectManifest.Despawn });
+    const printer = useEntity({ instance, entity_uuid: SmartObjectManifest.LabelPrinter });
+    const labelingCB = useEntity({ instance, entity_uuid: SmartObjectManifest.LabelingCB });
+    const labelingSensor = useEntity({ instance, entity_uuid: SmartObjectManifest.LabelingSensor });
+    const barriers = useEntity({ instance, entity_uuid: SmartObjectManifest.Barriers });
 
     const onDespawn = useCallback(
         (e: Event) => {

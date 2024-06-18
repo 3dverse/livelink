@@ -7,7 +7,7 @@ import { CanvasActionBar } from "../../styles/components/CanvasActionBar";
 
 const manifest = {
     charCtlSceneUUID: "a8b0086e-f89b-43fd-8e8e-2a5188fe3056",
-};
+} as const;
 
 class TPController extends Entity {
     onCreate() {
