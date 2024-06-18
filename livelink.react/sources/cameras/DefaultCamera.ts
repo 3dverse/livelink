@@ -1,10 +1,35 @@
 //------------------------------------------------------------------------------
 import CameraControls from "camera-controls";
 import { Camera, Quat, Vec3 } from "@3dverse/livelink";
-import * as THREE from "three";
 
 //------------------------------------------------------------------------------
-CameraControls.install({ THREE: THREE });
+import {
+    PerspectiveCamera,
+    Clock,
+    Quaternion,
+    Matrix4,
+    Spherical,
+    Vector2,
+    Vector3,
+    Vector4,
+    Box3,
+    Sphere,
+    Raycaster,
+} from "three";
+
+CameraControls.install({
+    THREE: {
+        Vector2,
+        Vector3,
+        Vector4,
+        Quaternion,
+        Matrix4,
+        Spherical,
+        Box3,
+        Sphere,
+        Raycaster,
+    },
+});
 
 //------------------------------------------------------------------------------
 export class DefaultCamera extends Camera {
@@ -38,13 +63,13 @@ export class DefaultCamera extends Camera {
             return;
         }
 
-        const camera = new THREE.PerspectiveCamera(
+        const camera = new PerspectiveCamera(
             this.perspective_lens!.fovy,
             this.perspective_lens!.aspectRatio,
             this.perspective_lens!.nearPlane,
             this.perspective_lens!.farPlane,
         );
-        const clock = new THREE.Clock();
+        const clock = new Clock();
         // create camera controls
         const cameraControls = new CameraControls(camera, this.viewport.canvas);
         this.cameraControls = cameraControls;
@@ -64,7 +89,7 @@ export class DefaultCamera extends Camera {
     onCameraUpdate() {
         if (!this.cameraControls) return;
         const cameraPosition = this.cameraControls.camera.position.toArray();
-        const cameraOrientation = new THREE.Quaternion();
+        const cameraOrientation = new Quaternion();
         this.cameraControls.camera.getWorldQuaternion(cameraOrientation);
         const cameraOrientationArray = cameraOrientation.toArray();
         this.local_transform!.position = cameraPosition;
@@ -75,7 +100,7 @@ export class DefaultCamera extends Camera {
         if (!this.cameraControls || !this.viewport) {
             throw new Error("CameraControls or Viewport is not initialized");
         }
-        const projectedPosition = new THREE.Vector3(position[0], position[1], position[2])
+        const projectedPosition = new Vector3(position[0], position[1], position[2])
             .project(this.cameraControls?.camera)
             .toArray();
         return [

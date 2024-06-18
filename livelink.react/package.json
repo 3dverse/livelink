@@ -26,8 +26,7 @@
   },
   "homepage": "https://github.com/3dverse/livelink#readme",
   "dependencies": {
-    "camera-controls": "^2.8.5",
-    "three": "^0.165.0"
+    "camera-controls": "^2.8.5"
   },
   "devDependencies": {
     "@types/react": "^18.3.3",
@@ -38,6 +37,7 @@
   },
   "peerDependencies": {
     "@3dverse/livelink": "^0.2.0",
+    "three": "^0.165.0",
     "react": "^18.2.0"
   }
 }
