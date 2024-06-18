@@ -1,29 +1,29 @@
-import type {
-    LivelinkCore,
+import {
     ClientConfig,
-    UUID,
-    FrameData,
-    CodecType,
     ClientConfigResponse,
+    CodecType,
     EntityUpdatedEvent,
+    FrameData,
     InputState,
-    Vec2i,
-    ViewportConfig,
+    LivelinkCore,
+    LivelinkCoreModule,
+    RTID,
     ScreenSpaceRayQuery,
     ScreenSpaceRayResult,
-    RTID,
+    UUID,
+    Vec2i,
+    ViewportConfig,
 } from "@3dverse/livelink.core";
 
 import { EncodedFrameConsumer } from "./decoders/EncodedFrameConsumer";
 import { DecodedFrameConsumer } from "./decoders/DecodedFrameConsumer";
 import { RemoteRenderingSurface } from "./RemoteRenderingSurface";
-import { InputDevice } from "./inputs/InputDevice";
-import { Scene } from "./Scene";
-import { Camera } from "./Camera";
-import { Viewport } from "./Viewport";
-import { Entity } from "./Entity";
 import { Session, SessionInfo, SessionSelector } from "./Session";
-import { LivelinkCoreModule } from "@3dverse/livelink.core";
+import { InputDevice } from "./inputs/InputDevice";
+import { Viewport } from "./Viewport";
+import { Camera } from "./Camera";
+import { Entity } from "./Entity";
+import { Scene } from "./Scene";
 
 /**
  * The Livelink interface.
@@ -102,7 +102,7 @@ export class Livelink {
         await LivelinkCoreModule.init();
 
         console.debug("Joining session:", session);
-        const inst = new Livelink(session);
+        const inst = new Livelink({ session });
         await inst.#connect();
         return inst;
     }
@@ -162,7 +162,7 @@ export class Livelink {
     /**
      *
      */
-    private constructor(session: Session) {
+    private constructor({ session }: { session: Session }) {
         this.session = session;
         this.#core = new LivelinkCoreModule.Core();
         this.scene = new Scene(this.#core);
@@ -175,11 +175,7 @@ export class Livelink {
         // Retrieve a session key
         await this.session.registerClient();
 
-        const component_serializer = await this.#core._connect({
-            session: this.session,
-            editor_url: EDITOR_URL,
-        });
-
+        const component_serializer = await this.#core._connect({ session: this.session, editor_url: EDITOR_URL });
         this.scene.entity_registry._configureComponentSerializer({ component_serializer });
 
         this.#core._addEventListener({
@@ -250,7 +246,7 @@ export class Livelink {
     /**
      *
      */
-    addViewports({ viewports }: { viewports: Array<Viewport> }) {
+    addViewports({ viewports }: { viewports: Array<Viewport> }): void {
         this.#remote_rendering_surface.addViewports({ viewports });
     }
 
@@ -271,19 +267,8 @@ export class Livelink {
     }): Promise<ClientConfigResponse> {
         const client_config: ClientConfig = {
             remote_canvas_size: this.#remote_rendering_surface.dimensions,
-            encoder_config: {
-                codec,
-                profile: 1,
-                frame_rate: 60,
-                lossy: true,
-            },
-            supported_devices: {
-                keyboard: true,
-                mouse: true,
-                gamepad: true,
-                hololens: false,
-                touchscreen: false,
-            },
+            encoder_config: { codec, profile: 1, frame_rate: 60, lossy: true },
+            supported_devices: { keyboard: true, mouse: true, gamepad: true, hololens: false, touchscreen: false },
         };
 
         const res = await this.#core.configureClient({ client_config });
@@ -301,7 +286,7 @@ export class Livelink {
     /**
      *
      */
-    async installFrameConsumer({ frame_consumer }: { frame_consumer: EncodedFrameConsumer }) {
+    async installFrameConsumer({ frame_consumer }: { frame_consumer: EncodedFrameConsumer }): Promise<void> {
         if (this.#codec === null) {
             throw new Error("Client not configured.");
         }
@@ -318,10 +303,7 @@ export class Livelink {
     #onFrameReceived = (e: Event) => {
         const frame_data = (e as CustomEvent<FrameData>).detail;
         this.session._updateClients({ client_data: frame_data.meta_data.clients });
-
-        this.#encoded_frame_consumer!.consumeEncodedFrame({
-            encoded_frame: frame_data.encoded_frame,
-        });
+        this.#encoded_frame_consumer!.consumeEncodedFrame({ encoded_frame: frame_data.encoded_frame });
     };
 
     /**

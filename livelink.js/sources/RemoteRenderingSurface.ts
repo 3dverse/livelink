@@ -1,8 +1,11 @@
 import type { Vec2i, Vec2ui16, ViewportConfig } from "@3dverse/livelink.core";
-import { Livelink } from "./Livelink";
 import { DecodedFrameConsumer } from "./decoders/DecodedFrameConsumer";
+import { Livelink } from "./Livelink";
 import { Viewport } from "./Viewport";
 
+/**
+ *
+ */
 type ViewportRect = {
     viewport: Viewport;
     offset: Vec2i;
@@ -18,13 +21,13 @@ type ViewportRect = {
  * associated camera.
  * Note that viewports will be packed arbitrarily on the rendering surface.
  *
- * The surface is also responsible of decoding the encoded frame return by the
+ * The surface is also responsible of decoding the encoded frame returned by the
  * renderer and spliting the decoded frame into areas corresponding to their
  * respective viewports.
  */
 export class RemoteRenderingSurface implements DecodedFrameConsumer {
     /**
-     *
+     * Owning Livelink instance.
      */
     #core: Livelink;
 
@@ -39,21 +42,21 @@ export class RemoteRenderingSurface implements DecodedFrameConsumer {
     #dimensions: Vec2ui16 = [0, 0];
 
     /**
-     * Returns the surface dimensions in pixels rounded up to the next multiple of 8.
+     * Surface dimensions in pixels rounded up to the next multiple of 8.
      */
     get dimensions(): Vec2ui16 {
         return this.#dimensions;
     }
 
     /**
-     *
+     * Registered viewports.
      */
     get viewports(): Array<Viewport> {
         return this.#viewports.map(v => v.viewport);
     }
 
     /**
-     *
+     * Config for all registered viewports.
      */
     get #config(): Array<ViewportConfig> {
         return this.#viewports.map(({ viewport, offset }) => ({
@@ -152,9 +155,10 @@ export class RemoteRenderingSurface implements DecodedFrameConsumer {
         const { offset, width, height } = this.#computeBoundingRect();
         this.#computeViewportsOffsets(offset);
 
-        const next_multiple_of_8 = (n: number) =>
-            Math.floor(n) + (Math.floor(n) % 8 === 0 ? 0 : 8 - (Math.floor(n) % 8));
-        const new_dimensions: Vec2i = [next_multiple_of_8(width), next_multiple_of_8(height)];
+        const SIZE_MULTIPLE = 8 as const;
+        const next_multiple = (n: number) =>
+            Math.floor(n) + (Math.floor(n) % SIZE_MULTIPLE === 0 ? 0 : SIZE_MULTIPLE - (Math.floor(n) % SIZE_MULTIPLE));
+        const new_dimensions: Vec2i = [next_multiple(width), next_multiple(height)];
 
         const need_to_resize = new_dimensions[0] != this.#dimensions[0] || new_dimensions[1] != this.dimensions[1];
 
@@ -167,8 +171,8 @@ export class RemoteRenderingSurface implements DecodedFrameConsumer {
      *
      */
     #computeBoundingRect(): { offset: Vec2i; width: number; height: number } {
-        let min: Vec2i = [Number.MAX_VALUE, Number.MAX_VALUE];
-        let max: Vec2i = [0, 0];
+        const min: Vec2i = [Number.MAX_VALUE, Number.MAX_VALUE];
+        const max: Vec2i = [0, 0];
 
         for (const { viewport } of this.#viewports) {
             const clientRect = viewport.canvas.getClientRects()[0];
