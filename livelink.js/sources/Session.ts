@@ -255,7 +255,9 @@ export class Session extends EventTarget implements SessionInterface {
     _updateClients({ client_data }: { client_data: Array<ClientMetaData> }): void {
         for (const data of client_data) {
             if (!this.#clients.has(data.client_id)) {
-                this._onClientJoined({ client: new Client(data) });
+                if (data.viewports.some(v => v.camera_rtid)) {
+                    this._onClientJoined({ client: new Client(data) });
+                }
             }
         }
 

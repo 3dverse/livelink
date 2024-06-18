@@ -56,9 +56,13 @@ export function useLivelinkInstance({ views }: { views: Array<View> }): {
 
             setInstance(instance);
             onConnected?.({ instance, cameras });
+
             return { instance, cameras };
         },
-        disconnect: () => setInstance(null),
+        disconnect: () => {
+            instance?.viewports.forEach(v => v.camera?.onDelete());
+            setInstance(null);
+        },
     };
 }
 

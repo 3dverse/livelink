@@ -1,7 +1,8 @@
-import type { ComponentType, EditorEntity, EntityCreationOptions, UUID } from "@3dverse/livelink.core";
+import type { ComponentType, EditorEntity, EntityCreationOptions, Mat4, UUID } from "@3dverse/livelink.core";
 import { EntityBase } from "../_prebuild/types/EntityBase";
 import { Scene } from "./Scene";
 import { LivelinkCoreModule } from "@3dverse/livelink.core";
+import { getWorldPosition, getWorldQuaternion } from "./utils";
 
 /**
  *
@@ -56,6 +57,13 @@ export class Entity extends EntityBase {
      */
     set auto_broadcast(state: EntityAutoUpdateState) {
         this._auto_broadcast = state;
+    }
+
+    /**
+     *
+     */
+    set proxy_state(state: EntityAutoUpdateState) {
+        this._proxy_state = state;
     }
 
     /**
@@ -212,6 +220,16 @@ export class Entity extends EntityBase {
             prop[0] !== "_" &&
             Object.values(LivelinkCoreModule.Enums.ComponentHash).includes(prop)
         );
+    }
+
+    /**
+     *
+     */
+    _updateTransformFromWorldMatrix(ws_from_ls: Mat4) {
+        this._auto_update = "off";
+        this._proxy_state = "off";
+        this.local_transform!.position = getWorldPosition(ws_from_ls);
+        this.local_transform!.orientation = getWorldQuaternion(ws_from_ls);
     }
 
     /**

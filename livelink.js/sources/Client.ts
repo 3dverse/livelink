@@ -1,4 +1,4 @@
-import type { ClientInterface, ClientMetaData, RTID, UUID } from "@3dverse/livelink.core";
+import type { ClientInterface, ClientMetaData, Mat4, RTID, UUID } from "@3dverse/livelink.core";
 
 /**
  * A client is the representation of a singular user in a session.
@@ -18,8 +18,20 @@ export class Client implements ClientInterface {
     /**
      *
      */
+    #ws_from_ls: Array<Mat4> = [];
+
+    /**
+     *
+     */
     get camera_rtids(): Array<RTID> {
         return this.#camera_rtids;
+    }
+
+    /**
+     *
+     */
+    get ws_from_ls(): Array<Mat4> {
+        return this.#ws_from_ls;
     }
 
     /**

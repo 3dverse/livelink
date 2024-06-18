@@ -24,6 +24,7 @@ import { Viewport } from "./Viewport";
 import { Camera } from "./Camera";
 import { Entity } from "./Entity";
 import { Scene } from "./Scene";
+import { getWorldPosition, getWorldQuaternion } from "./utils";
 
 /**
  * The Livelink interface.
@@ -304,6 +305,15 @@ export class Livelink {
         const frame_data = (e as CustomEvent<FrameData>).detail;
         this.session._updateClients({ client_data: frame_data.meta_data.clients });
         this.#encoded_frame_consumer!.consumeEncodedFrame({ encoded_frame: frame_data.encoded_frame });
+
+        frame_data.meta_data.clients
+            .filter(client => client.client_id !== this.session.client_id)
+            .forEach(client => {
+                client.viewports.forEach(viewport => {
+                    const entity = this.scene.entity_registry.get({ entity_rtid: viewport.camera_rtid });
+                    entity?._updateTransformFromWorldMatrix(viewport.ws_from_ls);
+                });
+            });
     };
 
     /**

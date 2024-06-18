@@ -35,4 +35,9 @@ export class Camera extends Entity {
             this._viewport.camera = this;
         }
     }
+
+    /**
+     *
+     */
+    onDelete() {}
 }

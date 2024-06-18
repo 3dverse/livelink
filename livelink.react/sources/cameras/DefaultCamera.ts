@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 import CameraControls from "camera-controls";
-import { Camera, Quat } from "@3dverse/livelink";
+import { Camera, Quat, Vec3 } from "@3dverse/livelink";
 import * as THREE from "three";
 
 //------------------------------------------------------------------------------
@@ -11,6 +11,7 @@ export class DefaultCamera extends Camera {
     cameraControls: CameraControls | null = null;
 
     onCreate() {
+        this.auto_broadcast = "off";
         this.local_transform = { position: [0, 1, 5] };
         this.camera = {
             renderGraphRef: "398ee642-030a-45e7-95df-7147f6c43392",
@@ -24,6 +25,12 @@ export class DefaultCamera extends Camera {
         };
 
         this._initController();
+    }
+
+    onDelete() {
+        if (this.cameraControls) {
+            this.cameraControls.dispose();
+        }
     }
 
     private _initController() {
@@ -62,5 +69,19 @@ export class DefaultCamera extends Camera {
         const cameraOrientationArray = cameraOrientation.toArray();
         this.local_transform!.position = cameraPosition;
         this.local_transform!.orientation = cameraOrientationArray as Quat;
+    }
+
+    project(position: Vec3) {
+        if (!this.cameraControls || !this.viewport) {
+            throw new Error("CameraControls or Viewport is not initialized");
+        }
+        const projectedPosition = new THREE.Vector3(position[0], position[1], position[2])
+            .project(this.cameraControls?.camera)
+            .toArray();
+        return [
+            ((projectedPosition[0] + 1) * this.viewport.width) / 2,
+            ((-projectedPosition[1] + 1) * this.viewport.height) / 2,
+            projectedPosition[2],
+        ];
     }
 }
