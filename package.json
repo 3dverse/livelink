@@ -12,7 +12,7 @@
     "prebuild": "npm run clean",
     "build:js": "npm -C livelink.js run build",
     "build:react": "npm -C livelink.react run build",
-    "build": "npm-run-all build:*",
+    "build": "npm run build:js && npm run build:react",
     "clean:js": "npm -C livelink.js run clean",
     "clean:react": "npm -C livelink.react run clean",
     "clean": "npm-run-all --parallel clean:*",

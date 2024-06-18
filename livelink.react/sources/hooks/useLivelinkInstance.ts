@@ -1,7 +1,7 @@
 //------------------------------------------------------------------------------
 import { useEffect, useState } from "react";
 import { DefaultCamera } from "../cameras/DefaultCamera";
-import { Camera, Livelink, SessionInfo, SoftwareDecoder, UUID, Viewport, WebCodecsDecoder } from "@3dverse/livelink";
+import { Camera, Livelink, SoftwareDecoder, UUID, Viewport, WebCodecsDecoder } from "@3dverse/livelink";
 
 //------------------------------------------------------------------------------
 type View = { canvas_ref: React.RefObject<HTMLCanvasElement>; camera?: typeof Camera | UUID | null };
