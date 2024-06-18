@@ -1,50 +1,48 @@
 //------------------------------------------------------------------------------
 const fs = require("fs");
 const path = require("path");
+const ts = require("typescript");
 
 //------------------------------------------------------------------------------
-const ftlSchemaFolder = process.argv[2] || "../../ftl-schemas";
+const nodeModulePath = process.argv[2] || "../../node_modules";
 const templateFolder = process.argv[3] || ".";
 const outputFolder = process.argv[4] || "../_prebuild/types";
 
 //------------------------------------------------------------------------------
-const componentFolder = path.join(ftlSchemaFolder, "components");
+const typeDeclarationFile = path.join(nodeModulePath, "@3dverse/livelink.core/dist/_prebuild/types/components.d.ts");
 
 //------------------------------------------------------------------------------
-function titlelize(str) {
-    return str
-        .split("_")
-        .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-        .map(word => word.replace(/(\d)([a-z])/g, (match, digit, letter) => digit + letter.toUpperCase()))
-        .join("");
-}
+const pascalCaseToSnakeCase = str =>
+    str.slice(0, 1).toLowerCase() +
+    str
+        .slice(1)
+        .replace(/([A-Z])/g, "_$1")
+        .toLowerCase();
 
 //------------------------------------------------------------------------------
 function generateEntityBase() {
-    //--------------------------------------------------------------------------
-    const componentFiles = fs.readdirSync(componentFolder);
-    const componentAttributes = [];
+    const program = ts.createProgram([typeDeclarationFile], {});
+    const checker = program.getTypeChecker();
+    const sourceFile = program.getSourceFile(typeDeclarationFile);
 
-    for (const assetFileName of componentFiles) {
-        const fileContent = fs.readFileSync(path.join(componentFolder, assetFileName), "utf-8");
-        const component = JSON.parse(fileContent);
+    const exportSymbol = checker.getSymbolAtLocation(sourceFile?.getChildAt(0));
+    const exports = checker.getExportsAndPropertiesOfModule(exportSymbol || sourceFile.symbol);
 
-        if (component.class === "euid") {
-            continue;
-        }
+    // For now filter only types with comments. This might not work for in the future.
+    const componentExports = exports.filter(symbol =>
+        symbol.declarations.some(declaration => declaration.jsDoc?.some(jsDoc => jsDoc.comment?.length > 0)),
+    );
 
-        if (component.mods.includes("transient")) {
-            continue;
-        }
+    const componentAttributes = componentExports.map(symbol => {
+        const declaration = symbol.declarations[0];
+        const jsDoc = declaration.jsDoc.find(jsDoc => jsDoc.comment?.length > 0);
 
-        const titlizedComponentClass = titlelize(component.class);
+        const name = pascalCaseToSnakeCase(symbol.name);
+        const type = symbol.name;
+        const comment = jsDoc.getText().replace(/\n/g, "\n    ");
 
-        //----------------------------------------------------------------------
-        componentAttributes.push(`    /**
-     * ${component.description}
-     */
-    ${component.class}?: Components.${titlizedComponentClass};`);
-    }
+        return `    ${comment}\n    ${name}?: Components.${type};`;
+    });
 
     //--------------------------------------------------------------------------
     applyTemplate("EntityBase.template.ts", path.join("EntityBase.ts"), {

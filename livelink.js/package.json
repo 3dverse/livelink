@@ -9,7 +9,7 @@
     "dist"
   ],
   "scripts": {
-    "prebuild": "node ci/auto-generate.js ../ftl-schemas/ ci/ ./_prebuild/types/",
+    "prebuild": "node ci/auto-generate.js ../node_modules/ ci/ ./_prebuild/types/",
     "build": "node esbuild.js && tsc",
     "dev": "run-p dev:*",
     "dev:esbuild": "node esbuild.js dev",
