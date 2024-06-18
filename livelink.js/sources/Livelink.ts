@@ -391,7 +391,7 @@ export class Livelink {
                 this.scene.entity_registry._clearUpdateList();
             }
 
-            const detachMsg = this.scene.entity_registry._getEntitiesToDetach();
+            const detachMsg = this.scene.entity_registry._getComponentsToDetach();
             if (detachMsg !== null) {
                 this.#core._removeComponents(detachMsg);
                 this.scene.entity_registry._clearDetachList();

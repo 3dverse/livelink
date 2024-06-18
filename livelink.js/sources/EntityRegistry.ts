@@ -31,9 +31,9 @@ export class EntityRegistry {
     /**
      *
      */
-    #dirty_entities = new Map<ComponentType, Set<Entity>>();
-    #detached_entities = new Map<ComponentType, Set<Entity>>();
-    #dirty_entities_to_broadcast = new Map<ComponentType, Set<Entity>>();
+    #dirty_components = new Map<ComponentType, Set<Entity>>();
+    #detached_components = new Map<ComponentType, Set<Entity>>();
+    #dirty_components_to_broadcast = new Map<ComponentType, Set<Entity>>();
 
     /**
      *
@@ -108,9 +108,9 @@ export class EntityRegistry {
         this.#serializer = component_serializer;
 
         for (const component_name of this.#serializer.component_names) {
-            this.#dirty_entities.set(component_name, new Set<Entity>());
-            this.#detached_entities.set(component_name, new Set<Entity>());
-            this.#dirty_entities_to_broadcast.set(component_name, new Set<Entity>());
+            this.#dirty_components.set(component_name, new Set<Entity>());
+            this.#detached_components.set(component_name, new Set<Entity>());
+            this.#dirty_components_to_broadcast.set(component_name, new Set<Entity>());
         }
     }
 
@@ -151,7 +151,7 @@ export class EntityRegistry {
      * @internal
      */
     _addEntityToUpdate({ component_type, entity }: { component_type: ComponentType; entity: Entity }) {
-        const dirty_entities = this.#dirty_entities.get(component_type);
+        const dirty_entities = this.#dirty_components.get(component_type);
         if (dirty_entities) {
             dirty_entities.add(entity);
         }
@@ -161,9 +161,9 @@ export class EntityRegistry {
      * @internal
      */
     _detachComponentFromEntity({ component_type, entity }: { component_type: ComponentType; entity: Entity }) {
-        const detached_entities = this.#detached_entities.get(component_type);
-        if (detached_entities) {
-            detached_entities.add(entity);
+        const detached_components = this.#detached_components.get(component_type);
+        if (detached_components) {
+            detached_components.add(entity);
         }
     }
 
@@ -173,7 +173,7 @@ export class EntityRegistry {
     _getEntitiesToUpdate(): UpdateEntitiesFromJsonMessage | null {
         const msg = { components: [] as Array<{ component_type: ComponentType; entities: Set<Entity> }> };
 
-        for (const [component_type, entities] of this.#dirty_entities) {
+        for (const [component_type, entities] of this.#dirty_components) {
             if (entities.size !== 0) {
                 msg.components.push({ component_type, entities });
             }
@@ -185,10 +185,10 @@ export class EntityRegistry {
     /**
      * @internal
      */
-    _getEntitiesToDetach(): RemoveComponentsCommand | null {
+    _getComponentsToDetach(): RemoveComponentsCommand | null {
         const msg = { components: [] as Array<{ component_type: ComponentType; entities: Set<Entity> }> };
 
-        for (const [component_type, entities] of this.#detached_entities) {
+        for (const [component_type, entities] of this.#detached_components) {
             if (entities.size !== 0) {
                 msg.components.push({ component_type, entities });
             }
@@ -204,7 +204,7 @@ export class EntityRegistry {
         const msg: UpdateEntitiesCommand = {};
         let hasData = false;
 
-        for (const [component_type, entities] of this.#dirty_entities_to_broadcast) {
+        for (const [component_type, entities] of this.#dirty_components_to_broadcast) {
             for (const entity of entities) {
                 msg[entity.id!] = msg[entity.id!] ?? {};
                 //@ts-ignore
@@ -220,8 +220,8 @@ export class EntityRegistry {
      * @internal
      */
     _clearUpdateList() {
-        for (const [component_type, entities] of this.#dirty_entities) {
-            const broadcast_set = this.#dirty_entities_to_broadcast.get(component_type);
+        for (const [component_type, entities] of this.#dirty_components) {
+            const broadcast_set = this.#dirty_components_to_broadcast.get(component_type);
             for (const entity of entities) {
                 if (entity.auto_broadcast === "on") {
                     broadcast_set!.add(entity);
@@ -235,7 +235,7 @@ export class EntityRegistry {
      * @internal
      */
     _clearDetachList() {
-        for (const [_, entities] of this.#detached_entities) {
+        for (const [_, entities] of this.#detached_components) {
             entities.clear();
         }
     }
@@ -244,7 +244,7 @@ export class EntityRegistry {
      * @internal
      */
     _clearBroadcastList() {
-        for (const [_, entities] of this.#dirty_entities_to_broadcast) {
+        for (const [_, entities] of this.#dirty_components_to_broadcast) {
             entities.clear();
         }
     }

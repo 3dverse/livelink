@@ -42,6 +42,16 @@ export class Session extends EventTarget implements SessionInterface {
     /**
      *
      */
+    readonly #scene_id: UUID;
+
+    /**
+     *
+     */
+    readonly #token: string;
+
+    /**
+     *
+     */
     #created: boolean = false;
 
     /**
@@ -71,7 +81,7 @@ export class Session extends EventTarget implements SessionInterface {
         return this.#created;
     }
     get scene_id() {
-        return this._scene_id;
+        return this.#scene_id;
     }
     get session_id() {
         return this.#session_info?.session_id;
@@ -90,16 +100,16 @@ export class Session extends EventTarget implements SessionInterface {
     }
 
     /**
-     * @param {UUID} _scene_id - The id of the scene
-     * @param {string} _token - The authentication token
+     * @param {UUID} scene_id - The id of the scene
+     * @param {string} token - The authentication token
      *
      * @see https://docs.3dverse.com/api/#tag/User-Authentication/operation/generateUserToken
      */
-    constructor(
-        private readonly _scene_id: UUID,
-        private readonly _token: string,
-    ) {
+    constructor(scene_id: UUID, token: string) {
         super();
+
+        this.#scene_id = scene_id;
+        this.#token = token;
     }
 
     /**
@@ -123,10 +133,10 @@ export class Session extends EventTarget implements SessionInterface {
     async create(): Promise<Session> {
         const res = await fetch(`${api_url}/sessions`, {
             method: "POST",
-            body: JSON.stringify({ scene_id: this._scene_id }),
+            body: JSON.stringify({ scene_id: this.#scene_id }),
             headers: {
                 "Content-Type": "application/json",
-                user_token: this._token,
+                user_token: this.#token,
             },
         });
 
@@ -151,10 +161,10 @@ export class Session extends EventTarget implements SessionInterface {
      *    null if none is found.
      */
     async find({ session_selector }: { session_selector: SessionSelector }): Promise<Session | null> {
-        const res = await fetch(`${api_url}/sessions?filters[scene_id]=${this._scene_id}`, {
+        const res = await fetch(`${api_url}/sessions?filters[scene_id]=${this.#scene_id}`, {
             method: "GET",
             headers: {
-                user_token: this._token,
+                user_token: this.#token,
             },
         });
 
@@ -179,7 +189,7 @@ export class Session extends EventTarget implements SessionInterface {
         const res = await fetch(`${api_url}/sessions/${this.session_id}/clients`, {
             method: "POST",
             headers: {
-                user_token: this._token,
+                user_token: this.#token,
             },
         });
 
@@ -206,7 +216,7 @@ export class Session extends EventTarget implements SessionInterface {
         const res = await fetch(`${api_url}/sessions/${this.session_id}`, {
             method: "DELETE",
             headers: {
-                api_key: this._token,
+                api_key: this.#token,
             },
         });
 
@@ -232,7 +242,7 @@ export class Session extends EventTarget implements SessionInterface {
         const res = await fetch(`${api_url}/sessions/${this.session_id}/clients/${client_id}`, {
             method: "DELETE",
             headers: {
-                user_token: this._token,
+                user_token: this.#token,
             },
         });
 
