@@ -21,35 +21,35 @@ export class Viewport extends EventTarget {
     /**
      * HTML canvas on which we display the final composited frame.
      */
-    private _canvas: HTMLCanvasElement;
+    #canvas: HTMLCanvasElement;
     /**
      *
      */
-    private _context: ContextProvider;
+    #context: ContextProvider;
     /**
      *
      */
-    private _auto_resizer: CanvasAutoResizer;
+    #auto_resizer: CanvasAutoResizer;
     /**
      *
      */
-    private _camera: Camera | null = null;
+    #camera: Camera | null = null;
 
     /**
      * HTML Canvas Element
      */
     get canvas() {
-        return this._canvas;
+        return this.#canvas;
     }
 
     /**
      * Dimensions of the HTML canvas in pixels.
      */
     get width(): number {
-        return this._canvas.clientWidth;
+        return this.#canvas.clientWidth;
     }
     get height(): number {
-        return this._canvas.clientHeight;
+        return this.#canvas.clientHeight;
     }
     get dimensions(): Vec2 {
         return [this.width, this.height];
@@ -62,14 +62,14 @@ export class Viewport extends EventTarget {
      *
      */
     get camera(): Camera | null {
-        return this._camera;
+        return this.#camera;
     }
 
     /**
      *
      */
     set camera(c: Camera) {
-        this._camera = c;
+        this.#camera = c;
         c.viewport = this;
         this.#core.refreshViewports();
     }
@@ -102,27 +102,27 @@ export class Viewport extends EventTarget {
             throw new Error(`HTML element ${canvas_element} is a '${canvas.nodeName}', it MUST be CANVAS`);
         }
 
-        this._canvas = canvas as HTMLCanvasElement;
+        this.#canvas = canvas as HTMLCanvasElement;
         switch (context_type) {
             case "2d":
-                this._context = new Context2D(this._canvas);
+                this.#context = new Context2D(this.#canvas);
                 break;
             case "webgl":
             case "webgl2":
-                this._context = new ContextWebGL(this._canvas, context_type);
+                this.#context = new ContextWebGL(this.#canvas, context_type);
                 break;
         }
 
         this.canvas.width = this.canvas.clientWidth;
         this.canvas.height = this.canvas.clientHeight;
-        this._auto_resizer = new CanvasAutoResizer(this);
+        this.#auto_resizer = new CanvasAutoResizer(this);
     }
 
     /**
      *
      */
     isValid(): boolean {
-        return this._camera !== null && this.width > 0 && this.height > 0;
+        return this.#camera !== null && this.width > 0 && this.height > 0;
     }
 
     /**
@@ -130,29 +130,29 @@ export class Viewport extends EventTarget {
      */
     release() {
         this.deactivatePicking();
-        this._auto_resizer.release();
-        this._context.release();
+        this.#auto_resizer.release();
+        this.#context.release();
     }
 
     /**
      *
      */
     drawFrame({ decoded_frame, left, top }: { decoded_frame: VideoFrame; left: number; top: number }): void {
-        this._context.drawFrame({ frame: decoded_frame, left, top });
+        this.#context.drawFrame({ frame: decoded_frame, left, top });
     }
 
     /**
      *
      */
     activatePicking() {
-        this._canvas.addEventListener("click", this.#onCanvasClicked);
+        this.#canvas.addEventListener("click", this.#onCanvasClicked);
     }
 
     /**
      *
      */
     deactivatePicking() {
-        this._canvas.removeEventListener("click", this.#onCanvasClicked);
+        this.#canvas.removeEventListener("click", this.#onCanvasClicked);
     }
 
     /**
@@ -160,8 +160,8 @@ export class Viewport extends EventTarget {
      */
     #onCanvasClicked = async (e: MouseEvent) => {
         const pos: Vec2 = [
-            e.offsetX / (this._canvas.clientWidth - this._canvas.clientLeft),
-            e.offsetY / (this._canvas.clientHeight - this._canvas.clientTop),
+            e.offsetX / (this.#canvas.clientWidth - this.#canvas.clientLeft),
+            e.offsetY / (this.#canvas.clientHeight - this.#canvas.clientTop),
         ];
 
         const res = await this.castScreenSpaceRay({
@@ -182,13 +182,13 @@ export class Viewport extends EventTarget {
         pos: Vec2;
         mode: HighlightMode;
     }): Promise<{ entity: Entity; ws_position: Vec3; ws_normal: Vec3 } | null> {
-        if (!this._camera || !this._camera.rtid) {
+        if (!this.#camera || !this.#camera.rtid) {
             return null;
         }
 
         const res = await this.#core._castScreenSpaceRay({
             screenSpaceRayQuery: {
-                camera_rtid: this._camera.rtid,
+                camera_rtid: this.#camera.rtid,
                 pos,
                 mode,
             },
@@ -210,7 +210,7 @@ export class Viewport extends EventTarget {
      * @internal
      */
     _updateCanvasSize() {
-        this._context.refreshSize();
+        this.#context.refreshSize();
         this.dispatchEvent(new Event("on-resized"));
     }
 }

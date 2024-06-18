@@ -42,51 +42,51 @@ export class Session extends EventTarget implements SessionInterface {
     /**
      *
      */
-    private _created: boolean = false;
+    #created: boolean = false;
 
     /**
      * Various info on the session.
      */
-    private _session_info: SessionInfo | null = null;
+    #session_info: SessionInfo | null = null;
 
     /**
      * The address of the gateway the session is running on.
      */
-    private _gateway_url: string | null = null;
+    #gateway_url: string | null = null;
 
     /**
      * The session key used as an authentication method on the gateway.
      */
-    private _session_key: string | null = null;
+    #session_key: string | null = null;
 
     /**
      * A map of all connected clients
      */
-    private _clients: Map<UUID, Client> = new Map<UUID, Client>();
+    #clients: Map<UUID, Client> = new Map<UUID, Client>();
 
     /**
      *
      */
     get has_been_created() {
-        return this._created;
+        return this.#created;
     }
     get scene_id() {
         return this._scene_id;
     }
     get session_id() {
-        return this._session_info?.session_id;
+        return this.#session_info?.session_id;
     }
     get gateway_url() {
-        return this._gateway_url;
+        return this.#gateway_url;
     }
     get session_key() {
-        return this._session_key;
+        return this.#session_key;
     }
     get client_ids(): Array<UUID> {
-        return Array.from(this._clients.keys());
+        return Array.from(this.#clients.keys());
     }
     get clients(): Array<Client> {
-        return Array.from(this._clients.values());
+        return Array.from(this.#clients.values());
     }
 
     /**
@@ -110,7 +110,7 @@ export class Session extends EventTarget implements SessionInterface {
      * @returns {boolean} True if the session can be joined, false otherwise.
      */
     isJoinable(): boolean {
-        return this._gateway_url !== null && this._session_key !== null;
+        return this.#gateway_url !== null && this.#session_key !== null;
     }
 
     /**
@@ -134,8 +134,8 @@ export class Session extends EventTarget implements SessionInterface {
             throw new Error("Error when creating session");
         }
 
-        this._session_info = (await res.json()) as SessionInfo;
-        this._created = true;
+        this.#session_info = (await res.json()) as SessionInfo;
+        this.#created = true;
         return this;
     }
 
@@ -168,7 +168,7 @@ export class Session extends EventTarget implements SessionInterface {
             return null;
         }
 
-        this._session_info = session;
+        this.#session_info = session;
         return this;
     }
 
@@ -191,15 +191,15 @@ export class Session extends EventTarget implements SessionInterface {
         // Gateways that don't support secure connections set their SSL port to 0.
         const protocol = endpoint_info.ssl_port ? "wss" : "ws";
         const port = endpoint_info.ssl_port !== 0 ? endpoint_info.ssl_port : endpoint_info.port;
-        this._gateway_url = `${protocol}://${endpoint_info.ip}:${port}`;
-        this._session_key = session_token;
+        this.#gateway_url = `${protocol}://${endpoint_info.ip}:${port}`;
+        this.#session_key = session_token;
     }
 
     /**
      *
      */
     async close() {
-        if (this._session_info === null) {
+        if (this.#session_info === null) {
             throw new Error("Cannot close session as it has not been opened yet");
         }
 
@@ -221,7 +221,7 @@ export class Session extends EventTarget implements SessionInterface {
      * @returns {Client | null} - The matching client or null if not found.
      */
     getClient({ client_id }: { client_id: UUID }): Client | null {
-        return this._clients.get(client_id) ?? null;
+        return this.#clients.get(client_id) ?? null;
     }
 
     /**
@@ -244,13 +244,13 @@ export class Session extends EventTarget implements SessionInterface {
      */
     _updateClients({ client_data }: { client_data: Array<ClientMetaData> }): void {
         for (const data of client_data) {
-            if (!this._clients.has(data.client_id)) {
+            if (!this.#clients.has(data.client_id)) {
                 this._onClientJoined({ client: new Client(data) });
             }
         }
 
         const client_ids = client_data.map(d => d.client_id);
-        for (const [client_id] of this._clients) {
+        for (const [client_id] of this.#clients) {
             if (!client_ids.includes(client_id)) {
                 this._onClientLeft({ client_id });
             }
@@ -262,7 +262,7 @@ export class Session extends EventTarget implements SessionInterface {
      * @param client The client to register
      */
     _onClientJoined({ client }: { client: Client }): void {
-        this._clients.set(client.id, client);
+        this.#clients.set(client.id, client);
         this.dispatchEvent(new CustomEvent("client-joined", { detail: client }));
     }
 
@@ -273,7 +273,7 @@ export class Session extends EventTarget implements SessionInterface {
     _onClientLeft({ client_id }: { client_id: UUID }): void {
         const client = this.getClient({ client_id });
         if (client) {
-            this._clients.delete(client_id);
+            this.#clients.delete(client_id);
             this.dispatchEvent(new CustomEvent("client-left", { detail: client }));
         }
     }

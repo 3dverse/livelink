@@ -9,22 +9,21 @@ export class CanvasAutoResizer extends EventTarget {
      * The viewport holding the observed canvas.
      */
     readonly #viewport: Viewport;
+
     /**
      * Observer for resize events.
      */
     readonly #observer: ResizeObserver;
+
     /**
      * Debounce timeout to avoid spamming the resize command.
      */
     #resize_debounce_timeout: number = 0;
+
     /**
      * Debounce timeout duration.
      */
-    #resize_debounce_timeout_duration_in_ms = 500;
-    /**
-     * Canvas actual dimensions.
-     */
-    #dimensions: Vec2i;
+    #resize_debounce_timeout_duration_in_ms = 500 as const;
 
     /**
      * Constructs an auto resizer for the provided canvas.
@@ -33,7 +32,6 @@ export class CanvasAutoResizer extends EventTarget {
         super();
 
         this.#viewport = viewport;
-        this.#dimensions = [viewport.canvas.clientWidth, viewport.canvas.clientHeight];
         this.#observer = new ResizeObserver(this.#onResized);
 
         // My watch begins...
@@ -43,7 +41,7 @@ export class CanvasAutoResizer extends EventTarget {
     /**
      *
      */
-    release() {
+    release(): void {
         this.#observer.disconnect();
     }
 
@@ -51,9 +49,6 @@ export class CanvasAutoResizer extends EventTarget {
      * Callback called by the observer when the canvas is resized.
      */
     #onResized = (_: Array<ResizeObserverEntry>): void => {
-        this.#dimensions[0] = this.#viewport.canvas.clientWidth;
-        this.#dimensions[1] = this.#viewport.canvas.clientHeight;
-
         if (this.#resize_debounce_timeout !== 0) {
             clearTimeout(this.#resize_debounce_timeout);
         }
@@ -67,8 +62,8 @@ export class CanvasAutoResizer extends EventTarget {
     #resize = (): void => {
         const old_size: Vec2i = [this.#viewport.canvas.width, this.#viewport.canvas.height];
 
-        this.#viewport.canvas.width = this.#dimensions[0];
-        this.#viewport.canvas.height = this.#dimensions[1];
+        this.#viewport.canvas.width = this.#viewport.canvas.clientWidth;
+        this.#viewport.canvas.height = this.#viewport.canvas.clientHeight;
 
         if (this.#viewport.canvas.width === 0 || this.#viewport.canvas.height === 0) {
             return;
@@ -81,9 +76,7 @@ export class CanvasAutoResizer extends EventTarget {
         this.#viewport._updateCanvasSize();
 
         super.dispatchEvent(
-            new CustomEvent("on-resized", {
-                detail: { old_size, new_size: this.#viewport.dimensions },
-            }),
+            new CustomEvent("on-resized", { detail: { old_size, new_size: this.#viewport.dimensions } }),
         );
     };
 
