@@ -58,8 +58,49 @@ export default function PointAndClick() {
         if (!event.detail) return;
         const { entity, ws_position } = event.detail;
         if (entity?.debug_name?.value !== "Ground") return;
-        _character!.local_transform!.position = [ws_position[0], 0.01, ws_position[2]];
+
+        const positionYIdle = 0.05;
+        const initial = _character!.local_transform!.position || ([0, positionYIdle, 0] as Vec3);
+        const destination = [ws_position[0], positionYIdle, ws_position[2]] as Vec3;
+
+        let t = 0;
+        const RATE = 12;
+        const SPEED = 50; // m/ms
+        const DISTANCE = distanceVector(initial, destination);
+        const DURATION = DISTANCE * SPEED;
+
+        const interval = setInterval(() => {
+            // Calcul position
+            const factor = Math.min(t / DURATION, 1);
+            const x = lerp(initial[0], destination[0], factor);
+            let y;
+            if (factor <= 0.1) {
+                y = lerp(positionYIdle, 1, Math.sin(factor * 10));
+            } else if (factor >= 0.9) {
+                y = lerp(1, positionYIdle, Math.cos((1 - factor) * 10));
+            } else {
+                y = 1;
+            }
+            const z = lerp(initial[2], destination[2], factor);
+
+            // Set position
+            _character!.local_transform!.position = [x, y, z];
+
+            if (t >= DURATION) clearInterval(interval);
+            else t += RATE;
+        }, RATE);
     }, []);
+
+    const lerp = (v0: number, v1: number, t: number) => {
+        return v0 + t * (v1 - v0);
+    };
+
+    const distanceVector = (v1: Vec3, v2: Vec3) => {
+        const dx = v1[0] - v2[0];
+        const dy = v1[1] - v2[1];
+        const dz = v1[2] - v2[2];
+        return Math.sqrt(dx * dx + dy * dy + dz * dz);
+    };
 
     // Listen to click on the ground
     useEffect(() => {
