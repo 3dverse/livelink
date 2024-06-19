@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import { DefaultCamera, useLivelinkInstance } from "@3dverse/livelink-react";
 import Canvas from "../../components/Canvas";
 import { CanvasActionBar } from "../../styles/components/CanvasActionBar";
-import { Client, Entity, Livelink, Viewport } from "@3dverse/livelink";
+import { Camera, Client, Entity, Livelink, RTID, Viewport } from "@3dverse/livelink";
 
 const isAvatarVisible = (projection: number[], viewport: Viewport) => {
     return (
@@ -29,6 +29,7 @@ const computeRadius = (zValue: number) => {
 //------------------------------------------------------------------------------
 const Avatar = ({ client, instance }: { client: Client; instance: Livelink }) => {
     const clientCameraRef = useRef<Entity | null>(null);
+
     const requestRef = useRef<number>(0);
     const avatarRef = useRef<HTMLDivElement>(null);
 
@@ -74,14 +75,17 @@ const Avatar = ({ client, instance }: { client: Client; instance: Livelink }) =>
 //------------------------------------------------------------------------------
 export default function Collaborators() {
     const canvasRef = useRef<HTMLCanvasElement>(null);
+    const canvasRef2 = useRef<HTMLCanvasElement>(null);
 
     const [clients, setClients] = useState<Array<Client>>([]);
+    const [pipCamera, setPipCamera] = useState<RTID | null>(null);
 
     const { instance, connect, disconnect } = useLivelinkInstance({ views: [{ canvas_ref: canvasRef }] });
 
     const toggleConnection = async () => {
         if (instance) {
             disconnect();
+            setPipCamera(null);
         } else if (canvasRef.current) {
             await connect({ scene_id: "e7d69f14-d18e-446b-8df3-cbd24e10fa92", token: "public_p54ra95AMAnZdTel" });
         }
@@ -92,10 +96,32 @@ export default function Collaborators() {
             return;
         }
 
-        instance.session.addEventListener("client-joined", () => setClients([...instance.session.clients]));
-        instance.session.addEventListener("client-left", () => setClients([...instance.session.clients]));
+        instance.session.addEventListener("client-joined", () =>
+            setClients([...instance.session.clients.filter(c => c.id !== instance?.session.client_id)]),
+        );
+        instance.session.addEventListener("client-left", () =>
+            setClients([...instance.session.clients.filter(c => c.id !== instance?.session.client_id)]),
+        );
         setClients([...instance.session.clients]);
     }, [instance, setClients]);
+
+    useEffect(() => {
+        if (!instance) return;
+        const camera_rtids = clients.map(c => c.camera_rtids).flat();
+        if (pipCamera && !camera_rtids.includes(pipCamera)) {
+            setPipCamera(null);
+        }
+        if (pipCamera && camera_rtids.includes(pipCamera)) {
+            instance.scene.getEntity({ entity_rtid: pipCamera }).then(entity => {
+                if (entity && canvasRef2.current) {
+                    const camera = entity as Camera;
+                    const viewport = new Viewport(instance, { canvas_element: canvasRef2.current, context_type: "2d" });
+                    viewport.camera = camera;
+                    instance.addViewports({ viewports: [viewport] });
+                }
+            });
+        }
+    }, [instance, pipCamera, clients]);
 
     return (
         <div className="relative h-full max-h-screen p-3 pl-0">
@@ -108,23 +134,34 @@ export default function Collaborators() {
             <div className="absolute right-8 top-6">
                 <div className="avatar-group flex -space-x-6 rtl:space-x-reverse ">
                     {clients.map(client => (
-                        <div key={client.id} className="avatar w-10 rounded-full overflow-clip">
-                            <img
-                                title={client.id + " | " + client.camera_rtids.join(", ")}
-                                src="https://img.daisyui.com/images/stock/photo-1534528741775-53994a69daeb.jpg"
-                            />
-                        </div>
+                        <button
+                            key={client.id}
+                            onClick={() => {
+                                const camera_rtid = client.camera_rtids[0];
+                                setPipCamera(currentPip => (currentPip === camera_rtid ? null : camera_rtid));
+                            }}
+                        >
+                            <div className="avatar w-10 rounded-full overflow-clip">
+                                <img
+                                    title={client.id + " | " + client.camera_rtids.join(", ")}
+                                    src="https://img.daisyui.com/images/stock/photo-1534528741775-53994a69daeb.jpg"
+                                />
+                            </div>
+                        </button>
                     ))}
                 </div>
             </div>
             {instance ? (
                 <>
-                    {clients
-                        .filter(client => client.id !== instance?.session.client_id)
-                        .map(client => (
-                            <Avatar key={client.id} client={client} instance={instance} />
-                        ))}
+                    {clients.map(client => (
+                        <Avatar key={client.id} client={client} instance={instance} />
+                    ))}
                 </>
+            ) : null}
+            {pipCamera ? (
+                <div className="absolute top-3/4 left-8 bottom-8 right-8 border border-tertiary rounded-lg shadow-2xl">
+                    <Canvas canvasRef={canvasRef2} />
+                </div>
             ) : null}
         </div>
     );
