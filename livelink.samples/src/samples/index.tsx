@@ -24,6 +24,7 @@ import LabelingStation from "./labeling-station/LabelingStation";
 // Misc
 import Collaborators from "./collaborators/Collaborators";
 import PictureInPicture from "./picture-in-picture/PictureInPicture";
+import LiveSkeletalAnimation from "./live-skeletal-animation/LiveSkeletalAnimation";
 
 export const SAMPLES = [
     {
@@ -66,6 +67,7 @@ export const SAMPLES = [
         list: [
             { title: "Collaborators", path: "collaborators", element: <Collaborators /> },
             { title: "Picture in Picture", path: "picture-in-picture", element: <PictureInPicture /> },
+         	{ title: "Live Skeletal Animation", path: "live-skeletal-animation", element: <LiveSkeletalAnimation /> },
         ],
     },
 ];

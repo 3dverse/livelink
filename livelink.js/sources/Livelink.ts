@@ -7,6 +7,7 @@ import {
     InputState,
     LivelinkCore,
     LivelinkCoreModule,
+    Quat,
     RTID,
     ScreenSpaceRayQuery,
     ScreenSpaceRayResult,
@@ -415,6 +416,16 @@ export class Livelink {
                 this.scene.entity_registry._clearBroadcastList();
             }
         }, 1000 / broadcastsPerSecond);
+    }
+
+    /**
+     *
+     */
+    sendSkeletonPose({ controller, pose }: { controller: Entity; pose: Map<number, Quat> }): void {
+        this.#core._sendSkeletonPose({
+            controller_rtid: controller.rtid!,
+            pose,
+        });
     }
 
     /**
