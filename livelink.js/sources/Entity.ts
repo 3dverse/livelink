@@ -62,13 +62,6 @@ export class Entity extends EntityBase {
     /**
      *
      */
-    set proxy_state(state: EntityAutoUpdateState) {
-        this._proxy_state = state;
-    }
-
-    /**
-     *
-     */
     constructor(private readonly _scene: Scene) {
         super();
     }
@@ -226,10 +219,12 @@ export class Entity extends EntityBase {
      *
      */
     _updateTransformFromWorldMatrix(ws_from_ls: Mat4) {
-        this._auto_update = "off";
         this._proxy_state = "off";
+        this._auto_update = "off";
         this.local_transform!.position = getWorldPosition(ws_from_ls);
         this.local_transform!.orientation = getWorldQuaternion(ws_from_ls);
+        this._proxy_state = "on";
+        this._auto_update = "on";
     }
 
     /**

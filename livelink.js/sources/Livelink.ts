@@ -25,7 +25,6 @@ import { Viewport } from "./Viewport";
 import { Camera } from "./Camera";
 import { Entity } from "./Entity";
 import { Scene } from "./Scene";
-import { getWorldPosition, getWorldQuaternion } from "./utils";
 
 /**
  * The Livelink interface.
