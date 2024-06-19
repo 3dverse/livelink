@@ -121,6 +121,9 @@ export default function Collaborators() {
                 }
             });
         }
+        if (!pipCamera && instance.viewports[1]) {
+            instance.removeViewport({ viewport: instance.viewports[1] });
+        }
     }, [instance, pipCamera, clients]);
 
     return (

@@ -255,6 +255,13 @@ export class Livelink {
     /**
      *
      */
+    removeViewport({ viewport }: { viewport: Viewport }): void {
+        this.#remote_rendering_surface.removeViewport({ viewport });
+    }
+
+    /**
+     *
+     */
     get viewports(): Array<Viewport> {
         return this.#remote_rendering_surface.viewports;
     }
