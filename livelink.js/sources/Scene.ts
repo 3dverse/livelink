@@ -110,6 +110,24 @@ export class Scene extends EventTarget {
     }
 
     /**
+     *
+     */
+    async highlightEntities({
+        entities,
+        keep_old_selection = false,
+    }: {
+        entities: Array<Entity>;
+        keep_old_selection?: boolean;
+    }): Promise<void> {
+        this.#core.highlightEntities({
+            highlightEntitiesMessage: {
+                entities: entities.map(e => e.rtid!),
+                keep_old_selection,
+            },
+        });
+    }
+
+    /**
      * @internal
      */
     _onScriptEventReceived = async (e: Event) => {
