@@ -245,7 +245,7 @@ export default function ConveyorBeltSorting() {
                                     <div className="mt-1">
                                         <div className="flex justify-between">
                                             <p>Speed</p>
-                                            <span className="text-xs text-color-tertiary">
+                                            <span className="text-xs text-tertiary">
                                                 {selectedEntity.physics_material!.contactVelocity![0]}
                                             </span>
                                         </div>

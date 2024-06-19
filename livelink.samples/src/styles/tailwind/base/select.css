@@ -1,6 +1,6 @@
 @layer base {
     .select {
-        @apply flex items-center justify-center px-4 py-2 text-color-primary text-md tracking-wide font-normal rounded-lg cursor-pointer;
+        @apply flex items-center justify-center px-4 py-2 text-primary text-md tracking-wide font-normal rounded-lg cursor-pointer;
         transition-property: box-shadow, background-color, opacity;
         transition-duration: 0.25s;
     }
@@ -8,7 +8,7 @@
     /* Variants */
 
     .select-primary {
-        @apply bg-[white] text-color-primary-dark;
+        @apply bg-[white] text-primary-dark;
         box-shadow: 0px 5px 10px hsl(0, 0%, 0%, 0.2);
 
         &:hover,

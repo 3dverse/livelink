@@ -1,6 +1,6 @@
 @layer base {
     .button {
-        @apply flex items-center justify-center px-4 py-2 text-color-primary text-md tracking-wide font-normal rounded-md;
+        @apply flex items-center justify-center px-4 py-2 text-primary text-md tracking-wide font-normal rounded-md;
         transition-property: box-shadow, background-color, opacity;
         transition-duration: 0.25s;
     }
@@ -8,7 +8,7 @@
     /* Variants */
 
     .button-accent {
-        @apply bg-color-accent text-color-primary-dark;
+        @apply bg-accent text-primary-dark;
         box-shadow: 0px 5px 10px hsl(var(--color-accent-hsl), 0.2);
 
         &:hover,
@@ -19,7 +19,7 @@
     }
 
     .button-primary {
-        @apply bg-[white] text-color-primary-dark;
+        @apply bg-[white] text-primary-dark;
         box-shadow: 0px 5px 10px hsl(0, 0%, 0%, 0.2);
 
         &:hover,
@@ -30,7 +30,7 @@
     }
 
     .button-secondary {
-        @apply opacity-60 bg-color-underground;
+        @apply opacity-60 bg-underground;
 
         &:hover,
         &:focus,
@@ -40,18 +40,18 @@
     }
 
     .button-ghost {
-        @apply text-color-secondary;
+        @apply text-secondary;
 
         &.active,
         &:hover,
         &:focus,
         &:active {
-            @apply text-color-primary bg-color-overground;
+            @apply text-primary bg-overground;
         }
     }
 
     .button-outline {
-        @apply border border-color-secondary;
+        @apply border border-secondary;
     }
 
     /* Sizes */

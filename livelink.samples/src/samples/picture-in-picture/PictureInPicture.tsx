@@ -59,7 +59,7 @@ export default function PictureInPicture() {
         <div className="w-full h-full flex basis-full flex-row grow gap-4 p-3 pl-0">
             <div className="relative flex basis-full">
                 <Canvas canvasRef={canvasRef1} />
-                <div className="absolute top-3/4 left-8 bottom-8 right-8 border border-color-tertiary rounded-lg shadow-2xl">
+                <div className="absolute top-3/4 left-8 bottom-8 right-8 border border-tertiary rounded-lg shadow-2xl">
                     <Canvas canvasRef={canvasRef2} />
                 </div>
             </div>

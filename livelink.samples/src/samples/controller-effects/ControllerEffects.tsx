@@ -200,7 +200,7 @@ export default function ControllerEffects() {
             <div className="relative flex basis-full">
                 <Canvas canvasRef={canvasRef2} />
                 <div className="absolute left-1/2 bottom-16 -translate-x-1/2">
-                    <p className="text-color-tertiary">No controls</p>
+                    <p className="text-tertiary">No controls</p>
                 </div>
             </div>
         </div>

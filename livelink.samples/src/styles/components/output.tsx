@@ -3,7 +3,7 @@ import { ReactNode } from "react";
 //------------------------------------------------------------------------------
 export const Output = ({ children }: { children: ReactNode }) => {
     return (
-        <output className="absolute top-5 right-5 py-2 flex flex-col gap-1 bg-color-underground bg-opacity-50 rounded-lg text-xs text-[#FFFFFFCC] divide-x divide-[#ffffff20] border border-[#ffffff20] backdrop-blur-xl">
+        <output className="absolute top-5 right-5 py-2 flex flex-col gap-1 bg-underground bg-opacity-50 rounded-lg text-xs text-[#FFFFFFCC] divide-x divide-[#ffffff20] border border-[#ffffff20] backdrop-blur-xl">
             {children}
         </output>
     );
