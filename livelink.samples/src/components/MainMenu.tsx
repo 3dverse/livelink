@@ -23,7 +23,7 @@ export function MainMenu({ isOpen, onClose }: { isOpen: boolean; onClose: () => 
                     className="relative w-80 h-full flex flex-col bg-ground shadow-2xl lg:shadow-none z-10"
                     onClick={onClose}
                 >
-                    <header className="my-6 px-5">
+                    <header className="mt-6 mb-3 px-5">
                         <NavLink to="/" className="flex items-center gap-3 pl-3 font-primary text-lg">
                             <img src="https://console.3dverse.com/static/logo/3dverse-wordmark.svg" className="h-6" />
                             3dverse Samples
@@ -41,7 +41,7 @@ export function MainMenu({ isOpen, onClose }: { isOpen: boolean; onClose: () => 
                                         to={s.path}
                                         className={({ isActive }) =>
                                             [
-                                                "button button-ghost text-sm justify-start rounded-xl",
+                                                "button button-ghost py-1 text-sm justify-start rounded-xl",
                                                 isActive ? "active" : "",
                                             ].join(" ")
                                         }
