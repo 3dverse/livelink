@@ -175,7 +175,7 @@ export default function ControllerEffects() {
     const cameraShake3 = cameraControls.current && new CameraShake(cameraControls.current, 5000, 2, 0.5);
 
     return (
-        <div className="w-full h-full flex basis-full grow p-4 ">
+        <div className="w-full h-full flex basis-full grow p-3 pl-0">
             <div className="relative flex basis-full">
                 <Canvas canvasRef={canvasRef1} />
                 <div className="absolute left-1/2 bottom-8 -translate-x-1/2 flex flex-col items-center gap-2">

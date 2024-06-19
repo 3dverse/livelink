@@ -69,7 +69,7 @@ export default function Trigger() {
     return (
         <>
             <div className="relative w-full h-full">
-                <div className="w-full h-full p-4">
+                <div className="w-full h-full p-3 pl-0">
                     <Canvas canvasRef={canvasRef} />
                 </div>
                 <div className="absolute bottom-8 right-8 w-80 flex flex-col basis-full flex-grow">

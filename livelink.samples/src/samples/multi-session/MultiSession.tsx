@@ -17,7 +17,7 @@ export default function MultiSession() {
     }, []);
 
     return (
-        <div className="w-full h-full flex basis-full flex-row grow gap-4 p-4">
+        <div className="w-full h-full flex basis-full flex-row grow gap-4 p-3 pl-0">
             <div className="flex basis-full">
                 <Canvas canvasRef={canvasRef1} />
             </div>

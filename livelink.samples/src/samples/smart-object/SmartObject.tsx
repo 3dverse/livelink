@@ -45,7 +45,7 @@ export default function SmartObject() {
     return (
         <>
             <div className="w-full h-full relative">
-                <div className="w-full h-full p-4">
+                <div className="w-full h-full p-3 pl-0">
                     <Canvas canvasRef={canvasRef} />
                 </div>
 

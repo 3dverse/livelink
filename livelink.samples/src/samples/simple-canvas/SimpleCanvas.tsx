@@ -19,7 +19,7 @@ export default function SimpleCanvas() {
     };
 
     return (
-        <div className="relative h-full p-3">
+        <div className="relative h-full p-3 pl-0">
             <Canvas canvasRef={canvasRef} />
 
             <CanvasActionBar isCentered={!instance}>

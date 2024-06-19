@@ -198,7 +198,7 @@ export default function ConveyorBeltSorting() {
 
     return (
         <div className="relative w-full h-full">
-            <div className="w-full h-full p-4">
+            <div className="w-full h-full p-3 pl-0">
                 <Canvas canvasRef={canvasRef} />
             </div>
             <CanvasActionBar isCentered={!instance}>
