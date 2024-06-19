@@ -63,7 +63,7 @@ export default function SmartObjectSync() {
 
     return (
         <div className="relative h-full">
-            <div className="h-full flex gap-4 p-3 pl-0">
+            <div className="h-full flex gap-3 p-3 pl-0">
                 <CanvasWithControl canvasRef={canvasRef1} light={light1} />
                 <CanvasWithControl canvasRef={canvasRef2} light={light2} />
             </div>

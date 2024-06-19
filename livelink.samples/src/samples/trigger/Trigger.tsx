@@ -72,21 +72,23 @@ export default function Trigger() {
                 <div className="w-full h-full p-3 pl-0">
                     <Canvas canvasRef={canvasRef} />
                 </div>
-                <div className="absolute bottom-8 right-8 w-80 flex flex-col basis-full flex-grow">
-                    {messages.map((msg, i) => (
-                        <div key={i} className={`chat chat-${i % 2 ? "start" : "end"}`}>
-                            <div className="chat-image avatar">
-                                <div className="w-10 rounded-full">
-                                    <img
-                                        alt="Tailwind CSS chat bubble component"
-                                        src="https://img.daisyui.com/images/stock/photo-1534528741775-53994a69daeb.jpg"
-                                    />
+                {messages.length > 0 && (
+                    <div className="absolute bottom-8 right-8 w-80 flex flex-col">
+                        {messages.map((msg, i) => (
+                            <div key={i} className={`chat chat-${i % 2 ? "start" : "end"}`}>
+                                <div className="chat-image avatar">
+                                    <div className="w-10 rounded-full">
+                                        <img
+                                            alt="Tailwind CSS chat bubble component"
+                                            src="https://img.daisyui.com/images/stock/photo-1534528741775-53994a69daeb.jpg"
+                                        />
+                                    </div>
                                 </div>
+                                <div className="chat-bubble">{msg}</div>
                             </div>
-                            <div className="chat-bubble">{msg}</div>
-                        </div>
-                    ))}
-                </div>
+                        ))}
+                    </div>
+                )}
                 <CanvasActionBar isCentered={!instance}>
                     <button className="button button-primary" onClick={toggleConnection}>
                         {instance ? "Disconnect" : "Connect"}
