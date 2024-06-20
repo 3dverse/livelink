@@ -275,7 +275,9 @@ export class Session extends EventTarget implements SessionInterface {
      */
     _onClientJoined({ client }: { client: Client }): void {
         this.#clients.set(client.id, client);
-        this.dispatchEvent(new CustomEvent("client-joined", { detail: client }));
+        if (client.id !== this.client_id) {
+            this.dispatchEvent(new CustomEvent("client-joined", { detail: client }));
+        }
     }
 
     /**
