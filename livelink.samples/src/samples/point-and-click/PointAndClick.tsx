@@ -1,8 +1,8 @@
 //------------------------------------------------------------------------------
 import { useCallback, useEffect, useRef } from "react";
-import { Camera, Entity, Vec3 } from "@3dverse/livelink";
-import Canvas from "../../components/Canvas";
+import { Camera, Entity, Vec2, Vec3, Viewport } from "@3dverse/livelink";
 import { useLivelinkInstance, DefaultCamera, useEntity } from "@3dverse/livelink-react";
+import Canvas from "../../components/Canvas";
 import { CanvasActionBar } from "../../styles/components/CanvasActionBar";
 
 //------------------------------------------------------------------------------
@@ -13,14 +13,32 @@ const SmartObjectManifest = {
 } as const;
 
 //------------------------------------------------------------------------------
+const lerp = (v0: number, v1: number, t: number) => {
+    return v0 + t * (v1 - v0);
+};
+
+//------------------------------------------------------------------------------
+const distanceVector = (v1: Vec3, v2: Vec3) => {
+    const dx = v1[0] - v2[0];
+    const dy = v1[1] - v2[1];
+    const dz = v1[2] - v2[2];
+    return Math.sqrt(dx * dx + dy * dy + dz * dz);
+};
+
+const CHARACTER_POS_Y_IDLE = 0.05;
+const CHARACTER_POS_Y_JUMP = 0.5;
+
+//------------------------------------------------------------------------------
 export default function PointAndClick() {
     const canvasRef = useRef<HTMLCanvasElement>(null);
 
+    //------------------------------------------------------------------------------
     const { instance, connect, disconnect } = useLivelinkInstance({ views: [{ canvas_ref: canvasRef }] });
     const character = useEntity({ instance, entity_uuid: SmartObjectManifest.Character });
     const ground = useEntity({ instance, entity_uuid: SmartObjectManifest.Ground });
     const cube = useEntity({ instance, entity_uuid: SmartObjectManifest.Cube });
 
+    //------------------------------------------------------------------------------
     const toggleConnection = async () => {
         if (instance) {
             disconnect();
@@ -33,6 +51,7 @@ export default function PointAndClick() {
         }
     };
 
+    //------------------------------------------------------------------------------
     async function onConnected({ cameras }: { cameras: Array<Camera | null> }) {
         if (cameras.length === 0 || cameras[0] === null) {
             return;
@@ -46,12 +65,36 @@ export default function PointAndClick() {
         camera.viewport.activatePicking();
     }
 
+    //------------------------------------------------------------------------------
+    // On hover plane with alt key pressed
+    const onMouseMove = useCallback(async (e: MouseEvent, character: Entity, viewport: Viewport) => {
+        if (!(e.metaKey || e.altKey)) return;
+
+        const canvas = viewport?.canvas;
+        if (!canvas) return;
+
+        const pos: Vec2 = [
+            e.offsetX / (canvas.clientWidth - canvas.clientLeft),
+            e.offsetY / (canvas.clientHeight - canvas.clientTop),
+        ];
+
+        const mode = 0;
+        const res = await viewport?.castScreenSpaceRay({ pos, mode });
+        if (!res?.ws_position) return;
+
+        const x = res?.ws_position[0] as number;
+        const z = res?.ws_position[2] as number;
+        character!.local_transform!.position = [x, CHARACTER_POS_Y_IDLE, z];
+    }, []);
+
+    //------------------------------------------------------------------------------
     // Initialize ground position
     useEffect(() => {
         if (!ground) return;
-        ground!.local_transform!.position = [0, 0.01, 0];
+        ground!.local_transform!.position = [0, CHARACTER_POS_Y_IDLE, 0];
     }, []);
 
+    //------------------------------------------------------------------------------
     // On click on ground
     const onClick = useCallback((e: Event, _character: Entity) => {
         const event = e as CustomEvent<{ entity: Entity | null; ws_normal: Vec3; ws_position: Vec3 }>;
@@ -59,25 +102,24 @@ export default function PointAndClick() {
         const { entity, ws_position } = event.detail;
         if (entity?.debug_name?.value !== "Ground") return;
 
-        const positionYIdle = 0.05;
-        const initial = _character!.local_transform!.position || ([0, positionYIdle, 0] as Vec3);
-        const destination = [ws_position[0], positionYIdle, ws_position[2]] as Vec3;
+        const initial = _character!.local_transform!.position || ([0, CHARACTER_POS_Y_IDLE, 0] as Vec3);
+        const destination = [ws_position[0], CHARACTER_POS_Y_IDLE, ws_position[2]] as Vec3;
 
-        let t = 0;
         const RATE = 12;
         const SPEED = 50; // m/ms
-        const DISTANCE = distanceVector(initial, destination);
-        const DURATION = DISTANCE * SPEED;
+        const distance = distanceVector(initial, destination);
+        const duration = distance * SPEED;
+        let t = 0;
 
         const interval = setInterval(() => {
             // Calcul position
-            const factor = Math.min(t / DURATION, 1);
+            const factor = Math.min(t / duration, 1);
             const x = lerp(initial[0], destination[0], factor);
             let y;
             if (factor <= 0.1) {
-                y = lerp(positionYIdle, 1, Math.sin(factor * 10));
+                y = lerp(CHARACTER_POS_Y_IDLE, CHARACTER_POS_Y_JUMP, Math.sin(factor * 10));
             } else if (factor >= 0.9) {
-                y = lerp(1, positionYIdle, Math.cos((1 - factor) * 10));
+                y = lerp(CHARACTER_POS_Y_JUMP, CHARACTER_POS_Y_IDLE, Math.cos((1 - factor) * 10));
             } else {
                 y = 1;
             }
@@ -86,29 +128,28 @@ export default function PointAndClick() {
             // Set position
             _character!.local_transform!.position = [x, y, z];
 
-            if (t >= DURATION) clearInterval(interval);
+            if (t >= duration) clearInterval(interval);
             else t += RATE;
         }, RATE);
     }, []);
 
-    const lerp = (v0: number, v1: number, t: number) => {
-        return v0 + t * (v1 - v0);
-    };
-
-    const distanceVector = (v1: Vec3, v2: Vec3) => {
-        const dx = v1[0] - v2[0];
-        const dy = v1[1] - v2[1];
-        const dz = v1[2] - v2[2];
-        return Math.sqrt(dx * dx + dy * dy + dz * dz);
-    };
-
+    //------------------------------------------------------------------------------
     // Listen to click on the ground
     useEffect(() => {
+        if (!instance) return;
+        const viewport = instance.viewports[0];
+        const canvas = viewport.canvas;
         if (character) {
-            instance!.viewports[0].addEventListener("on-entity-picked", e => onClick(e, character));
+            canvas.addEventListener("mousemove", e => onMouseMove(e, character as Entity, viewport));
+            instance.viewports[0].addEventListener("on-entity-picked", e => onClick(e, character));
         }
-    }, [instance, character, onClick]);
+        return () => {
+            canvas.removeEventListener("mousemove", e => onMouseMove(e, character as Entity, viewport));
+            instance.viewports[0].removeEventListener("on-entity-picked", e => onClick(e, character as Entity));
+        };
+    }, [instance, character, onClick, onMouseMove]);
 
+    //------------------------------------------------------------------------------
     function toggleComponent() {
         if (!cube) return;
 
@@ -119,6 +160,7 @@ export default function PointAndClick() {
         }
     }
 
+    //------------------------------------------------------------------------------
     // UI
     return (
         <div className="relative h-full p-3 pl-0">
