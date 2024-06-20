@@ -40,7 +40,7 @@ const devBuildOptions = {
 //------------------------------------------------------------------------------
 (async () => {
     if (process.argv.includes("dev")) {
-        const ctx = await esbuild.context(commonBuildOptions);
+        const ctx = await esbuild.context(devBuildOptions);
         await ctx.watch();
         return;
     }
