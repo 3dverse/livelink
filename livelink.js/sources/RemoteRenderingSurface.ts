@@ -115,6 +115,7 @@ export class RemoteRenderingSurface implements DecodedFrameConsumer {
      * Detach a viewport from the surface
      */
     removeViewport({ viewport }: { viewport: Viewport }): void {
+        viewport.release();
         this.#viewports = this.#viewports.filter(v => v.viewport !== viewport);
         this.#onViewportResized();
     }

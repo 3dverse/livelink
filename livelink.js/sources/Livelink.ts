@@ -312,14 +312,17 @@ export class Livelink {
         const frame_data = (e as CustomEvent<FrameData>).detail;
         this.session._updateClients({ client_data: frame_data.meta_data.clients });
         this.#encoded_frame_consumer!.consumeEncodedFrame({ encoded_frame: frame_data.encoded_frame });
+        const active_cameras_rtids = this.viewports.map(v => v.camera?.rtid);
 
         frame_data.meta_data.clients
             .filter(client => client.client_id !== this.session.client_id)
             .forEach(client => {
-                client.viewports.forEach(viewport => {
-                    const entity = this.scene.entity_registry.get({ entity_rtid: viewport.camera_rtid });
-                    entity?._updateTransformFromWorldMatrix(viewport.ws_from_ls);
-                });
+                client.viewports
+                    .filter(viewport => !active_cameras_rtids.includes(viewport.camera_rtid))
+                    .forEach(viewport => {
+                        const entity = this.scene.entity_registry.get({ entity_rtid: viewport.camera_rtid });
+                        entity?._updateTransformFromWorldMatrix(viewport.ws_from_ls);
+                    });
             });
     };
 
