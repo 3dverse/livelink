@@ -7,6 +7,9 @@ import CameraControls from "camera-controls";
 import * as THREE from "three";
 
 //------------------------------------------------------------------------------
+CameraControls.install({THREE});
+
+//------------------------------------------------------------------------------
 class MPRCamera extends Camera {
     static i = 0;
     cameraControls: CameraControls | null = null;
