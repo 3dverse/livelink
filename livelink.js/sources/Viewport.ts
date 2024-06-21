@@ -146,6 +146,7 @@ export class Viewport extends EventTarget {
         this.canvas.width = this.canvas.clientWidth;
         this.canvas.height = this.canvas.clientHeight;
         this.#auto_resizer = new CanvasAutoResizer(this);
+        this.#context.refreshSize();
     }
 
     /**
