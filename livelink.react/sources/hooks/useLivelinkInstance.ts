@@ -36,6 +36,7 @@ type LivelinkResponse = { instance: Livelink; cameras: Array<Camera | null> };
 //------------------------------------------------------------------------------
 export function useLivelinkInstance({ views }: { views: Array<View> }): {
     instance: Livelink | null;
+    isConnecting: boolean;
     connect: ({
         scene_id,
         token,
@@ -48,6 +49,7 @@ export function useLivelinkInstance({ views }: { views: Array<View> }): {
     disconnect: () => void;
 } {
     const [instance, setInstance] = useState<Livelink | null>(null);
+    const [isConnecting, setIsConnecting] = useState(false);
 
     // Disconnect when unmounted
     useEffect(() => {
@@ -58,6 +60,7 @@ export function useLivelinkInstance({ views }: { views: Array<View> }): {
 
     return {
         instance,
+        isConnecting,
         connect: async ({
             scene_id,
             token,
@@ -71,6 +74,7 @@ export function useLivelinkInstance({ views }: { views: Array<View> }): {
                 return null;
             }
 
+            setIsConnecting(true);
             const instance = await Livelink.join_or_start({ scene_id, token });
             const cameras = await configureClient(
                 instance,
@@ -86,6 +90,7 @@ export function useLivelinkInstance({ views }: { views: Array<View> }): {
             );
 
             setInstance(instance);
+            setIsConnecting(false);
             onConnected?.({ instance, cameras });
 
             return { instance, cameras };
