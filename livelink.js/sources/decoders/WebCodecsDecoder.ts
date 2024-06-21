@@ -15,7 +15,10 @@ export class WebCodecsDecoder implements EncodedFrameConsumer {
         return Object.freeze(
             new Map<CodecType, string[]>([
                 [LivelinkCoreModule.Enums.CodecType.h265, ["hvc1.1.6.L123.00"]],
-                [LivelinkCoreModule.Enums.CodecType.h264, ["avc1.42001E", "avc1.42002A", "avc1.42E01E"]],
+                [
+                    LivelinkCoreModule.Enums.CodecType.h264,
+                    ["avc1.42001E", "avc1.42002A", "avc1.42E01E", "avc1.64001f", "avc1.42002A"],
+                ],
             ]),
         );
     }
@@ -69,13 +72,20 @@ export class WebCodecsDecoder implements EncodedFrameConsumer {
      *
      */
     static async findSupportedCodec(): Promise<CodecType | null> {
+        if (typeof VideoDecoder === "undefined") {
+            console.log("WebCodecs not supported");
+            return null;
+        }
+
         for (const codec of this._codecs.keys()) {
             const supportedConfig = await WebCodecsDecoder._findSupportedConfig({ codec });
             if (supportedConfig) {
+                console.log("Found a supported codec", supportedConfig.config!.codec);
                 return codec;
             }
         }
 
+        console.log("No supported codec found");
         return null;
     }
 
@@ -102,18 +112,23 @@ export class WebCodecsDecoder implements EncodedFrameConsumer {
             codec: "",
             codedWidth: frame_dimensions?.[0],
             codedHeight: frame_dimensions?.[1],
-            // Forcing software decoding for H264, as hardware decoding with H264 has delay issues.
-            hardwareAcceleration:
-                codec === LivelinkCoreModule.Enums.CodecType.h264 ? "prefer-software" : "prefer-hardware",
             optimizeForLatency: true,
         };
 
-        for (const hXXX_codec of codecs) {
-            config.codec = hXXX_codec;
-            const supportedConfig = await VideoDecoder.isConfigSupported(config);
+        const hardwareAccelerations = ["prefer-hardware", "prefer-software", "no-preference"] as const;
 
-            if (supportedConfig.supported && supportedConfig.config) {
-                return supportedConfig;
+        for (const hardwareAcceleration of hardwareAccelerations) {
+            // Skipping hardware decoding for H264, as it has delay issues.
+            if (codec === LivelinkCoreModule.Enums.CodecType.h264 && hardwareAcceleration === "prefer-hardware") {
+                continue;
+            }
+
+            for (const hXXX_codec of codecs) {
+                config.codec = hXXX_codec;
+                const supportedConfig = await VideoDecoder.isConfigSupported({ ...config, hardwareAcceleration });
+                if (supportedConfig.supported && supportedConfig.config) {
+                    return supportedConfig;
+                }
             }
         }
 
