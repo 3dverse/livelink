@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import { DefaultCamera, useLivelinkInstance } from "@3dverse/livelink-react";
 import Canvas from "../../components/Canvas";
 import { CanvasActionBar } from "../../styles/components/CanvasActionBar";
-import { Camera, Client, Entity, Livelink, RTID, Viewport } from "@3dverse/livelink";
+import { Camera, Client, Entity, Livelink, RTID, RenderingSurface, Viewport } from "@3dverse/livelink";
 
 const isAvatarVisible = (projection: number[], viewport: Viewport) => {
     return (
@@ -115,7 +115,10 @@ export default function Collaborators() {
             instance.scene.getEntity({ entity_rtid: pipCamera }).then(entity => {
                 if (entity && canvasRef2.current) {
                     const camera = entity as Camera;
-                    const viewport = new Viewport(instance, { canvas_element: canvasRef2.current, context_type: "2d" });
+                    const viewport = new Viewport(
+                        instance,
+                        new RenderingSurface({ canvas_element: canvasRef2.current, context_type: "2d" }),
+                    );
                     viewport.camera = camera;
                     instance.addViewports({ viewports: [viewport] });
                 }

@@ -1,5 +1,5 @@
 //------------------------------------------------------------------------------
-import { Camera, Viewport, ContextWebGL } from "@3dverse/livelink";
+import { Camera, Viewport, ContextWebGL, RenderingSurface } from "@3dverse/livelink";
 
 //------------------------------------------------------------------------------
 export class WebXRCamera extends Camera {
@@ -98,7 +98,7 @@ export class WebXRHelper {
         // TODO: handle multiple viewports which are baked by a rect of a common
         // canvas, e.g that use the same WebGLRenderingContext.
         this._viewport = viewport;
-        this._context_webgl = viewport.getContext() as ContextWebGL;
+        this._context_webgl = (viewport.rendering_surface as RenderingSurface).getContext() as ContextWebGL;
 
         if (!(this._context_webgl instanceof ContextWebGL)) {
             throw new Error("Viewport should be initialized with a webgl context");
@@ -185,7 +185,7 @@ export class WebXRHelper {
         // In the "WebXR API Emulator" drawing from XRSession.requestAnimationFrame
         // is not mandatory. But it is mandatory on the Meta Quest headset, if it's
         // not done this way you get an error a no rendering output.
-        this._viewport!.drawLastFrame();
+        //this._viewport!.drawLastFrame();
         // if (!this._viewport!.drawLastFrame()) {
         //     // This is where the "WebXR API Emulator" may flick if there is no
         //     // frame to draw. But it does not happen in the Meta Quest headset.
@@ -263,7 +263,7 @@ export class WebXRHelper {
         const eyesWidth = viewport_rects.reduce((acc, viewport) => Math.max(acc, viewport.x + viewport.width), 0);
         const eyesHeight = viewport_rects.reduce((acc, viewport) => Math.max(acc, viewport.y + viewport.height), 0);
         console.debug("Resize canvas to ", eyesWidth, eyesHeight);
-        this._viewport!.setSize(eyesWidth, eyesHeight);
+        //this._viewport!.setSize(eyesWidth, eyesHeight);
 
         // Update the viewport camera perspective lens
         const xr_eye = xr_eyes[0];
