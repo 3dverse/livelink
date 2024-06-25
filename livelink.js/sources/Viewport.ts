@@ -74,8 +74,12 @@ export class Viewport extends EventTarget {
      *
      */
     set camera(c: Camera) {
+        if (this.#camera) {
+            this.#camera.onDetach?.();
+        }
         this.#camera = c;
         c.viewport = this;
+        c.onAttach?.();
         this.#core.refreshViewports();
     }
 

@@ -28,5 +28,15 @@ export class Camera extends Entity {
     /**
      *
      */
+    onAttach() {}
+
+    /**
+     *
+     */
+    onDetach() {}
+
+    /**
+     *
+     */
     onDelete() {}
 }

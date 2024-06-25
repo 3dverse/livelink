@@ -50,7 +50,7 @@ export class Mouse {
         }
         this.#instance = instance;
         this.#viewport = viewport;
-        this.name = "Mouse";
+        this.name = "mouse";
         this.#offset = this.#viewport.rendering_surface.getBoundingRect();
 
         if (!Mouse.#operations) {
