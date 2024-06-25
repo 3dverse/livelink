@@ -70,7 +70,7 @@ export default function PointAndClick() {
     const onMouseMove = useCallback(async (e: MouseEvent, character: Entity, viewport: Viewport) => {
         if (!(e.metaKey || e.altKey)) return;
 
-        const canvas = viewport?.canvas;
+        const canvas = canvasRef.current;
         if (!canvas) return;
 
         const pos: Vec2 = [
@@ -138,7 +138,7 @@ export default function PointAndClick() {
     useEffect(() => {
         if (!instance) return;
         const viewport = instance.viewports[0];
-        const canvas = viewport.canvas;
+        const canvas = canvasRef.current!;
         if (character) {
             canvas.addEventListener("mousemove", e => onMouseMove(e, character as Entity, viewport));
             instance.viewports[0].addEventListener("on-entity-picked", e => onClick(e, character));

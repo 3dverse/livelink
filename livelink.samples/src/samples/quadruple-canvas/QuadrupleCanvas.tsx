@@ -2,12 +2,12 @@
 import { useEffect, useRef } from "react";
 import Canvas from "../../components/Canvas";
 import { useLivelinkInstance, DefaultCamera } from "@3dverse/livelink-react";
-import { Camera, Quat } from "@3dverse/livelink";
+import { Camera, Quat, RenderingSurface } from "@3dverse/livelink";
 import CameraControls from "camera-controls";
 import * as THREE from "three";
 
 //------------------------------------------------------------------------------
-CameraControls.install({THREE});
+CameraControls.install({ THREE });
 
 //------------------------------------------------------------------------------
 class MPRCamera extends Camera {
@@ -55,7 +55,8 @@ class MPRCamera extends Camera {
         );
         const clock = new THREE.Clock();
         // create camera controls
-        const cameraControls = new CameraControls(camera, this.viewport.canvas);
+        const canvas = (this.viewport.rendering_surface as RenderingSurface).canvas;
+        const cameraControls = new CameraControls(camera, canvas);
         this.cameraControls = cameraControls;
 
         cameraControls.setOrbitPoint(0, 0, 0);

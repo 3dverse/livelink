@@ -2,24 +2,22 @@ import type { HighlightMode, Vec2, Vec3 } from "@3dverse/livelink.core";
 import { LivelinkCoreModule } from "@3dverse/livelink.core";
 
 import { Livelink } from "./Livelink";
-import { Context2D } from "./contexts/Context2D";
-import { ContextWebGL } from "./contexts/ContextWebGL";
-import { ContextProvider } from "./contexts/ContextProvider";
-import { CanvasAutoResizer } from "./CanvasAutoResizer";
 import { Camera } from "./Camera";
 import { Entity } from "./Entity";
+import { Rect, RenderingSurfaceBase } from "./surfaces/RenderingSurfaceBase";
+import { RenderingSurface } from "./surfaces/RenderingSurface";
 
 /**
  *
  */
-export type CanvasContextAttributes =
-    | CanvasRenderingContext2DSettings
-    | (WebGLContextAttributes & { xrCompatible?: boolean });
-
-/**
- *
- */
-export type CanvasContextType = "2d" | "webgl" | "webgl2";
+const DEFAULT_RECT: Rect = {
+    left: 0,
+    top: 0,
+    right: 1,
+    bottom: 1,
+    width: 1,
+    height: 1,
+} as const;
 
 /**
  *
@@ -31,17 +29,10 @@ export class Viewport extends EventTarget {
     #core: Livelink;
 
     /**
-     * HTML canvas on which we display the final composited frame.
-     */
-    #canvas: HTMLCanvasElement;
-    /**
      *
      */
-    #context: ContextProvider;
-    /**
-     *
-     */
-    #auto_resizer: CanvasAutoResizer;
+    #rendering_surface: RenderingSurfaceBase;
+
     /**
      *
      */
@@ -50,36 +41,13 @@ export class Viewport extends EventTarget {
     /**
      *
      */
-    #last_frame: { frame: VideoFrame | OffscreenCanvas; left: number; top: number } | null = null;
-
-    /**
-     * HTML Canvas Element
-     */
-    get canvas() {
-        return this.#canvas;
-    }
+    readonly rect: Rect;
 
     /**
      *
      */
-    getContext<ContextType extends ContextProvider>(): ContextType {
-        return this.#context as ContextType;
-    }
-
-    /**
-     * Dimensions of the HTML canvas in pixels.
-     */
-    get width(): number {
-        return this.#canvas.clientWidth;
-    }
-    get height(): number {
-        return this.#canvas.clientHeight;
-    }
-    get dimensions(): Vec2 {
-        return [this.width, this.height];
-    }
-    get aspect_ratio(): number {
-        return this.height > 0 ? this.width / this.height : 1;
+    get rendering_surface() {
+        return this.#rendering_surface;
     }
 
     /**
@@ -87,6 +55,19 @@ export class Viewport extends EventTarget {
      */
     get camera(): Camera | null {
         return this.#camera;
+    }
+
+    /**
+     *
+     */
+    get width(): number {
+        return this.rect.width * this.rendering_surface.width;
+    }
+    get height(): number {
+        return this.rect.height * this.rendering_surface.height;
+    }
+    get aspect_ratio(): number {
+        return this.rect.height > 0 ? this.rect.width / this.rect.height : 1;
     }
 
     /**
@@ -103,115 +84,51 @@ export class Viewport extends EventTarget {
      *
      * @throws {InvalidCanvasId} Thrown when the provided id doesn't refer to a canvas element.
      */
-    constructor(
-        core: Livelink,
-        {
-            canvas_element,
-            context_type,
-            context_attributes,
-        }: {
-            canvas_element: string | HTMLCanvasElement;
-        } & (
-            | { context_type: "2d"; context_attributes?: CanvasRenderingContext2DSettings }
-            | {
-                  context_type: "webgl" | "webgl2";
-                  context_attributes?: WebGLContextAttributes & { xrCompatible?: boolean };
-              }
-        ),
-    ) {
+    constructor(core: Livelink, rendering_surface: RenderingSurfaceBase, rect: Rect = DEFAULT_RECT) {
         super();
         this.#core = core;
-
-        const canvas = typeof canvas_element === "string" ? document.getElementById(canvas_element) : canvas_element;
-
-        if (canvas === null) {
-            throw new Error(`Cannot find canvas ${canvas_element}`);
-        }
-
-        if (canvas.nodeName !== "CANVAS") {
-            throw new Error(`HTML element ${canvas_element} is a '${canvas.nodeName}', it MUST be CANVAS`);
-        }
-
-        this.#canvas = canvas as HTMLCanvasElement;
-        switch (context_type) {
-            case "2d":
-                this.#context = new Context2D(this.#canvas);
-                break;
-            case "webgl":
-            case "webgl2":
-                this.#context = new ContextWebGL(this.#canvas, context_type, context_attributes);
-                break;
-        }
-
-        this.canvas.width = this.canvas.clientWidth;
-        this.canvas.height = this.canvas.clientHeight;
-        this.#auto_resizer = new CanvasAutoResizer(this);
-        this.#context.refreshSize();
+        this.#rendering_surface = rendering_surface;
+        this.rect = rect;
     }
 
     /**
      *
      */
     isValid(): boolean {
-        return this.#camera !== null && this.width > 0 && this.height > 0;
+        return this.#camera !== null;
     }
 
     /**
      *
      */
-    release() {
+    release(): void {
         this.deactivatePicking();
-        this.#auto_resizer.release();
-        this.#context.release();
     }
 
     /**
      *
      */
-    drawFrame(frame: { frame: VideoFrame | OffscreenCanvas; left: number; top: number }): void {
-        this.#context.drawFrame(frame);
-        this.#last_frame = frame;
+    activatePicking(): void {
+        const canvas = (this.rendering_surface as RenderingSurface).canvas;
+        canvas?.addEventListener("click", this.#onCanvasClicked);
     }
 
     /**
      *
      */
-    drawLastFrame() {
-        if (this.#last_frame) {
-            this.#context.drawFrame(this.#last_frame);
-        }
-    }
-
-    /**
-     *
-     */
-    setSize(w: number, h: number) {
-        this.#canvas.width = w;
-        this.#canvas.height = h;
-        this._updateCanvasSize();
-    }
-
-    /**
-     *
-     */
-    activatePicking() {
-        this.#canvas.addEventListener("click", this.#onCanvasClicked);
-    }
-
-    /**
-     *
-     */
-    deactivatePicking() {
-        this.#canvas.removeEventListener("click", this.#onCanvasClicked);
+    deactivatePicking(): void {
+        const canvas = (this.rendering_surface as RenderingSurface).canvas;
+        canvas?.removeEventListener("click", this.#onCanvasClicked);
     }
 
     /**
      *
      */
     #onCanvasClicked = async (e: MouseEvent) => {
+        const canvas = (this.rendering_surface as RenderingSurface).canvas;
         const pos: Vec2 = [
-            e.offsetX / (this.#canvas.clientWidth - this.#canvas.clientLeft),
-            e.offsetY / (this.#canvas.clientHeight - this.#canvas.clientTop),
+            e.offsetX / (canvas.clientWidth - canvas.clientLeft),
+            e.offsetY / (canvas.clientHeight - canvas.clientTop),
         ];
 
         const res = await this.castScreenSpaceRay({
@@ -254,24 +171,5 @@ export class Viewport extends EventTarget {
         }
 
         return { entity, ws_position: res.position, ws_normal: res.normal };
-    }
-
-    /**
-     * @internal
-     */
-    _updateCanvasSize() {
-        this.#context.refreshSize();
-        this.dispatchEvent(new Event("on-resized"));
-    }
-
-    /**
-     *
-     */
-    getBoundingRect(): [number, number, number, number] {
-        const rect = this.canvas.getClientRects()[0];
-        if (!rect) {
-            return [0, 0, this.canvas.width, this.canvas.height];
-        }
-        return [rect.left, rect.top, rect.right, rect.bottom];
     }
 }

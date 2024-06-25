@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 import CameraControls from "camera-controls";
-import { Camera, Quat, Vec3 } from "@3dverse/livelink";
+import { Camera, Quat, RenderingSurface, Vec3 } from "@3dverse/livelink";
 
 //------------------------------------------------------------------------------
 import {
@@ -71,7 +71,8 @@ export class DefaultCamera extends Camera {
         );
         const clock = new Clock();
         // create camera controls
-        const cameraControls = new CameraControls(camera, this.viewport.canvas);
+        const canvas = (this.viewport.rendering_surface as RenderingSurface).canvas;
+        const cameraControls = new CameraControls(camera, canvas);
         this.cameraControls = cameraControls;
 
         cameraControls.setOrbitPoint(0, 0, 0);

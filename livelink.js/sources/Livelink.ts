@@ -18,7 +18,7 @@ import {
 
 import { EncodedFrameConsumer } from "./decoders/EncodedFrameConsumer";
 import { DecodedFrameConsumer } from "./decoders/DecodedFrameConsumer";
-import { RemoteRenderingSurface } from "./RemoteRenderingSurface";
+import { RemoteRenderingSurface } from "./surfaces/RemoteRenderingSurface";
 import { Session, SessionInfo, SessionSelector } from "./Session";
 import { InputDevice } from "./inputs/InputDevice";
 import { Viewport } from "./Viewport";

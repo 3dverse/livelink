@@ -1,14 +1,14 @@
 import type { Vec2i } from "@3dverse/livelink.core";
-import { Viewport } from "./Viewport";
+import { Viewport } from "../Viewport";
 
 /**
  * A helper class auto resizing a canvas with debouncing.
  */
 export class CanvasAutoResizer extends EventTarget {
     /**
-     * The viewport holding the observed canvas.
+     * The observed canvas.
      */
-    readonly #viewport: Viewport;
+    readonly #canvas: HTMLCanvasElement;
 
     /**
      * Observer for resize events.
@@ -28,14 +28,14 @@ export class CanvasAutoResizer extends EventTarget {
     /**
      * Constructs an auto resizer for the provided canvas.
      */
-    constructor(viewport: Viewport) {
+    constructor(canvas: HTMLCanvasElement) {
         super();
 
-        this.#viewport = viewport;
+        this.#canvas = canvas;
         this.#observer = new ResizeObserver(this.#onResized);
 
         // My watch begins...
-        this.#observer.observe(this.#viewport.canvas, { box: "device-pixel-content-box" });
+        this.#observer.observe(this.#canvas, { box: "device-pixel-content-box" });
     }
 
     /**
@@ -60,24 +60,22 @@ export class CanvasAutoResizer extends EventTarget {
      * Debounced callback to actually resize the canvas and send an event.
      */
     #resize = (): void => {
-        const old_size: Vec2i = [this.#viewport.canvas.width, this.#viewport.canvas.height];
+        const old_size: Vec2i = [this.#canvas.width, this.#canvas.height];
 
-        this.#viewport.canvas.width = this.#viewport.canvas.clientWidth;
-        this.#viewport.canvas.height = this.#viewport.canvas.clientHeight;
+        this.#canvas.width = this.#canvas.clientWidth;
+        this.#canvas.height = this.#canvas.clientHeight;
 
-        if (this.#viewport.canvas.width === 0 || this.#viewport.canvas.height === 0) {
+        const new_size: Vec2i = [this.#canvas.width, this.#canvas.height];
+
+        if (this.#canvas.width === 0 || this.#canvas.height === 0) {
             return;
         }
 
-        if (!this.#haveDimensionsChanged(old_size, this.#viewport.dimensions)) {
+        if (!this.#haveDimensionsChanged(old_size, new_size)) {
             return;
         }
 
-        this.#viewport._updateCanvasSize();
-
-        super.dispatchEvent(
-            new CustomEvent("on-resized", { detail: { old_size, new_size: this.#viewport.dimensions } }),
-        );
+        super.dispatchEvent(new CustomEvent("on-resized", { detail: { old_size, new_size } }));
     };
 
     /**

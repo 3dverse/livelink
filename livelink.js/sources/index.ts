@@ -18,5 +18,7 @@ export * from "./contexts/ContextProvider";
 export * from "./contexts/Context2D";
 export * from "./contexts/ContextWebGL";
 
+export * from "./surfaces/RenderingSurface";
+
 export * from "./inputs/Keyboard";
 export * from "./inputs/Mouse";

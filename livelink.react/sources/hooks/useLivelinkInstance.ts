@@ -10,6 +10,7 @@ import {
     UUID,
     Viewport,
     WebCodecsDecoder,
+    RenderingSurface,
 } from "@3dverse/livelink";
 
 //------------------------------------------------------------------------------
@@ -115,11 +116,14 @@ async function configureClient(
     // Step 1: configure the viewports that will receive the video stream.
     const viewports = canvas.map(
         ({ canvas_element, context_type, context_attributes }) =>
-            new Viewport(instance, {
-                canvas_element,
-                context_type,
-                context_attributes,
-            }),
+            new Viewport(
+                instance,
+                new RenderingSurface({
+                    canvas_element,
+                    context_type,
+                    context_attributes,
+                }),
+            ),
     );
     instance.addViewports({ viewports });
 

@@ -1,15 +1,8 @@
 import type { Vec2i, Vec2ui16, ViewportConfig } from "@3dverse/livelink.core";
-import { DecodedFrameConsumer } from "./decoders/DecodedFrameConsumer";
-import { Livelink } from "./Livelink";
-import { Viewport } from "./Viewport";
-
-/**
- *
- */
-type ViewportRect = {
-    viewport: Viewport;
-    offset: Vec2i;
-};
+import { DecodedFrameConsumer } from "../decoders/DecodedFrameConsumer";
+import { Livelink } from "../Livelink";
+import { Viewport } from "../Viewport";
+import { RenderingSurfaceBase } from "./RenderingSurfaceBase";
 
 /**
  * A remote rendering surface represents the total available area for the remote
@@ -32,9 +25,9 @@ export class RemoteRenderingSurface implements DecodedFrameConsumer {
     #core: Livelink;
 
     /**
-     * List of viewports and their offsets.
+     * Reference counted rendering surfaces.
      */
-    #viewports: Array<ViewportRect> = [];
+    #surfaces: Array<RenderingSurfaceBase> = [];
 
     /**
      * Surface actual dimensions.
@@ -47,25 +40,33 @@ export class RemoteRenderingSurface implements DecodedFrameConsumer {
     get dimensions(): Vec2ui16 {
         return this.#dimensions;
     }
+    get width(): number {
+        return this.#dimensions[0];
+    }
+    get height(): number {
+        return this.#dimensions[1];
+    }
 
     /**
      * Registered viewports.
      */
     get viewports(): Array<Viewport> {
-        return this.#viewports.map(v => v.viewport);
+        const result: Array<Viewport> = [];
+        for (const surface of this.#surfaces) {
+            result.push(...surface.viewports);
+        }
+        return result;
     }
 
     /**
      * Config for all registered viewports.
      */
     get #config(): Array<ViewportConfig> {
-        return this.#viewports.map(({ viewport, offset }) => ({
-            camera_rtid: viewport.camera!.rtid!,
-            left: offset[0] / this.dimensions[0],
-            top: offset[1] / this.dimensions[1],
-            width: viewport.width / this.dimensions[0],
-            height: viewport.height / this.dimensions[1],
-        }));
+        const result: Array<ViewportConfig> = [];
+        for (const surface of this.#surfaces) {
+            result.push(...surface.getViewportConfigs(this.width, this.height));
+        }
+        return result;
     }
 
     /**
@@ -79,12 +80,8 @@ export class RemoteRenderingSurface implements DecodedFrameConsumer {
      *
      */
     consumeDecodedFrame({ decoded_frame }: { decoded_frame: VideoFrame | OffscreenCanvas }): void {
-        for (const { viewport, offset } of this.#viewports) {
-            viewport.drawFrame({
-                frame: decoded_frame,
-                left: offset[0],
-                top: offset[1],
-            });
+        for (const surface of this.#surfaces) {
+            surface.drawFrame({ frame: decoded_frame });
         }
     }
 
@@ -104,8 +101,12 @@ export class RemoteRenderingSurface implements DecodedFrameConsumer {
      */
     addViewports({ viewports }: { viewports: Array<Viewport> }): void {
         for (const viewport of viewports) {
-            this.#viewports.push({ viewport, offset: [0, 0] });
-            viewport.addEventListener("on-resized", this.#onViewportResized);
+            viewport.rendering_surface.addViewport({ viewport });
+
+            if (this.#surfaces.indexOf(viewport.rendering_surface) === -1) {
+                viewport.rendering_surface.addEventListener("on-resized", this.#onViewportResized);
+                this.#surfaces.push(viewport.rendering_surface);
+            }
         }
 
         this.#onViewportResized();
@@ -115,8 +116,22 @@ export class RemoteRenderingSurface implements DecodedFrameConsumer {
      * Detach a viewport from the surface
      */
     removeViewport({ viewport }: { viewport: Viewport }): void {
+        const index = this.#surfaces.indexOf(viewport.rendering_surface);
+        if (index === -1) {
+            throw new Error("Viewport without registered surface");
+        }
+
+        const surface = this.#surfaces[index];
+        surface.removeViewport({ viewport });
+
         viewport.release();
-        this.#viewports = this.#viewports.filter(v => v.viewport !== viewport);
+
+        if (surface.viewports.length === 0) {
+            surface.removeEventListener("on-resized", this.#onViewportResized);
+            surface.release();
+            this.#surfaces.splice(index, 1);
+        }
+
         this.#onViewportResized();
     }
 
@@ -131,16 +146,17 @@ export class RemoteRenderingSurface implements DecodedFrameConsumer {
      *
      */
     release(): void {
-        for (const v of this.#viewports) {
-            v.viewport.release();
+        for (const surface of this.#surfaces) {
+            surface.release();
         }
+        this.#surfaces.length = 0;
     }
 
     /**
      *
      */
     #isValid(): boolean {
-        return this.#viewports.every(({ viewport }) => viewport.isValid());
+        return this.#surfaces.every(s => s.isValid());
     }
 
     /**
@@ -183,12 +199,12 @@ export class RemoteRenderingSurface implements DecodedFrameConsumer {
         const min: Vec2i = [Number.MAX_VALUE, Number.MAX_VALUE];
         const max: Vec2i = [0, 0];
 
-        for (const { viewport } of this.#viewports) {
-            const clientRect = viewport.getBoundingRect();
-            min[0] = Math.min(min[0], clientRect[0]);
-            min[1] = Math.min(min[1], clientRect[1]);
-            max[0] = Math.max(max[0], clientRect[2]);
-            max[1] = Math.max(max[1], clientRect[3]);
+        for (const surface of this.#surfaces) {
+            const clientRect = surface.getBoundingRect();
+            min[0] = Math.min(min[0], clientRect.left);
+            min[1] = Math.min(min[1], clientRect.top);
+            max[0] = Math.max(max[0], clientRect.right);
+            max[1] = Math.max(max[1], clientRect.bottom);
         }
 
         const width = max[0] - min[0];
@@ -201,10 +217,10 @@ export class RemoteRenderingSurface implements DecodedFrameConsumer {
      *
      */
     #computeViewportsOffsets(client_rect_offset: Vec2i) {
-        for (const { viewport, offset } of this.#viewports) {
-            const clientRect = viewport.getBoundingRect();
-            offset[0] = clientRect[0] - client_rect_offset[0];
-            offset[1] = clientRect[1] - client_rect_offset[1];
+        for (const surface of this.#surfaces) {
+            const clientRect = surface.getBoundingRect();
+            surface.offset[0] = clientRect.left - client_rect_offset[0];
+            surface.offset[1] = clientRect.top - client_rect_offset[1];
         }
     }
 }
