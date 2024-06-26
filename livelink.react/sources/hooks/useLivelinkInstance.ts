@@ -89,7 +89,6 @@ export function useLivelinkInstance({ views }: { views: Array<View> }): {
             return { instance, cameras };
         },
         disconnect: () => {
-            instance?.viewports.forEach(v => v.camera?.onDelete());
             setInstance(null);
         },
     };
@@ -116,7 +115,10 @@ async function configureClient(instance: Livelink, views: Array<View>) {
     const viewports = views.map(
         view => new Viewport(instance, canvasToViews.get(view.canvas_ref.current!)!.surface, view.rect ?? DEFAULT_RECT),
     );
-    instance.addViewports({ viewports });
+
+    if (viewports.length > 0) {
+        instance.addViewports({ viewports });
+    }
 
     // Step 2: configure the client on the renderer side, this informs the
     //         renderer on the client canvas size and available input devices

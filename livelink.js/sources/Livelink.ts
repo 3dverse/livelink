@@ -350,7 +350,7 @@ export class Livelink {
         let camera = new camera_type(this.scene).init(name);
         camera = new Proxy(camera, Entity.handler) as CameraType;
         viewport.camera = camera;
-        await camera._instantiate();
+        await camera._instantiate({ delete_on_client_disconnection: true });
         return camera;
     }
 
