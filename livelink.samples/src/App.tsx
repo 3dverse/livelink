@@ -28,7 +28,7 @@ function App() {
             <div className="grow">
                 {outlet ? <Outlet /> : <Home />}
                 <button
-                    className="button button-icon lg:hidden absolute top-4 left-5"
+                    className="lg:hidden button button-outline button-icon absolute top-5 left-5 text-primary"
                     onClick={() => setnavOpen(!isNavOpen)}
                 >
                     <BarsIcon />
