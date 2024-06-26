@@ -62,7 +62,7 @@ export class AnimationSequence {
      *
      */
     private _updateState({ playback_speed, seek_offset }: { playback_speed: number; seek_offset?: number }) {
-        this.#core._updateAnimationSequenceState({
+        this.#core.updateAnimationSequenceState({
             linker_rtid: this.#linker?.rtid ?? 0n,
             animation_sequence_id: this.#id,
             state: 0,

@@ -176,10 +176,10 @@ export class Livelink {
         // Retrieve a session key
         await this.session.registerClient();
 
-        const component_serializer = await this.#core._connect({ session: this.session, editor_url: EDITOR_URL });
+        const component_serializer = await this.#core.connect({ session: this.session, editor_url: EDITOR_URL });
         this.scene.entity_registry._configureComponentSerializer({ component_serializer });
 
-        this.#core._addEventListener({
+        this.#core.addEventListener({
             target: "editor",
             event_name: "entities-updated",
             handler: (event: Event) => {
@@ -193,13 +193,13 @@ export class Livelink {
             },
         });
 
-        this.#core._addEventListener({
+        this.#core.addEventListener({
             target: "gateway",
             event_name: "on-script-event-received",
             handler: this.scene._onScriptEventReceived,
         });
 
-        this.#core._addEventListener({
+        this.#core.addEventListener({
             target: "gateway",
             event_name: "on-frame-received",
             handler: this.#onFrameReceived,
@@ -212,13 +212,13 @@ export class Livelink {
      *
      */
     async disconnect() {
-        this.#core._removeEventListener({
+        this.#core.removeEventListener({
             target: "gateway",
             event_name: "on-script-event-received",
             handler: this.scene._onScriptEventReceived,
         });
 
-        this.#core._removeEventListener({
+        this.#core.removeEventListener({
             target: "gateway",
             event_name: "on-frame-received",
             handler: this.#onFrameReceived,
@@ -241,7 +241,7 @@ export class Livelink {
         this.#remote_rendering_surface.release();
         this.#input_devices.forEach(d => d.teardown());
 
-        await this.#core._disconnect();
+        await this.#core.disconnect();
     }
 
     /**
@@ -390,7 +390,7 @@ export class Livelink {
      *
      */
     startSimulation(): void {
-        this.#core.startSimulation();
+        this.#core.setSimulationState({ state: "start_simulation" });
     }
 
     /**
@@ -408,13 +408,13 @@ export class Livelink {
 
             const updateMsg = this.scene.entity_registry._getEntitiesToUpdate();
             if (updateMsg !== null) {
-                this.#core._updateEntities(updateMsg);
+                this.#core.updateEntitiesFromJson(updateMsg);
                 this.scene.entity_registry._clearUpdateList();
             }
 
             const detachMsg = this.scene.entity_registry._getComponentsToDetach();
             if (detachMsg !== null) {
-                this.#core._removeComponents(detachMsg);
+                this.#core.removeComponents(detachMsg);
                 this.scene.entity_registry._clearDetachList();
             }
         }, 1000 / updatesPerSecond);
@@ -422,7 +422,7 @@ export class Livelink {
         this.#broadcast_interval = setInterval(() => {
             const msg = this.scene.entity_registry._getEntitiesToBroadcast();
             if (msg !== null) {
-                this.#core._updateComponents(msg);
+                this.#core.updateComponents(msg);
                 this.scene.entity_registry._clearBroadcastList();
             }
         }, 1000 / broadcastsPerSecond);
@@ -432,7 +432,7 @@ export class Livelink {
      *
      */
     sendSkeletonPose({ controller, pose }: { controller: Entity; pose: Map<number, Quat> }): void {
-        this.#core._sendSkeletonPose({
+        this.#core.sendSkeletonPose({
             controller_rtid: controller.rtid!,
             pose,
         });
@@ -442,21 +442,21 @@ export class Livelink {
      *
      */
     _sendInput({ input_state }: { input_state: InputState }) {
-        this.#core._sendInput({ input_state });
+        this.#core.sendInputState({ input_state });
     }
 
     /**
      *
      */
     _resize({ size }: { size: Vec2i }) {
-        this.#core._resize({ size });
+        this.#core.resize({ size });
     }
 
     /**
      *
      */
     _setViewports({ viewports }: { viewports: Array<ViewportConfig> }): void {
-        this.#core._setViewports({ viewports });
+        this.#core.setViewports({ viewports });
     }
 
     /**
@@ -467,7 +467,7 @@ export class Livelink {
     }: {
         screenSpaceRayQuery: ScreenSpaceRayQuery;
     }): Promise<ScreenSpaceRayResult> {
-        return this.#core._castScreenSpaceRay({ screenSpaceRayQuery });
+        return this.#core.castScreenSpaceRay({ screenSpaceRayQuery });
     }
 
     /**
@@ -480,6 +480,6 @@ export class Livelink {
         playback_speed: number;
         seek_offset?: number;
     }): void {
-        this.#core._updateAnimationSequenceState(params);
+        this.#core.updateAnimationSequenceState(params);
     }
 }

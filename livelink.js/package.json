@@ -21,7 +21,7 @@
   },
   "license": "ISC",
   "dependencies": {
-    "@3dverse/livelink.core": "^0.3.0"
+    "@3dverse/livelink.core": "^0.4.0"
   },
   "devDependencies": {
     "cross-env": "^7.0.3",

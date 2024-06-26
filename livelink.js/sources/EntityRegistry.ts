@@ -3,9 +3,9 @@ import type {
     UUID,
     ComponentSerializer,
     UpdateEntitiesFromJsonMessage,
-    UpdateEntitiesCommand,
     ComponentType,
     RemoveComponentsCommand,
+    UpdateComponentsCommand,
 } from "@3dverse/livelink.core";
 import { Entity } from "./Entity";
 
@@ -200,8 +200,8 @@ export class EntityRegistry {
     /**
      * @internal
      */
-    _getEntitiesToBroadcast(): UpdateEntitiesCommand | null {
-        const msg: UpdateEntitiesCommand = {};
+    _getEntitiesToBroadcast(): UpdateComponentsCommand | null {
+        const msg: UpdateComponentsCommand = {};
         let hasData = false;
 
         for (const [component_type, entities] of this.#dirty_components_to_broadcast) {

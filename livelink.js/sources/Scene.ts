@@ -45,7 +45,7 @@ export class Scene extends EventTarget {
             return entity;
         }
 
-        const editor_entities = await this.#core._resolveAncestors({ entity_rtid });
+        const editor_entities = await this.#core.resolveAncestors({ entity_rtid });
         this.#addEditorEntities(Entity, { editor_entities });
         return this.entity_registry.get({ entity_rtid });
     }
@@ -87,7 +87,7 @@ export class Scene extends EventTarget {
             return foundEntities[0] as EntityType;
         }
 
-        const editor_entities = await this.#core._findEntitiesByEUID({
+        const editor_entities = await this.#core.findEntitiesByEUID({
             entity_uuid,
         });
 
@@ -103,7 +103,7 @@ export class Scene extends EventTarget {
      *
      */
     async deleteEntities({ entities }: { entities: Array<Entity> }): Promise<void> {
-        await this.#core._deleteEntities({ entity_uuids: entities.map(e => e.id!) });
+        await this.#core.deleteEntities({ entity_uuids: entities.map(e => e.id!) });
         for (const entity of entities) {
             this.entity_registry.remove({ entity });
         }
@@ -170,7 +170,7 @@ export class Scene extends EventTarget {
         entity: Entity;
         options?: EntityCreationOptions;
     }): Promise<EditorEntity> {
-        return this.#core._spawnEntity({ entity, options });
+        return this.#core.spawnEntity({ entity, options });
     }
 
     /**
@@ -195,7 +195,7 @@ export class Scene extends EventTarget {
      * @internal
      */
     async _getChildren({ entity_rtid }: { entity_rtid: RTID }): Promise<Array<Entity>> {
-        const editor_entities = await this.#core._getChildren({ entity_rtid });
+        const editor_entities = await this.#core.getChildren({ entity_rtid });
         return this.#addEditorEntities(Entity, { editor_entities });
     }
 
