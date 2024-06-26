@@ -37,6 +37,7 @@ export class WebXRHelper {
     session: XRSession | null = null;
     private _reference_space: XRReferenceSpace | null = null;
     private _xr_viewports: XRViewport[] = [];
+    #animationFrameRequestId: number = 0;
 
     //--------------------------------------------------------------------------
     /**
@@ -75,26 +76,46 @@ export class WebXRHelper {
      */
     public async release(): Promise<void> {
         this.#surface?.release();
+        if (this.#animationFrameRequestId) {
+            this.session?.cancelAnimationFrame(this.#animationFrameRequestId);
+        }
         return this.session?.end().catch(error => console.warn("Could not end XR session:", error));
     }
 
     /**
      *
      */
-    public async initialize(
-        mode: XRSessionMode,
-        options: XRSessionInit = { requiredFeatures: ["local-floor"] },
-    ): Promise<void> {
-        try {
-            if (!WebXRHelper.isSessionSupported(mode)) {
-                throw new Error(`WebXR "${mode}" not supported`);
+    public async initialize(mode: XRSessionMode, options: XRSessionInit = {}): Promise<void> {
+        if (!WebXRHelper.isSessionSupported(mode)) {
+            throw new Error(`WebXR "${mode}" not supported`);
+        }
+
+        const spaceTypes: Array<XRReferenceSpaceType | undefined> = ["local-floor", "local"];
+        let lastError: unknown;
+
+        for (const spaceType of spaceTypes) {
+            const sessionOptions: XRSessionInit = spaceType
+                ? { ...options, requiredFeatures: [...(options.requiredFeatures || []), spaceType] }
+                : options;
+
+            try {
+                this.session = await navigator.xr!.requestSession(mode, sessionOptions);
+                await this.updateRenderState();
+                await this.setReferenceSpaceType(spaceType);
+                return;
+            } catch (error) {
+                console.warn(
+                    "Failed to request XR session",
+                    { spaceType, requiredFeatures: sessionOptions.requiredFeatures },
+                    error,
+                );
+                this.session?.end();
+                lastError = error;
             }
-            this.session = await navigator.xr!.requestSession(mode, options);
-            await this.updateRenderState();
-            await this.setReferenceSpaceType("local-floor");
-        } catch (error) {
-            console.error("Failed to initialize XR session:", error);
-            throw error;
+        }
+
+        if (!this.session) {
+            throw lastError;
         }
     }
 
@@ -108,7 +129,7 @@ export class WebXRHelper {
         }
 
         const { promise, resolve, reject } = Promise.withResolvers<XRViewports>();
-        this.session!.requestAnimationFrame(async (_, frame: XRFrame) => {
+        this.#animationFrameRequestId = this.session!.requestAnimationFrame(async (_, frame: XRFrame) => {
             const xr_views = frame.getViewerPose(this._reference_space!)?.views;
             if (!xr_views) {
                 reject(new Error("Failed to get XR views"));
@@ -135,7 +156,7 @@ export class WebXRHelper {
      * @param type - https://developer.mozilla.org/en-US/docs/Web/API/XRSession/requestReferenceSpace#type
      * @returns Resolves with the reference to the new reference space.
      */
-    public async setReferenceSpaceType(type: XRReferenceSpaceType = "local-floor"): Promise<XRReferenceSpace> {
+    public async setReferenceSpaceType(type: XRReferenceSpaceType = "local"): Promise<XRReferenceSpace> {
         this._reference_space = await this.session!.requestReferenceSpace(type).catch(async error => {
             console.error(`Failed to request XR reference space of type ${type}:`, error);
             throw error;

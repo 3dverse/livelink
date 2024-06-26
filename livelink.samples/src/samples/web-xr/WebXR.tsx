@@ -45,30 +45,37 @@ export default function WebXR({ mode }: { mode: XRSessionMode }) {
     //--------------------------------------------------------------------------
     const toggleConnection = async () => {
         if (instance) {
-            instance.disconnect();
+            setXRSession(null);
             setInstance(null);
+            return;
         }
 
-        const webXRHelper = new WebXRHelper();
-        await webXRHelper.initialize(mode);
+        try {
+            setMessage("");
+            const webXRHelper = new WebXRHelper();
+            await webXRHelper.initialize(mode);
 
-        webXRHelper.session!.addEventListener("end", () => {
-            setInstance(null);
-            setXRSession(null);
-        });
+            webXRHelper.session!.addEventListener("end", () => {
+                setInstance(null);
+                setXRSession(null);
+            });
 
-        setIsConnecting(true);
+            setIsConnecting(true);
 
-        const livelinkInstance = await Livelink.join_or_start({
-            scene_id: "e1250c0e-fa04-4af5-a5cb-cf29fd38b78d",
-            token: "public_p54ra95AMAnZdTel",
-        });
+            const livelinkInstance = await Livelink.join_or_start({
+                scene_id: "e1250c0e-fa04-4af5-a5cb-cf29fd38b78d",
+                token: "public_p54ra95AMAnZdTel",
+            });
 
-        await configureClient(webXRHelper, livelinkInstance);
+            await configureClient(webXRHelper, livelinkInstance);
 
-        setXRSession(webXRHelper);
-        setInstance(livelinkInstance);
-        setIsConnecting(false);
+            setXRSession(webXRHelper);
+            setInstance(livelinkInstance);
+            setIsConnecting(false);
+        } catch (error) {
+            setMessage(`Error: ${error instanceof Error ? error.message : error}`);
+            setIsConnecting(false);
+        }
     };
 
     //--------------------------------------------------------------------------
@@ -82,6 +89,8 @@ export default function WebXR({ mode }: { mode: XRSessionMode }) {
         });
     }, [mode]);
 
+    const xrModeTitle = mode.endsWith("ar") ? "AR" : "VR";
+
     //--------------------------------------------------------------------------
     return (
         <div className="relative h-full max-h-screen p-3">
@@ -93,7 +102,7 @@ export default function WebXR({ mode }: { mode: XRSessionMode }) {
                         disabled={isConnecting || !isSessionSupported}
                         style={isSessionSupported ? {} : { cursor: "not-allowed" }}
                     >
-                        {isConnecting ? "Connecting..." : instance ? "Disconnect" : "Connect"}
+                        {isConnecting ? "Connecting..." : instance ? `Exit ${xrModeTitle}` : `Enter ${xrModeTitle}`}
                     </button>
                     {message && <p>{message}</p>}
                 </div>
