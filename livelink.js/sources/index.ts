@@ -19,7 +19,7 @@ export * from "./contexts/Context2D";
 export * from "./contexts/ContextWebGL";
 
 export * from "./surfaces/RenderingSurface";
-export { Rect } from "./surfaces/RenderingSurfaceBase";
+export * from "./surfaces/RenderingSurfaceBase";
 
 export * from "./inputs/Keyboard";
 export * from "./inputs/Mouse";

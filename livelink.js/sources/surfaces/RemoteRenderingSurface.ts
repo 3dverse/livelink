@@ -111,6 +111,7 @@ export class RemoteRenderingSurface implements DecodedFrameConsumer {
             viewport.rendering_surface.addViewport({ viewport });
 
             if (this.#surfaces.indexOf(viewport.rendering_surface) === -1) {
+                console.debug("Adding a new surface", viewport.rendering_surface);
                 viewport.rendering_surface.addEventListener("on-resized", this.#onViewportResized);
                 this.#surfaces.push(viewport.rendering_surface);
             }
@@ -174,8 +175,10 @@ export class RemoteRenderingSurface implements DecodedFrameConsumer {
 
         if (this.#core.isConfigured() && this.#isValid()) {
             if (need_to_resize) {
+                console.debug("Surface resized", this.#dimensions);
                 this.#core._resize({ size: this.#dimensions });
             }
+            console.debug("Viewports reconfigured", this.#config);
             this.#core._setViewports({ viewports: this.#config });
         }
     };

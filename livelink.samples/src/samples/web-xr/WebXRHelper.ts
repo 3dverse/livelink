@@ -1,36 +1,42 @@
 //------------------------------------------------------------------------------
-import { Camera, Viewport, ContextWebGL, RenderingSurface } from "@3dverse/livelink";
+import { Camera, Livelink, Rect, Viewport } from "@3dverse/livelink";
+import { OffscreenSurface } from "./OffscreenSurface";
 
-//------------------------------------------------------------------------------
+/**
+ *
+ */
 export class WebXRCamera extends Camera {
     onCreate(): void {
         this.local_transform = {};
         this.perspective_lens = {};
-        this.camera = { renderGraphRef: "398ee642-030a-45e7-95df-7147f6c43392", dataJSON: { grid: false } };
+        this.camera = {
+            renderGraphRef: "398ee642-030a-45e7-95df-7147f6c43392",
+            dataJSON: { grid: false, displayBackground: false, debugLines: true },
+        };
     }
 }
 
-//------------------------------------------------------------------------------
+type XRViewports = Array<{
+    xr_view: XRView;
+    livelink_viewport: Viewport;
+}>;
+
+/**
+ *
+ */
 export class WebXRHelper {
     //--------------------------------------------------------------------------
     // References to livelink core
-    private _viewport: Viewport | null = null;
-    private _context_webgl: ContextWebGL | null = null;
+    #liveLink: Livelink | null = null;
+
+    //--------------------------------------------------------------------------
+    #surface: OffscreenSurface;
 
     //--------------------------------------------------------------------------
     // WebXR API references
     session: XRSession | null = null;
     private _reference_space: XRReferenceSpace | null = null;
     private _xr_viewports: XRViewport[] = [];
-
-    //--------------------------------------------------------------------------
-    // WebXRHelper logic
-    private _is_first_frame: boolean = true;
-    private _request_session_promise: Promise<void | XRSession>;
-
-    //--------------------------------------------------------------------------
-    // Debug HACK flag to invert eyes on a stereo vision device
-    invert_eyes: boolean = false;
 
     //--------------------------------------------------------------------------
     /**
@@ -51,66 +57,76 @@ export class WebXRHelper {
             return false;
         }
         const isSupported = await isSessionSupportedFunction.call(navigator.xr, mode).catch(console.warn);
-        // navigator.xr.supportsSession() throws an error if the session mode is
-        // not supported.
-        return typeof isSupported === "undefined" ? false : isSupported;
+        return isSupported ?? false;
     }
 
-    //--------------------------------------------------------------------------
     /**
-     * Request an XR session: async operation, use initialize() to await the XR
-     * session creation.
-     * @param mode - XR session mode "immersive-ar" or "immersive-vr"
-     * @param options - XR session options
+     *
      */
-    constructor(mode: XRSessionMode, options: XRSessionInit = {}) {
-        console.log(`WebXRHelper.constructor requesting ${mode} session with options:`, options);
-        this._request_session_promise = navigator
-            .xr!.requestSession(mode, options)
-            .then(session => {
-                this.session = session;
-            })
-            .catch(error => {
-                console.error(
-                    `WebXRHelper.constructor Unable to create ${mode} session due to the following error:`,
-                    error,
-                );
-            });
+    constructor() {
+        this.#surface = new OffscreenSurface({
+            width: window.innerWidth, // Not sure
+            height: window.innerHeight, // Really not sure
+        });
     }
 
-    //--------------------------------------------------------------------------
     /**
-     * Release the XR session
-     * @returns Resolves when the XR session is ended.
+     *
      */
     public async release(): Promise<void> {
+        this.#surface?.release();
         return this.session?.end().catch(error => console.warn("Could not end XR session:", error));
     }
 
-    //--------------------------------------------------------------------------
     /**
-     * Initializes an xr session. This must be initialized within a user action
-     * before usage.
-     * @returns Resolves when the XR session is created with
-     * a valid render state and local reference space.
+     *
      */
-    public async initialize(viewport: Viewport): Promise<void> {
-        // TODO: handle multiple viewports which are baked by a rect of a common
-        // canvas, e.g that use the same WebGLRenderingContext.
-        this._viewport = viewport;
-        this._context_webgl = (viewport.rendering_surface as RenderingSurface).getContext() as ContextWebGL;
+    public async initialize(
+        mode: XRSessionMode,
+        options: XRSessionInit = { requiredFeatures: ["local-floor"] },
+    ): Promise<void> {
+        try {
+            if (!WebXRHelper.isSessionSupported(mode)) {
+                throw new Error(`WebXR "${mode}" not supported`);
+            }
+            this.session = await navigator.xr!.requestSession(mode, options);
+            await this.updateRenderState();
+            await this.setReferenceSpaceType("local-floor");
+        } catch (error) {
+            console.error("Failed to initialize XR session:", error);
+            throw error;
+        }
+    }
 
-        if (!(this._context_webgl instanceof ContextWebGL)) {
-            throw new Error("Viewport should be initialized with a webgl context");
+    /**
+     *
+     */
+    public configureViewports(livelink: Livelink): Promise<XRViewports> {
+        this.#liveLink = livelink;
+        if (!this.#liveLink) {
+            throw new Error("Failed to initialize XR session, no LiveLink instance was provided.");
         }
 
-        await this._request_session_promise;
-        if (!this.session) {
-            throw new Error("Failed to initialize XR session, no session was created.");
-        }
-        await this.updateRenderState();
-        await this.setReferenceSpaceType("local");
-        this._startXRAnimationFrameLoop();
+        const { promise, resolve, reject } = Promise.withResolvers<XRViewports>();
+        this.session!.requestAnimationFrame(async (_, frame: XRFrame) => {
+            const xr_views = frame.getViewerPose(this._reference_space!)?.views;
+            if (!xr_views) {
+                reject(new Error("Failed to get XR views"));
+                return;
+            }
+
+            const viewports = this.#createLivelinkViewports(xr_views);
+            resolve(viewports);
+        });
+
+        return promise;
+    }
+
+    /**
+     *
+     */
+    public start(): void {
+        this.session!.requestAnimationFrame(this.#onXRFrame);
     }
 
     //--------------------------------------------------------------------------
@@ -119,7 +135,7 @@ export class WebXRHelper {
      * @param type - https://developer.mozilla.org/en-US/docs/Web/API/XRSession/requestReferenceSpace#type
      * @returns Resolves with the reference to the new reference space.
      */
-    public async setReferenceSpaceType(type: XRReferenceSpaceType = "local"): Promise<XRReferenceSpace> {
+    public async setReferenceSpaceType(type: XRReferenceSpaceType = "local-floor"): Promise<XRReferenceSpace> {
         this._reference_space = await this.session!.requestReferenceSpace(type).catch(async error => {
             console.error(`Failed to request XR reference space of type ${type}:`, error);
             throw error;
@@ -136,21 +152,11 @@ export class WebXRHelper {
      */
     public async updateRenderState(layer_init: XRWebGLLayerInit = {}): Promise<void> {
         const session = this.session!;
-        const context_webgl = this._context_webgl!;
+        const context_webgl = this.#surface!.context!;
         const baseLayer = new XRWebGLLayer(session, context_webgl.native, layer_init);
         await session.updateRenderState({ baseLayer });
         context_webgl.frame_buffer = baseLayer.framebuffer;
-    }
-
-    //--------------------------------------------------------------------------
-    /**
-     * Enables the XR session's animation frame loop.
-     */
-    private _startXRAnimationFrameLoop(): void {
-        // Ask the webgl canvas to delegate the frame consuming
-        // TODO: this is not configurable yet
-        // this._viewport_context!.is_frame_consuming_delegated = true;
-        this.session!.requestAnimationFrame(this._onXRFrame);
+        this.#surface!.resize(baseLayer.framebufferWidth, baseLayer.framebufferHeight);
     }
 
     //--------------------------------------------------------------------------
@@ -159,65 +165,32 @@ export class WebXRHelper {
      * @param time
      * @param frame
      */
-    private _onXRFrame = (_: DOMHighResTimeStamp, frame: XRFrame) => {
+    #onXRFrame = (_: DOMHighResTimeStamp, frame: XRFrame) => {
         const xr_views = frame.getViewerPose(this._reference_space!)?.views;
         if (!xr_views) {
-            this.session!.requestAnimationFrame(this._onXRFrame);
+            this.session!.requestAnimationFrame(this.#onXRFrame);
             return;
         }
 
-        // TODO: WebXR of the legacy 3dverse-sdk checks the viewports has changed
-        // on each XRFrame. I'm not sure it's necessary, though it might if you
-        // think about the drop down menu on Meta Quest (2D-stereo, 3D-stereo, ...).
-        this._updateLiveLinkViewports(xr_views);
+        const gl_layer = this.session!.renderState.baseLayer!;
+        const xr_viewports = xr_views.map(xr_view => gl_layer!.getViewport(xr_view)!);
 
-        if (this._is_first_frame) {
-            // TODO: May be this is a bit too much hidden. Indeed the webgl canvas
-            // starts to consume frames once the livelink core is resumed from here,
-            // and it's done here because we have the viewports at this right moment.
-            // this._liveLink!.resume();
-            this._is_first_frame = false;
-        } else {
-            // TODO: recall requestAnimationFrame before or after updating the cameras?
-            this._updateLiveLinkCameras(xr_views);
+        if (this.#xrViewportsHasChanged(xr_viewports)) {
+            // For now, we end the session if the viewports have changed
+            this.session!.end();
         }
 
-        // In the "WebXR API Emulator" drawing from XRSession.requestAnimationFrame
-        // is not mandatory. But it is mandatory on the Meta Quest headset, if it's
-        // not done this way you get an error a no rendering output.
-        //this._viewport!.drawLastFrame();
-        // if (!this._viewport!.drawLastFrame()) {
-        //     // This is where the "WebXR API Emulator" may flick if there is no
-        //     // frame to draw. But it does not happen in the Meta Quest headset.
-        //     // Please see the "Frame buffer auto-clear" section in ./README.md for more
-        //     // details.
-        //     console.debug("no frame to draw!!");
-        // }
-
-        // We cannot await the next decoded frame to call XRSession.requestAnimationFrame,
-        // otherwise the XRWebGLLayer frame buffer is cleared and we draw nothing, so
-        // it flicks in the emulator too.
-        this.session!.requestAnimationFrame(this._onXRFrame);
+        this.#updateLiveLinkCameras(xr_views);
+        this.#surface!.drawLastFrame();
+        this.session!.requestAnimationFrame(this.#onXRFrame);
     };
 
     //--------------------------------------------------------------------------
     /**
      * Update the cameras of the LiveLink instance.
      */
-    // TODO: Only the first XR view is supported so far. Implement multiple
-    // views support.
-    private _updateLiveLinkCameras(xr_views: readonly XRView[]) {
-        // const viewports = this._viewport!.viewports;
-        const viewports = [this._viewport!];
-        const cameras = viewports.map(viewport => viewport.camera);
-
-        if (this.invert_eyes && cameras.length === 2) {
-            // DEBUG HACK: Invert eyes on stereo vision device
-            // console.debug("Meta Quest temporary HACK because eyes are inverted");
-            const right_eye = cameras[1];
-            cameras[1] = cameras[0];
-            cameras[0] = right_eye;
-        }
+    #updateLiveLinkCameras(xr_views: readonly XRView[]) {
+        const cameras = this.#surface!.cameras;
 
         cameras.forEach((camera, index) => {
             const xr_view = xr_views[index];
@@ -232,12 +205,9 @@ export class WebXRHelper {
 
     //--------------------------------------------------------------------------
     /**
-     * Update the viewports of the LiveLink instance.
-     * @returns Resolves when the livelink viewport have been updated.
+     *
      */
-    // TODO: Only the first XR viewport is supported so far. Implement multiple
-    // viewports support.
-    private _updateLiveLinkViewports(xr_views: readonly XRView[]) {
+    #createLivelinkViewports(xr_views: readonly XRView[]): XRViewports {
         const gl_layer = this.session!.renderState.baseLayer!;
         const xr_eyes = xr_views.map(view => ({
             view,
@@ -245,73 +215,68 @@ export class WebXRHelper {
         }));
         const xr_viewports = xr_eyes.map(xr_eye => xr_eye.viewport);
 
-        // Check if the viewports must be updated
-        if (!this._xrViewportsHasChanged(xr_viewports)) {
-            return;
-        }
         console.debug("XR views:", xr_views);
-        console.debug(
-            "XR viewports:",
-            xr_eyes.map(v => v.viewport),
-        );
+        console.debug("XR viewports:", xr_viewports);
         this._xr_viewports = xr_viewports;
 
-        // Extract the rects of the XRViewports
-        const viewport_rects = this._extractXRViewportRects([xr_viewports[0]]);
-
-        // Set full canvas size to the maximum of the XRViewports
-        const eyesWidth = viewport_rects.reduce((acc, viewport) => Math.max(acc, viewport.x + viewport.width), 0);
-        const eyesHeight = viewport_rects.reduce((acc, viewport) => Math.max(acc, viewport.y + viewport.height), 0);
-        console.debug("Resize canvas to ", eyesWidth, eyesHeight);
-        //this._viewport!.setSize(eyesWidth, eyesHeight);
-
-        // Update the viewport camera perspective lens
-        const xr_eye = xr_eyes[0];
-        const rect = viewport_rects[0];
-        const perspective_lens = this._extractPerspectiveLens(xr_eye.view.projectionMatrix, rect.width, rect.height);
-        this._viewport!.camera!.perspective_lens = perspective_lens;
+        const are_xr_viewport_normalized = xr_eyes.every(({ viewport: v }) => {
+            return v.x <= 1 && v.y <= 1 && v.width <= 1 && v.height <= 1;
+        });
 
         // Create the viewports and attach them to the canvas
-        // const canvas = this._viewport!;
-        // const viewports: Array<Viewport> = [];
-        // for (let i = 0; i < xr_eyes.length; i++) {
-        //     const xr_eye = xr_eyes[i];
-        //     const rect = viewport_rects[i];
+        const viewports: XRViewports = [];
 
-        //     // Create the camera enttity
-        //     const perspective_lens = this._extractPerspectiveLens(xr_eye.view.projectionMatrix, rect.width, rect.height);
-        //     const camera = await this._liveLink!.newEntity(WebXRCamera, `XR_camera_${xr_eye.view.eye}`);
-        //     camera.perspective_lens = perspective_lens;
+        for (const xr_eye of xr_eyes) {
+            const xrViewport = xr_eye.viewport;
+            const rect: Rect = are_xr_viewport_normalized
+                ? {
+                      left: xrViewport.x,
+                      top: xrViewport.y,
+                      right: xrViewport.x + xrViewport.width,
+                      bottom: xrViewport.y + xrViewport.height,
+                      width: xrViewport.width,
+                      height: xrViewport.height,
+                  }
+                : {
+                      left: xrViewport.x / this.#surface!.width,
+                      top: xrViewport.y / this.#surface!.height,
+                      right: (xrViewport.x + xrViewport.width) / this.#surface!.width,
+                      bottom: (xrViewport.y + xrViewport.height) / this.#surface!.height,
+                      width: xrViewport.width / this.#surface!.width,
+                      height: xrViewport.height / this.#surface!.height,
+                  };
+            console.debug(`Viewport for ${xr_eye.view.eye} eye:`, rect);
+            const viewport = new Viewport(this.#liveLink!, this.#surface!, rect);
 
-        //     // Create the viewport
-        //     const viewport = this._createViewport(rect, camera);
-        //     console.debug(`Viewport for ${xr_eye.view.eye} eye:`, xr_eye.viewport);
-        //     console.debug(`3dverse Viewport for ${xr_eye.view.eye} eye:`, viewport);
-        //     viewports.push(viewport);
-        // }
-        // canvas.attachViewports(viewports);
+            viewports.push({
+                xr_view: xr_eye.view,
+                livelink_viewport: viewport,
+            });
+        }
+
+        this.#liveLink!.addViewports({ viewports: viewports.map(v => v.livelink_viewport) });
+        return viewports;
     }
 
     //--------------------------------------------------------------------------
-    /**
-     * Create a livelink Viewport from the a WebXRCamera an XRViewport's rect
-     * normalized on the remote canvas size.
-     * @param xr_viewport_rect the XR viewport rect
-     * @param camera The livelink webxr camera
-     * @returns The livelink viewport instance
-     */
-    // private _createViewport(xr_viewport_rect: any, camera: WebXRCamera): Viewport {
-    //     const canvas = this._viewport!.surface!.canvas;
-    //     const remoteWidth = canvas.remote_canvas_size[0];
-    //     const remoteHeigth = canvas.remote_canvas_size[1];
-    //     const viewport_rect = {
-    //         left: xr_viewport_rect.x / remoteWidth,
-    //         top: xr_viewport_rect.y / remoteHeigth,
-    //         width: xr_viewport_rect.width / remoteWidth,
-    //         height: xr_viewport_rect.height / remoteHeigth,
-    //     };
-    //     return new Viewport({ camera, ...viewport_rect });
-    // }
+    async createCameras(viewports: XRViewports): Promise<void> {
+        await Promise.all(
+            viewports.map(async ({ xr_view, livelink_viewport }) => {
+                const perspective_lens = this.#extractPerspectiveLens(
+                    xr_view.projectionMatrix,
+                    livelink_viewport.width,
+                    livelink_viewport.height,
+                );
+
+                const camera = await this.#liveLink!.newCamera(
+                    WebXRCamera,
+                    `XR_camera_${xr_view.eye}`,
+                    livelink_viewport,
+                );
+                camera.perspective_lens = perspective_lens;
+            }),
+        );
+    }
 
     //--------------------------------------------------------------------------
     /**
@@ -321,7 +286,7 @@ export class WebXRHelper {
      * @param viewportWidth
      * @param viewportHeight
      */
-    _extractPerspectiveLens(
+    #extractPerspectiveLens(
         projectionMatrix: Float32Array,
         viewportWidth: number,
         viewportHeight: number,
@@ -348,7 +313,7 @@ export class WebXRHelper {
      * the ones of the last XRFrame.
      * @param xr_viewports
      */
-    private _xrViewportsHasChanged(xr_viewports: XRViewport[]): boolean {
+    #xrViewportsHasChanged(xr_viewports: XRViewport[]): boolean {
         if (this._xr_viewports.length === 0) {
             return true;
         }
@@ -364,56 +329,5 @@ export class WebXRHelper {
                 xr_viewport.y !== viewport.y
             );
         });
-    }
-
-    //--------------------------------------------------------------------------
-    /**
-     * Extract the rects of the XRViewport instances
-     * @param xr_viewports
-     */
-    private _extractXRViewportRects(xr_viewports: XRViewport[]): {
-        x: number;
-        y: number;
-        width: number;
-        height: number;
-    }[] {
-        // Check if the viewport rects are normalized
-        const viewport_is_normalized = xr_viewports.map(v => {
-            return v.x <= 1 && v.y <= 1 && v.width <= 1 && v.height <= 1;
-        });
-        const are_xr_viewport_normalized = viewport_is_normalized.find(v => !v);
-        let viewport_rects;
-        if (are_xr_viewport_normalized) {
-            // XRViewport has a normalized rect between [O.O, 1.0] when running the
-            // "WebXR API Emulator" extension, so use the window size.
-            console.warn(
-                "The XR sessions viewports have normalized rects so resize those according to the window size.",
-            );
-            const w = window.innerWidth;
-            const h = window.innerHeight;
-            viewport_rects = xr_viewports.map(viewport => ({
-                x: Math.floor(viewport.x * w),
-                y: Math.floor(viewport.y * h),
-                width: Math.floor(viewport.width * w),
-                height: Math.floor(viewport.height * h),
-            }));
-        } else {
-            viewport_rects = xr_viewports.map(viewport => {
-                const { x, y, width, height } = viewport;
-                return { x, y, width, height };
-            });
-        }
-
-        // Check if the viewports are too small for the 3dverse renderer
-        viewport_rects.forEach(viewport => {
-            if (viewport.width * viewport.height < 640 * 480) {
-                console.warn("Viewport is too small:", viewport);
-                console.warn("=> resize it to 640x480");
-                viewport.width = viewport.width < viewport.height ? 480 : 640;
-                viewport.height = viewport.width < viewport.height ? 640 : 480;
-            }
-        });
-
-        return viewport_rects;
     }
 }
