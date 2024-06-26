@@ -87,7 +87,7 @@ export default function ThirdPersonController() {
     }, [instance, player]);
 
     return (
-        <div className="relative h-full p-3 pl-0">
+        <div className="relative h-full p-3 lg:pl-0">
             <Canvas canvasRef={canvasRef} />
             <CanvasActionBar isCentered={!instance}>
                 <button className="button button-primary" onClick={toggleConnection}>

@@ -30,7 +30,7 @@ export default function SceneSelector() {
     return (
         <>
             <div className="w-full h-full relative">
-                <div className="w-full h-full p-3 pl-0">
+                <div className="w-full h-full p-3 lg:pl-0">
                     <Canvas canvasRef={canvasRef} />
                 </div>
                 <div className="absolute bottom-16 left-1/2 -translate-x-1/2">

@@ -69,7 +69,7 @@ export default function Trigger() {
     return (
         <>
             <div className="relative w-full h-full">
-                <div className="w-full h-full p-3 pl-0">
+                <div className="w-full h-full p-3 lg:pl-0">
                     <Canvas canvasRef={canvasRef} />
                 </div>
                 {messages.length > 0 && (

@@ -110,7 +110,7 @@ export default function QuadrupleCanvas() {
     }, []);
 
     return (
-        <div className="w-full h-full grid grid-cols-2 gap-3 grid-rows-2 p-3 pl-0">
+        <div className="w-full h-full grid grid-cols-2 gap-3 grid-rows-2 p-3 lg:pl-0">
             <Canvas canvasRef={canvasRef1} />
             <Canvas canvasRef={canvasRef2} />
             <Canvas canvasRef={canvasRef3} />

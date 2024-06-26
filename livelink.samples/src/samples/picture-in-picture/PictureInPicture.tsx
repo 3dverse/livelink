@@ -56,7 +56,7 @@ export default function PictureInPicture() {
     }, [animationSeq]);
 
     return (
-        <div className="w-full h-full flex gap-3 p-3 pl-0">
+        <div className="w-full h-full flex gap-3 p-3 lg:pl-0">
             <div className="relative flex basis-full">
                 <Canvas canvasRef={canvasRef1} />
                 <div className="absolute top-3/4 left-8 bottom-8 right-8 border border-tertiary rounded-lg shadow-2xl">

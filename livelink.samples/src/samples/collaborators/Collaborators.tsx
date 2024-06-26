@@ -130,7 +130,7 @@ export default function Collaborators() {
     }, [instance, pipCamera, clients]);
 
     return (
-        <div className="relative h-full max-h-screen p-3 pl-0">
+        <div className="relative h-full max-h-screen p-3 lg:pl-0">
             <Canvas canvasRef={canvasRef} />
             <CanvasActionBar isCentered={!instance}>
                 <button className="button button-primary" onClick={toggleConnection}>
