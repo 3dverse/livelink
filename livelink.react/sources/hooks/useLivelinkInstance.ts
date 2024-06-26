@@ -11,11 +11,14 @@ import {
     Viewport,
     WebCodecsDecoder,
     RenderingSurface,
+    Rect,
+    DEFAULT_RECT,
 } from "@3dverse/livelink";
 
 //------------------------------------------------------------------------------
 type View = {
     canvas_ref: React.RefObject<HTMLCanvasElement>;
+    rect?: Rect;
     camera?: typeof Camera | UUID | null;
 } & (
     | {
@@ -77,18 +80,7 @@ export function useLivelinkInstance({ views }: { views: Array<View> }): {
 
             setIsConnecting(true);
             const instance = await Livelink.join_or_start({ scene_id, token });
-            const cameras = await configureClient(
-                instance,
-                views.map(view => {
-                    const canvas_element = view.canvas_ref.current!;
-                    return {
-                        canvas_element,
-                        context_type: "canvas_context_type" in view ? view.canvas_context_type : "2d",
-                        context_attributes: view.canvas_context_attributes,
-                    };
-                }),
-                views.map(v => (v.camera === null ? null : v.camera || DefaultCamera)),
-            );
+            const cameras = await configureClient(instance, views);
 
             setInstance(instance);
             setIsConnecting(false);
@@ -104,26 +96,25 @@ export function useLivelinkInstance({ views }: { views: Array<View> }): {
 }
 
 //------------------------------------------------------------------------------
-async function configureClient(
-    instance: Livelink,
-    canvas: Array<{
-        canvas_element: HTMLCanvasElement;
-        context_type: CanvasContextType;
-        context_attributes?: CanvasContextAttributes;
-    }>,
-    camera_constructors: (typeof Camera | UUID | null)[],
-) {
+async function configureClient(instance: Livelink, views: Array<View>) {
+    const canvasToViews = new Map<HTMLCanvasElement, { surface: RenderingSurface; views: Array<View> }>();
+    for (const view of views) {
+        const c2v = canvasToViews.get(view.canvas_ref.current!);
+        if (c2v !== undefined) {
+            c2v.views.push(view);
+        } else {
+            const surface = new RenderingSurface({
+                canvas_element: view.canvas_ref.current!,
+                context_type: "canvas_context_type" in view ? view.canvas_context_type : "2d",
+                context_attributes: view.canvas_context_attributes,
+            });
+            canvasToViews.set(view.canvas_ref.current!, { surface, views: [view] });
+        }
+    }
+
     // Step 1: configure the viewports that will receive the video stream.
-    const viewports = canvas.map(
-        ({ canvas_element, context_type, context_attributes }) =>
-            new Viewport(
-                instance,
-                new RenderingSurface({
-                    canvas_element,
-                    context_type,
-                    context_attributes,
-                }),
-            ),
+    const viewports = views.map(
+        view => new Viewport(instance, canvasToViews.get(view.canvas_ref.current!)!.surface, view.rect ?? DEFAULT_RECT),
     );
     instance.addViewports({ viewports });
 
@@ -142,6 +133,7 @@ async function configureClient(
     });
 
     // Step 4: inform the renderer of which camera to use with which viewport.
+    const camera_constructors = views.map(v => (v.camera === null ? null : v.camera || DefaultCamera));
     const cameras = (await Promise.all(
         viewports.map(async (viewport, i) => {
             if (camera_constructors[i] === null) {

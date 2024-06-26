@@ -28,6 +28,7 @@ import LiveSkeletalAnimation from "./live-skeletal-animation/LiveSkeletalAnimati
 
 // WebXR
 import WebXR from "./web-xr/WebXR";
+import MultiViewportCanvas from "./multi-viewport-canvas/MultiViewportCanvas";
 
 export const SAMPLES = [
     {
@@ -35,6 +36,7 @@ export const SAMPLES = [
         list: [
             { title: "Simple Canvas", path: "simple-canvas", element: <SimpleCanvas /> },
             { title: "Double Canvas", path: "double-canvas", element: <DoubleCanvas /> },
+            { title: "Multi-Viewport Canvas", path: "multi-viewport-canvas", element: <MultiViewportCanvas /> },
             { title: "Quadruple Canvas", path: "quadruple-canvas", element: <QuadrupleCanvas /> },
             { title: "Multi-Session", path: "multi-session", element: <MultiSession /> },
             { title: "Scene Selector", path: "scene-selector", element: <SceneSelector /> },

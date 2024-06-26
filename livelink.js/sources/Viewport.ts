@@ -10,7 +10,7 @@ import { RenderingSurface } from "./surfaces/RenderingSurface";
 /**
  *
  */
-const DEFAULT_RECT: Rect = {
+export const DEFAULT_RECT: Rect = {
     left: 0,
     top: 0,
     right: 1,
