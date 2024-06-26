@@ -267,7 +267,7 @@ export class WebXRHelper {
                       height: xrViewport.height / this.#surface!.height,
                   };
             console.debug(`Viewport for ${xr_eye.view.eye} eye:`, rect);
-            const viewport = new Viewport(this.#liveLink!, this.#surface!, rect);
+            const viewport = new Viewport(this.#liveLink!, this.#surface!, { rect });
 
             viewports.push({
                 xr_view: xr_eye.view,
