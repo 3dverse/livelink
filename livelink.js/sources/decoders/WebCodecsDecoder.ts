@@ -1,4 +1,4 @@
-import { EncodedFrameConsumer } from "./EncodedFrameConsumer";
+import { EncodedFrameConsumer, RawFrameMetaData } from "./EncodedFrameConsumer";
 
 import type { CodecType, Vec2i } from "@3dverse/livelink.core";
 import { LivelinkCoreModule } from "@3dverse/livelink.core";
@@ -7,7 +7,7 @@ import { DecodedFrameConsumer } from "./DecodedFrameConsumer";
 /**
  *
  */
-export class WebCodecsDecoder implements EncodedFrameConsumer {
+export class WebCodecsDecoder extends EncodedFrameConsumer {
     /**
      *
      */
@@ -26,17 +26,30 @@ export class WebCodecsDecoder implements EncodedFrameConsumer {
     /**
      *
      */
-    private _decoder: VideoDecoder | null = null;
+    #decoder: VideoDecoder | null = null;
 
     /**
      *
      */
-    private _first_frame: boolean = true;
+    #first_frame: boolean = true;
 
     /**
      *
      */
-    constructor(private _frame_consumer: DecodedFrameConsumer) {}
+    readonly #frame_consumer: DecodedFrameConsumer;
+
+    /**
+     *
+     */
+    #meta_data_stack: Array<RawFrameMetaData> = [];
+
+    /**
+     *
+     */
+    constructor(frame_consumer: DecodedFrameConsumer) {
+        super();
+        this.#frame_consumer = frame_consumer;
+    }
 
     /**
      *
@@ -57,12 +70,12 @@ export class WebCodecsDecoder implements EncodedFrameConsumer {
             throw new Error("Codec not supported");
         }
 
-        this._decoder = new VideoDecoder({
+        this.#decoder = new VideoDecoder({
             output: this._onFrameDecoded,
             error: e => console.error(e.message),
         });
 
-        this._decoder.configure(supportedConfig.config!);
+        this.#decoder.configure(supportedConfig.config!);
         console.log("Codec configured", supportedConfig.config);
 
         return this;
@@ -138,15 +151,16 @@ export class WebCodecsDecoder implements EncodedFrameConsumer {
     /**
      *
      */
-    consumeEncodedFrame({ encoded_frame }: { encoded_frame: DataView }) {
+    consumeEncodedFrame({ encoded_frame, meta_data }: { encoded_frame: DataView; meta_data: RawFrameMetaData }): void {
         const chunk = new EncodedVideoChunk({
             timestamp: 0,
-            type: this._first_frame ? "key" : "delta",
+            type: this.#first_frame ? "key" : "delta",
             data: new Uint8Array(encoded_frame.buffer, encoded_frame.byteOffset, encoded_frame.byteLength),
         });
 
-        this._first_frame = false;
-        this._decoder!.decode(chunk);
+        this.#first_frame = false;
+        this.#decoder!.decode(chunk);
+        this.#meta_data_stack.push(meta_data);
     }
 
     /**
@@ -157,7 +171,10 @@ export class WebCodecsDecoder implements EncodedFrameConsumer {
             this.#last_frame.close();
         }
 
-        this._frame_consumer.consumeDecodedFrame({ decoded_frame });
+        const raw_meta_data = this.#meta_data_stack.shift()!;
+        const meta_data = this.applyFrameMetaData(raw_meta_data);
+
+        this.#frame_consumer.consumeDecodedFrame({ decoded_frame, meta_data });
         this.#last_frame = decoded_frame;
     };
 

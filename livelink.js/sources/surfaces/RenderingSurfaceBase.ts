@@ -1,5 +1,6 @@
 import { Vec2i, ViewportConfig } from "@3dverse/livelink.core";
 import { Viewport } from "../Viewport";
+import { CurrentFrameMetaData } from "../decoders/EncodedFrameConsumer";
 
 /**
  *
@@ -96,5 +97,5 @@ export abstract class RenderingSurfaceBase extends EventTarget {
     /**
      *
      */
-    abstract drawFrame(frame: { frame: VideoFrame | OffscreenCanvas }): void;
+    abstract drawFrame(frame: { frame: VideoFrame | OffscreenCanvas; meta_data: CurrentFrameMetaData }): void;
 }

@@ -3,6 +3,7 @@ import { DecodedFrameConsumer } from "../decoders/DecodedFrameConsumer";
 import { Livelink } from "../Livelink";
 import { Viewport } from "../Viewport";
 import { RenderingSurfaceBase } from "./RenderingSurfaceBase";
+import { CurrentFrameMetaData } from "../decoders/EncodedFrameConsumer";
 
 /**
  * A remote rendering surface represents the total available area for the remote
@@ -79,9 +80,15 @@ export class RemoteRenderingSurface implements DecodedFrameConsumer {
     /**
      *
      */
-    consumeDecodedFrame({ decoded_frame }: { decoded_frame: VideoFrame | OffscreenCanvas }): void {
+    consumeDecodedFrame({
+        decoded_frame,
+        meta_data,
+    }: {
+        decoded_frame: VideoFrame | OffscreenCanvas;
+        meta_data: CurrentFrameMetaData;
+    }): void {
         for (const surface of this.#surfaces) {
-            surface.drawFrame({ frame: decoded_frame });
+            surface.drawFrame({ frame: decoded_frame, meta_data });
         }
     }
 

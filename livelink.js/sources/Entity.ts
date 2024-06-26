@@ -1,4 +1,12 @@
-import type { ComponentType, EditorEntity, EntityCreationOptions, Mat4, UUID } from "@3dverse/livelink.core";
+import type {
+    ComponentType,
+    EditorEntity,
+    EntityCreationOptions,
+    Mat4,
+    Quat,
+    UUID,
+    Vec3,
+} from "@3dverse/livelink.core";
 import { EntityBase } from "../_prebuild/types/EntityBase";
 import { Scene } from "./Scene";
 import { LivelinkCoreModule } from "@3dverse/livelink.core";
@@ -206,6 +214,18 @@ export class Entity extends EntityBase {
     /**
      *
      */
+    _setLocalTransform({ position, orientation }: { position: Vec3; orientation: Quat }) {
+        this._proxy_state = "off";
+        this._auto_update = "off";
+        this.local_transform!.position = position;
+        this.local_transform!.orientation = orientation;
+        this._auto_update = "on";
+        this._proxy_state = "on";
+    }
+
+    /**
+     *
+     */
     private _isSerializableComponent(prop: PropertyKey, v: any) {
         return (
             typeof prop === "string" &&
@@ -213,18 +233,6 @@ export class Entity extends EntityBase {
             prop[0] !== "_" &&
             Object.values(LivelinkCoreModule.Enums.ComponentHash).includes(prop)
         );
-    }
-
-    /**
-     *
-     */
-    _updateTransformFromWorldMatrix(ws_from_ls: Mat4) {
-        this._proxy_state = "off";
-        this._auto_update = "off";
-        this.local_transform!.position = getWorldPosition(ws_from_ls);
-        this.local_transform!.orientation = getWorldQuaternion(ws_from_ls);
-        this._proxy_state = "on";
-        this._auto_update = "on";
     }
 
     /**

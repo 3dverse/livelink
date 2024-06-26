@@ -1,6 +1,6 @@
 import { EncodedFrameConsumer } from "@3dverse/livelink";
 
-export class VideoWriter implements EncodedFrameConsumer {
+export class VideoWriter extends EncodedFrameConsumer {
     private _file_handle: FileSystemFileHandle | null = null;
     private _stream: FileSystemWritableFileStream | null = null;
 

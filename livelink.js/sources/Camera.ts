@@ -1,4 +1,3 @@
-import { Scene } from "./Scene";
 import { Entity } from "./Entity";
 import { Viewport } from "./Viewport";
 

@@ -14,9 +14,10 @@ import {
     UUID,
     Vec2i,
     ViewportConfig,
+    FrameMetaData,
 } from "@3dverse/livelink.core";
 
-import { EncodedFrameConsumer } from "./decoders/EncodedFrameConsumer";
+import { CameraFrameTransform, EncodedFrameConsumer, RawFrameMetaData } from "./decoders/EncodedFrameConsumer";
 import { DecodedFrameConsumer } from "./decoders/DecodedFrameConsumer";
 import { RemoteRenderingSurface } from "./surfaces/RemoteRenderingSurface";
 import { Session, SessionInfo, SessionSelector } from "./Session";
@@ -25,6 +26,7 @@ import { Viewport } from "./Viewport";
 import { Camera } from "./Camera";
 import { Entity } from "./Entity";
 import { Scene } from "./Scene";
+import { getWorldPosition, getWorldQuaternion } from "./utils";
 
 /**
  * The Livelink interface.
@@ -310,21 +312,44 @@ export class Livelink {
      */
     #onFrameReceived = (e: Event) => {
         const frame_data = (e as CustomEvent<FrameData>).detail;
-        this.session._updateClients({ client_data: frame_data.meta_data.clients });
-        this.#encoded_frame_consumer!.consumeEncodedFrame({ encoded_frame: frame_data.encoded_frame });
-        const active_cameras_rtids = this.viewports.map(v => v.camera?.rtid);
 
-        frame_data.meta_data.clients
-            .filter(client => client.client_id !== this.session.client_id)
-            .forEach(client => {
-                client.viewports
-                    .filter(viewport => !active_cameras_rtids.includes(viewport.camera_rtid))
-                    .forEach(viewport => {
-                        const entity = this.scene.entity_registry.get({ entity_rtid: viewport.camera_rtid });
-                        entity?._updateTransformFromWorldMatrix(viewport.ws_from_ls);
-                    });
-            });
+        this.session._updateClients({ client_data: frame_data.meta_data.clients });
+        const meta_data = this.#parseFrameMetaData(frame_data.meta_data);
+        this.#encoded_frame_consumer!.consumeEncodedFrame({ encoded_frame: frame_data.encoded_frame, meta_data });
     };
+
+    /**
+     *
+     */
+    #parseFrameMetaData(frame_meta_data: FrameMetaData): RawFrameMetaData {
+        const meta_data: RawFrameMetaData = {
+            renderer_timestamp: frame_meta_data.renderer_timestamp,
+            frame_counter: frame_meta_data.frame_counter,
+            current_client_cameras: [],
+            other_clients_cameras: [],
+        };
+
+        for (const client of frame_meta_data.clients) {
+            for (const viewport of client.viewports) {
+                const camera = this.scene.entity_registry.get({ entity_rtid: viewport.camera_rtid }) as Camera | null;
+                if (!camera) {
+                    continue;
+                }
+                const cameraMetadata: CameraFrameTransform = {
+                    camera,
+                    position: getWorldPosition(viewport.ws_from_ls),
+                    orientation: getWorldQuaternion(viewport.ws_from_ls),
+                };
+
+                if (client.client_id === this.session.client_id) {
+                    meta_data.current_client_cameras.push(cameraMetadata);
+                } else {
+                    meta_data.other_clients_cameras.push(cameraMetadata);
+                }
+            }
+        }
+        return meta_data;
+    }
 
     /**
      *
