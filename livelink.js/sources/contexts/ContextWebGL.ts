@@ -1,5 +1,7 @@
 import { ContextProvider } from "./ContextProvider";
 
+type Canvas = HTMLCanvasElement | OffscreenCanvas;
+
 /**
  *
  */
@@ -7,7 +9,7 @@ export class ContextWebGL extends ContextProvider {
     /**
      *
      */
-    private _canvas: HTMLCanvasElement;
+    private _canvas: Canvas;
 
     /**
      *
@@ -47,7 +49,7 @@ export class ContextWebGL extends ContextProvider {
      *
      */
     constructor(
-        canvas: HTMLCanvasElement,
+        canvas: Canvas,
         version: "webgl" | "webgl2" = "webgl",
         context_attributes?: WebGLContextAttributes & { xrCompatible?: boolean },
     ) {
