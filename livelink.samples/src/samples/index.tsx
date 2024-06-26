@@ -29,6 +29,7 @@ import LiveSkeletalAnimation from "./live-skeletal-animation/LiveSkeletalAnimati
 // WebXR
 import WebXR from "./web-xr/WebXR";
 import MultiViewportCanvas from "./multi-viewport-canvas/MultiViewportCanvas";
+import RenderTargetDebug from "./render-target-debug/RenderTargetDebug";
 
 export const SAMPLES = [
     {
@@ -80,6 +81,7 @@ export const SAMPLES = [
             { title: "Collaborators", path: "collaborators", element: <Collaborators /> },
             { title: "Picture in Picture", path: "picture-in-picture", element: <PictureInPicture /> },
             { title: "Live Skeletal Animation", path: "live-skeletal-animation", element: <LiveSkeletalAnimation /> },
+            { title: "Render Target Debug", path: "render-target-debug", element: <RenderTargetDebug /> },
         ],
     },
 ];

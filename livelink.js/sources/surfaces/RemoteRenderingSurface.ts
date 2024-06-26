@@ -179,7 +179,7 @@ export class RemoteRenderingSurface implements DecodedFrameConsumer {
                 this.#core._resize({ size: this.#dimensions });
             }
             console.debug("Viewports reconfigured", this.#config);
-            this.#core._setViewports({ viewports: this.#config });
+            this.#core._setViewports({ viewport_configs: this.#config });
         }
     };
 

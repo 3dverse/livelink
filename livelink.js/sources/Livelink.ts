@@ -4,6 +4,7 @@ import {
     CodecType,
     EntityUpdatedEvent,
     FrameData,
+    FrameMetaData,
     InputState,
     LivelinkCore,
     LivelinkCoreModule,
@@ -13,8 +14,7 @@ import {
     ScreenSpaceRayResult,
     UUID,
     Vec2i,
-    ViewportConfig,
-    FrameMetaData,
+    ViewportConfigs,
 } from "@3dverse/livelink.core";
 
 import { CameraFrameTransform, EncodedFrameConsumer, RawFrameMetaData } from "./decoders/EncodedFrameConsumer";
@@ -480,8 +480,8 @@ export class Livelink {
     /**
      *
      */
-    _setViewports({ viewports }: { viewports: Array<ViewportConfig> }): void {
-        this.#core.setViewports({ viewports });
+    _setViewports({ viewport_configs }: { viewport_configs: ViewportConfigs }): void {
+        this.#core.setViewports({ viewport_configs });
     }
 
     /**

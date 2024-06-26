@@ -113,7 +113,10 @@ async function configureClient(instance: Livelink, views: Array<View>) {
 
     // Step 1: configure the viewports that will receive the video stream.
     const viewports = views.map(
-        view => new Viewport(instance, canvasToViews.get(view.canvas_ref.current!)!.surface, view.rect ?? DEFAULT_RECT),
+        view =>
+            new Viewport(instance, canvasToViews.get(view.canvas_ref.current!)!.surface, {
+                rect: view.rect ?? DEFAULT_RECT,
+            }),
     );
 
     if (viewports.length > 0) {

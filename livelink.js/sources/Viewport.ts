@@ -41,6 +41,11 @@ export class Viewport extends EventTarget {
     /**
      *
      */
+    render_target_index: number = -1;
+
+    /**
+     *
+     */
     readonly rect: Rect;
 
     /**
@@ -88,11 +93,16 @@ export class Viewport extends EventTarget {
      *
      * @throws {InvalidCanvasId} Thrown when the provided id doesn't refer to a canvas element.
      */
-    constructor(core: Livelink, rendering_surface: RenderingSurfaceBase, rect: Rect = DEFAULT_RECT) {
+    constructor(
+        core: Livelink,
+        rendering_surface: RenderingSurfaceBase,
+        options?: { rect?: Rect; render_target_index?: number },
+    ) {
         super();
         this.#core = core;
         this.#rendering_surface = rendering_surface;
-        this.rect = rect;
+        this.rect = options?.rect ?? DEFAULT_RECT;
+        this.render_target_index = options?.render_target_index ?? -1;
     }
 
     /**

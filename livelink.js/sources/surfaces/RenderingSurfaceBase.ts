@@ -52,6 +52,7 @@ export abstract class RenderingSurfaceBase extends EventTarget {
             top: (this.offset[1] + viewport.rect.top * this.height) / height,
             width: viewport.width / width,
             height: viewport.height / height,
+            render_target_index: viewport.render_target_index,
         }));
     }
 
