@@ -1,16 +1,7 @@
-import type {
-    ComponentType,
-    EditorEntity,
-    EntityCreationOptions,
-    Mat4,
-    Quat,
-    UUID,
-    Vec3,
-} from "@3dverse/livelink.core";
+import type { ComponentType, EditorEntity, EntityCreationOptions, Quat, UUID, Vec3 } from "@3dverse/livelink.core";
 import { EntityBase } from "../_prebuild/types/EntityBase";
 import { Scene } from "./Scene";
 import { LivelinkCoreModule } from "@3dverse/livelink.core";
-import { getWorldPosition, getWorldQuaternion } from "./utils";
 
 /**
  *

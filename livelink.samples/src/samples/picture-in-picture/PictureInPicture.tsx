@@ -13,12 +13,14 @@ const SmartObjectManifest = {
 export default function PictureInPicture() {
     const canvasRef1 = useRef<HTMLCanvasElement>(null);
     const canvasRef2 = useRef<HTMLCanvasElement>(null);
+    const canvasRef3 = useRef<HTMLCanvasElement>(null);
     const [animationSeq, setAnimationSeq] = useState<AnimationSequence | null>(null);
 
     const { instance, connect } = useLivelinkInstance({
         views: [
             { canvas_ref: canvasRef1, camera: DefaultCamera },
             { canvas_ref: canvasRef2, camera: "b6f3ddc0-cd50-4ab1-be71-4c28772dc540" },
+            { canvas_ref: canvasRef3, camera: "b6f3ddc0-cd50-4ab1-be71-4c28772dc540" },
         ],
     });
 
@@ -61,6 +63,9 @@ export default function PictureInPicture() {
                 <Canvas canvasRef={canvasRef1} />
                 <div className="absolute top-3/4 left-8 bottom-8 right-8 border border-tertiary rounded-lg shadow-2xl">
                     <Canvas canvasRef={canvasRef2} />
+                </div>
+                <div className="absolute top-8 left-8 bottom-1/3 right-3/4 border border-tertiary rounded-lg shadow-2xl">
+                    <Canvas canvasRef={canvasRef3} />
                 </div>
             </div>
         </div>

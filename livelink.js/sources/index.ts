@@ -18,6 +18,7 @@ export * from "./contexts/ContextProvider";
 export * from "./contexts/Context2D";
 export * from "./contexts/ContextWebGL";
 
+export * from "./surfaces/NullSurface";
 export * from "./surfaces/RenderingSurface";
 export * from "./surfaces/RenderingSurfaceBase";
 

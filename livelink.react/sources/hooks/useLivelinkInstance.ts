@@ -3,8 +3,6 @@ import { useEffect, useState } from "react";
 import { DefaultCamera } from "../cameras/DefaultCamera";
 import {
     Camera,
-    CanvasContextAttributes,
-    CanvasContextType,
     Livelink,
     SoftwareDecoder,
     UUID,
@@ -44,10 +42,12 @@ export function useLivelinkInstance({ views }: { views: Array<View> }): {
     connect: ({
         scene_id,
         token,
+        onConfigureClient,
         onConnected,
     }: {
         scene_id: UUID;
         token: string;
+        onConfigureClient?: (instance: Livelink) => Promise<void>;
         onConnected?: ({ instance, cameras }: { instance: Livelink; cameras: Array<Camera | null> }) => void;
     }) => Promise<LivelinkResponse | null>;
     disconnect: () => void;
@@ -68,10 +68,12 @@ export function useLivelinkInstance({ views }: { views: Array<View> }): {
         connect: async ({
             scene_id,
             token,
+            onConfigureClient,
             onConnected,
         }: {
             scene_id: UUID;
             token: string;
+            onConfigureClient?: (instance: Livelink) => Promise<void>;
             onConnected?: ({ instance, cameras }: { instance: Livelink; cameras: Array<Camera | null> }) => void;
         }): Promise<LivelinkResponse | null> => {
             if (views.some(v => v.canvas_ref.current === null)) {
@@ -80,7 +82,15 @@ export function useLivelinkInstance({ views }: { views: Array<View> }): {
 
             setIsConnecting(true);
             const instance = await Livelink.join_or_start({ scene_id, token });
-            const cameras = await configureClient(instance, views);
+            const viewports = registerViewports(instance, views);
+            if (onConfigureClient) {
+                await onConfigureClient(instance);
+            } else {
+                await configureClient(instance);
+            }
+            const cameras = await resolveCameras(instance, views, viewports);
+
+            instance.startStreaming();
 
             setInstance(instance);
             setIsConnecting(false);
@@ -95,7 +105,7 @@ export function useLivelinkInstance({ views }: { views: Array<View> }): {
 }
 
 //------------------------------------------------------------------------------
-async function configureClient(instance: Livelink, views: Array<View>) {
+function registerViewports(instance: Livelink, views: Array<View>): Array<Viewport> {
     const canvasToViews = new Map<HTMLCanvasElement, { surface: RenderingSurface; views: Array<View> }>();
     for (const view of views) {
         const c2v = canvasToViews.get(view.canvas_ref.current!);
@@ -123,6 +133,11 @@ async function configureClient(instance: Livelink, views: Array<View>) {
         instance.addViewports({ viewports });
     }
 
+    return viewports;
+}
+
+//------------------------------------------------------------------------------
+async function configureClient(instance: Livelink) {
     // Step 2: configure the client on the renderer side, this informs the
     //         renderer on the client canvas size and available input devices
     //         and most importantly activates the session.
@@ -136,27 +151,44 @@ async function configureClient(instance: Livelink, views: Array<View>) {
                 ? new WebCodecsDecoder(instance.default_decoded_frame_consumer)
                 : new SoftwareDecoder(instance.default_decoded_frame_consumer),
     });
+}
 
+//------------------------------------------------------------------------------
+async function resolveCameras(
+    instance: Livelink,
+    views: Array<View>,
+    viewports: Array<Viewport>,
+): Promise<Array<Camera | null>> {
     // Step 4: inform the renderer of which camera to use with which viewport.
     const camera_constructors = views.map(v => (v.camera === null ? null : v.camera || DefaultCamera));
+
+    // Prefetch cameras
+    await Promise.all(
+        camera_constructors
+            .filter(camera_constructor => typeof camera_constructor === "string")
+            .map(async camera_constructor => {
+                return await instance.scene.findEntity(Camera, { entity_uuid: camera_constructor as UUID });
+            }),
+    );
+
     const cameras = (await Promise.all(
         viewports.map(async (viewport, i) => {
             if (camera_constructors[i] === null) {
                 return null;
-            } else if (typeof camera_constructors[i] === typeof Camera) {
-                return await instance.newCamera(camera_constructors[i] as typeof Camera, "MyCam_" + i++, viewport);
-            } else {
-                const camera = await instance.scene.findEntity(Camera, { entity_uuid: camera_constructors[i] as UUID });
-                if (camera) {
-                    camera.viewport = viewport;
-                    viewport.camera = camera;
-                }
-                return camera;
             }
+
+            if (typeof camera_constructors[i] === typeof Camera) {
+                return await instance.newCamera(camera_constructors[i] as typeof Camera, "MyCam_" + i++, viewport);
+            }
+
+            const camera = await instance.scene.findEntity(Camera, { entity_uuid: camera_constructors[i] as UUID });
+            if (camera) {
+                camera.viewport = viewport;
+                viewport.camera = camera;
+            }
+            return camera;
         }),
     )) satisfies Array<Camera | null>;
-
-    instance.startStreaming();
 
     return cameras;
 }
