@@ -11,7 +11,7 @@ export class WebXRCamera extends Camera {
         this.perspective_lens = {};
         this.camera = {
             renderGraphRef: "398ee642-030a-45e7-95df-7147f6c43392",
-            dataJSON: { grid: false, displayBackground: false, debugLines: true },
+            dataJSON: { grid: false, displayBackground: false },
         };
     }
 }
@@ -187,22 +187,25 @@ export class WebXRHelper {
      * @param frame
      */
     #onXRFrame = (_: DOMHighResTimeStamp, frame: XRFrame) => {
-        const xr_views = frame.getViewerPose(this._reference_space!)?.views;
+        const gl_layer = this.session!.renderState.baseLayer!;
+        const xr_views = frame.getViewerPose(this._reference_space!)?.views?.map(view => ({
+            view,
+            viewport: gl_layer.getViewport(view)!,
+        }));
+
         if (!xr_views) {
             this.session!.requestAnimationFrame(this.#onXRFrame);
             return;
         }
 
-        const gl_layer = this.session!.renderState.baseLayer!;
-        const xr_viewports = xr_views.map(xr_view => gl_layer!.getViewport(xr_view)!);
-
-        if (this.#xrViewportsHasChanged(xr_viewports)) {
+        if (this.#xrViewportsHasChanged(xr_views)) {
             // For now, we end the session if the viewports have changed
             this.session!.end();
         }
 
         this.#updateLiveLinkCameras(xr_views);
-        this.#surface!.drawLastFrame();
+
+        this.#surface!.drawLastFrame(xr_views);
         this.session!.requestAnimationFrame(this.#onXRFrame);
     };
 
@@ -210,12 +213,12 @@ export class WebXRHelper {
     /**
      * Update the cameras of the LiveLink instance.
      */
-    #updateLiveLinkCameras(xr_views: readonly XRView[]) {
+    #updateLiveLinkCameras(xr_views: Array<{ view: XRView }>): void {
         const cameras = this.#surface!.cameras;
 
         cameras.forEach((camera, index) => {
-            const xr_view = xr_views[index];
-            const { position, orientation } = xr_view.transform;
+            const { view } = xr_views[index];
+            const { position, orientation } = view.transform;
             // Update the local_transform component
             camera!.local_transform = {
                 position: [position.x, position.y, position.z],
@@ -332,13 +335,13 @@ export class WebXRHelper {
     /**
      * Check if the XRViewport instances passed as parameters are distinct from
      * the ones of the last XRFrame.
-     * @param xr_viewports
+     * @param xr_views
      */
-    #xrViewportsHasChanged(xr_viewports: XRViewport[]): boolean {
+    #xrViewportsHasChanged(xr_views: Array<{ viewport: XRViewport }>): boolean {
         if (this._xr_viewports.length === 0) {
             return true;
         }
-        return xr_viewports.some((viewport, index) => {
+        return xr_views.some(({ viewport }, index) => {
             const xr_viewport = this._xr_viewports[index];
             if (!xr_viewport) {
                 return true;

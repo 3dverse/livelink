@@ -1,4 +1,5 @@
-import { ContextWebGL, RenderingSurfaceBase, Rect, Camera, CurrentFrameMetaData } from "@3dverse/livelink";
+import { RenderingSurfaceBase, Rect, Camera, CurrentFrameMetaData } from "@3dverse/livelink";
+import { XRContext } from "./XRContext";
 
 /**
  *
@@ -12,7 +13,7 @@ export class OffscreenSurface extends RenderingSurfaceBase {
     /**
      *
      */
-    #context: ContextWebGL;
+    #context: XRContext;
 
     /**
      *
@@ -24,8 +25,12 @@ export class OffscreenSurface extends RenderingSurfaceBase {
      */
     constructor({ width, height }: { width: number; height: number }) {
         super();
-        this.#canvas = new OffscreenCanvas(width, height);
-        this.#context = new ContextWebGL(this.#canvas, "webgl", { xrCompatible: true });
+        //this.#canvas = new OffscreenCanvas(width, height);
+        const canvas = document.createElement("canvas");
+        canvas.width = width;
+        canvas.height = height;
+        this.#canvas = canvas as unknown as OffscreenCanvas;
+        this.#context = new XRContext(this.#canvas, "webgl", { xrCompatible: true });
     }
 
     /**
@@ -87,9 +92,20 @@ export class OffscreenSurface extends RenderingSurfaceBase {
     /**
      *
      */
-    drawLastFrame() {
+    drawLastFrame(xr_views: Array<{ view: XRView; viewport: XRViewport }>) {
         if (this.#last_frame) {
-            this.#context.drawFrame({ frame: this.#last_frame.frame, left: this.offset[0], top: this.offset[1] });
+            this.#context.drawFrame({
+                frame: this.#last_frame.frame,
+                left: this.offset[0],
+                top: this.offset[1],
+                xr_views: xr_views.map(({ view, viewport }, index) => {
+                    const currentViewport = this.viewports[index];
+                    const { position, orientation } = this.#last_frame!.meta_data.cameras.find(
+                        c => c.camera.id === currentViewport.camera!.id,
+                    )!;
+                    return { view, viewport, frame_camera_transform: { position, orientation } };
+                }),
+            });
         }
     }
 
