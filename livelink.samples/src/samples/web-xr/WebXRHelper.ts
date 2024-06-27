@@ -16,10 +16,30 @@ export class WebXRCamera extends Camera {
     }
 }
 
+/**
+ *
+ */
 type XRViewports = Array<{
     xr_view: XRView;
     livelink_viewport: Viewport;
 }>;
+
+/**
+ *
+ */
+function createPromiseWithResolvers<T>(): {
+    promise: Promise<T>;
+    resolve: (value: T) => void;
+    reject: (reason?: unknown) => void;
+} {
+    let resolve: (value: T) => void;
+    let reject: (reason?: unknown) => void;
+    const promise = new Promise<T>((_resolve, _reject) => {
+        resolve = _resolve;
+        reject = _reject;
+    });
+    return { promise, resolve: resolve!, reject: reject! };
+}
 
 /**
  *
@@ -129,7 +149,7 @@ export class WebXRHelper {
         }
 
         let remaining_attempts = 200;
-        const { promise, resolve, reject } = Promise.withResolvers<XRViewports>();
+        const { promise, resolve, reject } = createPromiseWithResolvers<XRViewports>();
         const onFirstXRFrame = async (_: DOMHighResTimeStamp, frame: XRFrame) => {
             const xr_views = frame.getViewerPose(this._reference_space!)?.views;
             if (!xr_views) {
