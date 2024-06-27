@@ -50,9 +50,11 @@ export default function WebXR({ mode }: { mode: XRSessionMode }) {
             return;
         }
 
+        const webXRHelper = new WebXRHelper();
+        let livelinkInstance: Livelink | null = null;
+
         try {
             setMessage("");
-            const webXRHelper = new WebXRHelper();
             await webXRHelper.initialize(mode);
 
             webXRHelper.session!.addEventListener("end", () => {
@@ -62,7 +64,7 @@ export default function WebXR({ mode }: { mode: XRSessionMode }) {
 
             setIsConnecting(true);
 
-            const livelinkInstance = await Livelink.join_or_start({
+            livelinkInstance = await Livelink.join_or_start({
                 scene_id: "e1250c0e-fa04-4af5-a5cb-cf29fd38b78d",
                 token: "public_p54ra95AMAnZdTel",
             });
@@ -71,9 +73,11 @@ export default function WebXR({ mode }: { mode: XRSessionMode }) {
 
             setXRSession(webXRHelper);
             setInstance(livelinkInstance);
-            setIsConnecting(false);
         } catch (error) {
+            webXRHelper.release();
+            livelinkInstance?.disconnect();
             setMessage(`Error: ${error instanceof Error ? error.message : error}`);
+        } finally {
             setIsConnecting(false);
         }
     };

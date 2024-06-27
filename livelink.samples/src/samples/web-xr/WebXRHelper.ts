@@ -125,21 +125,27 @@ export class WebXRHelper {
     public configureViewports(livelink: Livelink): Promise<XRViewports> {
         this.#liveLink = livelink;
         if (!this.#liveLink) {
-            throw new Error("Failed to initialize XR session, no LiveLink instance was provided.");
+            throw new Error("Failed to configure XR session, no LiveLink instance was provided.");
         }
 
+        let remaining_attempts = 200;
         const { promise, resolve, reject } = Promise.withResolvers<XRViewports>();
-        this.#animationFrameRequestId = this.session!.requestAnimationFrame(async (_, frame: XRFrame) => {
+        const onFirstXRFrame = async (_: DOMHighResTimeStamp, frame: XRFrame) => {
             const xr_views = frame.getViewerPose(this._reference_space!)?.views;
             if (!xr_views) {
-                reject(new Error("Failed to get XR views"));
+                if (--remaining_attempts > 0) {
+                    this.session!.requestAnimationFrame(onFirstXRFrame);
+                } else {
+                    reject(new Error("Failed to get XR views."));
+                }
                 return;
             }
 
             const viewports = this.#createLivelinkViewports(xr_views);
             resolve(viewports);
-        });
+        };
 
+        this.#animationFrameRequestId = this.session!.requestAnimationFrame(onFirstXRFrame);
         return promise;
     }
 
