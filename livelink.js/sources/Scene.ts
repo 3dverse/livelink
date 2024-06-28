@@ -53,8 +53,14 @@ export class Scene extends EventTarget {
     /**
      *
      */
-    getAnimationSequence({ animation_sequence_id }: { animation_sequence_id: UUID }) {
-        return new AnimationSequence(this.#core, { animation_sequence_id });
+    getAnimationSequence({
+        animation_sequence_id,
+        linker_entity,
+    }: {
+        animation_sequence_id: UUID;
+        linker_entity?: Entity;
+    }) {
+        return new AnimationSequence(this.#core, { animation_sequence_id, linker_entity });
     }
 
     /**
