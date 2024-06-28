@@ -1,10 +1,6 @@
 import type { ClientMetaData, SessionInterface, UUID } from "@3dverse/livelink.core";
 import { Client } from "./Client";
-
-/**
- *
- */
-const api_url = `https://${API_HOSTNAME}/app/v1`;
+import { Livelink } from "./Livelink";
 
 /**
  *
@@ -131,7 +127,7 @@ export class Session extends EventTarget implements SessionInterface {
      * const session = await new Session(scene_id, token).create();
      */
     async create(): Promise<Session> {
-        const res = await fetch(`${api_url}/sessions`, {
+        const res = await fetch(`${Livelink._api_url}/sessions`, {
             method: "POST",
             body: JSON.stringify({ scene_id: this.#scene_id }),
             headers: {
@@ -161,7 +157,7 @@ export class Session extends EventTarget implements SessionInterface {
      *    null if none is found.
      */
     async find({ session_selector }: { session_selector: SessionSelector }): Promise<Session | null> {
-        const res = await fetch(`${api_url}/sessions?filters[scene_id]=${this.#scene_id}`, {
+        const res = await fetch(`${Livelink._api_url}/sessions?filters[scene_id]=${this.#scene_id}`, {
             method: "GET",
             headers: {
                 user_token: this.#token,
@@ -186,7 +182,7 @@ export class Session extends EventTarget implements SessionInterface {
      *
      */
     async registerClient(): Promise<void> {
-        const res = await fetch(`${api_url}/sessions/${this.session_id}/clients`, {
+        const res = await fetch(`${Livelink._api_url}/sessions/${this.session_id}/clients`, {
             method: "POST",
             headers: {
                 user_token: this.#token,
@@ -213,7 +209,7 @@ export class Session extends EventTarget implements SessionInterface {
             throw new Error("Cannot close session as it has not been opened yet");
         }
 
-        const res = await fetch(`${api_url}/sessions/${this.session_id}`, {
+        const res = await fetch(`${Livelink._api_url}/sessions/${this.session_id}`, {
             method: "DELETE",
             headers: {
                 api_key: this.#token,
@@ -239,7 +235,7 @@ export class Session extends EventTarget implements SessionInterface {
      */
     async kickClient({ client }: { client: Client | UUID }) {
         const client_id = client instanceof Client ? client.id : client;
-        const res = await fetch(`${api_url}/sessions/${this.session_id}/clients/${client_id}`, {
+        const res = await fetch(`${Livelink._api_url}/sessions/${this.session_id}/clients/${client_id}`, {
             method: "DELETE",
             headers: {
                 user_token: this.#token,

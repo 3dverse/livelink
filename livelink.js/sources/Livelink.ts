@@ -37,6 +37,17 @@ import { getWorldPosition, getWorldQuaternion } from "./utils";
  */
 export class Livelink {
     /**
+     * @internal
+     */
+    static _api_url = `https://${API_HOSTNAME}/app/v1`;
+
+    /**
+     * @internal
+     */
+
+    static _editor_url = EDITOR_URL;
+
+    /**
      * Start a session with the given scene id
      *
      * @param {Object}  obj
@@ -180,7 +191,10 @@ export class Livelink {
         // Retrieve a session key
         await this.session.registerClient();
 
-        const component_serializer = await this.#core.connect({ session: this.session, editor_url: EDITOR_URL });
+        const component_serializer = await this.#core.connect({
+            session: this.session,
+            editor_url: Livelink._editor_url,
+        });
         this.scene.entity_registry._configureComponentSerializer({ component_serializer });
 
         this.#core.addEventListener({

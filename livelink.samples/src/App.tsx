@@ -5,6 +5,12 @@ import { Outlet, useOutlet } from "react-router-dom";
 import { Home } from "./components/Home";
 import { BarsIcon } from "./components-system/common/icons/BarsIcon";
 import { MainMenu } from "./components/MainMenu";
+import { Livelink } from "@3dverse/livelink";
+
+// @ts-ignore
+Livelink._api_url = "https://api.3dverse.dev/app/v1";
+// @ts-ignore
+Livelink._editor_url = "wss://api.3dverse.dev/editor-backend";
 
 //------------------------------------------------------------------------------
 function App() {

@@ -13,9 +13,8 @@ const commonBuildOptions = {
     external: [...Object.keys(pkg.peerDependencies || {})],
     sourcemap: true,
     define: {
-        API_HOSTNAME: `"api.3dverse.dev"`,
-        //EDITOR_URL : `"wss://livelink.3dverse.com"`;
-        EDITOR_URL: `"wss://api.3dverse.dev/editor-backend"`,
+        API_HOSTNAME: `"api.3dverse.com"`,
+        EDITOR_URL: `"wss://api.3dverse.com/editor-backend"`,
     },
 };
 
