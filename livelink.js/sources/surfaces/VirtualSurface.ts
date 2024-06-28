@@ -1,6 +1,6 @@
 import { RenderingSurfaceBase } from "./RenderingSurfaceBase";
 import { Rect } from "./Rect";
-import { CurrentFrameMetaData } from "../decoders/EncodedFrameConsumer";
+import { CurrentFrameMetaData } from "../decoders/CurrentFrameMetaData";
 
 /**
  *

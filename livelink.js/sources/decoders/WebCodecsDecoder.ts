@@ -1,4 +1,5 @@
-import { EncodedFrameConsumer, RawFrameMetaData } from "./EncodedFrameConsumer";
+import { EncodedFrameConsumer } from "./EncodedFrameConsumer";
+import { RawFrameMetaData } from "./RawFrameMetaData";
 
 import type { CodecType, Vec2i } from "@3dverse/livelink.core";
 import { LivelinkCoreModule } from "@3dverse/livelink.core";

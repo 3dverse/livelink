@@ -1,4 +1,5 @@
-import { EncodedFrameConsumer, RawFrameMetaData } from "./EncodedFrameConsumer";
+import { EncodedFrameConsumer } from "./EncodedFrameConsumer";
+import { RawFrameMetaData } from "./RawFrameMetaData";
 // @ts-ignore
 import BWDecoder from "../../external/Decoder.js";
 // @ts-ignore

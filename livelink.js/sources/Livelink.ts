@@ -17,7 +17,9 @@ import {
     ViewportConfigs,
 } from "@3dverse/livelink.core";
 
-import { CameraFrameTransform, EncodedFrameConsumer, RawFrameMetaData } from "./decoders/EncodedFrameConsumer";
+import { EncodedFrameConsumer } from "./decoders/EncodedFrameConsumer";
+import { CameraFrameTransform } from "./decoders/CameraFrameTransform";
+import { RawFrameMetaData } from "./decoders/RawFrameMetaData";
 import { DecodedFrameConsumer } from "./decoders/DecodedFrameConsumer";
 import { RemoteRenderingSurface } from "./surfaces/RemoteRenderingSurface";
 import { Session, SessionInfo, SessionSelector } from "./Session";

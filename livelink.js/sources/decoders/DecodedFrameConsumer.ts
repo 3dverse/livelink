@@ -1,4 +1,4 @@
-import { CurrentFrameMetaData } from "./EncodedFrameConsumer";
+import { CurrentFrameMetaData } from "./CurrentFrameMetaData";
 
 /**
  *

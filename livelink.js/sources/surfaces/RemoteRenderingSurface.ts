@@ -3,7 +3,7 @@ import { DecodedFrameConsumer } from "../decoders/DecodedFrameConsumer";
 import { Livelink } from "../Livelink";
 import { Viewport } from "../Viewport";
 import { RenderingSurfaceBase } from "./RenderingSurfaceBase";
-import { CurrentFrameMetaData } from "../decoders/EncodedFrameConsumer";
+import { CurrentFrameMetaData } from "../decoders/CurrentFrameMetaData";
 
 /**
  * A remote rendering surface represents the total available area for the remote

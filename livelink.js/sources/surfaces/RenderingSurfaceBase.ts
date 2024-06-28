@@ -1,6 +1,6 @@
 import { Vec2i, ViewportConfig } from "@3dverse/livelink.core";
 import { Viewport } from "../Viewport";
-import { CurrentFrameMetaData } from "../decoders/EncodedFrameConsumer";
+import { CurrentFrameMetaData } from "../decoders/CurrentFrameMetaData";
 import { Rect } from "./Rect";
 
 /**
