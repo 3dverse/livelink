@@ -116,7 +116,7 @@ export class RelativeRect extends Rect {
      */
     #areValuesRelative(): boolean {
         return (
-            this.left < 1 && this.top < 1 && this.right < 1 && this.bottom < 1 && this.width <= 1 && this.height <= 1
+            this.left < 1 && this.top < 1 && this.right <= 1 && this.bottom <= 1 && this.width <= 1 && this.height <= 1
         );
     }
 }
