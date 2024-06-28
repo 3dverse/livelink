@@ -35,7 +35,7 @@ export class XRContext extends ContextProvider {
     /**
      *
      */
-    readonly #neutral_direction: vec3 = vec3.fromValues(0, 0, 1);
+    readonly #neutral_direction: vec3 = vec3.fromValues(0, 0, -1);
 
     /**
      *
@@ -93,11 +93,13 @@ export class XRContext extends ContextProvider {
      */
     drawFrame({
         frame,
+        scale_factor,
         xr_views,
     }: {
         frame: VideoFrame | OffscreenCanvas;
         left: number;
         top: number;
+        scale_factor: number;
         xr_views: Array<{
             view: XRView;
             viewport: XRViewport;
@@ -128,10 +130,10 @@ export class XRContext extends ContextProvider {
         gl.bindTexture(gl.TEXTURE_2D, this._texture_ref);
         gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, frame);
 
-        const fovV = Math.atan(1 / xr_views[0].view.projectionMatrix[5]) * 2;
+        const fovY = Math.atan(1 / xr_views[0].view.projectionMatrix[5]) * 2;
 
         const aspectRatio = xr_views[0].viewport.width / xr_views[0].viewport.height;
-        const scaleY = this.screen_distance * Math.tan(fovV * 0.5);
+        const scaleY = scale_factor * this.screen_distance * Math.tan(fovY * 0.5);
         const scaleX = scaleY * aspectRatio;
 
         const viewportWidth = 1 / xr_views.length;
@@ -158,8 +160,7 @@ export class XRContext extends ContextProvider {
 
             vec3.transformQuat(this.#camera_direction, this.#neutral_direction, this.#camera_orientation);
             vec3.scale(this.#camera_direction, this.#camera_direction, this.screen_distance);
-            vec3.sub(this.#billboard_position, this.#camera_position, this.#camera_direction);
-
+            vec3.add(this.#billboard_position, this.#camera_position, this.#camera_direction);
             const billboardMatrix = this.#computeBillboardMatrix(this.#billboard_position);
 
             gl.viewport(viewport.x, viewport.y, viewport.width, viewport.height);

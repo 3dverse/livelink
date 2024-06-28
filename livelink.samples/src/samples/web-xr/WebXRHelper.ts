@@ -51,12 +51,15 @@ export class WebXRHelper {
 
     //--------------------------------------------------------------------------
     #surface: OffscreenSurface;
+    #fov_factor: number = 1.15;
+    #camera_fovy: number = 60;
+    #viewports: XRViewports = [];
 
     //--------------------------------------------------------------------------
     // WebXR API references
     session: XRSession | null = null;
-    private _reference_space: XRReferenceSpace | null = null;
-    private _xr_viewports: XRViewport[] = [];
+    #reference_space: XRReferenceSpace | null = null;
+    #xr_viewports: XRViewport[] = [];
     #animationFrameRequestId: number = 0;
 
     //--------------------------------------------------------------------------
@@ -142,16 +145,33 @@ export class WebXRHelper {
     /**
      *
      */
-    public configureViewports(livelink: Livelink): Promise<XRViewports> {
+    public async configureViewports(livelink: Livelink, enableScale: boolean = false): Promise<string> {
         this.#liveLink = livelink;
         if (!this.#liveLink) {
             throw new Error("Failed to configure XR session, no LiveLink instance was provided.");
         }
 
+        const xr_views = await this.#getXRViews();
+
+        this.#configureLivelinkViewports(xr_views);
+        if (enableScale) {
+            this.#configureScaleFactor(xr_views);
+        }
+
+        this.#liveLink!.addViewports({ viewports: this.#viewports.map(v => v.livelink_viewport) });
+
+        return `${this.#surface.width} x ${this.#surface.height}`;
+    }
+
+    /**
+     * Obtains a single set of XR views from the XR session.
+     */
+    #getXRViews(): Promise<Readonly<Array<XRView>>> {
+        const { promise, resolve, reject } = createPromiseWithResolvers<Readonly<Array<XRView>>>();
+
         let remaining_attempts = 200;
-        const { promise, resolve, reject } = createPromiseWithResolvers<XRViewports>();
         const onFirstXRFrame = async (_: DOMHighResTimeStamp, frame: XRFrame) => {
-            const xr_views = frame.getViewerPose(this._reference_space!)?.views;
+            const xr_views = frame.getViewerPose(this.#reference_space!)?.views;
             if (!xr_views) {
                 if (--remaining_attempts > 0) {
                     this.session!.requestAnimationFrame(onFirstXRFrame);
@@ -161,12 +181,30 @@ export class WebXRHelper {
                 return;
             }
 
-            const viewports = this.#createLivelinkViewports(xr_views);
-            resolve(viewports);
+            resolve(xr_views);
         };
 
         this.#animationFrameRequestId = this.session!.requestAnimationFrame(onFirstXRFrame);
         return promise;
+    }
+
+    /**
+     *
+     */
+    #configureScaleFactor(xr_views: Readonly<Array<XRView>>): void {
+        const fovY = xr_views[0].projectionMatrix[5];
+        const original_fov = 2 * Math.atan(1 / fovY);
+
+        const new_fov = original_fov * this.#fov_factor;
+        this.#surface.resolution_scale = (Math.tan(new_fov / 2) / Math.tan(original_fov / 2)) * 2;
+        this.#surface.scale_factor = this.#surface.resolution_scale;
+
+        this.#camera_fovy = new_fov * (180 / Math.PI);
+
+        console.log(
+            `%cFOV: ${original_fov * (180 / Math.PI)} -> ${this.#camera_fovy}, scale factor: ${this.#surface.scale_factor}`,
+            "color: orange; font-weight: bold; font-size: 1.5em",
+        );
     }
 
     /**
@@ -183,11 +221,11 @@ export class WebXRHelper {
      * @returns Resolves with the reference to the new reference space.
      */
     public async setReferenceSpaceType(type: XRReferenceSpaceType = "local"): Promise<XRReferenceSpace> {
-        this._reference_space = await this.session!.requestReferenceSpace(type).catch(async error => {
+        this.#reference_space = await this.session!.requestReferenceSpace(type).catch(async error => {
             console.error(`Failed to request XR reference space of type ${type}:`, error);
             throw error;
         });
-        return this._reference_space;
+        return this.#reference_space;
     }
 
     //--------------------------------------------------------------------------
@@ -214,7 +252,7 @@ export class WebXRHelper {
      */
     #onXRFrame = (_: DOMHighResTimeStamp, frame: XRFrame) => {
         const gl_layer = this.session!.renderState.baseLayer!;
-        const xr_views = frame.getViewerPose(this._reference_space!)?.views?.map(view => ({
+        const xr_views = frame.getViewerPose(this.#reference_space!)?.views?.map(view => ({
             view,
             viewport: gl_layer.getViewport(view)!,
         }));
@@ -257,7 +295,7 @@ export class WebXRHelper {
     /**
      *
      */
-    #createLivelinkViewports(xr_views: readonly XRView[]): XRViewports {
+    #configureLivelinkViewports(xr_views: readonly XRView[]) {
         const gl_layer = this.session!.renderState.baseLayer!;
         const xr_eyes = xr_views.map(view => ({
             view,
@@ -267,14 +305,13 @@ export class WebXRHelper {
 
         console.debug("XR views:", xr_views);
         console.debug("XR viewports:", xr_viewports);
-        this._xr_viewports = xr_viewports;
+        this.#xr_viewports = xr_viewports;
 
         const are_xr_viewport_normalized = xr_eyes.every(({ viewport: v }) => {
             return v.x <= 1 && v.y <= 1 && v.width <= 1 && v.height <= 1;
         });
 
-        // Create the viewports and attach them to the canvas
-        const viewports: XRViewports = [];
+        this.#viewports.length = 0;
 
         for (const xr_eye of xr_eyes) {
             const xrViewport = xr_eye.viewport;
@@ -287,30 +324,27 @@ export class WebXRHelper {
                           height: xrViewport.height,
                       }
                     : {
-                          left: xrViewport.x / this.#surface!.width,
-                          top: xrViewport.y / this.#surface!.height,
-                          width: xrViewport.width / this.#surface!.width,
-                          height: xrViewport.height / this.#surface!.height,
+                          left: xrViewport.x / gl_layer.framebufferWidth,
+                          top: xrViewport.y / gl_layer.framebufferHeight,
+                          width: xrViewport.width / gl_layer.framebufferWidth,
+                          height: xrViewport.height / gl_layer.framebufferHeight,
                       },
             );
             console.debug(`Viewport for ${xr_eye.view.eye} eye:`, rect);
             const viewport = new Viewport(this.#liveLink!, this.#surface!, { rect });
 
-            viewports.push({
+            this.#viewports.push({
                 xr_view: xr_eye.view,
                 livelink_viewport: viewport,
             });
         }
-
-        this.#liveLink!.addViewports({ viewports: viewports.map(v => v.livelink_viewport) });
-        return viewports;
     }
 
     //--------------------------------------------------------------------------
-    async createCameras(viewports: XRViewports): Promise<void> {
+    async createCameras(): Promise<void> {
         await Promise.all(
-            viewports.map(async ({ xr_view, livelink_viewport }) => {
-                const perspective_lens = this.#extractPerspectiveLens(
+            this.#viewports.map(async ({ xr_view, livelink_viewport }) => {
+                const perspective_lens = this.#computePerspectiveLens(
                     xr_view.projectionMatrix,
                     livelink_viewport.width,
                     livelink_viewport.height,
@@ -334,7 +368,7 @@ export class WebXRHelper {
      * @param viewportWidth
      * @param viewportHeight
      */
-    #extractPerspectiveLens(
+    #computePerspectiveLens(
         projectionMatrix: Float32Array,
         viewportWidth: number,
         viewportHeight: number,
@@ -345,10 +379,7 @@ export class WebXRHelper {
         farPlane: number;
     } {
         const aspectRatio = viewportWidth / viewportHeight;
-        // Extract FOV angle from the relevant element at row 2, column 2.
-        const fovyRadians = 2 * Math.atan(1 / projectionMatrix[5]);
-        // Convert FOV to degrees
-        const fovy = fovyRadians * (180 / Math.PI);
+        const fovy = this.#camera_fovy;
         // Extract near and far clipping planes from the projection matrix
         const nearPlane = projectionMatrix[14] / (projectionMatrix[10] - 1);
         const farPlane = projectionMatrix[14] / (projectionMatrix[10] + 1);
@@ -362,11 +393,11 @@ export class WebXRHelper {
      * @param xr_views
      */
     #xrViewportsHasChanged(xr_views: Array<{ viewport: XRViewport }>): boolean {
-        if (this._xr_viewports.length === 0) {
+        if (this.#xr_viewports.length === 0) {
             return true;
         }
         return xr_views.some(({ viewport }, index) => {
-            const xr_viewport = this._xr_viewports[index];
+            const xr_viewport = this.#xr_viewports[index];
             if (!xr_viewport) {
                 return true;
             }

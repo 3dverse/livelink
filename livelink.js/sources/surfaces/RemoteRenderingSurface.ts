@@ -219,8 +219,7 @@ export class RemoteRenderingSurface implements DecodedFrameConsumer {
 
         const width = max[0] - min[0];
         const height = max[1] - min[1];
-
-        return { offset: min, width, height };
+        return { offset: min, width, height: height };
     }
 
     /**

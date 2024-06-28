@@ -23,6 +23,16 @@ export class OffscreenSurface extends RenderingSurfaceBase {
     /**
      *
      */
+    resolution_scale: number = 1.0;
+
+    /**
+     *
+     */
+    scale_factor: number = 1.0;
+
+    /**
+     *
+     */
     constructor({ width, height }: { width: number; height: number }) {
         super();
         //this.#canvas = new OffscreenCanvas(width, height);
@@ -30,6 +40,7 @@ export class OffscreenSurface extends RenderingSurfaceBase {
         canvas.width = width;
         canvas.height = height;
         this.#canvas = canvas as unknown as OffscreenCanvas;
+
         this.#context = new XRContext(this.#canvas, "webgl", { xrCompatible: true });
     }
 
@@ -37,13 +48,13 @@ export class OffscreenSurface extends RenderingSurfaceBase {
      *
      */
     get width(): number {
-        return this.#canvas.width;
+        return Math.floor(this.#canvas.width * this.resolution_scale);
     }
     /**
      *
      */
     get height(): number {
-        return this.#canvas.height;
+        return Math.floor(this.#canvas.height * this.resolution_scale);
     }
 
     /**
@@ -79,7 +90,7 @@ export class OffscreenSurface extends RenderingSurfaceBase {
      *
      */
     getBoundingRect(): Rect {
-        return new Rect({ width: this.#canvas.width, height: this.#canvas.height });
+        return new Rect({ width: this.width, height: this.height });
     }
 
     /**
@@ -91,6 +102,7 @@ export class OffscreenSurface extends RenderingSurfaceBase {
                 frame: this.#last_frame.frame,
                 left: this.offset[0],
                 top: this.offset[1],
+                scale_factor: this.scale_factor,
                 xr_views: xr_views.map(({ view, viewport }, index) => {
                     const currentViewport = this.viewports[index];
                     const { position, orientation } = this.#last_frame!.meta_data.cameras.find(

@@ -1,15 +1,19 @@
 //------------------------------------------------------------------------------
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Livelink, SoftwareDecoder, WebCodecsDecoder } from "@3dverse/livelink";
 import { WebXRHelper } from "./WebXRHelper";
+import { CanvasActionBar } from "../../styles/components/CanvasActionBar";
 
 //------------------------------------------------------------------------------
 export default function WebXR({ mode }: { mode: XRSessionMode }) {
+    const containerRef = useRef<HTMLDivElement>(null);
     const [xrSession, setXRSession] = useState<WebXRHelper | null>(null);
     const [instance, setInstance] = useState<Livelink | null>(null);
     const [message, setMessage] = useState<string>("");
     const [isConnecting, setIsConnecting] = useState(false);
     const [isSessionSupported, setIsSessionSupported] = useState(false);
+    const [enableScale, setEnableScale] = useState(false);
+    const [resolution, setResolution] = useState("");
 
     //--------------------------------------------------------------------------
     useEffect(() => {
@@ -26,7 +30,7 @@ export default function WebXR({ mode }: { mode: XRSessionMode }) {
 
     //--------------------------------------------------------------------------
     async function configureClient(webXRHelper: WebXRHelper, livelinkInstance: Livelink) {
-        const viewports = await webXRHelper.configureViewports(livelinkInstance);
+        const resolution = await webXRHelper.configureViewports(livelinkInstance, enableScale);
 
         const webcodec = await WebCodecsDecoder.findSupportedCodec();
         await livelinkInstance.configureRemoteServer({ codec: webcodec || undefined });
@@ -37,9 +41,11 @@ export default function WebXR({ mode }: { mode: XRSessionMode }) {
                     : new SoftwareDecoder(livelinkInstance.default_decoded_frame_consumer),
         });
 
-        await webXRHelper.createCameras(viewports);
+        await webXRHelper.createCameras();
         livelinkInstance.startStreaming();
         webXRHelper.start();
+
+        setResolution(resolution);
     }
 
     //--------------------------------------------------------------------------
@@ -55,11 +61,16 @@ export default function WebXR({ mode }: { mode: XRSessionMode }) {
 
         try {
             setMessage("");
-            await webXRHelper.initialize(mode);
+            await webXRHelper.initialize(mode, {
+                optionalFeatures: ["dom-overlay"],
+                domOverlay: { root: containerRef.current! },
+            });
 
             webXRHelper.session!.addEventListener("end", () => {
                 setInstance(null);
                 setXRSession(null);
+
+                setResolution("");
             });
 
             setIsConnecting(true);
@@ -84,6 +95,11 @@ export default function WebXR({ mode }: { mode: XRSessionMode }) {
 
     //--------------------------------------------------------------------------
     useEffect(() => {
+        if (!window.isSecureContext) {
+            setMessage("WebXR requires a secure context (https).");
+            return;
+        }
+
         WebXRHelper.isSessionSupported(mode).then(supported => {
             if (!supported) {
                 setMessage(`WebXR '${mode}' is not supported on this device.`);
@@ -97,8 +113,8 @@ export default function WebXR({ mode }: { mode: XRSessionMode }) {
 
     //--------------------------------------------------------------------------
     return (
-        <div className="relative h-full max-h-screen p-3">
-            <div className={`absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2`}>
+        <div className="relative h-full max-h-screen p-3" ref={containerRef}>
+            <CanvasActionBar isCentered={!instance}>
                 <div className="flex items-center justify-center flex-col space-y-3">
                     <button
                         className={"button button-primary" + (!isSessionSupported || isConnecting ? " opacity-50" : "")}
@@ -108,9 +124,22 @@ export default function WebXR({ mode }: { mode: XRSessionMode }) {
                     >
                         {isConnecting ? "Connecting..." : instance ? `Exit ${xrModeTitle}` : `Enter ${xrModeTitle}`}
                     </button>
+
+                    {resolution && <p>{resolution}</p>}
+
+                    <div className="flex items-center space-x-3">
+                        <input
+                            type="checkbox"
+                            disabled={isConnecting || instance !== null}
+                            checked={enableScale}
+                            onChange={() => setEnableScale(!enableScale)}
+                        />
+                        <label htmlFor="enableScale">Enable Scale</label>
+                    </div>
+
                     {message && <p>{message}</p>}
                 </div>
-            </div>
+            </CanvasActionBar>
         </div>
     );
 }
