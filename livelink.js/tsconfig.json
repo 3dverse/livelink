@@ -10,7 +10,8 @@
     "declarationMap": true,
     "emitDeclarationOnly": true,
     "skipLibCheck": true,
-    "types": []
+    "types": [],
+    "stripInternal": true
   },
 
   "exclude": ["./dist/**/*", "./tests/*", "./ci/**"]
