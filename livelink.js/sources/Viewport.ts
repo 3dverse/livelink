@@ -4,20 +4,9 @@ import { LivelinkCoreModule } from "@3dverse/livelink.core";
 import { Livelink } from "./Livelink";
 import { Camera } from "./Camera";
 import { Entity } from "./Entity";
-import { Rect, RenderingSurfaceBase } from "./surfaces/RenderingSurfaceBase";
+import { RenderingSurfaceBase } from "./surfaces/RenderingSurfaceBase";
+import { RelativeRect } from "./surfaces/Rect";
 import { RenderingSurface } from "./surfaces/RenderingSurface";
-
-/**
- *
- */
-export const DEFAULT_RECT: Rect = {
-    left: 0,
-    top: 0,
-    right: 1,
-    bottom: 1,
-    width: 1,
-    height: 1,
-} as const;
 
 /**
  *
@@ -46,7 +35,7 @@ export class Viewport extends EventTarget {
     /**
      *
      */
-    readonly rect: Rect;
+    readonly rect: RelativeRect;
 
     /**
      *
@@ -96,12 +85,12 @@ export class Viewport extends EventTarget {
     constructor(
         core: Livelink,
         rendering_surface: RenderingSurfaceBase,
-        options?: { rect?: Rect; render_target_index?: number },
+        options?: { rect?: RelativeRect; render_target_index?: number },
     ) {
         super();
         this.#core = core;
         this.#rendering_surface = rendering_surface;
-        this.rect = options?.rect ?? DEFAULT_RECT;
+        this.rect = new RelativeRect(options?.rect ?? { left: 0, top: 0, width: 1, height: 1 });
         this.render_target_index = options?.render_target_index ?? -1;
     }
 

@@ -1,34 +1,43 @@
-import { Rect, RenderingSurfaceBase } from "./RenderingSurfaceBase";
+import { RenderingSurfaceBase } from "./RenderingSurfaceBase";
+import { Rect } from "./Rect";
 import { CurrentFrameMetaData } from "../decoders/EncodedFrameConsumer";
 
 /**
  *
  */
-export class NullSurface extends RenderingSurfaceBase {
+export class VirtualSurface extends RenderingSurfaceBase {
     /**
      *
      */
+    readonly #rect: Rect;
 
-    readonly width: number;
     /**
      *
      */
-    readonly height: number;
+    get width() {
+        return this.#rect.width;
+    }
+
+    /**
+     *
+     */
+    get height() {
+        return this.#rect.height;
+    }
 
     /**
      *
      */
     constructor(width: number, height: number) {
         super();
-        this.width = width;
-        this.height = height;
+        this.#rect = new Rect({ width, height });
     }
 
     /**
      *
      */
     getBoundingRect(): Rect {
-        return { left: 0, top: 0, right: this.width, bottom: this.height, width: this.width, height: this.height };
+        return this.#rect;
     }
 
     /**

@@ -3,7 +3,7 @@ import { useRef, useState } from "react";
 import { useLivelinkInstance } from "@3dverse/livelink-react";
 import Canvas from "../../components/Canvas";
 import { CanvasActionBar } from "../../styles/components/CanvasActionBar";
-import { Camera, EncodedFrameConsumer, Livelink, NullSurface, Viewport } from "@3dverse/livelink";
+import { Camera, EncodedFrameConsumer, Livelink, Viewport, VirtualSurface } from "@3dverse/livelink";
 
 //------------------------------------------------------------------------------
 class VideoWriter extends EncodedFrameConsumer {
@@ -63,7 +63,7 @@ export default function VideoCapture() {
                 scene_id: "15e95136-f9b7-425d-8518-d73dab5589b7",
                 token: "public_p54ra95AMAnZdTel",
                 onConfigureClient: async (inst: Livelink) => {
-                    const viewports = [new Viewport(inst, new NullSurface(1920, 1080))];
+                    const viewports = [new Viewport(inst, new VirtualSurface(1920, 1080))];
 
                     inst.addViewports({ viewports });
 

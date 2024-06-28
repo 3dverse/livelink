@@ -1,18 +1,7 @@
 import { Vec2i, ViewportConfig } from "@3dverse/livelink.core";
 import { Viewport } from "../Viewport";
 import { CurrentFrameMetaData } from "../decoders/EncodedFrameConsumer";
-
-/**
- *
- */
-export type Rect = {
-    left: number;
-    top: number;
-    right: number;
-    bottom: number;
-    width: number;
-    height: number;
-};
+import { Rect } from "./Rect";
 
 /**
  *

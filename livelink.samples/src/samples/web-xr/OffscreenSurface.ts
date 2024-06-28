@@ -79,14 +79,7 @@ export class OffscreenSurface extends RenderingSurfaceBase {
      *
      */
     getBoundingRect(): Rect {
-        return {
-            top: 0,
-            left: 0,
-            right: this.#canvas.width,
-            bottom: this.#canvas.height,
-            width: this.#canvas.width,
-            height: this.#canvas.height,
-        };
+        return new Rect({ width: this.#canvas.width, height: this.#canvas.height });
     }
 
     /**

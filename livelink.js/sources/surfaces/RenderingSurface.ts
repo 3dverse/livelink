@@ -3,7 +3,8 @@ import { Context2D } from "../contexts/Context2D";
 import { ContextProvider } from "../contexts/ContextProvider";
 import { ContextWebGL } from "../contexts/ContextWebGL";
 import { CanvasAutoResizer } from "./CanvasAutoResizer";
-import { Rect, RenderingSurfaceBase } from "./RenderingSurfaceBase";
+import { RenderingSurfaceBase } from "./RenderingSurfaceBase";
+import { Rect } from "./Rect";
 
 /**
  *
@@ -131,16 +132,7 @@ export class RenderingSurface extends RenderingSurfaceBase {
      */
     getBoundingRect(): Rect {
         const rect = this.canvas.getClientRects()[0];
-        return (
-            rect ?? {
-                left: 0,
-                top: 0,
-                right: this.canvas.width,
-                bottom: this.canvas.height,
-                width: this.canvas.width,
-                height: this.canvas.height,
-            }
-        );
+        return new Rect(rect ?? { width: this.canvas.width, height: this.canvas.height });
     }
 
     /**

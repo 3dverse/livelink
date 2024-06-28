@@ -1,7 +1,7 @@
 import { LivelinkCoreModule, InputOperation } from "@3dverse/livelink.core";
 import { Livelink } from "../Livelink";
 import { Viewport } from "../Viewport";
-import { Rect } from "../surfaces/RenderingSurfaceBase";
+import { Rect } from "../surfaces/Rect";
 import { RenderingSurface } from "../surfaces/RenderingSurface";
 
 /**

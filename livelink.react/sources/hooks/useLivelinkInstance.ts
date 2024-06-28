@@ -9,14 +9,13 @@ import {
     Viewport,
     WebCodecsDecoder,
     RenderingSurface,
-    Rect,
-    DEFAULT_RECT,
+    RelativeRect,
 } from "@3dverse/livelink";
 
 //------------------------------------------------------------------------------
 type View = {
     canvas_ref: React.RefObject<HTMLCanvasElement>;
-    rect?: Rect;
+    rect?: RelativeRect;
     camera?: typeof Camera | UUID | null;
 } & (
     | {
@@ -125,7 +124,7 @@ function registerViewports(instance: Livelink, views: Array<View>): Array<Viewpo
     const viewports = views.map(
         view =>
             new Viewport(instance, canvasToViews.get(view.canvas_ref.current!)!.surface, {
-                rect: view.rect ?? DEFAULT_RECT,
+                rect: new RelativeRect(view.rect ?? {}),
             }),
     );
 

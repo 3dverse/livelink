@@ -3,6 +3,7 @@ import { useRef } from "react";
 import { useLivelinkInstance } from "@3dverse/livelink-react";
 import Canvas from "../../components/Canvas";
 import { CanvasActionBar } from "../../styles/components/CanvasActionBar";
+import { RelativeRect } from "@3dverse/livelink";
 
 //------------------------------------------------------------------------------
 export default function MultiViewportCanvas() {
@@ -10,8 +11,8 @@ export default function MultiViewportCanvas() {
 
     const { instance, connect, disconnect } = useLivelinkInstance({
         views: [
-            { canvas_ref: canvasRef, rect: { left: 0, top: 0, right: 0.5, bottom: 1, width: 0.5, height: 1 } },
-            { canvas_ref: canvasRef, rect: { left: 0.5, top: 0, right: 0.5, bottom: 1, width: 0.5, height: 1 } },
+            { canvas_ref: canvasRef, rect: new RelativeRect({ left: 0, width: 0.5, height: 1 }) },
+            { canvas_ref: canvasRef, rect: new RelativeRect({ left: 0.5, width: 0.5, height: 1 }) },
         ],
     });
 

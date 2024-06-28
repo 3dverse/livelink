@@ -1,5 +1,5 @@
 //------------------------------------------------------------------------------
-import { Camera, Livelink, Rect, Viewport } from "@3dverse/livelink";
+import { Camera, Livelink, RelativeRect, Viewport } from "@3dverse/livelink";
 import { OffscreenSurface } from "./OffscreenSurface";
 
 /**
@@ -278,23 +278,21 @@ export class WebXRHelper {
 
         for (const xr_eye of xr_eyes) {
             const xrViewport = xr_eye.viewport;
-            const rect: Rect = are_xr_viewport_normalized
-                ? {
-                      left: xrViewport.x,
-                      top: xrViewport.y,
-                      right: xrViewport.x + xrViewport.width,
-                      bottom: xrViewport.y + xrViewport.height,
-                      width: xrViewport.width,
-                      height: xrViewport.height,
-                  }
-                : {
-                      left: xrViewport.x / this.#surface!.width,
-                      top: xrViewport.y / this.#surface!.height,
-                      right: (xrViewport.x + xrViewport.width) / this.#surface!.width,
-                      bottom: (xrViewport.y + xrViewport.height) / this.#surface!.height,
-                      width: xrViewport.width / this.#surface!.width,
-                      height: xrViewport.height / this.#surface!.height,
-                  };
+            const rect = new RelativeRect(
+                are_xr_viewport_normalized
+                    ? {
+                          left: xrViewport.x,
+                          top: xrViewport.y,
+                          width: xrViewport.width,
+                          height: xrViewport.height,
+                      }
+                    : {
+                          left: xrViewport.x / this.#surface!.width,
+                          top: xrViewport.y / this.#surface!.height,
+                          width: xrViewport.width / this.#surface!.width,
+                          height: xrViewport.height / this.#surface!.height,
+                      },
+            );
             console.debug(`Viewport for ${xr_eye.view.eye} eye:`, rect);
             const viewport = new Viewport(this.#liveLink!, this.#surface!, { rect });
 
