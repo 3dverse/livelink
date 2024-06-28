@@ -6,7 +6,7 @@ const ts = require("typescript");
 //------------------------------------------------------------------------------
 const nodeModulePath = process.argv[2] || "../../node_modules";
 const templateFolder = process.argv[3] || ".";
-const outputFolder = process.argv[4] || "../_prebuild/types";
+const outputFolder = process.argv[4] || "../_prebuild";
 
 //------------------------------------------------------------------------------
 const typeDeclarationFile = path.join(nodeModulePath, "@3dverse/livelink.core/dist/_prebuild/types/components.d.ts");
@@ -57,6 +57,10 @@ function applyTemplate(templateFileName, outputSchemaName, dictionnary) {
     let template = fs.readFileSync(path.join(templateFolder, templateFileName), "utf8");
     for (const entryName in dictionnary) {
         template = template.replaceAll("{{" + entryName + "}}", dictionnary[entryName]);
+    }
+
+    if (!fs.existsSync(outputFolder)) {
+        fs.mkdirSync(outputFolder);
     }
 
     fs.writeFileSync(path.join(outputFolder, outputSchemaName), template);

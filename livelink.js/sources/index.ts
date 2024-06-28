@@ -1,7 +1,5 @@
 export type * from "@3dverse/livelink.core";
 
-export * from "../_prebuild/types";
-
 export * from "./Livelink";
 export * from "./Session";
 export * from "./Client";
