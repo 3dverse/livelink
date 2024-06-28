@@ -74,6 +74,30 @@ export class Scene extends EventTarget {
     /**
      *
      */
+    async findEntities<EntityType extends Entity>(
+        entity_type: { new (_: Scene): EntityType },
+        {
+            entity_uuid,
+        }: {
+            entity_uuid: UUID;
+        },
+    ): Promise<Array<EntityType>> {
+        const foundEntities = this.entity_registry.find({ entity_euid: entity_uuid });
+        if (foundEntities.length > 0) {
+            return foundEntities as Array<EntityType>;
+        }
+
+        const editor_entities = await this.#core.findEntitiesByEUID({ entity_uuid });
+        if (editor_entities.length === 0) {
+            return [];
+        }
+
+        return this.#addEditorEntities(entity_type, { editor_entities });
+    }
+
+    /**
+     *
+     */
     async findEntity<EntityType extends Entity>(
         entity_type: { new (_: Scene): EntityType },
         {
@@ -82,21 +106,8 @@ export class Scene extends EventTarget {
             entity_uuid: UUID;
         },
     ): Promise<EntityType | null> {
-        const foundEntities = this.entity_registry.find({ entity_euid: entity_uuid });
-        if (foundEntities.length > 0) {
-            return foundEntities[0] as EntityType;
-        }
-
-        const editor_entities = await this.#core.findEntitiesByEUID({
-            entity_uuid,
-        });
-
-        if (editor_entities.length === 0) {
-            return null;
-        }
-
-        const entities = this.#addEditorEntities(entity_type, { editor_entities });
-        return entities[0];
+        const entities = await this.findEntities(entity_type, { entity_uuid });
+        return entities.length > 0 ? entities[0] : null;
     }
 
     /**
