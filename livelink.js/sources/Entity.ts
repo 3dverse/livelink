@@ -1,5 +1,5 @@
 import type { ComponentType, EditorEntity, EntityCreationOptions, Quat, UUID, Vec3 } from "@3dverse/livelink.core";
-import { EntityBase } from "../_prebuild/types/EntityBase";
+import { EntityBase } from "../_prebuild/EntityBase";
 import { Scene } from "./Scene";
 import { LivelinkCoreModule } from "@3dverse/livelink.core";
 
@@ -59,14 +59,14 @@ export class Entity extends EntityBase {
     }
 
     /**
-     *
+     * @internal
      */
     constructor(private readonly _scene: Scene) {
         super();
     }
 
     /**
-     *
+     * @internal
      */
     init(from: EditorEntity | string) {
         if (typeof from === "string") {
@@ -79,24 +79,24 @@ export class Entity extends EntityBase {
     }
 
     /**
-     *
+     * @internal
      */
     onCreate() {}
 
     /**
-     *
+     * @internal
      */
     onUpdate({ elapsed_time }: { elapsed_time: number }) {}
 
     /**
-     *
+     * @internal
      */
     onTriggerEntered({ entity }: { entity: Entity }) {
         this.dispatchEvent(new CustomEvent("trigger-entered", { detail: { entity } }));
     }
 
     /**
-     *
+     * @internal
      */
     onTriggerExited({ entity }: { entity: Entity }) {
         this.dispatchEvent(new CustomEvent("trigger-exited", { detail: { entity } }));
@@ -149,7 +149,7 @@ export class Entity extends EntityBase {
     }
 
     /**
-     *
+     * @internal
      */
     toJSON() {
         let serialized: Record<string, unknown> = {};
@@ -162,7 +162,7 @@ export class Entity extends EntityBase {
     }
 
     /**
-     *
+     * @internal
      */
     _updateFromEvent({ updated_components }: { updated_components: Record<string, unknown> }) {
         this._proxy_state = "off";
@@ -176,7 +176,7 @@ export class Entity extends EntityBase {
     }
 
     /**
-     *
+     * @internal
      */
     _tryMarkingAsDirty({ component_type }: { component_type: ComponentType }): boolean {
         if (this.isInstantiated()) {
@@ -189,7 +189,7 @@ export class Entity extends EntityBase {
     }
 
     /**
-     *
+     * @internal
      */
     _tryMarkingAsDeleted({ component_type }: { component_type: ComponentType }): boolean {
         if (this.isInstantiated()) {
@@ -203,7 +203,7 @@ export class Entity extends EntityBase {
     }
 
     /**
-     *
+     * @internal
      */
     _setLocalTransform({ position, orientation }: { position: Vec3; orientation: Quat }) {
         this._proxy_state = "off";
@@ -215,7 +215,7 @@ export class Entity extends EntityBase {
     }
 
     /**
-     *
+     * @internal
      */
     private _isSerializableComponent(prop: PropertyKey, v: any) {
         return (
@@ -227,7 +227,7 @@ export class Entity extends EntityBase {
     }
 
     /**
-     *
+     * @internal
      */
     static handler = {
         get(entity: Entity, prop: PropertyKey, receiver: unknown): unknown {
