@@ -1,4 +1,4 @@
-import { ContextProvider, Quat, Vec3 } from "@3dverse/livelink";
+import { ContextProvider, CurrentFrameMetaData, Quat, Vec3 } from "@3dverse/livelink";
 import { mat4, quat, vec3 } from "gl-matrix";
 
 type Canvas = HTMLCanvasElement | OffscreenCanvas;
@@ -30,7 +30,17 @@ export class XRContext extends ContextProvider {
     /**
      *
      */
+    #last_frame: { frame: VideoFrame | OffscreenCanvas; meta_data: CurrentFrameMetaData } | null = null;
+
+    /**
+     *
+     */
     screen_distance: number = 25;
+
+    /**
+     *
+     */
+    scale_factor: number = 1;
 
     /**
      *
@@ -71,17 +81,18 @@ export class XRContext extends ContextProvider {
      */
     constructor(
         canvas: Canvas,
-        version: "webgl" | "webgl2" = "webgl",
+        context_type: "webgl" | "webgl2" = "webgl",
         context_attributes?: WebGLContextAttributes & { xrCompatible?: boolean },
     ) {
         super();
 
-        const context = canvas.getContext(version, context_attributes);
+        const context = canvas.getContext(context_type, context_attributes);
         if (context === null) {
-            throw new Error(`Cannot create a ${version} context from canvas`);
+            throw new Error(`Cannot create a ${context_type} context from canvas`);
         }
 
-        this._context = version === "webgl" ? (context as WebGLRenderingContext) : (context as WebGL2RenderingContext);
+        this._context =
+            context_type === "webgl" ? (context as WebGLRenderingContext) : (context as WebGL2RenderingContext);
 
         this.#initShaderProgram();
         this.#initBuffers();
@@ -91,15 +102,28 @@ export class XRContext extends ContextProvider {
     /**
      *
      */
-    drawFrame({
-        frame,
-        scale_factor,
-        xr_views,
-    }: {
+    drawFrame(frame: {
         frame: VideoFrame | OffscreenCanvas;
         left: number;
         top: number;
-        scale_factor: number;
+        meta_data: CurrentFrameMetaData;
+    }): void {
+        this.#last_frame = frame;
+    }
+
+    /**
+     *
+     */
+    get lastFrameMetaData(): CurrentFrameMetaData | null {
+        return this.#last_frame?.meta_data || null;
+    }
+
+    /**
+     *
+     */
+    drawXRFrame({
+        xr_views,
+    }: {
         xr_views: Array<{
             view: XRView;
             viewport: XRViewport;
@@ -109,6 +133,10 @@ export class XRContext extends ContextProvider {
             };
         }>;
     }): void {
+        if (!this.#last_frame) {
+            return;
+        }
+
         const gl = this._context;
 
         if (this._frame_buffer !== null) {
@@ -128,12 +156,12 @@ export class XRContext extends ContextProvider {
 
         gl.activeTexture(gl.TEXTURE0);
         gl.bindTexture(gl.TEXTURE_2D, this._texture_ref);
-        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, frame);
+        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, this.#last_frame.frame);
 
         const fovY = Math.atan(1 / xr_views[0].view.projectionMatrix[5]) * 2;
 
         const aspectRatio = xr_views[0].viewport.width / xr_views[0].viewport.height;
-        const scaleY = scale_factor * this.screen_distance * Math.tan(fovY * 0.5);
+        const scaleY = this.scale_factor * this.screen_distance * Math.tan(fovY * 0.5);
         const scaleX = scaleY * aspectRatio;
 
         const viewportWidth = 1 / xr_views.length;

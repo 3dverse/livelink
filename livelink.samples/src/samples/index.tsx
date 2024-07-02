@@ -21,14 +21,14 @@ import ConveyorBelt from "./conveyor-belt/ConveyorBelt";
 import ConveyorBeltSorting from "./conveyor-belt-sorting/ConveyorBeltSorting";
 import LabelingStation from "./labeling-station/LabelingStation";
 
+// WebXR
+import WebXR from "./web-xr/WebXR";
+import MultiViewportCanvas from "./multi-viewport-canvas/MultiViewportCanvas";
+
 // Misc
 import Collaborators from "./collaborators/Collaborators";
 import PictureInPicture from "./picture-in-picture/PictureInPicture";
 import LiveSkeletalAnimation from "./live-skeletal-animation/LiveSkeletalAnimation";
-
-// WebXR
-import WebXR from "./web-xr/WebXR";
-import MultiViewportCanvas from "./multi-viewport-canvas/MultiViewportCanvas";
 import RenderTargetDebug from "./render-target-debug/RenderTargetDebug";
 import VideoCapture from "./video-capture/VideoCapture";
 
@@ -74,6 +74,10 @@ export const SAMPLES = [
         list: [
             { title: "Immersive AR Session", path: "webxr-ar", element: <WebXR key="ar" mode="immersive-ar" /> },
             { title: "Immersive VR Session", path: "webxr-vr", element: <WebXR key="vr" mode="immersive-vr" /> },
+            {
+                title: "Same Perspective",
+                path: "larger-view-with-same-perspective",
+            },
         ],
     },
     {

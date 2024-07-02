@@ -1,10 +1,16 @@
-import { RenderingSurfaceBase, Rect, Camera, CurrentFrameMetaData } from "@3dverse/livelink";
-import { XRContext } from "./XRContext";
+import {
+    RenderingSurfaceBase,
+    Rect,
+    Camera,
+    CurrentFrameMetaData,
+    ContextProvider,
+    CanvasContextType,
+} from "@3dverse/livelink";
 
 /**
  *
  */
-export class OffscreenSurface extends RenderingSurfaceBase {
+export class OffscreenSurface<ContextType extends CanvasContextType, ContextOptions> extends RenderingSurfaceBase {
     /**
      * Virtual canvas on which we display the final composited frame.
      */
@@ -13,12 +19,7 @@ export class OffscreenSurface extends RenderingSurfaceBase {
     /**
      *
      */
-    #context: XRContext;
-
-    /**
-     *
-     */
-    #last_frame: { frame: VideoFrame | OffscreenCanvas; meta_data: CurrentFrameMetaData } | null = null;
+    #context: ContextProvider;
 
     /**
      *
@@ -28,20 +29,32 @@ export class OffscreenSurface extends RenderingSurfaceBase {
     /**
      *
      */
-    scale_factor: number = 1.0;
-
-    /**
-     *
-     */
-    constructor({ width, height }: { width: number; height: number }) {
+    constructor({
+        width,
+        height,
+        context_constructor,
+        context_type,
+        context_options,
+    }: {
+        width: number;
+        height: number;
+        context_constructor: new (
+            canvas: HTMLCanvasElement | OffscreenCanvas,
+            context_type: ContextType,
+            options?: ContextOptions,
+        ) => ContextProvider;
+        context_type: ContextType;
+        context_options?: ContextOptions;
+    }) {
         super();
+
         //this.#canvas = new OffscreenCanvas(width, height);
         const canvas = document.createElement("canvas");
         canvas.width = width;
         canvas.height = height;
         this.#canvas = canvas as unknown as OffscreenCanvas;
 
-        this.#context = new XRContext(this.#canvas, "webgl", { xrCompatible: true });
+        this.#context = new context_constructor(this.#canvas, context_type, context_options);
     }
 
     /**
@@ -82,8 +95,13 @@ export class OffscreenSurface extends RenderingSurfaceBase {
     /**
      *
      */
-    drawFrame(frame: { frame: VideoFrame | OffscreenCanvas; meta_data: CurrentFrameMetaData }): void {
-        this.#last_frame = frame;
+    drawFrame(frame: {
+        frame: VideoFrame | OffscreenCanvas;
+        meta_data: CurrentFrameMetaData;
+        left: number;
+        top: number;
+    }): void {
+        this.#context.drawFrame(frame);
     }
 
     /**
@@ -91,27 +109,6 @@ export class OffscreenSurface extends RenderingSurfaceBase {
      */
     getBoundingRect(): Rect {
         return new Rect({ width: this.width, height: this.height });
-    }
-
-    /**
-     *
-     */
-    drawLastFrame(xr_views: Array<{ view: XRView; viewport: XRViewport }>) {
-        if (this.#last_frame) {
-            this.#context.drawFrame({
-                frame: this.#last_frame.frame,
-                left: this.offset[0],
-                top: this.offset[1],
-                scale_factor: this.scale_factor,
-                xr_views: xr_views.map(({ view, viewport }, index) => {
-                    const currentViewport = this.viewports[index];
-                    const { position, orientation } = this.#last_frame!.meta_data.cameras.find(
-                        c => c.camera.id === currentViewport.camera!.id,
-                    )!;
-                    return { view, viewport, frame_camera_transform: { position, orientation } };
-                }),
-            });
-        }
     }
 
     /**

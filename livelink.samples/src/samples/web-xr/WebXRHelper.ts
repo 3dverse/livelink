@@ -1,6 +1,7 @@
 //------------------------------------------------------------------------------
 import { Camera, Livelink, RelativeRect, Viewport } from "@3dverse/livelink";
 import { OffscreenSurface } from "./OffscreenSurface";
+import { XRContext } from "./XRContext";
 
 /**
  *
@@ -50,10 +51,11 @@ export class WebXRHelper {
     #liveLink: Livelink | null = null;
 
     //--------------------------------------------------------------------------
-    #surface: OffscreenSurface;
+    #surface: OffscreenSurface<"webgl", { xrCompatible: boolean }>;
     #fov_factor: number = 1.15;
     #camera_fovy: number = 60;
     #viewports: XRViewports = [];
+    #context: XRContext;
 
     //--------------------------------------------------------------------------
     // WebXR API references
@@ -91,7 +93,11 @@ export class WebXRHelper {
         this.#surface = new OffscreenSurface({
             width: window.innerWidth, // Not sure
             height: window.innerHeight, // Really not sure
+            context_constructor: XRContext,
+            context_type: "webgl",
+            context_options: { xrCompatible: true },
         });
+        this.#context = this.#surface.context as XRContext;
     }
 
     /**
@@ -197,12 +203,12 @@ export class WebXRHelper {
 
         const new_fov = original_fov * this.#fov_factor;
         this.#surface.resolution_scale = (Math.tan(new_fov / 2) / Math.tan(original_fov / 2)) * 2;
-        this.#surface.scale_factor = this.#surface.resolution_scale;
+        this.#context.scale_factor = this.#surface.resolution_scale;
 
         this.#camera_fovy = new_fov * (180 / Math.PI);
 
         console.log(
-            `%cFOV: ${original_fov * (180 / Math.PI)} -> ${this.#camera_fovy}, scale factor: ${this.#surface.scale_factor}`,
+            `%cFOV: ${original_fov * (180 / Math.PI)} -> ${this.#camera_fovy}, scale factor: ${this.#context.scale_factor}`,
             "color: orange; font-weight: bold; font-size: 1.5em",
         );
     }
@@ -237,10 +243,9 @@ export class WebXRHelper {
      */
     public async updateRenderState(layer_init: XRWebGLLayerInit = {}): Promise<void> {
         const session = this.session!;
-        const context_webgl = this.#surface!.context!;
-        const baseLayer = new XRWebGLLayer(session, context_webgl.native, layer_init);
+        const baseLayer = new XRWebGLLayer(session, this.#context.native, layer_init);
         await session.updateRenderState({ baseLayer });
-        context_webgl.frame_buffer = baseLayer.framebuffer;
+        this.#context.frame_buffer = baseLayer.framebuffer;
         this.#surface!.resize(baseLayer.framebufferWidth, baseLayer.framebufferHeight);
     }
 
@@ -269,7 +274,18 @@ export class WebXRHelper {
 
         this.#updateLiveLinkCameras(xr_views);
 
-        this.#surface!.drawLastFrame(xr_views);
+        if (this.#context.lastFrameMetaData) {
+            this.#context.drawXRFrame({
+                xr_views: xr_views.map(({ view, viewport }, index) => {
+                    const currentViewport = this.#surface.viewports[index];
+                    const { position, orientation } = this.#context.lastFrameMetaData!.cameras.find(
+                        c => c.camera.id === currentViewport.camera!.id,
+                    )!;
+                    return { view, viewport, frame_camera_transform: { position, orientation } };
+                }),
+            });
+        }
+
         this.session!.requestAnimationFrame(this.#onXRFrame);
     };
 
