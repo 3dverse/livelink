@@ -16,7 +16,6 @@
     "@3dverse/livelink": "file:../livelink.js",
     "@3dverse/livelink-react": "file:../livelink.react",
     "@fontsource-variable/manrope": "^5.0.20",
-    "gl-matrix": "^3.4.3",
     "react": "^18.2.0",
     "react-daisyui": "^5.0.0",
     "react-dom": "^18.2.0",
