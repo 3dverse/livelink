@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 import { Camera, Livelink, OffscreenSurface, RelativeRect, Viewport } from "@3dverse/livelink";
-import { XRContext } from "./XRContext";
+import { XRContext } from "@3dverse/livelink-react/sources/web-xr/XRContext";
 
 /**
  *
@@ -150,7 +150,7 @@ export class WebXRHelper {
     /**
      *
      */
-    public async configureViewports(livelink: Livelink, enableScale: boolean = false): Promise<string> {
+    public async configureViewports(livelink: Livelink, enableScale: boolean = false): Promise<void> {
         this.#liveLink = livelink;
         if (!this.#liveLink) {
             throw new Error("Failed to configure XR session, no LiveLink instance was provided.");
@@ -164,8 +164,6 @@ export class WebXRHelper {
         }
 
         this.#liveLink!.addViewports({ viewports: this.#viewports.map(v => v.livelink_viewport) });
-
-        return `${this.#surface.width} x ${this.#surface.height}`;
     }
 
     /**
