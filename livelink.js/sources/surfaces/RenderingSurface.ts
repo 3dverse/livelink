@@ -5,6 +5,7 @@ import { ContextWebGL } from "../contexts/ContextWebGL";
 import { CanvasAutoResizer } from "./CanvasAutoResizer";
 import { RenderingSurfaceBase } from "./RenderingSurfaceBase";
 import { Rect } from "./Rect";
+import { CurrentFrameMetaData } from "../decoders/CurrentFrameMetaData";
 
 /**
  *
@@ -138,7 +139,7 @@ export class RenderingSurface extends RenderingSurfaceBase {
     /**
      *
      */
-    drawFrame({ frame }: { frame: VideoFrame | OffscreenCanvas }): void {
-        this.#context.drawFrame({ frame, left: this.offset[0], top: this.offset[1] });
+    drawFrame({ frame, meta_data }: { frame: VideoFrame | OffscreenCanvas; meta_data: CurrentFrameMetaData }): void {
+        this.#context.drawFrame({ frame, left: this.offset[0], top: this.offset[1], meta_data });
     }
 }

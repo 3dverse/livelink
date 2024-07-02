@@ -1,11 +1,9 @@
-import {
-    RenderingSurfaceBase,
-    Rect,
-    Camera,
-    CurrentFrameMetaData,
-    ContextProvider,
-    CanvasContextType,
-} from "@3dverse/livelink";
+import { Camera } from "../Camera";
+import { ContextProvider } from "../contexts/ContextProvider";
+import { CurrentFrameMetaData } from "../decoders/CurrentFrameMetaData";
+import { Rect } from "./Rect";
+import { CanvasContextType } from "./RenderingSurface";
+import { RenderingSurfaceBase } from "./RenderingSurfaceBase";
 
 /**
  *
@@ -48,12 +46,7 @@ export class OffscreenSurface<ContextType extends CanvasContextType, ContextOpti
     }) {
         super();
 
-        //this.#canvas = new OffscreenCanvas(width, height);
-        const canvas = document.createElement("canvas");
-        canvas.width = width;
-        canvas.height = height;
-        this.#canvas = canvas as unknown as OffscreenCanvas;
-
+        this.#canvas = new OffscreenCanvas(width, height);
         this.#context = new context_constructor(this.#canvas, context_type, context_options);
     }
 
@@ -97,9 +90,9 @@ export class OffscreenSurface<ContextType extends CanvasContextType, ContextOpti
      */
     drawFrame(frame: {
         frame: VideoFrame | OffscreenCanvas;
-        meta_data: CurrentFrameMetaData;
         left: number;
         top: number;
+        meta_data: CurrentFrameMetaData;
     }): void {
         this.#context.drawFrame(frame);
     }

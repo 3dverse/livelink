@@ -10,22 +10,22 @@ export class XRContext extends ContextProvider {
     /**
      *
      */
-    private _context: WebGLRenderingContext | WebGL2RenderingContext;
+    #context: WebGLRenderingContext | WebGL2RenderingContext;
 
     /**
      * The WebGLRenderingContext of the canvas
      */
-    private _texture_ref: WebGLTexture | null = null;
+    #texture_ref: WebGLTexture | null = null;
 
     /**
      * The WebGLRenderingContext of the canvas
      */
-    private _shader_program: WebGLProgram | null = null;
+    #shader_program: WebGLProgram | null = null;
 
     /**
      * The alternative frame buffer to draw on.
      */
-    private _frame_buffer: WebGLFramebuffer | null = null;
+    #frame_buffer: WebGLFramebuffer | null = null;
 
     /**
      *
@@ -66,14 +66,14 @@ export class XRContext extends ContextProvider {
      *
      */
     get native() {
-        return this._context;
+        return this.#context;
     }
 
     /**
      *
      */
     set frame_buffer(fb: WebGLFramebuffer) {
-        this._frame_buffer = fb;
+        this.#frame_buffer = fb;
     }
 
     /**
@@ -91,7 +91,7 @@ export class XRContext extends ContextProvider {
             throw new Error(`Cannot create a ${context_type} context from canvas`);
         }
 
-        this._context =
+        this.#context =
             context_type === "webgl" ? (context as WebGLRenderingContext) : (context as WebGL2RenderingContext);
 
         this.#initShaderProgram();
@@ -114,7 +114,7 @@ export class XRContext extends ContextProvider {
     /**
      *
      */
-    get lastFrameMetaData(): CurrentFrameMetaData | null {
+    get meta_data(): CurrentFrameMetaData | null {
         return this.#last_frame?.meta_data || null;
     }
 
@@ -137,25 +137,25 @@ export class XRContext extends ContextProvider {
             return;
         }
 
-        const gl = this._context;
+        const gl = this.#context;
 
-        if (this._frame_buffer !== null) {
-            gl.bindFramebuffer(gl.FRAMEBUFFER, this._frame_buffer);
+        if (this.#frame_buffer !== null) {
+            gl.bindFramebuffer(gl.FRAMEBUFFER, this.#frame_buffer);
         }
 
         gl.clearColor(1, 0, 0, 1);
         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
-        const sizeLocation = gl.getUniformLocation(this._shader_program!, "size");
-        const offsetLocation = gl.getUniformLocation(this._shader_program!, "offset");
-        const scaleLocation = gl.getUniformLocation(this._shader_program!, "scale");
+        const sizeLocation = gl.getUniformLocation(this.#shader_program!, "size");
+        const offsetLocation = gl.getUniformLocation(this.#shader_program!, "offset");
+        const scaleLocation = gl.getUniformLocation(this.#shader_program!, "scale");
 
-        const viewMatrixLocation = gl.getUniformLocation(this._shader_program!, "viewMatrix");
-        const projectionMatrixLocation = gl.getUniformLocation(this._shader_program!, "projectionMatrix");
-        const billboardMatrixLocation = gl.getUniformLocation(this._shader_program!, "billboardMatrix");
+        const viewMatrixLocation = gl.getUniformLocation(this.#shader_program!, "viewMatrix");
+        const projectionMatrixLocation = gl.getUniformLocation(this.#shader_program!, "projectionMatrix");
+        const billboardMatrixLocation = gl.getUniformLocation(this.#shader_program!, "billboardMatrix");
 
         gl.activeTexture(gl.TEXTURE0);
-        gl.bindTexture(gl.TEXTURE_2D, this._texture_ref);
+        gl.bindTexture(gl.TEXTURE_2D, this.#texture_ref);
         gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, this.#last_frame.frame);
 
         const fovY = Math.atan(1 / xr_views[0].view.projectionMatrix[5]) * 2;
@@ -212,7 +212,7 @@ export class XRContext extends ContextProvider {
      *
      */
     release(): void {
-        const gl = this._context;
+        const gl = this.#context;
         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
         gl.bindFramebuffer(gl.FRAMEBUFFER, null);
     }
@@ -236,7 +236,7 @@ export class XRContext extends ContextProvider {
      *
      */
     #initShaderProgram(): void {
-        const gl = this._context!;
+        const gl = this.#context!;
         // Vertex shader
         const vertex_shader_source = `
             attribute vec2 position;
@@ -289,21 +289,21 @@ export class XRContext extends ContextProvider {
             console.log("Program failed to compile: " + gl.getProgramInfoLog(shader_program));
         }
         gl.useProgram(shader_program);
-        this._shader_program = shader_program;
+        this.#shader_program = shader_program;
     }
 
     /**
      *
      */
     #initBuffers(): void {
-        const gl = this._context!;
+        const gl = this.#context!;
 
         const vertex_buffer = gl.createBuffer();
         const vertices = new Float32Array([1, 1, -1, 1, 1, -1, -1, -1]);
         gl.bindBuffer(gl.ARRAY_BUFFER, vertex_buffer);
         gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW);
 
-        const position_attribute_location = gl.getAttribLocation(this._shader_program!, "position");
+        const position_attribute_location = gl.getAttribLocation(this.#shader_program!, "position");
         gl.enableVertexAttribArray(position_attribute_location);
         gl.vertexAttribPointer(position_attribute_location, 2, gl.FLOAT, false, 0, 0);
     }
@@ -312,16 +312,16 @@ export class XRContext extends ContextProvider {
      *
      */
     #initTexture(): void {
-        const gl = this._context!;
-        this._texture_ref = gl.createTexture()!;
-        gl.bindTexture(gl.TEXTURE_2D, this._texture_ref);
+        const gl = this.#context!;
+        this.#texture_ref = gl.createTexture()!;
+        gl.bindTexture(gl.TEXTURE_2D, this.#texture_ref);
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
         gl.bindTexture(gl.TEXTURE_2D, null);
 
-        const texture_uniform_location = gl.getUniformLocation(this._shader_program!, "texture");
+        const texture_uniform_location = gl.getUniformLocation(this.#shader_program!, "texture");
         gl.uniform1i(texture_uniform_location, 0);
     }
 }

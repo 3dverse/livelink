@@ -1,6 +1,5 @@
 //------------------------------------------------------------------------------
-import { Camera, Livelink, RelativeRect, Viewport } from "@3dverse/livelink";
-import { OffscreenSurface } from "./OffscreenSurface";
+import { Camera, Livelink, OffscreenSurface, RelativeRect, Viewport } from "@3dverse/livelink";
 import { XRContext } from "./XRContext";
 
 /**
@@ -274,11 +273,11 @@ export class WebXRHelper {
 
         this.#updateLiveLinkCameras(xr_views);
 
-        if (this.#context.lastFrameMetaData) {
+        if (this.#context.meta_data) {
             this.#context.drawXRFrame({
                 xr_views: xr_views.map(({ view, viewport }, index) => {
                     const currentViewport = this.#surface.viewports[index];
-                    const { position, orientation } = this.#context.lastFrameMetaData!.cameras.find(
+                    const { position, orientation } = this.#context.meta_data!.cameras.find(
                         c => c.camera.id === currentViewport.camera!.id,
                     )!;
                     return { view, viewport, frame_camera_transform: { position, orientation } };
