@@ -10,29 +10,37 @@ import type {
 import { Entity } from "./Entity";
 
 /**
- *
+ * @internal
  */
 export class EntityRegistry {
     /**
-     *
+     * A set of all resolved entities.
      */
     #entities = new Set<Entity>();
 
     /**
-     *
+     * Map from rtid to entity.
      */
     #entity_rtid_lut = new Map<RTID, Entity>();
 
     /**
-     *
+     * Map from EUID to a list of entities sharing the same EUID.
      */
     #entity_euid_lut = new Map<UUID, Array<Entity>>();
 
     /**
-     *
+     * List of dirty entities sorted by component.
      */
     #dirty_components = new Map<ComponentType, Set<Entity>>();
+
+    /**
+     * List of dirty entities having detached components sorted by component.
+     */
     #detached_components = new Map<ComponentType, Set<Entity>>();
+
+    /**
+     *
+     */
     #dirty_components_to_broadcast = new Map<ComponentType, Set<Entity>>();
 
     /**
@@ -46,7 +54,8 @@ export class EntityRegistry {
     #serializer: ComponentSerializer | null = null;
 
     /**
-     *
+     * Adds a new entity in the registry. The entity must be valid, i.e. have valid RTID and EUID and must not have the
+     * same RTID as any registered entity.
      */
     add({ entity }: { entity: Entity }): void {
         if (!entity.rtid || !entity.id) {
@@ -72,7 +81,7 @@ export class EntityRegistry {
     }
 
     /**
-     *
+     * Removes an entity from the registry. The entity must have been previously added to the registry.
      */
     remove({ entity }: { entity: Entity }): void {
         if (!entity.rtid || !entity.id) {
@@ -80,22 +89,39 @@ export class EntityRegistry {
         }
 
         if (!this.#entity_rtid_lut.delete(entity.rtid)) {
-            throw new Error(`Trying to remove entity ${entity.rtid} which has not been registred to the registry.`);
+            throw new Error(`Trying to remove entity ${entity.rtid} which has not been registred to the RTID LUT.`);
         }
 
-        this.#entity_euid_lut.delete(entity.id);
-        this.#entities.delete(entity);
+        const entities = this.#entity_euid_lut.get(entity.id);
+        if (!entities) {
+            throw new Error(`Trying to remove entity ${entity.id} which has not been registered to the EUID LUT.`);
+        }
+
+        const index = entities.indexOf(entity);
+        if (index == -1) {
+            throw new Error(`Trying to remove entity ${entity.id} which has not been registered to the EUID LUT.`);
+        }
+
+        entities.slice(index, 1);
+
+        if (entities.length === 0) {
+            this.#entity_euid_lut.delete(entity.id);
+        }
+
+        if (!this.#entities.delete(entity)) {
+            throw new Error(`Trying to remove entity ${entity.id} which has not been registered to the registry.`);
+        }
     }
 
     /**
-     *
+     * Returns the entity with the given RTID or null if not found.
      */
     get({ entity_rtid }: { entity_rtid: RTID }): Entity | null {
         return this.#entity_rtid_lut.get(entity_rtid) ?? null;
     }
 
     /**
-     *
+     * Returns all entities matching the given EUID or empty array if not found.
      */
     find({ entity_euid }: { entity_euid: UUID }): Array<Entity> {
         return this.#entity_euid_lut.get(entity_euid) ?? [];

@@ -44,7 +44,6 @@ export class Livelink {
     /**
      * @internal
      */
-
     static _editor_url = EDITOR_URL;
 
     /**
@@ -118,9 +117,8 @@ export class Livelink {
         await LivelinkCoreModule.init();
 
         console.debug("Joining session:", session);
-        const inst = new Livelink({ session });
-        await inst.#connect();
-        return inst;
+        const instance = new Livelink({ session });
+        return instance.#connect();
     }
 
     /**
@@ -142,14 +140,14 @@ export class Livelink {
      * The codec used by the renderer.
      */
     #codec: CodecType | null = null;
+
     /**
      *
      */
     #remote_rendering_surface = new RemoteRenderingSurface(this);
 
     /**
-     * User provided frame consumer designed to handle encoded frames from the
-     * remote viewer.
+     * User provided frame consumer designed to handle encoded frames from the remote viewer.
      */
     #encoded_frame_consumer: EncodedFrameConsumer | null = null;
 
@@ -481,28 +479,28 @@ export class Livelink {
     }
 
     /**
-     *
+     * @internal
      */
     _sendInput({ input_state }: { input_state: InputState }) {
         this.#core.sendInputState({ input_state });
     }
 
     /**
-     *
+     * @internal
      */
     _resize({ size }: { size: Vec2i }) {
         this.#core.resize({ size });
     }
 
     /**
-     *
+     * @internal
      */
     _setViewports({ viewport_configs }: { viewport_configs: ViewportConfigs }): void {
         this.#core.setViewports({ viewport_configs });
     }
 
     /**
-     *
+     * @internal
      */
     async _castScreenSpaceRay({
         screenSpaceRayQuery,
@@ -513,7 +511,7 @@ export class Livelink {
     }
 
     /**
-     *
+     * @internal
      */
     _updateAnimationSequenceState(params: {
         linker_rtid: RTID;
