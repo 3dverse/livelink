@@ -3,9 +3,19 @@ import { Livelink } from "../Livelink";
 import { LivelinkCoreModule } from "@3dverse/livelink.core";
 
 export class Keyboard implements InputDevice {
+    /**
+     *
+     */
     name: string;
+
+    /**
+     *
+     */
     #instance: Livelink;
 
+    /**
+     *
+     */
     constructor(instance: Livelink) {
         this.#instance = instance;
         this.name = "keyboard";
@@ -22,8 +32,7 @@ export class Keyboard implements InputDevice {
     /**
      *
      */
-
-    teardown() {
+    release() {
         window.removeEventListener("keydown", this.#onKeyDown);
         window.removeEventListener("keyup", this.#onKeyUp);
     }
@@ -31,7 +40,6 @@ export class Keyboard implements InputDevice {
     /**
      *
      */
-
     #onKeyDown = (event: KeyboardEvent) => {
         const keyData = this.#getKeyData(event);
         this.#instance._sendInput({
@@ -45,7 +53,6 @@ export class Keyboard implements InputDevice {
     /**
      *
      */
-
     #onKeyUp = (event: KeyboardEvent) => {
         const keyData = this.#getKeyData(event);
         this.#instance._sendInput({
@@ -56,6 +63,9 @@ export class Keyboard implements InputDevice {
         });
     };
 
+    /**
+     *
+     */
     #getKeyData(event: KeyboardEvent) {
         const keyCode = this.#getLayoutAgnosticKeyCode(event);
         const KeyData = new Uint8Array(4);
@@ -66,6 +76,9 @@ export class Keyboard implements InputDevice {
         return KeyData;
     }
 
+    /**
+     *
+     */
     #getLayoutAgnosticKeyCode(event: KeyboardEvent) {
         const { code, key } = event;
 

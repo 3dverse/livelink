@@ -257,7 +257,7 @@ export class Livelink {
         await this.session.close();
 
         this.#remote_rendering_surface.release();
-        this.#input_devices.forEach(d => d.teardown());
+        this.#input_devices.forEach(d => d.release());
 
         await this.#core.disconnect();
     }
@@ -424,7 +424,7 @@ export class Livelink {
         if (!device) {
             throw new Error(`Input device with name '${device_name}' not found`);
         }
-        device.teardown();
+        device.release();
         this.#input_devices = this.#input_devices.filter(d => d.name !== device_name);
     }
 

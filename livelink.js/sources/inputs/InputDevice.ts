@@ -3,5 +3,5 @@ export interface InputDevice {
 
     setup(): void;
 
-    teardown(): void;
+    release(): void;
 }

@@ -3,11 +3,12 @@ import { Livelink } from "../Livelink";
 import { Viewport } from "../Viewport";
 import { Rect } from "../surfaces/Rect";
 import { RenderingSurface } from "../surfaces/RenderingSurface";
+import { InputDevice } from "./InputDevice";
 
 /**
  *
  */
-export class Mouse {
+export class Mouse implements InputDevice {
     /**
      *
      */
@@ -44,10 +45,7 @@ export class Mouse {
     /**
      *
      */
-    constructor(instance: Livelink, viewport?: Viewport) {
-        if (!viewport) {
-            throw new Error("MouseInput: Viewport is required.");
-        }
+    constructor(instance: Livelink, viewport: Viewport) {
         this.#instance = instance;
         this.#viewport = viewport;
         this.name = "mouse";
@@ -82,7 +80,7 @@ export class Mouse {
     /**
      *
      */
-    teardown() {
+    release() {
         const canvas = (this.#viewport.rendering_surface as RenderingSurface).canvas;
         canvas.removeEventListener("mousedown", this.#onMouseDown);
         window.removeEventListener("mouseup", this.#onMouseUp);
