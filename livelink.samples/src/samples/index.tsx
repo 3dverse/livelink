@@ -74,10 +74,6 @@ export const SAMPLES = [
         list: [
             { title: "Immersive AR Session", path: "webxr-ar", element: <WebXR key="ar" mode="immersive-ar" /> },
             { title: "Immersive VR Session", path: "webxr-vr", element: <WebXR key="vr" mode="immersive-vr" /> },
-            {
-                title: "Same Perspective",
-                path: "larger-view-with-same-perspective",
-            },
         ],
     },
     {
