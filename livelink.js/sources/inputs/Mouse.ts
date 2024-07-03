@@ -45,7 +45,10 @@ export class Mouse implements InputDevice {
     /**
      *
      */
-    constructor(instance: Livelink, viewport: Viewport) {
+    constructor(instance: Livelink, viewport?: Viewport) {
+        if (!viewport) {
+            throw new Error("MouseInput: Viewport is required.");
+        }
         this.#instance = instance;
         this.#viewport = viewport;
         this.name = "mouse";
