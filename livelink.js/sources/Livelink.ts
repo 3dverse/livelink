@@ -1,4 +1,4 @@
-import {
+import type {
     ClientConfig,
     ClientConfigResponse,
     CodecType,
@@ -7,7 +7,6 @@ import {
     FrameMetaData,
     InputState,
     LivelinkCore,
-    LivelinkCoreModule,
     Quat,
     RTID,
     ScreenSpaceRayQuery,
@@ -17,18 +16,22 @@ import {
     ViewportConfigs,
 } from "@3dverse/livelink.core";
 
+import { LivelinkCoreModule } from "@3dverse/livelink.core";
+
+import { RawFrameMetaData, rawFrameMetaDatafromFrameMetaData } from "./decoders/RawFrameMetaData";
 import { EncodedFrameConsumer } from "./decoders/EncodedFrameConsumer";
 import { CameraFrameTransform } from "./decoders/CameraFrameTransform";
-import { RawFrameMetaData } from "./decoders/RawFrameMetaData";
 import { DecodedFrameConsumer } from "./decoders/DecodedFrameConsumer";
+
 import { RemoteRenderingSurface } from "./surfaces/RemoteRenderingSurface";
+
 import { Session, SessionInfo, SessionSelector } from "./Session";
+
 import { InputDevice } from "./inputs/InputDevice";
 import { Viewport } from "./Viewport";
 import { Camera } from "./Camera";
 import { Entity } from "./Entity";
 import { Scene } from "./Scene";
-import { getWorldPosition, getWorldQuaternion } from "./utils";
 
 /**
  * The Livelink interface.
@@ -117,22 +120,21 @@ export class Livelink {
         await LivelinkCoreModule.init();
 
         console.debug("Joining session:", session);
-        const instance = new Livelink({ session });
-        return instance.#connect();
+        return new Livelink({ session }).#connect();
     }
 
     /**
-     *
+     * The session associated with this Livelink instance.
      */
     public readonly session: Session;
 
     /**
-     *
+     * The scene the current session is running.
      */
     public readonly scene: Scene;
 
     /**
-     *
+     * The core object holding the connection to the server.
      */
     #core: LivelinkCore;
 
@@ -142,22 +144,22 @@ export class Livelink {
     #codec: CodecType | null = null;
 
     /**
-     *
+     * The rendering surface as seen by the renderer.
      */
     #remote_rendering_surface = new RemoteRenderingSurface(this);
 
     /**
-     * User provided frame consumer designed to handle encoded frames from the remote viewer.
+     * User provided frame consumer designed to receive the encoded frames sent by the renderer.
      */
     #encoded_frame_consumer: EncodedFrameConsumer | null = null;
 
     /**
-     * List of input devices.
+     * List of active input devices.
      */
     #input_devices: Array<InputDevice> = [];
 
     /**
-     * Interval between update to the renderer.
+     * Interval between updates to the renderer.
      */
     #update_interval = 0;
 
@@ -311,12 +313,16 @@ export class Livelink {
     /**
      *
      */
-    async installFrameConsumer({ frame_consumer }: { frame_consumer: EncodedFrameConsumer }): Promise<void> {
+    async setEncodedFrameConsumer({
+        encoded_frame_consumer,
+    }: {
+        encoded_frame_consumer: EncodedFrameConsumer;
+    }): Promise<void> {
         if (this.#codec === null) {
             throw new Error("Client not configured.");
         }
 
-        this.#encoded_frame_consumer = await frame_consumer.configure({
+        this.#encoded_frame_consumer = await encoded_frame_consumer.configure({
             codec: this.#codec,
             frame_dimensions: this.#remote_rendering_surface.dimensions,
         });
@@ -329,42 +335,13 @@ export class Livelink {
         const frame_data = (e as CustomEvent<FrameData>).detail;
 
         this.session._updateClients({ client_data: frame_data.meta_data.clients });
-        const meta_data = this.#parseFrameMetaData(frame_data.meta_data);
+        const meta_data = rawFrameMetaDatafromFrameMetaData({
+            frame_meta_data: frame_data.meta_data,
+            client_id: this.session.client_id!,
+            entity_registry: this.scene.entity_registry,
+        });
         this.#encoded_frame_consumer!.consumeEncodedFrame({ encoded_frame: frame_data.encoded_frame, meta_data });
     };
-
-    /**
-     *
-     */
-    #parseFrameMetaData(frame_meta_data: FrameMetaData): RawFrameMetaData {
-        const meta_data: RawFrameMetaData = {
-            renderer_timestamp: frame_meta_data.renderer_timestamp,
-            frame_counter: frame_meta_data.frame_counter,
-            current_client_cameras: [],
-            other_clients_cameras: [],
-        };
-
-        for (const client of frame_meta_data.clients) {
-            for (const viewport of client.viewports) {
-                const camera = this.scene.entity_registry.get({ entity_rtid: viewport.camera_rtid }) as Camera | null;
-                if (!camera) {
-                    continue;
-                }
-                const cameraMetadata: CameraFrameTransform = {
-                    camera,
-                    position: getWorldPosition(viewport.ws_from_ls),
-                    orientation: getWorldQuaternion(viewport.ws_from_ls),
-                };
-
-                if (client.client_id === this.session.client_id) {
-                    meta_data.current_client_cameras.push(cameraMetadata);
-                } else {
-                    meta_data.other_clients_cameras.push(cameraMetadata);
-                }
-            }
-        }
-        return meta_data;
-    }
 
     /**
      *

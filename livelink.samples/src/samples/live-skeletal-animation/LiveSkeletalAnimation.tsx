@@ -260,7 +260,7 @@ function setUpThreeJsSkeleton(canvas: HTMLCanvasElement) {
         // Calculate some info of parent joint
         const parentJointIndex = joint_parents[i];
         const parentJoint = parentJointIndex === -1 ? null : joints[parentJointIndex];
-        let parentJointWorldPos = new THREE.Vector3();
+        const parentJointWorldPos = new THREE.Vector3();
         let distanceToParentJoint = 0.2;
         if (parentJoint) {
             parentJoint.getWorldPosition(parentJointWorldPos);

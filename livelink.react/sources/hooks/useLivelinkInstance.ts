@@ -144,8 +144,8 @@ async function configureClient(instance: Livelink) {
     await instance.configureRemoteServer({ codec: webcodec || undefined });
 
     // Step 3: configure the local client.
-    await instance.installFrameConsumer({
-        frame_consumer:
+    await instance.setEncodedFrameConsumer({
+        encoded_frame_consumer:
             webcodec !== null
                 ? new WebCodecsDecoder(instance.default_decoded_frame_consumer)
                 : new SoftwareDecoder(instance.default_decoded_frame_consumer),

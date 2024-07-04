@@ -126,8 +126,8 @@ async function configureClient(webXRHelper: WebXRHelper, livelinkInstance: Livel
 
     const webcodec = await WebCodecsDecoder.findSupportedCodec();
     await livelinkInstance.configureRemoteServer({ codec: webcodec || undefined });
-    await livelinkInstance.installFrameConsumer({
-        frame_consumer:
+    await livelinkInstance.setEncodedFrameConsumer({
+        encoded_frame_consumer:
             webcodec !== null
                 ? new WebCodecsDecoder(livelinkInstance.default_decoded_frame_consumer)
                 : new SoftwareDecoder(livelinkInstance.default_decoded_frame_consumer),

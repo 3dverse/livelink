@@ -70,8 +70,8 @@ export default function VideoCapture() {
                     await inst.configureRemoteServer({ codec: 2 });
 
                     // Step 3: configure the local client.
-                    await inst.installFrameConsumer({
-                        frame_consumer: new VideoWriter(),
+                    await inst.setEncodedFrameConsumer({
+                        encoded_frame_consumer: new VideoWriter(),
                     });
 
                     inst.session.clients.map(c => console.log(c.camera_rtids));
