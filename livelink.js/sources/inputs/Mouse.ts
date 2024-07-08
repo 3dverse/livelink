@@ -78,6 +78,7 @@ export class Mouse implements InputDevice {
         canvas.addEventListener("mousedown", this.#onMouseDown);
         window.addEventListener("mouseup", this.#onMouseUp);
         window.addEventListener("mousemove", this.#onMouseMove);
+        document.addEventListener("pointerlockchange", this.#onPointerLockChange);
     }
 
     /**
@@ -88,6 +89,7 @@ export class Mouse implements InputDevice {
         canvas.removeEventListener("mousedown", this.#onMouseDown);
         window.removeEventListener("mouseup", this.#onMouseUp);
         window.removeEventListener("mousemove", this.#onMouseMove);
+        document.removeEventListener("pointerlockchange", this.#onPointerLockChange);
     }
 
     /**
@@ -160,6 +162,13 @@ export class Mouse implements InputDevice {
         }
         return this.#lastMousePosition;
     }
+
+    /**
+     *
+     */
+    #onPointerLockChange = () => {
+        this.#isLocked = document.pointerLockElement === (this.#viewport.rendering_surface as RenderingSurface).canvas;
+    };
 
     /**
      *

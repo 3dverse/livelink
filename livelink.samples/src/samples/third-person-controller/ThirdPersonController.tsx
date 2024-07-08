@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 import { useEffect, useRef, useState } from "react";
-import { Camera, Entity, Keyboard, Mouse, Livelink, UUID, Viewport } from "@3dverse/livelink";
+import { Camera, Entity, Keyboard, Mouse, Livelink, UUID, Viewport, RenderingSurface } from "@3dverse/livelink";
 import Canvas from "../../components/Canvas";
 import { useLivelinkInstance } from "@3dverse/livelink-react";
 import { CanvasActionBar } from "../../styles/components/CanvasActionBar";
@@ -37,7 +37,14 @@ export default function ThirdPersonController() {
         const firstPersonController = children.find(child => child.script_map !== undefined);
         const firstPersonCameraEntity = children.find(child => child.camera !== undefined);
         if (firstPersonController && firstPersonCameraEntity) {
+            const canvas = (viewport.rendering_surface as RenderingSurface).canvas;
             const firstPersonCamera = firstPersonCameraEntity as Camera;
+            firstPersonCamera.onAttach = () => {
+                canvas.requestPointerLock();
+            };
+            firstPersonCamera.onDetach = () => {
+                canvas.ownerDocument.exitPointerLock();
+            };
             viewport.camera = firstPersonCamera;
             thirdPersonCameraRef.current = firstPersonCamera;
             firstPersonController.assignClientToScripts({ client_uuid });
