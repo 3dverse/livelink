@@ -108,12 +108,30 @@ export class Scene extends EventTarget {
         entity_type: { new (_: Scene): EntityType },
         {
             entity_uuid,
+            linkage = [],
         }: {
             entity_uuid: UUID;
+            linkage?: Array<UUID>;
         },
     ): Promise<EntityType | null> {
-        const entities = await this.findEntities(entity_type, { entity_uuid });
-        return entities.length > 0 ? entities[0] : null;
+        const foundEntity = this.entity_registry
+            .find({ entity_euid: entity_uuid })
+            .find(
+                entity =>
+                    entity.lineage?.value?.length === linkage.length &&
+                    entity.lineage?.value?.every((uuid, i) => uuid === linkage[i]),
+            );
+
+        if (foundEntity) {
+            return foundEntity as EntityType;
+        }
+
+        const entity_entity = await this.#core.getEntity({ entity_uuid, linkage });
+        if (!entity_entity) {
+            return null;
+        }
+
+        return this.#addEditorEntities(entity_type, { editor_entities: [entity_entity] })[0];
     }
 
     /**
@@ -160,7 +178,10 @@ export class Scene extends EventTarget {
         }
 
         const dataObject = event.data_object as { hEntity: { linkage: Array<UUID>; originalEUID: UUID } };
-        const entity = await this.findEntity(Entity, { entity_uuid: dataObject.hEntity.originalEUID });
+        const entity = await this.findEntity(Entity, {
+            entity_uuid: dataObject.hEntity.originalEUID,
+            linkage: dataObject.hEntity.linkage,
+        });
 
         if (!entity) {
             return;
