@@ -67,7 +67,7 @@ export class Livelink {
      */
     static async start({ scene_id, token }: { scene_id: UUID; token: string }): Promise<Livelink> {
         console.debug(`Starting new session on scene '${scene_id}'`);
-        const session = await new Session(scene_id, token).create();
+        const session = await Session.create({ scene_id, token });
         return await Livelink.join({ session });
     }
 
@@ -84,9 +84,7 @@ export class Livelink {
         session_selector?: SessionSelector;
     }): Promise<Livelink> {
         console.debug(`Looking for sessions on scene '${scene_id}'`);
-        const session = await new Session(scene_id, token).find({
-            session_selector,
-        });
+        const session = await Session.find({ scene_id, token, session_selector });
 
         if (session === null) {
             console.debug(

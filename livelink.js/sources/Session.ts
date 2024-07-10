@@ -5,8 +5,19 @@ import { Livelink } from "./Livelink";
 /**
  *
  */
+type ClientInfo = {
+    client_id: UUID;
+    client_type: "user" | "guest";
+    user_id: UUID;
+    username: string;
+};
+
+/**
+ *
+ */
 export type SessionInfo = {
     readonly session_id: UUID;
+    readonly scene_id: UUID;
     readonly scene_name: string;
     readonly folder_id: UUID;
     readonly max_users: number;
@@ -14,13 +25,14 @@ export type SessionInfo = {
     readonly created_at: Date;
     readonly country_code: string;
     readonly continent_code: string;
+    readonly is_transient_session: boolean;
+    readonly clients: Array<ClientInfo>;
 };
 
 /**
  * Session selector function type.
  *
- * @param {Array<SessionInfo>} sessions - An array of session information
- *    running the targeted scene.
+ * @param {Array<SessionInfo>} sessions - An array of session information running the targeted scene.
  *
  * @returns {SessionInfo | null} -The selected session or null
  */
@@ -31,6 +43,102 @@ export type SessionSelector = ({ sessions }: { sessions: Array<SessionInfo> }) =
  */
 export class Session extends EventTarget implements SessionInterface {
     /**
+     * Create a new session with the provided scene.
+     *
+     * @returns {Session} returns the current instance
+     * @example
+     * const session = await Session.create({scene_id, token});
+     */
+    static async create({ scene_id, token }: { scene_id: UUID; token: string }): Promise<Session> {
+        const res = await fetch(`${Livelink._api_url}/sessions`, {
+            method: "POST",
+            body: JSON.stringify({ scene_id }),
+            headers: {
+                "Content-Type": "application/json",
+                user_token: token,
+            },
+        });
+
+        if (res.status !== 200) {
+            throw new Error("Error when creating session");
+        }
+
+        const session_info = (await res.json()) as SessionInfo;
+        return new Session({ token, session_info, created: true });
+    }
+
+    /**
+     * Asynchronous function to find and select a session based on the specified session selector.
+     *
+     * @param {Object} options - The options object.
+     * @param {SessionSelector} options.session_selector - The function for selecting a session from
+     *                          the retrieved sessions.
+     *
+     * @returns {Promise<Session | null>} - Resolves with the selected session or
+     *    null if none is found.
+     */
+    static async find({
+        scene_id,
+        token,
+        session_selector,
+    }: {
+        scene_id: UUID;
+        token: string;
+        session_selector: SessionSelector;
+    }): Promise<Session | null> {
+        const res = await fetch(`${Livelink._api_url}/sessions?filters[scene_id]=${scene_id}`, {
+            method: "GET",
+            headers: {
+                user_token: token,
+            },
+        });
+
+        const sessions = (await res.json()) as Array<SessionInfo>;
+        if (sessions.length === 0) {
+            return null;
+        }
+
+        const session_info = session_selector({ sessions });
+        if (!session_info) {
+            return null;
+        }
+
+        return new Session({ token, session_info, created: false });
+    }
+
+    /**
+     * Asynchronous function to find a session based on the specified id.
+     *
+     * @returns {Promise<Session | null>} - Resolves with the found session or null if not found.
+     */
+    static async findById({ session_id, token }: { session_id: UUID; token: string }): Promise<Session | null> {
+        const res = await fetch(`${Livelink._api_url}/sessions/${session_id}`, {
+            method: "GET",
+            headers: {
+                user_token: token,
+            },
+        });
+
+        if (res.status != 200) {
+            console.debug(`Could not find session with id ${session_id}.`);
+            return null;
+        }
+
+        const session_info = (await res.json()) as SessionInfo;
+        return new Session({ token, session_info, created: false });
+    }
+
+    /**
+     * Various info on the session.
+     */
+    public readonly info: SessionInfo;
+
+    /**
+     *
+     */
+    public readonly has_been_created: boolean;
+
+    /**
      *
      */
     public client_id: UUID | null = null;
@@ -38,22 +146,7 @@ export class Session extends EventTarget implements SessionInterface {
     /**
      *
      */
-    readonly #scene_id: UUID;
-
-    /**
-     *
-     */
     readonly #token: string;
-
-    /**
-     *
-     */
-    #created: boolean = false;
-
-    /**
-     * Various info on the session.
-     */
-    #session_info: SessionInfo | null = null;
 
     /**
      * The address of the gateway the session is running on.
@@ -73,14 +166,11 @@ export class Session extends EventTarget implements SessionInterface {
     /**
      *
      */
-    get has_been_created() {
-        return this.#created;
-    }
     get scene_id() {
-        return this.#scene_id;
+        return this.info.scene_id;
     }
     get session_id() {
-        return this.#session_info?.session_id;
+        return this.info.session_id;
     }
     get gateway_url() {
         return this.#gateway_url;
@@ -101,11 +191,20 @@ export class Session extends EventTarget implements SessionInterface {
      *
      * @see https://docs.3dverse.com/api/#tag/User-Authentication/operation/generateUserToken
      */
-    constructor(scene_id: UUID, token: string) {
+    private constructor({
+        token,
+        session_info,
+        created,
+    }: {
+        token: string;
+        session_info: SessionInfo;
+        created: boolean;
+    }) {
         super();
 
-        this.#scene_id = scene_id;
         this.#token = token;
+        this.info = session_info;
+        this.has_been_created = created;
     }
 
     /**
@@ -117,65 +216,6 @@ export class Session extends EventTarget implements SessionInterface {
      */
     isJoinable(): boolean {
         return this.#gateway_url !== null && this.#session_key !== null;
-    }
-
-    /**
-     * Create a new session with the provided scene.
-     *
-     * @returns {Session} returns the current instance
-     * @example
-     * const session = await new Session(scene_id, token).create();
-     */
-    async create(): Promise<Session> {
-        const res = await fetch(`${Livelink._api_url}/sessions`, {
-            method: "POST",
-            body: JSON.stringify({ scene_id: this.#scene_id }),
-            headers: {
-                "Content-Type": "application/json",
-                user_token: this.#token,
-            },
-        });
-
-        if (res.status !== 200) {
-            throw new Error("Error when creating session");
-        }
-
-        this.#session_info = (await res.json()) as SessionInfo;
-        this.#created = true;
-        return this;
-    }
-
-    /**
-     * Asynchronous function to find and select a session based on the specified
-     * session selector.
-     *
-     * @param {Object} options - The options object.
-     * @param {SessionSelector} options.session_selector - The function for
-     *    selecting a session from the retrieved sessions.
-     *
-     * @returns {Promise<Session | null>} - Resolves with the selected session or
-     *    null if none is found.
-     */
-    async find({ session_selector }: { session_selector: SessionSelector }): Promise<Session | null> {
-        const res = await fetch(`${Livelink._api_url}/sessions?filters[scene_id]=${this.#scene_id}`, {
-            method: "GET",
-            headers: {
-                user_token: this.#token,
-            },
-        });
-
-        const sessions = (await res.json()) as Array<SessionInfo>;
-        if (sessions.length === 0) {
-            return null;
-        }
-
-        const session = session_selector({ sessions });
-        if (!session) {
-            return null;
-        }
-
-        this.#session_info = session;
-        return this;
     }
 
     /**
@@ -205,7 +245,7 @@ export class Session extends EventTarget implements SessionInterface {
      *
      */
     async close() {
-        if (this.#session_info === null) {
+        if (this.info === null) {
             throw new Error("Cannot close session as it has not been opened yet");
         }
 
