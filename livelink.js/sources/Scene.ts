@@ -163,6 +163,22 @@ export class Scene extends EventTarget {
     }
 
     /**
+     *
+     */
+    fireEvent({
+        event_map_id,
+        event_name,
+        entity_rtids = [],
+    }: {
+        event_map_id: UUID;
+        event_name: string;
+        entity_rtids?: Array<RTID>;
+    }) {
+        // TODO: serialize data_object in livelink.core
+        return this.#core.fireEvent({ event_map_id, event_name, entities: entity_rtids, data_object: {} });
+    }
+
+    /**
      * @internal
      */
     _onScriptEventReceived = async (e: Event) => {
