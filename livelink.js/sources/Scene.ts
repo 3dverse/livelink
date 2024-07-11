@@ -193,26 +193,49 @@ export class Scene extends EventTarget {
             return;
         }
 
-        const dataObject = event.data_object as { hEntity: { linkage: Array<UUID>; originalEUID: UUID } };
-        const entity = await this.findEntity(Entity, {
-            entity_uuid: dataObject.hEntity.originalEUID,
-            linkage: dataObject.hEntity.linkage,
-        });
-
-        if (!entity) {
-            return;
-        }
-
         switch (event.event_name) {
             case "7a8cc05e-8659-4b23-99d1-1352d13e2020/enter_trigger":
-                emitter.onTriggerEntered({ entity });
+                {
+                    const entity = await this.#extractEntityFromEventDataObject({
+                        data_object: event.data_object,
+                        entity_name: "hEntity",
+                    });
+                    if (entity) {
+                        emitter.onTriggerEntered({ entity });
+                    }
+                }
                 break;
 
             case "7a8cc05e-8659-4b23-99d1-1352d13e2020/exit_trigger":
-                emitter.onTriggerExited({ entity });
+                {
+                    const entity = await this.#extractEntityFromEventDataObject({
+                        data_object: event.data_object,
+                        entity_name: "hEntity",
+                    });
+                    if (entity) {
+                        emitter.onTriggerExited({ entity });
+                    }
+                }
                 break;
         }
     };
+
+    /**
+     *
+     */
+    async #extractEntityFromEventDataObject({
+        data_object,
+        entity_name,
+    }: {
+        data_object: Record<string, {}>;
+        entity_name: string;
+    }): Promise<Entity | null> {
+        if (!data_object.hasOwnProperty(entity_name)) {
+            return null;
+        }
+        const entity_ref = data_object[entity_name] as { linkage: Array<UUID>; originalEUID: UUID };
+        return this.findEntity(Entity, { entity_uuid: entity_ref.originalEUID, linkage: entity_ref.linkage });
+    }
 
     /**
      * @internal
