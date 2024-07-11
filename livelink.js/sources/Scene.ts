@@ -118,8 +118,8 @@ export class Scene extends EventTarget {
             .find({ entity_euid: entity_uuid })
             .find(
                 entity =>
-                    entity.lineage?.value?.length === linkage.length &&
-                    entity.lineage?.value?.every((uuid, i) => uuid === linkage[i]),
+                    (entity.lineage?.value?.length ?? 0) === linkage.length &&
+                    (entity.lineage?.value ?? []).every((uuid, i) => uuid === linkage[i]),
             );
 
         if (foundEntity) {
@@ -225,7 +225,6 @@ export class Scene extends EventTarget {
         for (const entity of entities) {
             this.entity_registry.add({ entity });
         }
-
         return entities;
     }
 
