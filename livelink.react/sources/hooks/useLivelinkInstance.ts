@@ -4,6 +4,7 @@ import { DefaultCamera } from "../cameras/DefaultCamera";
 import {
     Camera,
     Livelink,
+    Session,
     SoftwareDecoder,
     UUID,
     Viewport,
@@ -40,11 +41,13 @@ export function useLivelinkInstance({ views }: { views: Array<View> }): {
     isConnecting: boolean;
     connect: ({
         scene_id,
+        session_id,
         token,
         onConfigureClient,
         onConnected,
     }: {
         scene_id: UUID;
+        session_id?: UUID;
         token: string;
         onConfigureClient?: (instance: Livelink) => Promise<void>;
         onConnected?: ({ instance, cameras }: { instance: Livelink; cameras: Array<Camera | null> }) => void;
@@ -66,11 +69,13 @@ export function useLivelinkInstance({ views }: { views: Array<View> }): {
         isConnecting,
         connect: async ({
             scene_id,
+            session_id,
             token,
             onConfigureClient,
             onConnected,
         }: {
             scene_id: UUID;
+            session_id?: UUID;
             token: string;
             onConfigureClient?: (instance: Livelink) => Promise<void>;
             onConnected?: ({ instance, cameras }: { instance: Livelink; cameras: Array<Camera | null> }) => void;
@@ -80,7 +85,18 @@ export function useLivelinkInstance({ views }: { views: Array<View> }): {
             }
 
             setIsConnecting(true);
-            const instance = await Livelink.join_or_start({ scene_id, token });
+            let instance: Livelink;
+            if(session_id) {
+                const session = await Session.findById({ session_id, token });
+                if(!session) {
+                    console.error(`Session '${session_id}' not found on scene '${scene_id}'`);
+                    return null;
+                }
+                instance = await Livelink.join({ session });
+            } else {
+                instance = await Livelink.join_or_start({ scene_id, token });
+            }
+
             const viewports = registerViewports(instance, views);
             if (onConfigureClient) {
                 await onConfigureClient(instance);

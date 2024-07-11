@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 import { useEffect, useState } from "react";
-import { Livelink, SoftwareDecoder, UUID, WebCodecsDecoder } from "@3dverse/livelink";
+import { Livelink, SoftwareDecoder, UUID, WebCodecsDecoder, Session } from "@3dverse/livelink";
 import { WebXRHelper } from "../web-xr/WebXRHelper";
 
 //------------------------------------------------------------------------------
@@ -14,10 +14,12 @@ export function useLivelinkXR({ mode }: { mode: XRSessionMode }): {
     isSessionSupported: boolean;
     connect: ({
         scene_id,
+        session_id,
         token,
         rootElement,
     }: {
         scene_id: UUID;
+        session_id?: UUID;
         token: string;
         rootElement?: HTMLElement;
     }) => Promise<LivelinkResponse | null>;
@@ -69,10 +71,12 @@ export function useLivelinkXR({ mode }: { mode: XRSessionMode }): {
         isSessionSupported,
         connect: async ({
             scene_id,
+            session_id,
             token,
             rootElement,
         }: {
             scene_id: UUID;
+            session_id?: UUID;
             token: string;
             rootElement?: HTMLElement;
         }): Promise<LivelinkResponse | null> => {
@@ -97,7 +101,17 @@ export function useLivelinkXR({ mode }: { mode: XRSessionMode }): {
 
                 setIsConnecting(true);
 
-                livelinkInstance = await Livelink.join_or_start({ scene_id, token });
+                let livelinkInstance: Livelink;
+                if(session_id) {
+                    const session = await Session.findById({ session_id, token });
+                    if(!session) {
+                        console.error(`Session '${session_id}' not found on scene '${scene_id}'`);
+                        return null;
+                    }
+                    livelinkInstance = await Livelink.join({ session });
+                } else {
+                    livelinkInstance = await Livelink.join_or_start({ scene_id, token });
+                }
 
                 await configureClient(webXRHelper, livelinkInstance);
 
@@ -105,7 +119,7 @@ export function useLivelinkXR({ mode }: { mode: XRSessionMode }): {
                 setInstance(livelinkInstance);
             } catch (error) {
                 webXRHelper.release();
-                livelinkInstance?.disconnect();
+                livelinkInstance!.disconnect();
                 setMessage(`Error: ${error instanceof Error ? error.message : error}`);
             } finally {
                 setIsConnecting(false);
