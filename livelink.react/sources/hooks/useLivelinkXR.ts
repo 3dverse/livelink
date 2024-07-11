@@ -101,7 +101,6 @@ export function useLivelinkXR({ mode }: { mode: XRSessionMode }): {
 
                 setIsConnecting(true);
 
-                let livelinkInstance: Livelink;
                 if(session_id) {
                     const session = await Session.findById({ session_id, token });
                     if(!session) {
@@ -119,7 +118,7 @@ export function useLivelinkXR({ mode }: { mode: XRSessionMode }): {
                 setInstance(livelinkInstance);
             } catch (error) {
                 webXRHelper.release();
-                livelinkInstance!.disconnect();
+                livelinkInstance?.disconnect();
                 setMessage(`Error: ${error instanceof Error ? error.message : error}`);
             } finally {
                 setIsConnecting(false);
