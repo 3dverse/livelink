@@ -411,6 +411,20 @@ export class Livelink {
     /**
      *
      */
+    pauseSimulation(): void {
+        this.#core.setSimulationState({ state: "pause_simulation" });
+    }
+
+    /**
+     *
+     */
+    stopSimulation(): void {
+        this.#core.setSimulationState({ state: "stop_simulation" });
+    }
+
+    /**
+     *
+     */
     #startUpdateLoop({
         updatesPerSecond = 30,
         broadcastsPerSecond = 1,
