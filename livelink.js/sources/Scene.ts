@@ -169,13 +169,14 @@ export class Scene extends EventTarget {
         event_map_id,
         event_name,
         entity_rtids = [],
+        data_object = {},
     }: {
         event_map_id: UUID;
         event_name: string;
         entity_rtids?: Array<RTID>;
+        data_object?: Record<string, unknown>;
     }) {
-        // TODO: serialize data_object in livelink.core
-        return this.#core.fireEvent({ event_map_id, event_name, entities: entity_rtids, data_object: {} });
+        return this.#core.fireEvent({ event_map_id, event_name, entities: entity_rtids, data_object });
     }
 
     /**
