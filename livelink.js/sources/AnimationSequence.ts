@@ -35,8 +35,8 @@ export class AnimationSequence {
     /**
      *
      */
-    play({ playback_speed }: { playback_speed: number }) {
-        this._updateState({ playback_speed });
+    play({ playback_speed, seek_offset }: { playback_speed: number; seek_offset?: number }) {
+        this._updateState({ playback_speed, seek_offset });
     }
 
     /**
