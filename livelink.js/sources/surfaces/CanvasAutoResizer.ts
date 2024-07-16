@@ -35,7 +35,7 @@ export class CanvasAutoResizer extends EventTarget {
         this.#observer = new ResizeObserver(this.#onResized);
 
         // My watch begins...
-        this.#observer.observe(this.#canvas, { box: "device-pixel-content-box" });
+        this.#observer.observe(this.#canvas);
     }
 
     /**
