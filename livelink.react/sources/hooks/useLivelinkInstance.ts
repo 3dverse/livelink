@@ -45,12 +45,14 @@ export function useLivelinkInstance({ views }: { views: Array<View> }): {
         token,
         onConfigureClient,
         onConnected,
+        is_transient,
     }: {
         scene_id: UUID;
         session_id?: UUID;
         token: string;
         onConfigureClient?: (instance: Livelink) => Promise<void>;
         onConnected?: ({ instance, cameras }: { instance: Livelink; cameras: Array<Camera | null> }) => void;
+        is_transient?: boolean;
     }) => Promise<LivelinkResponse | null>;
     disconnect: () => void;
 } {
@@ -73,12 +75,14 @@ export function useLivelinkInstance({ views }: { views: Array<View> }): {
             token,
             onConfigureClient,
             onConnected,
+            is_transient,
         }: {
             scene_id: UUID;
             session_id?: UUID;
             token: string;
             onConfigureClient?: (instance: Livelink) => Promise<void>;
             onConnected?: ({ instance, cameras }: { instance: Livelink; cameras: Array<Camera | null> }) => void;
+            is_transient?: boolean;
         }): Promise<LivelinkResponse | null> => {
             if (views.some(v => v.canvas_ref.current === null)) {
                 return null;
@@ -86,15 +90,15 @@ export function useLivelinkInstance({ views }: { views: Array<View> }): {
 
             setIsConnecting(true);
             let instance: Livelink;
-            if(session_id) {
+            if (session_id) {
                 const session = await Session.findById({ session_id, token });
-                if(!session) {
+                if (!session) {
                     console.error(`Session '${session_id}' not found on scene '${scene_id}'`);
                     return null;
                 }
                 instance = await Livelink.join({ session });
             } else {
-                instance = await Livelink.join_or_start({ scene_id, token });
+                instance = await Livelink.join_or_start({ scene_id, token, is_transient });
             }
 
             const viewports = registerViewports(instance, views);

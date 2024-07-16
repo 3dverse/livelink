@@ -49,10 +49,18 @@ export class Session extends EventTarget implements SessionInterface {
      * @example
      * const session = await Session.create({scene_id, token});
      */
-    static async create({ scene_id, token }: { scene_id: UUID; token: string }): Promise<Session> {
+    static async create({
+        scene_id,
+        token,
+        is_transient,
+    }: {
+        scene_id: UUID;
+        token: string;
+        is_transient?: boolean;
+    }): Promise<Session> {
         const res = await fetch(`${Livelink._api_url}/sessions`, {
             method: "POST",
-            body: JSON.stringify({ scene_id }),
+            body: JSON.stringify({ scene_id, is_transient }),
             headers: {
                 "Content-Type": "application/json",
                 user_token: token,

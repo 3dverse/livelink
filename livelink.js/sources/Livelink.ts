@@ -65,9 +65,17 @@ export class Livelink {
      * @throws {Error} Gateway issues
      * @throws {Error} SEB issues
      */
-    static async start({ scene_id, token }: { scene_id: UUID; token: string }): Promise<Livelink> {
+    static async start({
+        scene_id,
+        token,
+        is_transient,
+    }: {
+        scene_id: UUID;
+        token: string;
+        is_transient?: boolean;
+    }): Promise<Livelink> {
         console.debug(`Starting new session on scene '${scene_id}'`);
-        const session = await Session.create({ scene_id, token });
+        const session = await Session.create({ scene_id, token, is_transient });
         return await Livelink.join({ session });
     }
 
@@ -78,10 +86,12 @@ export class Livelink {
         scene_id,
         token,
         session_selector = ({ sessions }: { sessions: Array<SessionInfo> }) => sessions[0],
+        is_transient,
     }: {
         scene_id: UUID;
         token: string;
         session_selector?: SessionSelector;
+        is_transient?: boolean;
     }): Promise<Livelink> {
         console.debug(`Looking for sessions on scene '${scene_id}'`);
         const session = await Session.find({ scene_id, token, session_selector });
@@ -90,7 +100,7 @@ export class Livelink {
             console.debug(
                 `There's no session currently running on scene '${scene_id}' and satisfiying the provided selector criteria`,
             );
-            return await Livelink.start({ scene_id, token });
+            return await Livelink.start({ scene_id, token, is_transient });
         }
 
         try {
@@ -193,6 +203,7 @@ export class Livelink {
             session: this.session,
             editor_url: Livelink._editor_url,
         });
+
         this.scene.entity_registry._configureComponentSerializer({ component_serializer });
 
         this.#core.addEventListener({
