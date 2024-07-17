@@ -9,7 +9,14 @@ const templateFolder = process.argv[3] || ".";
 const outputFolder = process.argv[4] || "../_prebuild";
 
 //------------------------------------------------------------------------------
-const typeDeclarationFile = path.join(nodeModulePath, "@3dverse/livelink.core/dist/_prebuild/types/components.d.ts");
+const componentTypeDeclarationFile = path.join(
+    nodeModulePath,
+    "@3dverse/livelink.core/dist/_prebuild/types/components.d.ts",
+);
+const settingsTypeDeclarationFile = path.join(
+    nodeModulePath,
+    "@3dverse/livelink.core/dist/_prebuild/types/settings.d.ts",
+);
 
 //------------------------------------------------------------------------------
 const pascalCaseToSnakeCase = str =>
@@ -21,9 +28,9 @@ const pascalCaseToSnakeCase = str =>
 
 //------------------------------------------------------------------------------
 function generateEntityBase() {
-    const program = ts.createProgram([typeDeclarationFile], {});
+    const program = ts.createProgram([componentTypeDeclarationFile], {});
     const checker = program.getTypeChecker();
-    const sourceFile = program.getSourceFile(typeDeclarationFile);
+    const sourceFile = program.getSourceFile(componentTypeDeclarationFile);
 
     const exportSymbol = checker.getSymbolAtLocation(sourceFile?.getChildAt(0));
     const exports = checker.getExportsAndPropertiesOfModule(exportSymbol || sourceFile.symbol);
@@ -50,6 +57,30 @@ function generateEntityBase() {
     });
 }
 
+// ----------------------------------------------------------------------------
+function generateSettingsBase() {
+    const program = ts.createProgram([settingsTypeDeclarationFile], {});
+    const checker = program.getTypeChecker();
+    const sourceFile = program.getSourceFile(settingsTypeDeclarationFile);
+
+    const exportSymbol = checker.getSymbolAtLocation(sourceFile?.getChildAt(0));
+    const exports = checker.getExportsAndPropertiesOfModule(exportSymbol || sourceFile.symbol);
+
+    // For now filter only types with comments. This might not work for in the future.
+    const settingsType = exports
+        .filter(symbol =>
+            symbol.declarations.some(declaration => declaration.jsDoc?.some(jsDoc => jsDoc.comment?.length > 0)),
+        )
+        .map(symbol => symbol.name);
+
+    //--------------------------------------------------------------------------
+    applyTemplate("SettingsBase.template.ts", path.join("SettingsBase.ts"), {
+        settingsAttributes: settingsType
+            .map(type => `    ${pascalCaseToSnakeCase(type)}?: Settings.${type};`)
+            .join("\n"),
+    });
+}
+
 //------------------------------------------------------------------------------
 function applyTemplate(templateFileName, outputSchemaName, dictionnary) {
     console.log("Generating", outputSchemaName);
@@ -68,3 +99,4 @@ function applyTemplate(templateFileName, outputSchemaName, dictionnary) {
 
 //------------------------------------------------------------------------------
 generateEntityBase();
+generateSettingsBase();

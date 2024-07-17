@@ -9,6 +9,7 @@ import type {
 import { Entity } from "./Entity";
 import { EntityRegistry } from "./EntityRegistry";
 import { AnimationSequence } from "./AnimationSequence";
+import { Settings } from "./Settings";
 
 /**
  *
@@ -23,6 +24,11 @@ export class Scene extends EventTarget {
      * Registry of entities discovered until now.
      */
     public readonly entity_registry = new EntityRegistry();
+
+    /**
+     * Scene settings
+     */
+    public readonly settings = new Settings();
 
     /**
      *

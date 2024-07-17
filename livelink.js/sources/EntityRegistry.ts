@@ -1,7 +1,7 @@
 import type {
     RTID,
     UUID,
-    ComponentSerializer,
+    Serializer,
     UpdateEntitiesFromJsonMessage,
     ComponentType,
     RemoveComponentsCommand,
@@ -51,7 +51,7 @@ export class EntityRegistry {
     /**
      *
      */
-    #serializer: ComponentSerializer | null = null;
+    #serializer: Serializer | null = null;
 
     /**
      * Adds a new entity in the registry. The entity must be valid, i.e. have valid RTID and EUID and must not have the
@@ -130,8 +130,8 @@ export class EntityRegistry {
     /**
      * @internal
      */
-    _configureComponentSerializer({ component_serializer }: { component_serializer: ComponentSerializer }) {
-        this.#serializer = component_serializer;
+    _configureComponentSerializer({ serializer }: { serializer: Serializer }) {
+        this.#serializer = serializer;
 
         for (const component_name of this.#serializer.component_names) {
             this.#dirty_components.set(component_name, new Set<Entity>());

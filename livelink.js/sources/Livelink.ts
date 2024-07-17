@@ -4,7 +4,6 @@ import type {
     CodecType,
     EntityUpdatedEvent,
     FrameData,
-    FrameMetaData,
     InputState,
     LivelinkCore,
     Quat,
@@ -18,9 +17,8 @@ import type {
 
 import { LivelinkCoreModule } from "@3dverse/livelink.core";
 
-import { RawFrameMetaData, rawFrameMetaDatafromFrameMetaData } from "./decoders/RawFrameMetaData";
+import { rawFrameMetaDatafromFrameMetaData } from "./decoders/RawFrameMetaData";
 import { EncodedFrameConsumer } from "./decoders/EncodedFrameConsumer";
-import { CameraFrameTransform } from "./decoders/CameraFrameTransform";
 import { DecodedFrameConsumer } from "./decoders/DecodedFrameConsumer";
 
 import { RemoteRenderingSurface } from "./surfaces/RemoteRenderingSurface";
@@ -199,12 +197,14 @@ export class Livelink {
         // Retrieve a session key
         await this.session.registerClient();
 
-        const component_serializer = await this.#core.connect({
+        const { settings, serializer } = await this.#core.connect({
             session: this.session,
             editor_url: Livelink._editor_url,
         });
 
-        this.scene.entity_registry._configureComponentSerializer({ component_serializer });
+        this.scene.entity_registry._configureComponentSerializer({ serializer });
+
+        this.scene.settings._init(settings);
 
         this.#core.addEventListener({
             target: "editor",
