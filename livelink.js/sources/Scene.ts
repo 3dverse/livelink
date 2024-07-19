@@ -174,15 +174,15 @@ export class Scene extends EventTarget {
     fireEvent({
         event_map_id,
         event_name,
-        entity_rtids = [],
+        entities = [],
         data_object = {},
     }: {
         event_map_id: UUID;
         event_name: string;
-        entity_rtids?: Array<RTID>;
+        entities?: Array<Entity>;
         data_object?: Record<string, unknown>;
     }) {
-        return this.#core.fireEvent({ event_map_id, event_name, entities: entity_rtids, data_object });
+        return this.#core.fireEvent({ event_map_id, event_name, entities: entities.map(e => e.rtid!), data_object });
     }
 
     /**
