@@ -1,12 +1,16 @@
 //------------------------------------------------------------------------------
-import { Camera, Livelink, OffscreenSurface, RelativeRect, Viewport } from "@3dverse/livelink";
+import { Components, Camera, Livelink, OffscreenSurface, RelativeRect, Viewport, Vec3, Quat } from "@3dverse/livelink";
 import { XRContext } from "@3dverse/livelink-react/sources/web-xr/XRContext";
+// import { Quaternion } from "three";
 
 /**
  *
  */
 export class WebXRCamera extends Camera {
     onCreate(): void {
+        // TODO: might be a better approach to have a camera default origin
+        // but the FTL engine crashes.
+        // this.lineage = { parentUUID: WebXRHelper.cameras_origin!.id! };
         this.local_transform = {};
         this.perspective_lens = {};
         this.camera = {
@@ -45,6 +49,10 @@ function createPromiseWithResolvers<T>(): {
  *
  */
 export class WebXRHelper {
+    //--------------------------------------------------------------------------
+    // static cameras_origin: Entity | null = null;
+    cameras_origin: Components.LocalTransform = {};
+
     //--------------------------------------------------------------------------
     // References to livelink core
     #liveLink: Livelink | null = null;
@@ -155,6 +163,13 @@ export class WebXRHelper {
         if (!this.#liveLink) {
             throw new Error("Failed to configure XR session, no LiveLink instance was provided.");
         }
+
+        // if(WebXRHelper.cameras_origin === null) {
+        //     WebXRHelper.cameras_origin = await livelink.scene.newEntity(Entity, "cameras_origin");
+        //     // Figure out default_camera_transform this is not auto generated in Settings type
+        //     WebXRHelper.cameras_origin.local_transform = (livelink.scene.settings as unknown as any).default_camera_transform;
+        // }
+        this.cameras_origin = (livelink.scene.settings as any).default_camera_transform;
 
         const xr_views = await this.#getXRViews();
 
@@ -275,9 +290,17 @@ export class WebXRHelper {
             this.#context.drawXRFrame({
                 xr_views: xr_views.map(({ view, viewport }, index) => {
                     const currentViewport = this.#surface.viewports[index];
-                    const { position, orientation } = this.#context.meta_data!.cameras.find(
+                    let { position, orientation } = this.#context.meta_data!.cameras.find(
                         c => c.camera.id === currentViewport.camera!.id,
                     )!;
+
+                    const originPosition = this.cameras_origin.position!;
+                    // const originOrientation = this.cameras_origin.orientation!;
+                    position = position.map((coord, index) => coord -= originPosition[index]) as Vec3;
+                    // TODO: does not work, figure out the right way to apply default orientation
+                    // const cameraQuaternion = new Quaternion().fromArray(orientation);
+                    // const originQuaternion = new Quaternion().fromArray(originOrientation!);
+                    // orientation = cameraQuaternion.multiply(originQuaternion.invert()).toArray() as Quat;
                     return { view, viewport, frame_camera_transform: { position, orientation } };
                 }),
             });
@@ -295,11 +318,22 @@ export class WebXRHelper {
 
         cameras.forEach((camera, index) => {
             const { view } = xr_views[index];
-            const { position, orientation } = view.transform;
+            const originPosition = this.cameras_origin.position!;
+            // const originOrientation = this.cameras_origin.orientation!;
+            const { position: viewPosition, orientation: viewOrientation } = view.transform;
+            let position: Vec3 = [viewPosition.x, viewPosition.y, viewPosition.z];
+            let orientation: Quat = [viewOrientation.x, viewOrientation.y, viewOrientation.z, viewOrientation.w];
+
+            position = position.map((coord, index) => coord += originPosition[index]) as Vec3;
+            // TODO: does not work, figure out the right way to apply default orientation
+            // const cameraQuaternion = new Quaternion().fromArray(orientation);
+            // const originQuaternion = new Quaternion().fromArray(originOrientation!);
+            // orientation = cameraQuaternion.multiply(originQuaternion).toArray() as Quat;
+
             // Update the local_transform component
             camera!.local_transform = {
-                position: [position.x, position.y, position.z],
-                orientation: [orientation.x, orientation.y, orientation.z, orientation.w],
+                position,
+                orientation,
             };
         });
     }
