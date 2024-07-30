@@ -1,15 +1,17 @@
 //------------------------------------------------------------------------------
 import { Components, Camera, Livelink, OffscreenSurface, RelativeRect, Viewport, Vec3, Quat } from "@3dverse/livelink";
 import { XRContext } from "@3dverse/livelink-react/sources/web-xr/XRContext";
-// import { Quaternion } from "three";
+import { Quaternion, Vector3 } from "three";
 
 /**
  *
  */
 export class WebXRCamera extends Camera {
     onCreate(): void {
-        // TODO: might be a better approach to have a camera default origin
-        // but the FTL engine crashes.
+        // TODO: WebXRHelper.cameras_origin as an Entity might be a better
+        // approach to have a camera default origin but the FTL engine crashes
+        // when trying to set parent (lineage) of the camera. Actually it
+        // crashes a few time after, but reparenting is visible in the scene graph.
         // this.lineage = { parentUUID: WebXRHelper.cameras_origin!.id! };
         this.local_transform = {};
         this.perspective_lens = {};
@@ -293,15 +295,21 @@ export class WebXRHelper {
                     let { position, orientation } = this.#context.meta_data!.cameras.find(
                         c => c.camera.id === currentViewport.camera!.id,
                     )!;
+                    const positionVector = new Vector3(...position);
+                    const cameraQuaternion = new Quaternion(...orientation);
+                    const originPositionVector = new Vector3(...this.cameras_origin.position!);
+                    const originQuaternion = new Quaternion(...this.cameras_origin.orientation!);
+                    positionVector.sub(originPositionVector);
+                    cameraQuaternion.premultiply(originQuaternion.invert());
 
-                    const originPosition = this.cameras_origin.position!;
-                    // const originOrientation = this.cameras_origin.orientation!;
-                    position = position.map((coord, index) => coord -= originPosition[index]) as Vec3;
-                    // TODO: does not work, figure out the right way to apply default orientation
-                    // const cameraQuaternion = new Quaternion().fromArray(orientation);
-                    // const originQuaternion = new Quaternion().fromArray(originOrientation!);
-                    // orientation = cameraQuaternion.multiply(originQuaternion.invert()).toArray() as Quat;
-                    return { view, viewport, frame_camera_transform: { position, orientation } };
+                    return {
+                        view,
+                        viewport,
+                        frame_camera_transform: {
+                            position: positionVector.toArray() as Vec3,
+                            orientation: cameraQuaternion.toArray() as Quat,
+                        }
+                    };
                 }),
             });
         }
@@ -318,22 +326,18 @@ export class WebXRHelper {
 
         cameras.forEach((camera, index) => {
             const { view } = xr_views[index];
-            const originPosition = this.cameras_origin.position!;
-            // const originOrientation = this.cameras_origin.orientation!;
-            const { position: viewPosition, orientation: viewOrientation } = view.transform;
-            let position: Vec3 = [viewPosition.x, viewPosition.y, viewPosition.z];
-            let orientation: Quat = [viewOrientation.x, viewOrientation.y, viewOrientation.z, viewOrientation.w];
-
-            position = position.map((coord, index) => coord += originPosition[index]) as Vec3;
-            // TODO: does not work, figure out the right way to apply default orientation
-            // const cameraQuaternion = new Quaternion().fromArray(orientation);
-            // const originQuaternion = new Quaternion().fromArray(originOrientation!);
-            // orientation = cameraQuaternion.multiply(originQuaternion).toArray() as Quat;
+            const { position, orientation } = view.transform;
+            const positionVector = new Vector3(position.x, position.y, position.z);
+            const cameraQuaternion = new Quaternion(orientation.x, orientation.y, orientation.z, orientation.w);
+            const originPositionVector = new Vector3(...this.cameras_origin.position!);
+            const originQuaternion = new Quaternion(...this.cameras_origin.orientation!);
+            positionVector.add(originPositionVector);
+            cameraQuaternion.premultiply(originQuaternion);
 
             // Update the local_transform component
             camera!.local_transform = {
-                position,
-                orientation,
+                position: positionVector.toArray() as Vec3,
+                orientation: cameraQuaternion.toArray() as Quat,
             };
         });
     }
