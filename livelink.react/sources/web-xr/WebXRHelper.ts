@@ -53,7 +53,10 @@ function createPromiseWithResolvers<T>(): {
 export class WebXRHelper {
     //--------------------------------------------------------------------------
     // static cameras_origin: Entity | null = null;
-    cameras_origin: Components.LocalTransform = {};
+    cameras_origin: Components.LocalTransform = {
+        position: [0, 0, 0],
+        orientation: [0, 0, 0, 1],
+    };
 
     //--------------------------------------------------------------------------
     // References to livelink core
@@ -166,12 +169,20 @@ export class WebXRHelper {
             throw new Error("Failed to configure XR session, no LiveLink instance was provided.");
         }
 
+        // TODO: see why livelink.scene.settings does not have auto generated default_camera_transform
+        // default_camera_transform definition.
         // if(WebXRHelper.cameras_origin === null) {
         //     WebXRHelper.cameras_origin = await livelink.scene.newEntity(Entity, "cameras_origin");
         //     // Figure out default_camera_transform this is not auto generated in Settings type
         //     WebXRHelper.cameras_origin.local_transform = (livelink.scene.settings as unknown as any).default_camera_transform;
         // }
-        this.cameras_origin = (livelink.scene.settings as any).default_camera_transform;
+        const { default_camera_transform } = (livelink.scene.settings as any);
+        if(default_camera_transform?.position) {
+            this.cameras_origin.position = default_camera_transform.position;
+        }
+        if(default_camera_transform?.orientation) {
+            this.cameras_origin.orientation = default_camera_transform.orientation;
+        }
 
         const xr_views = await this.#getXRViews();
 
