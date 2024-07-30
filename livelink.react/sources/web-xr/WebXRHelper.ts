@@ -306,19 +306,25 @@ export class WebXRHelper {
                     let { position, orientation } = this.#context.meta_data!.cameras.find(
                         c => c.camera.id === currentViewport.camera!.id,
                     )!;
-                    const positionVector = new Vector3(...position);
-                    const cameraQuaternion = new Quaternion(...orientation);
-                    const originPositionVector = new Vector3(...this.cameras_origin.position!);
-                    const originQuaternion = new Quaternion(...this.cameras_origin.orientation!);
-                    positionVector.sub(originPositionVector);
-                    cameraQuaternion.premultiply(originQuaternion.invert());
+                    // const positionVector = new Vector3(...position);
+                    // const cameraQuaternion = new Quaternion(...orientation);
+                    // const originPositionVector = new Vector3(...this.cameras_origin.position!);
+                    // const originQuaternion = new Quaternion(...this.cameras_origin.orientation!);
+                    // TODO: does not work, is this have an actual value?
+                    // positionVector.sub(originPositionVector)
+                    // TODO: does not work, because it probably needs to be done
+                    // on the center eye, and we'd also like to only apply Y axis
+                    // orientation for an headset.
+                    // cameraQuaternion.premultiply(originQuaternion.invert());
 
                     return {
                         view,
                         viewport,
                         frame_camera_transform: {
-                            position: positionVector.toArray() as Vec3,
-                            orientation: cameraQuaternion.toArray() as Quat,
+                            // position: positionVector.toArray() as Vec3,
+                            // orientation: cameraQuaternion.toArray() as Quat,
+                            position,
+                            orientation
                         }
                     };
                 }),
@@ -338,17 +344,23 @@ export class WebXRHelper {
         cameras.forEach((camera, index) => {
             const { view } = xr_views[index];
             const { position, orientation } = view.transform;
-            const positionVector = new Vector3(position.x, position.y, position.z);
-            const cameraQuaternion = new Quaternion(orientation.x, orientation.y, orientation.z, orientation.w);
-            const originPositionVector = new Vector3(...this.cameras_origin.position!);
-            const originQuaternion = new Quaternion(...this.cameras_origin.orientation!);
-            positionVector.add(originPositionVector);
-            cameraQuaternion.premultiply(originQuaternion);
+            // const positionVector = new Vector3(position.x, position.y, position.z);
+            // const cameraQuaternion = new Quaternion(orientation.x, orientation.y, orientation.z, orientation.w);
+            // const originPositionVector = new Vector3(...this.cameras_origin.position!);
+            // const originQuaternion = new Quaternion(...this.cameras_origin.orientation!);
+            // TODO: does not work, is this have an actual value?
+            // positionVector.add(originPositionVector);
+            // TODO: does not work, because it probably needs to be done
+            // on the center eye, and we'd also like to only apply Y axis
+            // orientation for an headset.
+            // cameraQuaternion.premultiply(originQuaternion);
 
             // Update the local_transform component
             camera!.local_transform = {
-                position: positionVector.toArray() as Vec3,
-                orientation: cameraQuaternion.toArray() as Quat,
+                // position: positionVector.toArray() as Vec3,
+                // orientation: cameraQuaternion.toArray() as Quat,
+                position: [position.x, position.y, position.z],
+                orientation: [orientation.x, orientation.y, orientation.z, orientation.w]
             };
         });
     }
