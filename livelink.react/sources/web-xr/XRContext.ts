@@ -143,7 +143,7 @@ export class XRContext extends ContextProvider {
             gl.bindFramebuffer(gl.FRAMEBUFFER, this.#frame_buffer);
         }
 
-        gl.clearColor(1, 0, 0, 1);
+        gl.clearColor(0, 0, 0, 0);
         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
         const sizeLocation = gl.getUniformLocation(this.#shader_program!, "size");
