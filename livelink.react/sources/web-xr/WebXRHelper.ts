@@ -354,8 +354,8 @@ export class WebXRHelper {
     }
 
     //--------------------------------------------------------------------------
-    async createCameras(): Promise<void> {
-        await Promise.all(
+    async createCameras(): Promise<WebXRCamera[]> {
+        const cameras = (await Promise.all(
             this.#viewports.map(async ({ xr_view, livelink_viewport }) => {
                 const perspective_lens = this.#computePerspectiveLens(
                     xr_view.projectionMatrix,
@@ -369,8 +369,11 @@ export class WebXRHelper {
                     livelink_viewport,
                 );
                 camera.perspective_lens = perspective_lens;
+                return camera;
             }),
-        );
+        ));
+
+        return cameras;
     }
 
     //--------------------------------------------------------------------------

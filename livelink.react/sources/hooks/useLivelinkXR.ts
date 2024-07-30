@@ -1,10 +1,10 @@
 //------------------------------------------------------------------------------
 import { useEffect, useState } from "react";
-import { Livelink, SoftwareDecoder, UUID, WebCodecsDecoder, Session } from "@3dverse/livelink";
+import { Livelink, SoftwareDecoder, UUID, WebCodecsDecoder, Session, Camera } from "@3dverse/livelink";
 import { WebXRHelper } from "../web-xr/WebXRHelper";
 
 //------------------------------------------------------------------------------
-type LivelinkResponse = { instance: Livelink | null };
+type LivelinkResponse = { instance: Livelink | null; cameras: Array<Camera> };
 
 //------------------------------------------------------------------------------
 export function useLivelinkXR({ mode }: { mode: XRSessionMode }): {
@@ -82,7 +82,7 @@ export function useLivelinkXR({ mode }: { mode: XRSessionMode }): {
         }): Promise<LivelinkResponse | null> => {
             const webXRHelper = new WebXRHelper();
             let livelinkInstance: Livelink | null = null;
-
+            let cameras: Array<Camera> = [];
             try {
                 await webXRHelper.initialize(
                     mode,
@@ -114,6 +114,10 @@ export function useLivelinkXR({ mode }: { mode: XRSessionMode }): {
 
                 await configureClient(webXRHelper, livelinkInstance);
 
+                cameras = await webXRHelper.createCameras();
+                livelinkInstance.startStreaming();
+                webXRHelper.start();
+
                 setXRSession(webXRHelper);
                 setInstance(livelinkInstance);
             } catch (error) {
@@ -123,7 +127,7 @@ export function useLivelinkXR({ mode }: { mode: XRSessionMode }): {
             } finally {
                 setIsConnecting(false);
 
-                return { instance: livelinkInstance };
+                return { instance: livelinkInstance, cameras };
             }
         },
         disconnect: () => {
@@ -145,8 +149,4 @@ async function configureClient(webXRHelper: WebXRHelper, livelinkInstance: Livel
                 ? new WebCodecsDecoder(livelinkInstance.default_decoded_frame_consumer)
                 : new SoftwareDecoder(livelinkInstance.default_decoded_frame_consumer),
     });
-
-    await webXRHelper.createCameras();
-    livelinkInstance.startStreaming();
-    webXRHelper.start();
 }
