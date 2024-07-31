@@ -119,6 +119,16 @@ export class WebXRHelper {
     }
 
     //--------------------------------------------------------------------------
+    get fakeAlpha() {
+        return this.#context.fake_alpha_enabled;
+    }
+
+    //--------------------------------------------------------------------------
+    set fakeAlpha(value: boolean) {
+        this.#context.fake_alpha_enabled = value;
+    }
+
+    //--------------------------------------------------------------------------
     public async initialize(mode: XRSessionMode, options: XRSessionInit = {}): Promise<void> {
         if (!WebXRHelper.isSessionSupported(mode)) {
             throw new Error(`WebXR "${mode}" not supported`);

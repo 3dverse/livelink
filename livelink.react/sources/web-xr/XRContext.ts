@@ -45,6 +45,11 @@ export class XRContext extends ContextProvider {
     /**
      *
      */
+    fake_alpha_enabled: boolean = false;
+
+    /**
+     *
+     */
     readonly #neutral_direction: vec3 = vec3.fromValues(0, 0, -1);
 
     /**
@@ -153,6 +158,7 @@ export class XRContext extends ContextProvider {
         const viewMatrixLocation = gl.getUniformLocation(this.#shader_program!, "viewMatrix");
         const projectionMatrixLocation = gl.getUniformLocation(this.#shader_program!, "projectionMatrix");
         const billboardMatrixLocation = gl.getUniformLocation(this.#shader_program!, "billboardMatrix");
+        const fakeAlphaEnabledLocation = gl.getUniformLocation(this.#shader_program!, "fakeAlphaEnabled");
 
         gl.activeTexture(gl.TEXTURE0);
         gl.bindTexture(gl.TEXTURE_2D, this.#texture_ref);
@@ -195,6 +201,7 @@ export class XRContext extends ContextProvider {
             gl.uniformMatrix4fv(viewMatrixLocation, false, view.transform.inverse.matrix);
             gl.uniformMatrix4fv(projectionMatrixLocation, false, view.projectionMatrix);
             gl.uniformMatrix4fv(billboardMatrixLocation, false, billboardMatrix);
+            gl.uniform1i(fakeAlphaEnabledLocation, this.fake_alpha_enabled ? 1 : 0)
 
             gl.uniform2fv(offsetLocation, [current_offset, 0]);
             gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
@@ -268,9 +275,16 @@ export class XRContext extends ContextProvider {
             precision mediump float;
             varying vec2 texCoord;
             uniform sampler2D texture;
+            uniform int fakeAlphaEnabled;
 
             void main() {
                 gl_FragColor = texture2D(texture, texCoord);
+                if(fakeAlphaEnabled == 1) {
+                    highp float maxIntensity = max(max(gl_FragColor.r, gl_FragColor.g), gl_FragColor.b);
+                    if(maxIntensity < 0.1) {
+                        gl_FragColor.a = maxIntensity;
+                    }
+                }
             }`;
         const fragment_shader = gl.createShader(gl.FRAGMENT_SHADER)!;
         gl.shaderSource(fragment_shader, fragment_shader_source);
