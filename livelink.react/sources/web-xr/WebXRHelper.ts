@@ -116,6 +116,9 @@ export class WebXRHelper {
     }
 
     //--------------------------------------------------------------------------
+    /**
+     * Release the XRSession and the rendering OffscreenSurface.
+     */
     public async release(): Promise<void> {
         this.#surface?.release();
         if (this.#animationFrameRequestId) {
@@ -125,16 +128,31 @@ export class WebXRHelper {
     }
 
     //--------------------------------------------------------------------------
+    /**
+     * Get the fake alpha mode flag of the XRContext. If enabled: the alpha
+     * channel is set highest intensity among rgb channels for all pixels with
+     * all rgb intensities inferior than 0.1.
+     */
     get fakeAlpha() {
         return this.#context.fake_alpha_enabled;
     }
 
     //--------------------------------------------------------------------------
+    /**
+     * Set the fake alpha mode flag of the XRContext. If enabled: the alpha
+     * channel is set highest intensity among rgb channels for all pixels with
+     * all rgb intensities inferior than 0.1.
+     */
     set fakeAlpha(value: boolean) {
         this.#context.fake_alpha_enabled = value;
     }
 
     //--------------------------------------------------------------------------
+    /**
+     * Initialize the XRSession.
+     * @param mode
+     * @param options
+     */
     public async initialize(mode: XRSessionMode, options: XRSessionInit = {}): Promise<void> {
         if (!WebXRHelper.isSessionSupported(mode)) {
             throw new Error(`WebXR "${mode}" not supported`);
@@ -170,6 +188,11 @@ export class WebXRHelper {
     }
 
     //--------------------------------------------------------------------------
+    /**
+     * Configure the size and scale of the livelink viewports based on the XR views.
+     * @param livelink
+     * @param enableScale
+     */
     public async configureViewports(livelink: Livelink, enableScale: boolean = false): Promise<void> {
         this.#liveLink = livelink;
         if (!this.#liveLink) {
@@ -189,6 +212,8 @@ export class WebXRHelper {
     //--------------------------------------------------------------------------
     /**
      * Obtains a single set of XR views from the XR session.
+     * @returns {Promise<Readonly<XRView[]>>} Resolves with an array of XRView
+     * of the XRSession obtained from the next XRFrame.
      */
     #getXRViews(): Promise<Readonly<Array<XRView>>> {
         const { promise, resolve, reject } = createPromiseWithResolvers<Readonly<Array<XRView>>>();
@@ -204,7 +229,6 @@ export class WebXRHelper {
                 }
                 return;
             }
-
             resolve(xr_views);
         };
 
@@ -213,6 +237,11 @@ export class WebXRHelper {
     }
 
     //--------------------------------------------------------------------------
+    /**
+     * Compute the rendering OffscreenSurface & XRContext resolution scale and
+     * the camera fovy.
+     * @param xr_views
+     */
     #configureScaleFactor(xr_views: Readonly<Array<XRView>>): void {
         const fovY = xr_views[0].projectionMatrix[5];
         const original_fov = 2 * Math.atan(1 / fovY);
@@ -230,6 +259,9 @@ export class WebXRHelper {
     }
 
     //--------------------------------------------------------------------------
+    /**
+     * Start the XRFrame animation loop.
+     */
     public start(): void {
         this.session!.requestAnimationFrame(this.#onXRFrame);
     }
@@ -238,7 +270,7 @@ export class WebXRHelper {
     /**
      * Sets the reference space of the XR session
      * @param type - https://developer.mozilla.org/en-US/docs/Web/API/XRSession/requestReferenceSpace#type
-     * @returns Resolves with the reference to the new reference space.
+     * @returns {Promise<XRReferenceSpace>} Resolves with the reference to the new reference space.
      */
     public async setReferenceSpaceType(type: XRReferenceSpaceType = "local"): Promise<XRReferenceSpace> {
         this.#reference_space = await this.session!.requestReferenceSpace(type).catch(async error => {
@@ -268,7 +300,6 @@ export class WebXRHelper {
      * Apply a transformation on the single eye of the XR device. Transform is
      * expressed with a position vector and an orientation quaternion.
      * @param param0
-     * @returns
      */
     #transformSingleEye({
         eye,
@@ -496,7 +527,7 @@ export class WebXRHelper {
             return;
         }
 
-        if (this.#xrViewportsHasChanged(xr_views)) {
+        if (this.#xrViewportsHaveChanged(xr_views)) {
             // For now, we end the session if the viewports have changed
             session.end();
         }
@@ -526,6 +557,7 @@ export class WebXRHelper {
     //--------------------------------------------------------------------------
     /**
      * Update the cameras of the LiveLink instance.
+     * @param xr_views
      */
     #updateLiveLinkCameras(xr_views: Array<{ view: XRView }>): void {
         const cameras = this.#surface!.cameras;
@@ -543,6 +575,10 @@ export class WebXRHelper {
     }
 
     //--------------------------------------------------------------------------
+    /**
+     * Compute the livelink viewports rects.
+     * @param xr_views
+     */
     #configureLivelinkViewports(xr_views: readonly XRView[]) {
         const gl_layer = this.session!.renderState.baseLayer!;
         const xr_eyes = xr_views.map(view => ({
@@ -589,6 +625,10 @@ export class WebXRHelper {
     }
 
     //--------------------------------------------------------------------------
+    /**
+     * Create the livelink cameras.
+     * @return Resolves with the created WebXRCamera instances
+     */
     async createCameras(): Promise<WebXRCamera[]> {
         const cameras = (await Promise.all(
             this.#viewports.map(async ({ xr_view, livelink_viewport }) => {
@@ -618,6 +658,7 @@ export class WebXRHelper {
      * @param projectionMatrix
      * @param viewportWidth
      * @param viewportHeight
+     * @returns {object} { fovy, aspectRatio, nearPlane, farPlane }
      */
     #computePerspectiveLens(
         projectionMatrix: Float32Array,
@@ -642,8 +683,9 @@ export class WebXRHelper {
      * Check if the XRViewport instances passed as parameters are distinct from
      * the ones of the last XRFrame.
      * @param xr_views
+     * @returns True if the XR viewports have changed
      */
-    #xrViewportsHasChanged(xr_views: Array<{ viewport: XRViewport }>): boolean {
+    #xrViewportsHaveChanged(xr_views: Array<{ viewport: XRViewport }>): boolean {
         if (this.#xr_viewports.length === 0) {
             return true;
         }
