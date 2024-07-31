@@ -42,6 +42,12 @@ function createPromiseWithResolvers<T>(): {
 }
 
 //------------------------------------------------------------------------------
+export type CamerasOriginTransform = {
+    position: Vec3;
+    orientation: Quat;
+};
+
+//------------------------------------------------------------------------------
 export class WebXRHelper {
     //--------------------------------------------------------------------------
     // TODO: a better approach (cameras with a parent entity) than relying on
@@ -52,10 +58,10 @@ export class WebXRHelper {
     // WebXRCamera.onCreate().
     // static cameras_origin: Entity | null = null;
     //--------------------------------------------------------------------------
-    cameras_origin = {
-        position: [0, 0, 0] as Vec3,
-        orientation: [0, 0, 0, 1] as Quat,
-    };
+    /**
+     * Use it to shift the XRView camera transforms
+     */
+    cameras_origin: CamerasOriginTransform | null = null;
 
     //--------------------------------------------------------------------------
     // References to livelink core
@@ -376,6 +382,9 @@ export class WebXRHelper {
      * @param cameras
      */
     #applyCamerasOrigin(cameras: readonly Camera[]) {
+        if(!this.cameras_origin) {
+            return;
+        }
         // TODO: we probably shall identify the number of eyese better than
         // relying only on the number of cameras.
         if(cameras.length === 2) {
@@ -403,7 +412,9 @@ export class WebXRHelper {
                 position: eye2.position,
                 orientation: eye2.orientation,
             };
-        } else if(cameras.length === 1) {
+            return;
+        }
+        if(cameras.length === 1) {
             const camera = cameras[0];
             const eye_transform = {
                 position: camera.local_transform!.position!,
@@ -432,6 +443,9 @@ export class WebXRHelper {
             orientation: Quat,
         }
     }[]) {
+        if(!this.cameras_origin) {
+            return;
+        }
         // TODO: we probably shall identify the number of eyese better than
         // relying only on the number of cameras.
         if(views.length === 2) {
@@ -451,7 +465,9 @@ export class WebXRHelper {
                 position: eye2.position,
                 orientation: eye2.orientation,
             };
-        } else if(views.length === 1) {
+            return;
+        }
+        if(views.length === 1) {
             const view = views[0];
             view.frame_camera_transform = this.#transformSingleEye({
                 eye: view.frame_camera_transform,
