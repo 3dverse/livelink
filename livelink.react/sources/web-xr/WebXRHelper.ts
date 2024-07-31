@@ -170,11 +170,17 @@ export class WebXRHelper {
         const { default_camera_transform } = (livelink.scene.settings as any);
         if(default_camera_transform?.position) {
             this.#cameras_origin.position = default_camera_transform.position;
+            // If there is a camera default transform, we might switch back to
+            // local reference space to not get the floor Y distance inside the
+            // view poses.
+            // TODO: local-floor might make sense in others scenari, may be the
+            // character controller one.
+            await this.setReferenceSpaceType("local");
         }
         if(default_camera_transform?.orientation) {
-            // People usually start the app looking forward with thei XR device,
+            // People usually start the app looking forward with their XR device,
             // we don't want to orientate the eye(s) in a way that would not be
-            // parallel to the world floor.
+            // coplanar with the world floor.
             let quaternion = new Quaternion(...default_camera_transform.orientation);
             const euler = new Euler().setFromQuaternion(quaternion, 'YXZ');
             euler.x = 0;
