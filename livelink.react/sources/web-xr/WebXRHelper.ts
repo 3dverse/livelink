@@ -22,17 +22,13 @@ export class WebXRCamera extends Camera {
     }
 }
 
-/**
- *
- */
+//------------------------------------------------------------------------------
 type XRViewports = Array<{
     xr_view: XRView;
     livelink_viewport: Viewport;
 }>;
 
-/**
- *
- */
+//------------------------------------------------------------------------------
 function createPromiseWithResolvers<T>(): {
     promise: Promise<T>;
     resolve: (value: T) => void;
@@ -47,9 +43,7 @@ function createPromiseWithResolvers<T>(): {
     return { promise, resolve: resolve!, reject: reject! };
 }
 
-/**
- *
- */
+//------------------------------------------------------------------------------
 export class WebXRHelper {
     //--------------------------------------------------------------------------
     // static cameras_origin: Entity | null = null;
@@ -98,9 +92,7 @@ export class WebXRHelper {
         return isSupported ?? false;
     }
 
-    /**
-     *
-     */
+    //--------------------------------------------------------------------------
     constructor() {
         this.#surface = new OffscreenSurface({
             width: window.innerWidth, // Not sure
@@ -112,9 +104,7 @@ export class WebXRHelper {
         this.#context = this.#surface.context as XRContext;
     }
 
-    /**
-     *
-     */
+    //--------------------------------------------------------------------------
     public async release(): Promise<void> {
         this.#surface?.release();
         if (this.#animationFrameRequestId) {
@@ -123,9 +113,7 @@ export class WebXRHelper {
         return this.session?.end().catch(error => console.warn("Could not end XR session:", error));
     }
 
-    /**
-     *
-     */
+    //--------------------------------------------------------------------------
     public async initialize(mode: XRSessionMode, options: XRSessionInit = {}): Promise<void> {
         if (!WebXRHelper.isSessionSupported(mode)) {
             throw new Error(`WebXR "${mode}" not supported`);
@@ -160,9 +148,7 @@ export class WebXRHelper {
         }
     }
 
-    /**
-     *
-     */
+    //--------------------------------------------------------------------------
     public async configureViewports(livelink: Livelink, enableScale: boolean = false): Promise<void> {
         this.#liveLink = livelink;
         if (!this.#liveLink) {
@@ -194,6 +180,7 @@ export class WebXRHelper {
         this.#liveLink!.addViewports({ viewports: this.#viewports.map(v => v.livelink_viewport) });
     }
 
+    //--------------------------------------------------------------------------
     /**
      * Obtains a single set of XR views from the XR session.
      */
@@ -219,9 +206,7 @@ export class WebXRHelper {
         return promise;
     }
 
-    /**
-     *
-     */
+    //--------------------------------------------------------------------------
     #configureScaleFactor(xr_views: Readonly<Array<XRView>>): void {
         const fovY = xr_views[0].projectionMatrix[5];
         const original_fov = 2 * Math.atan(1 / fovY);
@@ -238,9 +223,7 @@ export class WebXRHelper {
         );
     }
 
-    /**
-     *
-     */
+    //--------------------------------------------------------------------------
     public start(): void {
         this.session!.requestAnimationFrame(this.#onXRFrame);
     }
@@ -362,9 +345,6 @@ export class WebXRHelper {
     }
 
     //--------------------------------------------------------------------------
-    /**
-     *
-     */
     #configureLivelinkViewports(xr_views: readonly XRView[]) {
         const gl_layer = this.session!.renderState.baseLayer!;
         const xr_eyes = xr_views.map(view => ({
