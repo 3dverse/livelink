@@ -1,5 +1,5 @@
 //------------------------------------------------------------------------------
-import { Components, Camera, Livelink, OffscreenSurface, RelativeRect, Viewport, Vec3, Quat } from "@3dverse/livelink";
+import { Camera, Livelink, OffscreenSurface, RelativeRect, Viewport, Vec3, Quat } from "@3dverse/livelink";
 import { XRContext } from "@3dverse/livelink-react/sources/web-xr/XRContext";
 import { Quaternion, Vector3, Euler } from "three";
 
@@ -45,10 +45,14 @@ function createPromiseWithResolvers<T>(): {
 export class WebXRHelper {
     //--------------------------------------------------------------------------
     // TODO: a better approach (cameras with a parent entity) than relying on
-    // cameras_origin & center_eye.
+    // cameras_origin & center_eye. It'd be static because to be used from
+    // WebXRCamera.onCreate() but it's not the right interface, we'd need a way
+    // to create an entity and set parent after creation (does not work so far),
+    // or place cameras_origin inside the Viewport to make it accessible from
+    // WebXRCamera.onCreate().
     // static cameras_origin: Entity | null = null;
     //--------------------------------------------------------------------------
-    #cameras_origin = {
+    cameras_origin = {
         position: [0, 0, 0] as Vec3,
         orientation: [0, 0, 0, 1] as Quat,
     };
@@ -154,39 +158,6 @@ export class WebXRHelper {
         this.#liveLink = livelink;
         if (!this.#liveLink) {
             throw new Error("Failed to configure XR session, no LiveLink instance was provided.");
-        }
-
-        // TODO: non working solution where the eye(s) camera are parented to
-        // a cameras_origin entity owning the default transform. FTL engine
-        // crashes when trying to set parent (lineage) of the cameras.
-        // if(WebXRHelper.cameras_origin === null) {
-        //     WebXRHelper.cameras_origin = await livelink.scene.newEntity(Entity, "cameras_origin");
-        //     // Figure out default_camera_transform this is not auto generated in Settings type
-        //     WebXRHelper.cameras_origin.local_transform = (livelink.scene.settings as unknown as any).default_camera_transform;
-        // }
-
-        // TODO: see why livelink.scene.settings does not have auto generated default_camera_transform
-        // default_camera_transform definition.
-        const { default_camera_transform } = (livelink.scene.settings as any);
-        if(default_camera_transform?.position) {
-            this.#cameras_origin.position = default_camera_transform.position;
-            // If there is a camera default transform, we might switch back to
-            // local reference space to not get the floor Y distance inside the
-            // view poses.
-            // TODO: local-floor might make sense in others scenari, may be the
-            // character controller one.
-            await this.setReferenceSpaceType("local");
-        }
-        if(default_camera_transform?.orientation) {
-            // People usually start the app looking forward with their XR device,
-            // we don't want to orientate the eye(s) in a way that would not be
-            // coplanar with the world floor.
-            let quaternion = new Quaternion(...default_camera_transform.orientation);
-            const euler = new Euler().setFromQuaternion(quaternion, 'YXZ');
-            euler.x = 0;
-            euler.z = 0;
-            quaternion = new Quaternion().setFromEuler(euler);
-            this.#cameras_origin.orientation = quaternion.toArray() as Quat;
         }
 
         const xr_views = await this.#getXRViews();
@@ -411,7 +382,7 @@ export class WebXRHelper {
             const { eye1, eye2 } = this.#transformEyes({
                 eye1: eye1_transform,
                 eye2: eye2_transform,
-                transform: this.#cameras_origin,
+                transform: this.cameras_origin,
                 inverse: false,
             });
             camera1.local_transform = {
@@ -430,7 +401,7 @@ export class WebXRHelper {
             };
             camera.local_transform = this.#transformSingleEye({
                 eye: eye_transform,
-                transform: this.#cameras_origin,
+                transform: this.cameras_origin,
                 inverse: false,
             });
         }
@@ -459,7 +430,7 @@ export class WebXRHelper {
             const { eye1, eye2 } = this.#transformEyes({
                 eye1: view1.frame_camera_transform,
                 eye2: view2.frame_camera_transform,
-                transform: this.#cameras_origin,
+                transform: this.cameras_origin,
                 inverse: true,
             });
             view1.frame_camera_transform = {
@@ -474,7 +445,7 @@ export class WebXRHelper {
             const view = views[0];
             view.frame_camera_transform = this.#transformSingleEye({
                 eye: view.frame_camera_transform,
-                transform: this.#cameras_origin,
+                transform: this.cameras_origin,
                 inverse: true,
             });
         }

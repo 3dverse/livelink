@@ -4,7 +4,11 @@ import { Livelink, SoftwareDecoder, UUID, WebCodecsDecoder, Session, Camera } fr
 import { WebXRHelper } from "../web-xr/WebXRHelper";
 
 //------------------------------------------------------------------------------
-type LivelinkResponse = { instance: Livelink | null; cameras: Array<Camera> };
+type LivelinkResponse = {
+    instance: Livelink | null;
+    cameras: Array<Camera>;
+    webXRHelper: WebXRHelper;
+};
 
 //------------------------------------------------------------------------------
 export function useLivelinkXR({ mode }: { mode: XRSessionMode }): {
@@ -127,7 +131,7 @@ export function useLivelinkXR({ mode }: { mode: XRSessionMode }): {
             } finally {
                 setIsConnecting(false);
 
-                return { instance: livelinkInstance, cameras };
+                return { instance: livelinkInstance, cameras, webXRHelper };
             }
         },
         disconnect: () => {
