@@ -110,7 +110,7 @@ export class WebXRHelper {
             height: window.innerHeight, // Really not sure
             context_constructor: XRContext,
             context_type: "webgl",
-            context_options: { xrCompatible: true },
+            context_options: { /* xrCompatible: true */ },
         });
         this.#context = this.#surface.context as XRContext;
     }
@@ -323,9 +323,9 @@ export class WebXRHelper {
         };
         if(inverse) {
             transform_tjs.quaternion.invert();
-            eye_tjs.position.sub(transform_tjs.position);
+            eye_tjs.position.sub(transform_tjs.position).applyQuaternion(transform_tjs.quaternion);
         } else {
-            eye_tjs.position.add(transform_tjs.position);
+            eye_tjs.position.applyQuaternion(transform_tjs.quaternion).add(transform_tjs.position);
         }
         eye_tjs.quaternion.premultiply(transform_tjs.quaternion);
         return {
@@ -370,36 +370,40 @@ export class WebXRHelper {
 
         // Calculate the center eye
         const center_eye = {
-            position: eye1_tjs.position.clone().add(eye2_tjs.position).multiplyScalar(0.5),
-            // quaternion: eye1_tjs.quaternion.clone().slerp(eye2_tjs.quaternion, 0.5),
-        }
+            position: eye1_tjs.position.clone().add(eye2_tjs.position).multiplyScalar(0.5)
+        };
         // Apply the transformation on the center eye
         // (transform_tjs.quaternion not applied because it is done directly on eyes)
         const transformed_center_eye = {
-            position: center_eye.position.clone(),
-            // quaternion: center_eye.quaternion.clone(),
-        }
+            position: center_eye.position.clone().add(transform_tjs.position)
+        };
+        // not used but still worth to know how it's computed
+        // center_eye.quaternion = eye1_tjs.quaternion.clone().slerp(eye2_tjs.quaternion, 0.5);
+        // transformed_center_eye.quaternion = center_eye.quaternion.clone().premultiply(transform_tjs.quaternion);
+
         if(inverse) {
             // Inverse of the transform quaternion
             transform_tjs.quaternion.invert();
-            transformed_center_eye.position.sub(transform_tjs.position);
-        } else {
-            transformed_center_eye.position.add(transform_tjs.position);
         }
-        // not used but still worth to know how it's computed
-        // transformed_center_eye.quaternion.premultiply(transform_tjs.quaternion);
 
         // Apply the transformation for eye1 and eye2
         const eyes = [eye1_tjs, eye2_tjs];
-        eyes.forEach(eye => {
-            eye.position.sub(center_eye.position).applyQuaternion(transform_tjs.quaternion).add(transformed_center_eye.position);
+        const [transformed_eye1, transformed_eye2] = eyes.map(eye => {
+            if(inverse) {
+                eye.position.applyQuaternion(transform_tjs.quaternion);
+                eye.position.sub(center_eye.position).sub(transformed_center_eye.position);
+            } else {
+                eye.position.sub(center_eye.position).add(transformed_center_eye.position);
+                eye.position.applyQuaternion(transform_tjs.quaternion);
+            }
+
             eye.quaternion.premultiply(transform_tjs.quaternion);
+            return {
+                position: eye.position.toArray() as Vec3,
+                orientation: eye.quaternion.toArray() as Quat,
+            };
         });
 
-        const [transformed_eye1, transformed_eye2 ] = eyes.map(eye => ({
-            position: eye.position.toArray() as Vec3,
-            orientation: eye.quaternion.toArray() as Quat,
-        }));
         return {
             eye1: transformed_eye1,
             eye2: transformed_eye2,
