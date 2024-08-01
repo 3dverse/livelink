@@ -391,7 +391,7 @@ export class WebXRHelper {
         const [transformed_eye1, transformed_eye2] = eyes.map(eye => {
             if(inverse) {
                 eye.position.applyQuaternion(transform_tjs.quaternion);
-                eye.position.sub(center_eye.position).sub(transformed_center_eye.position);
+                eye.position.add(center_eye.position).sub(transformed_center_eye.position);
             } else {
                 eye.position.sub(center_eye.position).add(transformed_center_eye.position);
                 eye.position.applyQuaternion(transform_tjs.quaternion);
