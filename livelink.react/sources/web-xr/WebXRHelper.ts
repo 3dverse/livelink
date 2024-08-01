@@ -110,7 +110,7 @@ export class WebXRHelper {
             height: window.innerHeight, // Really not sure
             context_constructor: XRContext,
             context_type: "webgl",
-            context_options: { /* xrCompatible: true */ },
+            context_options: { xrCompatible: true },
         });
         this.#context = this.#surface.context as XRContext;
     }
