@@ -4,6 +4,9 @@ import { XRContext } from "@3dverse/livelink-react/sources/web-xr/XRContext";
 import { Quaternion, Vector3, Euler } from "three";
 
 //------------------------------------------------------------------------------
+import { WebXRInputRelay } from "./WebXRInputRelay";
+
+//------------------------------------------------------------------------------
 export class WebXRCamera extends Camera {
     onCreate(): void {
         // TODO: WebXRHelper.cameras_origin as an Entity might be a better
@@ -520,6 +523,18 @@ export class WebXRHelper {
      */
     #onXRFrame = (_: DOMHighResTimeStamp, frame: XRFrame) => {
         const session = this.session!;
+
+        // Check for and respond to any gamepad state changes.
+        session.inputSources.forEach(source => {
+            // console.debug("webxr input source", source);
+            // debugger;
+            if (source.gamepad) {
+                let pose = frame.getPose(source.gripSpace!, this.#reference_space!);
+                WebXRInputRelay.processGamepad(source.gamepad, source.handedness, pose);
+            }
+        });
+        // WebXRInputRelay.drawInputSources(frame, this.#reference_space!);
+
         const gl_layer = session.renderState.baseLayer!;
         const xr_views = frame.getViewerPose(this.#reference_space!)?.views?.map(view => ({
             view,
