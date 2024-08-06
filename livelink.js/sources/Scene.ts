@@ -195,7 +195,10 @@ export class Scene extends EventTarget {
             return;
         }
 
-        const emitter = await this.getEntity({ entity_rtid: event.emitter_rtid });
+        // Look for the emitter entity in the registry, if the entity is not found,
+        // it means that the entity does not have any event listeners, therefore nobody
+        // is interested in the event.
+        const emitter = this.entity_registry.get({ entity_rtid: event.emitter_rtid });
         if (!emitter) {
             return;
         }
