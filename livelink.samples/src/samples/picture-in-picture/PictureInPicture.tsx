@@ -2,11 +2,11 @@
 import { useEffect, useRef, useState } from "react";
 import Canvas from "../../components/Canvas";
 import { useLivelinkInstance, DefaultCamera } from "@3dverse/livelink-react";
-import { AnimationSequence, Camera, Livelink } from "@3dverse/livelink";
+import { AnimationSequenceController, Camera, Livelink } from "@3dverse/livelink";
 
 //------------------------------------------------------------------------------
 const SmartObjectManifest = {
-    MyAnimSeq: "cb52924a-b2d5-47b2-b6c7-17d50a9a3209",
+    MyAnimSeqController: "977eadaa-3be8-43dc-b43c-c8a15bf0676c",
 } as const;
 
 //------------------------------------------------------------------------------
@@ -14,7 +14,7 @@ export default function PictureInPicture() {
     const canvasRef1 = useRef<HTMLCanvasElement>(null);
     const canvasRef2 = useRef<HTMLCanvasElement>(null);
     const canvasRef3 = useRef<HTMLCanvasElement>(null);
-    const [animationSeq, setAnimationSeq] = useState<AnimationSequence | null>(null);
+    const [animationSeq, setAnimationSeq] = useState<AnimationSequenceController | null>(null);
 
     const { instance, connect } = useLivelinkInstance({
         views: [
@@ -45,9 +45,11 @@ export default function PictureInPicture() {
 
     useEffect(() => {
         if (instance) {
-            setAnimationSeq(
-                instance.scene.getAnimationSequence({ animation_sequence_id: SmartObjectManifest.MyAnimSeq }),
-            );
+            instance.scene
+                .findEntity(AnimationSequenceController, {
+                    entity_uuid: SmartObjectManifest.MyAnimSeqController,
+                })
+                .then(setAnimationSeq);
         }
     }, [instance]);
 

@@ -8,7 +8,6 @@ import type {
 } from "@3dverse/livelink.core";
 import { Entity } from "./Entity";
 import { EntityRegistry } from "./EntityRegistry";
-import { AnimationSequence } from "./AnimationSequence";
 import { Settings } from "./Settings";
 
 /**
@@ -54,19 +53,6 @@ export class Scene extends EventTarget {
         const editor_entities = await this.#core.resolveAncestors({ entity_rtid });
         this.#addEditorEntities(Entity, { editor_entities });
         return this.entity_registry.get({ entity_rtid });
-    }
-
-    /**
-     *
-     */
-    getAnimationSequence({
-        animation_sequence_id,
-        linker_entity,
-    }: {
-        animation_sequence_id: UUID;
-        linker_entity?: Entity;
-    }) {
-        return new AnimationSequence(this.#core, { animation_sequence_id, linker_entity });
     }
 
     /**

@@ -509,17 +509,4 @@ export class Livelink {
     }): Promise<ScreenSpaceRayResult> {
         return this.#core.castScreenSpaceRay({ screenSpaceRayQuery });
     }
-
-    /**
-     * @internal
-     */
-    _updateAnimationSequenceState(params: {
-        linker_rtid: RTID;
-        animation_sequence_id: UUID;
-        state: 1 | 0;
-        playback_speed: number;
-        seek_offset?: number;
-    }): void {
-        this.#core.updateAnimationSequenceState(params);
-    }
 }

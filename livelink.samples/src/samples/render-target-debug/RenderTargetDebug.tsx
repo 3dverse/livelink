@@ -1,12 +1,12 @@
 //------------------------------------------------------------------------------
 import { useEffect, useRef, useState } from "react";
 import Canvas from "../../components/Canvas";
-import { useLivelinkInstance, DefaultCamera } from "@3dverse/livelink-react";
-import { AnimationSequence, Camera, Livelink, RenderingSurface, Viewport } from "@3dverse/livelink";
+import { useLivelinkInstance } from "@3dverse/livelink-react";
+import { AnimationSequenceController, Camera, Livelink, RenderingSurface, Viewport } from "@3dverse/livelink";
 
 //------------------------------------------------------------------------------
 const SmartObjectManifest = {
-    MyAnimSeq: "cb52924a-b2d5-47b2-b6c7-17d50a9a3209",
+    MyAnimSeq: "fdf26c41-f4c9-48dd-b5ad-df9fa98141e2",
 } as const;
 
 //------------------------------------------------------------------------------
@@ -15,10 +15,10 @@ export default function RenderTargetDebug() {
     const canvasRef2 = useRef<HTMLCanvasElement>(null);
     const canvasRef3 = useRef<HTMLCanvasElement>(null);
     const canvasRef4 = useRef<HTMLCanvasElement>(null);
-    const [animationSeq, setAnimationSeq] = useState<AnimationSequence | null>(null);
+    const [animationSeq, setAnimationSeq] = useState<AnimationSequenceController | null>(null);
 
     const { instance, connect } = useLivelinkInstance({
-        views: [{ canvas_ref: canvasRef1, camera: DefaultCamera }],
+        views: [{ canvas_ref: canvasRef1, camera: "f28e67f7-8ba4-4386-9917-dd66ed2c2fcc" }],
     });
 
     useEffect(() => {
@@ -71,9 +71,11 @@ export default function RenderTargetDebug() {
 
     useEffect(() => {
         if (instance) {
-            setAnimationSeq(
-                instance.scene.getAnimationSequence({ animation_sequence_id: SmartObjectManifest.MyAnimSeq }),
-            );
+            instance.scene
+                .findEntity(AnimationSequenceController, {
+                    entity_uuid: SmartObjectManifest.MyAnimSeq,
+                })
+                .then(setAnimationSeq);
         }
     }, [instance]);
 

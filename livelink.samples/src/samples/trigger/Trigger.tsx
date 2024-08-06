@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 import { useCallback, useEffect, useRef, useState } from "react";
-import { AnimationSequence } from "@3dverse/livelink";
+import { AnimationSequenceController } from "@3dverse/livelink";
 import { Range } from "react-daisyui";
 import Canvas from "../../components/Canvas";
 import { useLivelinkInstance, useEntity } from "@3dverse/livelink-react";
@@ -9,7 +9,7 @@ import { CanvasActionBar } from "../../styles/components/CanvasActionBar";
 //------------------------------------------------------------------------------
 const SmartObjectManifest = {
     MyTrigger: "40908492-100c-4749-8670-7df1148b818d",
-    MyAnimSeq: "b540a665-4598-424f-ac6b-4147220c2df0",
+    MyAnimSeqController: "fa455f1b-4881-4987-ba6f-c4595302bf8e",
 } as const;
 
 //------------------------------------------------------------------------------
@@ -17,7 +17,7 @@ export default function Trigger() {
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const [triggerState, setTriggerState] = useState("Idle");
     const [messages, setMessages] = useState<Array<string>>([]);
-    const [animationSeq, setAnimationSeq] = useState<AnimationSequence | null>(null);
+    const [animationSeq, setAnimationSeq] = useState<AnimationSequenceController | null>(null);
     const onTriggerEntered = useCallback(() => setTriggerState("Entered"), [setTriggerState]);
     const onTriggerExited = useCallback(() => setTriggerState("Exited"), [setTriggerState]);
 
@@ -28,9 +28,12 @@ export default function Trigger() {
     useEffect(() => {
         if (instance) {
             instance.startSimulation();
-            setAnimationSeq(
-                instance.scene.getAnimationSequence({ animation_sequence_id: SmartObjectManifest.MyAnimSeq }),
-            );
+
+            instance.scene
+                .findEntity(AnimationSequenceController, {
+                    entity_uuid: SmartObjectManifest.MyAnimSeqController,
+                })
+                .then(setAnimationSeq);
         }
     }, [instance, setAnimationSeq]);
 

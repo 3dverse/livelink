@@ -6,7 +6,7 @@ export * from "./Client";
 export * from "./Entity";
 export * from "./Camera";
 export * from "./Viewport";
-export * from "./AnimationSequence";
+export * from "./AnimationSequenceController";
 
 export * from "./decoders/SoftwareDecoder";
 export * from "./decoders/WebCodecsDecoder";
