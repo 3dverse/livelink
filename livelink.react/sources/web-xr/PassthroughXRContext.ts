@@ -6,7 +6,7 @@ type Canvas = HTMLCanvasElement | OffscreenCanvas;
 /**
  *
  */
-export class XRContext extends ContextProvider {
+export class PassthroughXRContext extends ContextProvider {
     /**
      *
      */
@@ -46,31 +46,6 @@ export class XRContext extends ContextProvider {
      *
      */
     fake_alpha_enabled: boolean = false;
-
-    /**
-     *
-     */
-    readonly #neutral_direction: vec3 = vec3.fromValues(0, 0, -1);
-
-    /**
-     *
-     */
-    readonly #up_direction: vec3 = vec3.fromValues(0, 1, 0);
-
-    /**
-     *
-     */
-    #billboard_position: vec3 = vec3.create();
-    #billboard_model_matrix: mat4 = mat4.create();
-    #billboard_translation_matrix: mat4 = mat4.create();
-    #billboard_orientation_matrix: mat4 = mat4.create();
-
-    /**
-     *
-     */
-    #camera_position: vec3 = vec3.create();
-    #camera_orientation: quat = quat.create();
-    #camera_direction: vec3 = vec3.create();
 
     /**
      *
@@ -153,86 +128,27 @@ export class XRContext extends ContextProvider {
             gl.bindFramebuffer(gl.FRAMEBUFFER, this.#frame_buffer);
         }
 
-        gl.clearColor(0, 0, 0, 0);
+        gl.clearColor(1, 0, 0, 1);
         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
-        const sizeLocation = gl.getUniformLocation(this.#shader_program!, "size");
-        const offsetLocation = gl.getUniformLocation(this.#shader_program!, "offset");
-        const scaleLocation = gl.getUniformLocation(this.#shader_program!, "scale");
-
-        const viewMatrixLocation = gl.getUniformLocation(this.#shader_program!, "viewMatrix");
-        const projectionMatrixLocation = gl.getUniformLocation(this.#shader_program!, "projectionMatrix");
-        const billboardMatrixLocation = gl.getUniformLocation(this.#shader_program!, "billboardMatrix");
-        const fakeAlphaEnabledLocation = gl.getUniformLocation(this.#shader_program!, "fakeAlphaEnabled");
-
-        gl.activeTexture(gl.TEXTURE0);
-        gl.bindTexture(gl.TEXTURE_2D, this.#texture_ref);
-        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, this.#last_frame.frame);
-
-        const fovY = Math.atan(1 / xr_views[0].view.projectionMatrix[5]) * 2;
-
-        const aspectRatio = xr_views[0].viewport.width / xr_views[0].viewport.height;
-        const scaleY = this.scale_factor * this.screen_distance * Math.tan(fovY * 0.5);
-        const scaleX = scaleY * aspectRatio;
+        const ls = gl.getUniformLocation(this.#shader_program!, "size");
+        const lo = gl.getUniformLocation(this.#shader_program!, "offset");
 
         const viewportWidth = 1 / xr_views.length;
         const viewportHeight = 1;
-
-        gl.uniform2fv(scaleLocation, [scaleX, scaleY]);
-        gl.uniform2fv(sizeLocation, [viewportWidth, viewportHeight]);
-
         const combinedViewportWidth = xr_views.reduce((acc, { viewport }) => acc + viewport.width, 0);
 
-        for (const { view, viewport, frame_camera_transform } of xr_views) {
-            vec3.set(
-                this.#camera_position,
-                frame_camera_transform.position[0],
-                frame_camera_transform.position[1],
-                frame_camera_transform.position[2],
-            );
+        gl.uniform2fv(ls, [viewportWidth, viewportHeight]);
 
-            quat.set(
-                this.#camera_orientation,
-                frame_camera_transform.orientation[0],
-                frame_camera_transform.orientation[1],
-                frame_camera_transform.orientation[2],
-                frame_camera_transform.orientation[3],
-            );
+        for (const { viewport } of xr_views) {
+            const frame_offset = viewport.x / combinedViewportWidth;
 
-            // Compute the billboard position from the camera position and orientation
-            vec3.transformQuat(this.#camera_direction, this.#neutral_direction, this.#camera_orientation);
-            vec3.scaleAndAdd(
-                this.#billboard_position,
-                this.#camera_position,
-                this.#camera_direction,
-                this.screen_distance,
-            );
-
-            // Apply the offset to the billboard position
-            const projectionOffsetX = view.projectionMatrix[8];
-            const projectionOffsetY = view.projectionMatrix[9];
-
-            const camera_left = vec3.create();
-            vec3.cross(camera_left, this.#camera_direction, this.#up_direction);
-            vec3.normalize(camera_left, camera_left);
-
-            const camera_up = vec3.create();
-            vec3.cross(camera_up, camera_left, this.#camera_direction);
-            vec3.normalize(camera_up, camera_up);
-
-            vec3.scaleAndAdd(this.#billboard_position, this.#billboard_position, camera_left, projectionOffsetX);
-            vec3.scaleAndAdd(this.#billboard_position, this.#billboard_position, camera_up, projectionOffsetY);
-
-            const billboardMatrix = this.#computeBillboardMatrix(this.#billboard_position);
+            gl.activeTexture(gl.TEXTURE0);
+            gl.bindTexture(gl.TEXTURE_2D, this.#texture_ref);
+            gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, this.#last_frame.frame);
 
             gl.viewport(viewport.x, viewport.y, viewport.width, viewport.height);
-            gl.uniformMatrix4fv(viewMatrixLocation, false, view.transform.inverse.matrix);
-            gl.uniformMatrix4fv(projectionMatrixLocation, false, view.projectionMatrix);
-            gl.uniformMatrix4fv(billboardMatrixLocation, false, billboardMatrix);
-            gl.uniform1i(fakeAlphaEnabledLocation, this.fake_alpha_enabled ? 1 : 0);
-
-            const frame_offset = viewport.x / combinedViewportWidth;
-            gl.uniform2fv(offsetLocation, [frame_offset, 0]);
+            gl.uniform2fv(lo, [frame_offset, 0]);
             gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
         }
     }
@@ -254,33 +170,12 @@ export class XRContext extends ContextProvider {
     /**
      *
      */
-    #computeBillboardMatrix(billboard_position: vec3): Float32Array {
-        mat4.fromQuat(this.#billboard_orientation_matrix, this.#camera_orientation);
-        mat4.fromTranslation(this.#billboard_translation_matrix, billboard_position);
-        mat4.multiply(
-            this.#billboard_model_matrix,
-            this.#billboard_translation_matrix,
-            this.#billboard_orientation_matrix,
-        );
-
-        return this.#billboard_model_matrix as Float32Array;
-    }
-
-    /**
-     *
-     */
     #initShaderProgram(): void {
         const gl = this.#context!;
         // Vertex shader
         const vertex_shader_source = `
             attribute vec2 position;
             varying vec2 texCoord;
-
-            uniform mat4 viewMatrix;
-            uniform mat4 projectionMatrix;
-            uniform vec2 scale;
-            uniform mat4 billboardMatrix;
-
             uniform vec2 size;
             uniform vec2 offset;
 
@@ -288,7 +183,7 @@ export class XRContext extends ContextProvider {
                 texCoord = (position + 1.0) * 0.5;
                 texCoord.y = 1.0 - texCoord.y;
                 texCoord = size * texCoord + offset;
-                gl_Position = projectionMatrix * viewMatrix * billboardMatrix * vec4(position * scale, 0.0, 1.0);
+                gl_Position = vec4(position, 0.0, 1.0);
             }`;
         const vertex_shader = gl.createShader(gl.VERTEX_SHADER)!;
         gl.shaderSource(vertex_shader, vertex_shader_source);
@@ -302,16 +197,9 @@ export class XRContext extends ContextProvider {
             precision mediump float;
             varying vec2 texCoord;
             uniform sampler2D texture;
-            uniform int fakeAlphaEnabled;
 
             void main() {
                 gl_FragColor = texture2D(texture, texCoord);
-                if(fakeAlphaEnabled == 1) {
-                    highp float maxIntensity = max(max(gl_FragColor.r, gl_FragColor.g), gl_FragColor.b);
-                    if(maxIntensity < 0.1) {
-                        gl_FragColor.a = maxIntensity;
-                    }
-                }
             }`;
         const fragment_shader = gl.createShader(gl.FRAGMENT_SHADER)!;
         gl.shaderSource(fragment_shader, fragment_shader_source);

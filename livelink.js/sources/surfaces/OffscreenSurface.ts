@@ -12,7 +12,7 @@ export class OffscreenSurface<ContextType extends CanvasContextType, ContextOpti
     /**
      * Virtual canvas on which we display the final composited frame.
      */
-    #canvas: OffscreenCanvas;
+    #canvas: HTMLCanvasElement;
 
     /**
      *
@@ -46,7 +46,9 @@ export class OffscreenSurface<ContextType extends CanvasContextType, ContextOpti
     }) {
         super();
 
-        this.#canvas = new OffscreenCanvas(width, height);
+        this.#canvas = document.createElement("canvas");
+        this.#canvas.width = width;
+        this.#canvas.height = height
         this.#context = new context_constructor(this.#canvas, context_type, context_options);
     }
 

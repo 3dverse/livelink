@@ -1,10 +1,11 @@
 //------------------------------------------------------------------------------
-import { Camera, Livelink, OffscreenSurface, RelativeRect, Viewport, Vec3, Quat } from "@3dverse/livelink";
+import { Camera, Livelink, OffscreenSurface, RelativeRect, Viewport, Vec3, Quat, Mat4 } from "@3dverse/livelink";
 import { XRContext } from "@3dverse/livelink-react/sources/web-xr/XRContext";
-import { Quaternion, Vector3, Euler } from "three";
+import { Quaternion, Vector3 } from "three";
 
 //------------------------------------------------------------------------------
 import { WebXRInputRelay } from "./WebXRInputRelay";
+import { PassthroughXRContext } from "./PassthroughXRContext";
 
 //------------------------------------------------------------------------------
 export class WebXRCamera extends Camera {
@@ -26,6 +27,7 @@ export class WebXRCamera extends Camera {
 //------------------------------------------------------------------------------
 type XRViewports = Array<{
     xr_view: XRView;
+    xr_viewport: XRViewport;
     livelink_viewport: Viewport;
 }>;
 
@@ -309,8 +311,8 @@ export class WebXRHelper {
         transform,
         inverse = false,
     }: {
-        eye: { position: Vec3, orientation: Quat };
-        transform: { position: Vec3, orientation: Quat };
+        eye: { position: Vec3; orientation: Quat };
+        transform: { position: Vec3; orientation: Quat };
         inverse?: boolean;
     }) {
         // TODO: this might probably be more clear and efficient if implemented
@@ -324,7 +326,7 @@ export class WebXRHelper {
             position: new Vector3(...eye.position),
             quaternion: new Quaternion(...eye.orientation),
         };
-        if(inverse) {
+        if (inverse) {
             transform_tjs.quaternion.invert();
             eye_tjs.position.sub(transform_tjs.position).applyQuaternion(transform_tjs.quaternion);
         } else {
@@ -349,9 +351,9 @@ export class WebXRHelper {
         transform,
         inverse = false,
     }: {
-        eye1: { position: Vec3, orientation: Quat };
-        eye2: { position: Vec3, orientation: Quat };
-        transform: { position: Vec3, orientation: Quat };
+        eye1: { position: Vec3; orientation: Quat };
+        eye2: { position: Vec3; orientation: Quat };
+        transform: { position: Vec3; orientation: Quat };
         inverse?: boolean;
     }) {
         // TODO: this might probably be more clear and efficient if implemented
@@ -373,18 +375,18 @@ export class WebXRHelper {
 
         // Calculate the center eye
         const center_eye = {
-            position: eye1_tjs.position.clone().add(eye2_tjs.position).multiplyScalar(0.5)
+            position: eye1_tjs.position.clone().add(eye2_tjs.position).multiplyScalar(0.5),
         };
         // Apply the transformation on the center eye
         // (transform_tjs.quaternion not applied because it is done directly on eyes)
         const transformed_center_eye = {
-            position: center_eye.position.clone().add(transform_tjs.position)
+            position: center_eye.position.clone().add(transform_tjs.position),
         };
         // not used but still worth to know how it's computed
         // center_eye.quaternion = eye1_tjs.quaternion.clone().slerp(eye2_tjs.quaternion, 0.5);
         // transformed_center_eye.quaternion = center_eye.quaternion.clone().premultiply(transform_tjs.quaternion);
 
-        if(inverse) {
+        if (inverse) {
             // Inverse of the transform quaternion
             transform_tjs.quaternion.invert();
         }
@@ -392,7 +394,7 @@ export class WebXRHelper {
         // Apply the transformation for eye1 and eye2
         const eyes = [eye1_tjs, eye2_tjs];
         const [transformed_eye1, transformed_eye2] = eyes.map(eye => {
-            if(inverse) {
+            if (inverse) {
                 eye.position.applyQuaternion(transform_tjs.quaternion);
                 eye.position.add(center_eye.position).sub(transformed_center_eye.position);
             } else {
@@ -420,12 +422,12 @@ export class WebXRHelper {
      * @param cameras
      */
     #applyCamerasOrigin(cameras: readonly Camera[]) {
-        if(!this.cameras_origin) {
+        if (!this.cameras_origin) {
             return;
         }
         // TODO: we probably shall identify the number of eyese better than
         // relying only on the number of cameras.
-        if(cameras.length === 2) {
+        if (cameras.length === 2) {
             const camera1 = cameras[0];
             const camera2 = cameras[1];
             const eye1_transform = {
@@ -452,7 +454,7 @@ export class WebXRHelper {
             };
             return;
         }
-        if(cameras.length === 1) {
+        if (cameras.length === 1) {
             const camera = cameras[0];
             const eye_transform = {
                 position: camera.local_transform!.position!,
@@ -475,18 +477,20 @@ export class WebXRHelper {
      * not the XRView.transform to place the billboard.
      * @param views
      */
-    #unapplyCamerasOrigin(views: {
-        frame_camera_transform: {
-            position: Vec3,
-            orientation: Quat,
-        }
-    }[]) {
-        if(!this.cameras_origin) {
+    #unapplyCamerasOrigin(
+        views: {
+            frame_camera_transform: {
+                position: Vec3;
+                orientation: Quat;
+            };
+        }[],
+    ) {
+        if (!this.cameras_origin) {
             return;
         }
         // TODO: we probably shall identify the number of eyese better than
         // relying only on the number of cameras.
-        if(views.length === 2) {
+        if (views.length === 2) {
             const view1 = views[0];
             const view2 = views[1];
             const { eye1, eye2 } = this.#transformEyes({
@@ -505,7 +509,7 @@ export class WebXRHelper {
             };
             return;
         }
-        if(views.length === 1) {
+        if (views.length === 1) {
             const view = views[0];
             view.frame_camera_transform = this.#transformSingleEye({
                 eye: view.frame_camera_transform,
@@ -562,7 +566,7 @@ export class WebXRHelper {
                 return {
                     view,
                     viewport,
-                    frame_camera_transform: { position, orientation }
+                    frame_camera_transform: { position, orientation },
                 };
             });
 
@@ -580,14 +584,12 @@ export class WebXRHelper {
      */
     #updateLiveLinkCameras(xr_views: Array<{ view: XRView }>): void {
         const cameras = this.#surface!.cameras;
-
         cameras.forEach((camera, index) => {
             const { view } = xr_views[index];
             const { position: pos, orientation: quat } = view.transform;
             const position = [pos.x, pos.y, pos.z] as Vec3;
             const orientation = [quat.x, quat.y, quat.z, quat.w] as Quat;
 
-            // Update the local_transform component
             camera!.local_transform = { position, orientation };
         });
         this.#applyCamerasOrigin(cameras);
@@ -638,6 +640,7 @@ export class WebXRHelper {
 
             this.#viewports.push({
                 xr_view: xr_eye.view,
+                xr_viewport: xrViewport,
                 livelink_viewport: viewport,
             });
         }
@@ -649,23 +652,33 @@ export class WebXRHelper {
      * @return Resolves with the created WebXRCamera instances
      */
     async createCameras(): Promise<WebXRCamera[]> {
-        const cameras = (await Promise.all(
-            this.#viewports.map(async ({ xr_view, livelink_viewport }) => {
-                const perspective_lens = this.#computePerspectiveLens(
+        const cameras = await Promise.all(
+            this.#viewports.map(async ({ xr_view, xr_viewport, livelink_viewport }, index) => {
+                const camera = await this.#liveLink!.newCamera(
+                    WebXRCamera,
+                    `XR_camera_${xr_view.eye}_${index}`,
+                    livelink_viewport,
+                );
+
+                camera.perspective_lens = this.#computePerspectiveLens(
                     xr_view.projectionMatrix,
                     livelink_viewport.width,
                     livelink_viewport.height,
                 );
 
-                const camera = await this.#liveLink!.newCamera(
-                    WebXRCamera,
-                    `XR_camera_${xr_view.eye}`,
-                    livelink_viewport,
-                );
-                camera.perspective_lens = perspective_lens;
+                camera.tags = {
+                    value: [
+                        `viewport_x = ${xr_viewport.x.toString()}`,
+                        `viewport_y = ${xr_viewport.y.toString()}`,
+                        `viewport_width = ${xr_viewport.width.toString()}`,
+                        `viewport_height = ${xr_viewport.height.toString()}`,
+                        `recommanded_scale = ${xr_view.recommendedViewportScale?.toString() || "?"}`,
+                    ],
+                };
+
                 return camera;
             }),
-        ));
+        );
 
         return cameras;
     }
@@ -688,13 +701,15 @@ export class WebXRHelper {
         aspectRatio: number;
         nearPlane: number;
         farPlane: number;
+        offset: [number, number];
     } {
         const aspectRatio = viewportWidth / viewportHeight;
         const fovy = this.#camera_fovy;
         // Extract near and far clipping planes from the projection matrix
         const nearPlane = projectionMatrix[14] / (projectionMatrix[10] - 1);
         const farPlane = projectionMatrix[14] / (projectionMatrix[10] + 1);
-        return { fovy, aspectRatio, nearPlane, farPlane };
+        const offset = [projectionMatrix[8], projectionMatrix[9] * -1] as [number, number];
+        return { fovy, aspectRatio, nearPlane, farPlane, offset };
     }
 
     //--------------------------------------------------------------------------
