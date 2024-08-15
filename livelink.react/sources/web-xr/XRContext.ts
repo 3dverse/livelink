@@ -1,5 +1,5 @@
 import { ContextProvider, CurrentFrameMetaData, Quat, Vec3 } from "@3dverse/livelink";
-import { mat4, quat, vec3 } from "gl-matrix";
+import { mat4, quat, vec2, vec3 } from "gl-matrix";
 
 type Canvas = HTMLCanvasElement | OffscreenCanvas;
 
@@ -55,15 +55,11 @@ export class XRContext extends ContextProvider {
     /**
      *
      */
-    readonly #up_direction: vec3 = vec3.fromValues(0, 1, 0);
-
-    /**
-     *
-     */
     #billboard_position: vec3 = vec3.create();
     #billboard_model_matrix: mat4 = mat4.create();
     #billboard_translation_matrix: mat4 = mat4.create();
     #billboard_orientation_matrix: mat4 = mat4.create();
+    #projection_offset: vec2 = vec2.create();
 
     /**
      *
@@ -158,9 +154,9 @@ export class XRContext extends ContextProvider {
 
         const sizeLocation = gl.getUniformLocation(this.#shader_program!, "size");
         const offsetLocation = gl.getUniformLocation(this.#shader_program!, "offset");
-        const scaleLocation = gl.getUniformLocation(this.#shader_program!, "scale");
-
         const viewMatrixLocation = gl.getUniformLocation(this.#shader_program!, "viewMatrix");
+        const viewOffsetLocation = gl.getUniformLocation(this.#shader_program!, "viewOffset");
+
         const projectionMatrixLocation = gl.getUniformLocation(this.#shader_program!, "projectionMatrix");
         const billboardMatrixLocation = gl.getUniformLocation(this.#shader_program!, "billboardMatrix");
         const fakeAlphaEnabledLocation = gl.getUniformLocation(this.#shader_program!, "fakeAlphaEnabled");
@@ -178,7 +174,6 @@ export class XRContext extends ContextProvider {
         const viewportWidth = 1 / xr_views.length;
         const viewportHeight = 1;
 
-        gl.uniform2fv(scaleLocation, [scaleX, scaleY]);
         gl.uniform2fv(sizeLocation, [viewportWidth, viewportHeight]);
 
         const combinedViewportWidth = xr_views.reduce((acc, { viewport }) => acc + viewport.width, 0);
@@ -208,22 +203,11 @@ export class XRContext extends ContextProvider {
                 this.screen_distance,
             );
 
-            // Apply the offset to the billboard position
-            const projectionOffsetX = view.projectionMatrix[8];
-            const projectionOffsetY = view.projectionMatrix[9];
+            this.#projection_offset[0] = view.projectionMatrix[8];
+            this.#projection_offset[1] = view.projectionMatrix[9];
 
-            const camera_left = vec3.create();
-            vec3.cross(camera_left, this.#camera_direction, this.#up_direction);
-            vec3.normalize(camera_left, camera_left);
-
-            const camera_up = vec3.create();
-            vec3.cross(camera_up, camera_left, this.#camera_direction);
-            vec3.normalize(camera_up, camera_up);
-
-            vec3.scaleAndAdd(this.#billboard_position, this.#billboard_position, camera_left, projectionOffsetX);
-            vec3.scaleAndAdd(this.#billboard_position, this.#billboard_position, camera_up, projectionOffsetY);
-
-            const billboardMatrix = this.#computeBillboardMatrix(this.#billboard_position);
+            const billboardMatrix = this.#computeBillboardMatrix(this.#billboard_position, scaleX, scaleY);
+            gl.uniform2fv(viewOffsetLocation, this.#projection_offset);
 
             gl.viewport(viewport.x, viewport.y, viewport.width, viewport.height);
             gl.uniformMatrix4fv(viewMatrixLocation, false, view.transform.inverse.matrix);
@@ -254,13 +238,12 @@ export class XRContext extends ContextProvider {
     /**
      *
      */
-    #computeBillboardMatrix(billboard_position: vec3): Float32Array {
-        mat4.fromQuat(this.#billboard_orientation_matrix, this.#camera_orientation);
-        mat4.fromTranslation(this.#billboard_translation_matrix, billboard_position);
-        mat4.multiply(
+    #computeBillboardMatrix(billboard_position: vec3, scaleX: number, scaleY: number): Float32Array {
+        mat4.fromRotationTranslationScale(
             this.#billboard_model_matrix,
-            this.#billboard_translation_matrix,
-            this.#billboard_orientation_matrix,
+            this.#camera_orientation,
+            billboard_position,
+            vec3.fromValues(scaleX, scaleY, 1),
         );
 
         return this.#billboard_model_matrix as Float32Array;
@@ -283,12 +266,13 @@ export class XRContext extends ContextProvider {
 
             uniform vec2 size;
             uniform vec2 offset;
+            uniform vec2 viewOffset;
 
             void main() {
                 texCoord = (position + 1.0) * 0.5;
                 texCoord.y = 1.0 - texCoord.y;
                 texCoord = size * texCoord + offset;
-                gl_Position = projectionMatrix * viewMatrix * billboardMatrix * vec4(position * scale, 0.0, 1.0);
+                gl_Position = projectionMatrix * viewMatrix * billboardMatrix * vec4(position + viewOffset, 0.0, 1.0);
             }`;
         const vertex_shader = gl.createShader(gl.VERTEX_SHADER)!;
         gl.shaderSource(vertex_shader, vertex_shader_source);

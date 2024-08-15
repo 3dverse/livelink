@@ -587,10 +587,17 @@ export class WebXRHelper {
         cameras.forEach((camera, index) => {
             const { view } = xr_views[index];
             const { position: pos, orientation: quat } = view.transform;
+            const { livelink_viewport } = this.#viewports[index];
             const position = [pos.x, pos.y, pos.z] as Vec3;
             const orientation = [quat.x, quat.y, quat.z, quat.w] as Quat;
 
             camera!.local_transform = { position, orientation };
+
+            camera.perspective_lens = this.#computePerspectiveLens(
+                view.projectionMatrix,
+                livelink_viewport.width,
+                livelink_viewport.height,
+            );
         });
         this.#applyCamerasOrigin(cameras);
     }
@@ -704,8 +711,7 @@ export class WebXRHelper {
         offset: [number, number];
     } {
         const aspectRatio = viewportWidth / viewportHeight;
-        const fovy = this.#camera_fovy;
-        // Extract near and far clipping planes from the projection matrix
+        const fovy = Math.atan(1 / projectionMatrix[5]) * (180 / Math.PI) * 2;
         const nearPlane = projectionMatrix[14] / (projectionMatrix[10] - 1);
         const farPlane = projectionMatrix[14] / (projectionMatrix[10] + 1);
         const offset = [projectionMatrix[8], projectionMatrix[9] * -1] as [number, number];
