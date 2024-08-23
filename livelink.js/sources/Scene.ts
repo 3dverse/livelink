@@ -5,6 +5,7 @@ import type {
     EntityCreationOptions,
     ScriptEvent,
     EditorEntity,
+    ComponentType,
 } from "@3dverse/livelink.core";
 import { Entity } from "./Entity";
 import { EntityRegistry } from "./EntityRegistry";
@@ -124,6 +125,39 @@ export class Scene extends EventTarget {
         }
 
         return this.#addEditorEntities(entity_type, { editor_entities: [entity_entity] })[0];
+    }
+
+    /**
+     *  @deprecated
+     */
+    async findEntitiesWithComponents<EntityType extends Entity>(
+        entity_type: { new (_: Scene): EntityType },
+        {
+            mandatory_components,
+            forbidden_components,
+        }: {
+            mandatory_components: Array<ComponentType>;
+            forbidden_components?: Array<ComponentType>;
+        },
+    ): Promise<Array<EntityType>> {
+        const editor_entities = await this.#core.findEntitiesWithComponents({
+            mandatory_components,
+            forbidden_components,
+        });
+        return this.#addEditorEntities(entity_type, { editor_entities });
+    }
+
+    /**
+     *  @deprecated
+     */
+    async findEntitiesByNames<EntityType extends Entity>(
+        entity_type: { new (_: Scene): EntityType },
+        { entity_names }: { entity_names: Array<string> },
+    ): Promise<Array<EntityType>> {
+        const editor_entities = await this.#core.findEntitiesByNames({
+            entity_names,
+        });
+        return this.#addEditorEntities(entity_type, { editor_entities });
     }
 
     /**
