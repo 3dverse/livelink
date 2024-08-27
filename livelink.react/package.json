@@ -37,7 +37,7 @@
     "typescript": "^5.4.5"
   },
   "peerDependencies": {
-    "@3dverse/livelink": "^0.6.0",
+    "@3dverse/livelink": "^0.7.0",
     "react": "^18.2.0",
     "three": "^0.165.0"
   }
