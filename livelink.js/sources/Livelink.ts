@@ -223,13 +223,19 @@ export class Livelink {
         this.#core.addEventListener({
             target: "gateway",
             event_name: "on-script-event-received",
-            handler: this.scene._onScriptEventReceived,
+            handler: e => this.scene._onScriptEventReceived(e),
         });
 
         this.#core.addEventListener({
             target: "gateway",
             event_name: "on-frame-received",
             handler: this.#onFrameReceived,
+        });
+
+        this.#core.addEventListener({
+            target: "gateway",
+            event_name: "on-disconnected",
+            handler: e => this.session._onDisconnected(e),
         });
 
         return this;
@@ -242,7 +248,7 @@ export class Livelink {
         this.#core.removeEventListener({
             target: "gateway",
             event_name: "on-script-event-received",
-            handler: this.scene._onScriptEventReceived,
+            handler: e => this.scene._onScriptEventReceived(e),
         });
 
         this.#core.removeEventListener({

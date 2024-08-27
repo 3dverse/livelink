@@ -335,4 +335,12 @@ export class Session extends EventTarget implements SessionInterface {
             this.dispatchEvent(new CustomEvent("client-left", { detail: client }));
         }
     }
+
+    /**
+     *
+     *
+     */
+    _onDisconnected(e: Event): void {
+        this.dispatchEvent(new CustomEvent("on-disconnected"));
+    }
 }
