@@ -295,13 +295,15 @@ export class Scene extends EventTarget {
         entity_type: { new (_: Scene): EntityType },
         { editor_entities }: { editor_entities: Array<EditorEntity> },
     ): Array<EntityType> {
-        const entities = editor_entities
-            .filter(editor_entity => this.entity_registry.get({ entity_rtid: BigInt(editor_entity.rtid) }) === null)
-            .map(e => new Proxy(new entity_type(this).init(e), Entity.handler) as EntityType);
-
-        for (const entity of entities) {
+        const entities = editor_entities.map(editor_entity => {
+            const entity_in_registry = this.entity_registry.get({ entity_rtid: BigInt(editor_entity.rtid) });
+            if (entity_in_registry) {
+                return entity_in_registry as EntityType;
+            }
+            const entity = new Proxy(new entity_type(this).init(editor_entity), Entity.handler) as EntityType;
             this.entity_registry.add({ entity });
-        }
+            return entity;
+        });
         return entities;
     }
 
