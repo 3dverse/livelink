@@ -50,9 +50,7 @@ export class Scene extends EventTarget {
         if (entity) {
             return entity;
         }
-
-        const editor_entities = await this.#core.resolveAncestors({ entity_rtid });
-        this.#addEditorEntities(Entity, { editor_entities });
+        await this.resolveAncestors({ entity_rtid });
         return this.entity_registry.get({ entity_rtid });
     }
 
@@ -87,11 +85,12 @@ export class Scene extends EventTarget {
         }
 
         const editor_entities = await this.#core.findEntitiesByEUID({ entity_uuid });
+
         if (editor_entities.length === 0) {
             return [];
         }
 
-        return this.#addEditorEntities(entity_type, { editor_entities });
+        return this.#addEditorEntities(entity_type, { editor_entities, resolve_ancestors: true });
     }
 
     /**
@@ -124,7 +123,7 @@ export class Scene extends EventTarget {
             return null;
         }
 
-        return this.#addEditorEntities(entity_type, { editor_entities: [entity_entity] })[0];
+        return this.#addEditorEntities(entity_type, { editor_entities: [entity_entity], resolve_ancestors: true })[0];
     }
 
     /**
@@ -144,7 +143,7 @@ export class Scene extends EventTarget {
             mandatory_components,
             forbidden_components,
         });
-        return this.#addEditorEntities(entity_type, { editor_entities });
+        return this.#addEditorEntities(entity_type, { editor_entities, resolve_ancestors: true });
     }
 
     /**
@@ -157,7 +156,8 @@ export class Scene extends EventTarget {
         const editor_entities = await this.#core.findEntitiesByNames({
             entity_names,
         });
-        return this.#addEditorEntities(entity_type, { editor_entities });
+
+        return this.#addEditorEntities(entity_type, { editor_entities, resolve_ancestors: true });
     }
 
     /**
@@ -293,17 +293,29 @@ export class Scene extends EventTarget {
      */
     #addEditorEntities<EntityType extends Entity>(
         entity_type: { new (_: Scene): EntityType },
-        { editor_entities }: { editor_entities: Array<EditorEntity> },
+        {
+            editor_entities,
+            resolve_ancestors,
+        }: {
+            editor_entities: Array<EditorEntity>;
+            resolve_ancestors: boolean;
+        },
     ): Array<EntityType> {
         const entities = editor_entities.map(editor_entity => {
-            const entity_in_registry = this.entity_registry.get({ entity_rtid: BigInt(editor_entity.rtid) });
-            if (entity_in_registry) {
-                return entity_in_registry as EntityType;
+            let entity = this.entity_registry.get({ entity_rtid: BigInt(editor_entity.rtid) }) as EntityType | null;
+
+            if (!entity) {
+                entity = new Proxy(new entity_type(this).init(editor_entity), Entity.handler) as EntityType;
+
+                this.entity_registry.add({ entity });
+
+                if (resolve_ancestors) {
+                    this.resolveAncestors({ entity_rtid: BigInt(editor_entity.rtid) });
+                }
             }
-            const entity = new Proxy(new entity_type(this).init(editor_entity), Entity.handler) as EntityType;
-            this.entity_registry.add({ entity });
             return entity;
         });
+
         return entities;
     }
 
@@ -312,7 +324,7 @@ export class Scene extends EventTarget {
      */
     async _getChildren({ entity_rtid }: { entity_rtid: RTID }): Promise<Array<Entity>> {
         const editor_entities = await this.#core.getChildren({ entity_rtid });
-        return this.#addEditorEntities(Entity, { editor_entities });
+        return this.#addEditorEntities(Entity, { editor_entities, resolve_ancestors: false });
     }
 
     /**
@@ -328,5 +340,30 @@ export class Scene extends EventTarget {
         script_uuid: UUID;
     }): Promise<void> {
         return this.#core.assignClientToScript({ client_uuid, script_uuid, entity_rtid });
+    }
+
+    /**
+     *  Add ancestors to the entity registry.
+     */
+    async resolveAncestors({ entity_rtid }: { entity_rtid: RTID }): Promise<Array<EditorEntity>> {
+        const ancestor_editor_entities = await this.#core.resolveAncestors({ entity_rtid: BigInt(entity_rtid) });
+
+        this.#addEditorEntities(Entity, {
+            editor_entities: ancestor_editor_entities,
+            resolve_ancestors: false,
+        });
+
+        ancestor_editor_entities.forEach(ancestor_editor_entity => {
+            const ancestor_entity = this.entity_registry.get({
+                entity_rtid: BigInt(ancestor_editor_entity.rtid),
+            });
+
+            ancestor_editor_entity.children.forEach(child_rtid => {
+                const child_entity = this.entity_registry.get({ entity_rtid: BigInt(child_rtid) });
+                child_entity?._setParent(ancestor_entity);
+            });
+        });
+
+        return ancestor_editor_entities;
     }
 }

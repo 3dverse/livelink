@@ -35,6 +35,11 @@ export class Entity extends EntityBase {
     /**
      *
      */
+    private _parentEntity: Entity | null = null;
+
+    /**
+     *
+     */
     get auto_update(): EntityAutoUpdateState {
         return this._auto_update;
     }
@@ -119,6 +124,13 @@ export class Entity extends EntityBase {
     }
 
     /**
+     * @internal
+     */
+    _setParent(entity: Entity | null) {
+        this._parentEntity = entity;
+    }
+
+    /**
      *
      */
     async getChildren(): Promise<Entity[]> {
@@ -127,6 +139,16 @@ export class Entity extends EntityBase {
         }
 
         return await this._scene._getChildren({ entity_rtid: this.rtid });
+    }
+
+    /**
+     *
+     */
+    getParent(): Entity | null {
+        if (!this.rtid) {
+            throw new InvalidEntityError();
+        }
+        return this._parentEntity;
     }
 
     /**
