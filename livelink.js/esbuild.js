@@ -31,16 +31,18 @@ const buildOptions = [
 ];
 
 //------------------------------------------------------------------------------
-const devBuildOptions = {
-    ...commonBuildOptions,
-    ...buildOptions[0],
-};
-
-//------------------------------------------------------------------------------
 (async () => {
     if (process.argv.includes("dev")) {
-        const ctx = await esbuild.context(devBuildOptions);
-        await ctx.watch();
+        for (const options of buildOptions) {
+            const devBuildOptions = {
+                ...commonBuildOptions,
+                ...options,
+            };
+
+            const ctx = await esbuild.context(devBuildOptions);
+            await ctx.watch();
+        }
+
         return;
     }
 
