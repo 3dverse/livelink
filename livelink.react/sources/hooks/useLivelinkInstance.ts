@@ -76,6 +76,7 @@ export function useLivelinkInstance({ views }: { views: Array<View> }): {
             onConfigureClient,
             onConnected,
             is_transient,
+            session_open_mode,
         }: {
             scene_id: UUID;
             session_id?: UUID;
@@ -83,6 +84,7 @@ export function useLivelinkInstance({ views }: { views: Array<View> }): {
             onConfigureClient?: (instance: Livelink) => Promise<void>;
             onConnected?: ({ instance, cameras }: { instance: Livelink; cameras: Array<Camera | null> }) => void;
             is_transient?: boolean;
+            session_open_mode?: "join" | "start" | "join_or_start";
         }): Promise<LivelinkResponse | null> => {
             if (views.some(v => v.canvas_ref.current === null)) {
                 return null;
@@ -90,7 +92,10 @@ export function useLivelinkInstance({ views }: { views: Array<View> }): {
 
             setIsConnecting(true);
             let instance: Livelink;
-            if (session_id) {
+
+            if (session_open_mode === "start") {
+                instance = await Livelink.start({ scene_id, token });
+            } else if (session_id) {
                 const session = await Session.findById({ session_id, token });
                 if (!session) {
                     console.error(`Session '${session_id}' not found on scene '${scene_id}'`);
@@ -98,6 +103,10 @@ export function useLivelinkInstance({ views }: { views: Array<View> }): {
                 }
                 instance = await Livelink.join({ session });
             } else {
+                if (session_open_mode === "join") {
+                    console.error(`Session ID is required when session_mode is 'join'`);
+                    return null;
+                }
                 instance = await Livelink.join_or_start({ scene_id, token, is_transient });
             }
 
