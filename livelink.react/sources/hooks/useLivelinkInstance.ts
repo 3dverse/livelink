@@ -46,6 +46,7 @@ export function useLivelinkInstance({ views }: { views: Array<View> }): {
         onConfigureClient,
         onConnected,
         is_transient,
+        session_open_mode,
     }: {
         scene_id: UUID;
         session_id?: UUID;
@@ -53,6 +54,7 @@ export function useLivelinkInstance({ views }: { views: Array<View> }): {
         onConfigureClient?: (instance: Livelink) => Promise<void>;
         onConnected?: ({ instance, cameras }: { instance: Livelink; cameras: Array<Camera | null> }) => void;
         is_transient?: boolean;
+        session_open_mode?: "join" | "start" | "join_or_start";
     }) => Promise<LivelinkResponse | null>;
     disconnect: () => void;
 } {
