@@ -18,6 +18,8 @@ type ClientInfo = {
 export type SessionInfo = {
     readonly session_id: UUID;
     readonly scene_id: UUID;
+    readonly is_transient_session: boolean;
+} & Partial<{
     readonly scene_name: string;
     readonly folder_id: UUID;
     readonly max_users: number;
@@ -25,9 +27,8 @@ export type SessionInfo = {
     readonly created_at: Date;
     readonly country_code: string;
     readonly continent_code: string;
-    readonly is_transient_session: boolean;
     readonly clients: Array<ClientInfo>;
-};
+}>;
 
 /**
  * Session selector function type.
@@ -71,8 +72,16 @@ export class Session extends EventTarget implements SessionInterface {
             throw new Error("Error when creating session");
         }
 
-        const session_info = (await res.json()) as SessionInfo;
-        return new Session({ token, session_info, created: true });
+        const session_info = (await res.json()) as { session_id: UUID };
+        return new Session({
+            token,
+            session_info: {
+                ...session_info,
+                scene_id,
+                is_transient_session: is_transient ?? false,
+            },
+            created: true,
+        });
     }
 
     /**
@@ -257,14 +266,12 @@ export class Session extends EventTarget implements SessionInterface {
             throw new Error("Cannot close session as it has not been opened yet");
         }
 
-        const res = await fetch(`${Livelink._api_url}/sessions/${this.session_id}`, {
+        await fetch(`${Livelink._api_url}/sessions/${this.session_id}`, {
             method: "DELETE",
             headers: {
                 api_key: this.#token,
             },
         });
-
-        console.log(res);
     }
 
     /**
@@ -283,14 +290,12 @@ export class Session extends EventTarget implements SessionInterface {
      */
     async kickClient({ client }: { client: Client | UUID }) {
         const client_id = client instanceof Client ? client.id : client;
-        const res = await fetch(`${Livelink._api_url}/sessions/${this.session_id}/clients/${client_id}`, {
+        await fetch(`${Livelink._api_url}/sessions/${this.session_id}/clients/${client_id}`, {
             method: "DELETE",
             headers: {
                 user_token: this.#token,
             },
         });
-
-        console.log(res);
     }
 
     /**
