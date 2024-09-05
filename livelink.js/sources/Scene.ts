@@ -324,7 +324,9 @@ export class Scene extends EventTarget {
      */
     async _getChildren({ entity_rtid }: { entity_rtid: RTID }): Promise<Array<Entity>> {
         const editor_entities = await this.#core.getChildren({ entity_rtid });
-        return this.#addEditorEntities(Entity, { editor_entities, resolve_ancestors: false });
+        const children = this.#addEditorEntities(Entity, { editor_entities, resolve_ancestors: false });
+        children.forEach(child => child._setParent(this.entity_registry.get({ entity_rtid })!));
+        return children;
     }
 
     /**
