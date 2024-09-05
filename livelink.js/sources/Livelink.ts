@@ -30,6 +30,7 @@ import { Viewport } from "./Viewport";
 import { Camera } from "./Camera";
 import { Entity } from "./Entity";
 import { Scene } from "./Scene";
+import { compute_rpn } from "./Filters";
 
 /**
  * The Livelink interface.
@@ -534,5 +535,27 @@ export class Livelink {
         screenSpaceRayQuery: ScreenSpaceRayQuery;
     }): Promise<ScreenSpaceRayResult> {
         return this.#core.castScreenSpaceRay({ screenSpaceRayQuery });
+    }
+
+    /**
+     * @experimental
+     */
+    setFilter({ name, value }: { name: string; value: string }): void {
+        const rpn = compute_rpn(value);
+        this.#core.setFilter({ name, rpn });
+    }
+
+    /**
+     * @experimental
+     */
+    toggleFilter({ name, enabled }: { name: string; enabled: boolean }): void {
+        this.#core.toggleFilter({ name, enabled });
+    }
+
+    /**
+     * @experimental
+     */
+    removeFilter({ name }: { name: string }): void {
+        this.#core.removeFilter({ name });
     }
 }
