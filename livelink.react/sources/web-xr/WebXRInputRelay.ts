@@ -7,12 +7,14 @@ export type ButtonBox = {
     pressed: boolean;
     touched: boolean;
     value: number;
+    index: number;
 };
 
 //------------------------------------------------------------------------------
 export type AxesBox = {
     dx: number;
     dy: number;
+    index: number;
 };
 
 //------------------------------------------------------------------------------
@@ -33,6 +35,7 @@ export class GamepadBoxSet {
                 pressed: false,
                 touched: false,
                 value: 0,
+                index: i
             });
         }
 
@@ -42,6 +45,7 @@ export class GamepadBoxSet {
             this.axesBoxes.push({
                 dx: 0,
                 dy: 0,
+                index: i
             });
         }
         this.matrix = new Matrix4();
