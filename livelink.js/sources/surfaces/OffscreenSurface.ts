@@ -22,7 +22,7 @@ export class OffscreenSurface<ContextType extends CanvasContextType, ContextOpti
     /**
      *
      */
-    resolution_scale: number = 1.0;
+    #resolution_scale: number;
 
     /**
      *
@@ -33,6 +33,7 @@ export class OffscreenSurface<ContextType extends CanvasContextType, ContextOpti
         context_constructor,
         context_type,
         context_options,
+        resolution_scale = 1.0,
     }: {
         width: number;
         height: number;
@@ -43,26 +44,28 @@ export class OffscreenSurface<ContextType extends CanvasContextType, ContextOpti
         ) => ContextProvider;
         context_type: ContextType;
         context_options?: ContextOptions;
+        resolution_scale: number;
     }) {
         super();
 
         this.#canvas = document.createElement("canvas");
         this.#canvas.width = width;
-        this.#canvas.height = height
+        this.#canvas.height = height;
         this.#context = new context_constructor(this.#canvas, context_type, context_options);
+        this.#resolution_scale = resolution_scale;
     }
 
     /**
      *
      */
     get width(): number {
-        return Math.floor(this.#canvas.width * this.resolution_scale);
+        return Math.floor(this.#canvas.width * this.#resolution_scale);
     }
     /**
      *
      */
     get height(): number {
-        return Math.floor(this.#canvas.height * this.resolution_scale);
+        return Math.floor(this.#canvas.height * this.#resolution_scale);
     }
 
     /**
@@ -113,5 +116,20 @@ export class OffscreenSurface<ContextType extends CanvasContextType, ContextOpti
         this.#canvas.width = width;
         this.#canvas.height = height;
         this.#context.refreshSize();
+    }
+
+    /**
+     *
+     */
+    get resolution_scale(): number {
+        return this.#resolution_scale;
+    }
+
+    /**
+     *
+     */
+    set resolution_scale(scale: number) {
+        this.#resolution_scale = scale;
+        this.dispatchEvent(new Event("on-resized"));
     }
 }

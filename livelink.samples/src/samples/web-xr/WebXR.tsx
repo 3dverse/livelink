@@ -7,7 +7,16 @@ import { CanvasActionBar } from "../../styles/components/CanvasActionBar";
 export default function WebXR({ mode }: { mode: XRSessionMode }) {
     const containerRef = useRef<HTMLDivElement>(null);
 
-    const { instance, isSessionSupported, isConnecting, message, connect, disconnect } = useLivelinkXR({ mode });
+    const {
+        instance,
+        isSessionSupported,
+        isConnecting,
+        message,
+        resolutionScale,
+        setResolutionScale,
+        connect,
+        disconnect,
+    } = useLivelinkXR({ mode });
 
     const toggleConnection = async () => {
         if (instance) {
@@ -16,7 +25,7 @@ export default function WebXR({ mode }: { mode: XRSessionMode }) {
             connect({
                 scene_id: "e1250c0e-fa04-4af5-a5cb-cf29fd38b78d",
                 token: "public_p54ra95AMAnZdTel",
-                rootElement: containerRef.current!,
+                root_element: containerRef.current!,
             });
         }
     };
@@ -36,6 +45,20 @@ export default function WebXR({ mode }: { mode: XRSessionMode }) {
                     >
                         {isConnecting ? "Connecting..." : instance ? `Exit ${xrModeTitle}` : `Enter ${xrModeTitle}`}
                     </button>
+
+                    {instance && (
+                        <div className="flex items-center justify-center flex-col space-y-3">
+                            <p>Resolution Scale: {resolutionScale}</p>
+                            <input
+                                type="range"
+                                min="0.1"
+                                max="1.5"
+                                step="0.05"
+                                value={resolutionScale}
+                                onChange={e => setResolutionScale(parseFloat(e.target.value))}
+                            />
+                        </div>
+                    )}
 
                     {message && <p>{message}</p>}
                 </div>

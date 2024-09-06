@@ -11,22 +11,23 @@ type LivelinkResponse = {
 };
 
 //------------------------------------------------------------------------------
+type ConnectParameters = {
+    scene_id: UUID;
+    session_id?: UUID;
+    token: string;
+    root_element?: HTMLElement;
+    resolution_scale?: number;
+};
+
+//------------------------------------------------------------------------------
 export function useLivelinkXR({ mode }: { mode: XRSessionMode }): {
     instance: Livelink | null;
     isConnecting: boolean;
     message: string;
     isSessionSupported: boolean;
-    connect: ({
-        scene_id,
-        session_id,
-        token,
-        rootElement,
-    }: {
-        scene_id: UUID;
-        session_id?: UUID;
-        token: string;
-        rootElement?: HTMLElement;
-    }) => Promise<LivelinkResponse | null>;
+    resolutionScale: number;
+    setResolutionScale: (scale: number) => void;
+    connect: (params: ConnectParameters) => Promise<LivelinkResponse | null>;
     disconnect: () => void;
 } {
     const [instance, setInstance] = useState<Livelink | null>(null);
@@ -34,6 +35,7 @@ export function useLivelinkXR({ mode }: { mode: XRSessionMode }): {
     const [isConnecting, setIsConnecting] = useState(false);
     const [message, setMessage] = useState<string>("");
     const [isSessionSupported, setIsSessionSupported] = useState(false);
+    const [resolutionScale, setResolutionScale] = useState(1);
 
     //--------------------------------------------------------------------------
     useEffect(() => {
@@ -50,6 +52,16 @@ export function useLivelinkXR({ mode }: { mode: XRSessionMode }): {
             xrSession?.release();
         };
     }, [xrSession]);
+
+    //--------------------------------------------------------------------------
+    useEffect(() => {
+        if (!xrSession) {
+            return;
+        }
+
+        console.info("Setting resolution scale to", resolutionScale);
+        xrSession.resolution_scale = resolutionScale;
+    }, [resolutionScale, instance]);
 
     //--------------------------------------------------------------------------
     useEffect(() => {
@@ -73,19 +85,15 @@ export function useLivelinkXR({ mode }: { mode: XRSessionMode }): {
         isConnecting,
         message,
         isSessionSupported,
+        resolutionScale,
+        setResolutionScale,
         connect: async ({
             scene_id,
             session_id,
             token,
             root_element,
             resolution_scale,
-        }: {
-            scene_id: UUID;
-            session_id?: UUID;
-            token: string;
-            root_element?: HTMLElement;
-            resolution_scale?: number
-        }): Promise<LivelinkResponse | null> => {
+        }: ConnectParameters): Promise<LivelinkResponse | null> => {
             const webXRHelper = new WebXRHelper(resolution_scale);
             let livelinkInstance: Livelink | null = null;
             let cameras: Array<Camera> = [];
@@ -107,9 +115,9 @@ export function useLivelinkXR({ mode }: { mode: XRSessionMode }): {
 
                 setIsConnecting(true);
 
-                if(session_id) {
+                if (session_id) {
                     const session = await Session.findById({ session_id, token });
-                    if(!session) {
+                    if (!session) {
                         console.error(`Session '${session_id}' not found on scene '${scene_id}'`);
                         return null;
                     }
@@ -124,6 +132,7 @@ export function useLivelinkXR({ mode }: { mode: XRSessionMode }): {
                 livelinkInstance.startStreaming();
                 webXRHelper.start();
 
+                setResolutionScale(webXRHelper.resolution_scale);
                 setXRSession(webXRHelper);
                 setInstance(livelinkInstance);
             } catch (error) {

@@ -109,15 +109,15 @@ export class WebXRHelper {
     }
 
     //--------------------------------------------------------------------------
-    constructor(resolution_scale : number = 1.0) {
+    constructor(resolution_scale: number = 1.0) {
         this.#surface = new OffscreenSurface({
             width: window.innerWidth, // Not sure
             height: window.innerHeight, // Really not sure
             context_constructor: XRContext,
             context_type: "webgl",
             context_options: { xrCompatible: true },
+            resolution_scale,
         });
-        this.#surface.resolution_scale = resolution_scale;
         this.#context = this.#surface.context as XRContext;
     }
 
@@ -742,5 +742,21 @@ export class WebXRHelper {
                 xr_viewport.y !== viewport.y
             );
         });
+    }
+
+    //--------------------------------------------------------------------------
+    /**
+     *
+     */
+    get resolution_scale(): number {
+        return this.#surface.resolution_scale;
+    }
+
+    //--------------------------------------------------------------------------
+    /**
+     *
+     */
+    set resolution_scale(value: number) {
+        this.#surface.resolution_scale = value;
     }
 }
