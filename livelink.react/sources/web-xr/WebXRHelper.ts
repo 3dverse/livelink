@@ -109,7 +109,7 @@ export class WebXRHelper {
     }
 
     //--------------------------------------------------------------------------
-    constructor() {
+    constructor(resolution_scale : number = 1.0) {
         this.#surface = new OffscreenSurface({
             width: window.innerWidth, // Not sure
             height: window.innerHeight, // Really not sure
@@ -117,6 +117,7 @@ export class WebXRHelper {
             context_type: "webgl",
             context_options: { xrCompatible: true },
         });
+        this.#surface.resolution_scale = resolution_scale;
         this.#context = this.#surface.context as XRContext;
     }
 

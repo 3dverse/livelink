@@ -77,23 +77,25 @@ export function useLivelinkXR({ mode }: { mode: XRSessionMode }): {
             scene_id,
             session_id,
             token,
-            rootElement,
+            root_element,
+            resolution_scale,
         }: {
             scene_id: UUID;
             session_id?: UUID;
             token: string;
-            rootElement?: HTMLElement;
+            root_element?: HTMLElement;
+            resolution_scale?: number
         }): Promise<LivelinkResponse | null> => {
-            const webXRHelper = new WebXRHelper();
+            const webXRHelper = new WebXRHelper(resolution_scale);
             let livelinkInstance: Livelink | null = null;
             let cameras: Array<Camera> = [];
             try {
                 await webXRHelper.initialize(
                     mode,
-                    rootElement
+                    root_element
                         ? {
                               optionalFeatures: ["dom-overlay"],
-                              domOverlay: { root: rootElement },
+                              domOverlay: { root: root_element },
                           }
                         : undefined,
                 );
