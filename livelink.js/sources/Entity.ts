@@ -118,7 +118,30 @@ export class Entity extends EntityBase {
     /**
      * @internal
      */
-    onScriptEvent({
+    onScriptEventTarget({
+        event_name,
+        data_object,
+        emitter_rtid,
+    }: {
+        event_name: string;
+        data_object: Record<string, {}> | null;
+        emitter_rtid: RTID;
+    }) {
+        this.dispatchEvent(
+            new CustomEvent("on-script-event-target", {
+                detail: {
+                    event_name,
+                    data_object,
+                    emitter_rtid,
+                },
+            }),
+        );
+    }
+
+    /**
+     * @internal
+     */
+    onScriptEventEmitter({
         event_name,
         data_object,
         target_rtids,
@@ -128,7 +151,7 @@ export class Entity extends EntityBase {
         target_rtids: RTID[];
     }) {
         this.dispatchEvent(
-            new CustomEvent("on-script-event-received", {
+            new CustomEvent("on-script-event-emitter", {
                 detail: {
                     event_name,
                     data_object,

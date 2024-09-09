@@ -11,6 +11,8 @@ import { Entity } from "./Entity";
 import { EntityRegistry } from "./EntityRegistry";
 import { Settings } from "./Settings";
 
+const PHYSICS_EVENT_MAP_ID = "7a8cc05e-8659-4b23-99d1-1352d13e2020";
+
 /**
  *
  */
@@ -223,47 +225,64 @@ export class Scene extends EventTarget {
             return;
         }
 
-        // Look for the emitter entity in the registry, if the entity is not found,
+        const emitter = this.entity_registry.get({ entity_rtid: event.emitter_rtid });
+
+        // Handle physics events
+        if (event.event_name.startsWith(PHYSICS_EVENT_MAP_ID)) {
+            return this.handlePhysicsScriptEvent({ event, emitter });
+        }
+
+        // Handle custom script events
+        const target_entities = event.target_rtids
+            .map(rtid => this.entity_registry.get({ entity_rtid: rtid }))
+            .filter(e => e !== null) as Array<Entity>;
+
+        target_entities.forEach(target => {
+            target.onScriptEventTarget({
+                event_name: event.event_name,
+                data_object: event.data_object,
+                emitter_rtid: event.emitter_rtid,
+            });
+        });
+
+        emitter?.onScriptEventEmitter({
+            event_name: event.event_name,
+            data_object: event.data_object,
+            target_rtids: event.target_rtids,
+        });
+    };
+
+    /**
+     *
+     */
+    async handlePhysicsScriptEvent({ emitter, event }: { emitter: Entity | null; event: ScriptEvent }) {
+        // if the emitter entity is not found,
         // it means that the entity does not have any event listeners, therefore nobody
         // is interested in the event.
-        const emitter = this.entity_registry.get({ entity_rtid: event.emitter_rtid });
         if (!emitter) {
             return;
         }
 
+        const entity = await this.#extractEntityFromEventDataObject({
+            data_object: event.data_object,
+            entity_name: "hEntity",
+        });
+
+        if (!entity) {
+            return;
+        }
+
         switch (event.event_name) {
-            case "7a8cc05e-8659-4b23-99d1-1352d13e2020/enter_trigger":
-                {
-                    const entity = await this.#extractEntityFromEventDataObject({
-                        data_object: event.data_object,
-                        entity_name: "hEntity",
-                    });
-                    if (entity) {
-                        emitter.onTriggerEntered({ entity });
-                    }
-                }
+            case `${PHYSICS_EVENT_MAP_ID}/enter_trigger`:
+                emitter.onTriggerEntered({ entity });
                 break;
 
-            case "7a8cc05e-8659-4b23-99d1-1352d13e2020/exit_trigger":
-                {
-                    const entity = await this.#extractEntityFromEventDataObject({
-                        data_object: event.data_object,
-                        entity_name: "hEntity",
-                    });
-                    if (entity) {
-                        emitter.onTriggerExited({ entity });
-                    }
-                }
-                break;
-            default:
-                emitter.onScriptEvent({
-                    event_name: event.event_name,
-                    data_object: event.data_object,
-                    target_rtids: event.target_rtids,
-                });
+            case `${PHYSICS_EVENT_MAP_ID}/exit_trigger`:
+                emitter.onTriggerExited({ entity });
                 break;
         }
-    };
+        return;
+    }
 
     /**
      *
