@@ -255,6 +255,13 @@ export class Scene extends EventTarget {
                     }
                 }
                 break;
+            default:
+                emitter.onScriptEvent({
+                    event_name: event.event_name,
+                    data_object: event.data_object,
+                    target_rtids: event.target_rtids,
+                });
+                break;
         }
     };
 
@@ -265,10 +272,10 @@ export class Scene extends EventTarget {
         data_object,
         entity_name,
     }: {
-        data_object: Record<string, {}>;
+        data_object: Record<string, {}> | null;
         entity_name: string;
     }): Promise<Entity | null> {
-        if (!data_object.hasOwnProperty(entity_name)) {
+        if (!data_object?.hasOwnProperty(entity_name)) {
             return null;
         }
         const entity_ref = data_object[entity_name] as { linkage: Array<UUID>; originalEUID: UUID };

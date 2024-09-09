@@ -1,4 +1,12 @@
-import type { ComponentType, EditorEntity, EntityCreationOptions, Quat, UUID, Vec3 } from "@3dverse/livelink.core";
+import type {
+    ComponentType,
+    EditorEntity,
+    EntityCreationOptions,
+    Quat,
+    RTID,
+    UUID,
+    Vec3,
+} from "@3dverse/livelink.core";
 import { EntityBase } from "../_prebuild/EntityBase";
 import { Scene } from "./Scene";
 import { LivelinkCoreModule } from "@3dverse/livelink.core";
@@ -105,6 +113,29 @@ export class Entity extends EntityBase {
      */
     onTriggerExited({ entity }: { entity: Entity }) {
         this.dispatchEvent(new CustomEvent("trigger-exited", { detail: { entity } }));
+    }
+
+    /**
+     * @internal
+     */
+    onScriptEvent({
+        event_name,
+        data_object,
+        target_rtids,
+    }: {
+        event_name: string;
+        data_object: Record<string, {}> | null;
+        target_rtids: RTID[];
+    }) {
+        this.dispatchEvent(
+            new CustomEvent("on-script-event-received", {
+                detail: {
+                    event_name,
+                    data_object,
+                    target_rtids,
+                },
+            }),
+        );
     }
 
     /**
