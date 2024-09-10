@@ -96,7 +96,7 @@ export function useLivelinkInstance({ views }: { views: Array<View> }): {
             let instance: Livelink;
 
             if (session_open_mode === "start") {
-                instance = await Livelink.start({ scene_id, token });
+                instance = await Livelink.start({ scene_id, token, is_transient });
             } else if (session_id) {
                 const session = await Session.findById({ session_id, token });
                 if (!session) {
