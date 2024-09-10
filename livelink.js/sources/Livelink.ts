@@ -336,6 +336,7 @@ export class Livelink {
         };
 
         const res = await this.#core.configureClient({ client_config });
+        this.#codec = res.codec;
         return res;
     }
 
