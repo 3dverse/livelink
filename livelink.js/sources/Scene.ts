@@ -66,8 +66,33 @@ export class Scene extends EventTarget {
     ): Promise<EntityType> {
         let entity = new entity_type(this).init(name);
         entity = new Proxy(entity, Entity.handler) as EntityType;
-        await entity._instantiate(options);
+        entity.onCreate();
+        await entity._instantiate(this.#core.spawnEntity({ entity, options }));
         return entity;
+    }
+
+    /**
+     *
+     */
+    async newEntities<EntityType extends Entity>(
+        entity_type: { new (_: Scene): EntityType },
+        entity_names: Array<string>,
+        options?: EntityCreationOptions,
+    ): Promise<Array<EntityType>> {
+        const entities = entity_names.map((name, index) => {
+            let entity = new entity_type(this).init(name, `entity_${index}`);
+            entity = new Proxy(entity, Entity.handler) as EntityType;
+            entity.onCreate();
+            return entity;
+        });
+
+        const promise = this.#core.createEntities({ entities, options });
+
+        for (let i = 0; i < entities.length; i++) {
+            await entities[i]._instantiate(promise.then(editor_entities => editor_entities[i]));
+        }
+
+        return entities;
     }
 
     /**
@@ -312,6 +337,19 @@ export class Scene extends EventTarget {
         options?: EntityCreationOptions;
     }): Promise<EditorEntity> {
         return this.#core.spawnEntity({ entity, options });
+    }
+
+    /**
+     * @internal
+     */
+    async _createEntities({
+        entities,
+        options,
+    }: {
+        entities: Array<Entity>;
+        options?: EntityCreationOptions;
+    }): Promise<Array<EditorEntity>> {
+        return this.#core.createEntities({ entities, options });
     }
 
     /**

@@ -81,11 +81,16 @@ export class Entity extends EntityBase {
     /**
      * @internal
      */
-    init(from: EditorEntity | string) {
+    init(from: EditorEntity | string, euid?: UUID) {
         if (typeof from === "string") {
             this.debug_name = { value: from };
+            this._proxy_state = "off";
         } else {
             this._parse({ editor_entity: from });
+        }
+
+        if(euid) {
+            this._setEuid(euid);
         }
 
         return this;
@@ -164,14 +169,12 @@ export class Entity extends EntityBase {
     /**
      * @internal
      */
-    async _instantiate(options?: EntityCreationOptions) {
+    async _instantiate(promise: Promise<EditorEntity>) {
         if (this.isInstantiated()) {
             throw new Error("Entity is already instantiated");
         }
 
-        this._proxy_state = "off";
-        this.onCreate();
-        const editor_entity = await this._scene._createEntity({ entity: this, options });
+        const editor_entity = await promise;
         this._parse({ editor_entity });
         this._scene.entity_registry.add({ entity: this });
         this._proxy_state = "on";
@@ -227,19 +230,6 @@ export class Entity extends EntityBase {
     /**
      * @internal
      */
-    toJSON() {
-        let serialized: Record<string, unknown> = {};
-        for (const p in this) {
-            if (this._isSerializableComponent(p, this[p])) {
-                serialized[p as string] = this[p];
-            }
-        }
-        return serialized;
-    }
-
-    /**
-     * @internal
-     */
     _updateFromEvent({ updated_components }: { updated_components: Record<string, unknown> }) {
         this._proxy_state = "off";
         for (const key in updated_components) {
@@ -288,18 +278,6 @@ export class Entity extends EntityBase {
         this.local_transform!.orientation = orientation;
         this._auto_update = "on";
         this._proxy_state = "on";
-    }
-
-    /**
-     * @internal
-     */
-    private _isSerializableComponent(prop: PropertyKey, v: any) {
-        return (
-            typeof prop === "string" &&
-            v !== undefined &&
-            prop[0] !== "_" &&
-            Object.values(LivelinkCoreModule.Enums.ComponentHash).includes(prop)
-        );
     }
 
     /**
