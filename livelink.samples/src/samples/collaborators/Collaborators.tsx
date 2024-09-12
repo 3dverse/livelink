@@ -67,7 +67,7 @@ const Avatar = ({ client, instance }: { client: Client; instance: Livelink }) =>
                 display: "none",
             }}
         >
-            <img src="https://img.daisyui.com/images/stock/photo-1534528741775-53994a69daeb.jpg" />
+            <img src="https://img.daisyui.com/images/stock/photo-1534528741775-53994a69daeb.webp" />
         </div>
     );
 };
@@ -150,7 +150,7 @@ export default function Collaborators() {
                             <div className="avatar w-10 rounded-full overflow-clip">
                                 <img
                                     title={client.id + " | " + client.camera_rtids.join(", ")}
-                                    src="https://img.daisyui.com/images/stock/photo-1534528741775-53994a69daeb.jpg"
+                                    src="https://img.daisyui.com/images/stock/photo-1534528741775-53994a69daeb.webp"
                                 />
                             </div>
                         </button>
