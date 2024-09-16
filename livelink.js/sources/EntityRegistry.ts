@@ -6,6 +6,8 @@ import type {
     ComponentType,
     RemoveComponentsCommand,
     UpdateComponentsCommand,
+    UpdateEntitiesFromBytesMessage,
+    ComponentSerializer,
 } from "@3dverse/livelink.core";
 import { Entity } from "./Entity";
 
@@ -196,16 +198,50 @@ export class EntityRegistry {
     /**
      * @internal
      */
-    _getEntitiesToUpdate(): UpdateEntitiesFromJsonMessage | null {
-        const msg = { components: [] as Array<{ component_type: ComponentType; entities: Set<Entity> }> };
+    _getEntitiesToUpdate():
+        | {
+              binary: true;
+              message: UpdateEntitiesFromBytesMessage;
+          }
+        | {
+              binary: false;
+              message: UpdateEntitiesFromJsonMessage;
+          }
+        | null {
+        let binary = true;
+        const message = {
+            components: [] as Array<{
+                component_type: ComponentType;
+                entities: Set<Entity>;
+                component_serializer?: ComponentSerializer;
+            }>,
+        };
 
         for (const [component_type, entities] of this.#dirty_components) {
             if (entities.size !== 0) {
-                msg.components.push({ component_type, entities });
+                const component_serializer = this.#serializer!.getComponentSerializer(component_type);
+                if (!component_serializer) {
+                    binary = false;
+                }
+                message.components.push({
+                    component_type,
+                    component_serializer,
+                    entities,
+                });
             }
         }
 
-        return msg.components.length > 0 ? msg : null;
+        return message.components.length > 0
+            ? ({ binary, message } as
+                  | {
+                        binary: true;
+                        message: UpdateEntitiesFromBytesMessage;
+                    }
+                  | {
+                        binary: false;
+                        message: UpdateEntitiesFromJsonMessage;
+                    })
+            : null;
     }
 
     /**

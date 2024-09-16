@@ -89,7 +89,7 @@ export class Entity extends EntityBase {
             this._parse({ editor_entity: from });
         }
 
-        if(euid) {
+        if (euid) {
             this._setEuid(euid);
         }
 

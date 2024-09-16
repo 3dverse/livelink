@@ -481,7 +481,11 @@ export class Livelink {
 
             const updateMsg = this.scene.entity_registry._getEntitiesToUpdate();
             if (updateMsg !== null) {
-                this.#core.updateEntitiesFromJson(updateMsg);
+                if (updateMsg.binary) {
+                    this.#core.updateEntitiesFromBytes(updateMsg.message);
+                } else {
+                    this.#core.updateEntitiesFromJson(updateMsg.message);
+                }
                 this.scene.entity_registry._clearUpdateList();
             }
 
