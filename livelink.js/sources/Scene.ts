@@ -2,7 +2,7 @@ import type {
     LivelinkCore,
     RTID,
     UUID,
-    EntityCreationOptions,
+    EntityCreationOptions as EntityCreationOptionsBase,
     ScriptEvent,
     EditorEntity,
     ComponentType,
@@ -10,6 +10,10 @@ import type {
 import { Entity } from "./Entity";
 import { EntityRegistry } from "./EntityRegistry";
 import { Settings } from "./Settings";
+
+export type EntityCreationOptions = EntityCreationOptionsBase & {
+    disable_proxy?: boolean;
+};
 
 const PHYSICS_EVENT_MAP_ID = "7a8cc05e-8659-4b23-99d1-1352d13e2020";
 

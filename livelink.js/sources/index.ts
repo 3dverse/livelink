@@ -25,3 +25,5 @@ export * from "./surfaces/OffscreenSurface";
 
 export * from "./inputs/Keyboard";
 export * from "./inputs/Mouse";
+
+export * from "./maths";
