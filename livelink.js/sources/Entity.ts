@@ -169,7 +169,7 @@ export class Entity extends EntityBase {
     /**
      * @internal
      */
-    async _instantiate(promise: Promise<EditorEntity>) {
+    async _instantiate(promise: Promise<EditorEntity>, proxy_state: EntityAutoUpdateState = "on") {
         if (this.isInstantiated()) {
             throw new Error("Entity is already instantiated");
         }
@@ -177,7 +177,7 @@ export class Entity extends EntityBase {
         const editor_entity = await promise;
         this._parse({ editor_entity });
         this._scene.entity_registry.add({ entity: this });
-        this._proxy_state = "on";
+        this._proxy_state = proxy_state;
     }
 
     /**

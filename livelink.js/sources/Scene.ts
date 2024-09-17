@@ -67,7 +67,10 @@ export class Scene extends EventTarget {
         let entity = new entity_type(this).init(name);
         entity = new Proxy(entity, Entity.handler) as EntityType;
         entity.onCreate();
-        await entity._instantiate(this.#core.spawnEntity({ entity, options }));
+        await entity._instantiate(
+            this.#core.spawnEntity({ entity, options }),
+            options?.disable_proxy === true ? "off" : "on",
+        );
         return entity;
     }
 
@@ -89,7 +92,10 @@ export class Scene extends EventTarget {
         const promise = this.#core.createEntities({ entities, options });
 
         for (let i = 0; i < entities.length; i++) {
-            await entities[i]._instantiate(promise.then(editor_entities => editor_entities[i]));
+            await entities[i]._instantiate(
+                promise.then(editor_entities => editor_entities[i]),
+                options?.disable_proxy === true ? "off" : "on",
+            );
         }
 
         return entities;
