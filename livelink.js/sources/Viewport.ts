@@ -61,7 +61,7 @@ export class Viewport extends EventTarget {
         return this.rect.height * this.rendering_surface.height;
     }
     get aspect_ratio(): number {
-        return this.rect.height > 0 ? this.rect.width / this.rect.height : 1;
+        return this.height > 0 ? this.width / this.height : 1;
     }
 
     /**
