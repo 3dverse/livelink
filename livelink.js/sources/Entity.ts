@@ -71,6 +71,13 @@ export class Entity extends EntityBase {
     }
 
     /**
+     *
+     */
+    get scene() {
+        return this._scene;
+    }
+
+    /**
      * @internal
      */
     constructor(private readonly _scene: Scene) {
