@@ -40,6 +40,7 @@ export class Client implements ClientInterface {
     constructor(data: ClientMetaData) {
         this.#uuid = data.client_id;
         this.#camera_rtids = data.viewports.map(v => v.camera_rtid);
+        this.#ws_from_ls = data.viewports.map(v => v.ws_from_ls);
     }
 
     /**
