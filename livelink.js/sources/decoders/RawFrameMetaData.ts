@@ -47,10 +47,27 @@ export function rawFrameMetaDatafromFrameMetaData({
         other_clients_cameras: [],
     };
 
-    for (const client of frame_meta_data.clients) {
+    const current_client = frame_meta_data.clients.find(client => client.client_id === client_id);
+    const other_clients = frame_meta_data.clients.filter(client => client.client_id !== client_id);
+
+    for (const viewport of current_client?.viewports || []) {
+        const camera = entity_registry.get({ entity_rtid: viewport.camera_rtid }) as Camera | null;
+        if (!camera) {
+            continue;
+        }
+        const cameraMetadata: CameraFrameTransform = {
+            camera,
+            position: getWorldPosition(viewport.ws_from_ls),
+            orientation: getWorldQuaternion(viewport.ws_from_ls),
+        };
+        meta_data.current_client_cameras.push(cameraMetadata);
+    }
+
+    for (const client of other_clients) {
         for (const viewport of client.viewports) {
             const camera = entity_registry.get({ entity_rtid: viewport.camera_rtid }) as Camera | null;
-            if (!camera) {
+            // Skip cameras which also belong to current client
+            if (!camera || meta_data.current_client_cameras.some(c => c.camera.rtid === camera.rtid)) {
                 continue;
             }
             const cameraMetadata: CameraFrameTransform = {
@@ -58,12 +75,7 @@ export function rawFrameMetaDatafromFrameMetaData({
                 position: getWorldPosition(viewport.ws_from_ls),
                 orientation: getWorldQuaternion(viewport.ws_from_ls),
             };
-
-            if (client.client_id === client_id) {
-                meta_data.current_client_cameras.push(cameraMetadata);
-            } else {
-                meta_data.other_clients_cameras.push(cameraMetadata);
-            }
+            meta_data.other_clients_cameras.push(cameraMetadata);
         }
     }
 
