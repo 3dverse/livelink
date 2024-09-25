@@ -1,11 +1,4 @@
-import type {
-    ComponentType,
-    EditorEntity,
-    Quat,
-    RTID,
-    UUID,
-    Vec3,
-} from "@3dverse/livelink.core";
+import type { ComponentType, EditorEntity, Quat, RTID, UUID, Vec3 } from "@3dverse/livelink.core";
 import { EntityBase } from "../_prebuild/EntityBase";
 import { Scene } from "./Scene";
 import { quaternionFromEuler, quaternionToEuler } from "./maths";
@@ -321,6 +314,10 @@ export class Entity extends EntityBase {
 
             if (entity._isSerializableComponent(prop, v)) {
                 //console.log("SET COMPONENT", prop, v);
+                const defaultValue = entity.scene.entity_registry._getComponentDefaultValue({
+                    component_type: prop as ComponentType,
+                });
+                v = { ...structuredClone(defaultValue), ...v };
                 entity._tryMarkingAsDirty({ component_type: prop as ComponentType });
             }
 
@@ -407,5 +404,3 @@ class LocalTransformHandler extends ComponentHandler {
         return super.set(component, prop, v);
     }
 }
-
-

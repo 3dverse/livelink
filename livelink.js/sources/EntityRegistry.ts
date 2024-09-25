@@ -8,8 +8,10 @@ import type {
     UpdateComponentsCommand,
     UpdateEntitiesFromBytesMessage,
     ComponentSerializer,
+    ComponentDescriptor,
 } from "@3dverse/livelink.core";
 import { Entity } from "./Entity";
+import { get_attribute_default_value } from "./attributes";
 
 /**
  * @internal
@@ -56,6 +58,11 @@ export class EntityRegistry {
     #serializer: Serializer | null = null;
 
     /**
+     *
+     */
+    #component_default_values = new Map<ComponentType, object>();
+
+    /**
      * Adds a new entity in the registry. The entity must be valid, i.e. have valid RTID and EUID and must not have the
      * same RTID as any registered entity.
      */
@@ -71,6 +78,7 @@ export class EntityRegistry {
             );
         }
 
+        this.#addComponentDefaultValues({ entity });
         this.#entities.add(entity);
         this.#entity_rtid_lut.set(entity.rtid, entity);
         const entities = this.#entity_euid_lut.get(entity.id);
@@ -140,6 +148,40 @@ export class EntityRegistry {
             this.#detached_components.set(component_name, new Set<Entity>());
             this.#dirty_components_to_broadcast.set(component_name, new Set<Entity>());
         }
+    }
+
+    /**
+     * @internal
+     */
+    _configureComponentDefaultValues({
+        component_descriptors,
+    }: {
+        component_descriptors: Record<string, ComponentDescriptor>;
+    }) {
+        for (const component_name in component_descriptors) {
+            const defaultValue = {} as Record<string, unknown>;
+            const component_descriptor = component_descriptors[component_name];
+            for (const attribute of component_descriptor.attributes) {
+                if (attribute.mods?.indexOf("engine-only") > -1) {
+                    continue;
+                }
+
+                if (attribute.default !== undefined) {
+                    defaultValue[attribute.name] = attribute.default;
+                } else {
+                    defaultValue[attribute.name] = get_attribute_default_value(attribute.type);
+                }
+            }
+
+            this.#component_default_values.set(component_name as ComponentType, defaultValue);
+        }
+    }
+
+    /**
+     *
+     */
+    _getComponentDefaultValue({ component_type }: { component_type: ComponentType }): object {
+        return this.#component_default_values.get(component_type) ?? {};
     }
 
     /**
@@ -308,6 +350,18 @@ export class EntityRegistry {
     _clearBroadcastList() {
         for (const [_, entities] of this.#dirty_components_to_broadcast) {
             entities.clear();
+        }
+    }
+
+    /**
+     * @internal
+     */
+    #addComponentDefaultValues({ entity }: { entity: Entity }) {
+        for (const [component_type, default_value] of this.#component_default_values) {
+            if (entity[component_type]) {
+                //@ts-ignore
+                entity[component_type] = { ...structuredClone(default_value), ...entity[component_type] };
+            }
         }
     }
 }
