@@ -377,9 +377,13 @@ class ComponentHandler {
      *
      */
     deleteProperty(component: object, prop: PropertyKey): boolean {
-        //TODO: reset to default?
         //console.log("DELETE ATTRIBUTE", prop);
-        return Reflect.deleteProperty(component, prop);
+        const defaultValue = this._entity.scene.entity_registry._getComponentDefaultValue({
+            component_type: this._component_type,
+        }) as Record<PropertyKey, unknown>;
+        this._entity._tryMarkingAsDirty({ component_type: this._component_type });
+
+        return Reflect.set(component, prop, structuredClone(defaultValue[prop]));
     }
 }
 
