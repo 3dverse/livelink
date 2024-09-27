@@ -247,6 +247,7 @@ export class Entity extends EntityBase {
         if (this.isInstantiated()) {
             // Register to appropriate dirty list
             this._scene.entity_registry._addEntityToUpdate({ component_type, entity: this });
+            this.dispatchEvent(new CustomEvent("entity-updated"));
             return true;
         }
 
