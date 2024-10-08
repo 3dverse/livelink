@@ -323,7 +323,7 @@ function setUpThreeJsSkeleton(canvas: HTMLCanvasElement) {
         // Disable camera controller when rotating joint
         orbit.enabled = !event.value;
     });
-    scene.add(jointGizmo);
+    scene.add(jointGizmo.getHelper());
 
     // Raycaster to check for hovered joints
     const raycaster = new THREE.Raycaster();
@@ -341,7 +341,7 @@ function setUpThreeJsSkeleton(canvas: HTMLCanvasElement) {
     renderer.domElement.addEventListener("pointermove", onPointerMove);
 
     function animate() {
-        const userControlledMode = jointGizmo!.visible;
+        const userControlledMode = jointGizmo!.getHelper().visible;
         if (userControlledMode && !jointGizmo!.dragging) {
             // Check for hovered joints to attach gizmo to them
             raycaster.setFromCamera(pointer, camera);
