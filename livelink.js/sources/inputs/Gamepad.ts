@@ -1,7 +1,7 @@
 import { LivelinkCoreModule } from "@3dverse/livelink.core";
-import { Livelink } from "../Livelink";
-import { Viewport } from "../Viewport";
-import { InputDevice } from "./InputDevice";
+import type { Livelink } from "../Livelink";
+import type { InputDevice } from "./InputDevice";
+import type { BrowserGamepad } from "../types/browser";
 
 /**
  *
@@ -25,7 +25,7 @@ const XInputMaskMap = [
     128, // DPadDown
     256, // DPadLeft
     512, // DPadRight
-];
+] as const;
 
 /**
  *
@@ -38,7 +38,7 @@ const ControllerAxis = {
     RightThumbstickY: 3,
     LeftTrigger: 4,
     RightTrigger: 5,
-};
+} as const;
 /**
  *
  */
@@ -62,7 +62,7 @@ type GamepadReading = {
  *
  */
 
-function computebuttonReading(gamepad: Gamepad) {
+function computebuttonReading(gamepad: BrowserGamepad) {
     let buttonReading = 0;
     for (const i in XInputMaskMap) {
         const button = gamepad.buttons[i];
@@ -77,7 +77,7 @@ function computebuttonReading(gamepad: Gamepad) {
  *
  */
 
-export class Gamepads implements InputDevice {
+export class Gamepad implements InputDevice {
     /**
      *
      */
@@ -91,19 +91,18 @@ export class Gamepads implements InputDevice {
     /**
      *
      */
-    #viewport: Viewport;
+    previousGamepadsReading: GamepadReading[] = [];
+
+    /*
+     *
+     */
+    #animation_frame: number | null = null;
 
     /**
      *
      */
-    previousGamepadsReading: GamepadReading[] = [];
-
-    constructor(instance: Livelink, viewport?: Viewport) {
-        if (!viewport) {
-            throw new Error("GamepadsInput: Viewport is required.");
-        }
+    constructor(instance: Livelink) {
         this.#instance = instance;
-        this.#viewport = viewport;
         this.name = "gamepads";
     }
 
@@ -111,15 +110,16 @@ export class Gamepads implements InputDevice {
      *
      */
     setup() {
-        // on frame prerender
-        window.addEventListener("gamepadconnected", this.#handleGamepadInputs);
+        this.#animation_frame = requestAnimationFrame(this.#handleGamepadInputs);
     }
 
     /**
      *
      */
     release() {
-        window.removeEventListener("gamepadconnected", this.#handleGamepadInputs);
+        if (this.#animation_frame) {
+            cancelAnimationFrame(this.#animation_frame);
+        }
     }
 
     /**
@@ -127,7 +127,7 @@ export class Gamepads implements InputDevice {
      *
      */
     #handleGamepadInputs = () => {
-        if (!document.hasFocus()) {
+        if (!window.document.hasFocus()) {
             return;
         }
 
@@ -140,6 +140,8 @@ export class Gamepads implements InputDevice {
             }
             this.previousGamepadsReading[i] = gamepadReading;
         });
+
+        this.#animation_frame = requestAnimationFrame(this.#handleGamepadInputs);
     };
 
     #computeGamepadsReading = (): GamepadReading[] => {
@@ -206,7 +208,6 @@ export class Gamepads implements InputDevice {
      *
      */
     #sendControllerInput = (gamepadIndex: number, previousReading: GamepadReading, gamepadReading: GamepadReading) => {
-        /// HACK HAAAAAACK!
         // ftl-rendering-services rendering_viewer::installRequestedInputDevices only add
         // the gamepad of index zero and misses facilities to attach distinct gamepads to
         // distinct controllers (camera, characters, ...)

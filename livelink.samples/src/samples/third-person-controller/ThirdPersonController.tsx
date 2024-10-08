@@ -1,6 +1,16 @@
 //------------------------------------------------------------------------------
 import { useEffect, useRef, useState } from "react";
-import { Camera, Entity, Keyboard, Mouse, Livelink, UUID, Viewport, RenderingSurface } from "@3dverse/livelink";
+import {
+    Camera,
+    Entity,
+    Keyboard,
+    Mouse,
+    Gamepad,
+    Livelink,
+    UUID,
+    Viewport,
+    RenderingSurface,
+} from "@3dverse/livelink";
 import Canvas from "../../components/Canvas";
 import { useLivelinkInstance } from "@3dverse/livelink-react";
 import { CanvasActionBar } from "../../styles/components/CanvasActionBar";
@@ -64,6 +74,7 @@ export default function ThirdPersonController() {
                     const viewport = instance.viewports[0];
                     flyCameraRef.current = viewport.camera;
                     instance.addInputDevice(Keyboard);
+                    instance.addInputDevice(Gamepad);
                     instance.addInputDevice(Mouse, viewport);
                     setupController(instance, viewport, instance.session.client_id);
                 },
