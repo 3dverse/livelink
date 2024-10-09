@@ -32,6 +32,7 @@ import PictureInPicture from "./picture-in-picture/PictureInPicture";
 import LiveSkeletalAnimation from "./live-skeletal-animation/LiveSkeletalAnimation";
 import RenderTargetDebug from "./render-target-debug/RenderTargetDebug";
 import VideoCapture from "./video-capture/VideoCapture";
+import ThreeJS from "./threejs/ThreeJS";
 
 export const SAMPLES = [
     {
@@ -69,6 +70,10 @@ export const SAMPLES = [
             { title: "Sorting Station", path: "conveyor-belt-sorting", element: <ConveyorBeltSorting /> },
             { title: "Labeling Station", path: "labeling-station", element: <LabelingStation /> },
         ],
+    },
+    {
+        categoryName: "Overlays",
+        list: [{ title: "ThreeJS", path: "threejs", element: <ThreeJS /> }],
     },
     {
         categoryName: "WebXR",

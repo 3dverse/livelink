@@ -1,11 +1,13 @@
-import { Vec2 } from "@3dverse/livelink.core";
 import { Context2D } from "../contexts/Context2D";
-import { ContextProvider } from "../contexts/ContextProvider";
 import { ContextWebGL } from "../contexts/ContextWebGL";
 import { CanvasAutoResizer } from "./CanvasAutoResizer";
 import { RenderingSurfaceBase } from "./RenderingSurfaceBase";
 import { Rect } from "./Rect";
-import { CurrentFrameMetaData } from "../decoders/CurrentFrameMetaData";
+
+import type { Vec2 } from "@3dverse/livelink.core";
+import type { ContextProvider } from "../contexts/ContextProvider";
+import type { CurrentFrameMetaData } from "../decoders/CurrentFrameMetaData";
+import type { OverlayInterface } from "./OverlayInterface";
 
 /**
  *
@@ -35,6 +37,11 @@ export class RenderingSurface extends RenderingSurfaceBase {
      *
      */
     #auto_resizer: CanvasAutoResizer;
+
+    /**
+     *
+     */
+    #overlays: Array<OverlayInterface> = [];
 
     /**
      * Dimensions of the HTML canvas in pixels.
@@ -119,6 +126,10 @@ export class RenderingSurface extends RenderingSurfaceBase {
     #onCanvasResized = () => {
         this.#context.refreshSize();
         this.dispatchEvent(new Event("on-resized"));
+
+        for (const overlay of this.#overlays) {
+            overlay.resize({ width: this.width, height: this.height });
+        }
     };
 
     /**
@@ -141,5 +152,41 @@ export class RenderingSurface extends RenderingSurfaceBase {
      */
     drawFrame({ frame, meta_data }: { frame: VideoFrame | OffscreenCanvas; meta_data: CurrentFrameMetaData }): void {
         this.#context.drawFrame({ frame, left: this.offset[0], top: this.offset[1], meta_data });
+
+        for (const overlay of this.#overlays) {
+            const overlayFrame = overlay.drawFrame({ viewports: this.viewports, meta_data });
+            this.#context.drawFrame({
+                frame: overlayFrame,
+                left: 0,
+                top: 0,
+                meta_data,
+            });
+        }
+    }
+
+    /**
+     *
+     */
+    addOverlay({ overlay }: { overlay: OverlayInterface }): void {
+        if (this.#overlays.includes(overlay)) {
+            console.warn("Attempting to add an overlay that is already present", overlay);
+            return;
+        }
+        this.#overlays.push(overlay);
+    }
+
+    /**
+     *
+     */
+    removeOverlay({ overlay }: { overlay: OverlayInterface }): void {
+        overlay.release();
+
+        const index = this.#overlays.indexOf(overlay);
+        if (index === -1) {
+            console.warn("Attempting to remove an overlay that is not present", overlay);
+            return;
+        }
+
+        this.#overlays.splice(index, 1);
     }
 }

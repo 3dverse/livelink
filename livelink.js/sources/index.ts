@@ -22,6 +22,7 @@ export * from "./surfaces/VirtualSurface";
 export * from "./surfaces/RenderingSurface";
 export * from "./surfaces/RenderingSurfaceBase";
 export * from "./surfaces/OffscreenSurface";
+export * from "./surfaces/OverlayInterface";
 
 export * from "./inputs/Keyboard";
 export * from "./inputs/Mouse";

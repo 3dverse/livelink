@@ -1,0 +1,17 @@
+{
+  "compilerOptions": {
+    "outDir": "dist",
+    "target": "ES2022",
+    "esModuleInterop": true,
+    "moduleResolution": "node",
+    "strict": true,
+    "sourceMap": true,
+    "declaration": true,
+    "declarationMap": true,
+    "emitDeclarationOnly": true,
+    "skipLibCheck": true,
+    "types": []
+  },
+
+  "exclude": ["./dist/**/*"]
+}

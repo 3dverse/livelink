@@ -60,6 +60,9 @@ export class Viewport extends EventTarget {
     get height(): number {
         return this.rect.height * this.rendering_surface.height;
     }
+    get offset(): Vec2 {
+        return [this.rect.left * this.rendering_surface.width, this.rect.top * this.rendering_surface.height];
+    }
     get aspect_ratio(): number {
         return this.height > 0 ? this.width / this.height : 1;
     }

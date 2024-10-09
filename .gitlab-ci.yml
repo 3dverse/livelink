@@ -9,6 +9,7 @@ include:
 variables:
   NODE_VERSION: "18"
   LIVELINK_JS_PACKAGE: livelink.js/3dverse-livelink
+  LIVELINK_THREE_PACKAGE: livelink.three/3dverse-livelink-three
   LIVELINK_REACT_PACKAGE: livelink.react/3dverse-livelink-react
   LIVELINK_SAMPLES_PACKAGE: livelink.samples/livelink.samples
 
@@ -59,6 +60,21 @@ js:livelink.js:build:
     PACKAGE_DIR: livelink.js
     PACKAGE_NAME: 3dverse-livelink
 
+js:livelink.three:build:
+  extends:
+    - .build
+  variables:
+    PACKAGE_DIR: livelink.three
+    PACKAGE_NAME: 3dverse-livelink-three
+  needs:
+    - job: js:livelink.js:build
+      artifacts: true
+  before_script:
+    - tar -zxf ${LIVELINK_JS_PACKAGE}-*.tgz --strip-components=1 -C livelink.js
+    - !reference [.build, before_script]
+  rules:
+    - if: $CI_COMMIT_TAG == null
+
 js:livelink.react:build:
   extends:
     - .build
@@ -68,8 +84,11 @@ js:livelink.react:build:
   needs:
     - job: js:livelink.js:build
       artifacts: true
+    - job: js:livelink.three:build
+      artifacts: true
   before_script:
     - tar -zxf ${LIVELINK_JS_PACKAGE}-*.tgz --strip-components=1 -C livelink.js
+    - tar -zxf ${LIVELINK_THREE_PACKAGE}-*.tgz --strip-components=1 -C livelink.three
     - !reference [.build, before_script]
   rules:
     - if: $CI_COMMIT_TAG == null
@@ -82,10 +101,13 @@ js:livelink.samples:build:
   needs:
     - job: js:livelink.js:build
       artifacts: true
+    - job: js:livelink.three:build
+      artifacts: true
     - job: js:livelink.react:build
       artifacts: true
   before_script:
     - tar -zxf ${LIVELINK_JS_PACKAGE}-*.tgz --strip-components=1 -C livelink.js
+    - tar -zxf ${LIVELINK_THREE_PACKAGE}-*.tgz --strip-components=1 -C livelink.three
     - tar -zxf ${LIVELINK_REACT_PACKAGE}-*.tgz --strip-components=1 -C livelink.react
     - !reference [.build, before_script]
   rules:
@@ -104,6 +126,33 @@ js:livelink.js:publish:
     PACKAGE_NAME: $LIVELINK_JS_PACKAGE
   rules:
     - if: $CI_COMMIT_TAG != null
+
+js:livelink.three:publish:
+  stage: deploy
+  extends:
+    - .publish
+  needs:
+    - job: js:livelink.three:build
+      artifacts: true
+  variables:
+    PACKAGE_DIR: livelink.three
+    PACKAGE_NAME: $LIVELINK_THREE_PACKAGE
+  script:
+    - |
+      set -e
+      latest_published_version=$(npm show @3dverse/livelink-three version)
+      current_version=$(node -e "console.log(require('./package.json').version)")
+
+      if [ "$latest_published_version" != "$current_version" ]; then
+        npm version $latest_published_version --no-git-tag-version
+      fi
+      npm version patch --no-git-tag-version
+    - !reference [.publish, script]
+  rules:
+    - if: $CI_COMMIT_REF_NAME == $CI_DEFAULT_BRANCH
+      changes:
+        - livelink.three/**/*
+        - livelink.three/*
 
 js:livelink.react:publish:
   stage: deploy
