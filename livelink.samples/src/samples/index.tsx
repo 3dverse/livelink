@@ -27,6 +27,7 @@ import MultiViewportCanvas from "./multi-viewport-canvas/MultiViewportCanvas";
 
 // Misc
 import Collaborators from "./collaborators/Collaborators";
+import ActivityWatcher from "./activity-watcher/ActivityWatcher";
 import PictureInPicture from "./picture-in-picture/PictureInPicture";
 import LiveSkeletalAnimation from "./live-skeletal-animation/LiveSkeletalAnimation";
 import RenderTargetDebug from "./render-target-debug/RenderTargetDebug";
@@ -80,6 +81,7 @@ export const SAMPLES = [
         categoryName: "Misc",
         list: [
             { title: "Collaborators", path: "collaborators", element: <Collaborators /> },
+            { title: "Activity Watcher", path: "activity-watcher", element: <ActivityWatcher /> },
             { title: "Picture in Picture", path: "picture-in-picture", element: <PictureInPicture /> },
             { title: "Live Skeletal Animation", path: "live-skeletal-animation", element: <LiveSkeletalAnimation /> },
             { title: "Render Target Debug", path: "render-target-debug", element: <RenderTargetDebug /> },

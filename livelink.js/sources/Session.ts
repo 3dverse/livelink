@@ -346,6 +346,6 @@ export class Session extends EventTarget implements SessionInterface {
      *
      */
     _onDisconnected(e: Event): void {
-        this.dispatchEvent(new CustomEvent("on-disconnected"));
+        this.dispatchEvent(new CustomEvent("on-disconnected", { detail: (e as CustomEvent).detail }));
     }
 }
