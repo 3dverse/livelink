@@ -1,4 +1,10 @@
-import type { Vec2i, Vec2ui16, ViewportConfig } from "@3dverse/livelink.core";
+import {
+    LivelinkCoreModule,
+    type CodecType,
+    type Vec2i,
+    type Vec2ui16,
+    type ViewportConfig,
+} from "@3dverse/livelink.core";
 import { DecodedFrameConsumer } from "../decoders/DecodedFrameConsumer";
 import { Livelink } from "../Livelink";
 import { Viewport } from "../Viewport";
@@ -34,6 +40,13 @@ export class RemoteRenderingSurface implements DecodedFrameConsumer {
      * Surface actual dimensions.
      */
     #dimensions: Vec2ui16 = [0, 0];
+
+    /**
+     * Because of the way the encoder works, pixels may be grouped in macroblocks,
+     * to avoid artifacts the surface dimensions must be a multiple of a power of 2.
+     * This multiple value depends on the encoder used.
+     */
+    #size_multiple: Vec2ui16 = [16, 16];
 
     /**
      * Surface dimensions in pixels rounded up to the next multiple of 8.
@@ -153,6 +166,19 @@ export class RemoteRenderingSurface implements DecodedFrameConsumer {
     /**
      *
      */
+    computeRemoteCanvasSize({ codec }: { codec: CodecType }): Vec2ui16 {
+        if (codec === LivelinkCoreModule.Enums.CodecType.h265) {
+            const HEVC_MACROBLOCK_SIZE: Vec2i = [64, 64] as const;
+            this.#size_multiple = HEVC_MACROBLOCK_SIZE;
+            this.#computeSurfaceSize();
+        }
+
+        return this.#dimensions;
+    }
+
+    /**
+     *
+     */
     release(): void {
         for (const surface of this.#surfaces) {
             surface.release();
@@ -183,6 +209,10 @@ export class RemoteRenderingSurface implements DecodedFrameConsumer {
         }
     };
 
+    #next_multiple = (n: number, multiple: number) => {
+        return Math.floor(n) + (Math.floor(n) % multiple === 0 ? 0 : multiple - (Math.floor(n) % multiple));
+    };
+
     /**
      *
      */
@@ -190,10 +220,10 @@ export class RemoteRenderingSurface implements DecodedFrameConsumer {
         const { offset, width, height } = this.#computeBoundingRect();
         this.#computeViewportsOffsets(offset);
 
-        const SIZE_MULTIPLE = 8 as const;
-        const next_multiple = (n: number) =>
-            Math.floor(n) + (Math.floor(n) % SIZE_MULTIPLE === 0 ? 0 : SIZE_MULTIPLE - (Math.floor(n) % SIZE_MULTIPLE));
-        const new_dimensions: Vec2i = [next_multiple(width), next_multiple(height)];
+        const new_dimensions: Vec2i = [
+            this.#next_multiple(width, this.#size_multiple[0]),
+            this.#next_multiple(height, this.#size_multiple[1]),
+        ];
 
         const need_to_resize = new_dimensions[0] != this.#dimensions[0] || new_dimensions[1] != this.dimensions[1];
 

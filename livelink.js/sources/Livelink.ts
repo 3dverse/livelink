@@ -309,13 +309,14 @@ export class Livelink {
         codec?: CodecType;
     }): Promise<ClientConfigResponse> {
         const client_config: ClientConfig = {
-            remote_canvas_size: this.#remote_rendering_surface.dimensions,
+            remote_canvas_size: this.#remote_rendering_surface.computeRemoteCanvasSize({ codec }),
             encoder_config: { codec, profile: 1, frame_rate: 60, lossy: true },
             supported_devices: { keyboard: true, mouse: true, gamepad: true, hololens: false, touchscreen: false },
         };
 
         console.debug("Initial surface size", this.#remote_rendering_surface.dimensions);
         const res = await this.#core.configureClient({ client_config });
+
         this.#codec = res.codec;
         return res;
     }
