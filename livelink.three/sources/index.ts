@@ -1,5 +1,5 @@
 import * as THREE from "three";
-import type { CurrentFrameMetaData, OverlayInterface, Viewport, UUID } from "@3dverse/livelink";
+import type { CurrentFrameMetaData, OverlayInterface, Viewport, UUID, Camera } from "@3dverse/livelink";
 import type { Components } from "@3dverse/livelink.core";
 import { CameraFrameTransform } from "@3dverse/livelink/dist/sources/decoders/CameraFrameTransform";
 
@@ -78,9 +78,9 @@ export class ThreeJS_Overlay implements OverlayInterface {
 
         let camera: THREE_Camera;
         if (viewport.camera.perspective_lens) {
-            camera = this.#setupPerspectiveLens({ viewport });
+            camera = this.#setupPerspectiveLens({ viewport, camera: viewport.camera });
         } else if (viewport.camera.orthographic_lens) {
-            camera = this.#setupOrthographicLens({ viewport });
+            camera = this.#setupOrthographicLens({ camera: viewport.camera });
         } else {
             console.error("Viewport has no projection lens", viewport);
             return;
@@ -105,12 +105,12 @@ export class ThreeJS_Overlay implements OverlayInterface {
     /**
      *
      */
-    #setupPerspectiveLens({ viewport }: { viewport: Viewport }): THREE_Camera {
-        const lens = viewport!.camera!.perspective_lens as Required<Components.PerspectiveLens>;
+    #setupPerspectiveLens({ viewport, camera }: { viewport: Viewport; camera: Camera }): THREE_Camera {
+        const lens = camera.perspective_lens as Required<Components.PerspectiveLens>;
         const perspectiveCamera = new THREE.PerspectiveCamera();
 
-        const camera = perspectiveCamera as unknown as THREE_Camera;
-        camera.onEntityUpdated = () => {
+        const threeCamera = perspectiveCamera as unknown as THREE_Camera;
+        threeCamera.onEntityUpdated = () => {
             perspectiveCamera.aspect = viewport.width / viewport.height;
             perspectiveCamera.fov = lens.fovy;
             perspectiveCamera.near = lens.nearPlane;
@@ -124,12 +124,12 @@ export class ThreeJS_Overlay implements OverlayInterface {
     /**
      *
      */
-    #setupOrthographicLens({ viewport }: { viewport: Viewport }): THREE_Camera {
-        const lens = viewport.camera!.orthographic_lens as Required<Components.OrthographicLens>;
+    #setupOrthographicLens({ camera }: { camera: Camera }): THREE_Camera {
+        const lens = camera.orthographic_lens as Required<Components.OrthographicLens>;
         const orthographicCamera = new THREE.OrthographicCamera();
 
-        const camera = orthographicCamera as unknown as THREE_Camera;
-        camera.onEntityUpdated = () => {
+        const threeCamera = orthographicCamera as unknown as THREE_Camera;
+        threeCamera.onEntityUpdated = () => {
             orthographicCamera.left = lens.left;
             orthographicCamera.right = lens.right;
             orthographicCamera.top = lens.top;
