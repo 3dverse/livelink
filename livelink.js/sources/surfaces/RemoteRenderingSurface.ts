@@ -46,7 +46,7 @@ export class RemoteRenderingSurface implements DecodedFrameConsumer {
      * to avoid artifacts the surface dimensions must be a multiple of a power of 2.
      * This multiple value depends on the encoder used.
      */
-    #size_multiple: Vec2ui16 = [16, 16];
+    #size_multiple: Vec2ui16 = [32, 32];
 
     /**
      * Surface dimensions in pixels rounded up to the next multiple of 8.
