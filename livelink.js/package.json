@@ -21,7 +21,7 @@
   },
   "license": "ISC",
   "dependencies": {
-    "@3dverse/livelink.core": "^0.7.2"
+    "@3dverse/livelink.core": "^0.7.4"
   },
   "devDependencies": {
     "cross-env": "^7.0.3",
@@ -30,6 +30,6 @@
     "rimraf": "^6.0.1",
     "typedoc": "^0.26.8",
     "typedoc-plugin-markdown": "^4.2.9",
-    "typescript": "^5.6.2"
+    "typescript": "^5.6.3"
   }
 }
