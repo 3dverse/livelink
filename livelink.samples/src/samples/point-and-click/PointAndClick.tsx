@@ -139,13 +139,15 @@ export default function PointAndClick() {
         if (!instance) return;
         const viewport = instance.viewports[0];
         const canvas = canvasRef.current!;
+        const mouseMouseCallback = (e: MouseEvent) => onMouseMove(e, character as Entity, viewport);
+        const onClickCallback = (e: Event) => onClick(e, character as Entity);
         if (character) {
-            canvas.addEventListener("mousemove", e => onMouseMove(e, character as Entity, viewport));
-            instance.viewports[0].addEventListener("on-entity-picked", e => onClick(e, character));
+            canvas.addEventListener("mousemove", mouseMouseCallback);
+            instance.viewports[0].addEventListener("on-entity-picked", onClickCallback);
         }
         return () => {
-            canvas.removeEventListener("mousemove", e => onMouseMove(e, character as Entity, viewport));
-            instance.viewports[0].removeEventListener("on-entity-picked", e => onClick(e, character as Entity));
+            canvas.removeEventListener("mousemove", mouseMouseCallback);
+            instance.viewports[0].removeEventListener("on-entity-picked", onClickCallback);
         };
     }, [instance, character, onClick, onMouseMove]);
 
