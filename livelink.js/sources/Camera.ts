@@ -2,7 +2,7 @@ import { Entity } from "./Entity";
 import { Viewport } from "./Viewport";
 
 /**
- *
+ * @category Entity
  */
 export class Camera extends Entity {
     /**

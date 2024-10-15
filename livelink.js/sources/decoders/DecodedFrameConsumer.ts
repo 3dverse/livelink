@@ -1,7 +1,7 @@
 import { CurrentFrameMetaData } from "./CurrentFrameMetaData";
 
 /**
- *
+ *  @category Streaming
  */
 export interface DecodedFrameConsumer {
     /**

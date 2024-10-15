@@ -1,7 +1,7 @@
 import { CurrentFrameMetaData } from "../decoders/CurrentFrameMetaData";
 
 /**
- *
+ * @category Rendering
  */
 export abstract class ContextProvider {
     /**

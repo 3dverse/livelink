@@ -4,7 +4,7 @@ import { EntityRegistry } from "../EntityRegistry";
 import { Camera } from "../Camera";
 
 /**
- *
+ * @category Streaming
  */
 export type RawFrameMetaData = {
     /**
@@ -29,7 +29,7 @@ export type RawFrameMetaData = {
 };
 
 /**
- *
+ * @category Streaming
  */
 export function rawFrameMetaDatafromFrameMetaData({
     frame_meta_data,

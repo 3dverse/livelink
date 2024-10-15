@@ -4,7 +4,7 @@ import { CurrentFrameMetaData } from "../decoders/CurrentFrameMetaData";
 import { Rect } from "./Rect";
 
 /**
- *
+ * @category Rendering
  */
 export abstract class RenderingSurfaceBase extends EventTarget {
     /**

@@ -1,3 +1,6 @@
+/**
+ * @category Inputs
+ */
 export interface InputDevice {
     name: string;
 

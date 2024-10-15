@@ -6,7 +6,7 @@ import { RenderingSurface } from "../surfaces/RenderingSurface";
 import { InputDevice } from "./InputDevice";
 
 /**
- *
+ * @category Inputs
  */
 export class Mouse implements InputDevice {
     /**

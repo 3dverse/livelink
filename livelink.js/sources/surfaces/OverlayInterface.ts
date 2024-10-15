@@ -2,7 +2,7 @@ import type { CurrentFrameMetaData } from "../decoders/CurrentFrameMetaData";
 import type { Viewport } from "../Viewport";
 
 /**
- *
+ * @category Rendering
  */
 export interface OverlayInterface {
     /**

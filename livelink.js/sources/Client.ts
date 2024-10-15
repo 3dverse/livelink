@@ -3,6 +3,9 @@ import type { ClientInterface, ClientMetaData, Mat4, RTID, UUID } from "@3dverse
 /**
  * A client is the representation of a singular user in a session.
  * The same user can have multiple clients in a given session.
+ *
+ * @category Session
+ *
  */
 export class Client implements ClientInterface {
     /**

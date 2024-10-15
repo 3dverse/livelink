@@ -13,6 +13,9 @@ type ClientInfo = {
 };
 
 /**
+ * Session information.
+ *
+ * @category Session
  *
  */
 export type SessionInfo = {
@@ -36,11 +39,14 @@ export type SessionInfo = {
  * @param {Array<SessionInfo>} sessions - An array of session information running the targeted scene.
  *
  * @returns {SessionInfo | null} -The selected session or null
+ *
+ * @category Session
+ *
  */
 export type SessionSelector = ({ sessions }: { sessions: Array<SessionInfo> }) => SessionInfo | null;
 
 /**
- *
+ *  @category Session
  */
 export class Session extends EventTarget implements SessionInterface {
     /**

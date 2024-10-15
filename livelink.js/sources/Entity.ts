@@ -14,7 +14,7 @@ type EntityAutoUpdateState = "on" | "off";
 class InvalidEntityError extends Error {}
 
 /**
- *
+ * @category Entity
  */
 export class Entity extends EntityBase {
     /**

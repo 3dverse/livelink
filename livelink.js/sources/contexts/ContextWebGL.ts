@@ -3,7 +3,7 @@ import { ContextProvider } from "./ContextProvider";
 type Canvas = HTMLCanvasElement | OffscreenCanvas;
 
 /**
- *
+ * @category Rendering
  */
 export class ContextWebGL extends ContextProvider {
     /**

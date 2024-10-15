@@ -74,7 +74,7 @@ function computebuttonReading(gamepad: BrowserGamepad) {
 }
 
 /**
- *
+ * @category Inputs
  */
 
 export class Gamepad implements InputDevice {

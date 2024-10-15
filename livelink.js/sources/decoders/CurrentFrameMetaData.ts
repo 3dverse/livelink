@@ -1,7 +1,7 @@
 import { CameraFrameTransform } from "./CameraFrameTransform";
 
 /**
- *
+ *  @category Streaming
  */
 
 export type CurrentFrameMetaData = {

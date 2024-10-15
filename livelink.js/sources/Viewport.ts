@@ -9,7 +9,7 @@ import { RelativeRect } from "./surfaces/Rect";
 import { RenderingSurface } from "./surfaces/RenderingSurface";
 
 /**
- *
+ * @category Rendering
  */
 export class Viewport extends EventTarget {
     /**

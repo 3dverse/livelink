@@ -1,7 +1,7 @@
 import { ContextProvider } from "./ContextProvider";
 
 /**
- *
+ * @category Rendering
  */
 export class Context2D extends ContextProvider {
     private _canvas: HTMLCanvasElement;

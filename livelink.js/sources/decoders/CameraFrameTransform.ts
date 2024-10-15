@@ -2,7 +2,7 @@ import type { Quat, Vec3 } from "@3dverse/livelink.core";
 import { Camera } from "../Camera";
 
 /**
- *
+ * @category Streaming
  */
 
 export type CameraFrameTransform = {

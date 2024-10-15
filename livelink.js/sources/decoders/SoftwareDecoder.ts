@@ -33,7 +33,7 @@ interface YUVCanvas {
 }
 
 /**
- *
+ * @category Streaming
  */
 export class SoftwareDecoder extends EncodedFrameConsumer {
     /**

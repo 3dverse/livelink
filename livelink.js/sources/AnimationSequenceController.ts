@@ -2,7 +2,7 @@ import { Entity } from "./Entity";
 import { Scene } from "./Scene";
 
 /**
- *
+ * @category Entity
  */
 export class AnimationSequenceController extends Entity {
     constructor(_scene: Scene) {

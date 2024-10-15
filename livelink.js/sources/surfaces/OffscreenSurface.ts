@@ -6,7 +6,7 @@ import { CanvasContextType } from "./RenderingSurface";
 import { RenderingSurfaceBase } from "./RenderingSurfaceBase";
 
 /**
- *
+ * @category Rendering
  */
 export class OffscreenSurface<ContextType extends CanvasContextType, ContextOptions> extends RenderingSurfaceBase {
     /**

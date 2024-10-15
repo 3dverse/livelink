@@ -6,7 +6,7 @@ import { LivelinkCoreModule } from "@3dverse/livelink.core";
 import { DecodedFrameConsumer } from "./DecodedFrameConsumer";
 
 /**
- *
+ *  @category Streaming
  */
 export class WebCodecsDecoder extends EncodedFrameConsumer {
     /**

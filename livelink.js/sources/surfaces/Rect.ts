@@ -1,5 +1,5 @@
 /**
- *
+ * @category Rendering
  */
 export class Rect {
     /**
@@ -83,7 +83,7 @@ export class Rect {
 }
 
 /**
- *
+ * @category Rendering
  */
 export class RelativeRect extends Rect {
     /**

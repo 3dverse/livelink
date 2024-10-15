@@ -35,6 +35,8 @@ import { compute_rpn } from "./Filters";
  * The Livelink interface.
  *
  * This interface CAN be embedded and distributed inside applications.
+ *
+ * @category Core
  */
 export class Livelink {
     /**

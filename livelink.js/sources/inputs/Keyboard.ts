@@ -2,6 +2,9 @@ import { InputDevice } from "./InputDevice";
 import { Livelink } from "../Livelink";
 import { LivelinkCoreModule } from "@3dverse/livelink.core";
 
+/**
+ * @category Inputs
+ */
 export class Keyboard implements InputDevice {
     /**
      *

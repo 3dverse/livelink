@@ -10,19 +10,19 @@ import type { CurrentFrameMetaData } from "../decoders/CurrentFrameMetaData";
 import type { OverlayInterface } from "./OverlayInterface";
 
 /**
- *
+ * @category Rendering
  */
 export type CanvasContextAttributes =
     | CanvasRenderingContext2DSettings
     | (WebGLContextAttributes & { xrCompatible?: boolean });
 
 /**
- *
+ * @category Rendering
  */
 export type CanvasContextType = "2d" | "webgl" | "webgl2";
 
 /**
- *
+ * @category Rendering
  */
 export class RenderingSurface extends RenderingSurfaceBase {
     /**

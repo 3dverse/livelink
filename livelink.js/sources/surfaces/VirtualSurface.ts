@@ -3,7 +3,7 @@ import { Rect } from "./Rect";
 import { CurrentFrameMetaData } from "../decoders/CurrentFrameMetaData";
 
 /**
- *
+ * @category Rendering
  */
 export class VirtualSurface extends RenderingSurfaceBase {
     /**

@@ -3,7 +3,7 @@ import { RawFrameMetaData } from "./RawFrameMetaData";
 import { CurrentFrameMetaData } from "./CurrentFrameMetaData";
 
 /**
- *
+ *  @category Streaming
  */
 export abstract class EncodedFrameConsumer {
     /**

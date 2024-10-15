@@ -24,6 +24,9 @@ import { CurrentFrameMetaData } from "../decoders/CurrentFrameMetaData";
  * The surface is also responsible of decoding the encoded frame returned by the
  * renderer and spliting the decoded frame into areas corresponding to their
  * respective viewports.
+ *
+ * @category Rendering
+ *
  */
 export class RemoteRenderingSurface implements DecodedFrameConsumer {
     /**

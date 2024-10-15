@@ -2,7 +2,7 @@ import { copySign } from ".";
 import type { Quat, Vec3 } from "@3dverse/livelink.core";
 
 /**
- *
+ * @internal
  */
 export function quaternionToEuler([x, y, z, w]: Quat): Vec3 {
     const euler = { roll: 0.0, pitch: 0.0, yaw: 0.0 };
@@ -30,7 +30,7 @@ export function quaternionToEuler([x, y, z, w]: Quat): Vec3 {
 }
 
 /**
- *
+ * @internal
  */
 export function quaternionFromEuler(eulers: Vec3): Quat {
     const [roll, pitch, yaw] = eulers.map(degree => (degree * Math.PI) / 180.0);
