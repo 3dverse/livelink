@@ -7,6 +7,7 @@ import type {
     InputState,
     LivelinkCore,
     Quat,
+    RTID,
     ScreenSpaceRayQuery,
     ScreenSpaceRayResult,
     UUID,
@@ -231,6 +232,18 @@ export class Livelink {
         });
 
         this.#core.addEventListener({
+            target: "editor",
+            event_name: "entity-visibility-changed",
+            handler: e => {
+                const event = e as CustomEvent<{ entityRTID: RTID; isVisible: boolean }>;
+                this.scene._onEntityVisibilityChanged({
+                    entity_rtid: event.detail.entityRTID,
+                    is_visible: event.detail.isVisible,
+                });
+            },
+        });
+
+        this.#core.addEventListener({
             target: "gateway",
             event_name: "on-script-event-received",
             handler: e => this.scene._onScriptEventReceived(e),
@@ -407,7 +420,7 @@ export class Livelink {
      *
      */
     async newCamera<CameraType extends Camera>(
-        camera_type: { new(_s: Scene): CameraType },
+        camera_type: { new (_s: Scene): CameraType },
         name: string,
         viewport: Viewport,
     ): Promise<CameraType> {
@@ -435,7 +448,7 @@ export class Livelink {
      */
 
     addInputDevice<DeviceType extends InputDevice>(
-        device_type: { new(_: Livelink, viewport?: Viewport): DeviceType },
+        device_type: { new (_: Livelink, viewport?: Viewport): DeviceType },
         viewport?: Viewport,
     ) {
         const device = new device_type(this, viewport);

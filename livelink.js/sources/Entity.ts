@@ -71,6 +71,21 @@ export class Entity extends EntityBase {
     }
 
     /**
+     *
+     */
+    get is_visible() {
+        return this._is_visible;
+    }
+
+    /**
+     *
+     */
+    set is_visible(val: boolean) {
+        this.scene._setEntityVisibility({ entity_rtid: this.rtid!, is_visible: val });
+        this._is_visible = val;
+    }
+
+    /**
      * @internal
      */
     constructor(private readonly _scene: Scene) {
@@ -278,6 +293,14 @@ export class Entity extends EntityBase {
         this.local_transform!.orientation = orientation;
         this._auto_update = "on";
         this._proxy_state = "on";
+    }
+
+    /**
+     * @internal
+     */
+    _onVisibilityChanged({ is_visible }: { is_visible: boolean }) {
+        this._is_visible = is_visible;
+        this.dispatchEvent(new CustomEvent("visibility-changed", { detail: { is_visible } }));
     }
 
     /**

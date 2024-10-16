@@ -48,6 +48,11 @@ export class EntityBase extends EventTarget implements EntityInterface {
     protected _setEuid(euid: UUID) {
         this.euid = { value: euid, rtid: BigInt(0) };
     }
+    
+    /**
+     *
+     */
+    protected _is_visible: boolean = true;
 
     /**
      *
@@ -62,6 +67,8 @@ export class EntityBase extends EventTarget implements EntityInterface {
             value: (components.euid as { value: UUID }).value,
             rtid: BigInt(editor_entity.rtid),
         };
+    
+        this._is_visible = editor_entity.isVisible;
 
         delete components.euid;
 

@@ -419,6 +419,29 @@ export class Scene extends EventTarget {
     }
 
     /**
+     * @internal
+     */
+    async _setEntityVisibility({ entity_rtid, is_visible }: { entity_rtid: RTID; is_visible: boolean }): Promise<void> {
+        return this.#core.setEntityVisibility({ entity_rtid, is_visible });
+    }
+
+    /**
+     * @internal
+     */
+    async _onEntityVisibilityChanged({
+        entity_rtid,
+        is_visible,
+    }: {
+        entity_rtid: RTID;
+        is_visible: boolean;
+    }): Promise<void> {
+        const entity = this.entity_registry.get({ entity_rtid });
+        if (entity) {
+            entity._onVisibilityChanged({ is_visible });
+        }
+    }
+
+    /**
      *  Add ancestors to the entity registry.
      */
     async resolveAncestors({ entity_rtid }: { entity_rtid: RTID }): Promise<Array<EditorEntity>> {

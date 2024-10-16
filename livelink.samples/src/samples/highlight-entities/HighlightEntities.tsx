@@ -10,6 +10,7 @@ export default function HighlightEntities() {
     const canvasRef = useRef<HTMLCanvasElement>(null);
 
     const [selectedEntities, setSelectedEntities] = useState<Entity[]>([]);
+    const [isVisible, setIsVisible] = useState(true);
 
     const { instance, connect, disconnect } = useLivelinkInstance({ views: [{ canvas_ref: canvasRef }] });
 
@@ -106,6 +107,19 @@ export default function HighlightEntities() {
                             }}
                         >
                             Delete {selectedEntities.length} {selectedEntities.length === 1 ? "entity" : "entities"}
+                        </button>
+                        <button
+                            className="button button-primary"
+                            onClick={() => {
+                                if (!instance) return;
+                                selectedEntities.forEach(entity => {
+                                    entity.is_visible = !isVisible;
+                                });
+                                setIsVisible(!isVisible);
+                            }}
+                        >
+                            {isVisible ? "Hide" : "Show"} {selectedEntities.length}{" "}
+                            {selectedEntities.length === 1 ? "entity" : "entities"}
                         </button>
                     </>
                 )}
