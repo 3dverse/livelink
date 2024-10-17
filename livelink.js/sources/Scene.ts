@@ -160,7 +160,8 @@ export class Scene extends EventTarget {
             return null;
         }
 
-        return this.#addEditorEntities(entity_type, { editor_entities: [entity_entity], resolve_ancestors: true })[0];
+        const entities = await this.#addEditorEntities(entity_type, { editor_entities: [entity_entity], resolve_ancestors: true });
+        return entities[0];
     }
 
     /**
@@ -374,8 +375,8 @@ export class Scene extends EventTarget {
             editor_entities: Array<EditorEntity>;
             resolve_ancestors: boolean;
         },
-    ): Array<EntityType> {
-        const entities = editor_entities.map(editor_entity => {
+    ): Promise<Array<EntityType>> {
+        const resolveEntities = editor_entities.map(async editor_entity => {
             let entity = this.entity_registry.get({ entity_rtid: BigInt(editor_entity.rtid) }) as EntityType | null;
 
             if (!entity) {
@@ -384,13 +385,12 @@ export class Scene extends EventTarget {
                 this.entity_registry.add({ entity });
 
                 if (resolve_ancestors) {
-                    this.resolveAncestors({ entity_rtid: BigInt(editor_entity.rtid) });
+                    await this.resolveAncestors({ entity_rtid: BigInt(editor_entity.rtid) });
                 }
             }
             return entity;
         });
-
-        return entities;
+        return Promise.all(resolveEntities);
     }
 
     /**
@@ -398,7 +398,7 @@ export class Scene extends EventTarget {
      */
     async _getChildren({ entity_rtid }: { entity_rtid: RTID }): Promise<Array<Entity>> {
         const editor_entities = await this.#core.getChildren({ entity_rtid });
-        const children = this.#addEditorEntities(Entity, { editor_entities, resolve_ancestors: false });
+        const children = await this.#addEditorEntities(Entity, { editor_entities, resolve_ancestors: false });
         children.forEach(child => child._setParent(this.entity_registry.get({ entity_rtid })!));
         return children;
     }
@@ -447,7 +447,7 @@ export class Scene extends EventTarget {
     async resolveAncestors({ entity_rtid }: { entity_rtid: RTID }): Promise<Array<EditorEntity>> {
         const ancestor_editor_entities = await this.#core.resolveAncestors({ entity_rtid: BigInt(entity_rtid) });
 
-        this.#addEditorEntities(Entity, {
+        await this.#addEditorEntities(Entity, {
             editor_entities: ancestor_editor_entities,
             resolve_ancestors: false,
         });
