@@ -304,6 +304,24 @@ export class Entity extends EntityBase {
     }
 
     /**
+     *
+     */
+    _addComponentDefaultValues({
+        component_default_values,
+    }: {
+        component_default_values: ReadonlyMap<ComponentType, object>;
+    }) {
+        this._proxy_state = "off";
+        for (const [component_type, default_value] of component_default_values) {
+            if (this[component_type]) {
+                //@ts-ignore
+                this[component_type] = { ...structuredClone(default_value), ...this[component_type] };
+            }
+        }
+        this._proxy_state = "on";
+    }
+
+    /**
      * @internal
      */
     static handler = {

@@ -78,7 +78,7 @@ export class EntityRegistry {
             );
         }
 
-        this.#addComponentDefaultValues({ entity });
+        entity._addComponentDefaultValues({ component_default_values: this.#component_default_values });
         this.#entities.add(entity);
         this.#entity_rtid_lut.set(entity.rtid, entity);
         const entities = this.#entity_euid_lut.get(entity.id);
@@ -350,18 +350,6 @@ export class EntityRegistry {
     _clearBroadcastList() {
         for (const [_, entities] of this.#dirty_components_to_broadcast) {
             entities.clear();
-        }
-    }
-
-    /**
-     * @internal
-     */
-    #addComponentDefaultValues({ entity }: { entity: Entity }) {
-        for (const [component_type, default_value] of this.#component_default_values) {
-            if (entity[component_type]) {
-                //@ts-ignore
-                entity[component_type] = { ...structuredClone(default_value), ...entity[component_type] };
-            }
         }
     }
 }
