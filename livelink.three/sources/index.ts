@@ -60,6 +60,7 @@ export class ThreeJS_Overlay implements OverlayInterface {
         }
 
         const camera = new THREE.Camera();
+        camera.matrixAutoUpdate = false;
         this.#viewports.set(viewport.camera.id!, { camera, viewport });
     }
 
@@ -94,9 +95,10 @@ export class ThreeJS_Overlay implements OverlayInterface {
     }) {
         const [offsetX, offsetY] = viewport.offset;
 
-        camera.matrixWorld.fromArray(metadata.world_from_view_matrix);
+        camera.position.fromArray(metadata.world_position);
+        camera.quaternion.fromArray(metadata.world_orientation);
+        camera.updateMatrix();
         camera.projectionMatrix.fromArray(viewport.camera!.clip_from_view_matrix);
-        camera.updateMatrixWorld();
 
         this.#renderer.setScissor(
             offsetX,
