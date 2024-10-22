@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 import { useEffect, useRef, useState } from "react";
-import { DefaultCamera, useLivelinkInstance } from "@3dverse/livelink-react";
+import { useLivelinkInstance } from "@3dverse/livelink-react";
 import Canvas from "../../components/Canvas";
 import { CanvasActionBar } from "../../styles/components/CanvasActionBar";
 import { Camera, Client, Entity, Livelink, RTID, RenderingSurface, Viewport } from "@3dverse/livelink";
@@ -34,17 +34,16 @@ const Avatar = ({ client, instance }: { client: Client; instance: Livelink }) =>
     const avatarRef = useRef<HTMLDivElement>(null);
 
     const viewport = instance.viewports[0];
-    const camera = viewport?.camera as DefaultCamera;
 
     const animate = () => {
         const position = clientCameraRef.current?.local_transform?.position;
         if (position) {
-            const projection = camera.project(position);
-            avatarRef.current!.style.left = projection[0] + "px";
-            avatarRef.current!.style.top = projection[1] + "px";
-            avatarRef.current!.style.display = isAvatarVisible(projection, viewport) ? "block" : "none";
-            avatarRef.current!.style.width = computeRadius(projection[2]) + "px";
-            avatarRef.current!.style.height = computeRadius(projection[2]) + "px";
+            const { screen_position } = viewport.projectWorldToScreen({ world_position: position });
+            avatarRef.current!.style.left = screen_position[0] + "px";
+            avatarRef.current!.style.top = screen_position[1] + "px";
+            avatarRef.current!.style.display = isAvatarVisible(screen_position, viewport) ? "block" : "none";
+            avatarRef.current!.style.width = computeRadius(screen_position[2]) + "px";
+            avatarRef.current!.style.height = computeRadius(screen_position[2]) + "px";
         }
         requestRef.current = requestAnimationFrame(animate);
     };

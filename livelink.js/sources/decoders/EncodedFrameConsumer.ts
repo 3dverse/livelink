@@ -26,8 +26,8 @@ export abstract class EncodedFrameConsumer {
      *
      */
     applyFrameMetaData(meta_data: RawFrameMetaData): CurrentFrameMetaData {
-        for (const { camera, position, orientation } of meta_data.other_clients_cameras) {
-            camera._setLocalTransform({ position, orientation });
+        for (const { camera, world_position, world_orientation } of meta_data.other_clients_cameras) {
+            camera._setLocalTransform({ world_position, world_orientation });
         }
 
         return {

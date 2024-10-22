@@ -400,6 +400,11 @@ export class Livelink {
             client_id: this.session.client_id!,
             entity_registry: this.scene.entity_registry,
         });
+
+        for (const frame_camera_transform of meta_data.current_client_cameras) {
+            frame_camera_transform.camera.updateClipFromWorldMatrix({ frame_camera_transform });
+        }
+
         this.#encoded_frame_consumer!.consumeEncodedFrame({ encoded_frame: frame_data.encoded_frame, meta_data });
     };
 
@@ -428,6 +433,7 @@ export class Livelink {
         camera = new Proxy(camera, Entity.handler) as CameraType;
         viewport.camera = camera;
         camera.onCreate();
+        camera.updateLens();
 
         await camera._instantiate(
             this.#core.spawnEntity({ entity: camera, options: { delete_on_client_disconnection: true } }),

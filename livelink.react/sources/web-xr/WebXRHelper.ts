@@ -561,9 +561,8 @@ export class WebXRHelper {
         if (this.#context.meta_data) {
             const views = xr_views.map(({ view, viewport }, index) => {
                 const current_viewport = this.#surface.viewports[index];
-                let { position, orientation } = this.#context.meta_data!.cameras.find(
-                    c => c.camera.id === current_viewport.camera!.id,
-                )!;
+                let { world_position: position, world_orientation: orientation } =
+                    this.#context.meta_data!.cameras.find(c => c.camera.id === current_viewport.camera!.id)!;
                 return {
                     view,
                     viewport,

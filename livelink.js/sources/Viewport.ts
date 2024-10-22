@@ -7,6 +7,7 @@ import { Entity } from "./Entity";
 import { RenderingSurfaceBase } from "./surfaces/RenderingSurfaceBase";
 import { RelativeRect } from "./surfaces/Rect";
 import { RenderingSurface } from "./surfaces/RenderingSurface";
+import { vec2, vec3 } from "gl-matrix";
 
 /**
  * @category Rendering
@@ -177,5 +178,31 @@ export class Viewport extends EventTarget {
         }
 
         return { entity, ws_position: res.position, ws_normal: res.normal };
+    }
+
+    /**
+     *
+     */
+    projectWorldToScreen({
+        world_position,
+        out_clip_position = vec3.create() as Vec3,
+    }: {
+        world_position: Vec3;
+        out_clip_position?: Vec3;
+    }): {
+        screen_position: Vec3;
+    } {
+        if (!this.#camera) {
+            throw new Error("No camera set on viewport");
+        }
+
+        const clip_position = this.#camera.projectWorldToClip({ world_position, out_clip_position });
+
+        clip_position[0] = (clip_position[0] + 1) * this.width * 0.5;
+        clip_position[1] = (-clip_position[1] + 1) * this.height * 0.5;
+
+        return {
+            screen_position: clip_position,
+        };
     }
 }

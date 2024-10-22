@@ -12,6 +12,7 @@ export * from "./decoders/SoftwareDecoder";
 export * from "./decoders/WebCodecsDecoder";
 export * from "./decoders/EncodedFrameConsumer";
 export * from "./decoders/CurrentFrameMetaData";
+export * from "./decoders/FrameCameraTransform";
 
 export * from "./contexts/ContextProvider";
 export * from "./contexts/Context2D";

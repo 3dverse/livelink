@@ -127,6 +127,10 @@ export class RenderingSurface extends RenderingSurfaceBase {
         this.#context.refreshSize();
         this.dispatchEvent(new Event("on-resized"));
 
+        for (const viewport of this.viewports) {
+            viewport?.camera?.updateLens();
+        }
+
         for (const overlay of this.#overlays) {
             overlay.resize({ width: this.width, height: this.height });
         }

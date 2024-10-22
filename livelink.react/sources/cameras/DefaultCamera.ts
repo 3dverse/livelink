@@ -96,18 +96,4 @@ export class DefaultCamera extends Camera {
         this.local_transform!.position = cameraPosition;
         this.local_transform!.orientation = cameraOrientationArray as Quat;
     }
-
-    project(position: Vec3) {
-        if (!this.cameraControls || !this.viewport) {
-            throw new Error("CameraControls or Viewport is not initialized");
-        }
-        const projectedPosition = new Vector3(position[0], position[1], position[2])
-            .project(this.cameraControls?.camera)
-            .toArray();
-        return [
-            ((projectedPosition[0] + 1) * this.viewport.width) / 2,
-            ((-projectedPosition[1] + 1) * this.viewport.height) / 2,
-            projectedPosition[2],
-        ];
-    }
 }

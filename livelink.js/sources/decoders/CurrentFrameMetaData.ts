@@ -1,4 +1,4 @@
-import { CameraFrameTransform } from "./CameraFrameTransform";
+import { FrameCameraTransform } from "./FrameCameraTransform";
 
 /**
  *  @category Streaming
@@ -18,5 +18,5 @@ export type CurrentFrameMetaData = {
     /**
      * Camera transforms of each viewport in the frame
      */
-    cameras: Array<CameraFrameTransform>;
+    cameras: Array<FrameCameraTransform>;
 };

@@ -1,5 +1,5 @@
 import type { FrameMetaData, Mat4, Quat, UUID, Vec3 } from "@3dverse/livelink.core";
-import { CameraFrameTransform } from "./CameraFrameTransform";
+import { FrameCameraTransform } from "./FrameCameraTransform";
 import { EntityRegistry } from "../EntityRegistry";
 import { Camera } from "../Camera";
 
@@ -20,12 +20,12 @@ export type RawFrameMetaData = {
     /**
      * Camera transforms of each client viewport in the frame
      */
-    current_client_cameras: Array<CameraFrameTransform>;
+    current_client_cameras: Array<FrameCameraTransform>;
 
     /**
      * Camera transforms of each other client viewport in the frame
      */
-    other_clients_cameras: Array<CameraFrameTransform>;
+    other_clients_cameras: Array<FrameCameraTransform>;
 };
 
 /**
@@ -55,10 +55,11 @@ export function rawFrameMetaDatafromFrameMetaData({
         if (!camera) {
             continue;
         }
-        const cameraMetadata: CameraFrameTransform = {
+        const cameraMetadata: FrameCameraTransform = {
             camera,
-            position: getWorldPosition(viewport.ws_from_ls),
-            orientation: getWorldQuaternion(viewport.ws_from_ls),
+            world_from_view_matrix: viewport.ws_from_ls,
+            world_position: getWorldPosition(viewport.ws_from_ls),
+            world_orientation: getWorldQuaternion(viewport.ws_from_ls),
         };
         meta_data.current_client_cameras.push(cameraMetadata);
     }
@@ -70,10 +71,11 @@ export function rawFrameMetaDatafromFrameMetaData({
             if (!camera || meta_data.current_client_cameras.some(c => c.camera.rtid === camera.rtid)) {
                 continue;
             }
-            const cameraMetadata: CameraFrameTransform = {
+            const cameraMetadata: FrameCameraTransform = {
                 camera,
-                position: getWorldPosition(viewport.ws_from_ls),
-                orientation: getWorldQuaternion(viewport.ws_from_ls),
+                world_from_view_matrix: viewport.ws_from_ls,
+                world_position: getWorldPosition(viewport.ws_from_ls),
+                world_orientation: getWorldQuaternion(viewport.ws_from_ls),
             };
             meta_data.other_clients_cameras.push(cameraMetadata);
         }
