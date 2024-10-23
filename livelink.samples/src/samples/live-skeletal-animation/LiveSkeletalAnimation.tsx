@@ -6,7 +6,7 @@ import * as THREE from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import { TransformControls } from "three/addons/controls/TransformControls.js";
 import { useLivelinkInstance, useEntity } from "@3dverse/livelink-react";
-import { Entity, Livelink, Quat } from "@3dverse/livelink";
+import { Entity, Livelink, Quat, SkeletonPartialPose } from "@3dverse/livelink";
 import { Animation } from "./animations/skeletal_animation_types.ts";
 import { droid_idle } from "./animations/droid_idle.ts";
 import { droid_walk } from "./animations/droid_walk.ts";
@@ -32,13 +32,13 @@ export default function LiveSkeletalAnimation() {
             disconnect();
         } else if (livelinkCanvasRef.current) {
             connect({
-                scene_id: "d63131bc-86f0-4fd4-afe5-3c52d4e38947",
-                token: "public_mpijUG4uJBZNH3Hl",
+                scene_id: "659b621a-e5fb-4653-a0c7-bf76a747dc39",
+                token: "public_p54ra95AMAnZdTel",
             });
         }
     };
 
-    const controller = useEntity({ instance, entity_uuid: "677ae420-f914-4604-a95b-494b2e78c94c" });
+    const controller = useEntity({ instance, entity_uuid: "a6b3e446-b65f-4e98-8474-813fe6599e45" });
 
     useEffect(() => {
         const { renderer, scene, camera } = setUpThreeJsSkeleton(threeJSCanvasRef.current!);
@@ -67,8 +67,10 @@ export default function LiveSkeletalAnimation() {
         jointGizmo!.addEventListener("rotationAngle-changed", e => {
             const joint = e.target.object!;
             const jointIndex = parseInt(joint.name);
-            const pose = new Map().set(jointIndex, joint.quaternion.toArray());
-            instance.sendSkeletonPose({ controller, pose });
+            const partial_pose: SkeletonPartialPose = {
+                orientations: new Map().set(jointIndex, joint.quaternion.toArray()),
+            };
+            instance.sendSkeletonPose({ controller, partial_pose });
         });
     }, [instance, controller]);
 
@@ -138,8 +140,10 @@ function handleUserControlledSkeleton(instance: Livelink | null, controller: Ent
 
     // Update livelink skeleton
     if (instance && controller) {
-        const pose = new Map(joints!.map((joint, jointIndex) => [jointIndex, joint.quaternion.toArray() as Quat]));
-        instance.sendSkeletonPose({ controller, pose });
+        const partial_pose: SkeletonPartialPose = {
+            orientations: new Map(joints!.map((joint, jointIndex) => [jointIndex, joint.quaternion.toArray() as Quat])),
+        };
+        instance.sendSkeletonPose({ controller, partial_pose });
     }
 }
 

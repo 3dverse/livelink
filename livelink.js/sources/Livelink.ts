@@ -6,10 +6,10 @@ import type {
     FrameData,
     InputState,
     LivelinkCore,
-    Quat,
     RTID,
     ScreenSpaceRayQuery,
     ScreenSpaceRayResult,
+    SkeletonPartialPose,
     UUID,
     Vec2i,
     ViewportConfigs,
@@ -537,10 +537,10 @@ export class Livelink {
     /**
      *
      */
-    sendSkeletonPose({ controller, pose }: { controller: Entity; pose: Map<number, Quat> }): void {
+    sendSkeletonPose({ controller, partial_pose }: { controller: Entity; partial_pose: SkeletonPartialPose }): void {
         this.#core.sendSkeletonPose({
             controller_rtid: controller.rtid!,
-            pose,
+            partial_pose,
         });
     }
 
