@@ -177,10 +177,12 @@ function handleAnimatedSkeleton(animation: string, instance: Livelink | null, co
         // Update livelink skeleton
         if (instance && controller) {
             const rotations = chosenAnimation[frameIndex].rotations;
-            const pose = new Map(rotations.map((quat, jointIndex) => [jointIndex, quat]));
+            const partial_pose: SkeletonPartialPose = {
+                orientations: new Map(rotations.map((quat, jointIndex) => [jointIndex, quat])),
+            };
             instance.sendSkeletonPose({
                 controller,
-                pose,
+                partial_pose,
             });
         }
 
