@@ -14,7 +14,7 @@ export interface OverlayInterface {
     }: {
         viewports: Array<Viewport>;
         meta_data: CurrentFrameMetaData;
-    }): OffscreenCanvas;
+    }): OffscreenCanvas | null;
 
     /**
      *

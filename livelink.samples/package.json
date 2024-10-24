@@ -17,6 +17,7 @@
     "@3dverse/livelink-react": "file:../livelink.react",
     "@3dverse/livelink-three": "file:../livelink.three",
     "@fontsource-variable/manrope": "^5.1.0",
+    "boring-avatars": "^1.11.2",
     "react": "^18.3.1",
     "react-daisyui": "^5.0.5",
     "react-dom": "^18.3.1",

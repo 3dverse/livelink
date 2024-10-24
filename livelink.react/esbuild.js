@@ -29,6 +29,7 @@ const buildOptions = [
 const devBuildOptions = {
     ...commonBuildOptions,
     ...buildOptions[0],
+    minify: false,
 };
 
 //------------------------------------------------------------------------------

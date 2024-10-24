@@ -33,6 +33,7 @@ import LiveSkeletalAnimation from "./live-skeletal-animation/LiveSkeletalAnimati
 import RenderTargetDebug from "./render-target-debug/RenderTargetDebug";
 import VideoCapture from "./video-capture/VideoCapture";
 import ThreeJS from "./threejs/ThreeJS";
+import DOMOverlaySample from "./dom-overlay/DOMOverlaySample";
 
 export const SAMPLES = [
     {
@@ -73,7 +74,11 @@ export const SAMPLES = [
     },
     {
         categoryName: "Overlays",
-        list: [{ title: "ThreeJS", path: "threejs", element: <ThreeJS /> }],
+        list: [
+            { title: "ThreeJS", path: "threejs", element: <ThreeJS /> },
+            { title: "DOM", path: "dom", element: <DOMOverlaySample /> },
+            { title: "Collaborators", path: "collaborators", element: <Collaborators /> },
+        ],
     },
     {
         categoryName: "WebXR",
@@ -85,7 +90,6 @@ export const SAMPLES = [
     {
         categoryName: "Misc",
         list: [
-            { title: "Collaborators", path: "collaborators", element: <Collaborators /> },
             { title: "Activity Watcher", path: "activity-watcher", element: <ActivityWatcher /> },
             { title: "Picture in Picture", path: "picture-in-picture", element: <PictureInPicture /> },
             { title: "Live Skeletal Animation", path: "live-skeletal-animation", element: <LiveSkeletalAnimation /> },

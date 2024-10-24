@@ -293,6 +293,7 @@ export class Entity extends EntityBase {
         this.local_transform!.orientation = world_orientation;
         this._auto_update = "on";
         this._proxy_state = "on";
+        this.dispatchEvent(new CustomEvent("entity-updated"));
     }
 
     /**

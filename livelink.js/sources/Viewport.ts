@@ -185,24 +185,24 @@ export class Viewport extends EventTarget {
      */
     projectWorldToScreen({
         world_position,
-        out_clip_position = vec3.create() as Vec3,
+        out_screen_position = vec3.create() as Vec3,
     }: {
         world_position: Vec3;
-        out_clip_position?: Vec3;
-    }): {
-        screen_position: Vec3;
-    } {
+        out_screen_position?: Vec3;
+    }) {
         if (!this.#camera) {
             throw new Error("No camera set on viewport");
         }
 
-        const clip_position = this.#camera.projectWorldToClip({ world_position, out_clip_position });
+        const clip_position = this.#camera.projectWorldToClip({
+            world_position,
+            out_clip_position: out_screen_position,
+        });
 
-        clip_position[0] = (clip_position[0] + 1) * this.width * 0.5;
-        clip_position[1] = (-clip_position[1] + 1) * this.height * 0.5;
+        const screen_position = clip_position;
+        screen_position[0] = (clip_position[0] + 1) * this.width * 0.5;
+        screen_position[1] = (-clip_position[1] + 1) * this.height * 0.5;
 
-        return {
-            screen_position: clip_position,
-        };
+        return screen_position;
     }
 }

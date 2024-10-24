@@ -167,6 +167,9 @@ export class RenderingSurface extends RenderingSurfaceBase {
 
         for (const overlay of this.#overlays) {
             const overlayFrame = overlay.drawFrame({ viewports: this.viewports, meta_data });
+            if (!overlayFrame) {
+                continue;
+            }
             this.#context.drawFrame({
                 frame: overlayFrame,
                 left: 0,
