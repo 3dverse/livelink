@@ -8,6 +8,7 @@ import type {
     ComponentType,
 } from "@3dverse/livelink.core";
 import { Entity } from "./Entity";
+import { Camera } from "./Camera";
 import { EntityRegistry } from "./EntityRegistry";
 import { Settings } from "./Settings";
 
@@ -376,11 +377,14 @@ export class Scene extends EventTarget {
             resolve_ancestors: boolean;
         },
     ): Promise<Array<EntityType>> {
+        const isCameraEntityType = entity_type.prototype instanceof Camera;
         const resolveEntities = editor_entities.map(async editor_entity => {
             let entity = this.entity_registry.get({ entity_rtid: BigInt(editor_entity.rtid) }) as EntityType | null;
 
             if (!entity) {
-                entity = new Proxy(new entity_type(this).init(editor_entity), Entity.handler) as EntityType;
+                const isCameraEntity = editor_entity.components.hasOwnProperty("camera");
+                const entity_instance = isCameraEntityType || !isCameraEntity ? new entity_type(this) : new Camera(this);
+                entity = new Proxy(entity_instance.init(editor_entity), Entity.handler) as EntityType;
 
                 this.entity_registry.add({ entity });
 
