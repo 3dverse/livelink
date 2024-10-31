@@ -288,12 +288,35 @@ export class XRContext extends ContextProvider {
             uniform sampler2D texture;
             uniform int fakeAlphaEnabled;
 
+            float tanh(float x) {
+                float ex = exp(x);
+                float eNegx = exp(-x);
+                return (ex - eNegx) / (ex + eNegx);
+            }
             void main() {
                 gl_FragColor = texture2D(texture, texCoord);
                 if(fakeAlphaEnabled == 1) {
                     highp float maxIntensity = max(max(gl_FragColor.r, gl_FragColor.g), gl_FragColor.b);
+
+                    // basic threshold
                     if(maxIntensity < 0.1) {
                         gl_FragColor.a = maxIntensity;
+                    }
+
+                    // sigmoid
+                    // if(maxIntensity < 0.1) {
+                    //     float k = 100.0; // Increased steepness for faster fade near black
+                    //     float x0 = 0.02; // Lower midpoint to handle darker edges with illumination
+                    //     gl_FragColor.a = 1.0 / (1.0 + exp(-k * (maxIntensity - x0)));
+                    // }
+
+                    // Hyperbolic Tangent
+                    if(maxIntensity < 0.1) {
+                        // float k = 100.0;
+                        // float x0 = 0.005;
+                        float k = 80.0;
+                        float x0 = 0.01;
+                        gl_FragColor.a = max(0.0, tanh(k * (maxIntensity - x0)));
                     }
                 }
             }`;
