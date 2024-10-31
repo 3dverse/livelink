@@ -130,6 +130,7 @@ export class WebXRHelper {
         if (this.#animationFrameRequestId) {
             this.session?.cancelAnimationFrame(this.#animationFrameRequestId);
         }
+        this.session?.removeEventListener("inputsourceschange", WebXRInputRelay.onInputSourcesChange);
         return this.session?.end().catch(error => console.warn("Could not end XR session:", error));
     }
 
@@ -164,6 +165,11 @@ export class WebXRHelper {
             throw new Error(`WebXR "${mode}" not supported`);
         }
 
+        if (this.session) {
+            console.warn("Releasing previous XR session");
+            await this.release();
+        }
+
         const spaceTypes: Array<XRReferenceSpaceType | undefined> = ["local-floor", "local"];
         let lastError: unknown;
 
@@ -176,6 +182,10 @@ export class WebXRHelper {
                 this.session = await navigator.xr!.requestSession(mode, sessionOptions);
                 await this.updateRenderState();
                 await this.setReferenceSpaceType(spaceType);
+                // As input sources are connected if they are tracked-pointer devices
+                // look up which meshes should be associated with their profile and
+                // load as the controller model for that hand.
+                this.session.addEventListener("inputsourceschange", WebXRInputRelay.onInputSourcesChange);
                 return;
             } catch (error) {
                 console.warn(
@@ -530,15 +540,9 @@ export class WebXRHelper {
         const session = this.session!;
 
         // Check for and respond to any gamepad state changes.
-        session.inputSources.forEach(source => {
-            // console.debug("webxr input source", source);
-            // debugger;
-            if (source.gamepad) {
-                let pose = frame.getPose(source.gripSpace!, this.#reference_space!);
-                WebXRInputRelay.processGamepad(source.gamepad, source.handedness, pose);
-            }
-        });
-        // WebXRInputRelay.drawInputSources(frame, this.#reference_space!);
+        session.inputSources.forEach(source =>
+            WebXRInputRelay.processInputSource(source, frame, this.#reference_space!),
+        );
 
         const gl_layer = session.renderState.baseLayer!;
         const xr_views = frame.getViewerPose(this.#reference_space!)?.views?.map(view => ({
