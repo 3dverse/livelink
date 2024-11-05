@@ -4,10 +4,10 @@ import ErrorPage from "./ErrorPage.tsx";
 import "@fontsource-variable/manrope";
 import "@fontsource-variable/inter";
 import "./styles/index.css";
-import { RouterProvider, createBrowserRouter } from "react-router-dom";
+import { RouterProvider, createHashRouter } from "react-router-dom";
 import { SAMPLES } from "./samples";
 
-const router = createBrowserRouter([
+const router = createHashRouter([
     {
         path: "/",
         element: <App />,
