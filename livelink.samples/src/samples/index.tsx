@@ -35,11 +35,14 @@ import VideoCapture from "./video-capture/VideoCapture";
 import ThreeJS from "./threejs/ThreeJS";
 import DOMOverlaySample from "./dom-overlay/DOMOverlaySample";
 
-export const SAMPLES = [
+export const SAMPLES: Array<{
+    categoryName: string;
+    list: Array<{ prod?: boolean; title: string; path: string; element: JSX.Element }>;
+}> = [
     {
         categoryName: "Core",
         list: [
-            { title: "Simple Canvas", path: "simple-canvas", element: <SimpleCanvas /> },
+            { title: "Simple Canvas", path: "simple-canvas", element: <SimpleCanvas />, prod: true },
             { title: "Double Canvas", path: "double-canvas", element: <DoubleCanvas /> },
             { title: "Multi-Viewport Canvas", path: "multi-viewport-canvas", element: <MultiViewportCanvas /> },
             { title: "Quadruple Canvas", path: "quadruple-canvas", element: <QuadrupleCanvas /> },
@@ -59,7 +62,12 @@ export const SAMPLES = [
         list: [
             { title: "Trigger", path: "trigger", element: <Trigger /> },
             { title: "Controller Effects", path: "controller-effects", element: <ControllerEffects /> },
-            { title: "Third Person Controller", path: "third-person-controller", element: <ThirdPersonController /> },
+            {
+                prod: true,
+                title: "Third Person Controller",
+                path: "third-person-controller",
+                element: <ThirdPersonController />,
+            },
             { title: "Point and Click", path: "point-and-click", element: <PointAndClick /> },
             { title: "Highlight Entities", path: "highlight", element: <HighlightEntities /> },
         ],
@@ -77,7 +85,7 @@ export const SAMPLES = [
         list: [
             { title: "ThreeJS", path: "threejs", element: <ThreeJS /> },
             { title: "DOM", path: "dom", element: <DOMOverlaySample /> },
-            { title: "Collaborators", path: "collaborators", element: <Collaborators /> },
+            { title: "Collaborators", path: "collaborators", element: <Collaborators />, prod: true },
         ],
     },
     {

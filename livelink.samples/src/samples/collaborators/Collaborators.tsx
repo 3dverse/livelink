@@ -8,6 +8,11 @@ import Canvas from "../../components/Canvas";
 import { CanvasActionBar } from "../../styles/components/CanvasActionBar";
 
 //------------------------------------------------------------------------------
+// https://console.3dverse.com/3dverse-templates/livelink-samples
+const scene_id = "545cb90f-a3e0-4531-9d98-0fc6d9131097";
+const token = import.meta.env.VITE_PROD_PUBLIC_TOKEN;
+
+//------------------------------------------------------------------------------
 const Avatar = ({ client }: { client: Client }) => {
     return <BoringAvatar name={client.id} size={40} variant="beam" />;
 };
@@ -43,7 +48,7 @@ export default function Collaborators() {
             disconnect();
             setPipCamera(null);
         } else if (canvasRef.current) {
-            await connect({ scene_id: "e7d69f14-d18e-446b-8df3-cbd24e10fa92", token: "public_p54ra95AMAnZdTel" });
+            await connect({ scene_id, token });
         }
     };
 

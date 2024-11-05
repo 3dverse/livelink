@@ -28,3 +28,17 @@ export default {
 -   Replace `plugin:@typescript-eslint/recommended` to `plugin:@typescript-eslint/recommended-type-checked` or `plugin:@typescript-eslint/strict-type-checked`
 -   Optionally add `plugin:@typescript-eslint/stylistic-type-checked`
 -   Install [eslint-plugin-react](https://github.com/jsx-eslint/eslint-plugin-react) and add `plugin:react/recommended` & `plugin:react/jsx-runtime` to the `extends` list
+
+# Publish a sample to production
+
+-   Ensure the sample uses assets from the [livelink.smaples console project](https://console.3dverse.com/3dverse-templates/livelink-samples/default/folders/013073f9-e687-4355-90e5-3b26c18979ab).
+-   Set its `prod` property to `true` inside [the sample list](./src/samples/index.tsx).
+
+Then test your sample is running properly:
+
+-   Set `VITE_TEST_PROD_ENV=true` in your `./.env.local` file.
+-   Run `npm run dev`.
+-   Test your sample.
+-   If everything's ok, then commit & push.
+
+The prod samples use the public token declared inside `.env` to be used with `import.meta.env.VITE_PROD_PUBLIC_TOKEN`.

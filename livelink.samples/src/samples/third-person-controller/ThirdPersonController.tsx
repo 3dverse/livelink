@@ -15,8 +15,12 @@ import Canvas from "../../components/Canvas";
 import { useLivelinkInstance } from "@3dverse/livelink-react";
 import { CanvasActionBar } from "../../styles/components/CanvasActionBar";
 
+//------------------------------------------------------------------------------
+// https://console.3dverse.com/3dverse-templates/livelink-samples
+const scene_id = "8f3c24c1-720e-4d2c-b0e7-f623e4feb7be";
+const token = import.meta.env.VITE_PROD_PUBLIC_TOKEN;
 const manifest = {
-    charCtlSceneUUID: "a8b0086e-f89b-43fd-8e8e-2a5188fe3056",
+    charCtlSceneUUID: "55e9d2cc-27c8-43e0-b014-0363be83de55",
 } as const;
 
 class TPController extends Entity {
@@ -50,6 +54,11 @@ export default function ThirdPersonController() {
             const canvas = (viewport.rendering_surface as RenderingSurface).canvas;
             const firstPersonCamera = firstPersonCameraEntity as Camera;
             firstPersonCamera.onAttach = () => {
+                if (document.activeElement instanceof HTMLElement) {
+                    // unfocus the toggle button, otherwise once the user press the space bar to jump, the toggle button
+                    // gets pressed and the user goes back to fly mode.
+                    document.activeElement.blur();
+                }
                 canvas.requestPointerLock();
             };
             firstPersonCamera.onDetach = () => {
@@ -67,18 +76,16 @@ export default function ThirdPersonController() {
         if (instance) {
             disconnect();
         } else if (canvasRef.current) {
-            connect({ scene_id: "5bd6f2b0-183f-4a63-a720-293b575fc439", token: "public_p54ra95AMAnZdTel" }).then(
-                async (v: { instance: Livelink } | null) => {
-                    const instance = v?.instance;
-                    if (!instance || !instance.session.client_id || instance.viewports.length === 0) return;
-                    const viewport = instance.viewports[0];
-                    flyCameraRef.current = viewport.camera;
-                    instance.addInputDevice(Keyboard);
-                    instance.addInputDevice(Gamepad);
-                    instance.addInputDevice(Mouse, viewport);
-                    setupController(instance, viewport, instance.session.client_id);
-                },
-            );
+            connect({ scene_id, token }).then(async (v: { instance: Livelink } | null) => {
+                const instance = v?.instance;
+                if (!instance || !instance.session.client_id || instance.viewports.length === 0) return;
+                const viewport = instance.viewports[0];
+                flyCameraRef.current = viewport.camera;
+                instance.addInputDevice(Keyboard);
+                instance.addInputDevice(Gamepad);
+                instance.addInputDevice(Mouse, viewport);
+                setupController(instance, viewport, instance.session.client_id);
+            });
         }
     };
 

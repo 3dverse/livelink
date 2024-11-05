@@ -5,6 +5,11 @@ import Canvas from "../../components/Canvas";
 import { CanvasActionBar } from "../../styles/components/CanvasActionBar";
 
 //------------------------------------------------------------------------------
+// https://console.3dverse.com/3dverse-templates/livelink-samples
+const scene_id = "80ec3064-df96-41fa-be93-c6dbeb985278";
+const token = import.meta.env.VITE_PROD_PUBLIC_TOKEN;
+
+//------------------------------------------------------------------------------
 export default function SimpleCanvas() {
     const canvasRef = useRef<HTMLCanvasElement>(null);
 
@@ -14,7 +19,7 @@ export default function SimpleCanvas() {
         if (instance) {
             disconnect();
         } else if (canvasRef.current) {
-            connect({ scene_id: "15e95136-f9b7-425d-8518-d73dab5589b7", token: "public_p54ra95AMAnZdTel" });
+            connect({ scene_id, token });
         }
     };
 
