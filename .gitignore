@@ -3,4 +3,5 @@ _build
 _prebuild
 dist
 docs
+docs-md
 .vscode

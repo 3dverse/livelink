@@ -16,7 +16,8 @@
     "dev:tsc": "tsc -w",
     "test": "echo \"Error: no test specified\" && exit 1",
     "clean": "rimraf dist",
-    "docs": "typedoc",
+    "docs": "typedoc --plugin typedoc-plugin-markdown --out docs-md",
+    "typedoc": "typedoc",
     "postversion": "cross-env-shell \"git commit -am v$npm_package_version && git tag -a v$npm_package_version -m v$npm_package_version\""
   },
   "license": "ISC",

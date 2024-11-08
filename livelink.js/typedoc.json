@@ -1,9 +1,0 @@
-{
-  "entryPoints": ["sources/index.ts"],
-  "out": "docs",
-  "excludeCategories": ["Other"],
-  "navigation": {
-    "includeCategories": true
-  }
-  //   "plugin": ["typedoc-plugin-markdown"]
-}
