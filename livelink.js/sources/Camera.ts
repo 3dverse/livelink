@@ -5,7 +5,6 @@ import type { Components, Mat4, Vec3 } from "@3dverse/livelink.core";
 import { FrameCameraTransform } from "./decoders/FrameCameraTransform";
 
 /**
- * @internal
  */
 export const INFINITE_FAR_VALUE = 100000;
 
