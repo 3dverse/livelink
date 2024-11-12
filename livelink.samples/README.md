@@ -31,8 +31,24 @@ export default {
 
 # Publish a sample to production
 
--   Ensure the sample uses assets from the [livelink.smaples console project](https://console.3dverse.com/3dverse-templates/livelink-samples/default/folders/013073f9-e687-4355-90e5-3b26c18979ab).
--   Set its `prod` property to `true` inside [the sample list](./src/samples/index.tsx).
+Ensure the sample uses assets from the [livelink.samples console project](https://console.3dverse.com/3dverse-templates/livelink-samples/default/folders/013073f9-e687-4355-90e5-3b26c18979ab). Organize your assets respecting the following folder structure:
+
+```
+├── Assets
+|   ├── common
+|   |   └── [optional folder to group assets]
+|   |        └── [any common assets used by distinct samples that does not need to be public]
+|   └── samples
+|       └── [folder per sample]
+|            └── [any assets specific to the sample that does not need to be public]
+└── Public
+    ├── common
+    |   └── [any common assets used by distinct samples that needs to be public]
+    └── samples
+        └── [one scene per sample or a folder with all the scenes and assets specific to the sample]
+```
+
+Set the `prod` property of the sample to `true` inside [the sample list](./src/samples/index.tsx).
 
 Then test your sample is running properly:
 
