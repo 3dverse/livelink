@@ -71,6 +71,7 @@ export default class React3DElement {
                     position: "absolute",
                     transform: transformStyle,
                     zIndex: z_index,
+                    pointerEvents: "auto",
                 }}
             >
                 {this.scale_factor ? (
