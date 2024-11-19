@@ -110,7 +110,8 @@ export class Gamepad implements InputDevice {
      *
      */
     setup() {
-        this.#animation_frame = requestAnimationFrame(this.#handleGamepadInputs);
+        this.#handleGamepadInputs();
+        window.addEventListener("focus", this.#onWindowFocused);
     }
 
     /**
@@ -119,15 +120,26 @@ export class Gamepad implements InputDevice {
     release() {
         if (this.#animation_frame) {
             cancelAnimationFrame(this.#animation_frame);
+            this.#animation_frame = null;
         }
+        window.removeEventListener("focus", this.#onWindowFocused);
     }
 
     /**
      *
+     */
+    #onWindowFocused = () => {
+        if (!this.#animation_frame) {
+            this.#handleGamepadInputs();
+        }
+    };
+
+    /**
      *
      */
     #handleGamepadInputs = () => {
         if (!window.document.hasFocus()) {
+            this.#animation_frame = null;
             return;
         }
 
