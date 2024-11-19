@@ -401,10 +401,6 @@ export class Livelink {
             entity_registry: this.scene.entity_registry,
         });
 
-        for (const frame_camera_transform of meta_data.current_client_cameras) {
-            frame_camera_transform.camera.updateClipFromWorldMatrix({ frame_camera_transform });
-        }
-
         this.#encoded_frame_consumer!.consumeEncodedFrame({ encoded_frame: frame_data.encoded_frame, meta_data });
     };
 

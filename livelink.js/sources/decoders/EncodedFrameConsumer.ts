@@ -30,6 +30,10 @@ export abstract class EncodedFrameConsumer {
             camera._setLocalTransform({ world_position, world_orientation });
         }
 
+        for (const frame_camera_transform of meta_data.current_client_cameras) {
+            frame_camera_transform.camera.updateClipFromWorldMatrix({ frame_camera_transform });
+        }
+
         return {
             renderer_timestamp: meta_data.renderer_timestamp,
             frame_counter: meta_data.frame_counter,
