@@ -7,7 +7,7 @@ include:
       - /ci/.bases/node/_index.yaml
 
 variables:
-  NODE_VERSION: "18"
+  NODE_VERSION: "22"
   LIVELINK_JS_PACKAGE: livelink.js/3dverse-livelink
   LIVELINK_THREE_PACKAGE: livelink.three/3dverse-livelink-three
   LIVELINK_REACT_PACKAGE: livelink.react/3dverse-livelink-react
