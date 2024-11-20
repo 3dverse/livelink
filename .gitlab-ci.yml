@@ -127,6 +127,7 @@ js:livelink.samples:build:
     - .build
   variables:
     PACKAGE_DIR: livelink.samples
+    PACKAGE_PATH_NAME: livelink.samples
   needs:
     - job: js:livelink.js:build
       artifacts: true
@@ -225,6 +226,9 @@ pages:
   extends:
     - .env-dev
     - .runner-onprem
+  needs:
+    - job: js:livelink.samples:build
+      artifacts: true
   artifacts:
     paths:
       - public/
