@@ -15,6 +15,7 @@
   "dependencies": {
     "@3dverse/livelink": "file:../livelink.js",
     "@3dverse/livelink-react": "file:../livelink.react",
+    "@3dverse/livelink-react-ui": "file:../livelink.react.ui",
     "@3dverse/livelink-three": "file:../livelink.three",
     "@fontsource-variable/manrope": "^5.1.0",
     "boring-avatars": "^1.11.2",

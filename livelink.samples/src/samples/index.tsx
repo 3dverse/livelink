@@ -8,6 +8,7 @@ import SceneSelector from "./scene-selector/SceneSelector";
 // Smart Object
 import SmartObjectSync from "./smart-object-sync/SmartObjectSync";
 import SmartObject from "./smart-object/SmartObject";
+import SunWidget from "./sun-widget/SunWidget";
 
 // Control
 import Trigger from "./trigger/Trigger";
@@ -55,6 +56,7 @@ export const SAMPLES: Array<{
         list: [
             { title: "Smart Object", path: "smart-object", element: <SmartObject /> },
             { title: "Smart Object Sync", path: "smart-object-sync", element: <SmartObjectSync /> },
+            { title: "Sun Widget", path: "sun-widget", element: <SunWidget /> },
         ],
     },
     {
