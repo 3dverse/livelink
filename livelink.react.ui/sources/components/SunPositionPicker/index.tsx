@@ -134,6 +134,22 @@ export const SunPositionPicker = ({ sun }: { sun: Entity }) => {
             ctx.moveTo(centerX + xCenterOffset, centerY + yCenterOffset);
             ctx.lineTo(sunX - xOffset, sunY - yOffset);
             ctx.stroke();
+
+            // Draw sun rays
+            const numRays = 12;
+            const rayLength = 3.5;
+            for (let i = 0; i < numRays; i++) {
+                const rayAngle = (i * 2 * Math.PI) / numRays;
+                const rayXStart = sunX + Math.cos(rayAngle) * SUN_RADIUS;
+                const rayYStart = sunY + Math.sin(rayAngle) * SUN_RADIUS;
+                const rayXEnd = sunX + Math.cos(rayAngle) * (SUN_RADIUS + rayLength);
+                const rayYEnd = sunY + Math.sin(rayAngle) * (SUN_RADIUS + rayLength);
+
+                ctx.beginPath();
+                ctx.moveTo(rayXStart, rayYStart);
+                ctx.lineTo(rayXEnd, rayYEnd);
+                ctx.stroke();
+            }
         };
 
         const update = () => {
