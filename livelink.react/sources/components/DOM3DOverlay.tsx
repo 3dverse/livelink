@@ -11,7 +11,7 @@ export function DOM3DOverlay({
     instance,
     children,
     style,
-}: React.PropsWithChildren<{ instance: Livelink | null; style: React.CSSProperties }>) {
+}: React.PropsWithChildren<{ instance: Livelink | null; style?: React.CSSProperties }>) {
     const containerRef = useRef<HTMLDivElement>(null);
     const [overlay, setOverlay] = useState<ReactOverlay | null>(null);
 
