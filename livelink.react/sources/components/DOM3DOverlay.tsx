@@ -7,7 +7,11 @@ import type { Livelink, RenderingSurface } from "@3dverse/livelink";
 export const OverlayContext = React.createContext<ReactOverlay | null>(null);
 
 //------------------------------------------------------------------------------
-export function DOM3DOverlay({ instance, children }: React.PropsWithChildren<{ instance: Livelink | null }>) {
+export function DOM3DOverlay({
+    instance,
+    children,
+    style,
+}: React.PropsWithChildren<{ instance: Livelink | null; style: React.CSSProperties }>) {
     const containerRef = useRef<HTMLDivElement>(null);
     const [overlay, setOverlay] = useState<ReactOverlay | null>(null);
 
@@ -44,6 +48,7 @@ export function DOM3DOverlay({ instance, children }: React.PropsWithChildren<{ i
                     zIndex: 10,
                     pointerEvents: "none",
                     padding: "inherit",
+                    ...style,
                 }}
             >
                 {children}
