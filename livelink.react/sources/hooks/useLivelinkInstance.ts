@@ -36,6 +36,18 @@ type View = {
 type LivelinkResponse = { instance: Livelink; cameras: Array<Camera | null> };
 
 //------------------------------------------------------------------------------
+type ConnectParameters = {
+    scene_id: UUID;
+    session_id?: UUID;
+    token: string;
+    onConfigureClient?: (instance: Livelink) => Promise<void>;
+    onConnected?: ({ instance, cameras }: { instance: Livelink; cameras: Array<Camera | null> }) => void;
+    onDisconnected?: (event: Event) => void;
+    is_transient?: boolean;
+    session_open_mode?: "join" | "start" | "join_or_start";
+};
+
+//------------------------------------------------------------------------------
 export function useLivelinkInstance({ views }: { views: Array<View> }): {
     instance: Livelink | null;
     isConnecting: boolean;
@@ -47,19 +59,12 @@ export function useLivelinkInstance({ views }: { views: Array<View> }): {
         onConnected,
         is_transient,
         session_open_mode,
-    }: {
-        scene_id: UUID;
-        session_id?: UUID;
-        token: string;
-        onConfigureClient?: (instance: Livelink) => Promise<void>;
-        onConnected?: ({ instance, cameras }: { instance: Livelink; cameras: Array<Camera | null> }) => void;
-        is_transient?: boolean;
-        session_open_mode?: "join" | "start" | "join_or_start";
-    }) => Promise<LivelinkResponse | null>;
+    }: ConnectParameters) => Promise<LivelinkResponse | null>;
     disconnect: () => void;
 } {
     const [instance, setInstance] = useState<Livelink | null>(null);
     const [isConnecting, setIsConnecting] = useState(false);
+    let onDisconnectedListener: ((event: Event) => void) | null = null;
 
     // Disconnect when unmounted
     useEffect(() => {
@@ -77,59 +82,81 @@ export function useLivelinkInstance({ views }: { views: Array<View> }): {
             token,
             onConfigureClient,
             onConnected,
+            onDisconnected,
             is_transient,
-            session_open_mode,
-        }: {
-            scene_id: UUID;
-            session_id?: UUID;
-            token: string;
-            onConfigureClient?: (instance: Livelink) => Promise<void>;
-            onConnected?: ({ instance, cameras }: { instance: Livelink; cameras: Array<Camera | null> }) => void;
-            is_transient?: boolean;
-            session_open_mode?: "join" | "start" | "join_or_start";
-        }): Promise<LivelinkResponse | null> => {
+            session_open_mode = "join_or_start",
+        }: ConnectParameters): Promise<LivelinkResponse> => {
             if (views.some(v => v.canvas_ref.current === null)) {
-                return null;
+                throw new Error("All views must have a canvas_ref.");
             }
 
             setIsConnecting(true);
             let instance: Livelink;
 
-            if (session_open_mode === "start") {
-                instance = await Livelink.start({ scene_id, token, is_transient });
-            } else if (session_id) {
-                const session = await Session.findById({ session_id, token });
-                if (!session) {
-                    console.error(`Session '${session_id}' not found on scene '${scene_id}'`);
-                    return null;
-                }
-                instance = await Livelink.join({ session });
-            } else {
-                if (session_open_mode === "join") {
-                    console.error(`Session ID is required when session_mode is 'join'`);
-                    return null;
-                }
-                instance = await Livelink.join_or_start({ scene_id, token, is_transient });
+            if (["start", "join_or_start"].includes(session_open_mode) && session_id) {
+                console.warn(
+                    `session_open_mode="${session_open_mode}" does not support session_id option, use session_open_mode="join".`,
+                );
+            }
+            switch (session_open_mode) {
+                case "start":
+                    instance = await Livelink.start({ scene_id, token, is_transient });
+                    break;
+                case "join":
+                    if (!session_id) {
+                        throw new Error(
+                            `session_open_mode="${session_open_mode}" requires session_id option to be defined`,
+                        );
+                    }
+                    const session = await Session.findById({ session_id, token });
+                    if (!session) {
+                        throw new Error(`Session '${session_id}' not found on scene '${scene_id}'`);
+                    }
+                    instance = await Livelink.join({ session });
+                    break;
+                case "join_or_start":
+                    instance = await Livelink.join_or_start({ scene_id, token, is_transient });
+                    break;
             }
 
-            const viewports = registerViewports(instance, views);
-            if (onConfigureClient) {
-                await onConfigureClient(instance);
-            } else {
-                await configureClient(instance);
+            if (onDisconnected) {
+                // Allow the hook user to be notified of a disconnection occuring while the above operations run.
+                // Still not perfect, because the gateway might disconnect before the instance is returned during
+                // the GatewayController.authenticateClient or EditorController.connectToSession of livelink-core.
+                // Also nothing's notify the livelink user of a loss of the EditorConnection.
+                instance.session.addEventListener("on-disconnected", onDisconnected);
+                onDisconnectedListener = onDisconnected;
             }
-            const cameras = await resolveCameras(instance, views, viewports);
 
-            instance.startStreaming();
+            let cameras: Array<Camera | null> = [];
+            try {
+                const viewports = registerViewports(instance, views);
+                if (onConfigureClient) {
+                    await onConfigureClient(instance);
+                } else {
+                    await configureClient(instance);
+                }
+                cameras = await resolveCameras(instance, views, viewports);
 
-            setInstance(instance);
-            setIsConnecting(false);
-            onConnected?.({ instance, cameras });
+                instance.startStreaming();
+
+                setInstance(instance);
+                setIsConnecting(false);
+                onConnected?.({ instance, cameras });
+            } catch (error) {
+                if (onDisconnected) {
+                    instance.session.removeEventListener("on-disconnected", onDisconnected);
+                }
+                throw error;
+            }
 
             return { instance, cameras };
         },
         disconnect: () => {
             setInstance(null);
+            if (onDisconnectedListener) {
+                instance?.session.removeEventListener("on-disconnected", onDisconnectedListener);
+            }
         },
     };
 }

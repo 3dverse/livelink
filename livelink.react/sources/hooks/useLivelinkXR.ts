@@ -15,6 +15,11 @@ type ConnectParameters = {
     scene_id: UUID;
     session_id?: UUID;
     token: string;
+    onConfigureClient?: (weXRHelper: WebXRHelper, instance: Livelink) => Promise<void>;
+    onConnected?: ({ instance, cameras }: { instance: Livelink; cameras: Array<Camera | null> }) => void;
+    onDisconnected?: (event: Event) => void;
+    is_transient?: boolean;
+    session_open_mode?: "join" | "start" | "join_or_start";
     root_element?: HTMLElement;
     resolution_scale?: number;
 };
@@ -36,6 +41,7 @@ export function useLivelinkXR({ mode }: { mode: XRSessionMode }): {
     const [message, setMessage] = useState<string>("");
     const [isSessionSupported, setIsSessionSupported] = useState(false);
     const [resolutionScale, setResolutionScale] = useState(1);
+    let onDisconnectedListener: ((event: Event) => void) | null = null;
 
     //--------------------------------------------------------------------------
     useEffect(() => {
@@ -91,11 +97,16 @@ export function useLivelinkXR({ mode }: { mode: XRSessionMode }): {
             scene_id,
             session_id,
             token,
+            onConfigureClient,
+            onConnected,
+            onDisconnected,
+            is_transient,
+            session_open_mode = "join_or_start",
             root_element,
             resolution_scale,
-        }: ConnectParameters): Promise<LivelinkResponse | null> => {
+        }: ConnectParameters): Promise<LivelinkResponse> => {
             const webXRHelper = new WebXRHelper(resolution_scale);
-            let livelinkInstance: Livelink | null = null;
+            let instance: Livelink | null = null;
             let cameras: Array<Camera> = [];
             try {
                 await webXRHelper.initialize(
@@ -115,39 +126,72 @@ export function useLivelinkXR({ mode }: { mode: XRSessionMode }): {
 
                 setIsConnecting(true);
 
-                if (session_id) {
-                    const session = await Session.findById({ session_id, token });
-                    if (!session) {
-                        console.error(`Session '${session_id}' not found on scene '${scene_id}'`);
-                        return null;
-                    }
-                    livelinkInstance = await Livelink.join({ session });
-                } else {
-                    livelinkInstance = await Livelink.join_or_start({ scene_id, token });
+                if (["start", "join_or_start"].includes(session_open_mode) && session_id) {
+                    console.warn(
+                        `session_open_mode="${session_open_mode}" does not support session_id option, use session_open_mode="join".`,
+                    );
+                }
+                switch (session_open_mode) {
+                    case "start":
+                        instance = await Livelink.start({ scene_id, token, is_transient });
+                        break;
+                    case "join":
+                        if (!session_id) {
+                            throw new Error(
+                                `session_open_mode="${session_open_mode}" requires session_id option to be defined`,
+                            );
+                        }
+                        const session = await Session.findById({ session_id, token });
+                        if (!session) {
+                            throw new Error(`Session '${session_id}' not found on scene '${scene_id}'`);
+                        }
+                        instance = await Livelink.join({ session });
+                        break;
+                    case "join_or_start":
+                        instance = await Livelink.join_or_start({ scene_id, token, is_transient });
+                        break;
                 }
 
-                await configureClient(webXRHelper, livelinkInstance);
+                if (onDisconnected) {
+                    // Allow the hook user to be notified of a disconnection occuring while the above operations run.
+                    // Still not perfect, because the gateway might disconnect before the instance is returned during
+                    // the GatewayController.authenticateClient or EditorController.connectToSession of livelink-core.
+                    // Also nothing's notify the livelink user of a loss of the EditorConnection.
+                    instance.session.addEventListener("on-disconnected", onDisconnected);
+                    onDisconnectedListener = onDisconnected;
+                }
+
+                if (onConfigureClient) {
+                    await onConfigureClient(webXRHelper, instance);
+                } else {
+                    await configureClient(webXRHelper, instance);
+                }
 
                 cameras = await webXRHelper.createCameras();
-                livelinkInstance.startStreaming();
+                instance.startStreaming();
                 webXRHelper.start();
 
                 setResolutionScale(webXRHelper.resolution_scale);
                 setXRSession(webXRHelper);
-                setInstance(livelinkInstance);
+                setInstance(instance);
+                onConnected?.({ instance, cameras });
             } catch (error) {
                 webXRHelper.release();
-                livelinkInstance?.disconnect();
-                setMessage(`Error: ${error instanceof Error ? error.message : error}`);
+                instance?.disconnect();
+                const err = error instanceof Error ? error : new Error(`Error: ${error}`);
+                setMessage(err.toString());
+                throw err;
             } finally {
                 setIsConnecting(false);
-
-                return { instance: livelinkInstance, cameras, webXRHelper };
+                return { instance, cameras, webXRHelper };
             }
         },
         disconnect: () => {
             setInstance(null);
             setXRSession(null);
+            if (onDisconnectedListener) {
+                instance?.session.removeEventListener("on-disconnected", onDisconnectedListener);
+            }
         },
     };
 }
