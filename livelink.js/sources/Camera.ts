@@ -1,12 +1,37 @@
 import { glMatrix, mat4, vec3 } from "gl-matrix";
 import { Entity } from "./Entity";
 import { Viewport } from "./Viewport";
-import type { Components, Mat4, Vec3 } from "@3dverse/livelink.core";
+import type { Components, ComponentType, Float, Mat4, Vec2, Vec3 } from "@3dverse/livelink.core";
 import { FrameCameraTransform } from "./decoders/FrameCameraTransform";
+import { ComponentHandler, ComponentHandlers } from "./ComponentHandler";
 
 /**
  */
 export const INFINITE_FAR_VALUE = 100000;
+
+/**
+ * @internal
+ */
+class LensComponentHandler extends ComponentHandler {
+    #camera: Camera;
+
+    /**
+     *
+     */
+    constructor(entity: Entity, component_type: ComponentType) {
+        super(entity, component_type);
+        this.#camera = entity as Camera;
+    }
+
+    /**
+     *
+     */
+    set(component: object, prop: PropertyKey, v: any): boolean {
+        const value = super.set(component, prop, v);
+        this.#camera.updateLens();
+        return value;
+    }
+}
 
 /**
  * @category Entity
@@ -69,6 +94,15 @@ export class Camera extends Entity {
      *
      */
     onDelete() {}
+
+    /**
+     * @internal
+     */
+    static serializableComponentsProxies = {
+        ...Entity.serializableComponentsProxies,
+        ["perspective_lens"]: LensComponentHandler,
+        ["orthographic_lens"]: LensComponentHandler,
+    } as ComponentHandlers;
 
     /**
      *

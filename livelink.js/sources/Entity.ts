@@ -1,7 +1,7 @@
 import type { ComponentType, EditorEntity, Quat, RTID, UUID, Vec3 } from "@3dverse/livelink.core";
 import { EntityBase } from "../_prebuild/EntityBase";
 import { Scene } from "./Scene";
-import { quaternionFromEuler, quaternionToEuler } from "./maths";
+import { ComponentHandler, ComponentHandlers, LocalTransformHandler } from "./ComponentHandler";
 
 /**
  *
@@ -325,6 +325,14 @@ export class Entity extends EntityBase {
     /**
      * @internal
      */
+    static serializableComponentsProxies = {
+        ["local_transform"]: LocalTransformHandler,
+        ["default"]: ComponentHandler,
+    } as ComponentHandlers;
+
+    /**
+     * @internal
+     */
     static handler = {
         get(entity: Entity, prop: PropertyKey, receiver: unknown): unknown {
             const value = Reflect.get(entity, prop, receiver);
@@ -341,8 +349,12 @@ export class Entity extends EntityBase {
 
             //@ts-ignore
             if (entity._isSerializableComponent(prop, entity[prop])) {
-                //console.log("GET COMPONENT", entity, prop);
-                const Handler = prop === "local_transform" ? LocalTransformHandler : ComponentHandler;
+                //console.log("GET COMPONENT", entity,prop);
+                const serializableComponentsProxies =
+                    Object.getPrototypeOf(entity).constructor.serializableComponentsProxies;
+
+                const Handler =
+                    serializableComponentsProxies[prop as ComponentType] ?? serializableComponentsProxies["default"];
                 //@ts-ignore
                 return new Proxy(entity[prop], new Handler(entity, prop as ComponentType));
             }
@@ -377,77 +389,4 @@ export class Entity extends EntityBase {
             return Reflect.deleteProperty(entity, prop);
         },
     };
-}
-
-/**
- *
- */
-class ComponentHandler {
-    /**
-     *
-     */
-    constructor(
-        private readonly _entity: Entity,
-        private readonly _component_type: ComponentType,
-    ) {}
-
-    /**
-     *
-     */
-    get(component: object, prop: PropertyKey): unknown {
-        //console.log("GET ATTRIBUTE", prop);
-        //@ts-ignore
-        if (prop[0] !== "_") {
-            //@ts-ignore
-            if ((typeof component[prop] === "object" && component[prop] !== null) || Array.isArray(component[prop])) {
-                //@ts-ignore
-                return new Proxy(component[prop], new ComponentHandler(this._entity, this._component_type));
-            }
-        }
-        return Reflect.get(component, prop);
-    }
-
-    /**
-     *
-     */
-    set(component: object, prop: PropertyKey, v: any): boolean {
-        //console.log("SET ATTRIBUTE", prop, v);
-        this._entity._tryMarkingAsDirty({ component_type: this._component_type });
-        return Reflect.set(component, prop, v);
-    }
-
-    /**
-     *
-     */
-    deleteProperty(component: object, prop: PropertyKey): boolean {
-        //console.log("DELETE ATTRIBUTE", prop);
-        const defaultValue = this._entity.scene.entity_registry._getComponentDefaultValue({
-            component_type: this._component_type,
-        }) as Record<PropertyKey, unknown>;
-        this._entity._tryMarkingAsDirty({ component_type: this._component_type });
-
-        return Reflect.set(component, prop, structuredClone(defaultValue[prop]));
-    }
-}
-
-/**
- *
- */
-class LocalTransformHandler extends ComponentHandler {
-    /**
-     *
-     */
-    set(component: object, prop: PropertyKey, v: any): boolean {
-        switch (prop) {
-            case "orientation":
-                Reflect.set(component, "eulerOrientation", quaternionToEuler(v));
-                break;
-
-            case "eulerOrientation":
-                Reflect.set(component, "orientation", quaternionFromEuler(v));
-                break;
-        }
-
-        return super.set(component, prop, v);
-    }
 }
