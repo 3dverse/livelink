@@ -21,7 +21,9 @@ export class Client implements ClientInterface {
     /**
      *
      */
-    #ws_from_ls: Array<Mat4> = [];
+    get id(): UUID {
+        return this.#uuid;
+    }
 
     /**
      *
@@ -33,23 +35,15 @@ export class Client implements ClientInterface {
     /**
      *
      */
-    get ws_from_ls(): Array<Mat4> {
-        return this.#ws_from_ls;
-    }
-
-    /**
-     *
-     */
     constructor(data: ClientMetaData) {
         this.#uuid = data.client_id;
         this.#camera_rtids = data.viewports.map(v => v.camera_rtid);
-        this.#ws_from_ls = data.viewports.map(v => v.ws_from_ls);
     }
 
     /**
-     *
+     * @internal
      */
-    get id(): UUID {
-        return this.#uuid;
+    update({ viewports }: ClientMetaData) {
+        this.#camera_rtids = viewports.map(v => v.camera_rtid);
     }
 }

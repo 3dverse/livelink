@@ -313,6 +313,9 @@ export class Session extends EventTarget implements SessionInterface {
                 if (data.viewports.some(v => v.camera_rtid)) {
                     this._onClientJoined({ client: new Client(data) });
                 }
+            } else {
+                const client = this.#clients.get(data.client_id)!;
+                client.update(data);
             }
         }
 
