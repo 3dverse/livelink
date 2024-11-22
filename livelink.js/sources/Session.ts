@@ -315,7 +315,7 @@ export class Session extends EventTarget implements SessionInterface {
                 }
             } else {
                 const client = this.#clients.get(data.client_id)!;
-                client.update(data);
+                client.update(data.viewports);
             }
         }
 
