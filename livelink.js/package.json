@@ -1,6 +1,6 @@
 {
   "name": "@3dverse/livelink",
-  "version": "0.7.17",
+  "version": "0.7.18",
   "description": "",
   "main": "./dist/index.cjs",
   "module": "./dist/index.mjs",
@@ -22,7 +22,7 @@
   },
   "license": "ISC",
   "dependencies": {
-    "@3dverse/livelink.core": "^0.7.9",
+    "@3dverse/livelink.core": "^0.7.10",
     "gl-matrix": "^3.4.3"
   },
   "devDependencies": {
