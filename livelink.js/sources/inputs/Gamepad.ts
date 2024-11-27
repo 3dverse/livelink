@@ -148,13 +148,7 @@ export class Gamepad implements InputDevice {
         gamepadsReading.forEach((gamepadReading, i) => {
             const previousReading = this.previousGamepadsReading[i];
             if (previousReading && gamepadReading) {
-                // HACK
-                // TODO:
-                // FTL rendering_viewer::installRequestedInputDevices only adds the gamepad of index zero and misses
-                // feature to attach distinct gamepads to distinct controllers (camera, characters, ...).
-                // So forcing the gamepad index to 0 for any gamepad to have control.
-                // this.#sendControllerInput(i, previousReading, gamepadReading);
-                this.#sendControllerInput(0, previousReading, gamepadReading);
+                this.#sendControllerInput(i, previousReading, gamepadReading);
             }
             this.previousGamepadsReading[i] = gamepadReading;
         });
