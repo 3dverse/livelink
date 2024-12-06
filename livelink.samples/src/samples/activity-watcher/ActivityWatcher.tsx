@@ -2,6 +2,7 @@
 import { useRef, useState } from "react";
 import { Livelink, GatewayDisconnectedReason } from "@3dverse/livelink";
 import { useLivelinkInstance } from "@3dverse/livelink-react";
+import { InactivityWarning } from "@3dverse/livelink-react-ui";
 import Canvas from "../../components/Canvas";
 import { CanvasActionBar } from "../../styles/components/CanvasActionBar";
 
@@ -56,18 +57,9 @@ export default function SimpleCanvas() {
                     {instance ? "Disconnect" : "Connect"}
                 </button>
             </CanvasActionBar>
-            {instance && inactivityWarning && !isDisconnected && (
-                <div className="absolute top-0 bottom-0 left-0 right-0 p-3 content-center">
-                    <div className="flex flex-col items-center justify-center gap-3">
-                        <div className="text-sm">You've been idle too long</div>
-                        <div className="text-sm">You'll be disconnected soon</div>
-                        <div className="text-sm">Are you still there?</div>
-                        <button className="button button-primary" onClick={onInactivityWarningValidated}>
-                            Yes!
-                        </button>
-                    </div>
-                </div>
-            )}
+
+            <InactivityWarning instance={instance} />
+
             {isDisconnected && (
                 <div className="absolute top-0 bottom-0 left-0 right-0 p-3 content-center">
                     <div className="flex flex-col items-center justify-center gap-3">
