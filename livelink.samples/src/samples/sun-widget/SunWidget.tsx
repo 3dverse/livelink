@@ -37,7 +37,7 @@ export default function SmartObject() {
                     <Canvas canvasRef={canvasRef} />
                 </div>
 
-                {theSun && (
+                {theSun && instance && (
                     <div className="fixed top-6 right-6">
                         <SunPositionPicker sun={theSun} instance={instance} />
                     </div>

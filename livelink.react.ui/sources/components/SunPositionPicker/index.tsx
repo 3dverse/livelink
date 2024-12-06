@@ -1,8 +1,8 @@
 //------------------------------------------------------------------------------
-import React from "react";
+import React, { Ref } from "react";
 import { useEffect, useRef } from "react";
 import type { Entity, Livelink, Vec2, Vec3 } from "@3dverse/livelink";
-import { Checkbox } from "@chakra-ui/react";
+import { Box, Checkbox, Flex } from "@chakra-ui/react";
 
 //------------------------------------------------------------------------------
 import { Provider } from "../../chakra/Provider";
@@ -14,14 +14,14 @@ const CENTER_RADIUS = 4;
 const CENTER_MARGIN = 2;
 const SUN_RADIUS = 6;
 const SUN_MARGIN = 0;
-const CANVAS_SIZE = `${RADIUS * 2 + 20}px`;
+const CANVAS_SIZE = RADIUS * 2 + 20;
+const CANVAS_SIZE_PX = `${CANVAS_SIZE}px`;
 
 //------------------------------------------------------------------------------
 const containerStyle = {
     position: "relative",
-    width: CANVAS_SIZE,
-    height: CANVAS_SIZE,
-    cursor: "pointer",
+    width: CANVAS_SIZE_PX,
+    height: CANVAS_SIZE_PX,
 } as const;
 
 const canvasStyle = {
@@ -35,10 +35,11 @@ const RED_COLOR = "#fb4949";
 const BLUE_COLOR = "#3db8ff";
 
 //------------------------------------------------------------------------------
-export const SunPositionPicker = ({ sun, instance }: { sun: Entity; instance: Livelink }) => {
+export const SunPositionPicker = ({ sun, instance }: { sun: Entity; instance: Livelink | null }) => {
     //------------------------------------------------------------------------------
     const bgCanvasRef = useRef<HTMLCanvasElement>(null);
     const sunCanvasRef = useRef<HTMLCanvasElement>(null);
+    const movingLightHintRef = useRef<HTMLDivElement>(null);
 
     //------------------------------------------------------------------------------
     const toggleShadowCascades = () => {
@@ -110,6 +111,7 @@ export const SunPositionPicker = ({ sun, instance }: { sun: Entity; instance: Li
         const canvas = sunCanvasRef.current;
         const ctx = canvas?.getContext("2d");
         if (!canvas || !ctx) return;
+        canvas.style.cursor = "pointer";
         ctx.fillStyle = HANDLE_COLOR;
         ctx.lineWidth = LINE_WIDTH;
         ctx.strokeStyle = HANDLE_COLOR;
@@ -127,14 +129,6 @@ export const SunPositionPicker = ({ sun, instance }: { sun: Entity; instance: Li
         let sunY = initY * RADIUS + centerY;
         let sunZ = 0;
 
-        const showShadow = () => {
-            ctx.shadowColor = "rgba(0, 0, 0, 0.5)";
-        };
-
-        const hideShadow = () => {
-            ctx.shadowColor = "rgba(0, 0, 0, 0)";
-        };
-
         const updateSunPosition = ({ x, y }: { x: number; y: number }) => {
             const distance = Math.sqrt(Math.pow(x - centerX, 2) + Math.pow(y - centerY, 2));
             if (distance > RADIUS) {
@@ -149,6 +143,22 @@ export const SunPositionPicker = ({ sun, instance }: { sun: Entity; instance: Li
                 sunY = y;
                 sunZ = distance;
             }
+        };
+
+        const showGrabbing = () => {
+            canvas.style.cursor = "grabbing";
+            ctx.shadowColor = "rgba(0, 0, 0, 0.5)";
+        };
+
+        const hideGrabbing = () => {
+            canvas.style.cursor = "pointer";
+            ctx.shadowColor = "rgba(0, 0, 0, 0)";
+        };
+
+        const updateLightHintPosition = ({ x, y }: { x: number; y: number }) => {
+            const el = movingLightHintRef.current;
+            if (!el) return;
+            el.style.maskPosition = `${x - CANVAS_SIZE / 2}px ${y - CANVAS_SIZE / 2}px`;
         };
 
         const updateCanvas = () => {
@@ -199,6 +209,8 @@ export const SunPositionPicker = ({ sun, instance }: { sun: Entity; instance: Li
 
         const onMouseDown = () => {
             isMouseDown = true;
+            showGrabbing();
+            requestAnimationFrame(update);
         };
 
         const onMouseUp = (event: PointerEvent) => {
@@ -209,19 +221,25 @@ export const SunPositionPicker = ({ sun, instance }: { sun: Entity; instance: Li
                 x: event.offsetX,
                 y: event.offsetY,
             });
-            hideShadow();
+            hideGrabbing();
             requestAnimationFrame(update);
         };
 
         const onMouseMove = (event: PointerEvent) => {
             event.preventDefault();
+            updateLightHintPosition({ x: event.offsetX, y: event.offsetY });
+
             if (!isMouseDown) return;
             updateSunPosition({
                 x: event.offsetX,
                 y: event.offsetY,
             });
-            showShadow();
+
             requestAnimationFrame(update);
+        };
+
+        const onMouseLeave = () => {
+            updateLightHintPosition({ x: -100, y: -100 });
         };
 
         requestAnimationFrame(updateCanvas);
@@ -229,10 +247,12 @@ export const SunPositionPicker = ({ sun, instance }: { sun: Entity; instance: Li
         canvas.addEventListener("pointerdown", onMouseDown);
         canvas.addEventListener("pointerup", onMouseUp);
         canvas.addEventListener("pointermove", onMouseMove);
+        canvas.addEventListener("pointerleave", onMouseLeave);
         return () => {
             canvas.removeEventListener("pointerdown", onMouseDown);
             canvas.removeEventListener("pointerup", onMouseUp);
             canvas.removeEventListener("pointermove", onMouseMove);
+            canvas.removeEventListener("pointerleave", onMouseLeave);
         };
     }, [sun]);
 
@@ -240,11 +260,14 @@ export const SunPositionPicker = ({ sun, instance }: { sun: Entity; instance: Li
     // UI
     return (
         <Provider>
-            <div style={containerStyle}>
-                <canvas width={CANVAS_SIZE} height={CANVAS_SIZE} ref={bgCanvasRef} style={canvasStyle} />
-                <canvas width={CANVAS_SIZE} height={CANVAS_SIZE} ref={sunCanvasRef} style={canvasStyle} />
-            </div>
-            <ShadowCheckbox onClick={toggleShadowCascades} />
+            <Flex flexDir="column" alignItems="center">
+                <div style={containerStyle}>
+                    <canvas width={CANVAS_SIZE_PX} height={CANVAS_SIZE_PX} ref={bgCanvasRef} style={canvasStyle} />
+                    <canvas width={CANVAS_SIZE_PX} height={CANVAS_SIZE_PX} ref={sunCanvasRef} style={canvasStyle} />
+                    <MovingLightHint ref={movingLightHintRef} />
+                </div>
+                <ShadowCheckbox onClick={toggleShadowCascades} />
+            </Flex>
         </Provider>
     );
 };
@@ -264,6 +287,33 @@ const ShadowCheckbox = ({ onClick }: { onClick: () => void }) => {
         >
             Shadows
         </Checkbox>
+    );
+};
+
+const MovingLightHint = ({ ref }: { ref: Ref<HTMLDivElement> }) => {
+    return (
+        <Box
+            ref={ref}
+            pos="absolute"
+            top="50%"
+            left="50%"
+            transform="translate(-50%,-50%)"
+            width={`${RADIUS * 2 + 1}px`}
+            aspectRatio="1 / 1"
+            border="1px solid yellow"
+            filter="blur(1px)"
+            rounded="100%"
+            role="presentation"
+            style={{
+                maskImage: "radial-gradient(circle, black 20%, transparent 50%)",
+                maskRepeat: "no-repeat",
+                maskPosition: "50px 60px",
+                maskComposite: "intersect",
+                WebkitMaskComposite: "destination-in",
+                maskSize: "100%",
+            }}
+            pointerEvents="none"
+        />
     );
 };
 
