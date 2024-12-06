@@ -1,11 +1,13 @@
 //------------------------------------------------------------------------------
-import React, { forwardRef, Ref } from "react";
+import React, { forwardRef } from "react";
 import { useEffect, useRef } from "react";
+import { Box, Checkbox, Flex, Icon } from "@chakra-ui/react";
+import { FaRegSun, FaSun } from "react-icons/fa6";
 import type { Entity, Livelink, Vec2, Vec3 } from "@3dverse/livelink";
-import { Box, Checkbox, Flex } from "@chakra-ui/react";
 
 //------------------------------------------------------------------------------
 import { Provider } from "../../chakra/Provider";
+import { pulseAnimation } from "../../chakra/animation/pulseAnimation";
 
 //------------------------------------------------------------------------------
 const RADIUS = 40;
@@ -262,11 +264,27 @@ export const SunPositionPicker = ({ sun, instance }: { sun: Entity; instance: Li
         <Provider>
             <Flex flexDir="column" alignItems="center">
                 <div style={containerStyle}>
-                    <canvas width={CANVAS_SIZE_PX} height={CANVAS_SIZE_PX} ref={bgCanvasRef} style={canvasStyle} />
-                    <canvas width={CANVAS_SIZE_PX} height={CANVAS_SIZE_PX} ref={sunCanvasRef} style={canvasStyle} />
-                    <MovingLightHint ref={movingLightHintRef} />
+                    {instance ? (
+                        <>
+                            <canvas
+                                width={CANVAS_SIZE_PX}
+                                height={CANVAS_SIZE_PX}
+                                ref={bgCanvasRef}
+                                style={canvasStyle}
+                            />
+                            <canvas
+                                width={CANVAS_SIZE_PX}
+                                height={CANVAS_SIZE_PX}
+                                ref={sunCanvasRef}
+                                style={canvasStyle}
+                            />
+                            <MovingLightHint ref={movingLightHintRef} />
+                        </>
+                    ) : (
+                        <Skeleton />
+                    )}
                 </div>
-                <ShadowCheckbox onClick={toggleShadowCascades} />
+                {instance && <ShadowCheckbox onClick={toggleShadowCascades} />}
             </Flex>
         </Provider>
     );
@@ -317,6 +335,31 @@ const MovingLightHint = forwardRef<HTMLDivElement, {}>((_, ref) => {
         />
     );
 });
+
+//--------------------------------------------------------------------------
+const Skeleton = () => {
+    return (
+        <Flex
+            alignItems="center"
+            justifyContent="center"
+            w={`${RADIUS * 2}px`}
+            aspectRatio="1 / 1"
+            m={3}
+            bgColor="bg.foreground"
+            rounded="full"
+            animation={pulseAnimation}
+        >
+            <Icon
+                as={FaRegSun}
+                boxSize={8}
+                color="content.tertiary"
+                opacity={0.25}
+                stroke="bg.foreground"
+                strokeWidth="24px"
+            />
+        </Flex>
+    );
+};
 
 //------------------------------------------------------------------------------
 const sunToPositionToEuler = (sunPosition: Vec3): Vec3 => {
