@@ -1,7 +1,11 @@
 //------------------------------------------------------------------------------
 import React from "react";
 import { useEffect, useRef } from "react";
-import type { Entity, Vec2, Vec3 } from "@3dverse/livelink";
+import type { Entity, Livelink, Vec2, Vec3 } from "@3dverse/livelink";
+import { Checkbox } from "@chakra-ui/react";
+
+//------------------------------------------------------------------------------
+import { Provider } from "../../chakra/Provider";
 
 //------------------------------------------------------------------------------
 const RADIUS = 40;
@@ -17,6 +21,7 @@ const containerStyle = {
     position: "relative",
     width: CANVAS_SIZE,
     height: CANVAS_SIZE,
+    cursor: "pointer",
 } as const;
 
 const canvasStyle = {
@@ -30,10 +35,28 @@ const RED_COLOR = "#fb4949";
 const BLUE_COLOR = "#3db8ff";
 
 //------------------------------------------------------------------------------
-export const SunPositionPicker = ({ sun }: { sun: Entity }) => {
+export const SunPositionPicker = ({ sun, instance }: { sun: Entity; instance: Livelink }) => {
     //------------------------------------------------------------------------------
     const bgCanvasRef = useRef<HTMLCanvasElement>(null);
     const sunCanvasRef = useRef<HTMLCanvasElement>(null);
+
+    //------------------------------------------------------------------------------
+    const toggleShadowCascades = () => {
+        if (!instance) return;
+
+        const cameraEntity = instance.viewports[0].camera;
+        if (!cameraEntity) {
+            console.error("No entity camera");
+            return null;
+        }
+
+        if (!cameraEntity.shadow_caster?.accumulateShadowCascades) {
+            console.error("No accumulateShadowCascades on this shadow_caster");
+            return null;
+        }
+
+        cameraEntity.shadow_caster.accumulateShadowCascades = !cameraEntity.shadow_caster?.accumulateShadowCascades;
+    };
 
     //------------------------------------------------------------------------------
     useEffect(() => {
@@ -90,6 +113,9 @@ export const SunPositionPicker = ({ sun }: { sun: Entity }) => {
         ctx.fillStyle = HANDLE_COLOR;
         ctx.lineWidth = LINE_WIDTH;
         ctx.strokeStyle = HANDLE_COLOR;
+        ctx.shadowBlur = 3;
+        ctx.shadowOffsetX = 5;
+        ctx.shadowOffsetY = 5;
         const centerX = canvas.width / 2;
         const centerY = canvas.height / 2;
 
@@ -100,6 +126,14 @@ export const SunPositionPicker = ({ sun }: { sun: Entity }) => {
         let sunX = initX * RADIUS + centerX;
         let sunY = initY * RADIUS + centerY;
         let sunZ = 0;
+
+        const showShadow = () => {
+            ctx.shadowColor = "rgba(0, 0, 0, 0.5)";
+        };
+
+        const hideShadow = () => {
+            ctx.shadowColor = "rgba(0, 0, 0, 0)";
+        };
 
         const updateSunPosition = ({ x, y }: { x: number; y: number }) => {
             const distance = Math.sqrt(Math.pow(x - centerX, 2) + Math.pow(y - centerY, 2));
@@ -175,6 +209,7 @@ export const SunPositionPicker = ({ sun }: { sun: Entity }) => {
                 x: event.offsetX,
                 y: event.offsetY,
             });
+            hideShadow();
             requestAnimationFrame(update);
         };
 
@@ -185,6 +220,7 @@ export const SunPositionPicker = ({ sun }: { sun: Entity }) => {
                 x: event.offsetX,
                 y: event.offsetY,
             });
+            showShadow();
             requestAnimationFrame(update);
         };
 
@@ -203,10 +239,31 @@ export const SunPositionPicker = ({ sun }: { sun: Entity }) => {
     //------------------------------------------------------------------------------
     // UI
     return (
-        <div style={containerStyle}>
-            <canvas width={CANVAS_SIZE} height={CANVAS_SIZE} ref={bgCanvasRef} style={canvasStyle} />
-            <canvas width={CANVAS_SIZE} height={CANVAS_SIZE} ref={sunCanvasRef} style={canvasStyle} />
-        </div>
+        <Provider>
+            <div style={containerStyle}>
+                <canvas width={CANVAS_SIZE} height={CANVAS_SIZE} ref={bgCanvasRef} style={canvasStyle} />
+                <canvas width={CANVAS_SIZE} height={CANVAS_SIZE} ref={sunCanvasRef} style={canvasStyle} />
+            </div>
+            <ShadowCheckbox onClick={toggleShadowCascades} />
+        </Provider>
+    );
+};
+
+//------------------------------------------------------------------------------
+const ShadowCheckbox = ({ onClick }: { onClick: () => void }) => {
+    return (
+        <Checkbox
+            size="xs"
+            color="content.secondary"
+            letterSpacing="0.02em"
+            opacity={0.75}
+            _checked={{ opacity: 1 }}
+            transition="opacity"
+            transitionDuration=".22s"
+            onClick={onClick}
+        >
+            Shadows
+        </Checkbox>
     );
 };
 
