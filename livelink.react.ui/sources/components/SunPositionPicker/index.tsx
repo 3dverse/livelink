@@ -1,5 +1,5 @@
 //------------------------------------------------------------------------------
-import React, { Ref } from "react";
+import React, { forwardRef, Ref } from "react";
 import { useEffect, useRef } from "react";
 import type { Entity, Livelink, Vec2, Vec3 } from "@3dverse/livelink";
 import { Box, Checkbox, Flex } from "@chakra-ui/react";
@@ -290,7 +290,7 @@ const ShadowCheckbox = ({ onClick }: { onClick: () => void }) => {
     );
 };
 
-const MovingLightHint = ({ ref }: { ref: Ref<HTMLDivElement> }) => {
+const MovingLightHint = forwardRef<HTMLDivElement, {}>((_, ref) => {
     return (
         <Box
             ref={ref}
@@ -300,22 +300,23 @@ const MovingLightHint = ({ ref }: { ref: Ref<HTMLDivElement> }) => {
             transform="translate(-50%,-50%)"
             width={`${RADIUS * 2 + 1}px`}
             aspectRatio="1 / 1"
-            border="1px solid yellow"
-            filter="blur(1px)"
+            border="1px"
+            borderColor="accent.500"
             rounded="100%"
-            role="presentation"
+            filter="blur(1px)"
             style={{
                 maskImage: "radial-gradient(circle, black 20%, transparent 50%)",
                 maskRepeat: "no-repeat",
-                maskPosition: "50px 60px",
+                maskPosition: "-100px -100px",
                 maskComposite: "intersect",
                 WebkitMaskComposite: "destination-in",
                 maskSize: "100%",
             }}
             pointerEvents="none"
+            role="presentation"
         />
     );
-};
+});
 
 //------------------------------------------------------------------------------
 const sunToPositionToEuler = (sunPosition: Vec3): Vec3 => {
