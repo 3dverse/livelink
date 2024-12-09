@@ -1,5 +1,5 @@
 import { EncodedFrameConsumer } from "./EncodedFrameConsumer";
-import { RawFrameMetaData } from "./RawFrameMetaData";
+import { FrameMetaData } from "./FrameMetaData";
 
 import type { CodecType, Vec2i } from "@3dverse/livelink.core";
 import { LivelinkCoreModule } from "@3dverse/livelink.core";
@@ -42,7 +42,7 @@ export class WebCodecsDecoder extends EncodedFrameConsumer {
     /**
      *
      */
-    #meta_data_stack: Array<RawFrameMetaData> = [];
+    #meta_data_stack: Array<FrameMetaData> = [];
 
     /**
      *
@@ -152,7 +152,7 @@ export class WebCodecsDecoder extends EncodedFrameConsumer {
     /**
      *
      */
-    consumeEncodedFrame({ encoded_frame, meta_data }: { encoded_frame: DataView; meta_data: RawFrameMetaData }): void {
+    consumeEncodedFrame({ encoded_frame, meta_data }: { encoded_frame: DataView; meta_data: FrameMetaData }): void {
         const chunk = new EncodedVideoChunk({
             timestamp: 0,
             type: this.#first_frame ? "key" : "delta",

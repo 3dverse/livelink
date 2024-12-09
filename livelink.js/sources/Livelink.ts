@@ -17,7 +17,7 @@ import type {
 
 import { LivelinkCoreModule } from "@3dverse/livelink.core";
 
-import { rawFrameMetaDatafromFrameMetaData } from "./decoders/RawFrameMetaData";
+import { frameMetaDatafromRawFrameMetaData } from "./decoders/FrameMetaData";
 import { EncodedFrameConsumer } from "./decoders/EncodedFrameConsumer";
 import { DecodedFrameConsumer } from "./decoders/DecodedFrameConsumer";
 
@@ -395,8 +395,8 @@ export class Livelink {
         const frame_data = (e as CustomEvent<FrameData>).detail;
 
         this.session._updateClients({ client_data: frame_data.meta_data.clients });
-        const meta_data = rawFrameMetaDatafromFrameMetaData({
-            frame_meta_data: frame_data.meta_data,
+        const meta_data = frameMetaDatafromRawFrameMetaData({
+            raw_frame_meta_data: frame_data.meta_data,
             client_id: this.session.client_id!,
             entity_registry: this.scene.entity_registry,
         });

@@ -1,4 +1,4 @@
-import type { FrameMetaData, Mat4, Quat, UUID, Vec3 } from "@3dverse/livelink.core";
+import type { RawFrameMetaData, Mat4, Quat, UUID, Vec3 } from "@3dverse/livelink.core";
 import { FrameCameraTransform } from "./FrameCameraTransform";
 import { EntityRegistry } from "../EntityRegistry";
 import { Camera } from "../Camera";
@@ -6,7 +6,7 @@ import { Camera } from "../Camera";
 /**
  * @category Streaming
  */
-export type RawFrameMetaData = {
+export type FrameMetaData = {
     /**
      * Timestamp of the frame
      */
@@ -31,24 +31,24 @@ export type RawFrameMetaData = {
 /**
  * @category Streaming
  */
-export function rawFrameMetaDatafromFrameMetaData({
-    frame_meta_data,
+export function frameMetaDatafromRawFrameMetaData({
+    raw_frame_meta_data,
     client_id,
     entity_registry,
 }: {
-    frame_meta_data: FrameMetaData;
+    raw_frame_meta_data: RawFrameMetaData;
     client_id: UUID;
     entity_registry: EntityRegistry;
-}): RawFrameMetaData {
-    const meta_data: RawFrameMetaData = {
-        renderer_timestamp: frame_meta_data.renderer_timestamp,
-        frame_counter: frame_meta_data.frame_counter,
+}): FrameMetaData {
+    const meta_data: FrameMetaData = {
+        renderer_timestamp: raw_frame_meta_data.renderer_timestamp,
+        frame_counter: raw_frame_meta_data.frame_counter,
         current_client_cameras: [],
         other_clients_cameras: [],
     };
 
-    const current_client = frame_meta_data.clients.find(client => client.client_id === client_id);
-    const other_clients = frame_meta_data.clients.filter(client => client.client_id !== client_id);
+    const current_client = raw_frame_meta_data.clients.find(client => client.client_id === client_id);
+    const other_clients = raw_frame_meta_data.clients.filter(client => client.client_id !== client_id);
 
     for (const viewport of current_client?.viewports || []) {
         const camera = entity_registry.get({ entity_rtid: viewport.camera_rtid }) as Camera | null;

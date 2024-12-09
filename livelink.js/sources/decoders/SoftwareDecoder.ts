@@ -1,5 +1,5 @@
 import { EncodedFrameConsumer } from "./EncodedFrameConsumer";
-import { RawFrameMetaData } from "./RawFrameMetaData";
+import { FrameMetaData } from "./FrameMetaData";
 // @ts-ignore
 import BWDecoder from "../../external/Decoder.js";
 // @ts-ignore
@@ -93,7 +93,7 @@ export class SoftwareDecoder extends EncodedFrameConsumer {
     /**
      *
      */
-    consumeEncodedFrame({ encoded_frame, meta_data }: { encoded_frame: DataView; meta_data: RawFrameMetaData }) {
+    consumeEncodedFrame({ encoded_frame, meta_data }: { encoded_frame: DataView; meta_data: FrameMetaData }) {
         const f = new Uint8Array(encoded_frame.buffer, encoded_frame.byteOffset, encoded_frame.byteLength);
         this.#broadway_sw_decoder.decode(f, meta_data);
     }
@@ -101,7 +101,7 @@ export class SoftwareDecoder extends EncodedFrameConsumer {
     /**
      *
      */
-    private _onFrameDecoded = (decoded_frame: Uint8Array, width: number, height: number, infos: [RawFrameMetaData]) => {
+    private _onFrameDecoded = (decoded_frame: Uint8Array, width: number, height: number, infos: [FrameMetaData]) => {
         const yDataPerRow = width;
         const yRowCnt = height;
         const uDataPerRow = width / 2;

@@ -1,5 +1,5 @@
 import type { CodecType, Vec2i } from "@3dverse/livelink.core";
-import { RawFrameMetaData } from "./RawFrameMetaData";
+import { FrameMetaData } from "./FrameMetaData";
 import { CurrentFrameMetaData } from "./CurrentFrameMetaData";
 
 /**
@@ -20,12 +20,12 @@ export abstract class EncodedFrameConsumer {
     /**
      *
      */
-    abstract consumeEncodedFrame(frame: { encoded_frame: DataView; meta_data: RawFrameMetaData }): void;
+    abstract consumeEncodedFrame(frame: { encoded_frame: DataView; meta_data: FrameMetaData }): void;
 
     /**
      *
      */
-    applyFrameMetaData(meta_data: RawFrameMetaData): CurrentFrameMetaData {
+    applyFrameMetaData(meta_data: FrameMetaData): CurrentFrameMetaData {
         for (const { camera, world_position, world_orientation } of meta_data.other_clients_cameras) {
             camera._setLocalTransform({ world_position, world_orientation });
         }
