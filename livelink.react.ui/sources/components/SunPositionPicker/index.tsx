@@ -1,9 +1,9 @@
 //------------------------------------------------------------------------------
-import React, { forwardRef } from "react";
+import React, { forwardRef, useState } from "react";
 import { useEffect, useRef } from "react";
 import { Box, Checkbox, Flex, Icon } from "@chakra-ui/react";
-import { FaRegSun, FaSun } from "react-icons/fa6";
-import type { Entity, Livelink, Vec2, Vec3 } from "@3dverse/livelink";
+import { FaRegSun } from "react-icons/fa6";
+import type { Components, Entity, Livelink, Vec2, Vec3 } from "@3dverse/livelink";
 
 //------------------------------------------------------------------------------
 import { Provider } from "../../chakra/Provider";
@@ -12,7 +12,7 @@ import { pulseAnimation } from "../../chakra/animation/pulseAnimation";
 //------------------------------------------------------------------------------
 const RADIUS = 40;
 const LINE_WIDTH = 1;
-const CENTER_RADIUS = 4;
+const CENTER_RADIUS = 3;
 const CENTER_MARGIN = 2;
 const SUN_RADIUS = 6;
 const SUN_MARGIN = 0;
@@ -31,10 +31,10 @@ const canvasStyle = {
 } as const;
 
 //------------------------------------------------------------------------------
-const STROKE_COLOR = "#3c4a62";
+const STROKE_COLOR = "#837cdf60";
 const HANDLE_COLOR = "#FFC700";
-const RED_COLOR = "#fb4949";
-const BLUE_COLOR = "#3db8ff";
+const RED_COLOR = "#B32D27";
+const BLUE_COLOR = "#262CCD";
 
 //------------------------------------------------------------------------------
 export const SunPositionPicker = ({ sun, instance }: { sun: Entity; instance: Livelink | null }) => {
@@ -42,23 +42,16 @@ export const SunPositionPicker = ({ sun, instance }: { sun: Entity; instance: Li
     const bgCanvasRef = useRef<HTMLCanvasElement>(null);
     const sunCanvasRef = useRef<HTMLCanvasElement>(null);
     const movingLightHintRef = useRef<HTMLDivElement>(null);
+    const [shadowCaster, setShadowCaster] = useState<Components.ShadowCaster>({});
 
     //------------------------------------------------------------------------------
-    const toggleShadowCascades = () => {
-        if (!instance) return;
-
-        const cameraEntity = instance.viewports[0].camera;
-        if (!cameraEntity) {
-            console.error("No entity camera");
-            return null;
+    const onToggleShadows = () => {
+        if (sun.shadow_caster) {
+            setShadowCaster(sun.shadow_caster);
+            delete sun.shadow_caster;
+        } else {
+            sun.shadow_caster = shadowCaster;
         }
-
-        if (!cameraEntity.shadow_caster?.accumulateShadowCascades) {
-            console.error("No accumulateShadowCascades on this shadow_caster");
-            return null;
-        }
-
-        cameraEntity.shadow_caster.accumulateShadowCascades = !cameraEntity.shadow_caster?.accumulateShadowCascades;
     };
 
     //------------------------------------------------------------------------------
@@ -117,7 +110,7 @@ export const SunPositionPicker = ({ sun, instance }: { sun: Entity; instance: Li
         ctx.fillStyle = HANDLE_COLOR;
         ctx.lineWidth = LINE_WIDTH;
         ctx.strokeStyle = HANDLE_COLOR;
-        ctx.shadowBlur = 3;
+        ctx.shadowBlur = 2;
         ctx.shadowOffsetX = 5;
         ctx.shadowOffsetY = 5;
         const centerX = canvas.width / 2;
@@ -149,7 +142,7 @@ export const SunPositionPicker = ({ sun, instance }: { sun: Entity; instance: Li
 
         const showGrabbing = () => {
             canvas.style.cursor = "grabbing";
-            ctx.shadowColor = "rgba(0, 0, 0, 0.5)";
+            ctx.shadowColor = "rgba(0, 0, 0, 0.9)";
         };
 
         const hideGrabbing = () => {
@@ -266,6 +259,8 @@ export const SunPositionPicker = ({ sun, instance }: { sun: Entity; instance: Li
                 <div style={containerStyle}>
                     {instance ? (
                         <>
+                            <MovingLightHint ref={movingLightHintRef} />
+                            <CircleShadow />
                             <canvas
                                 width={CANVAS_SIZE_PX}
                                 height={CANVAS_SIZE_PX}
@@ -278,20 +273,19 @@ export const SunPositionPicker = ({ sun, instance }: { sun: Entity; instance: Li
                                 ref={sunCanvasRef}
                                 style={canvasStyle}
                             />
-                            <MovingLightHint ref={movingLightHintRef} />
                         </>
                     ) : (
                         <Skeleton />
                     )}
                 </div>
-                {instance && <ShadowCheckbox onClick={toggleShadowCascades} />}
+                {instance && <ShadowCheckbox isChecked={Boolean(sun.shadow_caster)} onChange={onToggleShadows} />}
             </Flex>
         </Provider>
     );
 };
 
 //------------------------------------------------------------------------------
-const ShadowCheckbox = ({ onClick }: { onClick: () => void }) => {
+const ShadowCheckbox = ({ isChecked, onChange }: { isChecked: boolean; onChange: () => void }) => {
     return (
         <Checkbox
             size="xs"
@@ -301,13 +295,34 @@ const ShadowCheckbox = ({ onClick }: { onClick: () => void }) => {
             _checked={{ opacity: 1 }}
             transition="opacity"
             transitionDuration=".22s"
-            onClick={onClick}
+            onChange={onChange}
+            isChecked={isChecked}
         >
             Shadows
         </Checkbox>
     );
 };
 
+//------------------------------------------------------------------------------
+const CircleShadow = () => {
+    return (
+        <Box
+            pos="absolute"
+            top="50%"
+            left="50%"
+            transform="translate(-50%,-50%)"
+            width={`${RADIUS * 2 + 1}px`}
+            aspectRatio="1 / 1"
+            boxShadow="inset 0px 0px 10px #665ee160"
+            rounded="100%"
+            pointerEvents="none"
+            role="presentation"
+            zIndex={-1}
+        />
+    );
+};
+
+//------------------------------------------------------------------------------
 const MovingLightHint = forwardRef<HTMLDivElement, {}>((_, ref) => {
     return (
         <Box
@@ -318,7 +333,7 @@ const MovingLightHint = forwardRef<HTMLDivElement, {}>((_, ref) => {
             transform="translate(-50%,-50%)"
             width={`${RADIUS * 2 + 1}px`}
             aspectRatio="1 / 1"
-            border="1px"
+            border="2px"
             borderColor="accent.500"
             rounded="100%"
             filter="blur(1px)"
