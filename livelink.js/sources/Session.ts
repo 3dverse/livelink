@@ -308,14 +308,14 @@ export class Session extends EventTarget implements SessionInterface {
      *
      */
     _updateClients({ client_data }: { client_data: Array<ClientMetaData> }): void {
-        for (const data of client_data) {
-            if (!this.#clients.has(data.client_id)) {
-                if (data.viewports.some(v => v.camera_rtid)) {
-                    this._onClientJoined({ client: new Client(data) });
+        for (const client_meta_data of client_data) {
+            if (!this.#clients.has(client_meta_data.client_id)) {
+                if (client_meta_data.viewports.some(v => v.camera_rtid)) {
+                    this._onClientJoined({ client: new Client(client_meta_data) });
                 }
             } else {
-                const client = this.#clients.get(data.client_id)!;
-                client.update(data.viewports);
+                const client = this.#clients.get(client_meta_data.client_id)!;
+                client._updateFromClientMetaData({ client_meta_data });
             }
         }
 
