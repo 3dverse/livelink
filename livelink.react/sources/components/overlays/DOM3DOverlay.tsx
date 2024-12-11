@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import { ReactOverlay } from "../overlays/react/ReactOverlay";
+import { ReactOverlay } from "../../overlays/react/ReactOverlay";
 
 import type { Livelink, RenderingSurface } from "@3dverse/livelink";
 

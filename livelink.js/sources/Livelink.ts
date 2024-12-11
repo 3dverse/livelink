@@ -305,6 +305,7 @@ export class Livelink {
      */
     addViewports({ viewports }: { viewports: Array<Viewport> }): void {
         this.#remote_rendering_surface.addViewports({ viewports });
+        this.session.dispatchEvent(new CustomEvent("viewports-added", { detail: { viewports } }));
     }
 
     /**

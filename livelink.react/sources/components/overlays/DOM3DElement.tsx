@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { OverlayContext } from "./DOM3DOverlay";
 
 import type { Vec2i, Vec3 } from "@3dverse/livelink";
-import type React3DElement from "../overlays/react/React3DElement";
+import type React3DElement from "../../overlays/react/React3DElement";
 
 //------------------------------------------------------------------------------
 export function DOM3DElement({

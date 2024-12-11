@@ -1,36 +1,33 @@
 //------------------------------------------------------------------------------
-import { useRef } from "react";
-import { useLivelinkInstance } from "@3dverse/livelink-react";
-import Canvas from "../../components/Canvas";
-import { CanvasActionBar } from "../../styles/components/CanvasActionBar";
+import { useState } from "react";
 import { RelativeRect } from "@3dverse/livelink";
+import { Livelink, Viewport, type LivelinkConnectParameters } from "@3dverse/livelink-react";
+import StyledCanvas from "../../components/Canvas";
+import { CanvasActionBar } from "../../styles/components/CanvasActionBar";
 
 //------------------------------------------------------------------------------
 export default function MultiViewportCanvas() {
-    const canvasRef = useRef<HTMLCanvasElement>(null);
+    const [started, setStarted] = useState(false);
 
-    const { instance, connect, disconnect } = useLivelinkInstance({
-        views: [
-            { canvas_ref: canvasRef, rect: new RelativeRect({ left: 0, width: 0.5, height: 1 }) },
-            { canvas_ref: canvasRef, rect: new RelativeRect({ left: 0.5, width: 0.5, height: 1 }) },
-        ],
-    });
-
-    const toggleConnection = async () => {
-        if (instance) {
-            disconnect();
-        } else if (canvasRef.current) {
-            connect({ scene_id: "15e95136-f9b7-425d-8518-d73dab5589b7", token: "public_p54ra95AMAnZdTel" });
-        }
+    const livelinkSettings: LivelinkConnectParameters = {
+        scene_id: "15e95136-f9b7-425d-8518-d73dab5589b7",
+        token: "public_p54ra95AMAnZdTel",
     };
 
     return (
         <div className="relative h-full p-3 pl-0">
-            <Canvas canvasRef={canvasRef} />
+            {started && (
+                <Livelink {...livelinkSettings}>
+                    <StyledCanvas>
+                        <Viewport rect={new RelativeRect({ left: 0, width: 0.5, height: 1 })} />
+                        <Viewport rect={new RelativeRect({ left: 0.5, width: 0.5, height: 1 })} />
+                    </StyledCanvas>
+                </Livelink>
+            )}
 
-            <CanvasActionBar isCentered={!instance}>
-                <button className="button button-primary" onClick={toggleConnection}>
-                    {instance ? "Disconnect" : "Connect"}
+            <CanvasActionBar isCentered={!started}>
+                <button className="button button-primary" onClick={() => setStarted(!started)}>
+                    {started ? "Disconnect" : "Connect"}
                 </button>
             </CanvasActionBar>
         </div>

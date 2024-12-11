@@ -1,27 +1,23 @@
 //------------------------------------------------------------------------------
-import { useEffect, useRef } from "react";
-import Canvas from "../../components/Canvas";
-import { useLivelinkInstance } from "@3dverse/livelink-react";
+import { Livelink, Viewport } from "@3dverse/livelink-react";
+import StyledCanvas from "../../components/Canvas";
 
 //------------------------------------------------------------------------------
 export default function DoubleCanvas() {
-    const canvasRef1 = useRef<HTMLCanvasElement>(null);
-    const canvasRef2 = useRef<HTMLCanvasElement>(null);
-
-    const { connect } = useLivelinkInstance({ views: [{ canvas_ref: canvasRef1 }, { canvas_ref: canvasRef2 }] });
-
-    useEffect(() => {
-        connect({ scene_id: "e7d69f14-d18e-446b-8df3-cbd24e10fa92", token: "public_p54ra95AMAnZdTel" });
-    }, []);
-
     return (
-        <div className="w-full h-full flex gap-3 p-3 lg:pl-0">
-            <div className="flex basis-full">
-                <Canvas canvasRef={canvasRef1} />
+        <Livelink scene_id="e7d69f14-d18e-446b-8df3-cbd24e10fa92" token="public_p54ra95AMAnZdTel">
+            <div className="w-full h-full flex gap-3 p-3 lg:pl-0">
+                <div className="flex basis-full">
+                    <StyledCanvas>
+                        <Viewport />
+                    </StyledCanvas>
+                </div>
+                <div className="flex basis-full">
+                    <StyledCanvas>
+                        <Viewport />
+                    </StyledCanvas>
+                </div>
             </div>
-            <div className="flex basis-full">
-                <Canvas canvasRef={canvasRef2} />
-            </div>
-        </div>
+        </Livelink>
     );
 }

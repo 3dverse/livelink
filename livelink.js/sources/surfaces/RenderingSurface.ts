@@ -152,10 +152,12 @@ export class RenderingSurface extends RenderingSurfaceBase {
         // have floating point values that would differ from the canvas element clientWidth & clientHeight used by
         // RenderingSurfaceBase.getViewportConfigs(rect.width, rect.height). So it needs to be ceiled to prevent
         // normalized width or height superior to 1 in the viewport config.
-        rect.x = Math.ceil(rect.x);
-        rect.y = Math.ceil(rect.y);
-        rect.width = Math.ceil(rect.width);
-        rect.height = Math.ceil(rect.height);
+        if (rect) {
+            rect.x = Math.ceil(rect.x);
+            rect.y = Math.ceil(rect.y);
+            rect.width = Math.ceil(rect.width);
+            rect.height = Math.ceil(rect.height);
+        }
         return new Rect(rect ?? { width: this.canvas.width, height: this.canvas.height });
     }
 
