@@ -8,6 +8,8 @@ import { RenderingSurfaceBase } from "./surfaces/RenderingSurfaceBase";
 import { RelativeRect } from "./surfaces/Rect";
 import { RenderingSurface } from "./surfaces/RenderingSurface";
 import { vec2, vec3 } from "gl-matrix";
+import { OverlayInterface } from "./surfaces/OverlayInterface";
+import { CurrentFrameMetaData } from "./decoders/CurrentFrameMetaData";
 
 /**
  * @category Rendering
@@ -32,6 +34,11 @@ export class Viewport extends EventTarget {
      *
      */
     render_target_index: number = -1;
+
+    /**
+     *
+     */
+    #overlays: Array<OverlayInterface> = [];
 
     /**
      *
@@ -217,5 +224,64 @@ export class Viewport extends EventTarget {
         screen_position[1] = (-clip_position[1] + 1) * this.height * 0.5;
 
         return screen_position;
+    }
+
+    /**
+     *
+     */
+    addOverlay({ overlay }: { overlay: OverlayInterface }): void {
+        if (this.#overlays.includes(overlay)) {
+            console.warn("Attempting to add an overlay that is already present", overlay);
+            return;
+        }
+        this.#overlays.push(overlay);
+    }
+
+    /**
+     *
+     */
+    removeOverlay({ overlay }: { overlay: OverlayInterface }): void {
+        overlay.release();
+
+        const index = this.#overlays.indexOf(overlay);
+        if (index === -1) {
+            console.warn("Attempting to remove an overlay that is not present", overlay);
+            return;
+        }
+
+        this.#overlays.splice(index, 1);
+    }
+
+    /**
+     *
+     */
+    drawOverlays({ meta_data }: { meta_data: CurrentFrameMetaData }): OffscreenCanvas | null {
+        let blendedFrame: OffscreenCanvas | null = null;
+        for (const overlay of this.#overlays) {
+            const overlayFrame = overlay.draw({ meta_data, output_canvas: blendedFrame });
+
+            if (!blendedFrame) {
+                blendedFrame = overlayFrame;
+            }
+        }
+
+        return blendedFrame;
+    }
+
+    /**
+     *
+     */
+    get overlays(): readonly OverlayInterface[] {
+        return Object.freeze(Array.from(this.#overlays));
+    }
+
+    /**
+     *
+     */
+    onResize(): void {
+        this.camera?.updateLens();
+        for (const overlay of this.#overlays) {
+            overlay.resize({ width: this.width, height: this.height });
+        }
     }
 }

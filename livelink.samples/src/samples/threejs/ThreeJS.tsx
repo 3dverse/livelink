@@ -4,13 +4,14 @@ import * as THREE from "three";
 
 //------------------------------------------------------------------------------
 import { RelativeRect } from "@3dverse/livelink";
-import { useLivelinkInstance, useThreeJsOverlay } from "@3dverse/livelink-react";
+import { useLivelinkInstance } from "@3dverse/livelink-react";
 
 //------------------------------------------------------------------------------
 import Canvas from "../../components/Canvas";
 
 //------------------------------------------------------------------------------
 export default function ThreeJS() {
+    return null;
     const canvasRef1 = useRef<HTMLCanvasElement>(null);
     const canvasRef2 = useRef<HTMLCanvasElement>(null);
 

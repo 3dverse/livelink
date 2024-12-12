@@ -8,18 +8,13 @@ export interface OverlayInterface {
     /**
      *
      */
-    drawFrame({
-        viewports,
+    draw({
         meta_data,
+        output_canvas,
     }: {
-        viewports: Array<Viewport>;
         meta_data: CurrentFrameMetaData;
+        output_canvas: OffscreenCanvas | null;
     }): OffscreenCanvas | null;
-
-    /**
-     *
-     */
-    addViewport({ viewport }: { viewport: Viewport }): void;
 
     /**
      *

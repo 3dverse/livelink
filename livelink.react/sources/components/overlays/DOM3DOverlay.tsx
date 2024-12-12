@@ -1,40 +1,30 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { HTMLProps, useEffect, useRef, useState } from "react";
 import { ReactOverlay } from "../../overlays/react/ReactOverlay";
-
-import type { Livelink, RenderingSurface } from "@3dverse/livelink";
+import { ViewportContext } from "../core/Viewport";
 
 //------------------------------------------------------------------------------
 export const OverlayContext = React.createContext<ReactOverlay | null>(null);
 
 //------------------------------------------------------------------------------
-export function DOM3DOverlay({
-    instance,
-    children,
-    style,
-}: React.PropsWithChildren<{ instance: Livelink | null; style?: React.CSSProperties }>) {
+export function DOM3DOverlay({ children, ...props }: React.PropsWithChildren<HTMLProps<HTMLDivElement>>) {
     const containerRef = useRef<HTMLDivElement>(null);
     const [overlay, setOverlay] = useState<ReactOverlay | null>(null);
+    const { viewport } = React.useContext(ViewportContext);
 
     useEffect(() => {
-        if (!instance || !containerRef.current) {
+        if (!viewport || !containerRef.current) {
             return;
         }
 
-        const overlay = new ReactOverlay({ container: containerRef.current });
-
-        const renderingSurface = instance.viewports[0].rendering_surface as RenderingSurface;
-        renderingSurface.addOverlay({ overlay });
-
-        for (const viewport of instance.viewports) {
-            overlay.addViewport({ viewport });
-        }
+        const overlay = new ReactOverlay({ container: containerRef.current, viewport });
+        viewport.addOverlay({ overlay });
 
         setOverlay(overlay);
 
         return () => {
-            renderingSurface.removeOverlay({ overlay });
+            viewport.removeOverlay({ overlay });
         };
-    }, [instance, containerRef]);
+    }, [viewport, containerRef]);
 
     return (
         <OverlayContext.Provider value={overlay}>
@@ -48,8 +38,9 @@ export function DOM3DOverlay({
                     zIndex: 10,
                     pointerEvents: "none",
                     padding: "inherit",
-                    ...style,
+                    overflow: "hidden",
                 }}
+                {...props}
             >
                 {children}
             </div>

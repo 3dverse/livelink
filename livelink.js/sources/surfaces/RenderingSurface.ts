@@ -39,11 +39,6 @@ export class RenderingSurface extends RenderingSurfaceBase {
     #auto_resizer: CanvasAutoResizer;
 
     /**
-     *
-     */
-    #overlays: Array<OverlayInterface> = [];
-
-    /**
      * Dimensions of the HTML canvas in pixels.
      */
     get width(): number {
@@ -128,11 +123,7 @@ export class RenderingSurface extends RenderingSurfaceBase {
         this.dispatchEvent(new Event("on-resized"));
 
         for (const viewport of this.viewports) {
-            viewport?.camera?.updateLens();
-        }
-
-        for (const overlay of this.#overlays) {
-            overlay.resize({ width: this.width, height: this.height });
+            viewport.onResize();
         }
     };
 
@@ -167,43 +158,17 @@ export class RenderingSurface extends RenderingSurfaceBase {
     drawFrame({ frame, meta_data }: { frame: VideoFrame | OffscreenCanvas; meta_data: CurrentFrameMetaData }): void {
         this.#context.drawFrame({ frame, left: this.offset[0], top: this.offset[1], meta_data });
 
-        for (const overlay of this.#overlays) {
-            const overlayFrame = overlay.drawFrame({ viewports: this.viewports, meta_data });
+        for (const viewport of this.viewports) {
+            const overlayFrame = viewport.drawOverlays({ meta_data });
             if (!overlayFrame) {
                 continue;
             }
             this.#context.drawFrame({
                 frame: overlayFrame,
-                left: 0,
-                top: 0,
+                left: viewport.offset[0],
+                top: viewport.offset[1],
                 meta_data,
             });
         }
-    }
-
-    /**
-     *
-     */
-    addOverlay({ overlay }: { overlay: OverlayInterface }): void {
-        if (this.#overlays.includes(overlay)) {
-            console.warn("Attempting to add an overlay that is already present", overlay);
-            return;
-        }
-        this.#overlays.push(overlay);
-    }
-
-    /**
-     *
-     */
-    removeOverlay({ overlay }: { overlay: OverlayInterface }): void {
-        overlay.release();
-
-        const index = this.#overlays.indexOf(overlay);
-        if (index === -1) {
-            console.warn("Attempting to remove an overlay that is not present", overlay);
-            return;
-        }
-
-        this.#overlays.splice(index, 1);
     }
 }

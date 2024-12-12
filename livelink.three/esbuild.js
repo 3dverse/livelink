@@ -4,7 +4,7 @@ const esbuild = require("esbuild");
 
 //------------------------------------------------------------------------------
 const commonBuildOptions = {
-    entryPoints: ["./sources/index.ts"],
+    entryPoints: ["./sources/index.ts", "./sources/react/index.ts"],
     outdir: "dist",
     bundle: true,
     minify: true,

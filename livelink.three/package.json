@@ -2,9 +2,18 @@
   "name": "@3dverse/livelink-three",
   "version": "0.1.0",
   "description": "",
-  "main": "./dist/index.cjs",
-  "module": "./dist/index.mjs",
-  "typings": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.cjs"
+    },
+    "./react": {
+      "types": "./dist/react/index.d.ts",
+      "import": "./dist/react/index.mjs",
+      "require": "./dist/react/index.cjs"
+    }
+  },
   "files": [
     "dist"
   ],
@@ -33,6 +42,8 @@
   },
   "peerDependencies": {
     "@3dverse/livelink": "^0.7.19",
-    "three": "^0.169.0"
+    "@3dverse/livelink-react": "^0.2.0",
+    "react": "^18.2.0",
+    "three": "^0.170.0"
   }
 }

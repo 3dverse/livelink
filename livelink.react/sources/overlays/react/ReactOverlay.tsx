@@ -2,7 +2,14 @@ import React, { type CSSProperties, type ReactElement } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import React3DElement from "./React3DElement";
 
-import { INFINITE_FAR_VALUE, Vec3, type OverlayInterface, type Vec2i, type Viewport } from "@3dverse/livelink";
+import {
+    CurrentFrameMetaData,
+    INFINITE_FAR_VALUE,
+    Vec3,
+    type OverlayInterface,
+    type Vec2i,
+    type Viewport,
+} from "@3dverse/livelink";
 
 /**
  *
@@ -11,47 +18,30 @@ export class ReactOverlay implements OverlayInterface {
     /**
      *
      */
-    #container: HTMLDivElement;
+    readonly #container: HTMLDivElement;
 
     /**
      *
      */
-    #root: Root;
+    readonly #root: Root;
 
     /**
      *
      */
-    #viewports: Map<Viewport, OverlayContainer> = new Map();
+    readonly #elements: Map<ReactElement, React3DElement> = new Map();
 
     /**
      *
      */
-    #elements: Map<ReactElement, React3DElement> = new Map();
+    readonly #viewport: Viewport;
 
     /**
      *
      */
-    constructor({ container }: { container: HTMLDivElement }) {
+    constructor({ container, viewport }: { container: HTMLDivElement; viewport: Viewport }) {
         this.#container = container;
         this.#root = createRoot(this.#container);
-    }
-
-    /**
-     *
-     */
-    addViewport({ viewport }: { viewport: Viewport }) {
-        if (this.#viewports.has(viewport)) {
-            console.warn(`Viewport already added to dom overlay`);
-            return;
-        }
-
-        if (!viewport.camera) {
-            console.error("Viewport has no camera", viewport);
-            return;
-        }
-
-        const domViewport = new OverlayContainer({ viewport });
-        this.#viewports.set(viewport, domViewport);
+        this.#viewport = viewport;
     }
 
     /**
@@ -95,85 +85,27 @@ export class ReactOverlay implements OverlayInterface {
     resize({ width, height }: { width: number; height: number }): void {
         this.#container.style.width = width + "px";
         this.#container.style.height = height + "px";
-
-        for (const domViewport of this.#viewports.values()) {
-            domViewport.updateSize();
-        }
     }
 
     /**
      *
      */
-    drawFrame({ viewports }: { viewports: Viewport[] }): null {
-        const jsxElements: React.JSX.Element[] = [];
-
-        for (const viewport of viewports) {
-            const react_viewport = this.#viewports.get(viewport);
-            if (!react_viewport) {
-                continue;
-            }
-            jsxElements.push(react_viewport.render({ elements: this.#elements.values() }));
+    draw(_: { meta_data: CurrentFrameMetaData }): OffscreenCanvas | null {
+        if (!this.#viewport.camera) {
+            return null;
         }
 
-        this.#root.render(jsxElements);
-
+        this.#root.render(this.renderElements());
         return null;
     }
 
     /**
      *
      */
-    release() {
-        this.#viewports.clear();
-        this.#elements.clear();
-    }
-}
-
-/**
- * Overlay container for a single viewport.
- */
-class OverlayContainer {
-    /**
-     *
-     */
-    #viewport: Viewport;
-
-    /**
-     *
-     */
-    #style: CSSProperties = {};
-
-    /**
-     *
-     */
-    constructor({ viewport }: { viewport: Viewport }) {
-        this.#viewport = viewport;
-
-        this.updateSize();
-    }
-
-    /**
-     *
-     */
-    updateSize() {
-        this.#style = {
-            position: "relative",
-            overflow: "hidden",
-            pointerEvents: "none",
-            left: this.#viewport.offset[0],
-            top: this.#viewport.offset[1],
-            width: this.#viewport.width,
-            height: this.#viewport.height,
-        };
-    }
-
-    /**
-     *
-     */
-    render({ elements }: { elements: Iterable<React3DElement> }) {
+    renderElements(): React.JSX.Element[] {
         const visibleElements: React3DElement[] = [];
 
-        for (const react_element of elements) {
+        for (const react_element of this.#elements.values()) {
             const { scale, is_visible } = this.#projectElementOnScreen({ react_element });
 
             react_element.scale = scale;
@@ -185,11 +117,7 @@ class OverlayContainer {
 
         visibleElements.sort((a, b) => b.screen_position[2] - a.screen_position[2]);
 
-        return (
-            <div key={this.#viewport.camera?.id} style={this.#style}>
-                {visibleElements.map((element, z_index) => element._render({ z_index }))}
-            </div>
-        );
+        return visibleElements.map((element, z_index) => element._render({ z_index }));
     }
 
     /**
@@ -246,5 +174,12 @@ class OverlayContainer {
                 : camera.orthographic_lens?.zNear) ?? 1;
 
         return (far - near) * (1 - screen_position[2]) * scale_factor;
+    }
+
+    /**
+     *
+     */
+    release(): void {
+        this.#elements.clear();
     }
 }

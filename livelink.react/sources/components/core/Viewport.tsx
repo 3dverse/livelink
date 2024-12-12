@@ -6,7 +6,7 @@ import { CanvasContext } from "./Canvas";
 import { DefaultCamera } from "../../cameras/DefaultCamera";
 
 //------------------------------------------------------------------------------
-const ViewportContext = React.createContext<{ viewport: Viewport | null; cameraInstance: Camera | null }>({
+export const ViewportContext = React.createContext<{ viewport: Viewport | null; cameraInstance: Camera | null }>({
     viewport: null,
     cameraInstance: null,
 });
