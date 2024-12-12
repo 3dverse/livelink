@@ -4,7 +4,7 @@ import { DOM3DElement, DOM3DOverlay, Livelink, Viewport } from "@3dverse/livelin
 import { ThreeOverlay } from "@3dverse/livelink-three/react";
 import * as THREE from "three";
 import BoringAvatar from "boring-avatars";
-import StyledCanvas from "../../components/Canvas";
+import { StyledCanvas } from "../../styles/components/Canvas";
 
 //------------------------------------------------------------------------------
 export default function DoubleCanvas() {

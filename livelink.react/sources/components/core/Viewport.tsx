@@ -17,7 +17,11 @@ function ViewportProvider({
     rect = new RelativeRect({}),
     cameraType = DefaultCamera,
     cameraName = "MyCam",
-}: React.PropsWithChildren<{ rect?: RelativeRect; cameraType?: typeof Camera | UUID | null; cameraName?: string }>) {
+}: React.PropsWithChildren<{
+    rect?: RelativeRect;
+    cameraType?: typeof Camera | UUID | null | (() => Promise<Camera | null>);
+    cameraName?: string;
+}>) {
     const { instance } = React.useContext(LivelinkContext);
     const { renderingSurface } = React.useContext(CanvasContext);
 
@@ -52,19 +56,22 @@ function ViewportProvider({
                 return null;
             } else if (typeof cameraType === "string") {
                 console.log("---- Finding camera");
-                const cameraEntity = await instance.scene.findEntity(Camera, { entity_uuid: cameraType as UUID });
-                if (cameraEntity) {
-                    cameraEntity.viewport = viewport;
-                    viewport.camera = cameraEntity;
-                }
-                return cameraEntity;
+                return await instance.scene.findEntity(Camera, { entity_uuid: cameraType as UUID });
+            } else if (!(cameraType.prototype instanceof Camera)) {
+                console.log("---- Creating camera using callback");
+                return await (cameraType as () => Promise<Camera | null>)();
             } else {
                 console.log("---- Creating camera");
-                return await instance.newCamera(cameraType, cameraName, viewport);
+                return await instance.newCamera(cameraType as typeof Camera, cameraName, viewport);
             }
         };
 
         resolveCamera().then(cameraEntity => {
+            if (cameraEntity) {
+                cameraEntity.viewport = viewport;
+                viewport.camera = cameraEntity;
+            }
+
             setCameraInstance(cameraEntity);
             console.log("---- Viewport ready");
             viewport.markViewportAsReady();
