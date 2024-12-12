@@ -47,11 +47,11 @@ function ViewportProvider({
             return;
         }
 
-        console.log("---- Setting camera");
         const resolveCamera = async () => {
             if (cameraType === null) {
                 return null;
             } else if (typeof cameraType === "string") {
+                console.log("---- Finding camera");
                 const cameraEntity = await instance.scene.findEntity(Camera, { entity_uuid: cameraType as UUID });
                 if (cameraEntity) {
                     cameraEntity.viewport = viewport;
@@ -59,14 +59,15 @@ function ViewportProvider({
                 }
                 return cameraEntity;
             } else {
-                console.log("---- Adding camera");
+                console.log("---- Creating camera");
                 return await instance.newCamera(cameraType, cameraName, viewport);
             }
         };
 
         resolveCamera().then(cameraEntity => {
-            //instance.setViewportReady(viewport);
             setCameraInstance(cameraEntity);
+            console.log("---- Viewport ready");
+            viewport.markViewportAsReady();
         });
     }, [instance, cameraType, viewport]);
 

@@ -419,6 +419,21 @@ export class Livelink {
     }
 
     /**
+     * @experimental
+     */
+    startStreamingIfReady() {
+        if (!this.isConfigured()) {
+            return;
+        }
+
+        if (this.viewports.some(viewport => !viewport.ready)) {
+            return;
+        }
+
+        this.startStreaming();
+    }
+
+    /**
      *
      */
     async newCamera<CameraType extends Camera>(

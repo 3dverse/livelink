@@ -123,28 +123,21 @@ export function LivelinkProvider({
 
 //------------------------------------------------------------------------------
 function configureClient(instance: Livelink) {
-    let timeout = 0;
-
     const configure = async () => {
-        if (timeout) {
-            clearTimeout(timeout);
-        }
+        instance.session.removeEventListener("viewports-added", configure);
 
-        timeout = setTimeout(async () => {
-            instance.session.removeEventListener("viewports-added", configure);
+        console.log("-- Configuring client");
+        const webcodec = await WebCodecsDecoder.findSupportedCodec();
+        await instance.configureRemoteServer({ codec: webcodec || undefined });
 
-            const webcodec = await WebCodecsDecoder.findSupportedCodec();
-            await instance.configureRemoteServer({ codec: webcodec || undefined });
+        await instance.setEncodedFrameConsumer({
+            encoded_frame_consumer:
+                webcodec !== null
+                    ? new WebCodecsDecoder(instance.default_decoded_frame_consumer)
+                    : new SoftwareDecoder(instance.default_decoded_frame_consumer),
+        });
 
-            await instance.setEncodedFrameConsumer({
-                encoded_frame_consumer:
-                    webcodec !== null
-                        ? new WebCodecsDecoder(instance.default_decoded_frame_consumer)
-                        : new SoftwareDecoder(instance.default_decoded_frame_consumer),
-            });
-
-            instance.startStreaming();
-        }, 10);
+        instance.startStreamingIfReady();
     };
 
     instance.session.addEventListener("viewports-added", configure);

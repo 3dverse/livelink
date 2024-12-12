@@ -82,6 +82,19 @@ export class Viewport extends EventTarget {
     }
 
     /**
+     *
+     */
+    ready: boolean = false;
+
+    /**
+     * @experimental
+     */
+    markViewportAsReady() {
+        this.ready = true;
+        this.#core.startStreamingIfReady();
+    }
+
+    /**
      * @param canvas_element DOM Element or id of the canvas on which to display the final composited frame
      *
      * @throws {InvalidCanvasId} Thrown when the provided id doesn't refer to a canvas element.
