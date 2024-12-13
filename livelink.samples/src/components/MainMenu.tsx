@@ -1,26 +1,9 @@
 //------------------------------------------------------------------------------
 import { NavLink } from "react-router-dom";
-import { SAMPLES } from "../samples";
+import { SAMPLES } from "../samples/react-core/index.tsx";
 
 //------------------------------------------------------------------------------
-export function MainMenu({
-    useProdEnv,
-    isOpen,
-    onClose,
-}: {
-    useProdEnv: boolean;
-    isOpen: boolean;
-    onClose: () => void;
-}) {
-    let samples: typeof SAMPLES = [];
-    SAMPLES.forEach(category => {
-        const list = category.list.filter(sample => {
-            return sample.prod === useProdEnv || (sample.prod === undefined && !useProdEnv);
-        });
-        if (list.length > 0) {
-            samples.push({ ...category, list });
-        }
-    });
+export function MainMenu({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
     return (
         <div>
             {isOpen && (
@@ -47,7 +30,7 @@ export function MainMenu({
                         </NavLink>
                     </header>
                     <ul className="flex flex-col gap-6 h-full px-5 py-4 text-secondary overflow-auto">
-                        {samples.map((category, i) => (
+                        {SAMPLES.map((category, i) => (
                             <li key={i}>
                                 <p className="mb-1 pl-4 text-2xs uppercase text-tertiary opacity-80 tracking-wider">
                                     {category.categoryName}

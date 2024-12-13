@@ -5,7 +5,7 @@ import "@fontsource-variable/manrope";
 import "@fontsource-variable/inter";
 import "./styles/index.css";
 import { RouterProvider, createHashRouter } from "react-router-dom";
-import { SAMPLES } from "./samples";
+import { SAMPLES } from "./samples/react-core/index.tsx";
 
 const router = createHashRouter([
     {

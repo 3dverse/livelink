@@ -36,14 +36,13 @@ export function LivelinkProvider({
     session_open_mode = "join_or_start",
 }: React.PropsWithChildren<LivelinkConnectParameters>) {
     const [instance, setInstance] = useState<Livelink | null>(null);
-    const [isConnecting, setIsConnecting] = useState(false);
+    const [isConnecting, setIsConnecting] = useState(true);
 
     const disconnect = useCallback(() => {
         instance?.disconnect();
     }, [instance]);
 
     useEffect(() => {
-        setIsConnecting(true);
         let onDisconnectedListener: ((event: Event) => void) | null = null;
 
         const connect = async () => {
