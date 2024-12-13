@@ -39,7 +39,7 @@ export default function SmartObject() {
 
                 {theSun && (
                     <div className="fixed top-6 right-6">
-                        <SunPositionPicker sun={theSun} instance={instance} />
+                        <SunPositionPicker sun={theSun} />
                     </div>
                 )}
                 <CanvasActionBar isCentered={!instance}>
