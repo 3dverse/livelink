@@ -22,6 +22,7 @@ import { getAssetDescription } from "@3dverse/api";
 import { FaArrowRotateLeft, FaFolder, FaFolderOpen } from "react-icons/fa6";
 
 //------------------------------------------------------------------------------
+import { Provider } from "../../chakra/Provider";
 import { FormControlWidget } from "../FormControlWidget";
 
 //------------------------------------------------------------------------------
@@ -253,20 +254,21 @@ export const RenderGraphSettings = ({
     };
 
     //--------------------------------------------------------------------------
-    if (!cameraEntity) {
-        // TODO: Replace spinner by skeletons
-        return (
-            <Flex alignItems="center" justifyContent="center" py={8}>
-                <Spinner size="sm" />
-            </Flex>
-        );
-    }
-    //--------------------------------------------------------------------------
+
     return (
-        <Flex flexDir="column" pl={3}>
-            {renderGraphDescription && renderCategory(renderGraphDescription)}
-            <ResetAllButton onClick={onResetAllInputs} />
-        </Flex>
+        <Provider>
+            {!cameraEntity ? (
+                <Flex alignItems="center" justifyContent="center" py={8}>
+                    {/* TODO: Replace spinner by skeletons */}
+                    <Spinner size="sm" />
+                </Flex>
+            ) : (
+                <Flex flexDir="column" pl={3}>
+                    {renderGraphDescription && renderCategory(renderGraphDescription)}
+                    <ResetAllButton onClick={onResetAllInputs} />
+                </Flex>
+            )}
+        </Provider>
     );
 };
 
