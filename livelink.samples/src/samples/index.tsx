@@ -8,7 +8,6 @@ import SceneSelector from "./scene-selector/SceneSelector";
 // Smart Object
 import SmartObjectSync from "./smart-object-sync/SmartObjectSync";
 import SmartObject from "./smart-object/SmartObject";
-import SunWidget from "./sun-widget/SunWidget";
 
 // Control
 import Trigger from "./trigger/Trigger";
@@ -36,6 +35,10 @@ import VideoCapture from "./video-capture/VideoCapture";
 import ThreeJS from "./threejs/ThreeJS";
 import DOMOverlaySample from "./dom-overlay/DOMOverlaySample";
 
+// React UI
+import SunPositionPicker from "./sun-position-picker/SunPositionPicker";
+import RenderGraphSettings from "./render-graph-settings/RenderGraphSettings";
+
 export const SAMPLES: Array<{
     categoryName: string;
     list: Array<{ prod?: boolean; title: string; path: string; element: JSX.Element }>;
@@ -56,7 +59,6 @@ export const SAMPLES: Array<{
         list: [
             { title: "Smart Object", path: "smart-object", element: <SmartObject /> },
             { title: "Smart Object Sync", path: "smart-object-sync", element: <SmartObjectSync /> },
-            { title: "Sun Widget", path: "sun-widget", element: <SunWidget /> },
         ],
     },
     {
@@ -105,6 +107,13 @@ export const SAMPLES: Array<{
             { title: "Live Skeletal Animation", path: "live-skeletal-animation", element: <LiveSkeletalAnimation /> },
             { title: "Render Target Debug", path: "render-target-debug", element: <RenderTargetDebug /> },
             { title: "Video Capture", path: "video-capture", element: <VideoCapture /> },
+        ],
+    },
+    {
+        categoryName: "React UI",
+        list: [
+            { title: "Sun Position Picker", path: "sun-position-picker", element: <SunPositionPicker /> },
+            { title: "Render Graph Settings", path: "render-graph-settings", element: <RenderGraphSettings /> },
         ],
     },
 ];

@@ -19,10 +19,10 @@ import {
 } from "@chakra-ui/react";
 import { Camera } from "@3dverse/livelink";
 import { getAssetDescription } from "@3dverse/api";
+import { FaArrowRotateLeft, FaFolder, FaFolderOpen } from "react-icons/fa6";
 
 //------------------------------------------------------------------------------
 import { FormControlWidget } from "../FormControlWidget";
-import { FaArrowRotateLeft, FaFolder, FaFolderOpen } from "react-icons/fa6";
 
 //------------------------------------------------------------------------------
 type Category = { name?: string; description: Input[]; categories: Category[]; mainAttribute?: Input };

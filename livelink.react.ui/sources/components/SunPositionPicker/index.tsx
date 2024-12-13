@@ -36,7 +36,13 @@ const RED_COLOR = "#B32D27";
 const BLUE_COLOR = "#262CCD";
 
 //------------------------------------------------------------------------------
-export const SunPositionPicker = ({ sun }: { sun?: Entity }) => {
+export const SunPositionPicker = ({
+    sun,
+    hasShadowToggle = true,
+}: {
+    sun?: Entity | null;
+    hasShadowToggle?: Boolean;
+}) => {
     //------------------------------------------------------------------------------
     const bgCanvasRef = useRef<HTMLCanvasElement>(null);
     const sunCanvasRef = useRef<HTMLCanvasElement>(null);
@@ -261,28 +267,21 @@ export const SunPositionPicker = ({ sun }: { sun?: Entity }) => {
         <Provider>
             <Flex flexDir="column" alignItems="center">
                 <div style={containerStyle}>
-                    {sun ? (
-                        <>
-                            <MovingLightHint ref={movingLightHintRef} />
-                            <CircleShadow />
-                            <canvas
-                                width={CANVAS_SIZE_PX}
-                                height={CANVAS_SIZE_PX}
-                                ref={bgCanvasRef}
-                                style={canvasStyle}
-                            />
-                            <canvas
-                                width={CANVAS_SIZE_PX}
-                                height={CANVAS_SIZE_PX}
-                                ref={sunCanvasRef}
-                                style={canvasStyle}
-                            />
-                        </>
-                    ) : (
-                        <Skeleton />
-                    )}
+                    <Box opacity={sun ? 1 : 0}>
+                        <MovingLightHint ref={movingLightHintRef} />
+                        <CircleShadow />
+                        <canvas width={CANVAS_SIZE_PX} height={CANVAS_SIZE_PX} ref={bgCanvasRef} style={canvasStyle} />
+                        <canvas width={CANVAS_SIZE_PX} height={CANVAS_SIZE_PX} ref={sunCanvasRef} style={canvasStyle} />
+                    </Box>
+                    {!sun && <Skeleton />}
                 </div>
-                <ShadowCheckbox isDisabled={!sun} isChecked={Boolean(sun?.shadow_caster)} onChange={onToggleShadows} />
+                {hasShadowToggle && (
+                    <ShadowCheckbox
+                        isDisabled={!sun}
+                        isChecked={Boolean(sun?.shadow_caster)}
+                        onChange={onToggleShadows}
+                    />
+                )}
             </Flex>
         </Provider>
     );
@@ -372,7 +371,7 @@ const Skeleton = () => {
             justifyContent="center"
             w={`${RADIUS * 2}px`}
             aspectRatio="1 / 1"
-            m={3}
+            m="11px"
             bgColor="bg.foreground"
             rounded="full"
             animation={pulseAnimation}

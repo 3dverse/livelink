@@ -1,22 +1,27 @@
-import { useRef } from "react";
-import { useLivelinkInstance, useEntity } from "@3dverse/livelink-react";
-import { SunPositionPicker } from "@3dverse/livelink-react-ui";
+import { useEffect, useRef, useState } from "react";
+import { useLivelinkInstance } from "@3dverse/livelink-react";
+import { RenderGraphSettings } from "@3dverse/livelink-react-ui";
+import { Camera } from "@3dverse/livelink";
 
 import { CanvasActionBar } from "../../styles/components/CanvasActionBar";
 import Canvas from "../../components/Canvas";
+import { defaultCameraSettings } from "./defaultCameraSettings";
 
 //------------------------------------------------------------------------------
-const SmartObjectManifest = {
-    MySun: "9d69cad8-9590-44bf-bdfa-3278dcd3e9d4",
-} as const;
-
-//------------------------------------------------------------------------------
-export default function SmartObject() {
+export default function RenderGraphSettingsSample() {
     const canvasRef = useRef<HTMLCanvasElement>(null);
-
     const { instance, connect, disconnect } = useLivelinkInstance({ views: [{ canvas_ref: canvasRef }] });
 
-    const theSun = useEntity({ instance, entity_uuid: SmartObjectManifest.MySun });
+    const [cameraEntity, setCameraEntity] = useState<Camera>();
+
+    useEffect(() => {
+        if (!instance) return;
+
+        const cameraEntity = instance.viewports[0].camera;
+        if (!cameraEntity) return;
+
+        setCameraEntity(cameraEntity);
+    }, [instance]);
 
     const toggleConnection = async () => {
         if (instance) {
@@ -37,11 +42,16 @@ export default function SmartObject() {
                     <Canvas canvasRef={canvasRef} />
                 </div>
 
-                {theSun && (
-                    <div className="fixed top-6 right-6">
-                        <SunPositionPicker sun={theSun} />
-                    </div>
+                {cameraEntity && (
+                    <aside className="absolute top-5 right-8">
+                        <p className="text-xs my-2">Render graph settings</p>
+                        <RenderGraphSettings
+                            cameraEntity={cameraEntity}
+                            defaultCameraSettings={defaultCameraSettings}
+                        />
+                    </aside>
                 )}
+
                 <CanvasActionBar isCentered={!instance}>
                     <button className="button button-primary" onClick={toggleConnection}>
                         {instance ? "Disconnect" : "Connect"}
