@@ -3,8 +3,8 @@ import { useRef, useState } from "react";
 import { Livelink, GatewayDisconnectedReason } from "@3dverse/livelink";
 import { useLivelinkInstance } from "@3dverse/livelink-react";
 import { InactivityWarning } from "@3dverse/livelink-react-ui";
-import Canvas from "../../../../components/Canvas";
-import { CanvasActionBar } from "../../../../styles/components/CanvasActionBar";
+import Canvas from "../../../components/Canvas";
+import { CanvasActionBar } from "../../../styles/components/CanvasActionBar";
 
 //------------------------------------------------------------------------------
 export default function SimpleCanvas() {

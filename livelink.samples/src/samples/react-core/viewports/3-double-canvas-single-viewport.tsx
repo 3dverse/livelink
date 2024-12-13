@@ -4,17 +4,23 @@ import { Livelink, Canvas, Viewport } from "@3dverse/livelink-react";
 import { SamplePlayer } from "../../../components/Player";
 import { LoadingSpinner } from "../../../styles/components/LoadingSpinner";
 import { sampleCanvasClassName } from "../../../styles/components/Canvas";
+import { DisconnectedModal } from "../../../styles/components/DisconnectedModal";
 
 //------------------------------------------------------------------------------
 // https://console.3dverse.com/3dverse-templates/livelink-samples
-const scene_id = "80ec3064-df96-41fa-be93-c6dbeb985278";
+const scene_id = "6391ff06-c881-441d-8ada-4184b2050751";
 const token = import.meta.env.VITE_PROD_PUBLIC_TOKEN;
 
 //------------------------------------------------------------------------------
 export default function DoubleCanvasSingleViewport() {
     return (
         <SamplePlayer>
-            <Livelink scene_id={scene_id} token={token} loader={<LoadingSpinner />}>
+            <Livelink
+                scene_id={scene_id}
+                token={token}
+                loader={<LoadingSpinner />}
+                disconnectedModal={<DisconnectedModal />}
+            >
                 <div className="flex basis-full">
                     <Canvas className={sampleCanvasClassName}>
                         <Viewport />

@@ -21,7 +21,10 @@ export type LivelinkConnectParameters = {
     onDisconnected?: (event: Event) => void;
     is_transient?: boolean;
     session_open_mode?: "join" | "start" | "join_or_start";
+
     loader?: React.ReactNode;
+    inactivityTimeoutModal?: React.ReactNode;
+    disconnectedModal?: React.ReactNode;
 };
 
 //------------------------------------------------------------------------------
@@ -33,17 +36,29 @@ export function LivelinkProvider({
     token,
     loader,
     onDisconnected,
+    inactivityTimeoutModal,
+    disconnectedModal,
     session_open_mode = "join_or_start",
 }: React.PropsWithChildren<LivelinkConnectParameters>) {
     const [instance, setInstance] = useState<Livelink | null>(null);
     const [isConnecting, setIsConnecting] = useState(true);
+    const [isDisconnected, setIsDisconnected] = useState(false);
 
     const disconnect = useCallback(() => {
         instance?.disconnect();
     }, [instance]);
 
+    const onDisconnectedHandler = useCallback(
+        (event: Event) => {
+            setIsDisconnected(true);
+            onDisconnected?.(event);
+        },
+        [instance, onDisconnected],
+    );
+
     useEffect(() => {
-        let onDisconnectedListener: ((event: Event) => void) | null = null;
+        setIsConnecting(true);
+        setIsDisconnected(false);
 
         const connect = async () => {
             if (["start", "join_or_start"].includes(session_open_mode) && session_id) {
@@ -73,14 +88,11 @@ export function LivelinkProvider({
 
         connect()
             .then(instance => {
-                if (onDisconnected) {
-                    // Allow the hook user to be notified of a disconnection occuring while the above operations run.
-                    // Still not perfect, because the gateway might disconnect before the instance is returned during
-                    // the GatewayController.authenticateClient or EditorController.connectToSession of livelink-core.
-                    // Also nothing's notify the livelink user of a loss of the EditorConnection.
-                    instance.session.addEventListener("on-disconnected", onDisconnected);
-                    onDisconnectedListener = onDisconnected;
-                }
+                // Allow the hook user to be notified of a disconnection occuring while the above operations run.
+                // Still not perfect, because the gateway might disconnect before the instance is returned during
+                // the GatewayController.authenticateClient or EditorController.connectToSession of livelink-core.
+                // Also nothing's notify the livelink user of a loss of the EditorConnection.
+                instance.session.addEventListener("on-disconnected", onDisconnectedHandler);
 
                 console.log("Connected to Livelink", instance);
                 configureClient(instance);
@@ -96,10 +108,7 @@ export function LivelinkProvider({
             });
 
         return () => {
-            if (onDisconnectedListener) {
-                instance?.session.removeEventListener("on-disconnected", onDisconnectedListener);
-            }
-
+            instance?.session.removeEventListener("on-disconnected", onDisconnectedHandler);
             setInstance(null);
         };
     }, [scene_id, session_id, token, is_transient, session_open_mode]);
@@ -120,6 +129,7 @@ export function LivelinkProvider({
             }}
         >
             {isConnecting && loader}
+            {isDisconnected && disconnectedModal}
             {children}
         </LivelinkContext.Provider>
     );
