@@ -43,6 +43,11 @@ export class Viewport extends EventTarget {
     /**
      *
      */
+    #z_index: number = 0;
+
+    /**
+     *
+     */
     readonly rect: RelativeRect;
 
     /**
@@ -73,6 +78,9 @@ export class Viewport extends EventTarget {
     }
     get aspect_ratio(): number {
         return this.height > 0 ? this.width / this.height : 1;
+    }
+    get z_index(): number {
+        return this.#z_index;
     }
 
     /**
@@ -109,13 +117,14 @@ export class Viewport extends EventTarget {
     constructor(
         core: Livelink,
         rendering_surface: RenderingSurfaceBase,
-        options?: { rect?: RelativeRect; render_target_index?: number },
+        options?: { rect?: RelativeRect; render_target_index?: number; z_index?: number },
     ) {
         super();
         this.#core = core;
         this.#rendering_surface = rendering_surface;
         this.rect = new RelativeRect(options?.rect ?? { left: 0, top: 0, width: 1, height: 1 });
         this.render_target_index = options?.render_target_index ?? -1;
+        this.#z_index = options?.z_index ?? 0;
     }
 
     /**

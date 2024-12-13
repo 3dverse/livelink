@@ -30,7 +30,7 @@ export abstract class RenderingSurfaceBase extends EventTarget {
     /**
      *
      */
-    getViewportConfigs(width: number, height: number): Array<ViewportConfig> {
+    getViewportConfigs(width: number, height: number): Array<ViewportConfig & { z_index: number }> {
         if (!this.isValid()) {
             throw new Error("Invalid config");
         }
@@ -42,6 +42,7 @@ export abstract class RenderingSurfaceBase extends EventTarget {
             width: viewport.width / width,
             height: viewport.height / height,
             render_target_index: viewport.render_target_index,
+            z_index: viewport.z_index,
         }));
     }
 

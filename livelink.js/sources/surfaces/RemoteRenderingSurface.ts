@@ -79,11 +79,11 @@ export class RemoteRenderingSurface implements DecodedFrameConsumer {
      * Config for all registered viewports.
      */
     get #config(): Array<ViewportConfig> {
-        const result: Array<ViewportConfig> = [];
+        const result: Array<ViewportConfig & { z_index: number }> = [];
         for (const surface of this.#surfaces) {
             result.push(...surface.getViewportConfigs(this.width, this.height));
         }
-        return result;
+        return result.sort((a, b) => a.z_index - b.z_index);
     }
 
     /**

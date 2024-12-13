@@ -6,9 +6,14 @@ import { CanvasContext } from "./Canvas";
 import { DefaultCamera } from "../../cameras/DefaultCamera";
 
 //------------------------------------------------------------------------------
-export const ViewportContext = React.createContext<{ viewport: Viewport | null; cameraInstance: Camera | null }>({
+export const ViewportContext = React.createContext<{
+    viewport: Viewport | null;
+    cameraInstance: Camera | null;
+    zIndex: number;
+}>({
     viewport: null,
     cameraInstance: null,
+    zIndex: 0,
 });
 
 //------------------------------------------------------------------------------
@@ -24,17 +29,20 @@ function ViewportProvider({
 }>) {
     const { instance } = React.useContext(LivelinkContext);
     const { renderingSurface } = React.useContext(CanvasContext);
+    const { zIndex: parentZIndex = 0 } = React.useContext(ViewportContext);
 
     const [cameraInstance, setCameraInstance] = React.useState<Camera | null>(null);
     const [viewport, setViewport] = React.useState<Viewport | null>(null);
+
+    const zIndex = parentZIndex + 1;
 
     useEffect(() => {
         if (!instance || !renderingSurface) {
             return;
         }
 
-        const viewport = new Viewport(instance, renderingSurface, { rect });
-        console.log("---- Setting viewport");
+        const viewport = new Viewport(instance, renderingSurface, { rect, z_index: zIndex });
+        console.log("---- Setting viewport", viewport.width, viewport.height, zIndex);
         instance.addViewports({ viewports: [viewport] });
         setViewport(viewport);
 
@@ -44,7 +52,7 @@ function ViewportProvider({
             viewport.release();
             setViewport(null);
         };
-    }, [instance, renderingSurface]);
+    }, [instance, renderingSurface, zIndex]);
 
     useEffect(() => {
         if (!instance || !viewport) {
@@ -85,6 +93,7 @@ function ViewportProvider({
             value={{
                 viewport,
                 cameraInstance,
+                zIndex,
             }}
         >
             {children}
