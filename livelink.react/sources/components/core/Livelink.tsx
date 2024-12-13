@@ -84,9 +84,10 @@ export function LivelinkProvider({
                 }
 
                 console.log("Connected to Livelink", instance);
+                configureClient(instance);
                 setInstance(instance);
                 instance.__setReadyCallback(async () => {
-                    await configureClient(instance);
+                    instance.startStreaming();
                     setIsConnecting(false);
                 });
             })
@@ -126,19 +127,25 @@ export function LivelinkProvider({
 }
 
 //------------------------------------------------------------------------------
-async function configureClient(instance: Livelink) {
-    console.log("-- Configuring client");
-    const webcodec = await WebCodecsDecoder.findSupportedCodec();
-    await instance.configureRemoteServer({ codec: webcodec || undefined });
+function configureClient(instance: Livelink) {
+    const configure = async () => {
+        instance.session.removeEventListener("viewports-added", configure);
 
-    await instance.setEncodedFrameConsumer({
-        encoded_frame_consumer:
-            webcodec !== null
-                ? new WebCodecsDecoder(instance.default_decoded_frame_consumer)
-                : new SoftwareDecoder(instance.default_decoded_frame_consumer),
-    });
+        console.log("-- Configuring client");
+        const webcodec = await WebCodecsDecoder.findSupportedCodec();
+        await instance.configureRemoteServer({ codec: webcodec || undefined });
 
-    instance.startStreaming();
+        await instance.setEncodedFrameConsumer({
+            encoded_frame_consumer:
+                webcodec !== null
+                    ? new WebCodecsDecoder(instance.default_decoded_frame_consumer)
+                    : new SoftwareDecoder(instance.default_decoded_frame_consumer),
+        });
+
+        instance.__startIfReady();
+    };
+
+    instance.session.addEventListener("viewports-added", configure);
 }
 
 //------------------------------------------------------------------------------

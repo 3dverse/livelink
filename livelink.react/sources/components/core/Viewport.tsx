@@ -51,6 +51,7 @@ function ViewportProvider({
             return;
         }
 
+        let setCamera = true;
         const resolveCamera = async () => {
             if (cameraType === null) {
                 return null;
@@ -62,13 +63,14 @@ function ViewportProvider({
                 return await (cameraType as () => Promise<Camera | null>)();
             } else {
                 console.log("---- Creating camera");
+                setCamera = false;
                 return await instance.newCamera(cameraType as typeof Camera, cameraName, viewport);
             }
         };
 
         resolveCamera().then(cameraEntity => {
             console.log("---- Viewport ready");
-            if (cameraEntity) {
+            if (setCamera && cameraEntity) {
                 cameraEntity.viewport = viewport;
                 viewport.camera = cameraEntity;
             }
