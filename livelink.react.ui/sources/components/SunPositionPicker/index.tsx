@@ -1,9 +1,8 @@
 //------------------------------------------------------------------------------
-import React, { forwardRef, useState } from "react";
-import { useEffect, useRef } from "react";
+import React, { forwardRef, useEffect, useRef, useState } from "react";
 import { Box, Checkbox, Flex, Icon } from "@chakra-ui/react";
 import { FaRegSun } from "react-icons/fa6";
-import type { Components, Entity, Livelink, Vec2, Vec3 } from "@3dverse/livelink";
+import type { Components, Entity, Vec2, Vec3 } from "@3dverse/livelink";
 
 //------------------------------------------------------------------------------
 import { Provider } from "../../chakra/Provider";
@@ -37,7 +36,7 @@ const RED_COLOR = "#B32D27";
 const BLUE_COLOR = "#262CCD";
 
 //------------------------------------------------------------------------------
-export const SunPositionPicker = ({ sun, instance }: { sun: Entity; instance: Livelink | null }) => {
+export const SunPositionPicker = ({ sun }: { sun: Entity }) => {
     //------------------------------------------------------------------------------
     const bgCanvasRef = useRef<HTMLCanvasElement>(null);
     const sunCanvasRef = useRef<HTMLCanvasElement>(null);
@@ -257,7 +256,7 @@ export const SunPositionPicker = ({ sun, instance }: { sun: Entity; instance: Li
         <Provider>
             <Flex flexDir="column" alignItems="center">
                 <div style={containerStyle}>
-                    {instance ? (
+                    {sun ? (
                         <>
                             <MovingLightHint ref={movingLightHintRef} />
                             <CircleShadow />
@@ -278,7 +277,7 @@ export const SunPositionPicker = ({ sun, instance }: { sun: Entity; instance: Li
                         <Skeleton />
                     )}
                 </div>
-                {instance && <ShadowCheckbox isChecked={Boolean(sun.shadow_caster)} onChange={onToggleShadows} />}
+                {sun && <ShadowCheckbox isChecked={Boolean(sun.shadow_caster)} onChange={onToggleShadows} />}
             </Flex>
         </Provider>
     );
