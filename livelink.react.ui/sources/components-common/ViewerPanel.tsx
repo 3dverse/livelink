@@ -1,6 +1,5 @@
 //------------------------------------------------------------------------------
-import React from "react";
-import { ReactNode } from "react";
+import React, { ReactNode } from "react";
 import { Flex, FlexProps } from "@chakra-ui/react";
 
 //------------------------------------------------------------------------------

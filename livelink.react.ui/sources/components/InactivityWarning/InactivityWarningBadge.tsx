@@ -1,6 +1,5 @@
 //------------------------------------------------------------------------------
-import React from "react";
-import { RefObject, useEffect } from "react";
+import React, { RefObject, useEffect } from "react";
 import { Box, Flex, Text } from "@chakra-ui/react";
 
 //------------------------------------------------------------------------------
