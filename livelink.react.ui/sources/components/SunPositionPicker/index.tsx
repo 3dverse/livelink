@@ -36,7 +36,7 @@ const RED_COLOR = "#B32D27";
 const BLUE_COLOR = "#262CCD";
 
 //------------------------------------------------------------------------------
-export const SunPositionPicker = ({ sun }: { sun: Entity }) => {
+export const SunPositionPicker = ({ sun }: { sun?: Entity }) => {
     //------------------------------------------------------------------------------
     const bgCanvasRef = useRef<HTMLCanvasElement>(null);
     const sunCanvasRef = useRef<HTMLCanvasElement>(null);
@@ -45,6 +45,9 @@ export const SunPositionPicker = ({ sun }: { sun: Entity }) => {
 
     //------------------------------------------------------------------------------
     const onToggleShadows = () => {
+        if (!sun) {
+            return "No sun entity";
+        }
         if (sun.shadow_caster) {
             setShadowCaster(sun.shadow_caster);
             delete sun.shadow_caster;
@@ -102,6 +105,8 @@ export const SunPositionPicker = ({ sun }: { sun: Entity }) => {
 
     //------------------------------------------------------------------------------
     useEffect(() => {
+        if (!sun) return;
+
         const canvas = sunCanvasRef.current;
         const ctx = canvas?.getContext("2d");
         if (!canvas || !ctx) return;
@@ -277,14 +282,22 @@ export const SunPositionPicker = ({ sun }: { sun: Entity }) => {
                         <Skeleton />
                     )}
                 </div>
-                {sun && <ShadowCheckbox isChecked={Boolean(sun.shadow_caster)} onChange={onToggleShadows} />}
+                <ShadowCheckbox isDisabled={!sun} isChecked={Boolean(sun?.shadow_caster)} onChange={onToggleShadows} />
             </Flex>
         </Provider>
     );
 };
 
 //------------------------------------------------------------------------------
-const ShadowCheckbox = ({ isChecked, onChange }: { isChecked: boolean; onChange: () => void }) => {
+const ShadowCheckbox = ({
+    isDisabled,
+    isChecked,
+    onChange,
+}: {
+    isDisabled: boolean;
+    isChecked: boolean;
+    onChange: () => void;
+}) => {
     return (
         <Checkbox
             size="xs"
@@ -294,8 +307,9 @@ const ShadowCheckbox = ({ isChecked, onChange }: { isChecked: boolean; onChange:
             _checked={{ opacity: 1 }}
             transition="opacity"
             transitionDuration=".22s"
-            onChange={onChange}
+            isDisabled={isDisabled}
             isChecked={isChecked}
+            onChange={onChange}
         >
             Shadows
         </Checkbox>
