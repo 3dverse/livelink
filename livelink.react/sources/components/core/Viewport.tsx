@@ -67,14 +67,14 @@ function ViewportProvider({
         };
 
         resolveCamera().then(cameraEntity => {
+            console.log("---- Viewport ready");
             if (cameraEntity) {
                 cameraEntity.viewport = viewport;
                 viewport.camera = cameraEntity;
             }
 
             setCameraInstance(cameraEntity);
-            console.log("---- Viewport ready");
-            viewport.markViewportAsReady();
+            viewport.__markViewportAsReady();
         });
     }, [instance, cameraType, viewport]);
 

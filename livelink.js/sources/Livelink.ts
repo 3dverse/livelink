@@ -305,7 +305,6 @@ export class Livelink {
      */
     addViewports({ viewports }: { viewports: Array<Viewport> }): void {
         this.#remote_rendering_surface.addViewports({ viewports });
-        this.session.dispatchEvent(new CustomEvent("viewports-added", { detail: { viewports } }));
     }
 
     /**
@@ -418,19 +417,27 @@ export class Livelink {
         this.#startUpdateLoop({});
     }
 
-    /**
-     * @experimental
-     */
-    startStreamingIfReady() {
-        if (!this.isConfigured()) {
-            return;
-        }
+    #readyCallback: (() => void) | null = null;
 
+    /**
+     * @deprecated
+     */
+    __setReadyCallback(callback: () => void) {
+        this.#readyCallback = callback;
+    }
+
+    /**
+     * @internal
+     * @deprecated
+     */
+    __startIfReady() {
         if (this.viewports.some(viewport => !viewport.ready)) {
             return;
         }
 
-        this.startStreaming();
+        if (this.#readyCallback) {
+            this.#readyCallback();
+        }
     }
 
     /**

@@ -85,7 +85,10 @@ export function LivelinkProvider({
 
                 console.log("Connected to Livelink", instance);
                 setInstance(instance);
-                configureClient(instance, () => setIsConnecting(false));
+                instance.__setReadyCallback(async () => {
+                    await configureClient(instance);
+                    setIsConnecting(false);
+                });
             })
             .catch(error => {
                 console.error("Failed to connect to Livelink", error);
@@ -123,28 +126,19 @@ export function LivelinkProvider({
 }
 
 //------------------------------------------------------------------------------
-function configureClient(instance: Livelink, callbackCaca: () => void) {
-    const configure = async () => {
-        instance.session.removeEventListener("viewports-added", configure);
+async function configureClient(instance: Livelink) {
+    console.log("-- Configuring client");
+    const webcodec = await WebCodecsDecoder.findSupportedCodec();
+    await instance.configureRemoteServer({ codec: webcodec || undefined });
 
-        setTimeout(async () => {
-            console.log("-- Configuring client");
-            const webcodec = await WebCodecsDecoder.findSupportedCodec();
-            await instance.configureRemoteServer({ codec: webcodec || undefined });
+    await instance.setEncodedFrameConsumer({
+        encoded_frame_consumer:
+            webcodec !== null
+                ? new WebCodecsDecoder(instance.default_decoded_frame_consumer)
+                : new SoftwareDecoder(instance.default_decoded_frame_consumer),
+    });
 
-            await instance.setEncodedFrameConsumer({
-                encoded_frame_consumer:
-                    webcodec !== null
-                        ? new WebCodecsDecoder(instance.default_decoded_frame_consumer)
-                        : new SoftwareDecoder(instance.default_decoded_frame_consumer),
-            });
-
-            instance.startStreamingIfReady();
-            callbackCaca();
-        }, 2000);
-    };
-
-    instance.session.addEventListener("viewports-added", configure);
+    instance.startStreaming();
 }
 
 //------------------------------------------------------------------------------

@@ -94,11 +94,11 @@ export class Viewport extends EventTarget {
     ready: boolean = false;
 
     /**
-     * @experimental
+     * @deprecated
      */
-    markViewportAsReady() {
+    __markViewportAsReady() {
         this.ready = true;
-        this.#core.startStreamingIfReady();
+        this.#core.__startIfReady();
     }
 
     /**
