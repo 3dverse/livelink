@@ -2,9 +2,9 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { AnimationSequenceController } from "@3dverse/livelink";
 import { Range } from "react-daisyui";
-import Canvas from "../../../components/Canvas";
+import LegacyCanvas from "../../../components/Canvas";
 import { useLivelinkInstance, useEntity } from "@3dverse/livelink-react";
-import { CanvasActionBar } from "../../../styles/components/CanvasActionBar";
+import { CanvasActionBar } from "../../../components/SamplePlayer/CanvasActionBar";
 
 //------------------------------------------------------------------------------
 const SmartObjectManifest = {
@@ -73,7 +73,7 @@ export default function Trigger() {
         <>
             <div className="relative w-full h-full">
                 <div className="w-full h-full p-3 lg:pl-0">
-                    <Canvas canvasRef={canvasRef} />
+                    <LegacyCanvas canvasRef={canvasRef} />
                 </div>
                 {messages.length > 0 && (
                     <div className="absolute bottom-8 right-8 w-80 flex flex-col">

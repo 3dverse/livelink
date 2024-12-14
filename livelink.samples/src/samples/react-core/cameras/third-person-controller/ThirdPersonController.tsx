@@ -3,9 +3,9 @@ import { useCallback, useContext, useEffect, useState } from "react";
 import { type Livelink as LivelinkInstance, Camera, Entity, Gamepad, Keyboard, Mouse } from "@3dverse/livelink";
 import { CanvasContext, LivelinkContext, Livelink, Viewport, ViewportContext } from "@3dverse/livelink-react";
 
-import { SamplePlayer } from "../../../../components/Player";
-import { LoadingSpinner } from "../../../../styles/components/LoadingSpinner";
-import { StyledCanvas } from "../../../../styles/components/Canvas";
+import { SamplePlayer } from "../../../../components/SamplePlayer/Player";
+import { LoadingSpinner } from "../../../../components/SamplePlayer/LoadingSpinner";
+import { StyledCanvas } from "../../../../components/SamplePlayer/Canvas";
 
 //------------------------------------------------------------------------------
 // https://console.3dverse.com/3dverse-templates/livelink-samples

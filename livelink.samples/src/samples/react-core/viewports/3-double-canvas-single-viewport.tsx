@@ -1,13 +1,15 @@
 //------------------------------------------------------------------------------
 import { Livelink, Canvas, Viewport } from "@3dverse/livelink-react";
 
-import { SamplePlayer } from "../../../components/Player";
-import { LoadingSpinner } from "../../../styles/components/LoadingSpinner";
-import { sampleCanvasClassName } from "../../../styles/components/Canvas";
-import { DisconnectedModal } from "../../../styles/components/DisconnectedModal";
+//------------------------------------------------------------------------------
+import {
+    DisconnectedModal,
+    LoadingSpinner,
+    sampleCanvasClassName,
+    SamplePlayer,
+} from "../../../components/SamplePlayer";
 
 //------------------------------------------------------------------------------
-// https://console.3dverse.com/3dverse-templates/livelink-samples
 const scene_id = "6391ff06-c881-441d-8ada-4184b2050751";
 const token = import.meta.env.VITE_PROD_PUBLIC_TOKEN;
 

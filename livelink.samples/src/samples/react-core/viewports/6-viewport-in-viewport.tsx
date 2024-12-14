@@ -2,13 +2,15 @@
 import { RelativeRect } from "@3dverse/livelink";
 import { Livelink, Canvas, Viewport } from "@3dverse/livelink-react";
 
-import { SamplePlayer } from "../../../components/Player";
-import { LoadingSpinner } from "../../../styles/components/LoadingSpinner";
-import { sampleCanvasClassName } from "../../../styles/components/Canvas";
-import { DisconnectedModal } from "../../../styles/components/DisconnectedModal";
+//------------------------------------------------------------------------------
+import {
+    DisconnectedModal,
+    LoadingSpinner,
+    sampleCanvasClassName,
+    SamplePlayer,
+} from "../../../components/SamplePlayer";
 
 //------------------------------------------------------------------------------
-// https://console.3dverse.com/3dverse-templates/livelink-samples
 const scene_id = "6391ff06-c881-441d-8ada-4184b2050751";
 const token = import.meta.env.VITE_PROD_PUBLIC_TOKEN;
 
@@ -24,7 +26,7 @@ export default function ViewportInViewport() {
             >
                 <Canvas className={sampleCanvasClassName}>
                     <Viewport>
-                        <Viewport rect={new RelativeRect({ left: 0.2, top: 0.2, width: 0.2, height: 0.2 })} />
+                        <Viewport rect={new RelativeRect({ left: 0.7, top: 0.05, width: 0.25, height: 0.2 })} />
                     </Viewport>
                 </Canvas>
             </Livelink>

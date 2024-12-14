@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 import { useEffect, useRef } from "react";
-import Canvas from "../../../../components/Canvas";
+import LegacyCanvas from "../../../../components/Canvas";
 import { useLivelinkInstance, DefaultCamera } from "@3dverse/livelink-react";
 import CameraControls from "camera-controls";
 import * as THREE from "three";
@@ -177,7 +177,7 @@ export default function ControllerEffects() {
     return (
         <div className="w-full h-full flex gap-3 p-3 lg:pl-0">
             <div className="relative flex basis-full">
-                <Canvas canvasRef={canvasRef1} />
+                <LegacyCanvas canvasRef={canvasRef1} />
                 <div className="absolute left-1/2 bottom-8 -translate-x-1/2 flex flex-col items-center gap-2">
                     <div className="flex gap-2 w-max">
                         <button className="button button-primary" onClick={() => cameraShake1?.shake()}>
@@ -198,7 +198,7 @@ export default function ControllerEffects() {
                 </div>
             </div>
             <div className="relative flex basis-full">
-                <Canvas canvasRef={canvasRef2} />
+                <LegacyCanvas canvasRef={canvasRef2} />
                 <div className="absolute left-1/2 bottom-16 -translate-x-1/2">
                     <p className="text-tertiary">No controls</p>
                 </div>

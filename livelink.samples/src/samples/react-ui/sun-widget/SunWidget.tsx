@@ -2,8 +2,8 @@ import { useRef } from "react";
 import { useLivelinkInstance, useEntity } from "@3dverse/livelink-react";
 import { SunPositionPicker } from "@3dverse/livelink-react-ui";
 
-import { CanvasActionBar } from "../../../styles/components/CanvasActionBar";
-import Canvas from "../../../components/Canvas";
+import { CanvasActionBar } from "../../../components/SamplePlayer/CanvasActionBar";
+import LegacyCanvas from "../../../components/Canvas";
 
 //------------------------------------------------------------------------------
 const SmartObjectManifest = {
@@ -32,7 +32,7 @@ export default function SunPositionPickerSample() {
         <>
             <div className="w-full h-full relative">
                 <div className="w-full h-full p-3 lg:pl-0">
-                    <Canvas canvasRef={canvasRef} />
+                    <LegacyCanvas canvasRef={canvasRef} />
                 </div>
 
                 {instance && (

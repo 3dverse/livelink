@@ -1,8 +1,8 @@
 //------------------------------------------------------------------------------
 import { useRef, useState } from "react";
 import { useLivelinkInstance } from "@3dverse/livelink-react";
-import Canvas from "../../../components/Canvas";
-import { CanvasActionBar } from "../../../styles/components/CanvasActionBar";
+import LegacyCanvas from "../../../components/Canvas";
+import { CanvasActionBar } from "../../../components/SamplePlayer/CanvasActionBar";
 import { Camera, EncodedFrameConsumer, Livelink, Viewport, VirtualSurface } from "@3dverse/livelink";
 
 //------------------------------------------------------------------------------
@@ -94,7 +94,7 @@ export default function VideoCapture() {
 
     return (
         <div className="relative h-full p-3 lg:pl-0">
-            <Canvas canvasRef={canvasRef} />
+            <LegacyCanvas canvasRef={canvasRef} />
 
             <CanvasActionBar isCentered={!instance}>
                 <button className="button button-primary" onClick={toggleConnection}>

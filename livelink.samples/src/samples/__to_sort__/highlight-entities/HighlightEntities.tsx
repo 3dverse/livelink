@@ -1,9 +1,9 @@
 //------------------------------------------------------------------------------
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Camera, Entity, Vec3 } from "@3dverse/livelink";
-import Canvas from "../../../components/Canvas";
+import LegacyCanvas from "../../../components/Canvas";
 import { useLivelinkInstance, DefaultCamera } from "@3dverse/livelink-react";
-import { CanvasActionBar } from "../../../styles/components/CanvasActionBar";
+import { CanvasActionBar } from "../../../components/SamplePlayer/CanvasActionBar";
 
 //------------------------------------------------------------------------------
 export default function HighlightEntities() {
@@ -90,7 +90,7 @@ export default function HighlightEntities() {
     // UI
     return (
         <div className="relative h-full p-3">
-            <Canvas canvasRef={canvasRef} />
+            <LegacyCanvas canvasRef={canvasRef} />
 
             <CanvasActionBar isCentered={!instance}>
                 <button className="button button-primary" onClick={toggleConnection}>

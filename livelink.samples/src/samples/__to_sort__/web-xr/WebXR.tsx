@@ -1,7 +1,7 @@
 //------------------------------------------------------------------------------
 import { useRef } from "react";
 import { useLivelinkXR } from "@3dverse/livelink-react";
-import { CanvasActionBar } from "../../../styles/components/CanvasActionBar";
+import { CanvasActionBar } from "../../../components/SamplePlayer/CanvasActionBar";
 
 //------------------------------------------------------------------------------
 export default function WebXR({ mode }: { mode: XRSessionMode }) {

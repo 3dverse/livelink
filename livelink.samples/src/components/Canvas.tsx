@@ -1,5 +1,5 @@
 //------------------------------------------------------------------------------
-export default function Canvas({
+export default function LegacyCanvas({
     canvasRef,
     className = "",
     children,

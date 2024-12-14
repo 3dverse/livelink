@@ -1,10 +1,10 @@
 //------------------------------------------------------------------------------
 import { useCallback, useEffect, useRef, useState } from "react";
-import Canvas from "../../../components/Canvas";
+import LegacyCanvas from "../../../components/Canvas";
 import { useLivelinkInstance, useEntity, DefaultCamera } from "@3dverse/livelink-react";
 import { Camera, Entity, Livelink, Vec2, Vec3 } from "@3dverse/livelink";
 import { Output, OutputDivider, OutputItem, OutputTitle, OutputValue } from "../../../styles/components/output";
-import { CanvasActionBar } from "../../../styles/components/CanvasActionBar";
+import { CanvasActionBar } from "../../../components/SamplePlayer/CanvasActionBar";
 import { Range } from "react-daisyui";
 
 //------------------------------------------------------------------------------
@@ -199,7 +199,7 @@ export default function ConveyorBeltSorting() {
     return (
         <div className="relative w-full h-full">
             <div className="w-full h-full p-3 lg:pl-0">
-                <Canvas canvasRef={canvasRef} />
+                <LegacyCanvas canvasRef={canvasRef} />
             </div>
             <CanvasActionBar isCentered={!instance}>
                 <button

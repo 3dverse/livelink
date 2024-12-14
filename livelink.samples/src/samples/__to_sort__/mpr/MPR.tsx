@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 import { useEffect, useRef } from "react";
-import Canvas from "../../../components/Canvas";
+import LegacyCanvas from "../../../components/Canvas";
 import { useLivelinkInstance, DefaultCamera } from "@3dverse/livelink-react";
 import { Camera, Quat, RenderingSurface } from "@3dverse/livelink";
 import CameraControls from "camera-controls";
@@ -111,10 +111,10 @@ export default function MPR() {
 
     return (
         <div className="w-full h-full grid grid-cols-2 gap-3 grid-rows-2 p-3 lg:pl-0">
-            <Canvas canvasRef={canvasRef1} />
-            <Canvas canvasRef={canvasRef2} />
-            <Canvas canvasRef={canvasRef3} />
-            <Canvas canvasRef={canvasRef4} />
+            <LegacyCanvas canvasRef={canvasRef1} />
+            <LegacyCanvas canvasRef={canvasRef2} />
+            <LegacyCanvas canvasRef={canvasRef3} />
+            <LegacyCanvas canvasRef={canvasRef4} />
         </div>
     );
 }

@@ -6,9 +6,9 @@ import type React3DElement from "../../overlays/react/React3DElement";
 
 //------------------------------------------------------------------------------
 export function DOM3DElement({
+    world_position,
     pixel_dimensions,
     scale_factor,
-    world_position,
     children,
 }: React.PropsWithChildren<{
     world_position: Vec3;

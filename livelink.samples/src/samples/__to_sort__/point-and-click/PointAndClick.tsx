@@ -2,8 +2,8 @@
 import { useCallback, useEffect, useRef } from "react";
 import { Camera, Entity, Vec2, Vec3, Viewport } from "@3dverse/livelink";
 import { useLivelinkInstance, DefaultCamera, useEntity } from "@3dverse/livelink-react";
-import Canvas from "../../../components/Canvas";
-import { CanvasActionBar } from "../../../styles/components/CanvasActionBar";
+import LegacyCanvas from "../../../components/Canvas";
+import { CanvasActionBar } from "../../../components/SamplePlayer/CanvasActionBar";
 
 //------------------------------------------------------------------------------
 const SmartObjectManifest = {
@@ -166,7 +166,7 @@ export default function PointAndClick() {
     // UI
     return (
         <div className="relative h-full p-3 lg:pl-0">
-            <Canvas canvasRef={canvasRef} />
+            <LegacyCanvas canvasRef={canvasRef} />
 
             <CanvasActionBar isCentered={!instance}>
                 <button className="button button-primary" onClick={toggleConnection}>

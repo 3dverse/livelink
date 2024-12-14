@@ -1,6 +1,12 @@
 //------------------------------------------------------------------------------
-import { RelativeRect } from "@3dverse/livelink";
+import { useEffect, useState } from "react";
+
+//------------------------------------------------------------------------------
 import { Livelink, Canvas, Viewport } from "@3dverse/livelink-react";
+import { ThreeOverlay } from "@3dverse/livelink-three/react";
+
+//------------------------------------------------------------------------------
+import * as THREE from "three";
 
 //------------------------------------------------------------------------------
 import {
@@ -11,11 +17,21 @@ import {
 } from "../../../components/SamplePlayer";
 
 //------------------------------------------------------------------------------
-const scene_id = "6391ff06-c881-441d-8ada-4184b2050751";
+const scene_id = "812f58e2-e735-484e-bf47-a7faf9e10128";
 const token = import.meta.env.VITE_PROD_PUBLIC_TOKEN;
 
 //------------------------------------------------------------------------------
-export default function SingleCanvasDoubleViewports() {
+export default function ThreeOverlayViewport() {
+    const [scene] = useState(new THREE.Scene());
+
+    useEffect(() => {
+        const geometry = new THREE.BoxGeometry(1, 1, 1);
+        const material = new THREE.MeshNormalMaterial();
+        const cube = new THREE.Mesh(geometry, material);
+        cube.position.set(0, 0.5, 0);
+        scene.add(cube);
+    }, [scene]);
+
     return (
         <SamplePlayer>
             <Livelink
@@ -25,8 +41,9 @@ export default function SingleCanvasDoubleViewports() {
                 disconnectedModal={<DisconnectedModal />}
             >
                 <Canvas className={sampleCanvasClassName}>
-                    <Viewport rect={new RelativeRect({ left: 0, width: 0.5, height: 1 })} />
-                    <Viewport rect={new RelativeRect({ left: 0.5, width: 0.5, height: 1 })} />
+                    <Viewport>
+                        <ThreeOverlay scene={scene}></ThreeOverlay>
+                    </Viewport>
                 </Canvas>
             </Livelink>
         </SamplePlayer>

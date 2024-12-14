@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 import { useEffect, useRef, useState } from "react";
-import Canvas from "../../../components/Canvas";
+import LegacyCanvas from "../../../components/Canvas";
 import { useLivelinkInstance } from "@3dverse/livelink-react";
 import { AnimationSequenceController, Camera, Livelink, RenderingSurface, Viewport } from "@3dverse/livelink";
 
@@ -88,16 +88,16 @@ export default function RenderTargetDebug() {
     return (
         <div className="w-full h-full flex gap-3 p-3 pl-0">
             <div className="relative flex basis-full">
-                <Canvas canvasRef={canvasRef1} />
+                <LegacyCanvas canvasRef={canvasRef1} />
                 <div className="absolute h-full left-2 top-2 w-3/12 flex flex-col gap-2">
                     <div className="h-1/6 border border-tertiary rounded-lg shadow-2xl">
-                        <Canvas canvasRef={canvasRef2} />
+                        <LegacyCanvas canvasRef={canvasRef2} />
                     </div>
                     <div className="h-1/6 border border-tertiary rounded-lg shadow-2xl">
-                        <Canvas canvasRef={canvasRef3} />
+                        <LegacyCanvas canvasRef={canvasRef3} />
                     </div>
                     <div className="h-1/6 border border-tertiary rounded-lg shadow-2xl">
-                        <Canvas canvasRef={canvasRef4} />
+                        <LegacyCanvas canvasRef={canvasRef4} />
                     </div>
                 </div>
             </div>

@@ -6,7 +6,7 @@ import { useLivelinkInstance } from "@3dverse/livelink-react";
 import { RelativeRect, type RenderingSurface } from "@3dverse/livelink";
 
 //------------------------------------------------------------------------------
-import Canvas from "../../../components/Canvas";
+import LegacyCanvas from "../../../components/Canvas";
 import { DOMOverlay } from "./overlay/DOMOverlay";
 
 //------------------------------------------------------------------------------
@@ -61,7 +61,7 @@ export default function DOMOverlaySample() {
         <div className="w-full h-full flex gap-3 p-3 lg:pl-0">
             <div className="relative flex basis-full">
                 <div className="absolute basis-full z-10 pointer-events-none" ref={containerRef} />
-                <Canvas canvasRef={canvasRef} />
+                <LegacyCanvas canvasRef={canvasRef} />
             </div>
         </div>
     );

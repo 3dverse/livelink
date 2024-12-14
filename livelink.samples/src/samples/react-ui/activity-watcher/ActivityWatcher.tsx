@@ -3,8 +3,8 @@ import { useRef, useState } from "react";
 import { Livelink, GatewayDisconnectedReason } from "@3dverse/livelink";
 import { useLivelinkInstance } from "@3dverse/livelink-react";
 import { InactivityWarning } from "@3dverse/livelink-react-ui";
-import Canvas from "../../../components/Canvas";
-import { CanvasActionBar } from "../../../styles/components/CanvasActionBar";
+import LegacyCanvas from "../../../components/Canvas";
+import { CanvasActionBar } from "../../../components/SamplePlayer/CanvasActionBar";
 
 //------------------------------------------------------------------------------
 export default function SimpleCanvas() {
@@ -38,7 +38,7 @@ export default function SimpleCanvas() {
 
     return (
         <div className="relative h-full p-3 lg:pl-0">
-            <Canvas canvasRef={canvasRef} />
+            <LegacyCanvas canvasRef={canvasRef} />
 
             <CanvasActionBar isCentered={!instance}>
                 <button className="button button-primary" onClick={toggleConnection}>

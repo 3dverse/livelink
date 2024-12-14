@@ -1,5 +1,5 @@
 import { createContext, useEffect, useState } from "react";
-import { CanvasActionBar } from "../styles/components/CanvasActionBar";
+import { CanvasActionBar } from "./CanvasActionBar";
 
 type ConnectionState = "disconnected" | "connected" | "connection-lost" | "reconnect";
 

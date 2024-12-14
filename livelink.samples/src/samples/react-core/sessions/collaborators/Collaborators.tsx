@@ -4,8 +4,8 @@ import BoringAvatar from "boring-avatars";
 import { Camera, Client, Livelink, RTID, RenderingSurface, Viewport } from "@3dverse/livelink";
 import { useLivelinkInstance, DOM3DOverlay, DOMEntity } from "@3dverse/livelink-react";
 
-import Canvas from "../../../../components/Canvas";
-import { CanvasActionBar } from "../../../../styles/components/CanvasActionBar";
+import LegacyCanvas from "../../../../components/Canvas";
+import { CanvasActionBar } from "../../../../components/SamplePlayer/CanvasActionBar";
 
 //------------------------------------------------------------------------------
 // https://console.3dverse.com/3dverse-templates/livelink-samples
@@ -119,7 +119,7 @@ export default function Collaborators() {
 
     return (
         <div className="relative h-full max-h-screen p-3 lg:pl-0">
-            <Canvas canvasRef={canvasRef}>
+            <LegacyCanvas canvasRef={canvasRef}>
                 <DOM3DOverlay instance={instance}>
                     {instance &&
                         clients.map(client => <Avatar3D key={client.id} client={client} instance={instance} />)}
@@ -130,7 +130,7 @@ export default function Collaborators() {
                         {instance ? "Disconnect" : "Connect"}
                     </button>
                 </CanvasActionBar>
-            </Canvas>
+            </LegacyCanvas>
             <div className="absolute right-8 top-6">
                 <div className="avatar-group flex -space-x-6 rtl:space-x-reverse ">
                     {clients.map(client => (
@@ -148,7 +148,7 @@ export default function Collaborators() {
             </div>
             {pipCamera ? (
                 <div className="absolute top-3/4 left-8 bottom-8 right-8 border border-tertiary rounded-lg shadow-2xl">
-                    <Canvas canvasRef={canvasRef2} />
+                    <LegacyCanvas canvasRef={canvasRef2} />
                 </div>
             ) : null}
         </div>

@@ -1,7 +1,7 @@
 //------------------------------------------------------------------------------
 import { useRef, useState, useEffect } from "react";
-import Canvas from "../../../components/Canvas.tsx";
-import { CanvasActionBar } from "../../../styles/components/CanvasActionBar.tsx";
+import LegacyCanvas from "../../../components/Canvas.tsx";
+import { CanvasActionBar } from "../../../components/SamplePlayer/CanvasActionBar.tsx";
 import * as THREE from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import { TransformControls } from "three/addons/controls/TransformControls.js";
@@ -93,7 +93,7 @@ export default function LiveSkeletalAnimation() {
     return (
         <div className="w-full h-full flex gap-4 p-3">
             <div className="relative flex basis-full" id="skeleton-display">
-                <Canvas canvasRef={threeJSCanvasRef} />
+                <LegacyCanvas canvasRef={threeJSCanvasRef} />
                 <CanvasActionBar isCentered={false}>
                     <select
                         className="select select-primary"
@@ -111,7 +111,7 @@ export default function LiveSkeletalAnimation() {
                 </div>
             </div>
             <div className="relative flex basis-full">
-                <Canvas canvasRef={livelinkCanvasRef} />
+                <LegacyCanvas canvasRef={livelinkCanvasRef} />
                 <CanvasActionBar isCentered={!instance}>
                     <button className="button button-primary" onClick={toggleConnection}>
                         {instance ? "Disconnect" : "Connect"}

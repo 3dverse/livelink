@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 import { useContext, useEffect } from "react";
-import { SamplePlayerContext } from "../../components/Player";
+import { SamplePlayerContext } from "./Player";
 
 //------------------------------------------------------------------------------
 export function DisconnectedModal({ className = "" }: { className?: string }) {
