@@ -15,21 +15,19 @@ const token = import.meta.env.VITE_PROD_PUBLIC_TOKEN;
 //------------------------------------------------------------------------------
 export default function ViewportInViewport() {
     return (
-        <div className="relative h-full p-3 pl-0">
-            <SamplePlayer>
-                <Livelink
-                    scene_id={scene_id}
-                    token={token}
-                    loader={<LoadingSpinner />}
-                    disconnectedModal={<DisconnectedModal />}
-                >
-                    <Canvas className={sampleCanvasClassName}>
-                        <Viewport>
-                            <Viewport rect={new RelativeRect({ left: 0.2, top: 0.2, width: 0.2, height: 0.2 })} />
-                        </Viewport>
-                    </Canvas>
-                </Livelink>
-            </SamplePlayer>
-        </div>
+        <SamplePlayer>
+            <Livelink
+                scene_id={scene_id}
+                token={token}
+                loader={<LoadingSpinner />}
+                disconnectedModal={<DisconnectedModal />}
+            >
+                <Canvas className={sampleCanvasClassName}>
+                    <Viewport>
+                        <Viewport rect={new RelativeRect({ left: 0.2, top: 0.2, width: 0.2, height: 0.2 })} />
+                    </Viewport>
+                </Canvas>
+            </Livelink>
+        </SamplePlayer>
     );
 }

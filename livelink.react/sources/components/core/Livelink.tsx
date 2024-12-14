@@ -6,10 +6,12 @@ import { Livelink, Session, SoftwareDecoder, WebCodecsDecoder, type UUID } from 
 export const LivelinkContext = React.createContext<{
     instance: Livelink | null;
     isConnecting: boolean;
+    isDisconnected: boolean;
     disconnect: () => void;
 }>({
     instance: null,
     isConnecting: false,
+    isDisconnected: false,
     disconnect: () => {},
 });
 
@@ -47,9 +49,6 @@ export function LivelinkProvider({
     const disconnect = useCallback(() => instance?.disconnect(), [instance]);
 
     useEffect(() => {
-        setIsConnecting(true);
-        setIsDisconnected(false);
-
         const connect = async () => {
             if (["start", "join_or_start"].includes(session_open_mode) && session_id) {
                 console.warn(
@@ -95,6 +94,8 @@ export function LivelinkProvider({
 
         return () => {
             setInstance(null);
+            setIsConnecting(true);
+            setIsDisconnected(false);
         };
     }, [scene_id, session_id, token, is_transient, session_open_mode]);
 
@@ -132,6 +133,7 @@ export function LivelinkProvider({
             value={{
                 instance,
                 isConnecting,
+                isDisconnected,
                 disconnect,
             }}
         >

@@ -14,27 +14,25 @@ const token = import.meta.env.VITE_PROD_PUBLIC_TOKEN;
 //------------------------------------------------------------------------------
 export default function CanvasInCanvas() {
     return (
-        <div className="w-full h-full flex gap-3 p-3 lg:pl-0">
-            <SamplePlayer>
-                <Livelink
-                    scene_id={scene_id}
-                    token={token}
-                    loader={<LoadingSpinner />}
-                    disconnectedModal={<DisconnectedModal />}
-                >
-                    <div className="relative flex basis-full">
-                        <Canvas className={sampleCanvasClassName}>
-                            <Viewport>
-                                <div className="absolute top-3/4 left-8 bottom-8 right-8 border border-tertiary rounded-lg shadow-2xl">
-                                    <Canvas className={sampleCanvasClassName}>
-                                        <Viewport />
-                                    </Canvas>
-                                </div>
-                            </Viewport>
-                        </Canvas>
-                    </div>
-                </Livelink>
-            </SamplePlayer>
-        </div>
+        <SamplePlayer>
+            <Livelink
+                scene_id={scene_id}
+                token={token}
+                loader={<LoadingSpinner />}
+                disconnectedModal={<DisconnectedModal />}
+            >
+                <div className="relative flex basis-full">
+                    <Canvas className={sampleCanvasClassName}>
+                        <Viewport>
+                            <div className="absolute top-3/4 left-8 bottom-8 right-8 border border-tertiary rounded-lg shadow-2xl">
+                                <Canvas className={sampleCanvasClassName}>
+                                    <Viewport />
+                                </Canvas>
+                            </div>
+                        </Viewport>
+                    </Canvas>
+                </div>
+            </Livelink>
+        </SamplePlayer>
     );
 }
