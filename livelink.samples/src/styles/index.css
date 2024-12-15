@@ -17,7 +17,7 @@
     width: 48px;
     height: 48px;
     border: 5px solid #fff;
-    border-bottom-color: #ff3d00;
+    border-bottom-color: var(--color-accent);
     border-radius: 50%;
     display: inline-block;
     box-sizing: border-box;
@@ -30,5 +30,46 @@
     }
     100% {
         transform: rotate(360deg);
+    }
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.stroke-solid {
+    stroke-dashoffset: 0;
+    stroke-dasharray: 300;
+    stroke-width: 4px;
+    transition:
+        stroke-dashoffset 1s ease,
+        opacity 1s ease;
+    stroke: var(--color-accent);
+}
+
+.icon {
+    transform: scale(0.8);
+    transform-origin: 50% 50%;
+    transition: transform 200ms ease-out;
+    fill: var(--color-accent);
+}
+
+#play {
+    cursor: pointer;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translateY(-50%) translateX(-50%);
+}
+
+#play:hover {
+    .stroke-solid {
+        opacity: 1;
+        stroke-dashoffset: 300;
+    }
+    .icon {
+        transform: scale(0.9);
     }
 }

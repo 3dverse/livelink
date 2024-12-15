@@ -1,26 +1,17 @@
 //------------------------------------------------------------------------------
 import { useCallback, useContext, useEffect, useState } from "react";
+
+//------------------------------------------------------------------------------
 import { type Livelink as LivelinkInstance, Camera, Entity, Gamepad, Keyboard, Mouse } from "@3dverse/livelink";
-import { CanvasContext, LivelinkContext, Livelink, Viewport, ViewportContext } from "@3dverse/livelink-react";
-
-import { SamplePlayer } from "../../../../components/SamplePlayer/Player";
-import { LoadingSpinner } from "../../../../components/SamplePlayer/LoadingSpinner";
-import { StyledCanvas } from "../../../../components/SamplePlayer/Canvas";
+import { CanvasContext, LivelinkContext, Livelink, Viewport, ViewportContext, Canvas } from "@3dverse/livelink-react";
 
 //------------------------------------------------------------------------------
-// https://console.3dverse.com/3dverse-templates/livelink-samples
-const scene_id = "8f3c24c1-720e-4d2c-b0e7-f623e4feb7be";
+import { LoadingSpinner, sampleCanvasClassName, SamplePlayer } from "../../../../components/SamplePlayer";
+
+//------------------------------------------------------------------------------
 const token = import.meta.env.VITE_PROD_PUBLIC_TOKEN;
+const scene_id = "8f3c24c1-720e-4d2c-b0e7-f623e4feb7be";
 const characterControllerSceneUUID = "55e9d2cc-27c8-43e0-b014-0363be83de55";
-
-//------------------------------------------------------------------------------
-class TPController extends Entity {
-    onCreate() {
-        this.auto_broadcast = "off";
-        this.local_transform = { position: [0, 0, 0] };
-        this.scene_ref = { value: characterControllerSceneUUID };
-    }
-}
 
 //------------------------------------------------------------------------------
 export default function ThirdPersonController() {
@@ -36,12 +27,21 @@ export default function ThirdPersonController() {
 }
 
 //------------------------------------------------------------------------------
+class TPController extends Entity {
+    onCreate() {
+        this.auto_broadcast = "off";
+        this.local_transform = { position: [0, 0, 0] };
+        this.scene_ref = { value: characterControllerSceneUUID };
+    }
+}
+
+//------------------------------------------------------------------------------
 function App() {
     const { instance, isConnecting } = useContext(LivelinkContext);
     const [thirdPersonController, setThirdPersonController] = useState<Entity | undefined>(undefined);
 
     const setupFirstPersonCamera = useCallback(async () => {
-        if (!instance || !instance.session.client_id) {
+        if (!instance) {
             return null;
         }
 
@@ -58,13 +58,13 @@ function App() {
     }, [instance]);
 
     return (
-        <StyledCanvas>
+        <Canvas className={sampleCanvasClassName}>
             <Viewport cameraType={setupFirstPersonCamera}>
-                {thirdPersonController && instance && !isConnecting && (
+                {instance && !isConnecting && thirdPersonController && (
                     <Controller instance={instance} thirdPersonController={thirdPersonController} />
                 )}
             </Viewport>
-        </StyledCanvas>
+        </Canvas>
     );
 }
 
@@ -100,7 +100,7 @@ function Controller({
         thirdPersonController.assignClientToScripts({ client_uuid: instance.session.client_id });
 
         instance.startSimulation();
-    }, [canvas, viewport, instance]);
+    }, [instance, canvas, viewport]);
 
     return null;
 }
