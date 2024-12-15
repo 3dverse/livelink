@@ -1,5 +1,5 @@
 //------------------------------------------------------------------------------
-import { useEffect, useState } from "react";
+import { useMemo } from "react";
 
 //------------------------------------------------------------------------------
 import { Livelink, Canvas, Viewport, DOM3DOverlay, DOM3DElement } from "@3dverse/livelink-react";
@@ -22,15 +22,15 @@ const token = import.meta.env.VITE_PROD_PUBLIC_TOKEN;
 
 //------------------------------------------------------------------------------
 export default function MultiOverlayViewport() {
-    const [scene] = useState(new THREE.Scene());
-
-    useEffect(() => {
+    const scene = useMemo(() => {
+        const scene = new THREE.Scene();
         const geometry = new THREE.BoxGeometry(1, 1, 1);
         const material = new THREE.MeshNormalMaterial();
         const cube = new THREE.Mesh(geometry, material);
         cube.position.set(0, 2.5, 0);
         scene.add(cube);
-    }, [scene]);
+        return scene;
+    }, []);
 
     return (
         <SamplePlayer>
@@ -42,7 +42,7 @@ export default function MultiOverlayViewport() {
             >
                 <Canvas className={sampleCanvasClassName}>
                     <Viewport>
-                        <ThreeOverlay scene={scene}></ThreeOverlay>
+                        <ThreeOverlay scene={scene} />
 
                         <DOM3DOverlay>
                             <DOM3DElement world_position={[0, 1.5, 0]} pixel_dimensions={[1, 1]} scale_factor={0.0025}>
