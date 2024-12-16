@@ -1,46 +1,39 @@
 //------------------------------------------------------------------------------
-import { Livelink, Canvas, Viewport } from "@3dverse/livelink-react";
+import { Livelink, Canvas, Viewport, Camera, DefaultCamera } from "@3dverse/livelink-react";
 
 //------------------------------------------------------------------------------
-import {
-    DisconnectedModal,
-    LoadingSpinner,
-    sampleCanvasClassName,
-    SamplePlayer,
-} from "../../../components/SamplePlayer";
+import { DisconnectedModal, LoadingSpinner, sampleCanvasClassName } from "../../../components/SamplePlayer";
 
 //------------------------------------------------------------------------------
-const title = "Double Canvas";
-const summary = "Two canvases, each with their own viewport.";
-const description = "";
 const scene_id = "6391ff06-c881-441d-8ada-4184b2050751";
 const token = import.meta.env.VITE_PROD_PUBLIC_TOKEN;
 
 //------------------------------------------------------------------------------
 export default {
-    path: "double-canvas-single-viewport",
-    title,
-    summary,
-    description,
+    path: import.meta.url,
+    title: "Double Canvas",
+    summary: "Two canvases, each with their own viewport.",
     element: (
-        <SamplePlayer title={title} summary={summary} description={description}>
-            <Livelink
-                scene_id={scene_id}
-                token={token}
-                loader={<LoadingSpinner />}
-                disconnectedModal={<DisconnectedModal />}
-            >
-                <div className="flex basis-full">
-                    <Canvas className={sampleCanvasClassName}>
-                        <Viewport />
-                    </Canvas>
-                </div>
-                <div className="flex basis-full">
-                    <Canvas className={sampleCanvasClassName}>
-                        <Viewport />
-                    </Canvas>
-                </div>
-            </Livelink>
-        </SamplePlayer>
+        <Livelink
+            scene_id={scene_id}
+            token={token}
+            loader={<LoadingSpinner />}
+            disconnectedModal={<DisconnectedModal />}
+        >
+            <div className="flex basis-full">
+                <Canvas className={sampleCanvasClassName}>
+                    <Viewport>
+                        <Camera class={DefaultCamera} name={"MyCamera1"} />
+                    </Viewport>
+                </Canvas>
+            </div>
+            <div className="flex basis-full">
+                <Canvas className={sampleCanvasClassName}>
+                    <Viewport>
+                        <Camera class={DefaultCamera} name={"MyCamera2"} />
+                    </Viewport>
+                </Canvas>
+            </div>
+        </Livelink>
     ),
 };

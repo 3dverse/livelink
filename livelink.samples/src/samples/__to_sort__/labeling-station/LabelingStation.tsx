@@ -3,7 +3,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { Camera, Entity, Livelink } from "@3dverse/livelink";
 import { useLivelinkInstance, DefaultCamera, useEntity } from "@3dverse/livelink-react";
 import LegacyCanvas from "../../../components/Canvas";
-import { CanvasActionBar } from "../../../components/SamplePlayer/CanvasActionBar";
+import { ActionBar } from "../../../components/SamplePlayer/ActionBar";
 
 //------------------------------------------------------------------------------
 const SmartObjectManifest = {
@@ -225,7 +225,7 @@ export default function LabelingStation() {
             <div className="w-full h-full p-3 lg:pl-0">
                 <LegacyCanvas canvasRef={canvasRef} />
             </div>
-            <CanvasActionBar isCentered={!instance}>
+            <ActionBar isCentered={!instance}>
                 <button className="button button-primary" onClick={toggleConnection}>
                     {instance ? "Disconnect" : "Connect"}
                 </button>
@@ -239,7 +239,7 @@ export default function LabelingStation() {
                         </button>
                     </>
                 )}
-            </CanvasActionBar>
+            </ActionBar>
         </div>
     );
 }

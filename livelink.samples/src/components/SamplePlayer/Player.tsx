@@ -1,9 +1,15 @@
 import { createContext, useEffect, useState } from "react";
-import { CanvasActionBar } from "./CanvasActionBar";
+import { ActionBar } from "./ActionBar";
 import Markdown from "react-markdown";
+import { PrismLight as SyntaxHighlighter } from "react-syntax-highlighter";
+import { vscDarkPlus as codeTheme } from "react-syntax-highlighter/dist/esm/styles/prism";
+import tsx from "react-syntax-highlighter/dist/esm/languages/prism/tsx";
 
-type ConnectionState = "disconnected" | "connected" | "connection-lost" | "reconnect";
+//------------------------------------------------------------------------------
+SyntaxHighlighter.registerLanguage("tsx", tsx);
 
+//------------------------------------------------------------------------------
+export type ConnectionState = "disconnected" | "connected" | "connection-lost" | "reconnect";
 //------------------------------------------------------------------------------
 export const SamplePlayerContext = createContext<{
     connectionState: ConnectionState;
@@ -18,8 +24,9 @@ export function SamplePlayer({
     title,
     summary,
     description,
+    code,
     children,
-}: React.PropsWithChildren<{ title?: string; summary?: string; description?: string }>) {
+}: React.PropsWithChildren<{ title?: string; summary?: string; description?: string; code?: string }>) {
     const [connectionState, setConnectionState] = useState<ConnectionState>("disconnected");
 
     useEffect(() => {
@@ -32,11 +39,8 @@ export function SamplePlayer({
     const mountActionBar = connectionState === "connected";
     const mountPlayButton = connectionState === "disconnected";
 
-    const toggleConnectionState = () =>
-        setConnectionState(connectionState === "connected" ? "disconnected" : "connected");
-
     const connectButton = (
-        <button onClick={toggleConnectionState} className="relative w-32 h-32 m-auto flex">
+        <button onClick={() => setConnectionState("connected")} className="relative w-32 h-32 m-auto flex">
             <svg
                 version="1.1"
                 id="play"
@@ -64,15 +68,6 @@ export function SamplePlayer({
         </button>
     );
 
-    const disconnectButton = (
-        <button
-            className={connectionState === "connected" ? "button button-primary" : ""}
-            onClick={toggleConnectionState}
-        >
-            Disconnect
-        </button>
-    );
-
     return (
         <SamplePlayerContext.Provider value={{ connectionState, setConnectionState }}>
             <div className="w-full h-full flex gap-3 p-3 lg:pl-0 relative">
@@ -82,19 +77,24 @@ export function SamplePlayer({
                         <div className="w-full h-full flex-col content-center justify-center">
                             {connectButton}
                             <h1 className="text-center font-medium">{title}</h1>
-                            <h2 className="text-center font-thin">{summary}</h2>
+                            <h2 className="text-center font-extralight">{summary}</h2>
                         </div>
                     )}
-                    {mountActionBar && <CanvasActionBar>{disconnectButton}</CanvasActionBar>}
+                    {mountActionBar && <ActionBar disconnect={() => setConnectionState("disconnected")} />}
                 </div>
             </div>
-        </SamplePlayerContext.Provider>
-        /*
-            {readme && (
+
+            {description && (
                 <div>
                     <Markdown>{description}</Markdown>
                 </div>
             )}
-        */
+
+            {code === "caca" && (
+                <SyntaxHighlighter language="jsx" style={codeTheme} className="absolute bottom-0 right-0 max-h-[150px]">
+                    {code}
+                </SyntaxHighlighter>
+            )}
+        </SamplePlayerContext.Provider>
     );
 }

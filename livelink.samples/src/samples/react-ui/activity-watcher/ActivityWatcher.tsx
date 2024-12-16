@@ -4,7 +4,7 @@ import { Livelink, GatewayDisconnectedReason } from "@3dverse/livelink";
 import { useLivelinkInstance } from "@3dverse/livelink-react";
 import { InactivityWarning } from "@3dverse/livelink-react-ui";
 import LegacyCanvas from "../../../components/Canvas";
-import { CanvasActionBar } from "../../../components/SamplePlayer/CanvasActionBar";
+import { ActionBar } from "../../../components/SamplePlayer/ActionBar";
 
 //------------------------------------------------------------------------------
 export default function SimpleCanvas() {
@@ -40,11 +40,11 @@ export default function SimpleCanvas() {
         <div className="relative h-full p-3 lg:pl-0">
             <LegacyCanvas canvasRef={canvasRef} />
 
-            <CanvasActionBar isCentered={!instance}>
+            <ActionBar isCentered={!instance}>
                 <button className="button button-primary" onClick={toggleConnection}>
                     {instance ? "Disconnect" : "Connect"}
                 </button>
-            </CanvasActionBar>
+            </ActionBar>
 
             <InactivityWarning instance={instance} />
 

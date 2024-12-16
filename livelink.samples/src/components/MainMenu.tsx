@@ -1,6 +1,7 @@
 //------------------------------------------------------------------------------
 import { NavLink } from "react-router-dom";
 import { SAMPLES } from "../samples/react-core/index.tsx";
+import { resolveSamplePath } from "./SamplePlayer/index.tsx";
 
 //------------------------------------------------------------------------------
 export function MainMenu({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
@@ -9,7 +10,7 @@ export function MainMenu({ isOpen, onClose }: { isOpen: boolean; onClose: () => 
             {isOpen && (
                 <div
                     className={`
-                        lg:hidden absolute top-0 left-0 w-screen h-full bg-underground transition-opacity opacity-0 cursor-pointer z-10
+                         z-20 lg:hidden absolute top-0 left-0 w-screen h-full bg-underground transition-opacity opacity-0 cursor-pointer
                         ${isOpen ? "opacity-80" : ""}
                     `}
                     onClick={onClose}
@@ -20,7 +21,7 @@ export function MainMenu({ isOpen, onClose }: { isOpen: boolean; onClose: () => 
                 className={`absolute lg:relative top-0 transition-transform h-screen ${isOpen ? "" : "-translate-x-full lg:translate-x-0"}`}
             >
                 <div
-                    className="relative w-80 h-full flex flex-col bg-ground shadow-2xl lg:shadow-none z-10"
+                    className="relative w-80 h-full flex flex-col bg-ground shadow-2xl lg:shadow-none z-20"
                     onClick={onClose}
                 >
                     <header className="mt-6 mb-3 px-5">
@@ -38,7 +39,7 @@ export function MainMenu({ isOpen, onClose }: { isOpen: boolean; onClose: () => 
                                 {category.list.map((s, y) => (
                                     <NavLink
                                         key={y}
-                                        to={s.path}
+                                        to={resolveSamplePath(s.path)}
                                         className={({ isActive }) =>
                                             [
                                                 "button button-ghost py-1 text-sm justify-start rounded-xl",

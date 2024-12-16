@@ -7,21 +7,27 @@ import CanvasInCanvas from "./1-viewports/5-canvas-in-canvas";
 import ViewportInViewport from "./1-viewports/6-viewport-in-viewport";
 
 //------------------------------------------------------------------------------
-import SceneSelector from "./3.sessions/1-scene-selector";
-import MultiSession from "./3.sessions/2-multi-session";
-import LinkedMultiSession from "./3.sessions/3-linked-multi-session";
-import Clients from "./3.sessions/4-clients";
-import Collaborators from "./3.sessions/5-collaborators-avatars";
+import SceneSelector from "./3-sessions/1-scene-selector";
+import MultiSession from "./3-sessions/2-multi-session";
+import LinkedMultiSession from "./3-sessions/3-linked-multi-session";
+import Clients from "./3-sessions/4-clients";
+import Collaborators from "./3-sessions/5-collaborators-avatars";
 
 //------------------------------------------------------------------------------
-import DOM3DOverlayViewport from "./2.overlays/1-dom-3d-overlay";
-import ThreeOverlayViewport from "./2.overlays/2-threejs-overlay";
-import MultiOverlayViewport from "./2.overlays/3-multi-overlay";
+import DOM3DOverlayViewport from "./2-overlays/1-dom-3d-overlay";
+import ThreeOverlayViewport from "./2-overlays/2-threejs-overlay";
+import MultiOverlayViewport from "./2-overlays/3-multi-overlay";
 
 //------------------------------------------------------------------------------
 export const SAMPLES: Array<{
     categoryName: string;
-    list: Array<{ prod?: boolean; title: string; path: string; element: JSX.Element }>;
+    list: Array<{
+        path: string;
+        title: string;
+        summary?: string;
+        description?: string;
+        element: JSX.Element;
+    }>;
 }> = [
     {
         categoryName: "Viewports",
@@ -34,6 +40,7 @@ export const SAMPLES: Array<{
             ViewportInViewport,
         ],
     },
+    /*
     {
         categoryName: "Sessions",
         list: [
@@ -61,29 +68,14 @@ export const SAMPLES: Array<{
             },
         ],
     },
+    */
     {
         categoryName: "Overlays",
         list: [
-            {
-                title: "DOM 3D Overlay",
-                path: "dom-3d-overlay",
-                element: <DOM3DOverlayViewport />,
-            },
-            {
-                title: "Three.js Overlay",
-                path: "threejs-overlay",
-                element: <ThreeOverlayViewport />,
-            },
-            {
-                title: "Multi Overlay",
-                path: "multi-overlay",
-                element: <MultiOverlayViewport />,
-            },
-            {
-                title: "Collaborators",
-                path: "collaborators",
-                element: <Collaborators />,
-            },
+            DOM3DOverlayViewport,
+            ThreeOverlayViewport,
+            //MultiOverlayViewport,
+            //Collaborators
         ],
     },
 ];

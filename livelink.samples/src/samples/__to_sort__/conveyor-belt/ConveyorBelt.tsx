@@ -3,7 +3,7 @@ import { Camera, Entity, Livelink, Vec2, Vec3 } from "@3dverse/livelink";
 import LegacyCanvas from "../../../components/Canvas";
 import { useLivelinkInstance, DefaultCamera, useEntity } from "@3dverse/livelink-react";
 import { Output, OutputItem, OutputValue } from "../../../styles/components/output";
-import { CanvasActionBar } from "../../../components/SamplePlayer/CanvasActionBar";
+import { ActionBar } from "../../../components/SamplePlayer/ActionBar";
 
 //------------------------------------------------------------------------------
 const SmartObjectManifest = {
@@ -160,11 +160,11 @@ export default function ConveyorBelt() {
             <div className="w-full h-full p-3 lg:pl-0">
                 <LegacyCanvas canvasRef={canvasRef} />
             </div>
-            <CanvasActionBar isCentered={!instance}>
+            <ActionBar isCentered={!instance}>
                 <button className="button button-primary" onClick={toggleConnection}>
                     {instance ? "Disconnect" : "Connect"}
                 </button>
-            </CanvasActionBar>
+            </ActionBar>
             {instance && (
                 <Output>
                     <OutputItem>

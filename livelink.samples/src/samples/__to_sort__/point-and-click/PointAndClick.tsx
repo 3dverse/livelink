@@ -3,7 +3,7 @@ import { useCallback, useEffect, useRef } from "react";
 import { Camera, Entity, Vec2, Vec3, Viewport } from "@3dverse/livelink";
 import { useLivelinkInstance, DefaultCamera, useEntity } from "@3dverse/livelink-react";
 import LegacyCanvas from "../../../components/Canvas";
-import { CanvasActionBar } from "../../../components/SamplePlayer/CanvasActionBar";
+import { ActionBar } from "../../../components/SamplePlayer/ActionBar";
 
 //------------------------------------------------------------------------------
 const SmartObjectManifest = {
@@ -168,7 +168,7 @@ export default function PointAndClick() {
         <div className="relative h-full p-3 lg:pl-0">
             <LegacyCanvas canvasRef={canvasRef} />
 
-            <CanvasActionBar isCentered={!instance}>
+            <ActionBar isCentered={!instance}>
                 <button className="button button-primary" onClick={toggleConnection}>
                     {instance ? "Disconnect" : "Connect"}
                 </button>
@@ -179,7 +179,7 @@ export default function PointAndClick() {
                         </button>
                     </>
                 )}
-            </CanvasActionBar>
+            </ActionBar>
         </div>
     );
 }

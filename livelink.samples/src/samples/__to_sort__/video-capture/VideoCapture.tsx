@@ -2,7 +2,7 @@
 import { useRef, useState } from "react";
 import { useLivelinkInstance } from "@3dverse/livelink-react";
 import LegacyCanvas from "../../../components/Canvas";
-import { CanvasActionBar } from "../../../components/SamplePlayer/CanvasActionBar";
+import { ActionBar } from "../../../components/SamplePlayer/ActionBar";
 import { Camera, EncodedFrameConsumer, Livelink, Viewport, VirtualSurface } from "@3dverse/livelink";
 
 //------------------------------------------------------------------------------
@@ -96,7 +96,7 @@ export default function VideoCapture() {
         <div className="relative h-full p-3 lg:pl-0">
             <LegacyCanvas canvasRef={canvasRef} />
 
-            <CanvasActionBar isCentered={!instance}>
+            <ActionBar isCentered={!instance}>
                 <button className="button button-primary" onClick={toggleConnection}>
                     {instance ? "Disconnect" : "Connect"}
                 </button>
@@ -105,7 +105,7 @@ export default function VideoCapture() {
                         {recording ? "Stop" : "Start"} Recording
                     </button>
                 )}
-            </CanvasActionBar>
+            </ActionBar>
         </div>
     );
 }

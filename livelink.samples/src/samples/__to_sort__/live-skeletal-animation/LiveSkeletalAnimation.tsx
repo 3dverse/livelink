@@ -1,7 +1,7 @@
 //------------------------------------------------------------------------------
 import { useRef, useState, useEffect } from "react";
 import LegacyCanvas from "../../../components/Canvas.tsx";
-import { CanvasActionBar } from "../../../components/SamplePlayer/CanvasActionBar.tsx";
+import { ActionBar } from "../../../components/SamplePlayer/ActionBar.tsx";
 import * as THREE from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import { TransformControls } from "three/addons/controls/TransformControls.js";
@@ -94,7 +94,7 @@ export default function LiveSkeletalAnimation() {
         <div className="w-full h-full flex gap-4 p-3">
             <div className="relative flex basis-full" id="skeleton-display">
                 <LegacyCanvas canvasRef={threeJSCanvasRef} />
-                <CanvasActionBar isCentered={false}>
+                <ActionBar isCentered={false}>
                     <select
                         className="select select-primary"
                         name="animations"
@@ -105,18 +105,18 @@ export default function LiveSkeletalAnimation() {
                         <option value="idle">Idle</option>
                         <option value="walk">Walk</option>
                     </select>
-                </CanvasActionBar>
+                </ActionBar>
                 <div className="absolute flex right-2 top-2">
                     <span className="text-s text-color-secondary">Client Side Three JS Skeleton</span>
                 </div>
             </div>
             <div className="relative flex basis-full">
                 <LegacyCanvas canvasRef={livelinkCanvasRef} />
-                <CanvasActionBar isCentered={!instance}>
+                <ActionBar isCentered={!instance}>
                     <button className="button button-primary" onClick={toggleConnection}>
                         {instance ? "Disconnect" : "Connect"}
                     </button>
-                </CanvasActionBar>
+                </ActionBar>
                 <div className="absolute flex right-2 top-2">
                     <span className={"text-s " + (instance ? "text-color-primary-dark" : "text-color-secondary")}>
                         Livelink Session

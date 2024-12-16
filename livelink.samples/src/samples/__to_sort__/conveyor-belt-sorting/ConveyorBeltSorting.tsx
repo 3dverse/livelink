@@ -4,7 +4,7 @@ import LegacyCanvas from "../../../components/Canvas";
 import { useLivelinkInstance, useEntity, DefaultCamera } from "@3dverse/livelink-react";
 import { Camera, Entity, Livelink, Vec2, Vec3 } from "@3dverse/livelink";
 import { Output, OutputDivider, OutputItem, OutputTitle, OutputValue } from "../../../styles/components/output";
-import { CanvasActionBar } from "../../../components/SamplePlayer/CanvasActionBar";
+import { ActionBar } from "../../../components/SamplePlayer/ActionBar";
 import { Range } from "react-daisyui";
 
 //------------------------------------------------------------------------------
@@ -201,7 +201,7 @@ export default function ConveyorBeltSorting() {
             <div className="w-full h-full p-3 lg:pl-0">
                 <LegacyCanvas canvasRef={canvasRef} />
             </div>
-            <CanvasActionBar isCentered={!instance}>
+            <ActionBar isCentered={!instance}>
                 <button
                     className={`button ${instance ? "button-outline" : "button-primary"}`}
                     onClick={toggleConnection}
@@ -218,7 +218,7 @@ export default function ConveyorBeltSorting() {
                         </button>
                     </>
                 )}
-            </CanvasActionBar>
+            </ActionBar>
 
             {instance && (
                 <Output>

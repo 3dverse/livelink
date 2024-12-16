@@ -30,6 +30,7 @@ export function DOM3DOverlay({ children, ...props }: React.PropsWithChildren<HTM
         <OverlayContext.Provider value={overlay}>
             <div
                 ref={containerRef}
+                role={"dom-3d-overlay"}
                 style={{
                     position: "absolute",
                     width: "100%",

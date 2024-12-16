@@ -32,7 +32,7 @@ function App() {
             <div className="grow">
                 {outlet ? <Outlet /> : <Home />}
                 <button
-                    className="lg:hidden button button-outline button-icon absolute top-5 left-5 text-primary"
+                    className="z-10 lg:hidden button button-outline button-icon absolute top-5 left-5 text-primary"
                     onClick={() => setnavOpen(!isNavOpen)}
                 >
                     <BarsIcon />

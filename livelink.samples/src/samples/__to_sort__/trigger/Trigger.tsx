@@ -4,7 +4,7 @@ import { AnimationSequenceController } from "@3dverse/livelink";
 import { Range } from "react-daisyui";
 import LegacyCanvas from "../../../components/Canvas";
 import { useLivelinkInstance, useEntity } from "@3dverse/livelink-react";
-import { CanvasActionBar } from "../../../components/SamplePlayer/CanvasActionBar";
+import { ActionBar } from "../../../components/SamplePlayer/ActionBar";
 
 //------------------------------------------------------------------------------
 const SmartObjectManifest = {
@@ -92,7 +92,7 @@ export default function Trigger() {
                         ))}
                     </div>
                 )}
-                <CanvasActionBar isCentered={!instance}>
+                <ActionBar isCentered={!instance}>
                     <button className="button button-primary" onClick={toggleConnection}>
                         {instance ? "Disconnect" : "Connect"}
                     </button>
@@ -105,7 +105,7 @@ export default function Trigger() {
                             onChange={e => animationSeq?.play({ playback_speed: Number(e.target.value) })}
                         />
                     )}
-                </CanvasActionBar>
+                </ActionBar>
             </div>
         </>
     );

@@ -2,7 +2,7 @@ import { useRef } from "react";
 import { useLivelinkInstance, useEntity } from "@3dverse/livelink-react";
 import { SunPositionPicker } from "@3dverse/livelink-react-ui";
 
-import { CanvasActionBar } from "../../../components/SamplePlayer/CanvasActionBar";
+import { ActionBar } from "../../../components/SamplePlayer/ActionBar";
 import LegacyCanvas from "../../../components/Canvas";
 
 //------------------------------------------------------------------------------
@@ -40,11 +40,11 @@ export default function SunPositionPickerSample() {
                         <SunPositionPicker sun={theSun} />
                     </div>
                 )}
-                <CanvasActionBar isCentered={!instance}>
+                <ActionBar isCentered={!instance}>
                     <button className="button button-primary" onClick={toggleConnection}>
                         {instance ? "Disconnect" : "Connect"}
                     </button>
-                </CanvasActionBar>
+                </ActionBar>
             </div>
         </>
     );

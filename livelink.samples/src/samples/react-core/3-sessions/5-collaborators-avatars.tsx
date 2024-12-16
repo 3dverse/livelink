@@ -89,7 +89,7 @@ function App() {
                     </div>
                 </div>
                 {pipCamera !== null && (
-                    <div className="absolute z-10 top-20 w-1/3 h-1/6 right-8 border border-tertiary rounded-lg shadow-2xl">
+                    <div className="absolute top-20 w-1/3 h-1/6 right-8 border border-tertiary rounded-lg shadow-2xl">
                         <Canvas className={sampleCanvasClassName}>
                             <Viewport
                                 cameraType={() => instance.scene.entity_registry.get({ entity_rtid: pipCamera })}

@@ -3,7 +3,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { Camera, Entity, Vec3 } from "@3dverse/livelink";
 import LegacyCanvas from "../../../components/Canvas";
 import { useLivelinkInstance, DefaultCamera } from "@3dverse/livelink-react";
-import { CanvasActionBar } from "../../../components/SamplePlayer/CanvasActionBar";
+import { ActionBar } from "../../../components/SamplePlayer/ActionBar";
 
 //------------------------------------------------------------------------------
 export default function HighlightEntities() {
@@ -92,7 +92,7 @@ export default function HighlightEntities() {
         <div className="relative h-full p-3">
             <LegacyCanvas canvasRef={canvasRef} />
 
-            <CanvasActionBar isCentered={!instance}>
+            <ActionBar isCentered={!instance}>
                 <button className="button button-primary" onClick={toggleConnection}>
                     {instance ? "Disconnect" : "Connect"}
                 </button>
@@ -123,7 +123,7 @@ export default function HighlightEntities() {
                         </button>
                     </>
                 )}
-            </CanvasActionBar>
+            </ActionBar>
         </div>
     );
 }

@@ -3,7 +3,7 @@ import * as Livelink from "@3dverse/livelink";
 import { Input, Range } from "react-daisyui";
 import LegacyCanvas from "../../../components/Canvas";
 import { useLivelinkInstance, useEntity } from "@3dverse/livelink-react";
-import { CanvasActionBar } from "../../../components/SamplePlayer/CanvasActionBar";
+import { ActionBar } from "../../../components/SamplePlayer/ActionBar";
 
 //------------------------------------------------------------------------------
 const SmartObjectManifest = {
@@ -67,11 +67,11 @@ export default function SmartObjectSync() {
                 <CanvasWithControl canvasRef={canvasRef1} light={light1} />
                 <CanvasWithControl canvasRef={canvasRef2} light={light2} />
             </div>
-            <CanvasActionBar isCentered={!instance1}>
+            <ActionBar isCentered={!instance1}>
                 <button className="button button-primary" onClick={toggleConnection}>
                     {instance1 ? "Disconnect" : "Connect"}
                 </button>
-            </CanvasActionBar>
+            </ActionBar>
         </div>
     );
 }

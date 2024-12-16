@@ -1,7 +1,7 @@
 //------------------------------------------------------------------------------
 import { useRef } from "react";
 import { useLivelinkXR } from "@3dverse/livelink-react";
-import { CanvasActionBar } from "../../../components/SamplePlayer/CanvasActionBar";
+import { ActionBar } from "../../../components/SamplePlayer/ActionBar";
 
 //------------------------------------------------------------------------------
 export default function WebXR({ mode }: { mode: XRSessionMode }) {
@@ -35,7 +35,7 @@ export default function WebXR({ mode }: { mode: XRSessionMode }) {
     //--------------------------------------------------------------------------
     return (
         <div className="relative h-full max-h-screen p-3" ref={containerRef}>
-            <CanvasActionBar isCentered={!instance}>
+            <ActionBar isCentered={!instance}>
                 <div className="flex items-center justify-center flex-col space-y-3">
                     <button
                         className={"button button-primary" + (!isSessionSupported || isConnecting ? " opacity-50" : "")}
@@ -62,7 +62,7 @@ export default function WebXR({ mode }: { mode: XRSessionMode }) {
 
                     {message && <p>{message}</p>}
                 </div>
-            </CanvasActionBar>
+            </ActionBar>
         </div>
     );
 }

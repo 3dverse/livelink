@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 import CameraControls from "camera-controls";
-import { Camera, Quat, RenderingSurface, Vec3 } from "@3dverse/livelink";
+import { Camera, Quat, RenderingSurface } from "@3dverse/livelink";
 
 //------------------------------------------------------------------------------
 import {
@@ -48,8 +48,6 @@ export class DefaultCamera extends Camera {
             nearPlane: 0.1,
             farPlane: 10000,
         };
-
-        this._initController();
     }
 
     onDelete() {
@@ -58,7 +56,7 @@ export class DefaultCamera extends Camera {
         }
     }
 
-    private _initController() {
+    _initController({ domElement }: { domElement: HTMLElement }) {
         if (this.viewport === null) {
             throw new Error("Attempt to initialize camera without a viewport");
         }
@@ -71,8 +69,7 @@ export class DefaultCamera extends Camera {
         );
         const clock = new Clock();
         // create camera controls
-        const canvas = (this.viewport.rendering_surface as RenderingSurface).canvas;
-        const cameraControls = new CameraControls(camera, canvas);
+        const cameraControls = new CameraControls(camera, domElement);
         this.cameraControls = cameraControls;
 
         cameraControls.setOrbitPoint(0, 0, 0);
