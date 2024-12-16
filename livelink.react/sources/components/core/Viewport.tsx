@@ -7,6 +7,7 @@ import { RelativeRect, Viewport } from "@3dverse/livelink";
 //------------------------------------------------------------------------------
 import { LivelinkContext } from "./Livelink";
 import { CanvasContext } from "./Canvas";
+import { Camera } from "./Camera";
 
 //------------------------------------------------------------------------------
 export const ViewportContext = React.createContext<{
@@ -61,6 +62,14 @@ function ViewportProvider({
             setViewport(null);
         };
     }, [instance, renderingSurface, zIndex]);
+
+    const hasCameras = React.Children.toArray(children).some(child => {
+        return React.isValidElement(child) && child.type === Camera;
+    });
+
+    if (!hasCameras) {
+        throw "Viewport must have a Camera as a child.";
+    }
 
     return (
         <ViewportContext.Provider

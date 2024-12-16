@@ -66,14 +66,16 @@ export function Canvas({
                 renderingSurface,
             }}
         >
-            <canvas
-                ref={canvasRef}
-                onContextMenu={event => event.preventDefault()}
-                tabIndex={1}
-                style={{ width: "100%", height: "100%" }}
-                {...props}
-            />
-            {children}
+            <div className="relative">
+                <canvas
+                    ref={canvasRef}
+                    onContextMenu={event => event.preventDefault()}
+                    tabIndex={1}
+                    style={{ width: "100%", height: "100%" }}
+                    {...props}
+                />
+                {children}
+            </div>
         </CanvasContext.Provider>
     );
 }

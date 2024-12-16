@@ -24,7 +24,7 @@ function CameraProvider(cameraType: CameraType) {
     const { instance } = React.useContext(LivelinkContext);
     const { viewport, viewportDomElement } = React.useContext(ViewportContext);
 
-    //const [cameraInstance, setCameraInstance] = React.useState<Camera | null>(null);
+    const [cameraInstance, setCameraInstance] = React.useState<Camera | null>(null);
 
     useEffect(() => {
         if (!instance || !viewport) {
@@ -52,13 +52,16 @@ function CameraProvider(cameraType: CameraType) {
                 viewport.camera = cameraEntity;
             }
 
-            //setCameraInstance(cameraEntity);
-            if (viewportDomElement && cameraEntity instanceof DefaultCamera) {
-                cameraEntity._initController({ domElement: viewportDomElement });
-            }
+            setCameraInstance(cameraEntity);
             viewport.__markViewportAsReady();
         });
     }, [instance, cameraType, viewport]);
+
+    useEffect(() => {
+        if (viewportDomElement && cameraInstance instanceof DefaultCamera) {
+            cameraInstance._initController({ domElement: viewportDomElement });
+        }
+    }, [viewportDomElement, cameraInstance]);
 
     return null;
 }
