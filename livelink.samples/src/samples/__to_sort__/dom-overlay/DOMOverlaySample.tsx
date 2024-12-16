@@ -6,7 +6,7 @@ import { useLivelinkInstance } from "@3dverse/livelink-react";
 import { RelativeRect, type RenderingSurface } from "@3dverse/livelink";
 
 //------------------------------------------------------------------------------
-import LegacyCanvas from "../../../components/Canvas";
+import LegacyCanvas from "../../../components/LegacyCanvas";
 import { DOMOverlay } from "./overlay/DOMOverlay";
 
 //------------------------------------------------------------------------------

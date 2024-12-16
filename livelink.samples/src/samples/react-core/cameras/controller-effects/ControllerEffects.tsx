@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 import { useEffect, useRef } from "react";
-import LegacyCanvas from "../../../../components/Canvas";
+import LegacyCanvas from "../../../../components/LegacyCanvas";
 import { useLivelinkInstance, DefaultCamera } from "@3dverse/livelink-react";
 import CameraControls from "camera-controls";
 import * as THREE from "three";

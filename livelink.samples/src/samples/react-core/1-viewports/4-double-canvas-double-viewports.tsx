@@ -1,5 +1,5 @@
 //------------------------------------------------------------------------------
-import { Livelink, Canvas, Viewport } from "@3dverse/livelink-react";
+import { Livelink, Canvas, Viewport, Camera, DefaultCamera } from "@3dverse/livelink-react";
 
 //------------------------------------------------------------------------------
 import { DisconnectedModal, LoadingSpinner, sampleCanvasClassName } from "../../../components/SamplePlayer";
@@ -20,16 +20,22 @@ export default {
             loader={<LoadingSpinner />}
             disconnectedModal={<DisconnectedModal />}
         >
-            <div className="flex basis-full">
-                <Canvas className={sampleCanvasClassName}>
-                    <Viewport rect={{ left: 0, top: 0, width: 1, height: 0.5 }} />
-                    <Viewport rect={{ left: 0, top: 0.5, width: 1, height: 0.5 }} />
+            <div className="flex basis-full gap-2">
+                <Canvas className={`${sampleCanvasClassName} flex flex-col`}>
+                    <Viewport className="basis-1/2">
+                        <Camera class={DefaultCamera} name={"MyCamera1"} />
+                    </Viewport>
+                    <Viewport className="basis-1/2">
+                        <Camera class={DefaultCamera} name={"MyCamera2"} />
+                    </Viewport>
                 </Canvas>
-            </div>
-            <div className="flex basis-full">
-                <Canvas className={sampleCanvasClassName}>
-                    <Viewport rect={{ left: 0, top: 0, width: 0.5, height: 1 }} />
-                    <Viewport rect={{ left: 0.5, top: 0, width: 0.5, height: 1 }} />
+                <Canvas className={`${sampleCanvasClassName} flex flex-row`}>
+                    <Viewport className="basis-1/2">
+                        <Camera class={DefaultCamera} name={"MyCamera3"} />
+                    </Viewport>
+                    <Viewport className="basis-1/2">
+                        <Camera class={DefaultCamera} name={"MyCamera4"} />
+                    </Viewport>
                 </Canvas>
             </div>
         </Livelink>

@@ -21,7 +21,7 @@ export default {
             disconnectedModal={<DisconnectedModal />}
         >
             <Canvas className={sampleCanvasClassName}>
-                <Viewport>
+                <Viewport className="w-full h-full">
                     <Camera class={DefaultCamera} name={"MyCamera"} />
                 </Viewport>
             </Canvas>

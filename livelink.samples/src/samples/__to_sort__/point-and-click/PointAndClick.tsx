@@ -2,7 +2,7 @@
 import { useCallback, useEffect, useRef } from "react";
 import { Camera, Entity, Vec2, Vec3, Viewport } from "@3dverse/livelink";
 import { useLivelinkInstance, DefaultCamera, useEntity } from "@3dverse/livelink-react";
-import LegacyCanvas from "../../../components/Canvas";
+import LegacyCanvas from "../../../components/LegacyCanvas";
 import { ActionBar } from "../../../components/SamplePlayer/ActionBar";
 
 //------------------------------------------------------------------------------

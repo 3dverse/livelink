@@ -20,11 +20,11 @@ export default {
             loader={<LoadingSpinner />}
             disconnectedModal={<DisconnectedModal />}
         >
-            <Canvas className={sampleCanvasClassName}>
-                <Viewport rect={{ width: 0.5 }}>
+            <Canvas className={`${sampleCanvasClassName} flex`}>
+                <Viewport className="basis-[60%]">
                     <Camera class={DefaultCamera} name={"MyCamera1"} />
                 </Viewport>
-                <Viewport rect={{ left: 0.5, width: 0.5 }}>
+                <Viewport className="grow">
                     <Camera class={DefaultCamera} name={"MyCamera2"} />
                 </Viewport>
             </Canvas>

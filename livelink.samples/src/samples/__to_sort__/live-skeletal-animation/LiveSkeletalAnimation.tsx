@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 import { useRef, useState, useEffect } from "react";
-import LegacyCanvas from "../../../components/Canvas.tsx";
+import LegacyCanvas from "../../../components/LegacyCanvas.tsx";
 import { ActionBar } from "../../../components/SamplePlayer/ActionBar.tsx";
 import * as THREE from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";

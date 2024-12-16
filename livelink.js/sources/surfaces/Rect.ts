@@ -31,7 +31,7 @@ export class Rect {
         height?: number;
     }) {
         if (!this.#isValid({ left, top, right, bottom, width, height })) {
-            throw new Error("Invalid rect");
+            console.error("Invalid rect", this);
         }
 
         this.left = left;
@@ -107,7 +107,7 @@ export class RelativeRect extends Rect {
         super({ left, top, right, bottom, width, height });
 
         if (!this.#areValuesRelative()) {
-            throw new Error("Relative rect values must fall in [0,1] range");
+            console.error("Relative rect values must fall in [0,1] range", this);
         }
     }
 

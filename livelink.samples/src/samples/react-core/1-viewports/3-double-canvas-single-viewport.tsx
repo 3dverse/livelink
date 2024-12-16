@@ -20,16 +20,14 @@ export default {
             loader={<LoadingSpinner />}
             disconnectedModal={<DisconnectedModal />}
         >
-            <div className="flex basis-full">
-                <Canvas className={sampleCanvasClassName}>
-                    <Viewport>
+            <div className="flex basis-full gap-2">
+                <Canvas className={sampleCanvasClassName} width="100%" height="100%">
+                    <Viewport className="w-full h-full">
                         <Camera class={DefaultCamera} name={"MyCamera1"} />
                     </Viewport>
                 </Canvas>
-            </div>
-            <div className="flex basis-full">
-                <Canvas className={sampleCanvasClassName}>
-                    <Viewport>
+                <Canvas className={sampleCanvasClassName} width="100%" height="100%">
+                    <Viewport className="w-full h-full">
                         <Camera class={DefaultCamera} name={"MyCamera2"} />
                     </Viewport>
                 </Canvas>

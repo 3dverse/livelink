@@ -3,7 +3,7 @@ import { useRef, useState } from "react";
 import { Livelink, GatewayDisconnectedReason } from "@3dverse/livelink";
 import { useLivelinkInstance } from "@3dverse/livelink-react";
 import { InactivityWarning } from "@3dverse/livelink-react-ui";
-import LegacyCanvas from "../../../components/Canvas";
+import LegacyCanvas from "../../../components/LegacyCanvas";
 import { ActionBar } from "../../../components/SamplePlayer/ActionBar";
 
 //------------------------------------------------------------------------------

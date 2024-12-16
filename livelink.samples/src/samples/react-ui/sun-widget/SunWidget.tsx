@@ -3,7 +3,7 @@ import { useLivelinkInstance, useEntity } from "@3dverse/livelink-react";
 import { SunPositionPicker } from "@3dverse/livelink-react-ui";
 
 import { ActionBar } from "../../../components/SamplePlayer/ActionBar";
-import LegacyCanvas from "../../../components/Canvas";
+import LegacyCanvas from "../../../components/LegacyCanvas";
 
 //------------------------------------------------------------------------------
 const SmartObjectManifest = {

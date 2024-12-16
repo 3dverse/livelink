@@ -1,5 +1,5 @@
 //------------------------------------------------------------------------------
-import { Livelink, Canvas, Viewport, DOM3DOverlay, DOM3DElement } from "@3dverse/livelink-react";
+import { Livelink, Canvas, Viewport, DOM3DOverlay, DOM3DElement, Camera, DefaultCamera } from "@3dverse/livelink-react";
 
 //------------------------------------------------------------------------------
 import { DisconnectedModal, LoadingSpinner, sampleCanvasClassName } from "../../../components/SamplePlayer";
@@ -22,6 +22,7 @@ export default {
         >
             <Canvas className={sampleCanvasClassName}>
                 <Viewport>
+                    <Camera class={DefaultCamera} name={"MyCamera"} />
                     <DOM3DOverlay>
                         <DOM3DElement world_position={[2, 0, 0]} pixel_dimensions={[1, 1]}>
                             <p className="bg-ground p-4 rounded-lg">

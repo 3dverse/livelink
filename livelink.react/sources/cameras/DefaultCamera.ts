@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 import CameraControls from "camera-controls";
-import { Camera, Quat, RenderingSurface } from "@3dverse/livelink";
+import { Camera, Quat } from "@3dverse/livelink";
 
 //------------------------------------------------------------------------------
 import {

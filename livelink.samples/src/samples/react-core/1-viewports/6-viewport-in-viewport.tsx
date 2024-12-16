@@ -21,9 +21,9 @@ export default {
             disconnectedModal={<DisconnectedModal />}
         >
             <Canvas className={sampleCanvasClassName}>
-                <Viewport>
+                <Viewport className="w-full h-full">
                     <Camera class={DefaultCamera} name={"MyCamera1"} />
-                    <Viewport className="border-1" rect={{ left: 0.7, top: 0.05, width: 0.25, height: 0.2 }}>
+                    <Viewport className="absolute top-20 right-4 w-1/4 aspect-video border border-tertiary rounded-xl shadow-2xl">
                         <Camera class={DefaultCamera} name={"MyCamera2"} />
                     </Viewport>
                 </Viewport>

@@ -1,5 +1,5 @@
 //------------------------------------------------------------------------------
-import { Livelink, Canvas, Viewport } from "@3dverse/livelink-react";
+import { Livelink, Canvas, Viewport, DefaultCamera, Camera } from "@3dverse/livelink-react";
 
 //------------------------------------------------------------------------------
 import { DisconnectedModal, LoadingSpinner, sampleCanvasClassName } from "../../../components/SamplePlayer";
@@ -20,17 +20,16 @@ export default {
             loader={<LoadingSpinner />}
             disconnectedModal={<DisconnectedModal />}
         >
-            <div className="relative flex basis-full">
-                <Canvas className={sampleCanvasClassName}>
-                    <Viewport>
-                        <div className="absolute top-3/4 left-8 bottom-8 right-8 border border-tertiary rounded-lg shadow-2xl">
-                            <Canvas className={sampleCanvasClassName}>
-                                <Viewport />
-                            </Canvas>
-                        </div>
-                    </Viewport>
-                </Canvas>
-            </div>
+            <Canvas className={sampleCanvasClassName}>
+                <Viewport className="relative w-full h-full">
+                    <Camera class={DefaultCamera} name={"MyCamera1"} />
+                    <Canvas className="top-20 right-4 w-1/4 aspect-video border border-tertiary rounded-xl shadow-2xl">
+                        <Viewport className="w-full h-full">
+                            <Camera class={DefaultCamera} name={"MyCamera2"} />
+                        </Viewport>
+                    </Canvas>
+                </Viewport>
+            </Canvas>
         </Livelink>
     ),
 };

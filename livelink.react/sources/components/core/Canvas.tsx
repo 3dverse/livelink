@@ -1,4 +1,4 @@
-import React, { HTMLProps, useEffect, useRef } from "react";
+import React, { HTMLProps, useContext, useEffect, useRef, useState } from "react";
 
 import { LivelinkContext } from "./Livelink";
 import { RenderingSurface } from "@3dverse/livelink";
@@ -30,13 +30,19 @@ type CanvasContext =
 //------------------------------------------------------------------------------
 export function Canvas({
     children,
+    width,
+    height,
     context_type = "2d",
     context_attributes,
     ...props
-}: React.PropsWithChildren<CanvasContext & HTMLProps<HTMLCanvasElement>>) {
-    const { instance } = React.useContext(LivelinkContext);
-    const [renderingSurface, setRenderingSurface] = React.useState<RenderingSurface | null>(null);
+}: React.PropsWithChildren<
+    CanvasContext & HTMLProps<HTMLDivElement> & { width?: string | number; height?: string | number }
+>) {
+    const { instance } = useContext(LivelinkContext);
+    const [renderingSurface, setRenderingSurface] = useState<RenderingSurface | null>(null);
     const canvasRef = useRef<HTMLCanvasElement>(null);
+
+    const { canvas } = useContext(CanvasContext);
 
     useEffect(() => {
         if (!instance || !canvasRef.current) {
@@ -66,13 +72,25 @@ export function Canvas({
                 renderingSurface,
             }}
         >
-            <div className="relative">
+            <div
+                role="canvas-container"
+                style={
+                    canvas
+                        ? { width, height, position: "absolute", overflow: "clip" }
+                        : { width: width ?? "100%", height: height ?? "100%", position: "relative", overflow: "clip" }
+                }
+                {...props}
+            >
                 <canvas
                     ref={canvasRef}
                     onContextMenu={event => event.preventDefault()}
                     tabIndex={1}
-                    style={{ width: "100%", height: "100%" }}
-                    {...props}
+                    style={{
+                        position: "absolute",
+                        width: "100%",
+                        height: "100%",
+                        pointerEvents: "none",
+                    }}
                 />
                 {children}
             </div>

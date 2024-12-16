@@ -1,7 +1,7 @@
 import { useRef } from "react";
 import * as Livelink from "@3dverse/livelink";
 import { Input, Range } from "react-daisyui";
-import LegacyCanvas from "../../../components/Canvas";
+import LegacyCanvas from "../../../components/LegacyCanvas";
 import { useLivelinkInstance, useEntity } from "@3dverse/livelink-react";
 import { ActionBar } from "../../../components/SamplePlayer/ActionBar";
 
