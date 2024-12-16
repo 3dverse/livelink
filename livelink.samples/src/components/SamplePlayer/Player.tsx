@@ -14,7 +14,12 @@ export const SamplePlayerContext = createContext<{
 });
 
 //------------------------------------------------------------------------------
-export function SamplePlayer({ readme, children }: React.PropsWithChildren<{ readme?: string }>) {
+export function SamplePlayer({
+    title,
+    summary,
+    description,
+    children,
+}: React.PropsWithChildren<{ title?: string; summary?: string; description?: string }>) {
     const [connectionState, setConnectionState] = useState<ConnectionState>("disconnected");
 
     useEffect(() => {
@@ -23,15 +28,15 @@ export function SamplePlayer({ readme, children }: React.PropsWithChildren<{ rea
         }
     }, [connectionState]);
 
-    const mountChildren = connectionState !== "disconnected" && connectionState !== "reconnect";
-    const mountActionBar = connectionState !== "connection-lost";
-    const centerActionBar = connectionState === "disconnected";
+    const mountChildren = connectionState === "connected" || connectionState === "connection-lost";
+    const mountActionBar = connectionState === "connected";
+    const mountPlayButton = connectionState === "disconnected";
 
     const toggleConnectionState = () =>
         setConnectionState(connectionState === "connected" ? "disconnected" : "connected");
 
     const connectButton = (
-        <button onClick={toggleConnectionState}>
+        <button onClick={toggleConnectionState} className="relative w-32 h-32 m-auto flex">
             <svg
                 version="1.1"
                 id="play"
@@ -39,8 +44,6 @@ export function SamplePlayer({ readme, children }: React.PropsWithChildren<{ rea
                 xmlnsXlink="http://www.w3.org/1999/xlink"
                 x="0px"
                 y="0px"
-                height="100px"
-                width="100px"
                 viewBox="0 0 100 100"
                 enableBackground="new 0 0 100 100"
                 xmlSpace="preserve"
@@ -75,20 +78,23 @@ export function SamplePlayer({ readme, children }: React.PropsWithChildren<{ rea
             <div className="w-full h-full flex gap-3 p-3 lg:pl-0 relative">
                 <div className="w-full h-full gap-3 bg-[#1e222e] rounded-xl relative flex">
                     {mountChildren && children}
-                    {mountActionBar && (
-                        <>
-                            <CanvasActionBar isCentered={centerActionBar}>
-                                {connectionState === "connected" ? disconnectButton : connectButton}
-                            </CanvasActionBar>
-                            {readme && (
-                                <div>
-                                    <Markdown>{readme}</Markdown>
-                                </div>
-                            )}
-                        </>
+                    {mountPlayButton && (
+                        <div className="w-full h-full flex-col content-center justify-center">
+                            {connectButton}
+                            <h1 className="text-center font-medium">{title}</h1>
+                            <h2 className="text-center font-thin">{summary}</h2>
+                        </div>
                     )}
+                    {mountActionBar && <CanvasActionBar>{disconnectButton}</CanvasActionBar>}
                 </div>
             </div>
         </SamplePlayerContext.Provider>
+        /*
+            {readme && (
+                <div>
+                    <Markdown>{description}</Markdown>
+                </div>
+            )}
+        */
     );
 }
