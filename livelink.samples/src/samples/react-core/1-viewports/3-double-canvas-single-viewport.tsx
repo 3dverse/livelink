@@ -21,12 +21,12 @@ export default {
             disconnectedModal={<DisconnectedModal />}
         >
             <div className="flex basis-full gap-2">
-                <Canvas className={sampleCanvasClassName} width="100%" height="100%">
+                <Canvas className={sampleCanvasClassName}>
                     <Viewport className="w-full h-full">
                         <Camera class={DefaultCamera} name={"MyCamera1"} />
                     </Viewport>
                 </Canvas>
-                <Canvas className={sampleCanvasClassName} width="100%" height="100%">
+                <Canvas className={sampleCanvasClassName}>
                     <Viewport className="w-full h-full">
                         <Camera class={DefaultCamera} name={"MyCamera2"} />
                     </Viewport>
