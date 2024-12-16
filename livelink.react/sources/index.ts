@@ -8,6 +8,7 @@ export * from "./web-xr/WebXRInputRelay";
 export * from "./overlays/react/ReactOverlay";
 
 export * from "./components/core/Livelink";
+export * from "./components/core/Clients";
 export * from "./components/core/Canvas";
 export * from "./components/core/Viewport";
 

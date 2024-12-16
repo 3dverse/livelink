@@ -15,6 +15,8 @@ import LinkedMultiSession from "./sessions/3-linked-multi-session";
 import DOM3DOverlayViewport from "./overlays/1-dom-3d-overlay";
 import ThreeOverlayViewport from "./overlays/2-threejs-overlay";
 import MultiOverlayViewport from "./overlays/3-multi-overlay";
+import Clients from "./sessions/4-clients";
+import Collaborators from "./sessions/5-collaborators-avatars";
 
 //------------------------------------------------------------------------------
 export const SAMPLES: Array<{
@@ -75,6 +77,12 @@ export const SAMPLES: Array<{
                 path: "linked-multi-session",
                 element: <LinkedMultiSession />,
             },
+
+            {
+                title: "Clients",
+                path: "clients",
+                element: <Clients />,
+            },
         ],
     },
     {
@@ -94,6 +102,11 @@ export const SAMPLES: Array<{
                 title: "Multi Overlay",
                 path: "multi-overlay",
                 element: <MultiOverlayViewport />,
+            },
+            {
+                title: "Collaborators",
+                path: "collaborators",
+                element: <Collaborators />,
             },
         ],
     },

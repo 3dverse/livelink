@@ -42,7 +42,7 @@ export function SamplePlayer({ readme, children }: React.PropsWithChildren<{ rea
                 height="100px"
                 width="100px"
                 viewBox="0 0 100 100"
-                enable-background="new 0 0 100 100"
+                enableBackground="new 0 0 100 100"
                 xmlSpace="preserve"
             >
                 <path
