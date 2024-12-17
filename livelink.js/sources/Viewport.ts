@@ -7,7 +7,7 @@ import { Entity } from "./Entity";
 import { RenderingSurfaceBase } from "./surfaces/RenderingSurfaceBase";
 import { RelativeRect } from "./surfaces/Rect";
 import { RenderingSurface } from "./surfaces/RenderingSurface";
-import { vec2, vec3 } from "gl-matrix";
+import { vec3 } from "gl-matrix";
 import { OverlayInterface } from "./surfaces/OverlayInterface";
 import { CurrentFrameMetaData } from "./decoders/CurrentFrameMetaData";
 
@@ -83,7 +83,15 @@ export class Viewport extends EventTarget {
         return this.#z_index;
     }
     get rect(): RelativeRect {
-        return this.#rect;
+        return new Proxy(this.#rect, {
+            set: (target, key, value) => {
+                const success = Reflect.set(target, key, value);
+                if (success) {
+                    this.#core.refreshViewports();
+                }
+                return success;
+            },
+        });
     }
 
     /**

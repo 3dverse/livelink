@@ -52,12 +52,11 @@ function ViewportProvider({ children, ...props }: React.PropsWithChildren & HTML
         }
 
         console.log("---- Resizing viewport", viewportDomElement.current);
-        const rect = computeRelativeRect(viewportDomElement.current, canvas);
-        viewport.rect = rect;
+        viewport.rect = computeRelativeRect(viewportDomElement.current, canvas);
     }, [viewport, canvas, viewportDomElement.current]);
 
     useEffect(() => {
-        if (!viewportDomElement.current || !viewport) {
+        if (!viewportDomElement.current) {
             return;
         }
 
@@ -66,10 +65,10 @@ function ViewportProvider({ children, ...props }: React.PropsWithChildren & HTML
         return () => {
             resizeObserver.disconnect();
         };
-    }, [viewport, viewportDomElement.current, onResize]);
+    }, [viewportDomElement.current, onResize]);
 
     useEffect(() => {
-        if (!renderingSurface || !viewport) {
+        if (!renderingSurface) {
             return;
         }
 
@@ -77,7 +76,7 @@ function ViewportProvider({ children, ...props }: React.PropsWithChildren & HTML
         return () => {
             renderingSurface.removeEventListener("on-resized", onResize);
         };
-    }, [viewport, renderingSurface, onResize]);
+    }, [renderingSurface, onResize]);
 
     const zIndex = parentZIndex + 1;
 

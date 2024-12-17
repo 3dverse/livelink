@@ -468,12 +468,23 @@ export class Livelink {
     /**
      *
      */
+    #refreshViewportTimeout: number | null = null;
+
+    /**
+     *
+     */
     refreshViewports() {
         if (this.#readyCallback) {
             return;
         }
 
-        this.#remote_rendering_surface.init();
+        if (this.#refreshViewportTimeout !== null) {
+            clearTimeout(this.#refreshViewportTimeout);
+        }
+
+        this.#refreshViewportTimeout = setTimeout(() => {
+            this.#remote_rendering_surface.init();
+        }, 0);
     }
 
     /**
