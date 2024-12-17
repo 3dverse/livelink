@@ -20,10 +20,10 @@ export default function MultiSession() {
         <div className="w-full h-full flex">
             <SamplePlayer>
                 <Livelink
-                    scene_id={scene_id_1}
+                    sceneId={scene_id_1}
                     token={token}
                     loader={<LoadingSpinner />}
-                    disconnectedModal={<DisconnectedModal />}
+                    connectionLostPanel={<DisconnectedModal />}
                 >
                     <Canvas className={sampleCanvasClassName}>
                         <Viewport />
@@ -33,10 +33,10 @@ export default function MultiSession() {
 
             <SamplePlayer>
                 <Livelink
-                    scene_id={scene_id_2}
+                    sceneId={scene_id_2}
                     token={token}
                     loader={<LoadingSpinner />}
-                    disconnectedModal={<DisconnectedModal />}
+                    connectionLostPanel={<DisconnectedModal />}
                 >
                     <Canvas className={sampleCanvasClassName}>
                         <Viewport />

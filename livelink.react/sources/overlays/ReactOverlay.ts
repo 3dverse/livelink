@@ -1,4 +1,4 @@
-import React, { type CSSProperties, type ReactElement } from "react";
+import React, { type ReactElement } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import React3DElement from "./React3DElement";
 

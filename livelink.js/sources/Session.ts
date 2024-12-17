@@ -210,6 +210,9 @@ export class Session extends EventTarget implements SessionInterface {
     get other_clients(): Array<Client> {
         return Array.from(this.#clients.values()).filter(c => c.id !== this.client_id);
     }
+    get current_client(): Client | null {
+        return this.client_id ? (this.#clients.get(this.client_id) ?? null) : null;
+    }
 
     /**
      * @param {UUID} scene_id - The id of the scene

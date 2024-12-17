@@ -1,21 +1,21 @@
-import React, { useEffect, useState } from "react";
+import { createElement, Fragment, PropsWithChildren, useContext, useEffect, useState } from "react";
 import { OverlayContext } from "./DOM3DOverlay";
 
 import type { Vec2i, Vec3 } from "@3dverse/livelink";
-import type React3DElement from "../../overlays/react/React3DElement";
+import type React3DElement from "../../overlays/React3DElement";
 
 //------------------------------------------------------------------------------
 export function DOM3DElement({
-    world_position,
-    pixel_dimensions,
-    scale_factor,
+    worldPosition,
+    pixelDimensions,
+    scaleFactor,
     children,
-}: React.PropsWithChildren<{
-    world_position: Vec3;
-    pixel_dimensions: Vec2i;
-    scale_factor?: number;
+}: PropsWithChildren<{
+    worldPosition: Vec3;
+    pixelDimensions: Vec2i;
+    scaleFactor?: number;
 }>) {
-    const overlay = React.useContext(OverlayContext);
+    const overlay = useContext(OverlayContext);
     const [elementHandle, setElementHandle] = useState<React3DElement | null>(null);
 
     useEffect(() => {
@@ -23,8 +23,8 @@ export function DOM3DElement({
             return;
         }
 
-        const element = React.createElement(React.Fragment, { children });
-        const handle = overlay.addElement({ element, pixel_dimensions, scale_factor });
+        const element = createElement(Fragment, { children });
+        const handle = overlay.addElement({ element, pixel_dimensions: pixelDimensions, scale_factor: scaleFactor });
         setElementHandle(handle);
 
         return () => {
@@ -37,9 +37,9 @@ export function DOM3DElement({
             return;
         }
 
-        elementHandle.pixel_dimensions = pixel_dimensions;
-        elementHandle.world_position = world_position;
-    }, [elementHandle, pixel_dimensions, world_position]);
+        elementHandle.pixel_dimensions = pixelDimensions;
+        elementHandle.world_position = worldPosition;
+    }, [elementHandle, pixelDimensions, worldPosition]);
 
     return null;
 }

@@ -1,19 +1,19 @@
-import React, { useEffect, useState } from "react";
+import React, { PropsWithChildren, useEffect, useState } from "react";
 import { DOM3DElement } from "./DOM3DElement";
 import type { Components, Entity, Vec2i, Vec3 } from "@3dverse/livelink";
 
 //------------------------------------------------------------------------------
 export function DOMEntity({
     entity,
-    pixel_dimensions,
-    scale_factor,
+    pixelDimensions: pixelDimensions,
+    scaleFactor: scaleFactor,
     children,
-}: React.PropsWithChildren<{
+}: PropsWithChildren<{
     entity: Entity | null;
-    pixel_dimensions: Vec2i;
-    scale_factor?: number;
+    pixelDimensions: Vec2i;
+    scaleFactor?: number;
 }>) {
-    const [world_position, setWorldPosition] = useState<Vec3>([0, 0, 0]);
+    const [worldPosition, setWorldPosition] = useState<Vec3>([0, 0, 0]);
 
     useEffect(() => {
         if (!entity) {
@@ -37,7 +37,7 @@ export function DOMEntity({
     }, [entity]);
 
     return (
-        <DOM3DElement world_position={world_position} pixel_dimensions={pixel_dimensions} scale_factor={scale_factor}>
+        <DOM3DElement worldPosition={worldPosition} pixelDimensions={pixelDimensions} scaleFactor={scaleFactor}>
             {children}
         </DOM3DElement>
     );

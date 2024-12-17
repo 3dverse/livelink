@@ -18,10 +18,10 @@ export default {
     summary: "Shows a list of clients connected to the current session.",
     element: (
         <Livelink
-            scene_id={scene_id}
+            sceneId={scene_id}
             token={token}
             loader={<LoadingSpinner />}
-            disconnectedModal={<DisconnectedModal />}
+            connectionLostPanel={<DisconnectedModal />}
         >
             <Clients>
                 <Canvas className={sampleCanvasClassName}>

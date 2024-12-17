@@ -1,10 +1,21 @@
-import React, { HTMLProps, useContext, useEffect, useRef, useState } from "react";
+//------------------------------------------------------------------------------
+import React, {
+    createContext,
+    CSSProperties,
+    HTMLProps,
+    PropsWithChildren,
+    useContext,
+    useEffect,
+    useRef,
+    useState,
+} from "react";
 
+//------------------------------------------------------------------------------
 import { LivelinkContext } from "./Livelink";
 import { RenderingSurface } from "@3dverse/livelink";
 
 //------------------------------------------------------------------------------
-export const CanvasContext = React.createContext<{
+export const CanvasContext = createContext<{
     canvas: HTMLCanvasElement | null;
     renderingSurface: RenderingSurface | null;
 }>({
@@ -15,16 +26,16 @@ export const CanvasContext = React.createContext<{
 //------------------------------------------------------------------------------
 type CanvasContext =
     | {
-          context_type: "2d";
-          context_attributes?: CanvasRenderingContext2DSettings;
+          contextType: "2d";
+          contextAttributes?: CanvasRenderingContext2DSettings;
       }
     | {
-          context_type: "webgl";
-          context_attributes?: WebGLContextAttributes & { xrCompatible?: boolean };
+          contextType: "webgl";
+          contextAttributes?: WebGLContextAttributes & { xrCompatible?: boolean };
       }
     | {
-          context_type?: undefined;
-          context_attributes?: undefined;
+          contextType?: undefined;
+          contextAttributes?: undefined;
       };
 
 //------------------------------------------------------------------------------
@@ -32,59 +43,46 @@ export function Canvas({
     children,
     width,
     height,
-    context_type = "2d",
-    context_attributes,
+    contextType = "2d",
+    contextAttributes,
     ...props
-}: React.PropsWithChildren<
-    CanvasContext & HTMLProps<HTMLDivElement> & { width?: string | number; height?: string | number }
->) {
+}: PropsWithChildren<CanvasContext & HTMLProps<HTMLDivElement>>) {
     const { instance } = useContext(LivelinkContext);
+    const { canvas: parentCanvas } = useContext(CanvasContext);
+
     const [renderingSurface, setRenderingSurface] = useState<RenderingSurface | null>(null);
     const canvasRef = useRef<HTMLCanvasElement>(null);
-
-    const { canvas } = useContext(CanvasContext);
 
     useEffect(() => {
         if (!instance || !canvasRef.current) {
             return;
         }
 
-        console.log("--- Setting rendering surface");
+        console.debug("--- Setting rendering surface");
         const surface = new RenderingSurface({
             canvas_element: canvasRef.current,
-            context_type,
-            context_attributes,
+            context_type: contextType,
+            context_attributes: contextAttributes,
         });
 
         setRenderingSurface(surface);
 
         return () => {
-            console.log("--- Removing rendering surface");
+            console.debug("--- Removing rendering surface");
             surface.release();
             setRenderingSurface(null);
         };
-    }, [instance, context_type, context_attributes]);
+    }, [instance, contextType, contextAttributes]);
 
     return (
-        <CanvasContext.Provider
-            value={{
-                canvas: canvasRef.current,
-                renderingSurface,
-            }}
-        >
+        <CanvasContext.Provider value={{ canvas: canvasRef.current, renderingSurface }}>
             <div
                 role="canvas-container"
-                style={
-                    canvas
-                        ? { width, height, position: "absolute", overflow: "clip" }
-                        : { width: width ?? "100%", height: height ?? "100%", position: "relative", overflow: "clip" }
-                }
+                style={computeCanvasContainerStyle({ parentCanvas, width, height })}
                 {...props}
             >
                 <canvas
                     ref={canvasRef}
-                    onContextMenu={event => event.preventDefault()}
-                    tabIndex={1}
                     style={{
                         position: "absolute",
                         width: "100%",
@@ -96,4 +94,25 @@ export function Canvas({
             </div>
         </CanvasContext.Provider>
     );
+}
+
+//------------------------------------------------------------------------------
+function computeCanvasContainerStyle({
+    parentCanvas,
+    width,
+    height,
+}: {
+    parentCanvas: HTMLCanvasElement | null;
+    width?: string | number;
+    height?: string | number;
+}): CSSProperties {
+    const isNestedCanvas = Boolean(parentCanvas);
+    const commonStyle = { overflow: "clip" } satisfies CSSProperties;
+    const nestedCanvasStyle = { position: "absolute", width, height } satisfies CSSProperties;
+    const rootCanvasStyle = {
+        position: "relative",
+        width: width ?? "100%",
+        height: height ?? "100%",
+    } satisfies CSSProperties;
+    return { ...commonStyle, ...(isNestedCanvas ? nestedCanvasStyle : rootCanvasStyle) };
 }

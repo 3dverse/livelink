@@ -10,18 +10,10 @@ import {
     Keyboard,
     Mouse,
 } from "@3dverse/livelink";
-import {
-    CanvasContext,
-    LivelinkContext,
-    Livelink,
-    Viewport,
-    ViewportContext,
-    Canvas,
-    Camera,
-} from "@3dverse/livelink-react";
+import { LivelinkContext, Livelink, Viewport, ViewportContext, Canvas, Camera } from "@3dverse/livelink-react";
 
 //------------------------------------------------------------------------------
-import { LoadingSpinner, sampleCanvasClassName } from "../../../../components/SamplePlayer";
+import { LoadingSpinner, sampleCanvasClassName } from "../../../components/SamplePlayer";
 
 //------------------------------------------------------------------------------
 const token = import.meta.env.VITE_PROD_PUBLIC_TOKEN;
@@ -34,9 +26,11 @@ export default {
     title: "Third Person Controller",
     summary: "A character controller via a third person camera setup.",
     element: (
-        <Livelink scene_id={scene_id} token={token} loader={<LoadingSpinner />}>
+        <Livelink sceneId={scene_id} token={token} loader={<LoadingSpinner />}>
             <Canvas className={sampleCanvasClassName}>
-                <App />
+                <Viewport className="w-full h-full">
+                    <App />
+                </Viewport>
             </Canvas>
         </Livelink>
     ),
@@ -55,7 +49,7 @@ class TPController extends Entity {
 function App() {
     const [startSimulation, setStartSimulation] = useState<boolean>(false);
 
-    const setupFirstPersonCamera = async ({ instance }: { instance: LivelinkInstance }) => {
+    const setupFirstPersonCamera = useCallback(async ({ instance }: { instance: LivelinkInstance }) => {
         if (!instance) {
             return null;
         }
@@ -76,15 +70,13 @@ function App() {
         setStartSimulation(true);
 
         return thirdPersonCameraEntity as LivelinkCamera;
-    };
-
-    useEffect(() => {});
+    }, []);
 
     return (
-        <Viewport className="w-full h-full">
+        <>
             <Camera finder={setupFirstPersonCamera} />
             {startSimulation && <Controller />}
-        </Viewport>
+        </>
     );
 }
 

@@ -23,10 +23,10 @@ export default {
         "A viewport with a DOM overlay and a Three.js overlay that displays DOM elements on top of a Three.js scene rendered on top of the 3dverse scene.",
     element: (
         <Livelink
-            scene_id={scene_id}
+            sceneId={scene_id}
             token={token}
             loader={<LoadingSpinner />}
-            disconnectedModal={<DisconnectedModal />}
+            connectionLostPanel={<DisconnectedModal />}
         >
             <Canvas className={sampleCanvasClassName}>
                 <Viewport className="w-full h-full">
@@ -34,14 +34,14 @@ export default {
                     <ThreeOverlayScene />
 
                     <DOM3DOverlay>
-                        <DOM3DElement world_position={[0, 1.5, 0]} pixel_dimensions={[1, 1]} scale_factor={0.0025}>
+                        <DOM3DElement worldPosition={[0, 1.5, 0]} pixelDimensions={[1, 1]} scaleFactor={0.0025}>
                             <p className="bg-ground p-4 rounded-lg select-none pointer-events-none">
                                 ↑ Over me is a Three.js rendered cube ↑
                                 <br />↓ Beneath me is a 3dverse rendered cube ↓
                             </p>
                         </DOM3DElement>
 
-                        <DOM3DElement world_position={[-3, 1.5, -1]} pixel_dimensions={[1, 1]} scale_factor={0.0025}>
+                        <DOM3DElement worldPosition={[-3, 1.5, -1]} pixelDimensions={[1, 1]} scaleFactor={0.0025}>
                             <p className="bg-informative-800 opacity-80 p-4 rounded-lg select-none pointer-events-none">
                                 Note that there's no depth composition between layers.
                                 <br />

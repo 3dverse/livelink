@@ -15,10 +15,10 @@ export default {
     summary: "Two canvases having two viewports each.",
     element: (
         <Livelink
-            scene_id={scene_id}
+            sceneId={scene_id}
             token={token}
             loader={<LoadingSpinner />}
-            disconnectedModal={<DisconnectedModal />}
+            connectionLostPanel={<DisconnectedModal />}
         >
             <div className="flex basis-full gap-2">
                 <Canvas className={`${sampleCanvasClassName} flex flex-col`}>

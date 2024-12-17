@@ -1,15 +1,15 @@
-import React, { HTMLProps, useEffect, useRef, useState } from "react";
-import { ReactOverlay } from "../../overlays/react/ReactOverlay";
+import React, { createContext, HTMLProps, PropsWithChildren, useContext, useEffect, useRef, useState } from "react";
+import { ReactOverlay } from "../../overlays/ReactOverlay";
 import { ViewportContext } from "../core/Viewport";
 
 //------------------------------------------------------------------------------
-export const OverlayContext = React.createContext<ReactOverlay | null>(null);
+export const OverlayContext = createContext<ReactOverlay | null>(null);
 
 //------------------------------------------------------------------------------
-export function DOM3DOverlay({ children, ...props }: React.PropsWithChildren<HTMLProps<HTMLDivElement>>) {
+export function DOM3DOverlay({ children, ...props }: PropsWithChildren<HTMLProps<HTMLDivElement>>) {
     const containerRef = useRef<HTMLDivElement>(null);
     const [overlay, setOverlay] = useState<ReactOverlay | null>(null);
-    const { viewport, zIndex } = React.useContext(ViewportContext);
+    const { viewport, zIndex } = useContext(ViewportContext);
 
     useEffect(() => {
         if (!viewport || !containerRef.current) {

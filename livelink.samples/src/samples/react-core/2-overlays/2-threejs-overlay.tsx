@@ -22,10 +22,10 @@ export default {
     summary: "A viewport with a Three.js overlay that displays a Three.js scene rendered on top of the 3dverse scene.",
     element: (
         <Livelink
-            scene_id={scene_id}
+            sceneId={scene_id}
             token={token}
             loader={<LoadingSpinner />}
-            disconnectedModal={<DisconnectedModal />}
+            connectionLostPanel={<DisconnectedModal />}
         >
             <Canvas className={sampleCanvasClassName}>
                 <Viewport className="w-full h-full">

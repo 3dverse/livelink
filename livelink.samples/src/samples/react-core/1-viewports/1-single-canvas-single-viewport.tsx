@@ -15,10 +15,10 @@ export default {
     summary: "A single viewport inside a single canvas.",
     element: (
         <Livelink
-            scene_id={scene_id}
+            sceneId={scene_id}
             token={token}
             loader={<LoadingSpinner />}
-            disconnectedModal={<DisconnectedModal />}
+            connectionLostPanel={<DisconnectedModal />}
         >
             <Canvas className={sampleCanvasClassName}>
                 <Viewport className="w-full h-full">

@@ -1,7 +1,6 @@
-import React from "react";
 import { vec3 } from "gl-matrix";
-import type { ReactElement } from "react";
-import type { Vec2, Vec2i } from "@3dverse/livelink";
+import React, { type ReactElement } from "react";
+import type { Vec2i } from "@3dverse/livelink";
 
 export type ScaleTransform = (z_value: number) => number;
 

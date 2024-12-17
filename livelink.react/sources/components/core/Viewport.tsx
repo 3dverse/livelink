@@ -1,8 +1,17 @@
 //------------------------------------------------------------------------------
-import React, { HTMLProps, MouseEventHandler, useCallback, useEffect, useRef } from "react";
+import React, {
+    createContext,
+    HTMLProps,
+    PropsWithChildren,
+    useCallback,
+    useContext,
+    useEffect,
+    useRef,
+    useState,
+} from "react";
 
 //------------------------------------------------------------------------------
-import { RelativeRect, RenderingSurface, Viewport } from "@3dverse/livelink";
+import { RelativeRect, Viewport } from "@3dverse/livelink";
 
 //------------------------------------------------------------------------------
 import { LivelinkContext } from "./Livelink";
@@ -10,7 +19,7 @@ import { CanvasContext } from "./Canvas";
 import { Camera } from "./Camera";
 
 //------------------------------------------------------------------------------
-export const ViewportContext = React.createContext<{
+export const ViewportContext = createContext<{
     viewport: Viewport | null;
     viewportDomElement: HTMLDivElement | null;
     zIndex: number;
@@ -38,12 +47,12 @@ function computeRelativeRect(viewportDomElement: HTMLDivElement, canvas: HTMLCan
 }
 
 //------------------------------------------------------------------------------
-function ViewportProvider({ children, ...props }: React.PropsWithChildren & HTMLProps<HTMLDivElement>) {
-    const { instance } = React.useContext(LivelinkContext);
-    const { renderingSurface, canvas } = React.useContext(CanvasContext);
-    const { zIndex: parentZIndex = 0 } = React.useContext(ViewportContext);
+function ViewportProvider({ children, ...props }: PropsWithChildren & HTMLProps<HTMLDivElement>) {
+    const { instance } = useContext(LivelinkContext);
+    const { renderingSurface, canvas } = useContext(CanvasContext);
+    const { zIndex: parentZIndex = 0 } = useContext(ViewportContext);
 
-    const [viewport, setViewport] = React.useState<Viewport | null>(null);
+    const [viewport, setViewport] = useState<Viewport | null>(null);
     const viewportDomElement = useRef<HTMLDivElement>(null);
 
     const onResize = useCallback(() => {
@@ -99,14 +108,6 @@ function ViewportProvider({ children, ...props }: React.PropsWithChildren & HTML
             setViewport(null);
         };
     }, [instance, renderingSurface, canvas, zIndex]);
-
-    const hasCameras = React.Children.toArray(children).some(child => {
-        return React.isValidElement(child) && child.type === Camera;
-    });
-
-    if (!hasCameras) {
-        throw "Viewport must have a Camera as a child.";
-    }
 
     return (
         <ViewportContext.Provider

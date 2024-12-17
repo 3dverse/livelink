@@ -15,10 +15,10 @@ export default {
     summary: "A canvas inside a canvas.",
     element: (
         <Livelink
-            scene_id={scene_id}
+            sceneId={scene_id}
             token={token}
             loader={<LoadingSpinner />}
-            disconnectedModal={<DisconnectedModal />}
+            connectionLostPanel={<DisconnectedModal />}
         >
             <Canvas className={sampleCanvasClassName}>
                 <Viewport className="relative w-full h-full">

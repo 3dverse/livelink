@@ -1,8 +1,8 @@
 //------------------------------------------------------------------------------
-import React, { useEffect } from "react";
+import { createContext, useContext, useEffect, useState } from "react";
 
 //------------------------------------------------------------------------------
-import { Camera, UUID } from "@3dverse/livelink";
+import { UUID } from "@3dverse/livelink";
 import * as Livelink from "@3dverse/livelink";
 import { Livelink as LivelinkInstance } from "@3dverse/livelink";
 
@@ -11,21 +11,35 @@ import { LivelinkContext } from "./Livelink";
 import { DefaultCamera } from "../../cameras/DefaultCamera";
 import { ViewportContext } from "./Viewport";
 
-//------------------------------------------------------------------------------
-export const CameraContext = React.createContext<{ cameraInstance: Livelink.Camera | null }>({ cameraInstance: null });
+/**
+ *
+ */
+export const CameraContext = createContext<{ cameraInstance: Livelink.Camera | null }>({ cameraInstance: null });
 
-//------------------------------------------------------------------------------
-export type CameraType =
-    | { id: UUID }
-    | { class: typeof Livelink.Camera; name: string }
-    | { finder: ({ instance }: { instance: LivelinkInstance }) => Promise<Livelink.Camera | null> };
+export type CameraId = { id: UUID };
+export type CameraClass = { class: typeof Livelink.Camera; name: string };
+export type CameraFinder = {
+    finder: ({ instance }: { instance: LivelinkInstance }) => Promise<Livelink.Camera | null>;
+};
+export type ClientCamera = { client: Livelink.Client; index?: number };
+/**
+ *
+ */
+export type CameraProvider = CameraId | CameraClass | CameraFinder | ClientCamera;
 
-//------------------------------------------------------------------------------
-function CameraProvider(cameraType: CameraType) {
-    const { instance } = React.useContext(LivelinkContext);
-    const { viewport, viewportDomElement } = React.useContext(ViewportContext);
+/**
+ *
+ */
+export function Camera(cameraProvider: CameraProvider) {
+    const { instance } = useContext(LivelinkContext);
+    const { viewport, viewportDomElement } = useContext(ViewportContext);
 
-    const [cameraInstance, setCameraInstance] = React.useState<Camera | null>(null);
+    const [cameraInstance, setCameraInstance] = useState<Livelink.Camera | null>(null);
+
+    const cameraId = cameraProvider as CameraId;
+    const cameraClass = cameraProvider as CameraClass;
+    const cameraFinder = cameraProvider as CameraFinder;
+    const clientCamera = cameraProvider as ClientCamera;
 
     useEffect(() => {
         if (!instance || !viewport) {
@@ -34,20 +48,24 @@ function CameraProvider(cameraType: CameraType) {
 
         let setCamera = true;
         const resolveCamera = async () => {
-            if ("id" in cameraType) {
-                console.log("---- Finding camera with id", cameraType.id);
-                return await instance.scene.findEntity(Camera, { entity_uuid: cameraType.id });
-            } else if ("class" in cameraType) {
-                console.log("---- Creating camera");
+            if ("id" in cameraProvider) {
+                console.debug("---- Finding camera with id", cameraProvider.id);
+                return await instance.scene.findEntity(Livelink.Camera, { entity_uuid: cameraProvider.id });
+            } else if ("class" in cameraProvider) {
+                console.debug("---- Creating camera");
                 setCamera = false;
-                return await instance.newCamera(cameraType.class, cameraType.name, viewport);
+                return await instance.newCamera(cameraProvider.class, cameraProvider.name, viewport);
+            } else if ("finder" in cameraProvider) {
+                return await cameraProvider.finder({ instance });
             } else {
-                return await cameraType.finder({ instance });
+                return (await instance.scene.getEntity({
+                    entity_rtid: cameraProvider.client.camera_rtids[cameraProvider.index ?? 0],
+                })) as Livelink.Camera;
             }
         };
 
         resolveCamera().then(cameraEntity => {
-            console.log("---- Viewport ready");
+            console.debug("---- Viewport ready");
             if (setCamera && cameraEntity) {
                 cameraEntity.viewport = viewport;
                 viewport.camera = cameraEntity;
@@ -56,7 +74,16 @@ function CameraProvider(cameraType: CameraType) {
             setCameraInstance(cameraEntity);
             viewport.__markViewportAsReady();
         });
-    }, [instance, cameraType, viewport]);
+    }, [
+        instance,
+        cameraId.id,
+        cameraClass.class,
+        cameraClass.name,
+        cameraFinder.finder,
+        clientCamera.client,
+        clientCamera.index,
+        viewport,
+    ]);
 
     useEffect(() => {
         if (viewportDomElement && cameraInstance instanceof DefaultCamera) {
@@ -66,6 +93,3 @@ function CameraProvider(cameraType: CameraType) {
 
     return null;
 }
-
-//------------------------------------------------------------------------------
-export { CameraProvider as Camera };

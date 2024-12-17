@@ -2,7 +2,7 @@
 import { useContext, useEffect, useState } from "react";
 
 //------------------------------------------------------------------------------
-import { Livelink as LivelinkInstance, Client, RTID } from "@3dverse/livelink";
+import { Livelink as LivelinkInstance, Client } from "@3dverse/livelink";
 
 //------------------------------------------------------------------------------
 import {
@@ -35,10 +35,10 @@ export default {
     summary: "Shows other clients connected to the current session as avatars rendered on a DOM overlay.",
     element: (
         <Livelink
-            scene_id={scene_id}
+            sceneId={scene_id}
             token={token}
             loader={<LoadingSpinner />}
-            disconnectedModal={<DisconnectedModal />}
+            connectionLostPanel={<DisconnectedModal />}
         >
             <Clients>
                 <Canvas className={sampleCanvasClassName}>
@@ -56,13 +56,13 @@ export default {
 function App() {
     const { instance } = useContext(LivelinkContext);
     const { clients } = useContext(ClientsContext);
-    const [pipCamera, setPipCamera] = useState<RTID | null>(null);
+    const [watchedClient, setWatchedClient] = useState<Client | null>(null);
 
     useEffect(() => {
-        if (!clients.find(c => c.camera_rtids[0] === pipCamera)) {
-            setPipCamera(null);
+        if (watchedClient && !clients.includes(watchedClient)) {
+            setWatchedClient(null);
         }
-    }, [clients, setPipCamera]);
+    }, [clients]);
 
     if (!instance) {
         return null;
@@ -75,38 +75,39 @@ function App() {
                     <Avatar3D key={client.id} client={client} instance={instance} />
                 ))}
             </DOM3DOverlay>
-            <AvatarList
-                clients={clients}
-                setPipCamera={cameraId => setPipCamera(cameraId !== pipCamera ? cameraId : null)}
-            />
-            {pipCamera !== null && <PiPViewport pipCamera={pipCamera} />}
+            <AvatarList clients={clients} watchedClient={watchedClient} setWatchedClient={setWatchedClient} />
+            <PiPViewport watchedClient={watchedClient} />
         </>
     );
 }
 
 //------------------------------------------------------------------------------
-const PiPViewport = ({ pipCamera }: { pipCamera: RTID }) => {
+const PiPViewport = ({ watchedClient }: { watchedClient: Client | null }) => {
+    if (!watchedClient) {
+        return null;
+    }
+
     return (
-        <Canvas
-            className={`${sampleCanvasClassName} top-20 w-1/3 h-1/6 right-8 border border-tertiary rounded-lg shadow-2xl`}
-        >
-            <Viewport className="w-full h-full">
-                <Camera
-                    finder={({ instance }: { instance: LivelinkInstance }) =>
-                        instance.scene.entity_registry.get({ entity_rtid: pipCamera })
-                    }
-                />
-            </Viewport>
-        </Canvas>
+        <Viewport className="absolute top-20 w-1/3 h-1/6 right-8 border border-tertiary rounded-lg shadow-2x">
+            <Camera client={watchedClient} index={0} />
+        </Viewport>
     );
 };
 //------------------------------------------------------------------------------
-const AvatarList = ({ clients, setPipCamera }: { clients: Array<Client>; setPipCamera: (cameraId: RTID) => void }) => {
+const AvatarList = ({
+    clients,
+    watchedClient,
+    setWatchedClient,
+}: {
+    clients: Array<Client>;
+    watchedClient: Client | null;
+    setWatchedClient: (client: Client | null) => void;
+}) => {
     return (
-        <div className="absolute right-8 top-6">
+        <div className="absolute right-40 top-4">
             <div className="avatar-group flex -space-x-6 rtl:space-x-reverse ">
                 {clients.map(client => (
-                    <button key={client.id} onClick={() => setPipCamera(client.camera_rtids[0])}>
+                    <button key={client.id} onClick={() => setWatchedClient(client !== watchedClient ? client : null)}>
                         <Avatar client={client} />
                     </button>
                 ))}
@@ -125,8 +126,8 @@ const Avatar3D = ({ client, instance }: { client: Client; instance: LivelinkInst
     return (
         <DOMEntity
             key={client.id}
-            pixel_dimensions={[40, 40]}
-            scale_factor={0.01}
+            pixelDimensions={[40, 40]}
+            scaleFactor={0.01}
             entity={instance.scene.entity_registry.get({ entity_rtid: client.camera_rtids[0] })}
         >
             <Avatar client={client} />

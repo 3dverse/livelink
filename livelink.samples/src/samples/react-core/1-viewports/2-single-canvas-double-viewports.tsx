@@ -15,10 +15,10 @@ export default {
     summary: "Two viewports sharing the same canvas.",
     element: (
         <Livelink
-            scene_id={scene_id}
+            sceneId={scene_id}
             token={token}
             loader={<LoadingSpinner />}
-            disconnectedModal={<DisconnectedModal />}
+            connectionLostPanel={<DisconnectedModal />}
         >
             <Canvas className={`${sampleCanvasClassName} flex`}>
                 <Viewport className="basis-[60%]">

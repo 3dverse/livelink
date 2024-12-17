@@ -24,10 +24,10 @@ export default function SceneSelector() {
             <div className="w-full h-full p-3 lg:pl-0">
                 {selectedSceneId && (
                     <Livelink
-                        scene_id={selectedSceneId}
+                        sceneId={selectedSceneId}
                         token={token}
                         loader={<LoadingSpinner />}
-                        disconnectedModal={<DisconnectedModal />}
+                        connectionLostPanel={<DisconnectedModal />}
                     >
                         <Canvas className={sampleCanvasClassName}>
                             <Viewport />
