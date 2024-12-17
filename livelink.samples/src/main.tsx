@@ -6,7 +6,7 @@ import "@fontsource-variable/inter";
 import "./styles/index.css";
 import { RouterProvider, createHashRouter } from "react-router-dom";
 import { SAMPLES } from "./samples/react-core/index.tsx";
-import { SamplePlayer } from "./components/SamplePlayer/Player.tsx";
+import { SamplePlayer } from "./components/SamplePlayer/SamplePlayer.tsx";
 import reactElementToJSXString from "react-element-to-jsx-string";
 import { resolveSamplePath } from "./components/SamplePlayer/index.tsx";
 

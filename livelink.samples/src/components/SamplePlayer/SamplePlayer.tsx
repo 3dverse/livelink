@@ -27,7 +27,7 @@ export function SamplePlayer({
     code,
     children,
 }: React.PropsWithChildren<{ title?: string; summary?: string; description?: string; code?: string }>) {
-    const [connectionState, setConnectionState] = useState<ConnectionState>("disconnected");
+    const [connectionState, setConnectionState] = useState<ConnectionState>("connected");
 
     useEffect(() => {
         if (connectionState === "reconnect") {
