@@ -1,7 +1,7 @@
-import { vec2, vec3 } from "gl-matrix";
+import { vec3 } from "gl-matrix";
 
 import type { Viewport } from "@3dverse/livelink";
-import type { Vec2i, Vec3 } from "@3dverse/livelink.core";
+import type { Vec3 } from "@3dverse/livelink.core";
 
 /**
  *
@@ -59,27 +59,13 @@ export class DOMElement {
     /**
      *
      */
-    pixel_dimensions: Vec2i;
-
-    /**
-     *
-     */
     scale_factor?: number;
 
     /**
      *
      */
-    constructor({
-        element,
-        pixel_dimensions = vec2.create() as Vec2i,
-        scale_factor,
-    }: {
-        element: HTMLElement;
-        pixel_dimensions?: Vec2i;
-        scale_factor?: number;
-    }) {
+    constructor({ element, scale_factor }: { element: HTMLElement; scale_factor?: number }) {
         this.#element = element;
-        this.pixel_dimensions = pixel_dimensions;
         this.scale_factor = scale_factor;
     }
 

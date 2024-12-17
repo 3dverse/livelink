@@ -5,12 +5,10 @@ import type { Components, Entity, Vec2i, Vec3 } from "@3dverse/livelink";
 //------------------------------------------------------------------------------
 export function DOMEntity({
     entity,
-    pixelDimensions: pixelDimensions,
-    scaleFactor: scaleFactor,
+    scaleFactor,
     children,
 }: PropsWithChildren<{
     entity: Entity | null;
-    pixelDimensions: Vec2i;
     scaleFactor?: number;
 }>) {
     const [worldPosition, setWorldPosition] = useState<Vec3>([0, 0, 0]);
@@ -37,7 +35,7 @@ export function DOMEntity({
     }, [entity]);
 
     return (
-        <DOM3DElement worldPosition={worldPosition} pixelDimensions={pixelDimensions} scaleFactor={scaleFactor}>
+        <DOM3DElement worldPosition={worldPosition} scaleFactor={scaleFactor}>
             {children}
         </DOM3DElement>
     );

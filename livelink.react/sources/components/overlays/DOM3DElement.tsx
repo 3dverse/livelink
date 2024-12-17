@@ -7,12 +7,10 @@ import type React3DElement from "../../overlays/React3DElement";
 //------------------------------------------------------------------------------
 export function DOM3DElement({
     worldPosition,
-    pixelDimensions,
     scaleFactor,
     children,
 }: PropsWithChildren<{
     worldPosition: Vec3;
-    pixelDimensions: Vec2i;
     scaleFactor?: number;
 }>) {
     const overlay = useContext(OverlayContext);
@@ -24,7 +22,7 @@ export function DOM3DElement({
         }
 
         const element = createElement(Fragment, { children });
-        const handle = overlay.addElement({ element, pixel_dimensions: pixelDimensions, scale_factor: scaleFactor });
+        const handle = overlay.addElement({ element, scale_factor: scaleFactor });
         setElementHandle(handle);
 
         return () => {
@@ -37,9 +35,8 @@ export function DOM3DElement({
             return;
         }
 
-        elementHandle.pixel_dimensions = pixelDimensions;
         elementHandle.world_position = worldPosition;
-    }, [elementHandle, pixelDimensions, worldPosition]);
+    }, [elementHandle, worldPosition]);
 
     return null;
 }

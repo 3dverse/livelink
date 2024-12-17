@@ -78,14 +78,7 @@ export class DOMViewport {
         dom_elements.sort((a, b) => a.screen_position[2] - b.screen_position[2]);
 
         dom_elements.forEach((dom_element, index) => {
-            const scale = dom_element.scale_factor
-                ? this.#computeElementScale({
-                      screen_position: dom_element.screen_position,
-                      scale_factor: dom_element.scale_factor,
-                  })
-                : 1.0;
-
-            const is_visible = this.#isElementVisible({ dom_element, scale });
+            const is_visible = this.#isElementVisible({ dom_element });
 
             this.#renderHtmlElement({ dom_element, is_visible, z_index: index });
         });
@@ -125,17 +118,8 @@ export class DOMViewport {
     /**
      *
      */
-    #isElementVisible({ dom_element, scale }: { dom_element: DOMElement; scale: number }): boolean {
-        const shell = [dom_element.pixel_dimensions[0] * scale * 0.5, dom_element.pixel_dimensions[1] * scale * 0.5];
-
-        return (
-            dom_element.screen_position[0] > -shell[0] &&
-            dom_element.screen_position[0] < this.#viewport.width + shell[0] &&
-            dom_element.screen_position[1] > -shell[1] &&
-            dom_element.screen_position[1] < this.#viewport.height + shell[1] &&
-            dom_element.screen_position[2] < 1.0 &&
-            dom_element.screen_position[2] > 0
-        );
+    #isElementVisible({ dom_element }: { dom_element: DOMElement }): boolean {
+        return dom_element.screen_position[2] < 1.0 && dom_element.screen_position[2] > 0;
     }
 
     /**

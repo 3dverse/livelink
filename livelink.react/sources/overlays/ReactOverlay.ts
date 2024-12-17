@@ -47,21 +47,13 @@ export class ReactOverlay implements OverlayInterface {
     /**
      *
      */
-    addElement({
-        element,
-        pixel_dimensions,
-        scale_factor,
-    }: {
-        element: ReactElement;
-        pixel_dimensions: Vec2i;
-        scale_factor?: number;
-    }) {
+    addElement({ element, scale_factor }: { element: ReactElement; scale_factor?: number }) {
         if (this.#elements.has(element)) {
             console.warn(`Element already added to dom overlay`);
             return this.#elements.get(element)!;
         }
 
-        const dom3DElement = new React3DElement({ element, pixel_dimensions, scale_factor });
+        const dom3DElement = new React3DElement({ element, scale_factor });
         this.#elements.set(element, dom3DElement);
         return dom3DElement;
     }
@@ -137,18 +129,7 @@ export class ReactOverlay implements OverlayInterface {
             ? this.#computeElementScale({ screen_position, scale_factor: react_element.scale_factor })
             : 1.0;
 
-        const shell = [
-            react_element.pixel_dimensions[0] * scale * 0.5,
-            react_element.pixel_dimensions[1] * scale * 0.5,
-        ];
-
-        const is_visible =
-            screen_position[0] > -shell[0] &&
-            screen_position[0] < this.#viewport.width + shell[0] &&
-            screen_position[1] > -shell[1] &&
-            screen_position[1] < this.#viewport.height + shell[1] &&
-            screen_position[2] < 1.0 &&
-            screen_position[2] > 0;
+        const is_visible = screen_position[2] < 1.0 && screen_position[2] > 0;
 
         return {
             screen_position,

@@ -31,27 +31,13 @@ export default class React3DElement {
     /**
      *
      */
-    pixel_dimensions: Vec2i;
-
-    /**
-     *
-     */
     scale_factor?: number;
 
     /**
      *
      */
-    constructor({
-        element,
-        pixel_dimensions,
-        scale_factor,
-    }: {
-        element: ReactElement;
-        pixel_dimensions: Vec2i;
-        scale_factor?: number;
-    }) {
+    constructor({ element, scale_factor }: { element: ReactElement; scale_factor?: number }) {
         this.element = element;
-        this.pixel_dimensions = pixel_dimensions;
         this.scale_factor = scale_factor;
     }
 

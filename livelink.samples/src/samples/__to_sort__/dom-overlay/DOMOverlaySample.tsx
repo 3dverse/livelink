@@ -49,7 +49,7 @@ export default function DOMOverlaySample() {
         element.src = "https://console.3dverse.com/static/logo/3dverse-wordmark.svg";
         element.style.height = "110px";
 
-        const domElement = overlay.addElement({ element, pixel_dimensions: [50, 100] });
+        const domElement = overlay.addElement({ element });
         domElement.world_position.fill(0);
 
         return () => {

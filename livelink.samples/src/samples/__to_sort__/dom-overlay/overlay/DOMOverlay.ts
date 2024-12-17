@@ -1,4 +1,3 @@
-
 import { DOMElement } from "./DOMElement";
 import { DOMViewport } from "./DOMViewport";
 
@@ -62,13 +61,13 @@ export class DOMOverlay implements OverlayInterface {
     /**
      *
      */
-    addElement({ element, pixel_dimensions }: { element: HTMLElement, pixel_dimensions?: Vec2i }): DOMElement {
+    addElement({ element }: { element: HTMLElement }): DOMElement {
         if (this.#elements.has(element)) {
             console.warn(`Element already added to dom overlay`);
             return this.#elements.get(element)!;
         }
 
-        const dom3DElement = new DOMElement({ element, pixel_dimensions });
+        const dom3DElement = new DOMElement({ element });
         this.#elements.set(element, dom3DElement);
         return dom3DElement;
     }
