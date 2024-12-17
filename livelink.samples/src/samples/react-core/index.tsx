@@ -17,6 +17,7 @@ import Collaborators from "./3-sessions/5-collaborators-avatars";
 import DOM3DOverlayViewport from "./2-overlays/1-dom-3d-overlay";
 import ThreeOverlayViewport from "./2-overlays/2-threejs-overlay";
 import MultiOverlayViewport from "./2-overlays/3-multi-overlay";
+import ThirdPersonController from "./cameras/third-person-controller/ThirdPersonController";
 
 //------------------------------------------------------------------------------
 export const SAMPLES: Array<{
@@ -66,13 +67,11 @@ export const SAMPLES: Array<{
                 path: "linked-multi-session",
                 element: <LinkedMultiSession />,
             },
-
-            {
-                title: "Clients",
-                path: "clients",
-                element: <Clients />,
-            },
             */
         ],
+    },
+    {
+        categoryName: "Cameras",
+        list: [ThirdPersonController],
     },
 ];

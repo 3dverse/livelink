@@ -2,11 +2,26 @@
 import { useCallback, useContext, useEffect, useState } from "react";
 
 //------------------------------------------------------------------------------
-import { type Livelink as LivelinkInstance, Camera, Entity, Gamepad, Keyboard, Mouse } from "@3dverse/livelink";
-import { CanvasContext, LivelinkContext, Livelink, Viewport, ViewportContext, Canvas } from "@3dverse/livelink-react";
+import {
+    type Livelink as LivelinkInstance,
+    Camera as LivelinkCamera,
+    Entity,
+    Gamepad,
+    Keyboard,
+    Mouse,
+} from "@3dverse/livelink";
+import {
+    CanvasContext,
+    LivelinkContext,
+    Livelink,
+    Viewport,
+    ViewportContext,
+    Canvas,
+    Camera,
+} from "@3dverse/livelink-react";
 
 //------------------------------------------------------------------------------
-import { LoadingSpinner, sampleCanvasClassName, SamplePlayer } from "../../../../components/SamplePlayer";
+import { LoadingSpinner, sampleCanvasClassName } from "../../../../components/SamplePlayer";
 
 //------------------------------------------------------------------------------
 const token = import.meta.env.VITE_PROD_PUBLIC_TOKEN;
@@ -14,17 +29,18 @@ const scene_id = "8f3c24c1-720e-4d2c-b0e7-f623e4feb7be";
 const characterControllerSceneUUID = "55e9d2cc-27c8-43e0-b014-0363be83de55";
 
 //------------------------------------------------------------------------------
-export default function ThirdPersonController() {
-    return (
-        <div className="relative h-full p-3 lg:pl-0">
-            <SamplePlayer>
-                <Livelink scene_id={scene_id} token={token} loader={<LoadingSpinner />}>
-                    <App />
-                </Livelink>
-            </SamplePlayer>
-        </div>
-    );
-}
+export default {
+    path: import.meta.url,
+    title: "Third Person Controller",
+    summary: "A character controller via a third person camera setup.",
+    element: (
+        <Livelink scene_id={scene_id} token={token} loader={<LoadingSpinner />}>
+            <Canvas className={sampleCanvasClassName}>
+                <App />
+            </Canvas>
+        </Livelink>
+    ),
+};
 
 //------------------------------------------------------------------------------
 class TPController extends Entity {
@@ -37,10 +53,9 @@ class TPController extends Entity {
 
 //------------------------------------------------------------------------------
 function App() {
-    const { instance, isConnecting } = useContext(LivelinkContext);
-    const [thirdPersonController, setThirdPersonController] = useState<Entity | undefined>(undefined);
+    const [startSimulation, setStartSimulation] = useState<boolean>(false);
 
-    const setupFirstPersonCamera = useCallback(async () => {
+    const setupFirstPersonCamera = async ({ instance }: { instance: LivelinkInstance }) => {
         if (!instance) {
             return null;
         }
@@ -52,39 +67,34 @@ function App() {
         const children = await playerSceneEntity.getChildren();
         const thirdPersonController = children.find(child => child.script_map !== undefined);
         const thirdPersonCameraEntity = children.find(child => child.camera !== undefined);
-        setThirdPersonController(thirdPersonController);
 
-        return thirdPersonCameraEntity as Camera;
-    }, [instance]);
+        console.log("Assigning client to scripts");
+        if (thirdPersonController && instance.session.client_id) {
+            thirdPersonController.assignClientToScripts({ client_uuid: instance.session.client_id });
+        }
+
+        setStartSimulation(true);
+
+        return thirdPersonCameraEntity as LivelinkCamera;
+    };
+
+    useEffect(() => {});
 
     return (
-        <Canvas className={sampleCanvasClassName}>
-            <Viewport cameraType={setupFirstPersonCamera}>
-                {instance && !isConnecting && thirdPersonController && (
-                    <Controller instance={instance} thirdPersonController={thirdPersonController} />
-                )}
-            </Viewport>
-        </Canvas>
+        <Viewport className="w-full h-full">
+            <Camera finder={setupFirstPersonCamera} />
+            {startSimulation && <Controller />}
+        </Viewport>
     );
 }
 
 //------------------------------------------------------------------------------
-function Controller({
-    instance,
-    thirdPersonController,
-}: {
-    instance: LivelinkInstance;
-    thirdPersonController: Entity;
-}) {
-    const { canvas } = useContext(CanvasContext);
-    const { viewport } = useContext(ViewportContext);
+function Controller() {
+    const { instance } = useContext(LivelinkContext);
+    const { viewportDomElement } = useContext(ViewportContext);
 
     useEffect(() => {
-        if (!canvas || !viewport) {
-            return;
-        }
-
-        if (!instance.session.client_id) {
+        if (!instance || !viewportDomElement) {
             return;
         }
 
@@ -94,13 +104,10 @@ function Controller({
 
         instance.addInputDevice(Keyboard);
         instance.addInputDevice(Gamepad);
-        instance.addInputDevice(Mouse, viewport);
-
-        console.log("Assigning client to scripts");
-        thirdPersonController.assignClientToScripts({ client_uuid: instance.session.client_id });
+        instance.addInputDevice(Mouse, viewportDomElement);
 
         instance.startSimulation();
-    }, [instance, canvas, viewport]);
+    }, [instance, viewportDomElement]);
 
     return null;
 }

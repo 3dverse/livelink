@@ -2,8 +2,9 @@
 import React, { useEffect } from "react";
 
 //------------------------------------------------------------------------------
-import { Camera, RelativeRect, UUID, Viewport } from "@3dverse/livelink";
+import { Camera, UUID } from "@3dverse/livelink";
 import * as Livelink from "@3dverse/livelink";
+import { Livelink as LivelinkInstance } from "@3dverse/livelink";
 
 //------------------------------------------------------------------------------
 import { LivelinkContext } from "./Livelink";
@@ -17,7 +18,7 @@ export const CameraContext = React.createContext<{ cameraInstance: Livelink.Came
 export type CameraType =
     | { id: UUID }
     | { class: typeof Livelink.Camera; name: string }
-    | { finder: () => Promise<Livelink.Camera | null> };
+    | { finder: ({ instance }: { instance: LivelinkInstance }) => Promise<Livelink.Camera | null> };
 
 //------------------------------------------------------------------------------
 function CameraProvider(cameraType: CameraType) {
@@ -41,7 +42,7 @@ function CameraProvider(cameraType: CameraType) {
                 setCamera = false;
                 return await instance.newCamera(cameraType.class, cameraType.name, viewport);
             } else {
-                return await cameraType.finder();
+                return await cameraType.finder({ instance });
             }
         };
 

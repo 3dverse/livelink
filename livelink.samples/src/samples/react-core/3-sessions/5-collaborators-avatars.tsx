@@ -79,19 +79,23 @@ function App() {
                 clients={clients}
                 setPipCamera={cameraId => setPipCamera(cameraId !== pipCamera ? cameraId : null)}
             />
-            {pipCamera !== null && <PiPViewport instance={instance} pipCamera={pipCamera} />}
+            {pipCamera !== null && <PiPViewport pipCamera={pipCamera} />}
         </>
     );
 }
 
 //------------------------------------------------------------------------------
-const PiPViewport = ({ instance, pipCamera }: { instance: LivelinkInstance; pipCamera: RTID }) => {
+const PiPViewport = ({ pipCamera }: { pipCamera: RTID }) => {
     return (
         <Canvas
             className={`${sampleCanvasClassName} top-20 w-1/3 h-1/6 right-8 border border-tertiary rounded-lg shadow-2xl`}
         >
             <Viewport className="w-full h-full">
-                <Camera finder={() => instance.scene.entity_registry.get({ entity_rtid: pipCamera })} />
+                <Camera
+                    finder={({ instance }: { instance: LivelinkInstance }) =>
+                        instance.scene.entity_registry.get({ entity_rtid: pipCamera })
+                    }
+                />
             </Viewport>
         </Canvas>
     );

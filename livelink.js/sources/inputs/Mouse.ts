@@ -28,11 +28,7 @@ export class Mouse implements InputDevice {
     /**
      *
      */
-    #viewport: Viewport;
-    /**
-     *
-     */
-    #offset: Rect;
+    #viewport: HTMLDivElement;
 
     /**
      *
@@ -45,14 +41,13 @@ export class Mouse implements InputDevice {
     /**
      *
      */
-    constructor(instance: Livelink, viewport?: Viewport) {
-        if (!viewport) {
-            throw new Error("MouseInput: Viewport is required.");
+    constructor(instance: Livelink, viewportDiv?: HTMLDivElement) {
+        if (!viewportDiv) {
+            throw new Error("MouseInput: viewport div is required.");
         }
         this.#instance = instance;
-        this.#viewport = viewport;
+        this.#viewport = viewportDiv;
         this.name = "mouse";
-        this.#offset = this.#viewport.rendering_surface.getBoundingRect();
 
         if (!Mouse.#operations) {
             Mouse.#operations = {
@@ -74,8 +69,7 @@ export class Mouse implements InputDevice {
      *
      */
     setup() {
-        const canvas = (this.#viewport.rendering_surface as RenderingSurface).canvas;
-        canvas.addEventListener("mousedown", this.#onMouseDown);
+        this.#viewport.addEventListener("mousedown", this.#onMouseDown);
         window.addEventListener("mouseup", this.#onMouseUp);
         window.addEventListener("mousemove", this.#onMouseMove);
         document.addEventListener("pointerlockchange", this.#onPointerLockChange);
@@ -85,8 +79,7 @@ export class Mouse implements InputDevice {
      *
      */
     release() {
-        const canvas = (this.#viewport.rendering_surface as RenderingSurface).canvas;
-        canvas.removeEventListener("mousedown", this.#onMouseDown);
+        this.#viewport.removeEventListener("mousedown", this.#onMouseDown);
         window.removeEventListener("mouseup", this.#onMouseUp);
         window.removeEventListener("mousemove", this.#onMouseMove);
         document.removeEventListener("pointerlockchange", this.#onPointerLockChange);
@@ -167,7 +160,7 @@ export class Mouse implements InputDevice {
      *
      */
     #onPointerLockChange = () => {
-        this.#isLocked = document.pointerLockElement === (this.#viewport.rendering_surface as RenderingSurface).canvas;
+        this.#isLocked = document.pointerLockElement === this.#viewport;
     };
 
     /**
@@ -177,11 +170,8 @@ export class Mouse implements InputDevice {
         const data = new ArrayBuffer(bufferSize);
         const bufferWriter = new DataView(data);
 
-        const PositionX = (PosX - this.#offset.left) / this.#offset.width;
-        const PositionY = (PosY - this.#offset.top) / this.#offset.height;
-
-        bufferWriter.setFloat32(0, PositionX, true);
-        bufferWriter.setFloat32(4, PositionY, true);
+        bufferWriter.setFloat32(0, PosX / this.#viewport.clientWidth, true);
+        bufferWriter.setFloat32(4, PosY / this.#viewport.clientHeight, true);
 
         return new Uint8Array(data);
     }
