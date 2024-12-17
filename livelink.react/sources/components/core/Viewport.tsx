@@ -1,8 +1,8 @@
 //------------------------------------------------------------------------------
-import React, { HTMLProps, MouseEventHandler, useEffect, useRef } from "react";
+import React, { HTMLProps, MouseEventHandler, useCallback, useEffect, useRef } from "react";
 
 //------------------------------------------------------------------------------
-import { RelativeRect, Viewport } from "@3dverse/livelink";
+import { RelativeRect, RenderingSurface, Viewport } from "@3dverse/livelink";
 
 //------------------------------------------------------------------------------
 import { LivelinkContext } from "./Livelink";
@@ -21,36 +21,72 @@ export const ViewportContext = React.createContext<{
 });
 
 //------------------------------------------------------------------------------
+function computeRelativeRect(viewportDomElement: HTMLDivElement, canvas: HTMLCanvasElement) {
+    const clientRect = viewportDomElement.getBoundingClientRect();
+    const canvasPos = canvas.getBoundingClientRect();
+    const relativePos = {
+        left: clientRect.left - canvasPos.left,
+        top: clientRect.top - canvasPos.top,
+    };
+
+    return new RelativeRect({
+        left: relativePos.left / canvasPos.width,
+        top: relativePos.top / canvasPos.height,
+        width: clientRect.width / canvasPos.width,
+        height: clientRect.height / canvasPos.height,
+    });
+}
+
+//------------------------------------------------------------------------------
 function ViewportProvider({ children, ...props }: React.PropsWithChildren & HTMLProps<HTMLDivElement>) {
     const { instance } = React.useContext(LivelinkContext);
-    const { renderingSurface } = React.useContext(CanvasContext);
+    const { renderingSurface, canvas } = React.useContext(CanvasContext);
     const { zIndex: parentZIndex = 0 } = React.useContext(ViewportContext);
 
     const [viewport, setViewport] = React.useState<Viewport | null>(null);
     const viewportDomElement = useRef<HTMLDivElement>(null);
 
-    const zIndex = parentZIndex + 1;
-
-    useEffect(() => {
-        if (!instance || !renderingSurface || !viewportDomElement.current) {
+    const onResize = useCallback(() => {
+        if (!viewportDomElement.current || !canvas || !viewport) {
             return;
         }
 
-        //TO_CLEAN!
-        const clientRect = viewportDomElement.current.getBoundingClientRect();
-        console.log("CLIENT RECT", clientRect);
-        const parentPos = viewportDomElement.current.parentElement!.getBoundingClientRect();
-        const relativePos = {
-            left: clientRect.left - parentPos.left,
-            top: clientRect.top - parentPos.top,
+        console.log("---- Resizing viewport", viewportDomElement.current);
+        const rect = computeRelativeRect(viewportDomElement.current, canvas);
+        viewport.rect = rect;
+    }, [viewport, canvas, viewportDomElement.current]);
+
+    useEffect(() => {
+        if (!viewportDomElement.current || !viewport) {
+            return;
+        }
+
+        const resizeObserver = new ResizeObserver(onResize);
+        resizeObserver.observe(viewportDomElement.current);
+        return () => {
+            resizeObserver.disconnect();
         };
-        const rect = new RelativeRect({
-            left: relativePos.left / renderingSurface.width,
-            top: relativePos.top / renderingSurface.height,
-            width: clientRect.width / renderingSurface.width,
-            height: clientRect.height / renderingSurface.height,
-        });
-        //TO_CLEAN!
+    }, [viewport, viewportDomElement.current, onResize]);
+
+    useEffect(() => {
+        if (!renderingSurface || !viewport) {
+            return;
+        }
+
+        renderingSurface.addEventListener("on-resized", onResize);
+        return () => {
+            renderingSurface.removeEventListener("on-resized", onResize);
+        };
+    }, [viewport, renderingSurface, onResize]);
+
+    const zIndex = parentZIndex + 1;
+
+    useEffect(() => {
+        if (!instance || !renderingSurface || !canvas || !viewportDomElement.current) {
+            return;
+        }
+
+        const rect = computeRelativeRect(viewportDomElement.current, canvas);
 
         const viewport = new Viewport(instance, renderingSurface, { rect, z_index: zIndex });
         console.log("---- Setting viewport", viewport.width, viewport.height, zIndex);
@@ -63,7 +99,7 @@ function ViewportProvider({ children, ...props }: React.PropsWithChildren & HTML
             viewport.release();
             setViewport(null);
         };
-    }, [instance, renderingSurface, zIndex]);
+    }, [instance, renderingSurface, canvas, zIndex]);
 
     const hasCameras = React.Children.toArray(children).some(child => {
         return React.isValidElement(child) && child.type === Camera;

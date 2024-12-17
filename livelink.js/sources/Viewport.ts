@@ -48,7 +48,7 @@ export class Viewport extends EventTarget {
     /**
      *
      */
-    readonly rect: RelativeRect;
+    #rect: RelativeRect;
 
     /**
      *
@@ -68,19 +68,38 @@ export class Viewport extends EventTarget {
      *
      */
     get width(): number {
-        return this.rect.width * this.rendering_surface.width;
+        return this.#rect.width * this.rendering_surface.width;
     }
     get height(): number {
-        return this.rect.height * this.rendering_surface.height;
+        return this.#rect.height * this.rendering_surface.height;
     }
     get offset(): Vec2 {
-        return [this.rect.left * this.rendering_surface.width, this.rect.top * this.rendering_surface.height];
+        return [this.#rect.left * this.rendering_surface.width, this.#rect.top * this.rendering_surface.height];
     }
     get aspect_ratio(): number {
         return this.height > 0 ? this.width / this.height : 1;
     }
     get z_index(): number {
         return this.#z_index;
+    }
+    get rect(): RelativeRect {
+        return this.#rect;
+    }
+
+    /**
+     *
+     */
+    set z_index(z: number) {
+        this.#z_index = z;
+        this.#core.refreshViewports();
+    }
+
+    /**
+     *
+     */
+    set rect(r: RelativeRect) {
+        this.#rect = r;
+        this.#core.refreshViewports();
     }
 
     /**
@@ -122,7 +141,7 @@ export class Viewport extends EventTarget {
         super();
         this.#core = core;
         this.#rendering_surface = rendering_surface;
-        this.rect = new RelativeRect(options?.rect ?? { left: 0, top: 0, width: 1, height: 1 });
+        this.#rect = new RelativeRect(options?.rect ?? { left: 0, top: 0, width: 1, height: 1 });
         this.render_target_index = options?.render_target_index ?? -1;
         this.#z_index = options?.z_index ?? 0;
     }
@@ -285,7 +304,7 @@ export class Viewport extends EventTarget {
     }
 
     /**
-     *
+     * @internal
      */
     onResize(): void {
         this.camera?.updateLens();
