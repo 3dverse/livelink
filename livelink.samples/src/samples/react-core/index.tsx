@@ -40,10 +40,16 @@ export const SAMPLES: Array<{
             ViewportInViewport,
         ],
     },
-    /*
+    {
+        categoryName: "Overlays",
+        list: [DOM3DOverlayViewport, ThreeOverlayViewport, MultiOverlayViewport],
+    },
     {
         categoryName: "Sessions",
         list: [
+            Clients,
+            Collaborators,
+            /*
             {
                 title: "Scene Selector",
                 path: "scene-selector",
@@ -66,16 +72,7 @@ export const SAMPLES: Array<{
                 path: "clients",
                 element: <Clients />,
             },
-        ],
-    },
-    */
-    {
-        categoryName: "Overlays",
-        list: [
-            DOM3DOverlayViewport,
-            ThreeOverlayViewport,
-            //MultiOverlayViewport,
-            //Collaborators
+            */
         ],
     },
 ];

@@ -2,7 +2,7 @@
 import { useMemo } from "react";
 
 //------------------------------------------------------------------------------
-import { Livelink, Canvas, Viewport } from "@3dverse/livelink-react";
+import { Livelink, Canvas, Viewport, Camera, DefaultCamera } from "@3dverse/livelink-react";
 import { ThreeOverlay } from "@3dverse/livelink-three/react";
 
 //------------------------------------------------------------------------------
@@ -28,7 +28,8 @@ export default {
             disconnectedModal={<DisconnectedModal />}
         >
             <Canvas className={sampleCanvasClassName}>
-                <Viewport>
+                <Viewport className="w-full h-full">
+                    <Camera class={DefaultCamera} name={"MyCamera"} />
                     <ThreeOverlayScene />
                 </Viewport>
             </Canvas>

@@ -21,7 +21,7 @@ export default {
             disconnectedModal={<DisconnectedModal />}
         >
             <Canvas className={sampleCanvasClassName}>
-                <Viewport>
+                <Viewport className="w-full h-full">
                     <Camera class={DefaultCamera} name={"MyCamera"} />
                     <DOM3DOverlay>
                         <DOM3DElement world_position={[2, 0, 0]} pixel_dimensions={[1, 1]}>

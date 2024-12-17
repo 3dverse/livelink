@@ -9,7 +9,7 @@ export const OverlayContext = React.createContext<ReactOverlay | null>(null);
 export function DOM3DOverlay({ children, ...props }: React.PropsWithChildren<HTMLProps<HTMLDivElement>>) {
     const containerRef = useRef<HTMLDivElement>(null);
     const [overlay, setOverlay] = useState<ReactOverlay | null>(null);
-    const { viewport } = React.useContext(ViewportContext);
+    const { viewport, zIndex } = React.useContext(ViewportContext);
 
     useEffect(() => {
         if (!viewport || !containerRef.current) {
@@ -36,7 +36,7 @@ export function DOM3DOverlay({ children, ...props }: React.PropsWithChildren<HTM
                     width: "100%",
                     height: "100%",
                     top: "0",
-                    zIndex: 10,
+                    zIndex,
                     pointerEvents: "none",
                     padding: "inherit",
                     overflow: "hidden",
