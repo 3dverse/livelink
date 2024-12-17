@@ -30,10 +30,10 @@ function computeRelativeRect(viewportDomElement: HTMLDivElement, canvas: HTMLCan
     };
 
     return new RelativeRect({
-        left: relativePos.left / canvasPos.width,
-        top: relativePos.top / canvasPos.height,
-        width: clientRect.width / canvasPos.width,
-        height: clientRect.height / canvasPos.height,
+        left: parseFloat((relativePos.left / canvasPos.width).toPrecision(6)),
+        top: parseFloat((relativePos.top / canvasPos.height).toPrecision(6)),
+        width: parseFloat((clientRect.width / canvasPos.width).toPrecision(6)),
+        height: parseFloat((clientRect.height / canvasPos.height).toPrecision(6)),
     });
 }
 
