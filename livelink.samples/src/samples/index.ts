@@ -26,8 +26,8 @@ import Clients from "./react-core/5-clients/1-clients-list";
 import Collaborators from "./react-core/5-clients/2-clients-avatars";
 
 //------------------------------------------------------------------------------
-import SunPositionPicker from "./react-ui/sun-position-picker";
-import ActivityWatcher from "./react-ui/activity-watcher";
+import SunPositionPicker from "./react-ui/x-sun-position-picker";
+import ActivityWatcher from "./react-ui/x-activity-watcher";
 
 //------------------------------------------------------------------------------
 export const SAMPLES: Array<{
