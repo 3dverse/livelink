@@ -19,7 +19,7 @@ import MultiOverlayViewport from "./3-overlays/3-multi-overlay";
 //------------------------------------------------------------------------------
 import DefaultCameraController from "./4-cameras/1-default-camera-controller";
 import CustomCameraController from "./4-cameras/2-custom-camera-controller";
-import ThirdPersonController from "./4-cameras/x-third-person-controller";
+import ThirdPersonController from "./4-cameras/3-third-person-controller";
 
 //------------------------------------------------------------------------------
 import Clients from "./5-clients/1-clients-list";
