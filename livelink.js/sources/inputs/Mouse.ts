@@ -170,8 +170,13 @@ export class Mouse implements InputDevice {
         const data = new ArrayBuffer(bufferSize);
         const bufferWriter = new DataView(data);
 
-        bufferWriter.setFloat32(0, PosX / this.#viewport.clientWidth, true);
-        bufferWriter.setFloat32(4, PosY / this.#viewport.clientHeight, true);
+        const br = this.#viewport.getBoundingClientRect();
+
+        const posX = (PosX - br.left) / br.width;
+        const posY = (PosY - br.top) / br.height;
+
+        bufferWriter.setFloat32(0, posX, true);
+        bufferWriter.setFloat32(4, posY, true);
 
         return new Uint8Array(data);
     }
