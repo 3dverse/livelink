@@ -22,6 +22,16 @@ export type CursorData = {
 };
 
 /**
+ *
+ */
+export type ClientInfo = {
+    client_id: UUID;
+    client_type: "user" | "guest" | "unknown";
+    user_id: UUID;
+    username: string;
+};
+
+/**
  * A client is the representation of a singular user in a session.
  * The same user can have multiple clients in a given session.
  *
@@ -32,7 +42,7 @@ export class Client implements ClientInterface {
     /**
      *
      */
-    #uuid: UUID;
+    readonly #client_info: ClientInfo;
 
     /**
      *
@@ -48,7 +58,21 @@ export class Client implements ClientInterface {
      *
      */
     get id(): UUID {
-        return this.#uuid;
+        return this.#client_info.client_id;
+    }
+
+    /**
+     *
+     */
+    get user_id() {
+        return this.#client_info.user_id;
+    }
+
+    /**
+     *
+     */
+    get username() {
+        return this.#client_info.username;
     }
 
     /**
@@ -68,9 +92,8 @@ export class Client implements ClientInterface {
     /**
      *
      */
-    constructor(client_meta_data: ClientMetaData) {
-        this.#uuid = client_meta_data.client_id;
-        this._updateFromClientMetaData({ client_meta_data });
+    constructor({ client_info }: { client_info: ClientInfo }) {
+        this.#client_info = client_info;
     }
 
     /**

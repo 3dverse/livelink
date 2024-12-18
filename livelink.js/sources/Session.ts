@@ -1,16 +1,6 @@
 import type { ClientMetaData, SessionInterface, UUID } from "@3dverse/livelink.core";
-import { Client } from "./Client";
+import { Client, ClientInfo } from "./Client";
 import { Livelink } from "./Livelink";
-
-/**
- *
- */
-type ClientInfo = {
-    client_id: UUID;
-    client_type: "user" | "guest";
-    user_id: UUID;
-    username: string;
-};
 
 /**
  * Session information.
@@ -187,6 +177,11 @@ export class Session extends EventTarget implements SessionInterface {
     #clients: Map<UUID, Client> = new Map<UUID, Client>();
 
     /**
+     * A map for clients pending identification
+     */
+    #clients_pending_identification = new Set<UUID>();
+
+    /**
      *
      */
     get scene_id() {
@@ -311,33 +306,78 @@ export class Session extends EventTarget implements SessionInterface {
     }
 
     /**
-     *
+     * @internal
      */
     _updateClients({ client_data }: { client_data: Array<ClientMetaData> }): void {
         for (const client_meta_data of client_data) {
-            if (!this.#clients.has(client_meta_data.client_id)) {
-                if (client_meta_data.viewports.some(v => v.camera_rtid)) {
-                    this._onClientJoined({ client: new Client(client_meta_data) });
-                }
+            const client_id = client_meta_data.client_id;
+
+            if (this.#clients_pending_identification.has(client_id)) {
+                continue;
+            }
+
+            const client = this.#clients.get(client_id);
+            if (client) {
+                this.#handleExistingClient({ client, client_meta_data });
             } else {
-                const client = this.#clients.get(client_meta_data.client_id)!;
-                client._updateFromClientMetaData({ client_meta_data });
+                this.#handleNewClient({ client_meta_data });
             }
         }
 
+        this.#removeDisconnectedClients({ client_data });
+    }
+
+    /**
+     *
+     */
+    async #handleNewClient({ client_meta_data }: { client_meta_data: ClientMetaData }): Promise<void> {
+        const client_id = client_meta_data.client_id;
+
+        this.#clients_pending_identification.add(client_id);
+        let client_info: ClientInfo | null = null;
+
+        try {
+            client_info = await this.#fetchClientInfo({ client_id: client_meta_data.client_id });
+        } catch (error) {
+            console.error("Could not get info for client", client_id, error);
+            client_info = {
+                client_id,
+                client_type: "unknown",
+                user_id: "",
+                username: "unknown user",
+            };
+        }
+
+        console.debug("--- Client joined", client_info);
+        const client = new Client({ client_info });
+        this.#onClientJoined({ client });
+        this.#clients_pending_identification.delete(client_id);
+    }
+
+    /**
+     *
+     */
+    #handleExistingClient({ client, client_meta_data }: { client: Client; client_meta_data: ClientMetaData }): void {
+        client._updateFromClientMetaData({ client_meta_data });
+    }
+
+    /**
+     *
+     */
+    #removeDisconnectedClients({ client_data }: { client_data: Array<ClientMetaData> }) {
         const client_ids = client_data.map(d => d.client_id);
+
         for (const [client_id] of this.#clients) {
             if (!client_ids.includes(client_id)) {
-                this._onClientLeft({ client_id });
+                this.#onClientLeft({ client_id });
             }
         }
     }
 
     /**
-     *
      * @param client The client to register
      */
-    _onClientJoined({ client }: { client: Client }): void {
+    #onClientJoined({ client }: { client: Client }) {
         this.#clients.set(client.id, client);
         if (client.id !== this.client_id) {
             this.dispatchEvent(new CustomEvent("client-joined", { detail: client }));
@@ -346,9 +386,8 @@ export class Session extends EventTarget implements SessionInterface {
 
     /**
      *
-     * @param client The client to unregister
      */
-    _onClientLeft({ client_id }: { client_id: UUID }): void {
+    #onClientLeft({ client_id }: { client_id: UUID }): void {
         const client = this.getClient({ client_id });
         if (client) {
             this.#clients.delete(client_id);
@@ -358,9 +397,22 @@ export class Session extends EventTarget implements SessionInterface {
 
     /**
      *
-     *
      */
     _onDisconnected(e: Event): void {
         this.dispatchEvent(new CustomEvent("on-disconnected", { detail: (e as CustomEvent).detail }));
+    }
+
+    /**
+     *
+     */
+    async #fetchClientInfo({ client_id }: { client_id: UUID }): Promise<ClientInfo> {
+        const res = await fetch(`${Livelink._api_url}/sessions/${this.session_id}/clients/${client_id}`, {
+            method: "GET",
+            headers: {
+                user_token: this.#token,
+            },
+        });
+
+        return (await res.json()) as ClientInfo;
     }
 }

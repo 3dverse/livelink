@@ -48,13 +48,15 @@ export default {
 function App() {
     const { instance } = useContext(LivelinkContext);
     const { clients } = useContext(ClientsContext);
+    const prettifyUsername = (username: string) => username.substring(username.lastIndexOf("_") + 1);
+
     return (
         <ul className="absolute right-0 bottom-0 flex flex-col-reverse">
             <li className="bg-informative-800 p-2 m-1 rounded-full text-3xs">{`Current Client = ${instance?.session.client_id}`}</li>
             {clients.map((client, i) => {
                 return (
                     <li key={client.id} className="bg-foreground p-2 m-1 rounded-full text-3xs">
-                        {`Client[${i}] = ${client.id}`}
+                        {`Client[${i}] = ${prettifyUsername(client.username)}`}
                     </li>
                 );
             })}
