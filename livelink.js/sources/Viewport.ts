@@ -53,6 +53,11 @@ export class Viewport extends EventTarget {
     /**
      *
      */
+    #element: HTMLElement | null = null;
+
+    /**
+     *
+     */
     get rendering_surface() {
         return this.#rendering_surface;
     }
@@ -171,35 +176,35 @@ export class Viewport extends EventTarget {
     /**
      *
      */
-    activatePicking(): void {
-        const canvas = (this.rendering_surface as RenderingSurface).canvas;
-        canvas?.addEventListener("click", this.#onCanvasClicked);
+    activatePicking({ element }: { element: HTMLElement }): void {
+        this.#element = element;
+        this.#element.addEventListener("click", this.#onCanvasClicked);
     }
 
     /**
      *
      */
     deactivatePicking(): void {
-        const canvas = (this.rendering_surface as RenderingSurface).canvas;
-        canvas?.removeEventListener("click", this.#onCanvasClicked);
+        this.#element?.removeEventListener("click", this.#onCanvasClicked);
+        this.#element = null;
     }
 
     /**
      *
      */
     #onCanvasClicked = async (e: MouseEvent) => {
-        const canvas = (this.rendering_surface as RenderingSurface).canvas;
-        const pos: Vec2 = [
-            e.offsetX / (canvas.clientWidth - canvas.clientLeft),
-            e.offsetY / (canvas.clientHeight - canvas.clientTop),
-        ];
+        e.stopPropagation();
 
-        const res = await this.castScreenSpaceRay({
-            pos,
-            mode: LivelinkCoreModule.Enums.HighlightMode.HighlightAndDiscardOldSelection,
-        });
+        const cursorData = this.#core.session.current_client?.cursor_data;
+        if (!cursorData) {
+            return;
+        }
 
-        this.dispatchEvent(new CustomEvent("on-entity-picked", { detail: res }));
+        const entity = await this.#core.scene.getEntity({ entity_rtid: cursorData.hovered_entity_rtid });
+        const detail = entity
+            ? { entity, ws_position: cursorData.hovered_ws_position, ws_normal: cursorData.hovered_ws_normal }
+            : null;
+        this.dispatchEvent(new CustomEvent("on-entity-picked", { detail }));
     };
 
     /**
