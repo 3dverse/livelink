@@ -17,8 +17,8 @@ export default {
         <Livelink
             sceneId={scene_id}
             token={token}
-            loader={<LoadingSpinner />}
-            connectionLostPanel={<DisconnectedModal />}
+            LoadingPanel={LoadingSpinner}
+            ConnectionErrorPanel={DisconnectedModal}
         >
             <div className="flex basis-full gap-2">
                 <Canvas className={sampleCanvasClassName}>

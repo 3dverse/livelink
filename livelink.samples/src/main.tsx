@@ -5,7 +5,7 @@ import "@fontsource-variable/manrope";
 import "@fontsource-variable/inter";
 import "./styles/index.css";
 import { RouterProvider, createHashRouter } from "react-router-dom";
-import { SAMPLES } from "./samples/react-core/index.tsx";
+import { SAMPLES } from "./samples/index.ts";
 import { SamplePlayer } from "./components/SamplePlayer/SamplePlayer.tsx";
 import reactElementToJSXString from "react-element-to-jsx-string";
 import { resolveSamplePath } from "./components/SamplePlayer/index.tsx";

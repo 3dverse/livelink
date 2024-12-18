@@ -84,26 +84,19 @@ export type LivelinkConnectParameters = {
     token: string;
 
     /**
-     * Optional callback triggered when the connection is disconnected.
-     *
-     * @param event - The event object containing details about the disconnection.
-     */
-    onDisconnected?: (event: Event) => void;
-
-    /**
      * Optional React component or node displayed while the connection is loading.
      */
-    loader?: ReactNode;
+    LoadingPanel?: React.ComponentType<{ stage: string }>;
 
     /**
      * Optional React component or node displayed when an inactivity timeout occurs.
      */
-    inactivityTimeoutModal?: ReactNode;
+    InactivityWarningPanel?: React.ComponentType<{ onActivityDetected: () => void }>;
 
     /**
      * Optional React component or node displayed when the connection is disconnected.
      */
-    connectionLostPanel?: ReactNode;
+    ConnectionErrorPanel?: React.ComponentType<{ error: string }>;
 } & SessionOpenMode;
 
 /**
@@ -120,7 +113,6 @@ export type LivelinkConnectParameters = {
  * @property isTransient - Specifies if the connection is transient (non-persistent).
  * @property token - The authentication token required for the Livelink connection.
  * @property loader - Optional React node displayed while the connection is being established.
- * @property onDisconnected - Optional callback invoked when the connection is disconnected.
  * @property inactivityTimeoutModal - Optional React node displayed when an inactivity timeout occurs.
  * @property disconnectedModal - Optional React node displayed when the connection is lost.
  * @property sessionOpenMode - Specifies the mode for opening the session; defaults to `"join-or-start"`.
@@ -131,15 +123,16 @@ export function LivelinkProvider({
     sessionId,
     isTransient,
     token,
-    loader,
-    onDisconnected,
-    inactivityTimeoutModal,
-    connectionLostPanel,
+    LoadingPanel,
+    InactivityWarningPanel,
+    ConnectionErrorPanel,
     sessionOpenMode = "join-or-start",
 }: PropsWithChildren<LivelinkConnectParameters>) {
     const [instance, setInstance] = useState<LivelinkInstance | null>(null);
     const [isConnecting, setIsConnecting] = useState(true);
     const [isConnectionLost, setIsConnectionLost] = useState(false);
+    const [showInactivityWarning, setInactivityWarning] = useState(false);
+    const [connectionError, setConnectionError] = useState<string>("Unknown error");
 
     const disconnect = useCallback(() => instance?.disconnect(), [instance]);
 
@@ -161,6 +154,10 @@ export function LivelinkProvider({
             }
         };
 
+        const onInactivityWarning = () => {
+            setInactivityWarning(true);
+        };
+
         connect({ sessionOpenMode, sceneId, sessionId } as SessionOpenMode)
             .then(instance => {
                 console.debug("Connected to Livelink", instance);
@@ -170,18 +167,21 @@ export function LivelinkProvider({
                     instance.startStreaming();
                     setIsConnecting(false);
                 });
+                instance.activity_watcher.addEventListener("on-warning", onInactivityWarning);
             })
             .catch(error => {
                 console.debug("Failed to connect to Livelink", error);
                 setIsConnecting(false);
                 setIsConnectionLost(true);
-                onDisconnected?.(new CustomEvent("on-disconnected", { detail: error }));
+                setConnectionError(error);
             });
 
         return () => {
+            instance?.activity_watcher.removeEventListener("on-warning", onInactivityWarning);
             setInstance(null);
             setIsConnecting(true);
             setIsConnectionLost(false);
+            setInactivityWarning(false);
         };
     }, [token, sessionOpenMode, sceneId, sessionId, isTransient]);
 
@@ -197,7 +197,8 @@ export function LivelinkProvider({
 
         const onDisconnectedHandler = (event: Event) => {
             setIsConnectionLost(true);
-            onDisconnected?.(event);
+            setInactivityWarning(false);
+            setConnectionError((event as CustomEvent<{ reason: string }>).detail.reason);
         };
 
         instance.session.addEventListener("on-disconnected", onDisconnectedHandler);
@@ -205,7 +206,7 @@ export function LivelinkProvider({
         return () => {
             instance.session.removeEventListener("on-disconnected", onDisconnectedHandler);
         };
-    }, [instance, onDisconnected]);
+    }, [instance]);
 
     // Disconnect when unmounted
     useEffect(() => {
@@ -223,8 +224,11 @@ export function LivelinkProvider({
                 disconnect,
             }}
         >
-            {isConnecting && loader}
-            {isConnectionLost && connectionLostPanel}
+            {isConnecting && LoadingPanel && <LoadingPanel stage={""} />}
+            {isConnectionLost && ConnectionErrorPanel && <ConnectionErrorPanel error={connectionError} />}
+            {showInactivityWarning && InactivityWarningPanel && (
+                <InactivityWarningPanel onActivityDetected={() => setInactivityWarning(false)} />
+            )}
             {children}
         </LivelinkContext.Provider>
     );

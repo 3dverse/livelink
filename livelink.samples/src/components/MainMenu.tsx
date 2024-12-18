@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 import { NavLink } from "react-router-dom";
-import { SAMPLES } from "../samples/react-core/index.tsx";
+import { SAMPLES } from "../samples/index.ts";
 import { resolveSamplePath } from "./SamplePlayer/index.tsx";
 
 //------------------------------------------------------------------------------

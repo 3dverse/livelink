@@ -26,8 +26,8 @@ export default function SceneSelector() {
                     <Livelink
                         sceneId={selectedSceneId}
                         token={token}
-                        loader={<LoadingSpinner />}
-                        connectionLostPanel={<DisconnectedModal />}
+                        LoadingPanel={LoadingSpinner}
+                        ConnectionErrorPanel={DisconnectedModal}
                     >
                         <Canvas className={sampleCanvasClassName}>
                             <Viewport />

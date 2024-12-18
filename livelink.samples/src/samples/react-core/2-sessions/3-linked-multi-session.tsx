@@ -22,8 +22,8 @@ export default function LinkedMultiSession() {
                 <Livelink
                     sceneId={scene_id_1}
                     token={token}
-                    loader={<LoadingSpinner />}
-                    connectionLostPanel={<DisconnectedModal />}
+                    LoadingPanel={LoadingSpinner}
+                    ConnectionErrorPanel={DisconnectedModal}
                 >
                     <Canvas className={sampleCanvasClassName}>
                         <Viewport />
@@ -34,8 +34,8 @@ export default function LinkedMultiSession() {
                 <Livelink
                     sceneId={scene_id_2}
                     token={token}
-                    loader={<LoadingSpinner />}
-                    connectionLostPanel={<DisconnectedModal />}
+                    LoadingPanel={LoadingSpinner}
+                    ConnectionErrorPanel={DisconnectedModal}
                 >
                     <Canvas className={sampleCanvasClassName}>
                         <Viewport />

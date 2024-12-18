@@ -26,7 +26,7 @@ export default {
     title: "Third Person Controller",
     summary: "A character controller via a third person camera setup.",
     element: (
-        <Livelink sceneId={scene_id} token={token} loader={<LoadingSpinner />}>
+        <Livelink sceneId={scene_id} token={token} LoadingPanel={LoadingSpinner}>
             <Canvas className={sampleCanvasClassName}>
                 <Viewport className="w-full h-full">
                     <App />

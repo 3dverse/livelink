@@ -1,29 +1,33 @@
 //------------------------------------------------------------------------------
-import SingleCanvasSingleViewport from "./1-viewports/1-single-canvas-single-viewport";
-import SingleCanvasDoubleViewports from "./1-viewports/2-single-canvas-double-viewports";
-import DoubleCanvasSingleViewport from "./1-viewports/3-double-canvas-single-viewport";
-import DoubleCanvasDoubleViewports from "./1-viewports/4-double-canvas-double-viewports";
-import CanvasInCanvas from "./1-viewports/5-canvas-in-canvas";
-import ViewportInViewport from "./1-viewports/6-viewport-in-viewport";
+import SingleCanvasSingleViewport from "./react-core/1-viewports/1-single-canvas-single-viewport";
+import SingleCanvasDoubleViewports from "./react-core/1-viewports/2-single-canvas-double-viewports";
+import DoubleCanvasSingleViewport from "./react-core/1-viewports/3-double-canvas-single-viewport";
+import DoubleCanvasDoubleViewports from "./react-core/1-viewports/4-double-canvas-double-viewports";
+import CanvasInCanvas from "./react-core/1-viewports/5-canvas-in-canvas";
+import ViewportInViewport from "./react-core/1-viewports/6-viewport-in-viewport";
 
 //------------------------------------------------------------------------------
-import SceneSelector from "./2-sessions/1-scene-selector";
-import MultiSession from "./2-sessions/2-multi-session";
-import LinkedMultiSession from "./2-sessions/3-linked-multi-session";
+import SceneSelector from "./react-core/2-sessions/1-scene-selector";
+import MultiSession from "./react-core/2-sessions/2-multi-session";
+import LinkedMultiSession from "./react-core/2-sessions/3-linked-multi-session";
 
 //------------------------------------------------------------------------------
-import DOM3DOverlayViewport from "./3-overlays/1-dom-3d-overlay";
-import ThreeOverlayViewport from "./3-overlays/2-threejs-overlay";
-import MultiOverlayViewport from "./3-overlays/3-multi-overlay";
+import DOM3DOverlayViewport from "./react-core/3-overlays/1-dom-3d-overlay";
+import ThreeOverlayViewport from "./react-core/3-overlays/2-threejs-overlay";
+import MultiOverlayViewport from "./react-core/3-overlays/3-multi-overlay";
 
 //------------------------------------------------------------------------------
-import DefaultCameraController from "./4-cameras/1-default-camera-controller";
-import CustomCameraController from "./4-cameras/2-custom-camera-controller";
-import ThirdPersonController from "./4-cameras/3-third-person-controller";
+import DefaultCameraController from "./react-core/4-cameras/1-default-camera-controller";
+import CustomCameraController from "./react-core/4-cameras/2-custom-camera-controller";
+import ThirdPersonController from "./react-core/4-cameras/3-third-person-controller";
 
 //------------------------------------------------------------------------------
-import Clients from "./5-clients/1-clients-list";
-import Collaborators from "./5-clients/2-clients-avatars";
+import Clients from "./react-core/5-clients/1-clients-list";
+import Collaborators from "./react-core/5-clients/2-clients-avatars";
+
+//------------------------------------------------------------------------------
+import SunPositionPicker from "./react-ui/sun-position-picker";
+import ActivityWatcher from "./react-ui/activity-watcher";
 
 //------------------------------------------------------------------------------
 export const SAMPLES: Array<{
@@ -79,5 +83,9 @@ export const SAMPLES: Array<{
     {
         categoryName: "Cameras",
         list: [DefaultCameraController, CustomCameraController, ThirdPersonController],
+    },
+    {
+        categoryName: "Widgets",
+        list: [ActivityWatcher, SunPositionPicker],
     },
 ];

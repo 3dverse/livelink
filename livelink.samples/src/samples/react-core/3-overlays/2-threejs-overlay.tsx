@@ -24,8 +24,8 @@ export default {
         <Livelink
             sceneId={scene_id}
             token={token}
-            loader={<LoadingSpinner />}
-            connectionLostPanel={<DisconnectedModal />}
+            LoadingPanel={LoadingSpinner}
+            ConnectionErrorPanel={DisconnectedModal}
         >
             <Canvas className={sampleCanvasClassName}>
                 <Viewport className="w-full h-full">
