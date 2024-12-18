@@ -11,12 +11,12 @@
   "scripts": {
     "prebuild": "node ci/auto-generate.js ../node_modules/ ci/ ./_prebuild/",
     "build": "node esbuild.js && tsc",
+    "clean": "rimraf _prebuild dist docs",
     "dev": "run-p dev:*",
     "dev:esbuild": "node esbuild.js dev",
     "dev:tsc": "tsc -w",
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "clean": "rimraf dist",
     "docs": "typedoc --plugin typedoc-plugin-markdown --out docs-md",
+    "test": "echo \"Error: no test specified\" && exit 1",
     "typedoc": "typedoc",
     "postversion": "cross-env-shell \"git commit -am v$npm_package_version && git tag -a v$npm_package_version -m v$npm_package_version\""
   },
@@ -30,8 +30,8 @@
     "esbuild": "^0.24.0",
     "npm-run-all": "^4.1.5",
     "rimraf": "^6.0.1",
-    "typedoc": "^0.26.11",
-    "typedoc-plugin-markdown": "^4.2.10",
-    "typescript": "^5.6.3"
+    "typedoc": "^0.27.5",
+    "typedoc-plugin-markdown": "^4.3.2",
+    "typescript": "^5.7.2"
   }
 }

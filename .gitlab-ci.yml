@@ -25,6 +25,8 @@ variables:
     expire_in: 1 day
     paths:
       - $PACKAGE_DIR/$PACKAGE_PATH_NAME-*.tgz
+      - $PACKAGE_DIR/_prebuild/
+      - $PACKAGE_DIR/dist/
   before_script:
     - !reference [.npm-regcreds, before_script]
     - cd $PACKAGE_DIR
@@ -61,6 +63,25 @@ variables:
     - npm pkg delete private
   script:
     - npm publish --access public
+
+.docs:
+  stage: deploy
+  extends:
+    - .env-dev
+    - .runner-onprem
+  image: node:${NODE_VERSION}
+  before_script:
+    - !reference [.npm-regcreds, before_script]
+    - cd $PACKAGE_DIR
+    - !reference [.node-cache, before_script]
+  script:
+    - npm run docs
+    - tar -zcvf docs-md.tgz -C docs-md/ .
+    - |
+      curl \
+          --location --header "JOB-TOKEN: ${CI_JOB_TOKEN}" \
+          --upload-file docs-md.tgz \
+          "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/${PACKAGE_DIR}/docs/latest.tgz"
 
 # JOBS ################################################################################################################
 # BUILD
@@ -220,7 +241,7 @@ js:livelink.react.ui:publish:
         - livelink.react.ui/**/*
         - livelink.react.ui/*
 
-# GITLAB PAGE
+# DOCS
 pages:
   stage: deploy
   extends:
@@ -240,4 +261,15 @@ pages:
     - if: $CI_COMMIT_TAG != null
       when: never
     - if: $CI_COMMIT_REF_NAME == $CI_DEFAULT_BRANCH
-#######################################################################################################################
+
+js:livelink.js:docs:
+  stage: deploy
+  extends:
+    - .docs
+  needs:
+    - job: js:livelink.js:build
+      artifacts: true
+  rules:
+    - when: always
+  variables:
+    PACKAGE_DIR: livelink.js
