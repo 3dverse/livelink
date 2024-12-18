@@ -202,6 +202,7 @@ export const SunPositionPicker = ({
         };
 
         const update = () => {
+            if (!sun) return;
             updateCanvas();
             const normalizedPosition = [
                 (sunX - centerX) / RADIUS,
