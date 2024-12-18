@@ -1,27 +1,32 @@
 //------------------------------------------------------------------------------
-import { useEffect, useReducer, useState } from "react";
-import { Entity, Livelink, UUID } from "@3dverse/livelink";
+import { useContext, useEffect, useReducer, useState } from "react";
+import { Entity, UUID } from "@3dverse/livelink";
+import { LivelinkContext } from "../components/core/Livelink";
 
 //------------------------------------------------------------------------------
-export function useEntity({ instance, entity_uuid }: { instance: Livelink | null; entity_uuid: UUID }): Entity | null {
+export function useEntity({ entity_uuid }: { entity_uuid: UUID }): { isPending: boolean; entity: Entity | null } {
+    const { instance } = useContext(LivelinkContext);
     const [entity, setEntity] = useState<Entity | null>(null);
+    const [isPending, setIsPending] = useState(true);
     const [, forceUpdate] = useReducer(x => x + 1, 0);
 
     useEffect(() => {
-        if (instance) {
-            (async function () {
-                const ent = await instance.scene.findEntity(Entity, { entity_uuid });
-                if (ent) {
-                    ent.addEventListener("entity-updated", () => {
+        instance?.scene
+            .findEntity(Entity, { entity_uuid })
+            .then(foundEntity => {
+                if (foundEntity) {
+                    foundEntity.addEventListener("entity-updated", () => {
                         forceUpdate();
                     });
                 }
-                setEntity(ent);
-            })();
-        }
+                setEntity(foundEntity);
+            })
+            .finally(() => {
+                setIsPending(false);
+            });
 
         return () => setEntity(null);
     }, [instance]);
 
-    return entity;
+    return { isPending, entity };
 }

@@ -213,14 +213,20 @@ export const SunPositionPicker = ({
             sun.local_transform!.eulerOrientation = sunToPositionToEuler(normalizedPosition);
         };
 
-        const onMouseDown = () => {
+        const onMouseDown = (event: PointerEvent) => {
             isMouseDown = true;
+            event.stopPropagation();
             showGrabbing();
             requestAnimationFrame(update);
+
+            canvas.addEventListener("pointerup", onMouseUp);
+            canvas.addEventListener("pointermove", onMouseMove);
+            canvas.addEventListener("pointerleave", onMouseLeave);
         };
 
         const onMouseUp = (event: PointerEvent) => {
             event.preventDefault();
+            event.stopPropagation();
             if (!isMouseDown) return;
             isMouseDown = false;
             updateSunPosition({
@@ -229,10 +235,15 @@ export const SunPositionPicker = ({
             });
             hideGrabbing();
             requestAnimationFrame(update);
+
+            canvas.removeEventListener("pointerup", onMouseUp);
+            canvas.removeEventListener("pointermove", onMouseMove);
+            canvas.removeEventListener("pointerleave", onMouseLeave);
         };
 
         const onMouseMove = (event: PointerEvent) => {
             event.preventDefault();
+            event.stopPropagation();
             updateLightHintPosition({ x: event.offsetX, y: event.offsetY });
 
             if (!isMouseDown) return;
@@ -244,16 +255,14 @@ export const SunPositionPicker = ({
             requestAnimationFrame(update);
         };
 
-        const onMouseLeave = () => {
+        const onMouseLeave = (event: PointerEvent) => {
+            event.stopPropagation();
             updateLightHintPosition({ x: -100, y: -100 });
         };
 
         requestAnimationFrame(updateCanvas);
 
         canvas.addEventListener("pointerdown", onMouseDown);
-        canvas.addEventListener("pointerup", onMouseUp);
-        canvas.addEventListener("pointermove", onMouseMove);
-        canvas.addEventListener("pointerleave", onMouseLeave);
         return () => {
             canvas.removeEventListener("pointerdown", onMouseDown);
             canvas.removeEventListener("pointerup", onMouseUp);
