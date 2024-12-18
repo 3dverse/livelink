@@ -17,11 +17,13 @@ import ThreeOverlayViewport from "./3-overlays/2-threejs-overlay";
 import MultiOverlayViewport from "./3-overlays/3-multi-overlay";
 
 //------------------------------------------------------------------------------
-import Clients from "./4-clients/1-clients-list";
-import Collaborators from "./4-clients/2-clients-avatars";
+import DefaultCameraController from "./4-cameras/1-default-camera-controller";
+import CustomCameraController from "./4-cameras/2-custom-camera-controller";
+import ThirdPersonController from "./4-cameras/x-third-person-controller";
 
 //------------------------------------------------------------------------------
-import ThirdPersonController from "./5-cameras/x-third-person-controller";
+import Clients from "./5-clients/1-clients-list";
+import Collaborators from "./5-clients/2-clients-avatars";
 
 //------------------------------------------------------------------------------
 export const SAMPLES: Array<{
@@ -76,6 +78,6 @@ export const SAMPLES: Array<{
     },
     {
         categoryName: "Cameras",
-        list: [ThirdPersonController],
+        list: [DefaultCameraController, CustomCameraController, ThirdPersonController],
     },
 ];

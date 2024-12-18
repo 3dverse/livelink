@@ -2,7 +2,16 @@
 import { useContext } from "react";
 
 //------------------------------------------------------------------------------
-import { Livelink, Clients, Canvas, Viewport, ClientsContext, Camera, DefaultCamera } from "@3dverse/livelink-react";
+import {
+    Livelink,
+    Clients,
+    Canvas,
+    Viewport,
+    ClientsContext,
+    Camera,
+    DefaultCamera,
+    LivelinkContext,
+} from "@3dverse/livelink-react";
 
 //------------------------------------------------------------------------------
 import { DisconnectedModal, LoadingSpinner, sampleCanvasClassName } from "../../../components/SamplePlayer";
@@ -37,12 +46,14 @@ export default {
 
 //------------------------------------------------------------------------------
 function App() {
+    const { instance } = useContext(LivelinkContext);
     const { clients } = useContext(ClientsContext);
     return (
-        <ul className="absolute right-0 bottom-0">
+        <ul className="absolute right-0 bottom-0 flex flex-col-reverse">
+            <li className="bg-informative-800 p-2 m-1 rounded-full text-3xs">{`Current Client = ${instance?.session.client_id}`}</li>
             {clients.map((client, i) => {
                 return (
-                    <li key={i} className="bg-foreground p-2 m-1 rounded-full text-3xs">
+                    <li key={client.id} className="bg-foreground p-2 m-1 rounded-full text-3xs">
                         {`Client[${i}] = ${client.id}`}
                     </li>
                 );

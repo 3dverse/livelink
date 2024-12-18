@@ -1,8 +1,8 @@
 //------------------------------------------------------------------------------
-import { useContext, useEffect, useState } from "react";
+import { useContext, useEffect, useState, useTransition } from "react";
 
 //------------------------------------------------------------------------------
-import { Livelink as LivelinkInstance, Client } from "@3dverse/livelink";
+import { Livelink as LivelinkInstance, Client, Entity } from "@3dverse/livelink";
 
 //------------------------------------------------------------------------------
 import {
@@ -105,7 +105,7 @@ const AvatarList = ({
 }) => {
     return (
         <div className="absolute right-40 top-4">
-            <div className="avatar-group flex -space-x-6 rtl:space-x-reverse ">
+            <div className="avatar-group flex gap-1 rtl:space-x-reverse ">
                 {clients.map(client => (
                     <button key={client.id} onClick={() => setWatchedClient(client !== watchedClient ? client : null)}>
                         <Avatar client={client} />
@@ -123,13 +123,18 @@ const Avatar = ({ client }: { client: Client }) => {
 
 //------------------------------------------------------------------------------
 const Avatar3D = ({ client, instance }: { client: Client; instance: LivelinkInstance }) => {
+    //TEMPTEMPTEMPTEMP
+    const [clientCameraEntity, setClientCameraEntity] = useState<Entity | null>(null);
+    useEffect(() => {
+        instance.scene.getEntity({ entity_rtid: client.camera_rtids[0] }).then(setClientCameraEntity);
+    });
+    if (!clientCameraEntity) {
+        return null;
+    }
+    //TEMPTEMPTEMPTEMP
+
     return (
-        <DOMEntity
-            key={client.id}
-            pixelDimensions={[40, 40]}
-            scaleFactor={0.01}
-            entity={instance.scene.entity_registry.get({ entity_rtid: client.camera_rtids[0] })}
-        >
+        <DOMEntity key={client.id} scaleFactor={0.0025} entity={clientCameraEntity}>
             <Avatar client={client} />
         </DOMEntity>
     );
