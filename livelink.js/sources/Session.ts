@@ -159,7 +159,7 @@ export class Session extends EventTarget implements SessionInterface {
     /**
      *
      */
-    readonly #token: string;
+    public readonly token: string;
 
     /**
      * The address of the gateway the session is running on.
@@ -226,7 +226,7 @@ export class Session extends EventTarget implements SessionInterface {
     }) {
         super();
 
-        this.#token = token;
+        this.token = token;
         this.info = session_info;
         this.has_been_created = created;
     }
@@ -249,7 +249,7 @@ export class Session extends EventTarget implements SessionInterface {
         const res = await fetch(`${Livelink._api_url}/sessions/${this.session_id}/clients`, {
             method: "POST",
             headers: {
-                user_token: this.#token,
+                user_token: this.token,
             },
         });
 
@@ -276,7 +276,7 @@ export class Session extends EventTarget implements SessionInterface {
         await fetch(`${Livelink._api_url}/sessions/${this.session_id}`, {
             method: "DELETE",
             headers: {
-                api_key: this.#token,
+                api_key: this.token,
             },
         });
     }
@@ -300,7 +300,7 @@ export class Session extends EventTarget implements SessionInterface {
         await fetch(`${Livelink._api_url}/sessions/${this.session_id}/clients/${client_id}`, {
             method: "DELETE",
             headers: {
-                user_token: this.#token,
+                user_token: this.token,
             },
         });
     }
@@ -409,7 +409,7 @@ export class Session extends EventTarget implements SessionInterface {
         const res = await fetch(`${Livelink._api_url}/sessions/${this.session_id}/clients/${client_id}`, {
             method: "GET",
             headers: {
-                user_token: this.#token,
+                user_token: this.token,
             },
         });
 
