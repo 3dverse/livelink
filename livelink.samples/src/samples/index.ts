@@ -32,6 +32,9 @@ import ActivityWatcher from "./react-ui/x-activity-watcher";
 import RenderGraphSettings from "./react-ui/x-render-graph-settings";
 
 //------------------------------------------------------------------------------
+import LiveSkeletalAnimation from "./advanced/x-live-skeletal-animation";
+
+//------------------------------------------------------------------------------
 export const SAMPLES: Array<{
     categoryName: string;
     list: Array<{
@@ -74,5 +77,9 @@ export const SAMPLES: Array<{
     {
         categoryName: "Widgets",
         list: [ActivityWatcher, SunPositionPicker, RenderGraphSettings],
+    },
+    {
+        categoryName: "Advanced",
+        list: [LiveSkeletalAnimation],
     },
 ];

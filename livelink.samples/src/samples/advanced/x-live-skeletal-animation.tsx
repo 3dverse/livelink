@@ -1,44 +1,39 @@
 //------------------------------------------------------------------------------
-import { useRef, useState, useEffect } from "react";
-import LegacyCanvas from "../../../components/LegacyCanvas.tsx";
-import { ActionBar } from "../../../components/SamplePlayer/ActionBar.tsx";
+import { Entity, Livelink as LivelinkInstance } from "@3dverse/livelink";
+import { Livelink, Canvas, Viewport, Camera, DefaultCamera, LivelinkContext, useEntity } from "@3dverse/livelink-react";
+
+//------------------------------------------------------------------------------
+import { DisconnectedModal, LoadingSpinner, sampleCanvasClassName, SamplePlayer } from "../../components/SamplePlayer";
+
+//------------------------------------------------------------------------------
 import * as THREE from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import { TransformControls } from "three/addons/controls/TransformControls.js";
-import { useLivelinkInstance, useEntity } from "@3dverse/livelink-react";
-import { Entity, Livelink, Quat, SkeletonPartialPose } from "@3dverse/livelink";
 import { Animation } from "./animations/skeletal_animation_types.ts";
 import { droid_idle } from "./animations/droid_idle.ts";
 import { droid_walk } from "./animations/droid_walk.ts";
 import { droid_tpose } from "./animations/droid_tpose.ts";
 import { joint_parents } from "./animations/droid_skeleton.ts";
+import { useContext, useEffect, useRef, useState } from "react";
+import { SkeletonPartialPose } from "@3dverse/livelink";
 
 //------------------------------------------------------------------------------
-let joints: Array<THREE.Object3D> | undefined = undefined;
-let jointGizmo: TransformControls | undefined = undefined;
+const token = import.meta.env.VITE_PROD_PUBLIC_TOKEN;
+const scene_id = "aff417e2-1b41-4f65-a78c-3b3f9b97a5ae";
 
 //------------------------------------------------------------------------------
-export default function LiveSkeletalAnimation() {
+export default {
+    path: import.meta.url,
+    title: "Live Skeletal Animation",
+    summary:
+        "Shows a 3dverse skeleton driven by a Three.js one that can be either controlled by the user or by a local animation.",
+    useCustomLayout: true,
+    element: <App />,
+};
+
+//------------------------------------------------------------------------------
+function App() {
     const threeJSCanvasRef = useRef<HTMLCanvasElement>(null);
-    const livelinkCanvasRef = useRef<HTMLCanvasElement>(null);
-    const [animation, setAnimation] = useState<string | null>(null);
-
-    const { instance, connect, disconnect } = useLivelinkInstance({
-        views: [{ canvas_ref: livelinkCanvasRef }],
-    });
-
-    const toggleConnection = async () => {
-        if (instance) {
-            disconnect();
-        } else if (livelinkCanvasRef.current) {
-            connect({
-                scene_id: "659b621a-e5fb-4653-a0c7-bf76a747dc39",
-                token: "public_p54ra95AMAnZdTel",
-            });
-        }
-    };
-
-    const controller = useEntity({ instance, entity_uuid: "a6b3e446-b65f-4e98-8474-813fe6599e45" });
 
     useEffect(() => {
         const { renderer, scene, camera } = setUpThreeJsSkeleton(threeJSCanvasRef.current!);
@@ -59,10 +54,43 @@ export default function LiveSkeletalAnimation() {
         };
     }, []);
 
+    return (
+        <>
+            <div className="h-full w-full p-3 pr-0">
+                <canvas className="w-full h-full rounded-xl" ref={threeJSCanvasRef} />
+            </div>
+            <SamplePlayer title={"3dverse Skeleton"}>
+                <Livelink
+                    sceneId={scene_id}
+                    token={token}
+                    LoadingPanel={LoadingSpinner}
+                    ConnectionErrorPanel={DisconnectedModal}
+                >
+                    <SkeletonController />
+                    <Canvas className={sampleCanvasClassName}>
+                        <Viewport className="w-full h-full">
+                            <Camera class={DefaultCamera} name="MyCamera" />
+                        </Viewport>
+                    </Canvas>
+                </Livelink>
+            </SamplePlayer>
+        </>
+    );
+}
+
+//------------------------------------------------------------------------------
+function SkeletonController() {
+    const { instance } = useContext(LivelinkContext);
+    const { entity: controller } = useEntity({ entity_uuid: "dbe0b7de-fd0c-46d8-a90c-8a9f2f896002" });
+
+    const [animation, setAnimation] = useState<string | null>(null);
+
     useEffect(() => {
         if (!instance || !controller) {
             return;
         }
+
+        console.log("FOUND CONTROLLER", controller.name);
 
         jointGizmo!.addEventListener("rotationAngle-changed", e => {
             const joint = e.target.object!;
@@ -91,44 +119,26 @@ export default function LiveSkeletalAnimation() {
     }, [animation]);
 
     return (
-        <div className="w-full h-full flex gap-4 p-3">
-            <div className="relative flex basis-full" id="skeleton-display">
-                <LegacyCanvas canvasRef={threeJSCanvasRef} />
-                <ActionBar isCentered={false}>
-                    <select
-                        className="select select-primary"
-                        name="animations"
-                        id="animation"
-                        onChange={e => setAnimation(e.target.value)}
-                    >
-                        <option value="user-controlled">User Controlled</option>
-                        <option value="idle">Idle</option>
-                        <option value="walk">Walk</option>
-                    </select>
-                </ActionBar>
-                <div className="absolute flex right-2 top-2">
-                    <span className="text-s text-color-secondary">Client Side Three JS Skeleton</span>
-                </div>
-            </div>
-            <div className="relative flex basis-full">
-                <LegacyCanvas canvasRef={livelinkCanvasRef} />
-                <ActionBar isCentered={!instance}>
-                    <button className="button button-primary" onClick={toggleConnection}>
-                        {instance ? "Disconnect" : "Connect"}
-                    </button>
-                </ActionBar>
-                <div className="absolute flex right-2 top-2">
-                    <span className={"text-s " + (instance ? "text-color-primary-dark" : "text-color-secondary")}>
-                        Livelink Session
-                    </span>
-                </div>
-            </div>
+        <div className="absolute bottom-4 flex items-center w-full justify-center z-10">
+            <select
+                className="select select-primary"
+                name="animations"
+                id="animation"
+                onChange={e => setAnimation(e.target.value)}
+            >
+                <option value="user-controlled">User Controlled</option>
+                <option value="idle">Idle</option>
+                <option value="walk">Walk</option>
+            </select>
         </div>
     );
 }
+//------------------------------------------------------------------------------
+let joints: Array<THREE.Object3D> | undefined = undefined;
+let jointGizmo: TransformControls | undefined = undefined;
 
 //------------------------------------------------------------------------------
-function handleUserControlledSkeleton(instance: Livelink | null, controller: Entity | null) {
+function handleUserControlledSkeleton(instance: LivelinkInstance | null, controller: Entity | null) {
     // Attach joint gizmo to root
     jointGizmo!.attach(joints![0]);
 
@@ -141,14 +151,14 @@ function handleUserControlledSkeleton(instance: Livelink | null, controller: Ent
     // Update livelink skeleton
     if (instance && controller) {
         const partial_pose: SkeletonPartialPose = {
-            orientations: new Map(joints!.map((joint, jointIndex) => [jointIndex, joint.quaternion.toArray() as Quat])),
+            orientations: new Map(joints!.map((joint, jointIndex) => [jointIndex, joint.quaternion.toArray()])),
         };
         instance.sendSkeletonPose({ controller, partial_pose });
     }
 }
 
 //------------------------------------------------------------------------------
-function handleAnimatedSkeleton(animation: string, instance: Livelink | null, controller: Entity | null) {
+function handleAnimatedSkeleton(animation: string, instance: LivelinkInstance | null, controller: Entity | null) {
     // Disable joint gizmo for animations
     jointGizmo!.detach();
 
