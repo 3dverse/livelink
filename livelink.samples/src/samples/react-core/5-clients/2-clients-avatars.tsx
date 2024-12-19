@@ -33,7 +33,12 @@ export default {
     path: import.meta.url,
     title: "Client Avatars",
     summary: "Shows other clients connected to the current session as avatars rendered on a DOM overlay.",
-    element: (
+    element: <App />,
+};
+
+//------------------------------------------------------------------------------
+function App() {
+    return (
         <Livelink
             sceneId={scene_id}
             token={token}
@@ -44,16 +49,16 @@ export default {
                 <Canvas className={sampleCanvasClassName}>
                     <Viewport className="w-full h-full">
                         <Camera class={DefaultCamera} name={"MyCamera"} />
-                        <App />
+                        <Avatars />
                     </Viewport>
                 </Canvas>
             </Clients>
         </Livelink>
-    ),
-};
+    );
+}
 
 //------------------------------------------------------------------------------
-function App() {
+function Avatars() {
     const { instance } = useContext(LivelinkContext);
     const { clients } = useContext(ClientsContext);
     const [watchedClient, setWatchedClient] = useState<Client | null>(null);
@@ -82,18 +87,6 @@ function App() {
 }
 
 //------------------------------------------------------------------------------
-const PiPViewport = ({ watchedClient }: { watchedClient: Client | null }) => {
-    if (!watchedClient) {
-        return null;
-    }
-
-    return (
-        <Viewport className="absolute top-20 w-1/3 h-1/6 right-8 border border-tertiary rounded-lg shadow-2x">
-            <Camera client={watchedClient} index={0} />
-        </Viewport>
-    );
-};
-//------------------------------------------------------------------------------
 const AvatarList = ({
     clients,
     watchedClient,
@@ -107,12 +100,29 @@ const AvatarList = ({
         <div className="absolute right-40 top-4">
             <div className="avatar-group flex gap-1 rtl:space-x-reverse ">
                 {clients.map(client => (
-                    <button key={client.id} onClick={() => setWatchedClient(client !== watchedClient ? client : null)}>
+                    <button
+                        key={client.id}
+                        title={client.username}
+                        onClick={() => setWatchedClient(client !== watchedClient ? client : null)}
+                    >
                         <Avatar client={client} />
                     </button>
                 ))}
             </div>
         </div>
+    );
+};
+
+//------------------------------------------------------------------------------
+const PiPViewport = ({ watchedClient }: { watchedClient: Client | null }) => {
+    if (!watchedClient) {
+        return null;
+    }
+
+    return (
+        <Viewport className="absolute top-20 w-1/3 h-1/6 right-8 border border-tertiary rounded-lg shadow-2x">
+            <Camera client={watchedClient} index={0} />
+        </Viewport>
     );
 };
 

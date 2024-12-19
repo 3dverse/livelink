@@ -13,7 +13,12 @@ export default {
     path: import.meta.url,
     title: "Canvas in Canvas",
     summary: "A canvas inside a canvas.",
-    element: (
+    element: <App />,
+};
+
+//------------------------------------------------------------------------------
+function App() {
+    return (
         <Livelink
             sceneId={scene_id}
             token={token}
@@ -31,5 +36,5 @@ export default {
                 </Viewport>
             </Canvas>
         </Livelink>
-    ),
-};
+    );
+}

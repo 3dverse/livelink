@@ -25,7 +25,12 @@ export default {
     path: import.meta.url,
     title: "Client List",
     summary: "Shows a list of clients connected to the current session.",
-    element: (
+    element: <App />,
+};
+
+//------------------------------------------------------------------------------
+function App() {
+    return (
         <Livelink
             sceneId={scene_id}
             token={token}
@@ -36,16 +41,15 @@ export default {
                 <Canvas className={sampleCanvasClassName}>
                     <Viewport className="w-full h-full">
                         <Camera class={DefaultCamera} name={"MyCamera"} />
-                        <App />
+                        <ClientList />
                     </Viewport>
                 </Canvas>
             </Clients>
         </Livelink>
-    ),
-};
+    );
+}
 
-//------------------------------------------------------------------------------
-function App() {
+function ClientList() {
     const { instance } = useContext(LivelinkContext);
     const { clients } = useContext(ClientsContext);
     const prettifyUsername = (username: string) => username.substring(username.lastIndexOf("_") + 1);

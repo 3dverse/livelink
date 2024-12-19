@@ -9,7 +9,7 @@ import ViewportInViewport from "./react-core/1-viewports/6-viewport-in-viewport"
 //------------------------------------------------------------------------------
 import SceneSelector from "./react-core/2-sessions/1-scene-selector";
 import MultiSession from "./react-core/2-sessions/2-multi-session";
-import LinkedMultiSession from "./react-core/2-sessions/3-linked-multi-session";
+import JoinSession from "./react-core/2-sessions/3-join-session";
 
 //------------------------------------------------------------------------------
 import DOM3DOverlayViewport from "./react-core/3-overlays/1-dom-3d-overlay";
@@ -37,6 +37,8 @@ export const SAMPLES: Array<{
         title: string;
         summary?: string;
         description?: string;
+        useCustomLayout?: boolean;
+        autoConnect?: boolean;
         element: JSX.Element;
     }>;
 }> = [
@@ -52,37 +54,20 @@ export const SAMPLES: Array<{
         ],
     },
     {
+        categoryName: "Sessions",
+        list: [SceneSelector, MultiSession, JoinSession],
+    },
+    {
         categoryName: "Overlays",
         list: [DOM3DOverlayViewport, ThreeOverlayViewport, MultiOverlayViewport],
     },
     {
-        categoryName: "Sessions",
-        list: [
-            Clients,
-            Collaborators,
-            /*
-            {
-                title: "Scene Selector",
-                path: "scene-selector",
-                element: <SceneSelector />,
-            },
-            {
-                title: "Multi Session",
-                path: "multi-session",
-                element: <MultiSession />,
-            },
-
-            {
-                title: "Linked Multi Session",
-                path: "linked-multi-session",
-                element: <LinkedMultiSession />,
-            },
-            */
-        ],
-    },
-    {
         categoryName: "Cameras",
         list: [DefaultCameraController, CustomCameraController, ThirdPersonController],
+    },
+    {
+        categoryName: "Clients",
+        list: [Clients, Collaborators],
     },
     {
         categoryName: "Widgets",

@@ -10,6 +10,14 @@ const scene_id = "6391ff06-c881-441d-8ada-4184b2050751";
 const token = import.meta.env.VITE_PROD_PUBLIC_TOKEN;
 
 //------------------------------------------------------------------------------
+export default {
+    path: import.meta.url,
+    title: "Custom Controller",
+    summary: "Shows how to create a custom camera controller.",
+    element: <App />,
+};
+
+//------------------------------------------------------------------------------
 class CustomCamera extends LivelinkCamera {
     private _speed = 1;
     onCreate() {
@@ -34,11 +42,8 @@ class CustomCamera extends LivelinkCamera {
 }
 
 //------------------------------------------------------------------------------
-export default {
-    path: import.meta.url,
-    title: "Custom Controller",
-    summary: "Shows how to create a custom camera controller.",
-    element: (
+function App() {
+    return (
         <Livelink
             sceneId={scene_id}
             token={token}
@@ -51,5 +56,5 @@ export default {
                 </Viewport>
             </Canvas>
         </Livelink>
-    ),
-};
+    );
+}

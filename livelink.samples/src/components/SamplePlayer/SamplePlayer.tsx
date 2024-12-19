@@ -1,4 +1,4 @@
-import { createContext, useEffect, useState } from "react";
+import { createContext, PropsWithChildren, useEffect, useState } from "react";
 import { ActionBar } from "./ActionBar";
 import Markdown from "react-markdown";
 import { PrismLight as SyntaxHighlighter } from "react-syntax-highlighter";
@@ -25,9 +25,18 @@ export function SamplePlayer({
     summary,
     description,
     code,
+    useCustomLayout = false,
+    autoConnect = true,
     children,
-}: React.PropsWithChildren<{ title?: string; summary?: string; description?: string; code?: string }>) {
-    const [connectionState, setConnectionState] = useState<ConnectionState>("connected");
+}: PropsWithChildren<{
+    title?: string;
+    summary?: string;
+    description?: string;
+    code?: string;
+    useCustomLayout?: boolean;
+    autoConnect?: boolean;
+}>) {
+    const [connectionState, setConnectionState] = useState<ConnectionState>(autoConnect ? "connected" : "disconnected");
 
     useEffect(() => {
         if (connectionState === "reconnect") {
@@ -72,15 +81,21 @@ export function SamplePlayer({
         <SamplePlayerContext.Provider value={{ connectionState, setConnectionState }}>
             <div className="w-full h-full flex gap-3 p-3 lg:pl-0 relative">
                 <div className="w-full h-full gap-3 bg-[#1e222e] rounded-xl relative flex">
-                    {mountChildren && children}
-                    {mountPlayButton && (
-                        <div className="w-full h-full flex-col content-center justify-center">
-                            {connectButton}
-                            <h1 className="text-center font-medium">{title}</h1>
-                            <h2 className="text-center font-extralight">{summary}</h2>
-                        </div>
+                    {useCustomLayout ? (
+                        children
+                    ) : (
+                        <>
+                            {mountChildren && children}
+                            {mountPlayButton && (
+                                <div className="w-full h-full flex-col content-center justify-center">
+                                    {connectButton}
+                                    <h1 className="text-center font-medium">{title}</h1>
+                                    <h2 className="text-center font-extralight">{summary}</h2>
+                                </div>
+                            )}
+                            {mountActionBar && <ActionBar disconnect={() => setConnectionState("disconnected")} />}
+                        </>
                     )}
-                    {mountActionBar && <ActionBar disconnect={() => setConnectionState("disconnected")} />}
                 </div>
             </div>
 

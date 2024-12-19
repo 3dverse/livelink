@@ -20,25 +20,11 @@ export default {
     path: import.meta.url,
     title: "Three.js Overlay",
     summary: "A viewport with a Three.js overlay that displays a Three.js scene rendered on top of the 3dverse scene.",
-    element: (
-        <Livelink
-            sceneId={scene_id}
-            token={token}
-            LoadingPanel={LoadingSpinner}
-            ConnectionErrorPanel={DisconnectedModal}
-        >
-            <Canvas className={sampleCanvasClassName}>
-                <Viewport className="w-full h-full">
-                    <Camera class={DefaultCamera} name={"MyCamera"} />
-                    <ThreeOverlayScene />
-                </Viewport>
-            </Canvas>
-        </Livelink>
-    ),
+    element: <App />,
 };
 
 //------------------------------------------------------------------------------
-function ThreeOverlayScene() {
+function App() {
     const scene = useMemo(() => {
         const scene = new THREE.Scene();
         const geometry = new THREE.BoxGeometry(1, 1, 1);
@@ -49,5 +35,19 @@ function ThreeOverlayScene() {
         return scene;
     }, []);
 
-    return <ThreeOverlay scene={scene} />;
+    return (
+        <Livelink
+            sceneId={scene_id}
+            token={token}
+            LoadingPanel={LoadingSpinner}
+            ConnectionErrorPanel={DisconnectedModal}
+        >
+            <Canvas className={sampleCanvasClassName}>
+                <Viewport className="w-full h-full">
+                    <Camera class={DefaultCamera} name={"MyCamera"} />
+                    <ThreeOverlay scene={scene} />
+                </Viewport>
+            </Canvas>
+        </Livelink>
+    );
 }

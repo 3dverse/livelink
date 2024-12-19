@@ -14,7 +14,12 @@ export default {
     path: import.meta.url,
     title: "Activity Watcher",
     summary: "A panel that detects activity when the inactivity timout is triggered.",
-    element: (
+    element: <App />,
+};
+
+//------------------------------------------------------------------------------
+function App() {
+    return (
         <Livelink
             sceneId={scene_id}
             token={token}
@@ -28,5 +33,5 @@ export default {
                 </Viewport>
             </Canvas>
         </Livelink>
-    ),
-};
+    );
+}

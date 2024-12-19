@@ -13,7 +13,12 @@ export default {
     path: import.meta.url,
     title: "Default Controller",
     summary: "Shows how to customize the default camera controller.",
-    element: (
+    element: <App />,
+};
+
+//------------------------------------------------------------------------------
+function App() {
+    return (
         <Livelink
             sceneId={scene_id}
             token={token}
@@ -26,5 +31,5 @@ export default {
                 </Viewport>
             </Canvas>
         </Livelink>
-    ),
-};
+    );
+}

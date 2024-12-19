@@ -13,7 +13,12 @@ export default {
     path: import.meta.url,
     title: "DOM 3D Overlay",
     summary: "A viewport with a DOM 3D overlay to display DOM elements located in the 3D world.",
-    element: (
+    element: <App />,
+};
+
+//------------------------------------------------------------------------------
+function App() {
+    return (
         <Livelink
             sceneId={scene_id}
             token={token}
@@ -59,5 +64,5 @@ export default {
                 </Viewport>
             </Canvas>
         </Livelink>
-    ),
-};
+    );
+}

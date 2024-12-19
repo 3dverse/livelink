@@ -21,7 +21,22 @@ export default {
     title: "Multi Overlay",
     summary:
         "A viewport with a DOM overlay and a Three.js overlay that displays DOM elements on top of a Three.js scene rendered on top of the 3dverse scene.",
-    element: (
+    element: <App />,
+};
+
+//------------------------------------------------------------------------------
+function App() {
+    const scene = useMemo(() => {
+        const scene = new THREE.Scene();
+        const geometry = new THREE.BoxGeometry(1, 1, 1);
+        const material = new THREE.MeshNormalMaterial();
+        const cube = new THREE.Mesh(geometry, material);
+        cube.position.set(0, 2.5, 0);
+        scene.add(cube);
+        return scene;
+    }, []);
+
+    return (
         <Livelink
             sceneId={scene_id}
             token={token}
@@ -31,7 +46,7 @@ export default {
             <Canvas className={sampleCanvasClassName}>
                 <Viewport className="w-full h-full">
                     <Camera class={DefaultCamera} name={"MyCamera"} />
-                    <ThreeOverlayScene />
+                    <ThreeOverlay scene={scene} />
 
                     <DOM3DOverlay>
                         <DOM3DElement worldPosition={[0, 1.5, 0]} scaleFactor={0.0025}>
@@ -56,20 +71,5 @@ export default {
                 </Viewport>
             </Canvas>
         </Livelink>
-    ),
-};
-
-//------------------------------------------------------------------------------
-function ThreeOverlayScene() {
-    const scene = useMemo(() => {
-        const scene = new THREE.Scene();
-        const geometry = new THREE.BoxGeometry(1, 1, 1);
-        const material = new THREE.MeshNormalMaterial();
-        const cube = new THREE.Mesh(geometry, material);
-        cube.position.set(0, 2.5, 0);
-        scene.add(cube);
-        return scene;
-    }, []);
-
-    return <ThreeOverlay scene={scene} />;
+    );
 }

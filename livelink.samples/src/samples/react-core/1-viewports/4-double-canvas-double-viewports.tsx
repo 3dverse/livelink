@@ -13,7 +13,12 @@ export default {
     path: import.meta.url,
     title: "Multi-Viewports Double Canvas",
     summary: "Two canvases having two viewports each.",
-    element: (
+    element: <App />,
+};
+
+//------------------------------------------------------------------------------
+function App() {
+    return (
         <Livelink
             sceneId={scene_id}
             token={token}
@@ -39,5 +44,5 @@ export default {
                 </Canvas>
             </div>
         </Livelink>
-    ),
-};
+    );
+}

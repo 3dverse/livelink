@@ -23,6 +23,8 @@ const router = createHashRouter([
                     title={sample.title}
                     summary={sample.summary}
                     description={sample.description}
+                    useCustomLayout={sample.useCustomLayout}
+                    autoConnect={sample.autoConnect}
                     code={reactElementToJSXString(sample.element, {
                         sortProps: false,
                         showFunctions: true,
