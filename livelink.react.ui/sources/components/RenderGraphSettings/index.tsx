@@ -18,7 +18,7 @@ import {
     Tooltip,
 } from "@chakra-ui/react";
 import { Camera } from "@3dverse/livelink";
-import { getAssetDescription } from "@3dverse/api";
+import { getAssetDescription, setUserToken } from "@3dverse/api";
 import { FaArrowRotateLeft, FaFolder, FaFolderOpen } from "react-icons/fa6";
 
 //------------------------------------------------------------------------------
@@ -41,10 +41,12 @@ type Input = {
 
 //------------------------------------------------------------------------------
 export const RenderGraphSettings = ({
+    userToken,
     cameraEntity,
     defaultCameraSettings,
 }: {
-    cameraEntity?: Camera;
+    userToken: string;
+    cameraEntity: Camera | null;
     defaultCameraSettings?: Record<string, unknown>;
 }) => {
     //------------------------------------------------------------------------------
@@ -64,7 +66,7 @@ export const RenderGraphSettings = ({
                 return null;
             }
             // Get render graph description
-            debugger;
+            setUserToken(userToken);
             const { data: renderGraphDescription } = await getAssetDescription({
                 asset_id: renderGraphRef,
                 asset_container: "render_graphs",
@@ -83,7 +85,7 @@ export const RenderGraphSettings = ({
             setRenderGraphDescription(inputDescriptorsGroupedByCategories);
         };
         getRenderGraphDesciption();
-    }, [cameraEntity]);
+    }, [userToken, cameraEntity]);
 
     //------------------------------------------------------------------------------
     const onChange = (attributeName: string, attributeValue: boolean | number | number[]) => {
@@ -102,7 +104,6 @@ export const RenderGraphSettings = ({
 
     //------------------------------------------------------------------------------
     const onResetAllInputs = () => {
-        debugger;
         if (!cameraEntity?.camera?.dataJSON) {
             return null;
         }

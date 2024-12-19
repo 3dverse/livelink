@@ -1,5 +1,5 @@
 //------------------------------------------------------------------------------
-import { useContext, useEffect, useState, useTransition } from "react";
+import { useContext, useEffect, useState } from "react";
 
 //------------------------------------------------------------------------------
 import { Livelink as LivelinkInstance, Client, Entity } from "@3dverse/livelink";

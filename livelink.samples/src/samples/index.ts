@@ -28,6 +28,7 @@ import Collaborators from "./react-core/5-clients/2-clients-avatars";
 //------------------------------------------------------------------------------
 import SunPositionPicker from "./react-ui/x-sun-position-picker";
 import ActivityWatcher from "./react-ui/x-activity-watcher";
+import RenderGraphSettings from "./react-ui/x-render-graph-settings";
 
 //------------------------------------------------------------------------------
 export const SAMPLES: Array<{
@@ -71,6 +72,6 @@ export const SAMPLES: Array<{
     },
     {
         categoryName: "Widgets",
-        list: [ActivityWatcher, SunPositionPicker],
+        list: [ActivityWatcher, SunPositionPicker, RenderGraphSettings],
     },
 ];
