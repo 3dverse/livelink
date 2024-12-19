@@ -209,7 +209,7 @@ export class WebXRHelper {
      * @param livelink
      * @param enableScale
      */
-    public async configureViewports(livelink: Livelink, enableScale: boolean = false): Promise<void> {
+    public async configureViewports(livelink: Livelink, enableScale: boolean = false): Promise<Array<Viewport>> {
         this.#liveLink = livelink;
         if (!this.#liveLink) {
             throw new Error("Failed to configure XR session, no LiveLink instance was provided.");
@@ -223,6 +223,7 @@ export class WebXRHelper {
         }
 
         this.#liveLink!.addViewports({ viewports: this.#viewports.map(v => v.livelink_viewport) });
+        return this.#viewports.map(v => v.livelink_viewport);
     }
 
     //--------------------------------------------------------------------------
@@ -562,11 +563,12 @@ export class WebXRHelper {
 
         this.#updateLiveLinkCameras(xr_views);
 
-        if (this.#context.meta_data) {
+        if (this.#context.meta_data && this.#context.meta_data.cameras.length > 0) {
             const views = xr_views.map(({ view, viewport }, index) => {
                 const current_viewport = this.#surface.viewports[index];
-                let { world_position: position, world_orientation: orientation } =
+                const { world_position: position, world_orientation: orientation } =
                     this.#context.meta_data!.cameras.find(c => c.camera.id === current_viewport.camera!.id)!;
+
                 return {
                     view,
                     viewport,
@@ -576,6 +578,8 @@ export class WebXRHelper {
 
             this.#unapplyCamerasOrigin(views);
             this.#context.drawXRFrame({ xr_views: views });
+        } else {
+            console.warn("No camera meta data found in the XRContext.");
         }
 
         session.requestAnimationFrame(this.#onXRFrame);

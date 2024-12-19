@@ -5,6 +5,7 @@ import DoubleCanvasSingleViewport from "./react-core/1-viewports/3-double-canvas
 import DoubleCanvasDoubleViewports from "./react-core/1-viewports/4-double-canvas-double-viewports";
 import CanvasInCanvas from "./react-core/1-viewports/5-canvas-in-canvas";
 import ViewportInViewport from "./react-core/1-viewports/6-viewport-in-viewport";
+import WebXR from "./react-core/1-viewports/7-web-xr";
 
 //------------------------------------------------------------------------------
 import SceneSelector from "./react-core/2-sessions/1-scene-selector";
@@ -56,6 +57,7 @@ export const SAMPLES: Array<{
             DoubleCanvasDoubleViewports,
             CanvasInCanvas,
             ViewportInViewport,
+            WebXR,
         ],
     },
     {
