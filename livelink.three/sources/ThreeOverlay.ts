@@ -67,9 +67,11 @@ export class ThreeOverlay implements OverlayInterface {
             return null;
         }
 
-        const metadata = meta_data.cameras.find(({ camera }) => camera.id === viewport_camera.id);
+        const metadata = meta_data.cameras.find(
+            ({ camera_entity }) => camera_entity.id === viewport_camera.camera_entity.id,
+        );
         if (!metadata) {
-            console.error("No metadata found for camera", viewport_camera.id);
+            console.error("No metadata found for camera", viewport_camera.camera_entity.id);
             return null;
         }
 

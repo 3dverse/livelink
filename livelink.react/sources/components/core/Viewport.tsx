@@ -11,20 +11,23 @@ import React, {
 } from "react";
 
 //------------------------------------------------------------------------------
-import { RelativeRect, Viewport, Camera } from "@3dverse/livelink";
+import * as Livelink from "@3dverse/livelink";
+import { Entity, RelativeRect, Camera } from "@3dverse/livelink";
 
 //------------------------------------------------------------------------------
 import { LivelinkContext } from "./Livelink";
 import { CanvasContext } from "./Canvas";
+import { EntityProvider, useEntity } from "../../hooks/useEntity";
 
 //------------------------------------------------------------------------------
 export const ViewportContext = createContext<{
-    viewport: Viewport | null;
+    viewport: Livelink.Viewport | null;
+    cameraEntity: Entity | null;
     viewportDomElement: HTMLDivElement | null;
     zIndex: number;
-    camera?: Camera;
 }>({
     viewport: null,
+    cameraEntity: null,
     viewportDomElement: null,
     zIndex: 0,
 });
@@ -49,16 +52,18 @@ function computeRelativeRect(viewportDomElement: HTMLDivElement, canvas: HTMLCan
 }
 
 //------------------------------------------------------------------------------
-function ViewportProvider({
-    camera,
+export function Viewport({
+    cameraProvider = { class: DefaultCamera, name: "Default Camera" },
     children,
     ...props
-}: PropsWithChildren & { camera?: Camera } & HTMLProps<HTMLDivElement>) {
+}: PropsWithChildren & { cameraProvider?: EntityProvider } & HTMLProps<HTMLDivElement>) {
     const { instance } = useContext(LivelinkContext);
     const { renderingSurface, canvas } = useContext(CanvasContext);
     const { zIndex: parentZIndex = 0 } = useContext(ViewportContext);
 
-    const [viewport, setViewport] = useState<Viewport | null>(null);
+    const { entity: cameraEntity } = useEntity(cameraProvider);
+
+    const [viewport, setViewport] = useState<Livelink.Viewport | null>(null);
     const viewportDomElement = useRef<HTMLDivElement>(null);
 
     const onResize = useCallback(() => {
@@ -102,7 +107,7 @@ function ViewportProvider({
 
         const rect = computeRelativeRect(viewportDomElement.current, canvas);
 
-        const viewport = new Viewport(instance, renderingSurface, { rect, z_index: zIndex });
+        const viewport = new Livelink.Viewport(instance, renderingSurface, { rect, z_index: zIndex });
         console.log("---- Setting viewport", viewport.width, viewport.height, zIndex);
         instance.addViewports({ viewports: [viewport] });
         setViewport(viewport);
@@ -116,13 +121,15 @@ function ViewportProvider({
     }, [instance, renderingSurface, canvas, zIndex]);
 
     useEffect(() => {
-        if (!viewport || !camera) {
+        if (!viewport || !cameraEntity) {
             return;
         }
 
-        console.log("---- Setting camera", camera);
+        console.log("---- Setting camera", cameraEntity);
+        const camera = new Camera({ camera_entity: cameraEntity, viewport });
         viewport.camera = camera;
-    }, [viewport, camera]);
+        viewport.TO_REMOVE__markViewportAsReady();
+    }, [viewport, cameraEntity]);
 
     return (
         <ViewportContext.Provider
@@ -130,7 +137,7 @@ function ViewportProvider({
                 viewport,
                 viewportDomElement: viewportDomElement.current,
                 zIndex,
-                camera,
+                cameraEntity,
             }}
         >
             <div ref={viewportDomElement} role={"viewport"} {...props}>
@@ -141,4 +148,19 @@ function ViewportProvider({
 }
 
 //------------------------------------------------------------------------------
-export { ViewportProvider as Viewport };
+export class DefaultCamera extends Entity {
+    //--------------------------------------------------------------------------
+    onCreate() {
+        this.auto_broadcast = "off";
+        this.local_transform = { position: [0, 1, 5] };
+        this.camera = {
+            renderGraphRef: "398ee642-030a-45e7-95df-7147f6c43392",
+            dataJSON: { grid: true, skybox: false, gradient: true },
+        };
+        this.perspective_lens = {
+            fovy: 60,
+            nearPlane: 0.1,
+            farPlane: 10000,
+        };
+    }
+}

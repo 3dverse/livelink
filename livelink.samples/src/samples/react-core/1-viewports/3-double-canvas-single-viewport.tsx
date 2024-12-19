@@ -1,5 +1,5 @@
 //------------------------------------------------------------------------------
-import { Livelink, Canvas, Viewport, Camera, DefaultCamera } from "@3dverse/livelink-react";
+import { Livelink, Canvas, Viewport, CameraController } from "@3dverse/livelink-react";
 
 //------------------------------------------------------------------------------
 import { DisconnectedModal, LoadingSpinner, sampleCanvasClassName } from "../../../components/SamplePlayer";
@@ -28,12 +28,12 @@ function App() {
             <div className="flex basis-full gap-2">
                 <Canvas className={sampleCanvasClassName}>
                     <Viewport className="w-full h-full">
-                        <Camera class={DefaultCamera} name={"MyCamera1"} />
+                        <CameraController />
                     </Viewport>
                 </Canvas>
                 <Canvas className={sampleCanvasClassName}>
                     <Viewport className="w-full h-full">
-                        <Camera class={DefaultCamera} name={"MyCamera2"} />
+                        <CameraController />
                     </Viewport>
                 </Canvas>
             </div>

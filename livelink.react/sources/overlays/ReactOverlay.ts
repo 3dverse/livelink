@@ -7,7 +7,6 @@ import {
     INFINITE_FAR_VALUE,
     Vec3,
     type OverlayInterface,
-    type Vec2i,
     type Viewport,
 } from "@3dverse/livelink";
 
@@ -142,7 +141,7 @@ export class ReactOverlay implements OverlayInterface {
      *
      */
     #computeElementScale({ screen_position, scale_factor }: { screen_position: Vec3; scale_factor: number }): number {
-        const camera = this.#viewport.camera;
+        const camera = this.#viewport.camera?.camera_entity;
         if (!camera) {
             throw new Error("Viewport has no camera");
         }

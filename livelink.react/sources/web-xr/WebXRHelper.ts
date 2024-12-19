@@ -1,14 +1,13 @@
 //------------------------------------------------------------------------------
-import { Camera, Livelink, OffscreenSurface, RelativeRect, Viewport, Vec3, Quat, Mat4 } from "@3dverse/livelink";
+import { Livelink, OffscreenSurface, RelativeRect, Viewport, Vec3, Quat, Entity } from "@3dverse/livelink";
 import { XRContext } from "@3dverse/livelink-react/sources/web-xr/XRContext";
 import { Quaternion, Vector3 } from "three";
 
 //------------------------------------------------------------------------------
 import { WebXRInputRelay } from "./WebXRInputRelay";
-import { PassthroughXRContext } from "./PassthroughXRContext";
 
 //------------------------------------------------------------------------------
-export class WebXRCamera extends Camera {
+export class WebXRCamera extends Entity {
     onCreate(): void {
         // TODO: WebXRHelper.cameras_origin as an Entity might be a better
         // approach to have a camera default origin but the FTL engine crashes
@@ -433,7 +432,7 @@ export class WebXRHelper {
      * eye(s) transform in the world.
      * @param cameras
      */
-    #applyCamerasOrigin(cameras: readonly Camera[]) {
+    #applyCamerasOrigin(cameras: readonly Entity[]) {
         if (!this.cameras_origin) {
             return;
         }
@@ -567,7 +566,9 @@ export class WebXRHelper {
             const views = xr_views.map(({ view, viewport }, index) => {
                 const current_viewport = this.#surface.viewports[index];
                 const { world_position: position, world_orientation: orientation } =
-                    this.#context.meta_data!.cameras.find(c => c.camera.id === current_viewport.camera!.id)!;
+                    this.#context.meta_data!.cameras.find(
+                        ({ camera_entity }) => camera_entity.id === current_viewport.camera?.camera_entity.id,
+                    )!;
 
                 return {
                     view,
@@ -599,7 +600,7 @@ export class WebXRHelper {
             const position = [pos.x, pos.y, pos.z] as Vec3;
             const orientation = [quat.x, quat.y, quat.z, quat.w] as Quat;
 
-            camera!.local_transform = { position, orientation };
+            camera.local_transform = { position, orientation };
 
             camera.perspective_lens = this.#computePerspectiveLens(
                 view.projectionMatrix,
@@ -669,11 +670,8 @@ export class WebXRHelper {
     async createCameras(): Promise<WebXRCamera[]> {
         const cameras = await Promise.all(
             this.#viewports.map(async ({ xr_view, xr_viewport, livelink_viewport }, index) => {
-                const camera = await this.#liveLink!.newCamera(
-                    WebXRCamera,
-                    `XR_camera_${xr_view.eye}_${index}`,
-                    livelink_viewport,
-                );
+                const camera = await this.#liveLink!.scene.newEntity(WebXRCamera, `XR_camera_${xr_view.eye}_${index}`);
+                //livelink_viewport.camera = camera;
 
                 camera.perspective_lens = this.#computePerspectiveLens(
                     xr_view.projectionMatrix,

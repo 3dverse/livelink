@@ -59,28 +59,28 @@ export const SAMPLES: Array<{
             ViewportInViewport,
         ],
     },
-    {
-        categoryName: "Sessions",
-        list: [SceneSelector, MultiSession, JoinSession],
-    },
-    {
-        categoryName: "Overlays",
-        list: [DOM3DOverlayViewport, ThreeOverlayViewport, MultiOverlayViewport],
-    },
-    {
-        categoryName: "Cameras",
-        list: [DefaultCameraController, CustomCameraController, ThirdPersonController, RenderTargetIndex],
-    },
-    {
-        categoryName: "Clients",
-        list: [Clients, Collaborators],
-    },
-    {
-        categoryName: "Widgets",
-        list: [ActivityWatcher, SunPositionPicker, RenderGraphSettings],
-    },
-    {
-        categoryName: "Advanced",
-        list: [LiveSkeletalAnimation, WebXR],
-    },
+    // {
+    //     categoryName: "Sessions",
+    //     list: [SceneSelector, MultiSession, JoinSession],
+    // },
+    // {
+    //     categoryName: "Overlays",
+    //     list: [DOM3DOverlayViewport, ThreeOverlayViewport, MultiOverlayViewport],
+    // },
+    // {
+    //     categoryName: "Cameras",
+    //     list: [DefaultCameraController, CustomCameraController, ThirdPersonController, RenderTargetIndex],
+    // },
+    // {
+    //     categoryName: "Clients",
+    //     list: [Clients, Collaborators],
+    // },
+    // {
+    //     categoryName: "Widgets",
+    //     list: [ActivityWatcher, SunPositionPicker, RenderGraphSettings],
+    // },
+    // {
+    //     categoryName: "Advanced",
+    //     list: [LiveSkeletalAnimation, WebXR],
+    // },
 ];

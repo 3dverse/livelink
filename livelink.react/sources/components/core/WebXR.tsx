@@ -49,7 +49,7 @@ export function WebXR({ children, mode }: PropsWithChildren<{ mode: XRSessionMod
 
         webXRHelper.createCameras().then(() => {
             for (const viewport of viewports) {
-                viewport.__markViewportAsReady();
+                viewport.TO_REMOVE__markViewportAsReady();
             }
             webXRHelper.start();
         });

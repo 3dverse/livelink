@@ -1,6 +1,7 @@
 import { Camera } from "../Camera";
 import { ContextProvider } from "../contexts/ContextProvider";
 import { CurrentFrameMetaData } from "../decoders/CurrentFrameMetaData";
+import { Entity } from "../Entity";
 import { Rect } from "./Rect";
 import { CanvasContextType } from "./RenderingSurface";
 import { RenderingSurfaceBase } from "./RenderingSurfaceBase";
@@ -78,8 +79,8 @@ export class OffscreenSurface<ContextType extends CanvasContextType, ContextOpti
     /**
      *
      */
-    get cameras(): Readonly<Array<Camera>> {
-        return this.viewports.map(v => v.camera).filter(c => c !== null) as Camera[];
+    get cameras(): Readonly<Array<Entity>> {
+        return this.viewports.map(v => v.camera?.camera_entity).filter(c => c !== null) as Entity[];
     }
 
     /**

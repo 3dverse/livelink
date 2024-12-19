@@ -17,7 +17,7 @@ import {
     Text,
     Tooltip,
 } from "@chakra-ui/react";
-import { Camera } from "@3dverse/livelink";
+import { Entity } from "@3dverse/livelink";
 import { getAssetDescription, setUserToken } from "@3dverse/api";
 import { FaArrowRotateLeft, FaFolder, FaFolderOpen } from "react-icons/fa6";
 
@@ -46,7 +46,7 @@ export const RenderGraphSettings = ({
     defaultCameraSettings,
 }: {
     userToken: string;
-    cameraEntity: Camera | null;
+    cameraEntity: Entity | null;
     defaultCameraSettings?: Record<string, unknown>;
 }) => {
     //------------------------------------------------------------------------------
