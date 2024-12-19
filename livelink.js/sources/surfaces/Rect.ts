@@ -5,12 +5,12 @@ export class Rect {
     /**
      *
      */
-    left: number;
-    top: number;
-    right: number;
-    bottom: number;
-    width: number;
-    height: number;
+    readonly left: number;
+    readonly top: number;
+    readonly right: number;
+    readonly bottom: number;
+    readonly width: number;
+    readonly height: number;
 
     /**
      *

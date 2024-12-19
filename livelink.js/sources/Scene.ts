@@ -161,7 +161,10 @@ export class Scene extends EventTarget {
             return null;
         }
 
-        const entities = await this.#addEditorEntities(entity_type, { editor_entities: [entity_entity], resolve_ancestors: true });
+        const entities = await this.#addEditorEntities(entity_type, {
+            editor_entities: [entity_entity],
+            resolve_ancestors: true,
+        });
         return entities[0];
     }
 
@@ -382,8 +385,7 @@ export class Scene extends EventTarget {
             let entity = this.entity_registry.get({ entity_rtid: BigInt(editor_entity.rtid) }) as EntityType | null;
 
             if (!entity) {
-                const isCameraEntity = editor_entity.components.hasOwnProperty("camera");
-                const entity_instance = isCameraEntityType || !isCameraEntity ? new entity_type(this) : new Camera(this);
+                const entity_instance = new entity_type(this);
                 entity = new Proxy(entity_instance.init(editor_entity), Entity.handler) as EntityType;
 
                 this.entity_registry.add({ entity });

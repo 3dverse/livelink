@@ -1,108 +1,79 @@
+//------------------------------------------------------------------------------
 import { glMatrix, mat4, vec3 } from "gl-matrix";
+
+//------------------------------------------------------------------------------
+import type { Components, Mat4, Quat, Vec3 } from "@3dverse/livelink.core";
+
+//------------------------------------------------------------------------------
 import { Entity } from "./Entity";
 import { Viewport } from "./Viewport";
-import type { Components, ComponentType, Float, Mat4, Vec2, Vec3 } from "@3dverse/livelink.core";
 import { FrameCameraTransform } from "./decoders/FrameCameraTransform";
-import { ComponentHandler, ComponentHandlers } from "./ComponentHandler";
 
 /**
+ *
  */
 export const INFINITE_FAR_VALUE = 100000;
 
 /**
- * @internal
+ *
  */
-class LensComponentHandler extends ComponentHandler {
-    #camera: Camera;
+export class Camera {
+    /**
+     *
+     */
+    readonly camera_entity: Entity;
 
     /**
      *
      */
-    constructor(entity: Entity, component_type: ComponentType) {
-        super(entity, component_type);
-        this.#camera = entity as Camera;
-    }
+    readonly viewport: Viewport;
 
     /**
      *
      */
-    set(component: object, prop: PropertyKey, v: any): boolean {
-        const value = super.set(component, prop, v);
-        this.#camera.updateLens();
-        return value;
-    }
-}
-
-/**
- * @category Entity
- */
-export class Camera extends Entity {
-    /**
-     *
-     */
-    private _viewport: Viewport | null = null;
+    #clip_from_view_matrix = mat4.create();
 
     /**
      *
      */
-    private _clip_from_view_matrix = mat4.create();
-
-    /**
-     *
-     */
-    private _clip_from_world_matrix = mat4.create();
-
-    /**
-     *
-     */
-    get viewport(): Viewport | null {
-        return this._viewport;
-    }
-
-    /**
-     *
-     */
-    set viewport(v: Viewport | null) {
-        this._viewport = v;
-    }
+    #clip_from_world_matrix = mat4.create();
 
     /**
      *
      */
     get clip_from_view_matrix(): Mat4 {
-        return this._clip_from_view_matrix as Mat4;
+        return this.#clip_from_view_matrix as Mat4;
     }
 
     /**
      *
      */
     get clip_from_world_matrix(): Mat4 {
-        return this._clip_from_world_matrix as Mat4;
+        return this.#clip_from_world_matrix as Mat4;
     }
 
     /**
      *
      */
-    onAttach() {}
+    constructor({ camera_entity, viewport }: { camera_entity: Entity; viewport: Viewport }) {
+        this.#checkCameraEntityValidity({ camera_entity });
+
+        this.camera_entity = camera_entity;
+        this.viewport = viewport;
+    }
 
     /**
      *
      */
-    onDetach() {}
+    #checkCameraEntityValidity({ camera_entity }: { camera_entity: Entity }) {
+        if (!camera_entity.camera) {
+            throw new Error("Camera entity must have a camera component");
+        }
 
-    /**
-     *
-     */
-    onDelete() {}
-
-    /**
-     * @internal
-     */
-    static serializableComponentsProxies = {
-        ...Entity.serializableComponentsProxies,
-        ["perspective_lens"]: LensComponentHandler,
-        ["orthographic_lens"]: LensComponentHandler,
-    } as ComponentHandlers;
+        if (!camera_entity.perspective_lens && !camera_entity.orthographic_lens) {
+            throw new Error("Camera entity must have a perspective or orthographic lens component");
+        }
+    }
 
     /**
      *
@@ -114,7 +85,7 @@ export class Camera extends Entity {
         world_position: Vec3;
         out_clip_position?: Vec3;
     }): Vec3 {
-        vec3.transformMat4(out_clip_position, world_position, this._clip_from_world_matrix);
+        vec3.transformMat4(out_clip_position, world_position, this.#clip_from_world_matrix);
         return out_clip_position as Vec3;
     }
 
@@ -122,14 +93,10 @@ export class Camera extends Entity {
      *
      */
     updateLens() {
-        if (this._viewport && this.perspective_lens) {
-            this.perspective_lens.aspectRatio = this._viewport.width / this._viewport.height;
-            this._computePerspectiveLens();
-        } else if (this.orthographic_lens) {
-            this._computeOrthographicLens();
-        } else {
-            console.trace(this);
-            throw new Error("Camera has no projection lens");
+        if (this.camera_entity.perspective_lens) {
+            this.#computePerspectiveLens();
+        } else if (this.camera_entity.orthographic_lens) {
+            this.#computeOrthographicLens();
         }
     }
 
@@ -137,12 +104,12 @@ export class Camera extends Entity {
      *
      */
     updateClipFromWorldMatrix({ frame_camera_transform }: { frame_camera_transform: FrameCameraTransform }) {
-        const tmp_matrix = this._clip_from_world_matrix;
+        const tmp_matrix = this.#clip_from_world_matrix;
         const view_from_world_matrix = mat4.invert(tmp_matrix, frame_camera_transform.world_from_view_matrix);
 
-        this._clip_from_world_matrix = mat4.multiply(
-            this._clip_from_world_matrix,
-            this._clip_from_view_matrix,
+        this.#clip_from_world_matrix = mat4.multiply(
+            this.#clip_from_world_matrix,
+            this.#clip_from_view_matrix,
             view_from_world_matrix,
         );
     }
@@ -150,12 +117,12 @@ export class Camera extends Entity {
     /**
      *
      */
-    private _computePerspectiveLens() {
-        const lens = this.perspective_lens as Required<Components.PerspectiveLens>;
+    #computePerspectiveLens() {
+        const lens = this.camera_entity.perspective_lens as Required<Components.PerspectiveLens>;
         mat4.perspective(
-            this._clip_from_view_matrix,
+            this.#clip_from_view_matrix,
             glMatrix.toRadian(lens.fovy),
-            lens.aspectRatio,
+            this.viewport.aspect_ratio,
             lens.nearPlane,
             lens.farPlane || INFINITE_FAR_VALUE,
         );
@@ -164,8 +131,8 @@ export class Camera extends Entity {
     /**
      *
      */
-    private _computeOrthographicLens() {
-        const lens = this.orthographic_lens as Required<Components.OrthographicLens>;
-        mat4.ortho(this._clip_from_view_matrix, lens.left, lens.right, lens.bottom, lens.top, lens.zNear, lens.zFar);
+    #computeOrthographicLens() {
+        const lens = this.camera_entity.orthographic_lens as Required<Components.OrthographicLens>;
+        mat4.ortho(this.#clip_from_view_matrix, lens.left, lens.right, lens.bottom, lens.top, lens.zNear, lens.zFar);
     }
 }

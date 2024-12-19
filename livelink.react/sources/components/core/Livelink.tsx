@@ -163,7 +163,7 @@ export function LivelinkProvider({
                 console.debug("Connected to Livelink", instance);
                 configureClient(instance);
                 setInstance(instance);
-                instance.__setReadyCallback(async () => {
+                instance.TO_REMOVE__setReadyCallback(async () => {
                     instance.startStreaming();
                     setIsConnecting(false);
                 });
@@ -250,7 +250,7 @@ function configureClient(instance: LivelinkInstance) {
                     : new Livelink.SoftwareDecoder(instance.default_decoded_frame_consumer),
         });
 
-        instance.__startIfReady();
+        instance.TO_REMOVE__startIfReady();
     };
 
     instance.session.addEventListener("viewports-added", configure);

@@ -36,7 +36,7 @@ export abstract class RenderingSurfaceBase extends EventTarget {
         }
 
         return this.viewports.map(viewport => ({
-            camera_rtid: viewport.camera!.rtid!,
+            camera_rtid: viewport.camera!.camera_entity.rtid!,
             left: (this.offset[0] + viewport.rect.left * this.width) / width,
             top: (this.offset[1] + viewport.rect.top * this.height) / height,
             width: viewport.width / width,

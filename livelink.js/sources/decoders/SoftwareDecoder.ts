@@ -121,7 +121,7 @@ export class SoftwareDecoder extends EncodedFrameConsumer {
             uRowCnt,
         });
 
-        const meta_data = this.applyFrameMetaData(infos[0]);
+        const meta_data = this.applyFrameMetaData({ meta_data: infos[0] });
 
         this.#frame_consumer.consumeDecodedFrame({ decoded_frame: this.#offscreen_canvas!, meta_data });
     };

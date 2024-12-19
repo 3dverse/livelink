@@ -172,10 +172,10 @@ export class WebCodecsDecoder extends EncodedFrameConsumer {
             this.#last_frame.close();
         }
 
-        const raw_meta_data = this.#meta_data_stack.shift()!;
-        const meta_data = this.applyFrameMetaData(raw_meta_data);
+        const meta_data = this.#meta_data_stack.shift()!;
+        const current_frame_meta_data = this.applyFrameMetaData({ meta_data });
 
-        this.#frame_consumer.consumeDecodedFrame({ decoded_frame, meta_data });
+        this.#frame_consumer.consumeDecodedFrame({ decoded_frame, meta_data: current_frame_meta_data });
         this.#last_frame = decoded_frame;
     };
 

@@ -1,7 +1,7 @@
 import type { RawFrameMetaData, Mat4, Quat, UUID, Vec3 } from "@3dverse/livelink.core";
 import { FrameCameraTransform } from "./FrameCameraTransform";
 import { EntityRegistry } from "../EntityRegistry";
-import { Camera } from "../Camera";
+import { Viewport } from "../Viewport";
 
 /**
  * @category Streaming
@@ -20,64 +20,85 @@ export type FrameMetaData = {
     /**
      * Camera transforms of each client viewport in the frame
      */
-    current_client_cameras: Array<FrameCameraTransform>;
+    current_client_camera_entities: Array<FrameCameraTransform>;
 
     /**
      * Camera transforms of each other client viewport in the frame
      */
-    other_clients_cameras: Array<FrameCameraTransform>;
+    other_clients_camera_entities: Array<FrameCameraTransform>;
 };
 
 /**
  * @category Streaming
  */
-export function frameMetaDatafromRawFrameMetaData({
+export function convertRawFrameMetaDataToFrameMetaData({
     raw_frame_meta_data,
     client_id,
     entity_registry,
+    viewports,
 }: {
     raw_frame_meta_data: RawFrameMetaData;
     client_id: UUID;
     entity_registry: EntityRegistry;
+    viewports: Array<Viewport>;
 }): FrameMetaData {
     const meta_data: FrameMetaData = {
         renderer_timestamp: raw_frame_meta_data.renderer_timestamp,
         frame_counter: raw_frame_meta_data.frame_counter,
-        current_client_cameras: [],
-        other_clients_cameras: [],
+        current_client_camera_entities: [],
+        other_clients_camera_entities: [],
     };
 
-    const current_client = raw_frame_meta_data.clients.find(client => client.client_id === client_id);
     const other_clients = raw_frame_meta_data.clients.filter(client => client.client_id !== client_id);
 
-    for (const viewport of current_client?.viewports || []) {
-        const camera = entity_registry.get({ entity_rtid: viewport.camera_rtid }) as Camera | null;
-        if (!camera) {
+    const current_client = raw_frame_meta_data.clients.find(client => client.client_id === client_id);
+    for (const viewport_meta_data of current_client?.viewports || []) {
+        const camera_entity = entity_registry.get({ entity_rtid: viewport_meta_data.camera_rtid });
+        if (!camera_entity) {
             continue;
         }
+
+        const viewport = viewports.find(v => v.camera?.camera_entity.rtid === camera_entity.rtid);
+        if (!viewport) {
+            continue;
+        }
+
         const cameraMetadata: FrameCameraTransform = {
-            camera,
-            world_from_view_matrix: viewport.ws_from_ls,
-            world_position: getWorldPosition(viewport.ws_from_ls),
-            world_orientation: getWorldQuaternion(viewport.ws_from_ls),
+            camera_entity,
+            viewport,
+            world_from_view_matrix: viewport_meta_data.ws_from_ls,
+            world_position: getWorldPosition(viewport_meta_data.ws_from_ls),
+            world_orientation: getWorldQuaternion(viewport_meta_data.ws_from_ls),
         };
-        meta_data.current_client_cameras.push(cameraMetadata);
+        meta_data.current_client_camera_entities.push(cameraMetadata);
     }
 
-    for (const client of other_clients) {
-        for (const viewport of client.viewports) {
-            const camera = entity_registry.get({ entity_rtid: viewport.camera_rtid }) as Camera | null;
-            // Skip cameras which also belong to current client
-            if (!camera || meta_data.current_client_cameras.some(c => c.camera.rtid === camera.rtid)) {
+    for (const client_meta_data of other_clients) {
+        for (const viewport_meta_data of client_meta_data.viewports) {
+            const camera_entity = entity_registry.get({ entity_rtid: viewport_meta_data.camera_rtid });
+            if (!camera_entity) {
                 continue;
             }
+            //TODO: This is a temporary solution, we need to find a better way to identify cameras
+            //      that are controlled by the current client.
+            // Skip cameras which also belong to current client
+            if (meta_data.current_client_camera_entities.some(c => c.camera_entity.rtid === camera_entity.rtid)) {
+                continue;
+            }
+
+            const viewport = viewports.find(v => v.camera?.camera_entity.rtid === camera_entity.rtid);
+            if (!viewport) {
+                continue;
+            }
+
             const cameraMetadata: FrameCameraTransform = {
-                camera,
-                world_from_view_matrix: viewport.ws_from_ls,
-                world_position: getWorldPosition(viewport.ws_from_ls),
-                world_orientation: getWorldQuaternion(viewport.ws_from_ls),
+                camera_entity,
+                viewport,
+                world_from_view_matrix: viewport_meta_data.ws_from_ls,
+                world_position: getWorldPosition(viewport_meta_data.ws_from_ls),
+                world_orientation: getWorldQuaternion(viewport_meta_data.ws_from_ls),
             };
-            meta_data.other_clients_cameras.push(cameraMetadata);
+            meta_data.other_clients_camera_entities.push(cameraMetadata);
         }
     }
 

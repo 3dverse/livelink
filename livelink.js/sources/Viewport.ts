@@ -3,74 +3,87 @@ import { LivelinkCoreModule } from "@3dverse/livelink.core";
 
 import { Livelink } from "./Livelink";
 import { Camera } from "./Camera";
-import { Entity } from "./Entity";
 import { RenderingSurfaceBase } from "./surfaces/RenderingSurfaceBase";
 import { RelativeRect } from "./surfaces/Rect";
-import { RenderingSurface } from "./surfaces/RenderingSurface";
 import { vec3 } from "gl-matrix";
 import { OverlayInterface } from "./surfaces/OverlayInterface";
 import { CurrentFrameMetaData } from "./decoders/CurrentFrameMetaData";
+import { Entity } from "./Entity";
 
 /**
  * @category Rendering
  */
 export class Viewport extends EventTarget {
+    //TEMPTEMPTEMPTEMPTEMPTEMPTEMPTEMPTEMPTEMPTEMPTEMPTEMPTEMPTEMPTEMP
+    /**
+     * @deprecated
+     */
+    TO_REMOVE__markViewportAsReady() {
+        this.TO_REMOVE__ready = true;
+        this.#core.TO_REMOVE__startIfReady();
+    }
+    /**
+     * @deprecated
+     */
+    TO_REMOVE__ready: boolean = false;
+    //TEMPTEMPTEMPTEMPTEMPTEMPTEMPTEMPTEMPTEMPTEMPTEMPTEMPTEMPTEMPTEMP
+
     /**
      * The Livelink core used to send commands.
      */
     #core: Livelink;
 
     /**
-     *
+     * The rendering surface on which the viewport is displayed.
      */
     #rendering_surface: RenderingSurfaceBase;
 
     /**
-     *
+     * The camera used to render the scene.
      */
     #camera: Camera | null = null;
 
     /**
-     *
+     * The index of the render target that is rendered on the viewport.
      */
     render_target_index: number = -1;
 
     /**
-     *
+     * Overlays that are rendered on top of the viewport.
      */
     #overlays: Array<OverlayInterface> = [];
 
     /**
-     *
+     * The z-index of the viewport.
      */
     #z_index: number = 0;
 
     /**
-     *
+     * The relative position and size of the viewport in relation to the rendering surface.
      */
     #rect: RelativeRect;
 
     /**
-     *
+     * The DOM element used for picking.
      */
     #element: HTMLElement | null = null;
 
     /**
-     *
+     * The rendering surface on which the viewport is displayed.
      */
     get rendering_surface() {
         return this.#rendering_surface;
     }
 
     /**
-     *
+     * The camera used to render the scene.
      */
     get camera(): Camera | null {
         return this.#camera;
     }
 
     /**
-     *
+     * The width and height of the viewport in pixels.
      */
     get width(): number {
         return this.#rect.width * this.rendering_surface.width;
@@ -88,57 +101,31 @@ export class Viewport extends EventTarget {
         return this.#z_index;
     }
     get rect(): RelativeRect {
-        return new Proxy(this.#rect, {
-            set: (target, key, value) => {
-                const success = Reflect.set(target, key, value);
-                if (success) {
-                    this.#core.refreshViewports();
-                }
-                return success;
-            },
-        });
+        return this.#rect;
     }
 
     /**
      *
      */
-    set z_index(z: number) {
-        this.#z_index = z;
+    set z_index(z_index: number) {
+        this.#z_index = z_index;
         this.#core.refreshViewports();
     }
 
     /**
      *
      */
-    set rect(r: RelativeRect) {
-        this.#rect = r;
+    set rect(rect: RelativeRect) {
+        this.#rect = rect;
         this.#core.refreshViewports();
     }
 
     /**
      *
      */
-    set camera(c: Camera) {
-        if (this.#camera) {
-            this.#camera.onDetach?.();
-        }
-        this.#camera = c;
-        c.viewport = this;
-        c.onAttach?.();
+    set camera(camera: Camera) {
+        this.#camera = camera;
         this.#core.refreshViewports();
-    }
-
-    /**
-     *
-     */
-    ready: boolean = false;
-
-    /**
-     * @deprecated
-     */
-    __markViewportAsReady() {
-        this.ready = true;
-        this.#core.__startIfReady();
     }
 
     /**
@@ -217,13 +204,13 @@ export class Viewport extends EventTarget {
         pos: Vec2;
         mode: HighlightMode;
     }): Promise<{ entity: Entity; ws_position: Vec3; ws_normal: Vec3 } | null> {
-        if (!this.#camera || !this.#camera.rtid) {
+        if (!this.#camera || !this.#camera.camera_entity.rtid) {
             return null;
         }
 
         const res = await this.#core._castScreenSpaceRay({
             screenSpaceRayQuery: {
-                camera_rtid: this.#camera.rtid,
+                camera_rtid: this.#camera.camera_entity.rtid,
                 pos,
                 mode,
             },
@@ -307,13 +294,6 @@ export class Viewport extends EventTarget {
         }
 
         return blendedFrame;
-    }
-
-    /**
-     *
-     */
-    get overlays(): readonly OverlayInterface[] {
-        return Object.freeze(Array.from(this.#overlays));
     }
 
     /**

@@ -17,7 +17,7 @@ import type {
 
 import { LivelinkCoreModule } from "@3dverse/livelink.core";
 
-import { frameMetaDatafromRawFrameMetaData } from "./decoders/FrameMetaData";
+import { convertRawFrameMetaDataToFrameMetaData } from "./decoders/FrameMetaData";
 import { EncodedFrameConsumer } from "./decoders/EncodedFrameConsumer";
 import { DecodedFrameConsumer } from "./decoders/DecodedFrameConsumer";
 
@@ -27,7 +27,6 @@ import { Session, SessionInfo, SessionSelector } from "./Session";
 
 import { InputDevice } from "./inputs/InputDevice";
 import { Viewport } from "./Viewport";
-import { Camera } from "./Camera";
 import { Entity } from "./Entity";
 import { Scene } from "./Scene";
 import { compute_rpn } from "./Filters";
@@ -40,6 +39,37 @@ import { compute_rpn } from "./Filters";
  * @category Core
  */
 export class Livelink {
+    //TEMPTEMPTEMPTEMPTEMPTEMPTEMPTEMPTEMPTEMPTEMPTEMPTEMPTEMPTEMPTEMP
+    /**
+     * @deprecated
+     */
+    #TO_REMOVE__readyCallback: (() => void) | null = null;
+
+    /**
+     * @deprecated
+     */
+    TO_REMOVE__setReadyCallback(callback: () => void) {
+        this.#TO_REMOVE__readyCallback = callback;
+    }
+    /**
+     * @deprecated
+     */
+    TO_REMOVE__startIfReady() {
+        if (!this.isConfigured()) {
+            return;
+        }
+
+        if (this.viewports.some(viewport => !viewport.TO_REMOVE__ready)) {
+            return;
+        }
+
+        if (this.#TO_REMOVE__readyCallback) {
+            this.#TO_REMOVE__readyCallback();
+            this.#TO_REMOVE__readyCallback = null;
+        }
+    }
+    //TEMPTEMPTEMPTEMPTEMPTEMPTEMPTEMPTEMPTEMPTEMPTEMPTEMPTEMPTEMPTEMP
+
     /**
      * @internal
      */
@@ -396,10 +426,11 @@ export class Livelink {
         const frame_data = (e as CustomEvent<FrameData>).detail;
 
         this.session._updateClients({ client_data: frame_data.meta_data.clients });
-        const meta_data = frameMetaDatafromRawFrameMetaData({
+        const meta_data = convertRawFrameMetaDataToFrameMetaData({
             raw_frame_meta_data: frame_data.meta_data,
             client_id: this.session.client_id!,
             entity_registry: this.scene.entity_registry,
+            viewports: this.viewports,
         });
 
         this.#encoded_frame_consumer!.consumeEncodedFrame({ encoded_frame: frame_data.encoded_frame, meta_data });
@@ -418,53 +449,6 @@ export class Livelink {
         this.#startUpdateLoop({});
     }
 
-    #readyCallback: (() => void) | null = null;
-
-    /**
-     * @deprecated
-     */
-    __setReadyCallback(callback: () => void) {
-        this.#readyCallback = callback;
-    }
-    /**
-     * @deprecated
-     */
-    __startIfReady() {
-        if (!this.isConfigured()) {
-            return;
-        }
-
-        if (this.viewports.some(viewport => !viewport.ready)) {
-            return;
-        }
-
-        if (this.#readyCallback) {
-            this.#readyCallback();
-            this.#readyCallback = null;
-        }
-    }
-
-    /**
-     *
-     */
-    async newCamera<CameraType extends Camera>(
-        camera_type: { new (_s: Scene): CameraType },
-        name: string,
-        viewport: Viewport,
-    ): Promise<CameraType> {
-        let camera = new camera_type(this.scene).init(name);
-        camera = new Proxy(camera, Entity.handler) as CameraType;
-        viewport.camera = camera;
-        camera.onCreate();
-        camera.updateLens();
-
-        await camera._instantiate(
-            this.#core.spawnEntity({ entity: camera, options: { delete_on_client_disconnection: true } }),
-        );
-
-        return camera;
-    }
-
     /**
      *
      */
@@ -474,7 +458,7 @@ export class Livelink {
      *
      */
     refreshViewports() {
-        if (this.#readyCallback) {
+        if (this.#TO_REMOVE__readyCallback) {
             return;
         }
 

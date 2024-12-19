@@ -286,19 +286,6 @@ export class Entity extends EntityBase {
     /**
      * @internal
      */
-    _setLocalTransform({ world_position, world_orientation }: { world_position: Vec3; world_orientation: Quat }) {
-        this._proxy_state = "off";
-        this._auto_update = "off";
-        this.local_transform!.position = world_position;
-        this.local_transform!.orientation = world_orientation;
-        this._auto_update = "on";
-        this._proxy_state = "on";
-        this.dispatchEvent(new CustomEvent("entity-updated"));
-    }
-
-    /**
-     * @internal
-     */
     _onVisibilityChanged({ is_visible }: { is_visible: boolean }) {
         this._is_visible = is_visible;
         this.dispatchEvent(new CustomEvent("visibility-changed", { detail: { is_visible } }));

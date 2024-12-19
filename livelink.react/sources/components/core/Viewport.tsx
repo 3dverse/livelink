@@ -11,18 +11,18 @@ import React, {
 } from "react";
 
 //------------------------------------------------------------------------------
-import { RelativeRect, Viewport } from "@3dverse/livelink";
+import { RelativeRect, Viewport, Camera } from "@3dverse/livelink";
 
 //------------------------------------------------------------------------------
 import { LivelinkContext } from "./Livelink";
 import { CanvasContext } from "./Canvas";
-import { Camera } from "./Camera";
 
 //------------------------------------------------------------------------------
 export const ViewportContext = createContext<{
     viewport: Viewport | null;
     viewportDomElement: HTMLDivElement | null;
     zIndex: number;
+    camera?: Camera;
 }>({
     viewport: null,
     viewportDomElement: null,
@@ -38,16 +38,22 @@ function computeRelativeRect(viewportDomElement: HTMLDivElement, canvas: HTMLCan
         top: clientRect.top - canvasPos.top,
     };
 
+    const PRECISION = 6 as const;
+
     return new RelativeRect({
-        left: parseFloat((relativePos.left / canvasPos.width).toPrecision(6)),
-        top: parseFloat((relativePos.top / canvasPos.height).toPrecision(6)),
-        width: parseFloat((clientRect.width / canvasPos.width).toPrecision(6)),
-        height: parseFloat((clientRect.height / canvasPos.height).toPrecision(6)),
+        left: parseFloat((relativePos.left / canvasPos.width).toPrecision(PRECISION)),
+        top: parseFloat((relativePos.top / canvasPos.height).toPrecision(PRECISION)),
+        width: parseFloat((clientRect.width / canvasPos.width).toPrecision(PRECISION)),
+        height: parseFloat((clientRect.height / canvasPos.height).toPrecision(PRECISION)),
     });
 }
 
 //------------------------------------------------------------------------------
-function ViewportProvider({ children, ...props }: PropsWithChildren & HTMLProps<HTMLDivElement>) {
+function ViewportProvider({
+    camera,
+    children,
+    ...props
+}: PropsWithChildren & { camera?: Camera } & HTMLProps<HTMLDivElement>) {
     const { instance } = useContext(LivelinkContext);
     const { renderingSurface, canvas } = useContext(CanvasContext);
     const { zIndex: parentZIndex = 0 } = useContext(ViewportContext);
@@ -109,12 +115,22 @@ function ViewportProvider({ children, ...props }: PropsWithChildren & HTMLProps<
         };
     }, [instance, renderingSurface, canvas, zIndex]);
 
+    useEffect(() => {
+        if (!viewport || !camera) {
+            return;
+        }
+
+        console.log("---- Setting camera", camera);
+        viewport.camera = camera;
+    }, [viewport, camera]);
+
     return (
         <ViewportContext.Provider
             value={{
                 viewport,
                 viewportDomElement: viewportDomElement.current,
                 zIndex,
+                camera,
             }}
         >
             <div ref={viewportDomElement} role={"viewport"} {...props}>

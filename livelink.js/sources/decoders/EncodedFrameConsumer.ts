@@ -25,20 +25,30 @@ export abstract class EncodedFrameConsumer {
     /**
      *
      */
-    applyFrameMetaData(meta_data: FrameMetaData): CurrentFrameMetaData {
-        for (const { camera, world_position, world_orientation } of meta_data.other_clients_cameras) {
-            camera._setLocalTransform({ world_position, world_orientation });
-        }
+    applyFrameMetaData({ meta_data }: { meta_data: FrameMetaData }): CurrentFrameMetaData {
+        this.#setCamerasGlobalTransform({ meta_data });
 
-        for (const frame_camera_transform of meta_data.current_client_cameras) {
-            frame_camera_transform.camera.updateClipFromWorldMatrix({ frame_camera_transform });
+        for (const frame_camera_transform of meta_data.current_client_camera_entities) {
+            frame_camera_transform.viewport.camera?.updateClipFromWorldMatrix({ frame_camera_transform });
         }
 
         return {
             renderer_timestamp: meta_data.renderer_timestamp,
             frame_counter: meta_data.frame_counter,
-            cameras: meta_data.current_client_cameras,
+            cameras: meta_data.current_client_camera_entities,
         };
+    }
+
+    /**
+     *
+     */
+    #setCamerasGlobalTransform({ meta_data }: { meta_data: FrameMetaData }) {
+        for (const { camera_entity, world_position, world_orientation } of meta_data.other_clients_camera_entities) {
+            // TODO: This should actually set the global transform not the local transform.
+            camera_entity._updateFromEvent({
+                updated_components: { local_transform: { position: world_position, orientation: world_orientation } },
+            });
+        }
     }
 
     /**
