@@ -92,8 +92,9 @@ export class Client implements ClientInterface {
     /**
      *
      */
-    constructor({ client_info }: { client_info: ClientInfo }) {
+    constructor({ client_info, client_meta_data }: { client_info: ClientInfo; client_meta_data: ClientMetaData }) {
         this.#client_info = client_info;
+        this._updateFromClientMetaData({ client_meta_data });
     }
 
     /**

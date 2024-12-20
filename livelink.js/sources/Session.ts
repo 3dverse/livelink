@@ -349,7 +349,7 @@ export class Session extends EventTarget implements SessionInterface {
         }
 
         console.debug("--- Client joined", client_info);
-        const client = new Client({ client_info });
+        const client = new Client({ client_info, client_meta_data });
         this.#onClientJoined({ client });
         this.#clients_pending_identification.delete(client_id);
     }
