@@ -108,12 +108,22 @@ export class WebXRHelper {
      * Release the XRSession and the rendering OffscreenSurface.
      */
     public async release(): Promise<void> {
-        this.#surface?.release();
-        if (this.#animationFrameRequestId) {
-            this.session?.cancelAnimationFrame(this.#animationFrameRequestId);
+        if (this.session) {
+            if (this.#animationFrameRequestId) {
+                this.session.cancelAnimationFrame(this.#animationFrameRequestId);
+            }
+
+            this.session.removeEventListener("inputsourceschange", WebXRInputRelay.onInputSourcesChange);
+            await this.session.end().catch(error => console.warn("Could not end XR session:", error));
         }
-        this.session?.removeEventListener("inputsourceschange", WebXRInputRelay.onInputSourcesChange);
-        return this.session?.end().catch(error => console.warn("Could not end XR session:", error));
+
+        if (this.#liveLink) {
+            for (const { livelink_viewport } of this.#viewports) {
+                this.#liveLink.removeViewport({ viewport: livelink_viewport });
+            }
+        }
+
+        this.#surface?.release();
     }
 
     //--------------------------------------------------------------------------

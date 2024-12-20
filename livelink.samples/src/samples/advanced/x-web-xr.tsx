@@ -40,7 +40,7 @@ function App() {
         >
             {xrMode ? (
                 <WebXR mode={xrMode}>
-                    <div className="absolute top-4 left-4">
+                    <div className="fixed top-4 left-4">
                         <button className="button button-primary" onClick={() => setXRMode(null)}>
                             Exit XR
                         </button>
