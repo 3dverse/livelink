@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 import CameraControls from "camera-controls";
-import { Entity, Quat } from "@3dverse/livelink";
+import { Entity } from "@3dverse/livelink";
 
 //------------------------------------------------------------------------------
 import {

@@ -68,7 +68,15 @@ export class Scene extends EventTarget {
     /**
      *
      */
-    async newEntity(name: string, components: ComponentsRecord, options?: EntityCreationOptions): Promise<Entity> {
+    async newEntity({
+        name,
+        components,
+        options,
+    }: {
+        name: string;
+        components: ComponentsRecord;
+        options?: EntityCreationOptions;
+    }): Promise<Entity> {
         const entity = this.#createEntityProxy({ name, components });
         const editor_entity = await this.#core.spawnEntity({ entity, options });
         this.#instantiateEntity({ entity, editor_entity, options });
@@ -78,10 +86,13 @@ export class Scene extends EventTarget {
     /**
      *
      */
-    async newEntities(
-        componentsArray: Array<{ name: string; components: ComponentsRecord }>,
-        options?: EntityCreationOptions,
-    ): Promise<Array<Entity>> {
+    async newEntities({
+        componentsArray,
+        options,
+    }: {
+        componentsArray: Array<{ name: string; components: ComponentsRecord }>;
+        options?: EntityCreationOptions;
+    }): Promise<Array<Entity>> {
         const entities = componentsArray.map(this.#createEntityProxy);
         const editor_entities = await this.#core.createEntities({ entities, options });
         for (let i = 0; i < entities.length; i++) {

@@ -663,13 +663,17 @@ export class WebXRHelper {
     async createCameras(): Promise<Entity[]> {
         const cameras = await Promise.all(
             this.#viewports.map(async ({ xr_view, xr_viewport, livelink_viewport }, index) => {
-                const camera = await this.#liveLink!.scene.newEntity(`XR_camera_${xr_view.eye}_${index}`, {
-                    local_transform: {},
-                    perspective_lens: {},
-                    camera: {
-                        renderGraphRef: "398ee642-030a-45e7-95df-7147f6c43392",
-                        dataJSON: { grid: false, displayBackground: false },
+                const camera = await this.#liveLink!.scene.newEntity({
+                    name: `XR_camera_${xr_view.eye}_${index}`,
+                    components: {
+                        local_transform: {},
+                        perspective_lens: {},
+                        camera: {
+                            renderGraphRef: "398ee642-030a-45e7-95df-7147f6c43392",
+                            dataJSON: { grid: false, displayBackground: false },
+                        },
                     },
+                    options: { delete_on_client_disconnection: true, auto_broadcast: false },
                 });
                 livelink_viewport.camera = new Camera({ camera_entity: camera, viewport: livelink_viewport });
 

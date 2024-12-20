@@ -45,11 +45,7 @@ export function useEntity(entityProvider: EntityProvider) {
                 return await instance.scene.findEntity({ entity_uuid: entityProvider.id });
             } else if ("components" in entityProvider) {
                 console.debug("---- Creating entity");
-                return await instance.scene.newEntity(
-                    entityProvider.name,
-                    entityProvider.components,
-                    entityProvider.options,
-                );
+                return await instance.scene.newEntity(entityProvider);
             } else {
                 return await entityProvider.finder({ instance });
             }
