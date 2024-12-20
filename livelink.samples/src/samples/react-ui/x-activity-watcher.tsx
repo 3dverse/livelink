@@ -50,7 +50,7 @@ function AppLayout() {
             instance.activity_watcher.inactivity_warning = 3;
             instance.activity_watcher.inactivity_timeout = 10;
         }
-    });
+    }, [instance]);
 
     return (
         <Canvas className={sampleCanvasClassName}>

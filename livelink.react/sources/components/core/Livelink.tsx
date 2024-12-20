@@ -215,7 +215,9 @@ export function LivelinkProvider({
         };
     }, [instance]);
 
-    const warningDuration = instance ? instance.activity_watcher.inactivity_timeout : 0;
+    const warningDuration = instance
+        ? instance.activity_watcher.inactivity_timeout - instance.activity_watcher.inactivity_warning
+        : 0;
 
     return (
         <LivelinkContext.Provider
