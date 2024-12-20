@@ -19,8 +19,8 @@ const token = import.meta.env.VITE_PROD_PUBLIC_TOKEN;
 //------------------------------------------------------------------------------
 export default {
     path: import.meta.url,
-    title: "Render Target Index",
-    summary: "Shows how to change the index of the displayed render target.",
+    title: "Camera Render Target",
+    summary: "Shows how to change the index of the displayed render target for a camera.",
     element: <App />,
 };
 

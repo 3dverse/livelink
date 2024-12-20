@@ -5,7 +5,7 @@ import DoubleCanvasSingleViewport from "./react-core/1-viewports/3-double-canvas
 import DoubleCanvasDoubleViewports from "./react-core/1-viewports/4-double-canvas-double-viewports";
 import CanvasInCanvas from "./react-core/1-viewports/5-canvas-in-canvas";
 import ViewportInViewport from "./react-core/1-viewports/6-viewport-in-viewport";
-import WebXR from "./advanced/x-web-xr";
+import ViewportRenderTarget from "./react-core/1-viewports/7-viewport-render-target";
 
 //------------------------------------------------------------------------------
 import SceneSelector from "./react-core/2-sessions/1-scene-selector";
@@ -21,7 +21,7 @@ import MultiOverlayViewport from "./react-core/3-overlays/3-multi-overlay";
 import DefaultCameraController from "./react-core/4-cameras/1-default-camera-controller";
 import CustomCameraController from "./react-core/4-cameras/2-custom-camera-controller";
 import ThirdPersonController from "./react-core/4-cameras/3-third-person-controller";
-import RenderTargetIndex from "./react-core/4-cameras/4-render-target-index";
+import CameraRenderTarget from "./react-core/4-cameras/4-camera-render-target";
 
 //------------------------------------------------------------------------------
 import Clients from "./react-core/5-clients/1-clients-list";
@@ -34,6 +34,7 @@ import RenderGraphSettings from "./react-ui/x-render-graph-settings";
 
 //------------------------------------------------------------------------------
 import LiveSkeletalAnimation from "./advanced/x-live-skeletal-animation";
+import WebXR from "./advanced/x-web-xr";
 
 //------------------------------------------------------------------------------
 export const SAMPLES: Array<{
@@ -57,6 +58,7 @@ export const SAMPLES: Array<{
             DoubleCanvasDoubleViewports,
             CanvasInCanvas,
             ViewportInViewport,
+            ViewportRenderTarget,
         ],
     },
     {
@@ -69,7 +71,7 @@ export const SAMPLES: Array<{
     },
     {
         categoryName: "Cameras",
-        list: [DefaultCameraController, CustomCameraController, ThirdPersonController, RenderTargetIndex],
+        list: [DefaultCameraController, CustomCameraController, ThirdPersonController, CameraRenderTarget],
     },
     {
         categoryName: "Clients",
