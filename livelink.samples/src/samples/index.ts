@@ -35,6 +35,7 @@ import RenderGraphSettings from "./react-ui/x-render-graph-settings";
 //------------------------------------------------------------------------------
 import LiveSkeletalAnimation from "./advanced/x-live-skeletal-animation";
 import WebXR from "./advanced/x-web-xr";
+import CreateEntity from "./react-core/6-entities/1-create-entity";
 
 //------------------------------------------------------------------------------
 export const SAMPLES: Array<{
@@ -76,6 +77,10 @@ export const SAMPLES: Array<{
     {
         categoryName: "Clients",
         list: [Clients, Collaborators],
+    },
+    {
+        categoryName: "Entities",
+        list: [CreateEntity],
     },
     {
         categoryName: "Widgets",
