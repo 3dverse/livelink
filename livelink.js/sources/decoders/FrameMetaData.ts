@@ -20,7 +20,7 @@ export type FrameMetaData = {
     /**
      * Camera transforms of each client viewport in the frame
      */
-    current_client_camera_entities: Array<FrameCameraTransform>;
+    current_client_camera_entities: Array<FrameCameraTransform & { viewport: Viewport }>;
 
     /**
      * Camera transforms of each other client viewport in the frame
@@ -63,7 +63,7 @@ export function convertRawFrameMetaDataToFrameMetaData({
             continue;
         }
 
-        const cameraMetadata: FrameCameraTransform = {
+        const cameraMetadata: FrameCameraTransform & { viewport: Viewport } = {
             camera_entity,
             viewport,
             world_from_view_matrix: viewport_meta_data.ws_from_ls,
@@ -86,14 +86,8 @@ export function convertRawFrameMetaDataToFrameMetaData({
                 continue;
             }
 
-            const viewport = viewports.find(v => v.camera?.camera_entity.rtid === camera_entity.rtid);
-            if (!viewport) {
-                continue;
-            }
-
             const cameraMetadata: FrameCameraTransform = {
                 camera_entity,
-                viewport,
                 world_from_view_matrix: viewport_meta_data.ws_from_ls,
                 world_position: getWorldPosition(viewport_meta_data.ws_from_ls),
                 world_orientation: getWorldQuaternion(viewport_meta_data.ws_from_ls),

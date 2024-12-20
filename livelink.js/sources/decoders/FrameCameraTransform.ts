@@ -1,6 +1,5 @@
 import type { Mat4, Quat, Vec3 } from "@3dverse/livelink.core";
-import { Entity } from "../Entity";
-import { Viewport } from "../Viewport";
+import type { Entity } from "../Entity";
 
 /**
  * @category Streaming
@@ -11,11 +10,6 @@ export type FrameCameraTransform = {
      * Camera Entity
      */
     camera_entity: Entity;
-
-    /**
-     *
-     */
-    viewport: Viewport;
 
     /**
      * Transform view space to world space matrix
