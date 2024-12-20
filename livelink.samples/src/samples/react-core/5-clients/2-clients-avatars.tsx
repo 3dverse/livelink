@@ -193,10 +193,9 @@ const PiPViewport = ({ watchedClient }: { watchedClient: Client | null }) => {
     }
 
     return (
-        <Viewport
-            cameraEntity={clientCameraEntity}
-            className="absolute top-20 w-1/3 h-1/6 right-8 border border-tertiary rounded-lg shadow-2x"
-        />
+        <Canvas className="absolute top-20 w-1/3 h-1/6 right-8 border border-tertiary rounded-lg shadow-2x">
+            <Viewport className="w-full h-full" cameraEntity={clientCameraEntity} />
+        </Canvas>
     );
 };
 

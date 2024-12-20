@@ -13,6 +13,7 @@ import React, {
 //------------------------------------------------------------------------------
 import { LivelinkContext } from "./Livelink";
 import { RenderingSurface } from "@3dverse/livelink";
+import { ViewportContext } from "./Viewport";
 
 //------------------------------------------------------------------------------
 export const CanvasContext = createContext<{
@@ -49,6 +50,7 @@ export function Canvas({
 }: PropsWithChildren<CanvasContext & HTMLProps<HTMLDivElement>>) {
     const { instance } = useContext(LivelinkContext);
     const { canvas: parentCanvas } = useContext(CanvasContext);
+    const { zIndex } = useContext(ViewportContext);
 
     const [renderingSurface, setRenderingSurface] = useState<RenderingSurface | null>(null);
     const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -78,7 +80,7 @@ export function Canvas({
         <CanvasContext.Provider value={{ canvas: canvasRef.current, renderingSurface }}>
             <div
                 role="canvas-container"
-                style={computeCanvasContainerStyle({ parentCanvas, width, height })}
+                style={computeCanvasContainerStyle({ parentCanvas, width, height, zIndex })}
                 {...props}
             >
                 <canvas
@@ -99,15 +101,17 @@ export function Canvas({
 //------------------------------------------------------------------------------
 function computeCanvasContainerStyle({
     parentCanvas,
+    zIndex,
     width,
     height,
 }: {
     parentCanvas: HTMLCanvasElement | null;
+    zIndex: number;
     width?: string | number;
     height?: string | number;
 }): CSSProperties {
     const isNestedCanvas = Boolean(parentCanvas);
-    const commonStyle = { overflow: "clip" } satisfies CSSProperties;
+    const commonStyle = { overflow: "clip", zIndex } satisfies CSSProperties;
     const nestedCanvasStyle = { position: "absolute", width, height } satisfies CSSProperties;
     const rootCanvasStyle = {
         position: "relative",
