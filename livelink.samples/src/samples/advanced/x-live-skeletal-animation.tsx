@@ -75,29 +75,38 @@ function AppLayout() {
 //------------------------------------------------------------------------------
 function ThreeJSCanvas() {
     const threeJSCanvasRef = useRef<HTMLCanvasElement>(null);
-
+    const containerRef = useRef<HTMLDivElement>(null);
     useEffect(() => {
-        const { renderer, scene, camera } = setUpThreeJsSkeleton(threeJSCanvasRef.current!);
+        if (!threeJSCanvasRef.current || !containerRef.current) {
+            return;
+        }
 
-        function onWindowResize() {
-            // TODO: fixme
-            const width = threeJSCanvasRef.current!.offsetWidth;
-            const height = threeJSCanvasRef.current!.offsetHeight;
+        const canvas = threeJSCanvasRef.current;
+        const container = containerRef.current;
+
+        const { renderer, scene, camera } = setUpThreeJsSkeleton(canvas);
+
+        function onContainerResized() {
+            const { width, height } = container.getBoundingClientRect();
             camera.aspect = width / height;
             camera.updateProjectionMatrix();
-            renderer.setSize(width, height);
+            renderer.setSize(width, height, true);
         }
-        window.addEventListener("resize", onWindowResize);
+
+        const resizeObserver = new ResizeObserver(onContainerResized);
+        resizeObserver.observe(container);
 
         return () => {
-            window.removeEventListener("resize", onWindowResize);
+            resizeObserver.disconnect();
             cleanUpThreeJs(renderer, scene);
         };
     }, []);
 
     return (
-        <div className="h-full w-full p-3 pr-0">
-            <canvas className="w-full h-full rounded-xl" ref={threeJSCanvasRef} />
+        <div className="w-full h-full flex pl-3 py-3">
+            <div className="grow" ref={containerRef}>
+                <canvas className="absolute rounded-xl" ref={threeJSCanvasRef} />
+            </div>
         </div>
     );
 }
