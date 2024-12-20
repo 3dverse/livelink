@@ -28,14 +28,17 @@ import Clients from "./react-core/5-clients/1-clients-list";
 import Collaborators from "./react-core/5-clients/2-clients-avatars";
 
 //------------------------------------------------------------------------------
-import SunPositionPicker from "./react-ui/x-sun-position-picker";
-import ActivityWatcher from "./react-ui/x-activity-watcher";
-import RenderGraphSettings from "./react-ui/x-render-graph-settings";
+import CreateEntity from "./react-core/6-entities/1-create-entity";
+import SmartObject from "./react-core/6-entities/x-smart-object";
+
+//------------------------------------------------------------------------------
+import ActivityWatcher from "./react-ui/1-activity-watcher";
+import SunPositionPicker from "./react-ui/2-sun-position-picker";
+import RenderGraphSettings from "./react-ui/3-render-graph-settings";
 
 //------------------------------------------------------------------------------
 import LiveSkeletalAnimation from "./advanced/x-live-skeletal-animation";
 import WebXR from "./advanced/x-web-xr";
-import CreateEntity from "./react-core/6-entities/1-create-entity";
 
 //------------------------------------------------------------------------------
 export const SAMPLES: Array<{
@@ -80,7 +83,7 @@ export const SAMPLES: Array<{
     },
     {
         categoryName: "Entities",
-        list: [CreateEntity],
+        list: [CreateEntity, SmartObject],
     },
     {
         categoryName: "Widgets",
