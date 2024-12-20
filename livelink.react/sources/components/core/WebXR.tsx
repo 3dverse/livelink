@@ -1,6 +1,10 @@
+//------------------------------------------------------------------------------
 import React, { type PropsWithChildren, useContext, useEffect, useRef, useState } from "react";
+
+//------------------------------------------------------------------------------
 import { Viewport } from "@3dverse/livelink";
 
+//------------------------------------------------------------------------------
 import { LivelinkContext } from "./Livelink";
 import { WebXRHelper } from "../../web-xr/WebXRHelper";
 
@@ -48,9 +52,6 @@ export function WebXR({ children, mode }: PropsWithChildren<{ mode: XRSessionMod
         }
 
         webXRHelper.createCameras().then(() => {
-            for (const viewport of viewports) {
-                viewport.TO_REMOVE__markViewportAsReady();
-            }
             webXRHelper.start();
         });
     }, [viewports, webXRHelper]);

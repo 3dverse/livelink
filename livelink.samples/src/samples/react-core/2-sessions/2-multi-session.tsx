@@ -1,5 +1,5 @@
 //------------------------------------------------------------------------------
-import { Livelink, Canvas, Viewport, Camera, DefaultCamera } from "@3dverse/livelink-react";
+import { Livelink, Canvas, Viewport, CameraController, useCameraEntity } from "@3dverse/livelink-react";
 
 //------------------------------------------------------------------------------
 import {
@@ -27,34 +27,38 @@ export default {
 function App() {
     return (
         <div className="w-full h-full flex relative pl-3">
-            <SamplePlayer autoConnect={false} title={"First Session"}>
+            <SamplePlayer autoConnect={false} title={"First Scene Session"}>
                 <Livelink
                     sceneId={scene_id_1}
                     token={token}
                     LoadingPanel={LoadingSpinner}
                     ConnectionErrorPanel={DisconnectedModal}
                 >
-                    <Canvas className={sampleCanvasClassName}>
-                        <Viewport className="w-full h-full">
-                            <Camera class={DefaultCamera} name="MyCamera" />
-                        </Viewport>
-                    </Canvas>
+                    <AppLayout />
                 </Livelink>
             </SamplePlayer>
-            <SamplePlayer autoConnect={false} title={"Second Session"}>
+            <SamplePlayer autoConnect={false} title={"Second Scene Session"}>
                 <Livelink
                     sceneId={scene_id_2}
                     token={token}
                     LoadingPanel={LoadingSpinner}
                     ConnectionErrorPanel={DisconnectedModal}
                 >
-                    <Canvas className={sampleCanvasClassName}>
-                        <Viewport className="w-full h-full">
-                            <Camera class={DefaultCamera} name="MyCamera" />
-                        </Viewport>
-                    </Canvas>
+                    <AppLayout />
                 </Livelink>
             </SamplePlayer>
         </div>
+    );
+}
+
+//------------------------------------------------------------------------------
+function AppLayout() {
+    const { cameraEntity } = useCameraEntity();
+    return (
+        <Canvas className={sampleCanvasClassName}>
+            <Viewport cameraEntity={cameraEntity} className="w-full h-full">
+                <CameraController />
+            </Viewport>
+        </Canvas>
     );
 }

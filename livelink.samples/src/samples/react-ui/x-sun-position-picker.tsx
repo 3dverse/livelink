@@ -1,5 +1,5 @@
 //------------------------------------------------------------------------------
-import { Livelink, Canvas, Viewport, Camera, DefaultCamera, useEntity } from "@3dverse/livelink-react";
+import { Livelink, Canvas, Viewport, useEntity, useCameraEntity, CameraController } from "@3dverse/livelink-react";
 import { SunPositionPicker } from "@3dverse/livelink-react-ui";
 
 //------------------------------------------------------------------------------
@@ -18,18 +18,6 @@ export default {
 };
 
 //------------------------------------------------------------------------------
-const SUN_ENTITY_ID = "23e6b1cc-5e04-42c4-b179-12447556a170";
-
-//------------------------------------------------------------------------------
-class MyCameraWithAtmosphere extends DefaultCamera {
-    onCreate() {
-        super.onCreate();
-        this.camera!.dataJSON!.atmosphere = true;
-        this.camera!.dataJSON!.gradient = false;
-    }
-}
-
-//------------------------------------------------------------------------------
 function App() {
     return (
         <Livelink
@@ -39,21 +27,34 @@ function App() {
             LoadingPanel={LoadingSpinner}
             ConnectionErrorPanel={DisconnectedModal}
         >
-            <Canvas className={sampleCanvasClassName}>
-                <Viewport className="w-full h-full">
-                    <Camera class={MyCameraWithAtmosphere} name={"MyCamera"} />
-                    <SunWidget />
-                </Viewport>
-            </Canvas>
+            <AppLayout />
         </Livelink>
     );
 }
 
 //------------------------------------------------------------------------------
+function AppLayout() {
+    const { cameraEntity } = useCameraEntity({ settings: { atmosphere: true, gradient: false } });
+
+    return (
+        <Canvas className={sampleCanvasClassName}>
+            <Viewport cameraEntity={cameraEntity} className="w-full h-full">
+                <CameraController />
+                <SunWidget />
+            </Viewport>
+        </Canvas>
+    );
+}
+
+//------------------------------------------------------------------------------
+const SUN_ENTITY_ID = "23e6b1cc-5e04-42c4-b179-12447556a170" as const;
+
+//------------------------------------------------------------------------------
 function SunWidget() {
-    const { isPending, entity: theSun } = useEntity({ entity_uuid: SUN_ENTITY_ID });
+    const { isPending, entity: theSun } = useEntity({ id: SUN_ENTITY_ID });
 
     if (!isPending && !theSun) {
+        console.error("There's no sun entity in the scene");
         return null;
     }
 

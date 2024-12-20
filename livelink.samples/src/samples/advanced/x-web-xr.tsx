@@ -2,7 +2,15 @@
 import { useEffect, useState } from "react";
 
 //------------------------------------------------------------------------------
-import { Livelink, Canvas, Viewport, DefaultCamera, Camera, WebXRHelper, WebXR } from "@3dverse/livelink-react";
+import {
+    Livelink,
+    Canvas,
+    Viewport,
+    WebXRHelper,
+    WebXR,
+    CameraController,
+    useCameraEntity,
+} from "@3dverse/livelink-react";
 
 //------------------------------------------------------------------------------
 import { DisconnectedModal, LoadingSpinner, sampleCanvasClassName } from "../../components/SamplePlayer";
@@ -40,11 +48,8 @@ function App() {
                 </WebXR>
             ) : (
                 <>
-                    <Canvas className={sampleCanvasClassName}>
-                        <Viewport className="w-full h-full">
-                            <Camera class={DefaultCamera} name="MyCamera" />
-                        </Viewport>
-                    </Canvas>
+                    <AppLayout />
+
                     <div className="absolute w-full top-4 flex items-center justify-center gap-4">
                         <XRButton mode="immersive-ar" enterXR={setXRMode} />
                         <XRButton mode="immersive-vr" enterXR={setXRMode} />
@@ -52,6 +57,19 @@ function App() {
                 </>
             )}
         </Livelink>
+    );
+}
+
+//------------------------------------------------------------------------------
+function AppLayout() {
+    const { cameraEntity } = useCameraEntity();
+
+    return (
+        <Canvas className={sampleCanvasClassName}>
+            <Viewport cameraEntity={cameraEntity} className="w-full h-full">
+                <CameraController />
+            </Viewport>
+        </Canvas>
     );
 }
 

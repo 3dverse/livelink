@@ -2,7 +2,7 @@
 import { useMemo } from "react";
 
 //------------------------------------------------------------------------------
-import { Livelink, Canvas, Viewport, Camera, DefaultCamera } from "@3dverse/livelink-react";
+import { Livelink, Canvas, Viewport, CameraController, useCameraEntity } from "@3dverse/livelink-react";
 import { ThreeOverlay } from "@3dverse/livelink-three/react";
 
 //------------------------------------------------------------------------------
@@ -25,6 +25,22 @@ export default {
 
 //------------------------------------------------------------------------------
 function App() {
+    return (
+        <Livelink
+            sceneId={scene_id}
+            token={token}
+            LoadingPanel={LoadingSpinner}
+            ConnectionErrorPanel={DisconnectedModal}
+        >
+            <AppLayout />
+        </Livelink>
+    );
+}
+
+//------------------------------------------------------------------------------
+function AppLayout() {
+    const { cameraEntity } = useCameraEntity();
+
     const scene = useMemo(() => {
         const scene = new THREE.Scene();
         const geometry = new THREE.BoxGeometry(1, 1, 1);
@@ -36,18 +52,11 @@ function App() {
     }, []);
 
     return (
-        <Livelink
-            sceneId={scene_id}
-            token={token}
-            LoadingPanel={LoadingSpinner}
-            ConnectionErrorPanel={DisconnectedModal}
-        >
-            <Canvas className={sampleCanvasClassName}>
-                <Viewport className="w-full h-full">
-                    <Camera class={DefaultCamera} name={"MyCamera"} />
-                    <ThreeOverlay scene={scene} />
-                </Viewport>
-            </Canvas>
-        </Livelink>
+        <Canvas className={sampleCanvasClassName}>
+            <Viewport cameraEntity={cameraEntity} className="w-full h-full">
+                <CameraController />
+                <ThreeOverlay scene={scene} />
+            </Viewport>
+        </Canvas>
     );
 }

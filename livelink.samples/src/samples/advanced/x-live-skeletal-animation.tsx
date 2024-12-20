@@ -1,6 +1,14 @@
 //------------------------------------------------------------------------------
 import { Entity, Livelink as LivelinkInstance } from "@3dverse/livelink";
-import { Livelink, Canvas, Viewport, Camera, DefaultCamera, LivelinkContext, useEntity } from "@3dverse/livelink-react";
+import {
+    Livelink,
+    Canvas,
+    Viewport,
+    LivelinkContext,
+    useEntity,
+    useCameraEntity,
+    CameraController,
+} from "@3dverse/livelink-react";
 
 //------------------------------------------------------------------------------
 import { DisconnectedModal, LoadingSpinner, sampleCanvasClassName, SamplePlayer } from "../../components/SamplePlayer";
@@ -33,6 +41,39 @@ export default {
 
 //------------------------------------------------------------------------------
 function App() {
+    return (
+        <>
+            <ThreeJSCanvas />
+            <SamplePlayer title={"3dverse Skeleton"}>
+                <Livelink
+                    sceneId={scene_id}
+                    token={token}
+                    LoadingPanel={LoadingSpinner}
+                    ConnectionErrorPanel={DisconnectedModal}
+                >
+                    <SkeletonController />
+                    <AppLayout />
+                </Livelink>
+            </SamplePlayer>
+        </>
+    );
+}
+
+//------------------------------------------------------------------------------
+function AppLayout() {
+    const { cameraEntity } = useCameraEntity();
+
+    return (
+        <Canvas className={sampleCanvasClassName}>
+            <Viewport cameraEntity={cameraEntity} className="w-full h-full">
+                <CameraController />
+            </Viewport>
+        </Canvas>
+    );
+}
+
+//------------------------------------------------------------------------------
+function ThreeJSCanvas() {
     const threeJSCanvasRef = useRef<HTMLCanvasElement>(null);
 
     useEffect(() => {
@@ -55,33 +96,16 @@ function App() {
     }, []);
 
     return (
-        <>
-            <div className="h-full w-full p-3 pr-0">
-                <canvas className="w-full h-full rounded-xl" ref={threeJSCanvasRef} />
-            </div>
-            <SamplePlayer title={"3dverse Skeleton"}>
-                <Livelink
-                    sceneId={scene_id}
-                    token={token}
-                    LoadingPanel={LoadingSpinner}
-                    ConnectionErrorPanel={DisconnectedModal}
-                >
-                    <SkeletonController />
-                    <Canvas className={sampleCanvasClassName}>
-                        <Viewport className="w-full h-full">
-                            <Camera class={DefaultCamera} name="MyCamera" />
-                        </Viewport>
-                    </Canvas>
-                </Livelink>
-            </SamplePlayer>
-        </>
+        <div className="h-full w-full p-3 pr-0">
+            <canvas className="w-full h-full rounded-xl" ref={threeJSCanvasRef} />
+        </div>
     );
 }
 
 //------------------------------------------------------------------------------
 function SkeletonController() {
     const { instance } = useContext(LivelinkContext);
-    const { entity: controller } = useEntity({ entity_uuid: "dbe0b7de-fd0c-46d8-a90c-8a9f2f896002" });
+    const { entity: controller } = useEntity({ id: "dbe0b7de-fd0c-46d8-a90c-8a9f2f896002" });
 
     const [animation, setAnimation] = useState<string | null>(null);
 
@@ -89,8 +113,6 @@ function SkeletonController() {
         if (!instance || !controller) {
             return;
         }
-
-        console.log("FOUND CONTROLLER", controller.name);
 
         jointGizmo!.addEventListener("rotationAngle-changed", e => {
             const joint = e.target.object!;

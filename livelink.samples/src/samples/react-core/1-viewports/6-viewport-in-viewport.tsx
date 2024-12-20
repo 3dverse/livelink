@@ -1,5 +1,5 @@
 //------------------------------------------------------------------------------
-import { Livelink, Canvas, Viewport, CameraController } from "@3dverse/livelink-react";
+import { Livelink, Canvas, Viewport, CameraController, useCameraEntity } from "@3dverse/livelink-react";
 
 //------------------------------------------------------------------------------
 import { DisconnectedModal, LoadingSpinner, sampleCanvasClassName } from "../../../components/SamplePlayer";
@@ -25,14 +25,27 @@ function App() {
             LoadingPanel={LoadingSpinner}
             ConnectionErrorPanel={DisconnectedModal}
         >
-            <Canvas className={sampleCanvasClassName}>
-                <Viewport className="w-full h-full">
-                    <CameraController />
-                    <Viewport className="absolute top-20 right-4 w-1/4 aspect-video border border-tertiary rounded-xl shadow-2xl">
-                        <CameraController />
-                    </Viewport>
-                </Viewport>
-            </Canvas>
+            <AppLayout />
         </Livelink>
+    );
+}
+
+//------------------------------------------------------------------------------
+function AppLayout() {
+    const { cameraEntity: mainCamera } = useCameraEntity();
+    const { cameraEntity: pipCamera } = useCameraEntity();
+
+    return (
+        <Canvas className={sampleCanvasClassName}>
+            <Viewport cameraEntity={mainCamera} className="w-full h-full">
+                <CameraController />
+                <Viewport
+                    cameraEntity={pipCamera}
+                    className="absolute top-20 right-4 w-1/4 aspect-video border border-tertiary rounded-xl shadow-2xl"
+                >
+                    <CameraController />
+                </Viewport>
+            </Viewport>
+        </Canvas>
     );
 }

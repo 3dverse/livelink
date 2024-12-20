@@ -1,5 +1,12 @@
 //------------------------------------------------------------------------------
-import { Livelink, Canvas, Viewport, Camera, DefaultCamera, LivelinkContext } from "@3dverse/livelink-react";
+import {
+    Livelink,
+    Canvas,
+    Viewport,
+    LivelinkContext,
+    useCameraEntity,
+    CameraController,
+} from "@3dverse/livelink-react";
 
 //------------------------------------------------------------------------------
 import {
@@ -30,43 +37,64 @@ function App() {
 
     return (
         <div className="w-full h-full flex relative pl-3">
-            <SamplePlayer autoConnect={false} title={"Create Session"}>
-                <Livelink
-                    sceneId={scene_id}
-                    token={token}
-                    LoadingPanel={LoadingSpinner}
-                    ConnectionErrorPanel={DisconnectedModal}
-                >
-                    <Canvas className={sampleCanvasClassName}>
-                        <Viewport className="w-full h-full">
-                            <Camera class={DefaultCamera} name="MyCamera" />
-                            <SessionSniffer setSessionId={setSessionId} />
-                        </Viewport>
-                    </Canvas>
-                </Livelink>
-            </SamplePlayer>
-            {sessionId ? (
-                <SamplePlayer autoConnect={false} title={"Join Session"}>
-                    <Livelink
-                        sessionId={sessionId}
-                        sessionOpenMode="join"
-                        token={token}
-                        LoadingPanel={LoadingSpinner}
-                        ConnectionErrorPanel={DisconnectedModal}
-                    >
-                        <Canvas className={sampleCanvasClassName}>
-                            <Viewport className="w-full h-full">
-                                <Camera class={DefaultCamera} name="MyCamera" />
-                            </Viewport>
-                        </Canvas>
-                    </Livelink>
-                </SamplePlayer>
-            ) : (
-                <div className="w-full h-full flex-col content-center justify-center">
-                    <h1 className="text-center font-medium">Start by creating a session</h1>
-                </div>
-            )}
+            <SessionCreator setSessionId={setSessionId} />
+            <SessionJoiner sessionId={sessionId} />
         </div>
+    );
+}
+
+//------------------------------------------------------------------------------
+function SessionCreator({ setSessionId }: { setSessionId: (sessionId: UUID | null) => void }) {
+    return (
+        <SamplePlayer autoConnect={false} title={"Create Session"}>
+            <Livelink
+                sceneId={scene_id}
+                token={token}
+                LoadingPanel={LoadingSpinner}
+                ConnectionErrorPanel={DisconnectedModal}
+            >
+                <SessionSniffer setSessionId={setSessionId} />
+                <AppLayout />
+            </Livelink>
+        </SamplePlayer>
+    );
+}
+
+//------------------------------------------------------------------------------
+function SessionJoiner({ sessionId }: { sessionId: UUID | null }) {
+    if (!sessionId) {
+        return (
+            <div className="w-full h-full flex-col content-center justify-center">
+                <h1 className="text-center font-medium">Start by creating a session</h1>
+            </div>
+        );
+    }
+
+    return (
+        <SamplePlayer autoConnect={false} title={"Join Session"}>
+            <Livelink
+                sessionId={sessionId}
+                sessionOpenMode="join"
+                token={token}
+                LoadingPanel={LoadingSpinner}
+                ConnectionErrorPanel={DisconnectedModal}
+            >
+                <AppLayout />
+            </Livelink>
+        </SamplePlayer>
+    );
+}
+
+//------------------------------------------------------------------------------
+function AppLayout() {
+    const { cameraEntity } = useCameraEntity();
+
+    return (
+        <Canvas className={sampleCanvasClassName}>
+            <Viewport cameraEntity={cameraEntity} className="w-full h-full">
+                <CameraController />
+            </Viewport>
+        </Canvas>
     );
 }
 

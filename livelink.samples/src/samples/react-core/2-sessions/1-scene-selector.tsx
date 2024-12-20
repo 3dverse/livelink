@@ -3,7 +3,7 @@ import { useState } from "react";
 
 //------------------------------------------------------------------------------
 import type { UUID } from "@3dverse/livelink";
-import { Livelink, Canvas, Viewport, DefaultCamera, Camera } from "@3dverse/livelink-react";
+import { Livelink, Canvas, Viewport, useCameraEntity, CameraController } from "@3dverse/livelink-react";
 
 //------------------------------------------------------------------------------
 import { DisconnectedModal, LoadingSpinner, sampleCanvasClassName } from "../../../components/SamplePlayer";
@@ -37,15 +37,24 @@ function App() {
                     LoadingPanel={LoadingSpinner}
                     ConnectionErrorPanel={DisconnectedModal}
                 >
-                    <Canvas className={sampleCanvasClassName}>
-                        <Viewport className="w-full h-full">
-                            <Camera class={DefaultCamera} name="MyCamera" />
-                        </Viewport>
-                    </Canvas>
+                    <AppLayout />
                 </Livelink>
             )}
             <SceneSelector selectedSceneId={selectedSceneId} setSceneId={setSceneId} />
         </>
+    );
+}
+
+//------------------------------------------------------------------------------
+function AppLayout() {
+    const { cameraEntity } = useCameraEntity();
+
+    return (
+        <Canvas className={sampleCanvasClassName}>
+            <Viewport cameraEntity={cameraEntity} className="w-full h-full">
+                <CameraController />
+            </Viewport>
+        </Canvas>
     );
 }
 

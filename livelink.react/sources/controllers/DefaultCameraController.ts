@@ -89,7 +89,6 @@ export class DefaultCameraController implements CameraControllerInterface {
      *
      */
     #initController() {
-        // create camera controls
         this.cameraControls.setOrbitPoint(0, 0, 0);
         this.cameraControls.setPosition(...this.camera_entity.local_transform!.position!);
         this.cameraControls.addEventListener("update", this.#onCameraUpdate);

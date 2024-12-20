@@ -1,6 +1,13 @@
 //------------------------------------------------------------------------------
-import { Camera as LivelinkCamera } from "@3dverse/livelink";
-import { Livelink, Canvas, Viewport, Camera } from "@3dverse/livelink-react";
+import { Entity } from "@3dverse/livelink";
+import {
+    Livelink,
+    Canvas,
+    Viewport,
+    CameraController,
+    CameraControllerInterface,
+    useCameraEntity,
+} from "@3dverse/livelink-react";
 
 //------------------------------------------------------------------------------
 import { DisconnectedModal, LoadingSpinner, sampleCanvasClassName } from "../../../components/SamplePlayer";
@@ -18,30 +25,6 @@ export default {
 };
 
 //------------------------------------------------------------------------------
-class CustomCamera extends LivelinkCamera {
-    private _speed = 1;
-    onCreate() {
-        const DEFAULT_RENDER_GRAPH_REF = "398ee642-030a-45e7-95df-7147f6c43392" as const;
-
-        this.local_transform = { position: [0, 2, 5] };
-        this.camera = {
-            renderGraphRef: DEFAULT_RENDER_GRAPH_REF,
-            dataJSON: { grid: true, skybox: false, gradient: true },
-        };
-        this.perspective_lens = {
-            aspectRatio: 1,
-            fovy: 60,
-            nearPlane: 0.1,
-            farPlane: 10000,
-        };
-    }
-
-    onUpdate({ elapsed_time }: { elapsed_time: number }): void {
-        this.local_transform!.position![1] = 1 + Math.sin(elapsed_time * this._speed);
-    }
-}
-
-//------------------------------------------------------------------------------
 function App() {
     return (
         <Livelink
@@ -50,11 +33,38 @@ function App() {
             LoadingPanel={LoadingSpinner}
             ConnectionErrorPanel={DisconnectedModal}
         >
-            <Canvas className={sampleCanvasClassName}>
-                <Viewport className="w-full h-full">
-                    <Camera class={CustomCamera} name={"MyCustomCamera"} />
-                </Viewport>
-            </Canvas>
+            <AppLayout />
         </Livelink>
+    );
+}
+
+//------------------------------------------------------------------------------
+class CustomCameraController implements CameraControllerInterface {
+    release(): void {
+        clearInterval(this.#interval);
+    }
+
+    #speed = 1;
+    #elapsedTime: number = 0;
+    #interval: number;
+    constructor({ camera_entity }: { camera_entity: Entity; dom_element: HTMLElement }) {
+        const PERIOD = 1000 / 60;
+        this.#interval = setInterval(() => {
+            camera_entity.local_transform!.position![1] = 1 + Math.sin(this.#elapsedTime * 0.001) * this.#speed;
+            this.#elapsedTime += PERIOD;
+        }, PERIOD);
+    }
+}
+
+//------------------------------------------------------------------------------
+function AppLayout() {
+    const { cameraEntity } = useCameraEntity();
+
+    return (
+        <Canvas className={sampleCanvasClassName}>
+            <Viewport cameraEntity={cameraEntity} className="w-full h-full">
+                <CameraController controllerClass={CustomCameraController} />
+            </Viewport>
+        </Canvas>
     );
 }

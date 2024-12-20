@@ -1,5 +1,12 @@
 //------------------------------------------------------------------------------
-import { Livelink, Canvas, Viewport, Camera, DefaultCamera, ViewportContext } from "@3dverse/livelink-react";
+import {
+    Livelink,
+    Canvas,
+    Viewport,
+    ViewportContext,
+    useCameraEntity,
+    CameraController,
+} from "@3dverse/livelink-react";
 
 //------------------------------------------------------------------------------
 import { DisconnectedModal, LoadingSpinner, sampleCanvasClassName } from "../../../components/SamplePlayer";
@@ -27,17 +34,25 @@ function App() {
                 LoadingPanel={LoadingSpinner}
                 ConnectionErrorPanel={DisconnectedModal}
             >
-                <Canvas className={sampleCanvasClassName}>
-                    <Viewport className="w-full h-full">
-                        <Camera class={DefaultCamera} name={"MyCamera"} />
-                        <RenderTargetSelector />
-                    </Viewport>
-                </Canvas>
+                <AppLayout />
             </Livelink>
         </>
     );
 }
 
+//------------------------------------------------------------------------------
+function AppLayout() {
+    const { cameraEntity } = useCameraEntity();
+
+    return (
+        <Canvas className={sampleCanvasClassName}>
+            <Viewport cameraEntity={cameraEntity} className="w-full h-full">
+                <CameraController />
+                <RenderTargetSelector />
+            </Viewport>
+        </Canvas>
+    );
+}
 //------------------------------------------------------------------------------
 function RenderTargetSelector() {
     const { viewport } = useContext(ViewportContext);
@@ -52,7 +67,7 @@ function RenderTargetSelector() {
 
     useEffect(() => {
         if (viewport && viewport.camera) {
-            viewport.camera.camera!.renderTargetIndex = selectedRenderTarget;
+            viewport.camera.camera_entity.camera!.renderTargetIndex = selectedRenderTarget;
         }
     }, [viewport, selectedRenderTarget]);
 

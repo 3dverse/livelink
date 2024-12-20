@@ -79,8 +79,10 @@ export class OffscreenSurface<ContextType extends CanvasContextType, ContextOpti
     /**
      *
      */
-    get cameras(): Readonly<Array<Entity>> {
-        return this.viewports.map(v => v.camera?.camera_entity).filter(c => c !== null) as Entity[];
+    get cameras(): readonly Entity[] {
+        return this.viewports
+            .map(v => (v.camera?.camera_entity ? v.camera.camera_entity : null))
+            .filter(c => c !== null);
     }
 
     /**

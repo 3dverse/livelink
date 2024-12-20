@@ -4,10 +4,10 @@ import {
     Livelink,
     Canvas,
     Viewport,
-    Camera,
-    DefaultCamera,
     ViewportContext,
     LivelinkContext,
+    useCameraEntity,
+    CameraController,
 } from "@3dverse/livelink-react";
 import { InactivityWarning, RenderGraphSettings } from "@3dverse/livelink-react-ui";
 
@@ -37,33 +37,38 @@ function App() {
             ConnectionErrorPanel={DisconnectedModal}
             InactivityWarningPanel={InactivityWarning}
         >
-            <Canvas className={sampleCanvasClassName}>
-                <Viewport className="w-full h-full">
-                    <Camera class={DefaultCamera} name={"MyCamera"} />
-                    <RenderGraphWidget />
-                </Viewport>
-            </Canvas>
+            <AppLayout />
         </Livelink>
     );
 }
+
+//------------------------------------------------------------------------------
+function AppLayout() {
+    const { cameraEntity } = useCameraEntity();
+
+    return (
+        <Canvas className={sampleCanvasClassName}>
+            <Viewport cameraEntity={cameraEntity} className="w-full h-full">
+                <CameraController />
+                <RenderGraphWidget />
+            </Viewport>
+        </Canvas>
+    );
+}
+
 //------------------------------------------------------------------------------
 function RenderGraphWidget() {
     const { instance } = useContext(LivelinkContext);
-    const { viewport } = useContext(ViewportContext);
-    const [cameraEntity, setCameraEntity] = useState<LivelinkCamera | null>(null);
+    const { camera } = useContext(ViewportContext);
 
-    useEffect(() => {
-        setCameraEntity(viewport?.camera ?? null);
-    }, [viewport]);
-
-    if (!instance) {
+    if (!instance || !camera) {
         return null;
     }
 
     return (
         <aside className="absolute top-4 left-4 bg-ground rounded-lg p-2">
             <p className="text-xs">Render graph settings</p>
-            <RenderGraphSettings userToken={instance.session.token} cameraEntity={cameraEntity} />
+            <RenderGraphSettings userToken={instance.session.token} cameraEntity={camera.camera_entity} />
         </aside>
     );
 }

@@ -64,14 +64,13 @@ export class Scene extends EventTarget {
     /**
      *
      */
-    async newEntity<EntityType extends Entity>(
-        entity_type: { new (_: Scene): EntityType },
+    async newEntity(
         name: string,
+        components: Record<string, unknown>,
         options?: EntityCreationOptions,
-    ): Promise<EntityType> {
-        let entity = new entity_type(this).init(name);
-        entity = new Proxy(entity, Entity.handler) as EntityType;
-        entity.onCreate();
+    ): Promise<Entity> {
+        let entity = new Entity(this, components).init(name);
+        entity = new Proxy(entity, Entity.handler);
         await entity._instantiate(
             this.#core.spawnEntity({ entity, options }),
             options?.disable_proxy === true ? "off" : "on",
@@ -82,16 +81,17 @@ export class Scene extends EventTarget {
     /**
      *
      */
-    async newEntities<EntityType extends Entity>(
-        entity_type: { new (_: Scene): EntityType },
-        entity_names: Array<string>,
+    async newEntities(
+        componentsArray: Array<{ name: string; components: Record<string, unknown> }>,
         options?: EntityCreationOptions,
-    ): Promise<Array<EntityType>> {
-        const entities = entity_names.map((name, index) => {
-            let entity = new entity_type(this).init(name, `entity_${index}`);
-            entity = new Proxy(entity, Entity.handler) as EntityType;
-            entity.onCreate();
-            return entity;
+    ): Promise<Array<Entity>> {
+        const entities = componentsArray.map(({ name, components }, index) => {
+            // createEntities need entities to have unique identifiers to create
+            // the hierarchy correctly. We use the index to create a temporary
+            // unique identifier.
+            const uniqueId = `entity_${index}`;
+            const entity = new Entity(this, components).init(name, uniqueId);
+            return new Proxy(entity, Entity.handler);
         });
 
         const promise = this.#core.createEntities({ entities, options });
@@ -109,41 +109,30 @@ export class Scene extends EventTarget {
     /**
      *
      */
-    async findEntities<EntityType extends Entity>(
-        entity_type: { new (_: Scene): EntityType },
-        {
-            entity_uuid,
-        }: {
-            entity_uuid: UUID;
-        },
-    ): Promise<Array<EntityType>> {
+    async findEntities({ entity_uuid }: { entity_uuid: UUID }): Promise<Array<Entity>> {
         const foundEntities = this.entity_registry.find({ entity_euid: entity_uuid });
         if (foundEntities.length > 0) {
-            return foundEntities as Array<EntityType>;
+            return foundEntities;
         }
 
         const editor_entities = await this.#core.findEntitiesByEUID({ entity_uuid });
-
         if (editor_entities.length === 0) {
             return [];
         }
 
-        return this.#addEditorEntities(entity_type, { editor_entities, resolve_ancestors: true });
+        return this.#addEditorEntities({ editor_entities, resolve_ancestors: true });
     }
 
     /**
      *
      */
-    async findEntity<EntityType extends Entity>(
-        entity_type: { new (_: Scene): EntityType },
-        {
-            entity_uuid,
-            linkage = [],
-        }: {
-            entity_uuid: UUID;
-            linkage?: Array<UUID>;
-        },
-    ): Promise<EntityType | null> {
+    async findEntity({
+        entity_uuid,
+        linkage = [],
+    }: {
+        entity_uuid: UUID;
+        linkage?: Array<UUID>;
+    }): Promise<Entity | null> {
         const foundEntity = this.entity_registry
             .find({ entity_euid: entity_uuid })
             .find(
@@ -153,16 +142,16 @@ export class Scene extends EventTarget {
             );
 
         if (foundEntity) {
-            return foundEntity as EntityType;
+            return foundEntity;
         }
 
-        const entity_entity = await this.#core.getEntity({ entity_uuid, linkage });
-        if (!entity_entity) {
+        const editor_entity = await this.#core.getEntity({ entity_uuid, linkage });
+        if (!editor_entity) {
             return null;
         }
 
-        const entities = await this.#addEditorEntities(entity_type, {
-            editor_entities: [entity_entity],
+        const entities = await this.#addEditorEntities({
+            editor_entities: [editor_entity],
             resolve_ancestors: true,
         });
         return entities[0];
@@ -171,35 +160,29 @@ export class Scene extends EventTarget {
     /**
      *  @deprecated
      */
-    async findEntitiesWithComponents<EntityType extends Entity>(
-        entity_type: { new (_: Scene): EntityType },
-        {
-            mandatory_components,
-            forbidden_components,
-        }: {
-            mandatory_components: Array<ComponentType>;
-            forbidden_components?: Array<ComponentType>;
-        },
-    ): Promise<Array<EntityType>> {
+    async findEntitiesWithComponents({
+        mandatory_components,
+        forbidden_components,
+    }: {
+        mandatory_components: Array<ComponentType>;
+        forbidden_components?: Array<ComponentType>;
+    }): Promise<Array<Entity>> {
         const editor_entities = await this.#core.findEntitiesWithComponents({
             mandatory_components,
             forbidden_components,
         });
-        return this.#addEditorEntities(entity_type, { editor_entities, resolve_ancestors: true });
+        return this.#addEditorEntities({ editor_entities, resolve_ancestors: true });
     }
 
     /**
      *  @deprecated
      */
-    async findEntitiesByNames<EntityType extends Entity>(
-        entity_type: { new (_: Scene): EntityType },
-        { entity_names }: { entity_names: Array<string> },
-    ): Promise<Array<EntityType>> {
+    async findEntitiesByNames({ entity_names }: { entity_names: Array<string> }): Promise<Array<Entity>> {
         const editor_entities = await this.#core.findEntitiesByNames({
             entity_names,
         });
 
-        return this.#addEditorEntities(entity_type, { editor_entities, resolve_ancestors: true });
+        return this.#addEditorEntities({ editor_entities, resolve_ancestors: true });
     }
 
     /**
@@ -338,7 +321,7 @@ export class Scene extends EventTarget {
             return null;
         }
         const entity_ref = data_object[entity_name] as { linkage: Array<UUID>; originalEUID: UUID };
-        return this.findEntity(Entity, { entity_uuid: entity_ref.originalEUID, linkage: entity_ref.linkage });
+        return this.findEntity({ entity_uuid: entity_ref.originalEUID, linkage: entity_ref.linkage });
     }
 
     /**
@@ -370,23 +353,19 @@ export class Scene extends EventTarget {
     /**
      *
      */
-    #addEditorEntities<EntityType extends Entity>(
-        entity_type: { new (_: Scene): EntityType },
-        {
-            editor_entities,
-            resolve_ancestors,
-        }: {
-            editor_entities: Array<EditorEntity>;
-            resolve_ancestors: boolean;
-        },
-    ): Promise<Array<EntityType>> {
-        const isCameraEntityType = entity_type.prototype instanceof Camera;
+    #addEditorEntities({
+        editor_entities,
+        resolve_ancestors,
+    }: {
+        editor_entities: Array<EditorEntity>;
+        resolve_ancestors: boolean;
+    }): Promise<Array<Entity>> {
         const resolveEntities = editor_entities.map(async editor_entity => {
-            let entity = this.entity_registry.get({ entity_rtid: BigInt(editor_entity.rtid) }) as EntityType | null;
+            let entity = this.entity_registry.get({ entity_rtid: BigInt(editor_entity.rtid) });
 
             if (!entity) {
-                const entity_instance = new entity_type(this);
-                entity = new Proxy(entity_instance.init(editor_entity), Entity.handler) as EntityType;
+                entity = new Entity(this).init(editor_entity);
+                entity = new Proxy(entity, Entity.handler);
 
                 this.entity_registry.add({ entity });
 
@@ -394,6 +373,7 @@ export class Scene extends EventTarget {
                     await this.resolveAncestors({ entity_rtid: BigInt(editor_entity.rtid) });
                 }
             }
+
             return entity;
         });
         return Promise.all(resolveEntities);
@@ -404,7 +384,7 @@ export class Scene extends EventTarget {
      */
     async _getChildren({ entity_rtid }: { entity_rtid: RTID }): Promise<Array<Entity>> {
         const editor_entities = await this.#core.getChildren({ entity_rtid });
-        const children = await this.#addEditorEntities(Entity, { editor_entities, resolve_ancestors: false });
+        const children = await this.#addEditorEntities({ editor_entities, resolve_ancestors: false });
         children.forEach(child => child._setParent(this.entity_registry.get({ entity_rtid })!));
         return children;
     }
@@ -453,7 +433,7 @@ export class Scene extends EventTarget {
     async resolveAncestors({ entity_rtid }: { entity_rtid: RTID }): Promise<Array<EditorEntity>> {
         const ancestor_editor_entities = await this.#core.resolveAncestors({ entity_rtid: BigInt(entity_rtid) });
 
-        await this.#addEditorEntities(Entity, {
+        await this.#addEditorEntities({
             editor_entities: ancestor_editor_entities,
             resolve_ancestors: false,
         });

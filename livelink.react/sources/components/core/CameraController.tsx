@@ -25,22 +25,22 @@ export function CameraController({
         new (_: { camera_entity: Entity; dom_element: HTMLElement }): CameraControllerInterface;
     };
 }) {
-    const { viewportDomElement, cameraEntity } = useContext(ViewportContext);
+    const { viewportDomElement, camera } = useContext(ViewportContext);
 
     useEffect(() => {
-        if (!viewportDomElement || !cameraEntity) {
+        if (!viewportDomElement || !camera) {
             return;
         }
 
         const controller = new controllerClass({
             dom_element: viewportDomElement,
-            camera_entity: cameraEntity,
+            camera_entity: camera.camera_entity,
         });
 
         return () => {
             controller.release();
         };
-    }, [viewportDomElement, cameraEntity]);
+    }, [viewportDomElement, camera]);
 
     return null;
 }

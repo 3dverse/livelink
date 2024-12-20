@@ -18,7 +18,7 @@ export class Viewport extends EventTarget {
     /**
      * @deprecated
      */
-    TO_REMOVE__markViewportAsReady() {
+    #TO_REMOVE__markViewportAsReady() {
         this.TO_REMOVE__ready = true;
         this.#core.TO_REMOVE__startIfReady();
     }
@@ -126,6 +126,7 @@ export class Viewport extends EventTarget {
     set camera(camera: Camera) {
         this.#camera = camera;
         this.#core.refreshViewports();
+        this.#TO_REMOVE__markViewportAsReady();
     }
 
     /**
@@ -300,7 +301,7 @@ export class Viewport extends EventTarget {
      * @internal
      */
     onResize(): void {
-        this.camera?.updateLens();
+        this.camera?.updateProjectionMatrix();
         for (const overlay of this.#overlays) {
             overlay.resize({ width: this.width, height: this.height });
         }

@@ -1,5 +1,5 @@
 //------------------------------------------------------------------------------
-import { Livelink, Canvas, Viewport, CameraController } from "@3dverse/livelink-react";
+import { Livelink, Canvas, Viewport, CameraController, useCameraEntity } from "@3dverse/livelink-react";
 
 //------------------------------------------------------------------------------
 import { DisconnectedModal, LoadingSpinner, sampleCanvasClassName } from "../../../components/SamplePlayer";
@@ -25,24 +25,36 @@ function App() {
             LoadingPanel={LoadingSpinner}
             ConnectionErrorPanel={DisconnectedModal}
         >
-            <div className="flex basis-full gap-2">
-                <Canvas className={`${sampleCanvasClassName} flex flex-col`}>
-                    <Viewport className="basis-1/2">
-                        <CameraController />
-                    </Viewport>
-                    <Viewport className="basis-1/2">
-                        <CameraController />
-                    </Viewport>
-                </Canvas>
-                <Canvas className={`${sampleCanvasClassName} flex flex-row`}>
-                    <Viewport className="basis-1/2">
-                        <CameraController />
-                    </Viewport>
-                    <Viewport className="basis-1/2">
-                        <CameraController />
-                    </Viewport>
-                </Canvas>
-            </div>
+            <AppLayout />
         </Livelink>
+    );
+}
+
+//------------------------------------------------------------------------------
+function AppLayout() {
+    const { cameraEntity: cameraEntity1 } = useCameraEntity();
+    const { cameraEntity: cameraEntity2 } = useCameraEntity();
+    const { cameraEntity: cameraEntity3 } = useCameraEntity();
+    const { cameraEntity: cameraEntity4 } = useCameraEntity();
+
+    return (
+        <div className="flex basis-full gap-2">
+            <Canvas className={`${sampleCanvasClassName} flex flex-col`}>
+                <Viewport cameraEntity={cameraEntity1} className="basis-1/2">
+                    <CameraController />
+                </Viewport>
+                <Viewport cameraEntity={cameraEntity2} className="basis-1/2">
+                    <CameraController />
+                </Viewport>
+            </Canvas>
+            <Canvas className={`${sampleCanvasClassName} flex flex-row`}>
+                <Viewport cameraEntity={cameraEntity3} className="basis-1/2">
+                    <CameraController />
+                </Viewport>
+                <Viewport cameraEntity={cameraEntity4} className="basis-1/2">
+                    <CameraController />
+                </Viewport>
+            </Canvas>
+        </div>
     );
 }

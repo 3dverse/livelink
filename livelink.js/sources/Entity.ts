@@ -88,8 +88,14 @@ export class Entity extends EntityBase {
     /**
      * @internal
      */
-    constructor(private readonly _scene: Scene) {
+    constructor(
+        private readonly _scene: Scene,
+        components?: Record<ComponentType, unknown>,
+    ) {
         super();
+        if (components) {
+            this._updateFromEvent({ updated_components: components });
+        }
     }
 
     /**

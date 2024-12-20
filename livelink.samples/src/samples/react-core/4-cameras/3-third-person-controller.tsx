@@ -10,7 +10,7 @@ import {
     Keyboard,
     Mouse,
 } from "@3dverse/livelink";
-import { LivelinkContext, Livelink, Viewport, ViewportContext, Canvas, Camera } from "@3dverse/livelink-react";
+import { LivelinkContext, Livelink, Viewport, ViewportContext, Canvas, useEntity } from "@3dverse/livelink-react";
 
 //------------------------------------------------------------------------------
 import { LoadingSpinner, sampleCanvasClassName } from "../../../components/SamplePlayer";
@@ -30,43 +30,31 @@ export default {
 };
 
 //------------------------------------------------------------------------------
-class TPController extends Entity {
-    onCreate() {
-        this.auto_broadcast = "off";
-        this.local_transform = { position: [0, 0, 0] };
-        this.scene_ref = { value: characterControllerSceneUUID };
-    }
-}
-
-//------------------------------------------------------------------------------
 function App() {
     return (
         <Livelink sceneId={scene_id} token={token} LoadingPanel={LoadingSpinner}>
-            <Canvas className={sampleCanvasClassName}>
-                <Viewport className="w-full h-full">
-                    <Controller />
-                </Viewport>
-            </Canvas>
+            <AppLayout />
         </Livelink>
     );
 }
 
 //------------------------------------------------------------------------------
-function Controller() {
+function AppLayout() {
     const { instance } = useContext(LivelinkContext);
-    const { viewportDomElement } = useContext(ViewportContext);
-
-    const [startSimulation, setStartSimulation] = useState<boolean>(false);
 
     const instantiatePlayerSceneAndFindThirdPersonCamera = useCallback(
-        async ({ instance }: { instance: LivelinkInstance }) => {
+        async ({ instance }: { instance: LivelinkInstance }): Promise<Entity | null> => {
             if (!instance) {
                 return null;
             }
 
-            const playerSceneEntity = await instance.scene.newEntity(TPController, "PlayerSceneEntity", {
-                delete_on_client_disconnection: true,
-            });
+            const playerSceneEntity = await instance.scene.newEntity(
+                "PlayerSceneEntity",
+                { local_transform: [0, 0, 0], scene_ref: { value: characterControllerSceneUUID } },
+                {
+                    delete_on_client_disconnection: true,
+                },
+            );
 
             const children = await playerSceneEntity.getChildren();
             const thirdPersonController = children.find(child => child.script_map !== undefined);
@@ -79,13 +67,30 @@ function Controller() {
 
             setStartSimulation(true);
 
-            return thirdPersonCameraEntity as LivelinkCamera;
+            return thirdPersonCameraEntity ?? null;
         },
         [instance],
     );
 
+    const { entity: cameraEntity } = useEntity({ finder: instantiatePlayerSceneAndFindThirdPersonCamera });
+    const [startSimulation, setStartSimulation] = useState<boolean>(false);
+
+    return (
+        <Canvas className={sampleCanvasClassName}>
+            <Viewport cameraEntity={cameraEntity} className="w-full h-full">
+                {startSimulation && <SimulationStarter />}
+            </Viewport>
+        </Canvas>
+    );
+}
+
+//------------------------------------------------------------------------------
+function SimulationStarter() {
+    const { instance } = useContext(LivelinkContext);
+    const { viewportDomElement } = useContext(ViewportContext);
+
     useEffect(() => {
-        if (!startSimulation || !instance || !viewportDomElement) {
+        if (!instance || !viewportDomElement) {
             return;
         }
 
@@ -98,7 +103,7 @@ function Controller() {
         instance.addInputDevice(Mouse, viewportDomElement);
 
         instance.startSimulation();
-    }, [startSimulation, instance, viewportDomElement]);
+    }, [instance, viewportDomElement]);
 
-    return <Camera finder={instantiatePlayerSceneAndFindThirdPersonCamera} />;
+    return null;
 }

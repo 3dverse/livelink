@@ -1,5 +1,5 @@
 //------------------------------------------------------------------------------
-import { Livelink, Canvas, Viewport, CameraController } from "@3dverse/livelink-react";
+import { Livelink, Canvas, Viewport, CameraController, useCameraEntity } from "@3dverse/livelink-react";
 
 //------------------------------------------------------------------------------
 import { DisconnectedModal, LoadingSpinner, sampleCanvasClassName } from "../../../components/SamplePlayer";
@@ -25,18 +25,28 @@ function App() {
             LoadingPanel={LoadingSpinner}
             ConnectionErrorPanel={DisconnectedModal}
         >
-            <div className="flex basis-full gap-2">
-                <Canvas className={sampleCanvasClassName}>
-                    <Viewport className="w-full h-full">
-                        <CameraController />
-                    </Viewport>
-                </Canvas>
-                <Canvas className={sampleCanvasClassName}>
-                    <Viewport className="w-full h-full">
-                        <CameraController />
-                    </Viewport>
-                </Canvas>
-            </div>
+            <AppLayout />
         </Livelink>
+    );
+}
+
+//------------------------------------------------------------------------------
+function AppLayout() {
+    const { cameraEntity: cameraEntity1 } = useCameraEntity();
+    const { cameraEntity: cameraEntity2 } = useCameraEntity();
+
+    return (
+        <div className="flex basis-full gap-2">
+            <Canvas className={sampleCanvasClassName}>
+                <Viewport cameraEntity={cameraEntity1} className="w-full h-full">
+                    <CameraController />
+                </Viewport>
+            </Canvas>
+            <Canvas className={sampleCanvasClassName}>
+                <Viewport cameraEntity={cameraEntity2} className="w-full h-full">
+                    <CameraController />
+                </Viewport>
+            </Canvas>
+        </div>
     );
 }

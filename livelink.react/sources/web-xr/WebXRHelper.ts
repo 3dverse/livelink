@@ -1,27 +1,10 @@
 //------------------------------------------------------------------------------
-import { Livelink, OffscreenSurface, RelativeRect, Viewport, Vec3, Quat, Entity } from "@3dverse/livelink";
+import { Livelink, OffscreenSurface, RelativeRect, Viewport, Vec3, Quat, Entity, Camera } from "@3dverse/livelink";
 import { XRContext } from "@3dverse/livelink-react/sources/web-xr/XRContext";
 import { Quaternion, Vector3 } from "three";
 
 //------------------------------------------------------------------------------
 import { WebXRInputRelay } from "./WebXRInputRelay";
-
-//------------------------------------------------------------------------------
-export class WebXRCamera extends Entity {
-    onCreate(): void {
-        // TODO: WebXRHelper.cameras_origin as an Entity might be a better
-        // approach to have a camera default origin but the FTL engine crashes
-        // when trying to set parent (lineage) of the camera. Actually it
-        // crashes a few time after, but reparenting is visible in the scene graph.
-        // this.lineage = { parentUUID: WebXRHelper.cameras_origin!.id! };
-        this.local_transform = {};
-        this.perspective_lens = {};
-        this.camera = {
-            renderGraphRef: "398ee642-030a-45e7-95df-7147f6c43392",
-            dataJSON: { grid: false, displayBackground: false },
-        };
-    }
-}
 
 //------------------------------------------------------------------------------
 type XRViewports = Array<{
@@ -221,7 +204,7 @@ export class WebXRHelper {
             this.#configureScaleFactor(xr_views);
         }
 
-        this.#liveLink!.addViewports({ viewports: this.#viewports.map(v => v.livelink_viewport) });
+        this.#liveLink.addViewports({ viewports: this.#viewports.map(v => v.livelink_viewport) });
         return this.#viewports.map(v => v.livelink_viewport);
     }
 
@@ -667,11 +650,18 @@ export class WebXRHelper {
      * Create the livelink cameras.
      * @return Resolves with the created WebXRCamera instances
      */
-    async createCameras(): Promise<WebXRCamera[]> {
+    async createCameras(): Promise<Entity[]> {
         const cameras = await Promise.all(
             this.#viewports.map(async ({ xr_view, xr_viewport, livelink_viewport }, index) => {
-                const camera = await this.#liveLink!.scene.newEntity(WebXRCamera, `XR_camera_${xr_view.eye}_${index}`);
-                //livelink_viewport.camera = camera;
+                const camera = await this.#liveLink!.scene.newEntity(`XR_camera_${xr_view.eye}_${index}`, {
+                    local_transform: {},
+                    perspective_lens: {},
+                    camera: {
+                        renderGraphRef: "398ee642-030a-45e7-95df-7147f6c43392",
+                        dataJSON: { grid: false, displayBackground: false },
+                    },
+                });
+                livelink_viewport.camera = new Camera({ camera_entity: camera, viewport: livelink_viewport });
 
                 camera.perspective_lens = this.#computePerspectiveLens(
                     xr_view.projectionMatrix,

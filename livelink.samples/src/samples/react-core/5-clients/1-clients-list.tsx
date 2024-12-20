@@ -8,9 +8,9 @@ import {
     Canvas,
     Viewport,
     ClientsContext,
-    Camera,
-    DefaultCamera,
     LivelinkContext,
+    useCameraEntity,
+    CameraController,
 } from "@3dverse/livelink-react";
 
 //------------------------------------------------------------------------------
@@ -38,17 +38,27 @@ function App() {
             ConnectionErrorPanel={DisconnectedModal}
         >
             <Clients>
-                <Canvas className={sampleCanvasClassName}>
-                    <Viewport className="w-full h-full">
-                        <Camera class={DefaultCamera} name={"MyCamera"} />
-                        <ClientList />
-                    </Viewport>
-                </Canvas>
+                <AppLayout />
             </Clients>
         </Livelink>
     );
 }
 
+//------------------------------------------------------------------------------
+function AppLayout() {
+    const { cameraEntity } = useCameraEntity();
+
+    return (
+        <Canvas className={sampleCanvasClassName}>
+            <Viewport cameraEntity={cameraEntity} className="w-full h-full">
+                <CameraController />
+                <ClientList />
+            </Viewport>
+        </Canvas>
+    );
+}
+
+//------------------------------------------------------------------------------
 function ClientList() {
     const { instance } = useContext(LivelinkContext);
     const { clients } = useContext(ClientsContext);

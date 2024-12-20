@@ -60,7 +60,17 @@ export class Camera {
 
         this.camera_entity = camera_entity;
         this.viewport = viewport;
+
+        this.updateProjectionMatrix();
+        camera_entity.addEventListener("entity-updated", this.#onEntityUpdated);
     }
+
+    /**
+     *
+     */
+    #onEntityUpdated = () => {
+        this.updateProjectionMatrix();
+    };
 
     /**
      *
@@ -92,11 +102,11 @@ export class Camera {
     /**
      *
      */
-    updateLens() {
+    updateProjectionMatrix() {
         if (this.camera_entity.perspective_lens) {
-            this.#computePerspectiveLens();
+            this.#computePerspectiveProjection();
         } else if (this.camera_entity.orthographic_lens) {
-            this.#computeOrthographicLens();
+            this.#computeOrthographicProjection();
         }
     }
 
@@ -117,7 +127,7 @@ export class Camera {
     /**
      *
      */
-    #computePerspectiveLens() {
+    #computePerspectiveProjection() {
         const lens = this.camera_entity.perspective_lens as Required<Components.PerspectiveLens>;
         mat4.perspective(
             this.#clip_from_view_matrix,
@@ -131,7 +141,7 @@ export class Camera {
     /**
      *
      */
-    #computeOrthographicLens() {
+    #computeOrthographicProjection() {
         const lens = this.camera_entity.orthographic_lens as Required<Components.OrthographicLens>;
         mat4.ortho(this.#clip_from_view_matrix, lens.left, lens.right, lens.bottom, lens.top, lens.zNear, lens.zFar);
     }
