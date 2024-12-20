@@ -2,18 +2,22 @@ import type {
     LivelinkCore,
     RTID,
     UUID,
-    EntityCreationOptions as EntityCreationOptionsBase,
+    EntityCreationCoreOptions,
     ScriptEvent,
     EditorEntity,
     ComponentType,
 } from "@3dverse/livelink.core";
-import { Entity } from "./Entity";
-import { Camera } from "./Camera";
+import { Entity, ComponentsRecord, ScriptDataObject } from "./Entity";
 import { EntityRegistry } from "./EntityRegistry";
 import { Settings } from "./Settings";
 
-export type EntityCreationOptions = EntityCreationOptionsBase & {
+/**
+ *
+ */
+export type EntityCreationOptions = EntityCreationCoreOptions & {
     disable_proxy?: boolean;
+    auto_broadcast?: boolean;
+    auto_update?: boolean;
 };
 
 const PHYSICS_EVENT_MAP_ID = "7a8cc05e-8659-4b23-99d1-1352d13e2020";
@@ -64,17 +68,10 @@ export class Scene extends EventTarget {
     /**
      *
      */
-    async newEntity(
-        name: string,
-        components: Record<string, unknown>,
-        options?: EntityCreationOptions,
-    ): Promise<Entity> {
-        let entity = new Entity(this, components).init(name);
-        entity = new Proxy(entity, Entity.handler);
-        await entity._instantiate(
-            this.#core.spawnEntity({ entity, options }),
-            options?.disable_proxy === true ? "off" : "on",
-        );
+    async newEntity(name: string, components: ComponentsRecord, options?: EntityCreationOptions): Promise<Entity> {
+        const entity = this.#createEntityProxy({ name, components });
+        const editor_entity = await this.#core.spawnEntity({ entity, options });
+        this.#instantiateEntity({ entity, editor_entity, options });
         return entity;
     }
 
@@ -82,28 +79,53 @@ export class Scene extends EventTarget {
      *
      */
     async newEntities(
-        componentsArray: Array<{ name: string; components: Record<string, unknown> }>,
+        componentsArray: Array<{ name: string; components: ComponentsRecord }>,
         options?: EntityCreationOptions,
     ): Promise<Array<Entity>> {
-        const entities = componentsArray.map(({ name, components }, index) => {
-            // createEntities need entities to have unique identifiers to create
-            // the hierarchy correctly. We use the index to create a temporary
-            // unique identifier.
-            const uniqueId = `entity_${index}`;
-            const entity = new Entity(this, components).init(name, uniqueId);
-            return new Proxy(entity, Entity.handler);
+        const entities = componentsArray.map(this.#createEntityProxy);
+        const editor_entities = await this.#core.createEntities({ entities, options });
+        for (let i = 0; i < entities.length; i++) {
+            await this.#instantiateEntity({ entity: entities[i], editor_entity: editor_entities[i], options });
+        }
+        return entities;
+    }
+
+    /**
+     *
+     */
+    #createEntityProxy = ({ name, components }: { name: string; components: ComponentsRecord }): Entity => {
+        const entity = new Entity({ scene: this, name, components });
+        return new Proxy(entity, Entity.handler);
+    };
+
+    /**
+     *
+     */
+    #instantiateEntity({
+        entity,
+        editor_entity,
+        options,
+    }: {
+        entity: Entity;
+        editor_entity: EditorEntity;
+        options?: EntityCreationOptions;
+    }): void {
+        entity._instantiate({
+            editor_entity,
+            proxy_state: options?.disable_proxy === true ? "off" : "on",
         });
 
-        const promise = this.#core.createEntities({ entities, options });
-
-        for (let i = 0; i < entities.length; i++) {
-            await entities[i]._instantiate(
-                promise.then(editor_entities => editor_entities[i]),
-                options?.disable_proxy === true ? "off" : "on",
-            );
+        if (!options) {
+            return;
         }
 
-        return entities;
+        if (options.auto_broadcast !== undefined) {
+            entity.auto_broadcast = options.auto_broadcast ? "on" : "off";
+        }
+
+        if (options.auto_update !== undefined) {
+            entity.auto_update = options.auto_update ? "on" : "off";
+        }
     }
 
     /**
@@ -227,7 +249,7 @@ export class Scene extends EventTarget {
         event_name: string;
         emitter_entity?: Entity;
         target_entities?: Array<Entity>;
-        data_object?: Record<string, unknown>;
+        data_object?: ScriptDataObject;
     }) {
         return this.#core.fireEvent({
             event_map_id,
@@ -364,7 +386,7 @@ export class Scene extends EventTarget {
             let entity = this.entity_registry.get({ entity_rtid: BigInt(editor_entity.rtid) });
 
             if (!entity) {
-                entity = new Entity(this).init(editor_entity);
+                entity = new Entity({ scene: this, editor_entity });
                 entity = new Proxy(entity, Entity.handler);
 
                 this.entity_registry.add({ entity });

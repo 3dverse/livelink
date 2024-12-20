@@ -7,6 +7,6 @@ import type { Components } from "@3dverse/livelink.core";
 /**
  *
  */
-export type ComponentRecord = {
-    {{componentAttributes}}
+export type ComponentsRecord = {
+{{componentAttributes}}
 }

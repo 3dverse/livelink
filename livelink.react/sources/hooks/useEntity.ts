@@ -2,14 +2,21 @@
 import { useContext, useEffect, useReducer, useState } from "react";
 
 //------------------------------------------------------------------------------
-import { Livelink as LivelinkInstance, Entity, type UUID, EntityCreationOptions } from "@3dverse/livelink";
+import {
+    Livelink as LivelinkInstance,
+    Entity,
+    type UUID,
+    ComponentsRecord,
+    RenderGraphDataObject,
+    EntityCreationOptions,
+} from "@3dverse/livelink";
 
 //------------------------------------------------------------------------------
 import { LivelinkContext } from "../components/core/Livelink";
 
 //------------------------------------------------------------------------------
 export type EntityId = { id: UUID };
-export type EntityInstance = { name: string; components: Record<string, unknown>; options: EntityCreationOptions };
+export type EntityInstance = { name: string; components: ComponentsRecord; options: EntityCreationOptions };
 export type EntityFinder = {
     finder: ({ instance }: { instance: LivelinkInstance }) => Promise<Entity | null>;
 };
@@ -78,7 +85,7 @@ export function useEntity(entityProvider: EntityProvider) {
 
 //------------------------------------------------------------------------------
 export function useCameraEntity(
-    props: { name?: string; renderGraphRef?: UUID; settings?: Record<string, unknown>; renderTargetIndex?: number } = {
+    props: { name?: string; renderGraphRef?: UUID; settings?: RenderGraphDataObject; renderTargetIndex?: number } = {
         name: "Camera",
         renderGraphRef: "398ee642-030a-45e7-95df-7147f6c43392",
         renderTargetIndex: -1,
@@ -102,7 +109,7 @@ export function useCameraEntity(
                 farPlane: 10000,
             },
         },
-        options: { delete_on_client_disconnection: true },
+        options: { auto_broadcast: false, delete_on_client_disconnection: true },
     });
 
     return { isPending, cameraEntity };

@@ -6,38 +6,43 @@ import { Provider } from "../../chakra/Provider";
 import { InactivityWarningBadge } from "./InactivityWarningBadge";
 
 //------------------------------------------------------------------------------
-const delayBeforeDisconnnect = 60; // seconds
 
 //------------------------------------------------------------------------------
-export const InactivityWarning = ({ onActivityDetected }: { onActivityDetected: () => void }) => {
+export const InactivityWarning = ({
+    warningDuration,
+    onActivityDetected,
+}: {
+    warningDuration: number;
+    onActivityDetected: () => void;
+}) => {
     //------------------------------------------------------------------------------
-    const [timeLeft, setTimeLeft] = useState<number>(delayBeforeDisconnnect);
+    const [timeLeft, setTimeLeft] = useState<number>(0);
     const animatedPathRef = useRef<SVGPathElement>(null);
     const animatedOverlayRef = useRef<HTMLDivElement>(null);
 
     //------------------------------------------------------------------------------
     useEffect(() => {
-        setTimeLeft(delayBeforeDisconnnect);
+        setTimeLeft(warningDuration);
 
         // Relaunch css animation
         const path = animatedPathRef.current;
         if (path) {
             path.style.animation = "none";
             path.getBBox();
-            path.style.animation = `inactivity-timer-path ${delayBeforeDisconnnect}s linear forwards`;
+            path.style.animation = `inactivity-timer-path ${warningDuration}s linear forwards`;
         }
         const overlay = animatedOverlayRef.current;
         if (overlay) {
             overlay.style.animation = "none";
             void overlay.offsetWidth;
-            overlay.style.animation = `inactivity-timer-overlay ${delayBeforeDisconnnect}s linear forwards`;
+            overlay.style.animation = `inactivity-timer-overlay ${warningDuration}s linear forwards`;
         }
 
         const timer = setInterval(() => {
             setTimeLeft(prev => prev - 1);
         }, 1000);
         return () => clearInterval(timer);
-    }, []);
+    }, [warningDuration]);
 
     //------------------------------------------------------------------------------
     return (

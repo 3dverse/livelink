@@ -12,6 +12,7 @@ import type {
 } from "@3dverse/livelink.core";
 import { Entity } from "./Entity";
 import { get_attribute_default_value } from "./attributes";
+import { ComponentsRecord } from "../_prebuild/ComponentsRecord";
 
 /**
  * @internal
@@ -203,7 +204,7 @@ export class EntityRegistry {
         updated_components,
     }: {
         entity_euid: string;
-        updated_components: Record<string, unknown>;
+        updated_components: ComponentsRecord;
     }) {
         const entities = this.find({ entity_euid });
 
@@ -213,7 +214,7 @@ export class EntityRegistry {
         }
 
         for (const entity of entities) {
-            entity._updateFromEvent({ updated_components });
+            entity._setComponentsFromEditor({ components: updated_components });
         }
     }
 

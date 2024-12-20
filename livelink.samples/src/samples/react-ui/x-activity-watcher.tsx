@@ -1,9 +1,17 @@
 //------------------------------------------------------------------------------
-import { Livelink, Canvas, Viewport, useCameraEntity, CameraController } from "@3dverse/livelink-react";
+import {
+    Livelink,
+    Canvas,
+    Viewport,
+    useCameraEntity,
+    CameraController,
+    LivelinkContext,
+} from "@3dverse/livelink-react";
 import { InactivityWarning } from "@3dverse/livelink-react-ui";
 
 //------------------------------------------------------------------------------
 import { DisconnectedModal, LoadingSpinner, sampleCanvasClassName } from "../../components/SamplePlayer";
+import { useContext, useEffect } from "react";
 
 //------------------------------------------------------------------------------
 const scene_id = "6391ff06-c881-441d-8ada-4184b2050751";
@@ -34,7 +42,15 @@ function App() {
 
 //------------------------------------------------------------------------------
 function AppLayout() {
+    const { instance } = useContext(LivelinkContext);
     const { cameraEntity } = useCameraEntity();
+
+    useEffect(() => {
+        if (instance) {
+            instance.activity_watcher.inactivity_warning = 3;
+            instance.activity_watcher.inactivity_timeout = 10;
+        }
+    });
 
     return (
         <Canvas className={sampleCanvasClassName}>

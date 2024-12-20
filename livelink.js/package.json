@@ -22,7 +22,7 @@
   },
   "license": "ISC",
   "dependencies": {
-    "@3dverse/livelink.core": "^0.7.12",
+    "@3dverse/livelink.core": "^0.7.13",
     "gl-matrix": "^3.4.3"
   },
   "devDependencies": {

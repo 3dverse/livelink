@@ -91,7 +91,7 @@ export type LivelinkConnectParameters = {
     /**
      * Optional React component or node displayed when an inactivity timeout occurs.
      */
-    InactivityWarningPanel?: React.ComponentType<{ onActivityDetected: () => void }>;
+    InactivityWarningPanel?: React.ComponentType<{ warningDuration: number; onActivityDetected: () => void }>;
 
     /**
      * Optional React component or node displayed when the connection is disconnected.
@@ -215,6 +215,8 @@ export function LivelinkProvider({
         };
     }, [instance]);
 
+    const warningDuration = instance ? instance.activity_watcher.inactivity_timeout : 0;
+
     return (
         <LivelinkContext.Provider
             value={{
@@ -227,7 +229,10 @@ export function LivelinkProvider({
             {isConnecting && LoadingPanel && <LoadingPanel stage={""} />}
             {isConnectionLost && ConnectionErrorPanel && <ConnectionErrorPanel error={connectionError} />}
             {showInactivityWarning && InactivityWarningPanel && (
-                <InactivityWarningPanel onActivityDetected={() => setInactivityWarning(false)} />
+                <InactivityWarningPanel
+                    warningDuration={warningDuration}
+                    onActivityDetected={() => setInactivityWarning(false)}
+                />
             )}
             {children}
         </LivelinkContext.Provider>

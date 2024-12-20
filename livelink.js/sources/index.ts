@@ -5,7 +5,7 @@ export * from "./Session";
 export * from "./Client";
 export * from "./Entity";
 export * from "./Camera";
-export { Scene, EntityCreationOptions } from "./Scene";
+export * from "./Scene";
 export * from "./Viewport";
 export * from "./AnimationSequenceController";
 

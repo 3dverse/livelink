@@ -79,6 +79,7 @@ export function convertRawFrameMetaDataToFrameMetaData({
             if (!camera_entity) {
                 continue;
             }
+
             //TODO: This is a temporary solution, we need to find a better way to identify cameras
             //      that are controlled by the current client.
             // Skip cameras which also belong to current client

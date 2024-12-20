@@ -58,6 +58,7 @@ function DebugViewports({ cameraEntity }: { cameraEntity: Entity | null }) {
         <div className="absolute flex h-full flex-col gap-2 top-4 left-4 w-1/5">
             {RENDER_TARGETS.map(({ index, name }) => (
                 <Viewport
+                    key={index}
                     cameraEntity={cameraEntity}
                     renderTargetIndex={index}
                     title={name}

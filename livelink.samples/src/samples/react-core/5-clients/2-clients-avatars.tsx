@@ -57,7 +57,7 @@ function App() {
 //------------------------------------------------------------------------------
 function SessionCreator({ setSessionId }: { setSessionId: (sessionId: UUID | null) => void }) {
     return (
-        <SamplePlayer autoConnect={false} title={"Create Session"}>
+        <SamplePlayer autoConnect={true} title={"Create Session"}>
             <Livelink
                 sceneId={scene_id}
                 token={token}
@@ -84,7 +84,7 @@ function SessionJoiner({ sessionId }: { sessionId: UUID | null }) {
     }
 
     return (
-        <SamplePlayer autoConnect={false} title={"Join Session"}>
+        <SamplePlayer autoConnect={true} title={"Join Session"}>
             <Livelink
                 sessionId={sessionId}
                 sessionOpenMode="join"
@@ -167,11 +167,7 @@ const AvatarList = ({
         <div className="absolute right-40 top-4">
             <div className="avatar-group flex gap-1 rtl:space-x-reverse ">
                 {clients.map(client => (
-                    <button
-                        key={client.id}
-                        title={client.username}
-                        onClick={() => setWatchedClient(client !== watchedClient ? client : null)}
-                    >
+                    <button key={client.id} onClick={() => setWatchedClient(client !== watchedClient ? client : null)}>
                         <Avatar client={client} />
                     </button>
                 ))}
@@ -186,7 +182,7 @@ const PiPViewport = ({ watchedClient }: { watchedClient: Client | null }) => {
     const { instance } = useContext(LivelinkContext);
     const [clientCameraEntity, setClientCameraEntity] = useState<Entity | null>(null);
     useEffect(() => {
-        if (instance && watchedClient) {
+        if (instance && watchedClient && watchedClient.camera_rtids[0]) {
             instance.scene.getEntity({ entity_rtid: watchedClient.camera_rtids[0] }).then(setClientCameraEntity);
         }
     });
@@ -206,7 +202,11 @@ const PiPViewport = ({ watchedClient }: { watchedClient: Client | null }) => {
 
 //------------------------------------------------------------------------------
 const Avatar = ({ client }: { client: Client }) => {
-    return <BoringAvatar name={client.id} size={40} variant="beam" />;
+    return (
+        <div title={client.username}>
+            <BoringAvatar name={client.id} size={40} variant="beam" />
+        </div>
+    );
 };
 
 //------------------------------------------------------------------------------
@@ -214,7 +214,9 @@ const Avatar3D = ({ instance, client }: { instance: LivelinkInstance; client: Cl
     //TEMPTEMPTEMPTEMP
     const [clientCameraEntity, setClientCameraEntity] = useState<Entity | null>(null);
     useEffect(() => {
-        instance.scene.getEntity({ entity_rtid: client.camera_rtids[0] }).then(setClientCameraEntity);
+        if (client.camera_rtids[0]) {
+            instance.scene.getEntity({ entity_rtid: client.camera_rtids[0] }).then(setClientCameraEntity);
+        }
     });
     if (!clientCameraEntity) {
         return null;

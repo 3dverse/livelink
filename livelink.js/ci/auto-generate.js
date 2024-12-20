@@ -57,7 +57,7 @@ function generateEntityBase() {
     });
 
     //--------------------------------------------------------------------------
-    applyTemplate("ComponentRecord.template.ts", path.join("ComponentRecord.ts"), {
+    applyTemplate("ComponentsRecord.template.ts", path.join("ComponentsRecord.ts"), {
         componentAttributes: componentAttributes.join("\n\n"),
     });
 }

@@ -43,11 +43,9 @@ type Input = {
 export const RenderGraphSettings = ({
     userToken,
     cameraEntity,
-    defaultCameraSettings,
 }: {
     userToken: string;
     cameraEntity: Entity | null;
-    defaultCameraSettings?: Record<string, unknown>;
 }) => {
     //------------------------------------------------------------------------------
     const [originalDataJSON, setOriginalDataJSON] = useState(cameraEntity?.camera?.dataJSON);
@@ -182,7 +180,7 @@ export const RenderGraphSettings = ({
                     <>
                         {category.description.map((input, index) => {
                             const value = dataJSON?.[input.name] ?? input.default;
-                            const defaultValue = defaultCameraSettings?.[input.name] || input.default;
+                            const defaultValue = input.default;
                             const isDisabled = value === undefined || value === defaultValue;
                             return (
                                 <FormControl

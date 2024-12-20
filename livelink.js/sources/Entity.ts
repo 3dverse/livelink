@@ -1,7 +1,29 @@
-import type { ComponentType, EditorEntity, Quat, RTID, UUID, Vec3 } from "@3dverse/livelink.core";
+import type { ComponentType, EditorEntity, Quat, RTID, UUID, Vec2, Vec3, Vec4 } from "@3dverse/livelink.core";
 import { EntityBase } from "../_prebuild/EntityBase";
 import { Scene } from "./Scene";
 import { ComponentHandler, ComponentHandlers, LocalTransformHandler } from "./ComponentHandler";
+import { ComponentsRecord } from "../_prebuild/ComponentsRecord";
+
+/**
+ *
+ */
+export { ComponentsRecord } from "../_prebuild/ComponentsRecord";
+
+/**
+ *
+ */
+export type RenderGraphDataObject = Record<string, Vec4 | Vec3 | Vec2 | number | boolean>;
+export type ScriptDataObject = Record<string, Quat | Vec4 | Vec3 | Vec2 | number | boolean | UUID | string>;
+export type AnimationSequenceDataObject = Record<string, Quat | Vec4 | Vec3 | Vec2 | number | boolean | UUID | string>;
+export type ShaderDataObject = Record<string, Vec4 | Vec3 | Vec2 | number | boolean | UUID>;
+export type AnimationGraphDataObject = Record<string, Vec3 | number | boolean | UUID>;
+
+/**
+ *
+ */
+type InitFromEditor = { editor_entity: EditorEntity };
+type InitFromComponents = { name: string; components?: ComponentsRecord };
+type EntityInitOptions = InitFromEditor | InitFromComponents;
 
 /**
  *
@@ -17,6 +39,11 @@ class InvalidEntityError extends Error {}
  * @category Entity
  */
 export class Entity extends EntityBase {
+    /**
+     *
+     */
+    private readonly _scene: Scene;
+
     /**
      *
      */
@@ -88,32 +115,26 @@ export class Entity extends EntityBase {
     /**
      * @internal
      */
-    constructor(
-        private readonly _scene: Scene,
-        components?: Record<ComponentType, unknown>,
-    ) {
+    constructor({ scene, ...init }: { scene: Scene } & EntityInitOptions) {
         super();
-        if (components) {
-            this._updateFromEvent({ updated_components: components });
+
+        this._scene = scene;
+
+        if ("editor_entity" in init) {
+            this._initFromEditorEntity({ editor_entity: init.editor_entity });
+        } else {
+            this._initFromComponents({ name: init.name, components: init.components });
         }
     }
 
     /**
-     * @internal
+     *
      */
-    init(from: EditorEntity | string, euid?: UUID) {
-        if (typeof from === "string") {
-            this.debug_name = { value: from };
-            this._proxy_state = "off";
-        } else {
-            this._parse({ editor_entity: from });
+    private _initFromComponents({ name, components }: { name: string; components?: ComponentsRecord }) {
+        this.debug_name = { value: name };
+        if (components) {
+            this._mergeComponents({ components, dispatch_event: false });
         }
-
-        if (euid) {
-            this._setEuid(euid);
-        }
-
-        return this;
     }
 
     /**
@@ -189,13 +210,18 @@ export class Entity extends EntityBase {
     /**
      * @internal
      */
-    async _instantiate(promise: Promise<EditorEntity>, proxy_state: EntityAutoUpdateState = "on") {
+    _instantiate({
+        editor_entity,
+        proxy_state = "on",
+    }: {
+        editor_entity: EditorEntity;
+        proxy_state: EntityAutoUpdateState;
+    }) {
         if (this.isInstantiated()) {
             throw new Error("Entity is already instantiated");
         }
 
-        const editor_entity = await promise;
-        this._parse({ editor_entity });
+        this._initFromEditorEntity({ editor_entity });
         this._scene.entity_registry.add({ entity: this });
         this._proxy_state = proxy_state;
     }
@@ -250,11 +276,37 @@ export class Entity extends EntityBase {
     /**
      * @internal
      */
-    _updateFromEvent({ updated_components }: { updated_components: Record<string, unknown> }) {
+    _mergeComponents({
+        components,
+        dispatch_event = true,
+    }: {
+        components: ComponentsRecord;
+        dispatch_event?: boolean;
+    }) {
         this._proxy_state = "off";
-        for (const key in updated_components) {
-            //@ts-ignore: the update message is guaranteed to contain only valid components
-            this[key] = updated_components[key];
+        for (const key in components) {
+            //@ts-ignore
+            this[key] = { ...this[key], ...components[key] };
+        }
+        this._proxy_state = "on";
+
+        if (dispatch_event) {
+            this.dispatchEvent(new CustomEvent("entity-updated"));
+        }
+    }
+
+    /**
+     * @internal
+     */
+    _setComponentsFromEditor({ components }: { components: ComponentsRecord }) {
+        // Turn off the proxy as this is already a validated message from the editor.
+        this._proxy_state = "off";
+
+        // The update message from the editor is guaranteed to contain only valid components
+        // so we don't need to merge with the current values.
+        for (const key in components) {
+            //@ts-ignore
+            this[key] = components[key];
         }
         this._proxy_state = "on";
 
