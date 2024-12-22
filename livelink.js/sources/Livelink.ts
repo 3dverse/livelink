@@ -31,6 +31,7 @@ import { InputDevice } from "./inputs/InputDevice";
 
 import { Session, SessionSelector } from "./session/Session";
 import { SessionInfo } from "./session/SessionInfo";
+import { ActivityWatcher } from "@3dverse/livelink.core/dist/sources/controllers/ActivityWatcher";
 
 /**
  * This class represents the Livelink connection between the client and the 3dverse server holding
@@ -107,14 +108,14 @@ export class Livelink {
     /**
      * @deprecated
      */
-    TO_REMOVE__setReadyCallback(callback: () => void) {
+    TO_REMOVE__setReadyCallback(callback: () => void): void {
         this.#TO_REMOVE__readyCallback = callback;
     }
 
     /**
      * @deprecated
      */
-    TO_REMOVE__startIfReady() {
+    TO_REMOVE__startIfReady(): void {
         if (!this.isConfigured()) {
             return;
         }
@@ -188,7 +189,7 @@ export class Livelink {
     static async join_or_start({
         scene_id,
         token,
-        session_selector = ({ sessions }: { sessions: Array<SessionInfo> }) => sessions[0],
+        session_selector = ({ sessions }: { sessions: Array<SessionInfo> }): SessionInfo => sessions[0],
         is_transient,
     }: {
         scene_id: UUID;
@@ -287,10 +288,10 @@ export class Livelink {
     #broadcast_interval = 0;
 
     /**
-     * The default decoded frame consumer that consumes the decoded frames produced by the
-     * encoded frame consumer.
+     * The default internal implementation of the {@link DecodedFrameConsumer} interface.
      *
-     * By default, it is the remote rendering surface.
+     * If no custom decoded frame consumer is needed, this can be passed to instanciate {@link EncodedFrameConsumer}
+     * implementations.
      */
     get default_decoded_frame_consumer(): DecodedFrameConsumer {
         return this.#remote_rendering_surface;
@@ -300,7 +301,7 @@ export class Livelink {
      * The activity watcher disconnects the session if no activity is detected for a certain amount
      * of time.
      */
-    get activity_watcher() {
+    get activity_watcher(): ActivityWatcher {
         return this.#core.activity_watcher;
     }
 
@@ -439,7 +440,7 @@ export class Livelink {
     /**
      * Start streaming the viewports from the server.
      */
-    startStreaming() {
+    startStreaming(): void {
         if (!this.isConfigured()) {
             throw new Error("The Livelink instance is not configured yet");
         }
@@ -490,7 +491,7 @@ export class Livelink {
     addInputDevice<DeviceType extends InputDevice>(
         device_type: { new (_: Livelink, viewport?: HTMLDivElement): DeviceType },
         viewport?: HTMLDivElement,
-    ) {
+    ): void {
         const device = new device_type(this, viewport);
         device.setup();
         this.#input_devices.push(device);
@@ -499,7 +500,7 @@ export class Livelink {
     /**
      * @experimental
      */
-    removeInputDevice({ device_name }: { device_name: string }) {
+    removeInputDevice({ device_name }: { device_name: string }): void {
         const device = this.#input_devices.find(d => d.name === device_name);
         if (!device) {
             throw new Error(`Input device with name '${device_name}' not found`);
@@ -532,14 +533,14 @@ export class Livelink {
     /**
      * @internal
      */
-    _sendInput({ input_state }: { input_state: InputState }) {
+    _sendInput({ input_state }: { input_state: InputState }): void {
         this.#core.sendInputState({ input_state });
     }
 
     /**
      * @internal
      */
-    _resize({ size }: { size: Vec2i }) {
+    _resize({ size }: { size: Vec2i }): void {
         this.#core.resize({ size });
     }
 
@@ -564,7 +565,7 @@ export class Livelink {
     /**
      * @internal
      */
-    _refreshViewports() {
+    _refreshViewports(): void {
         if (this.#TO_REMOVE__readyCallback) {
             return;
         }
@@ -645,7 +646,7 @@ export class Livelink {
     /**
      *
      */
-    #onFrameReceived = (e: Event) => {
+    #onFrameReceived = (e: Event): void => {
         const frame_data = (e as CustomEvent<FrameData>).detail;
 
         this.session._updateClients({ client_data: frame_data.meta_data.clients });
@@ -668,7 +669,7 @@ export class Livelink {
     }: {
         updatesPerSecond?: number;
         broadcastsPerSecond?: number;
-    }) {
+    }): void {
         this.#update_interval = setInterval(() => {
             const updateMsg = this.scene.entity_registry._getEntitiesToUpdate();
             if (updateMsg !== null) {

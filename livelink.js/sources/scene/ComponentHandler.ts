@@ -8,6 +8,7 @@ export type ComponentHandlers = Record<ComponentType | "default", typeof Compone
 /**
  * @internal
  */
+/* eslint-disable */
 export class ComponentHandler {
     /**
      *

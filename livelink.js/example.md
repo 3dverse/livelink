@@ -116,7 +116,9 @@ Before doing that we need to configure the remote server with the codec we found
 await instance.configureRemoteServer({ codec });
 
 await instance.setEncodedFrameConsumer({
-    encoded_frame_consumer: new WebCodecsDecoder(instance.default_decoded_frame_consumer),
+    encoded_frame_consumer: new WebCodecsDecoder({
+        decoded_frame_consumer: instance.default_decoded_frame_consumer,
+    }),
 });
 ```
 
@@ -209,7 +211,9 @@ instance.startStreaming();
 
             // Set the encoded frame consumer to be the WebCodecsDecoder.
             await instance.setEncodedFrameConsumer({
-                encoded_frame_consumer: new WebCodecsDecoder(instance.default_decoded_frame_consumer),
+                encoded_frame_consumer: new WebCodecsDecoder({
+                    decoded_frame_consumer: instance.default_decoded_frame_consumer,
+                }),
             });
 
             // Create a camera entity.

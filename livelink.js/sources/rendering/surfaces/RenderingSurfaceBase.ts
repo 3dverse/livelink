@@ -52,14 +52,14 @@ export abstract class RenderingSurfaceBase extends EventTarget {
     /**
      *
      */
-    addViewport({ viewport }: { viewport: Viewport }) {
+    addViewport({ viewport }: { viewport: Viewport }): void {
         this.viewports.push(viewport);
     }
 
     /**
      *
      */
-    removeViewport({ viewport }: { viewport: Viewport }) {
+    removeViewport({ viewport }: { viewport: Viewport }): void {
         const index = this.viewports.indexOf(viewport);
         if (index !== -1) {
             this.viewports.splice(index, 1);

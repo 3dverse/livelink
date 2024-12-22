@@ -56,7 +56,7 @@ export class RenderingSurface extends RenderingSurfaceBase {
     /**
      * HTML Canvas Element
      */
-    get canvas() {
+    get canvas(): HTMLCanvasElement {
         return this.#canvas;
     }
 
@@ -117,7 +117,7 @@ export class RenderingSurface extends RenderingSurfaceBase {
     /**
      *
      */
-    #onCanvasResized = () => {
+    #onCanvasResized = (): void => {
         this.#context.refreshSize();
         this.dispatchEvent(new Event("on-resized"));
 

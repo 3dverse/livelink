@@ -202,7 +202,7 @@ export class RemoteRenderingSurface implements DecodedFrameConsumer {
     /**
      *
      */
-    #onViewportResized = () => {
+    #onViewportResized = (): void => {
         const need_to_resize = this.#computeSurfaceSize();
 
         if (this.#core.isConfigured() && this.#isValid()) {
@@ -215,7 +215,7 @@ export class RemoteRenderingSurface implements DecodedFrameConsumer {
         }
     };
 
-    #next_multiple = (n: number, multiple: number) => {
+    #next_multiple = (n: number, multiple: number): number => {
         return Math.floor(n) + (Math.floor(n) % multiple === 0 ? 0 : multiple - (Math.floor(n) % multiple));
     };
 
@@ -261,7 +261,7 @@ export class RemoteRenderingSurface implements DecodedFrameConsumer {
     /**
      *
      */
-    #computeViewportsOffsets(client_rect_offset: Vec2i) {
+    #computeViewportsOffsets(client_rect_offset: Vec2i): void {
         for (const surface of this.#surfaces) {
             const clientRect = surface.getBoundingRect();
             surface.offset[0] = clientRect.left - client_rect_offset[0];

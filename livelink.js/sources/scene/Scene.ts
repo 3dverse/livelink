@@ -266,8 +266,8 @@ export class Scene extends EventTarget {
         emitter_entity?: Entity;
         target_entities?: Array<Entity>;
         data_object?: ScriptDataObject;
-    }) {
-        return this.#core.fireEvent({
+    }): void {
+        this.#core.fireEvent({
             event_map_id,
             event_name,
             emitter_entity: emitter_entity ? emitter_entity.rtid! : 0n,
@@ -348,7 +348,7 @@ export class Scene extends EventTarget {
     /**
      * @internal
      */
-    _onScriptEventReceived = async (e: Event) => {
+    _onScriptEventReceived = async (e: Event): Promise<void> => {
         const event = (e as CustomEvent<ScriptEvent>).detail;
 
         if (event.emitter_rtid === 0n) {
@@ -525,7 +525,7 @@ export class Scene extends EventTarget {
     /**
      *
      */
-    async #handlePhysicsScriptEvent({ emitter, event }: { emitter: Entity | null; event: ScriptEvent }) {
+    async #handlePhysicsScriptEvent({ emitter, event }: { emitter: Entity | null; event: ScriptEvent }): Promise<void> {
         // if the emitter entity is not found,
         // it means that the entity does not have any event listeners, therefore nobody
         // is interested in the event.

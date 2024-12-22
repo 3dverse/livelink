@@ -65,16 +65,16 @@ export class CameraProjection {
     }
 
     /**
-     * World space position of the camera as used by the currently processed frame.
+     * World space position of the camera as used to render the currently processed frame.
      */
-    get world_position(): Vec3 {
+    get world_position(): Readonly<Vec3> {
         return this.#world_position;
     }
 
     /**
-     * World space orientation of the camera as used by the currently processed frame.
+     * World space orientation of the camera as used to render the currently processed frame.
      */
-    get world_orientation(): Quat {
+    get world_orientation(): Readonly<Quat> {
         return this.#world_orientation;
     }
 
@@ -100,14 +100,14 @@ export class CameraProjection {
     /**
      *
      */
-    #onEntityUpdated = () => {
+    #onEntityUpdated = (): void => {
         this.updateProjectionMatrix();
     };
 
     /**
      *
      */
-    #checkCameraEntityValidity({ camera_entity }: { camera_entity: Entity }) {
+    #checkCameraEntityValidity({ camera_entity }: { camera_entity: Entity }): void {
         if (!camera_entity.camera) {
             throw new Error("Camera entity must have a camera component");
         }
@@ -141,7 +141,7 @@ export class CameraProjection {
      * Updates the projection matrix of the camera entity.
      * This method should be called whenever the camera entity or viewport changes.
      */
-    updateProjectionMatrix() {
+    updateProjectionMatrix(): void {
         if (this.camera_entity.perspective_lens) {
             this.#computePerspectiveProjection();
         } else if (this.camera_entity.orthographic_lens) {
@@ -157,7 +157,7 @@ export class CameraProjection {
      * @param params
      * @param params.frame_camera_transform - The frame camera transform data as found in the frame metadata.
      */
-    updateFromFrameCameraTransform({ frame_camera_transform }: { frame_camera_transform: FrameCameraTransform }) {
+    updateFromFrameCameraTransform({ frame_camera_transform }: { frame_camera_transform: FrameCameraTransform }): void {
         this.#world_position = frame_camera_transform.world_position;
         this.#world_orientation = frame_camera_transform.world_orientation;
 
@@ -174,7 +174,7 @@ export class CameraProjection {
     /**
      *
      */
-    #computePerspectiveProjection() {
+    #computePerspectiveProjection(): void {
         const lens = this.camera_entity.perspective_lens as Required<Components.PerspectiveLens>;
         mat4.perspective(
             this.#clip_from_view_matrix,
@@ -188,7 +188,7 @@ export class CameraProjection {
     /**
      *
      */
-    #computeOrthographicProjection() {
+    #computeOrthographicProjection(): void {
         const lens = this.camera_entity.orthographic_lens as Required<Components.OrthographicLens>;
         mat4.ortho(this.#clip_from_view_matrix, lens.left, lens.right, lens.bottom, lens.top, lens.zNear, lens.zFar);
     }

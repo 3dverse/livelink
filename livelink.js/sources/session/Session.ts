@@ -208,14 +208,14 @@ export class Session extends EventTarget implements SessionInterface {
     /**
      * The unique identifier of the scene the session is running.
      */
-    get scene_id() {
+    get scene_id(): UUID {
         return this.info.scene_id;
     }
 
     /**
      * The unique identifier of the session.
      */
-    get session_id() {
+    get session_id(): UUID {
         return this.info.session_id;
     }
 
@@ -251,7 +251,7 @@ export class Session extends EventTarget implements SessionInterface {
      * @internal
      * The address of the gateway the session is running on.
      */
-    get gateway_url() {
+    get gateway_url(): string | null {
         return this.#gateway_url;
     }
 
@@ -259,7 +259,7 @@ export class Session extends EventTarget implements SessionInterface {
      * @internal
      * The session key used as an authentication method on the gateway.
      */
-    get session_key() {
+    get session_key(): string | null {
         return this.#session_key;
     }
 
@@ -322,7 +322,7 @@ export class Session extends EventTarget implements SessionInterface {
      * @internal
      * Close the session.
      */
-    async close() {
+    async close(): Promise<void> {
         if (this.info === null) {
             throw new Error("Cannot close session as it has not been opened yet");
         }
@@ -377,7 +377,7 @@ export class Session extends EventTarget implements SessionInterface {
      * @internal
      */
     _onDisconnected(e: Event): void {
-        this.dispatchEvent(new CustomEvent("on-disconnected", { detail: (e as CustomEvent).detail }));
+        this.dispatchEvent(new CustomEvent("on-disconnected", { detail: (e as CustomEvent<unknown>).detail }));
     }
 
     /**

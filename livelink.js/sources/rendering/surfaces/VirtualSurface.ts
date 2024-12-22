@@ -14,14 +14,14 @@ export class VirtualSurface extends RenderingSurfaceBase {
     /**
      *
      */
-    get width() {
+    get width(): number {
         return this.#rect.width;
     }
 
     /**
      *
      */
-    get height() {
+    get height(): number {
         return this.#rect.height;
     }
 

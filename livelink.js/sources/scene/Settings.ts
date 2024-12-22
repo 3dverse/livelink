@@ -17,7 +17,7 @@ export class Settings extends SettingsBase {
     /**
      * @internal
      */
-    _init(settings: SettingsBaseType) {
+    _init(settings: SettingsBaseType): void {
         for (const key in settings) {
             this[key as SettingType] = settings[key as SettingType];
         }

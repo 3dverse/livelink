@@ -14,7 +14,7 @@ import { EncodedFrameConsumer } from "./EncodedFrameConsumer";
 import { DecodedFrameConsumer } from "./DecodedFrameConsumer";
 
 /**
- *
+ * @internal
  */
 interface YUVCanvas {
     /**
@@ -37,37 +37,69 @@ interface YUVCanvas {
 }
 
 /**
+ * @internal
+ */
+interface IBWDecoder {
+    /**
+     *
+     */
+    onPictureDecoded: (_: Uint8Array, width: number, height: number, infos: [FrameMetaData]) => void;
+
+    /**
+     *
+     */
+    decode: (_: Uint8Array, __: FrameMetaData) => void;
+}
+
+/**
+ * Software decoder that uses Broadway.js to decode h264 encoded frames.
+ *
+ * This decoder is not recommended for production use.
+ * It is not optimized for performance.
+ * It is mainly provided as a reference implementation.
+ *
+ * As a last resort, it can be used as a fallback when hardware decoding is not available.
+ *
+ * @see https://github.com/mbebenita/Broadway
+ *
  * @category Streaming
  */
 export class SoftwareDecoder extends EncodedFrameConsumer {
     /**
-     *
+     * Broadway software decoder instance.
      */
-    #broadway_sw_decoder = new BWDecoder();
+    //eslint-disable-next-line
+    #broadway_sw_decoder: IBWDecoder = new BWDecoder();
+
     /**
-     *
+     * Offscreen canvas to draw the decoded frame.
      */
     #offscreen_canvas: OffscreenCanvas | null = null;
+
     /**
-     *
+     * YUV canvas to draw and convert the decoded frame to RGB.
      */
     #yuv_canvas: YUVCanvas | null = null;
 
     /**
+     * Create a new software decoder.
      *
+     * @param params
+     * @param params.decoded_frame_consumer - The decoded frame consumer that will receive the decoded frames
      */
-    readonly #frame_consumer: DecodedFrameConsumer;
-
-    /**
-     *
-     */
-    constructor(frame_consumer: DecodedFrameConsumer) {
-        super();
-        this.#frame_consumer = frame_consumer;
+    constructor({ decoded_frame_consumer }: { decoded_frame_consumer: DecodedFrameConsumer }) {
+        super({ decoded_frame_consumer });
     }
 
     /**
+     * Configure the decoder with the codec and frame dimensions.
+     * This method replaces the constructor to allow for async initialization.
      *
+     * @param params
+     * @param params.codec - The codec used to encode the frames
+     * @param params.frame_dimensions - The dimensions of the frame
+     *
+     * @returns Returns a promise to `this` so that the method can be chained to the constructor.
      */
     configure({
         codec,
@@ -82,22 +114,32 @@ export class SoftwareDecoder extends EncodedFrameConsumer {
 
         this.#offscreen_canvas = new OffscreenCanvas(frame_dimensions[0], frame_dimensions[1]);
 
-        this.#broadway_sw_decoder = new BWDecoder();
-        this.#broadway_sw_decoder.onPictureDecoded = this.#onFrameDecoded;
-
+        //eslint-disable-next-line
         this.#yuv_canvas = new YUVCanvas({
             canvas: this.#offscreen_canvas,
             width: frame_dimensions[0],
             height: frame_dimensions[1],
         });
 
+        this.#broadway_sw_decoder.onPictureDecoded = this.#onFrameDecoded;
+
         return Promise.resolve(this);
     }
 
     /**
-     *
+     * Release any resources used by the decoder.
      */
-    consumeEncodedFrame({ encoded_frame, meta_data }: { encoded_frame: DataView; meta_data: FrameMetaData }) {
+    release(): void {}
+
+    /**
+     * Consume an encoded frame.
+     * Called as soon as a frame is received.
+     *
+     * @param params
+     * @param params.encoded_frame - The encoded frame data
+     * @param params.meta_data - The frame meta data
+     */
+    consumeEncodedFrame({ encoded_frame, meta_data }: { encoded_frame: DataView; meta_data: FrameMetaData }): void {
         const f = new Uint8Array(encoded_frame.buffer, encoded_frame.byteOffset, encoded_frame.byteLength);
         this.#broadway_sw_decoder.decode(f, meta_data);
     }
@@ -105,7 +147,7 @@ export class SoftwareDecoder extends EncodedFrameConsumer {
     /**
      *
      */
-    #onFrameDecoded = (decoded_frame: Uint8Array, width: number, height: number, infos: [FrameMetaData]) => {
+    #onFrameDecoded = (decoded_frame: Uint8Array, width: number, height: number, infos: [FrameMetaData]): void => {
         const yDataPerRow = width;
         const yRowCnt = height;
         const uDataPerRow = width / 2;
@@ -126,12 +168,6 @@ export class SoftwareDecoder extends EncodedFrameConsumer {
         });
 
         const meta_data = infos[0];
-        this.applyFrameMetaData({ meta_data });
-        this.#frame_consumer.consumeDecodedFrame({ decoded_frame: this.#offscreen_canvas!, meta_data });
+        super._onFrameDecoded({ decoded_frame: this.#offscreen_canvas!, meta_data });
     };
-
-    /**
-     *
-     */
-    release() {}
 }

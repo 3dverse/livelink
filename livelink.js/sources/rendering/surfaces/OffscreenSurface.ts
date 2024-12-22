@@ -72,7 +72,7 @@ export class OffscreenSurface<ContextType extends CanvasContextType, ContextOpti
     /**
      *
      */
-    get context() {
+    get context(): ContextProvider {
         return this.#context;
     }
 
@@ -88,7 +88,7 @@ export class OffscreenSurface<ContextType extends CanvasContextType, ContextOpti
     /**
      *
      */
-    release() {
+    release(): void {
         super.release();
         this.#context.release();
     }
@@ -115,7 +115,7 @@ export class OffscreenSurface<ContextType extends CanvasContextType, ContextOpti
     /**
      *
      */
-    resize(width: number, height: number) {
+    resize(width: number, height: number): void {
         this.#canvas.width = width;
         this.#canvas.height = height;
         this.#context.refreshSize();

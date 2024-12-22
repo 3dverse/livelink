@@ -77,7 +77,7 @@ export class Client implements ClientInterface {
     /**
      * @internal
      */
-    _updateFromClientMetaData({ client_meta_data }: { client_meta_data: ClientMetaData }) {
+    _updateFromClientMetaData({ client_meta_data }: { client_meta_data: ClientMetaData }): void {
         this.#camera_rtids = client_meta_data.viewports.map(v => v.camera_rtid);
 
         if (client_meta_data.hovered_entity_rtid != 0n) {

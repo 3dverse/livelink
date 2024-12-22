@@ -253,8 +253,8 @@ function configureClient(instance: LivelinkInstance) {
         await instance.setEncodedFrameConsumer({
             encoded_frame_consumer:
                 webcodec !== null
-                    ? new Livelink.WebCodecsDecoder(instance.default_decoded_frame_consumer)
-                    : new Livelink.SoftwareDecoder(instance.default_decoded_frame_consumer),
+                    ? new Livelink.WebCodecsDecoder({ decoded_frame_consumer: instance.default_decoded_frame_consumer })
+                    : new Livelink.SoftwareDecoder({ decoded_frame_consumer: instance.default_decoded_frame_consumer }),
         });
 
         instance.TO_REMOVE__startIfReady();

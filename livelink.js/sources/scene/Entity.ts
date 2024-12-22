@@ -173,7 +173,7 @@ export class Entity extends EntityBase {
     /**
      * @internal
      */
-    private _initFromComponents({ name, components }: { name: string; components?: ComponentsRecord }) {
+    private _initFromComponents({ name, components }: { name: string; components?: ComponentsRecord }): void {
         this.debug_name = { value: name };
         if (components) {
             this._mergeComponents({ components, dispatch_event: false });
@@ -192,7 +192,7 @@ export class Entity extends EntityBase {
         event_name: string;
         data_object: Record<string, {}> | null;
         emitter_rtid: RTID;
-    }) {
+    }): void {
         this.dispatchEvent(
             new CustomEvent("on-script-event-target", {
                 detail: {
@@ -216,7 +216,7 @@ export class Entity extends EntityBase {
         event_name: string;
         data_object: Record<string, {}> | null;
         target_rtids: RTID[];
-    }) {
+    }): void {
         this.dispatchEvent(
             new CustomEvent("on-script-event-emitter", {
                 detail: {
@@ -237,7 +237,7 @@ export class Entity extends EntityBase {
     }: {
         editor_entity: EditorEntity;
         proxy_state: EntityAutoUpdateState;
-    }) {
+    }): void {
         if (this._isInstantiated()) {
             throw new Error("Entity is already instantiated");
         }
@@ -250,7 +250,7 @@ export class Entity extends EntityBase {
     /**
      * @internal
      */
-    _setParent(entity: Entity | null) {
+    _setParent(entity: Entity | null): void {
         this._parentEntity = entity;
     }
 
@@ -263,10 +263,11 @@ export class Entity extends EntityBase {
     }: {
         components: ComponentsRecord;
         dispatch_event?: boolean;
-    }) {
+    }): void {
         this._proxy_state = "off";
         for (const key in components) {
             //@ts-ignore
+            //eslint-disable-next-line
             this[key] = { ...this[key], ...components[key] };
         }
         this._proxy_state = "on";
@@ -279,7 +280,7 @@ export class Entity extends EntityBase {
     /**
      * @internal
      */
-    _setComponentsFromEditor({ components }: { components: ComponentsRecord }) {
+    _setComponentsFromEditor({ components }: { components: ComponentsRecord }): void {
         // Turn off the proxy as this is already a validated message from the editor.
         this._proxy_state = "off";
 
@@ -287,6 +288,7 @@ export class Entity extends EntityBase {
         // so we don't need to merge with the current values.
         for (const key in components) {
             //@ts-ignore
+            //eslint-disable-next-line
             this[key] = components[key];
         }
         this._proxy_state = "on";
@@ -325,7 +327,7 @@ export class Entity extends EntityBase {
     /**
      * @internal
      */
-    _onVisibilityChanged({ is_visible }: { is_visible: boolean }) {
+    _onVisibilityChanged({ is_visible }: { is_visible: boolean }): void {
         this._is_visible = is_visible;
         this.dispatchEvent(new CustomEvent("visibility-changed", { detail: { is_visible } }));
     }
@@ -337,7 +339,7 @@ export class Entity extends EntityBase {
         component_default_values,
     }: {
         component_default_values: ReadonlyMap<ComponentType, object>;
-    }) {
+    }): void {
         this._proxy_state = "off";
         for (const [component_type, default_value] of component_default_values) {
             if (this[component_type]) {
@@ -366,6 +368,7 @@ export class Entity extends EntityBase {
     /**
      * @internal
      */
+    /* eslint-disable */
     static handler = {
         get(entity: Entity, prop: PropertyKey, receiver: unknown): unknown {
             const value = Reflect.get(entity, prop, receiver);
@@ -422,4 +425,5 @@ export class Entity extends EntityBase {
             return Reflect.deleteProperty(entity, prop);
         },
     };
+    /* eslint-enable */
 }

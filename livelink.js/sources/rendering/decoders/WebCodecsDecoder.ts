@@ -54,7 +54,7 @@ export class WebCodecsDecoder extends EncodedFrameConsumer {
     /**
      * A map of codecs supported by Livelink.core and their corresponding WebCodecs codec strings.
      */
-    static get #codecs() {
+    static get #codecs(): ReadonlyMap<CodecType, string[]> {
         return Object.freeze(
             new Map<CodecType, string[]>([
                 [LivelinkCoreModule.Enums.CodecType.h265, ["hvc1.1.6.L123.00"]],
@@ -113,11 +113,6 @@ export class WebCodecsDecoder extends EncodedFrameConsumer {
     }
 
     /**
-     * The frame consumer that will receive the decoded frames.
-     */
-    readonly #frame_consumer: DecodedFrameConsumer;
-
-    /**
      * The decoder instance.
      */
     #decoder: VideoDecoder | null = null;
@@ -143,9 +138,8 @@ export class WebCodecsDecoder extends EncodedFrameConsumer {
      *
      * @param frame_consumer - The frame consumer that will receive the decoded frames
      */
-    constructor(frame_consumer: DecodedFrameConsumer) {
-        super();
-        this.#frame_consumer = frame_consumer;
+    constructor({ decoded_frame_consumer }: { decoded_frame_consumer: DecodedFrameConsumer }) {
+        super({ decoded_frame_consumer });
     }
 
     /**
@@ -170,7 +164,7 @@ export class WebCodecsDecoder extends EncodedFrameConsumer {
 
         this.#decoder = new VideoDecoder({
             output: this.#onFrameDecoded,
-            error: e => console.error(e.message),
+            error: (e): void => console.error(e.message),
         });
 
         this.#decoder.configure(supportedConfig.config!);
@@ -180,9 +174,9 @@ export class WebCodecsDecoder extends EncodedFrameConsumer {
     }
 
     /**
-     *
+     * Release any resources used by the decoder.
      */
-    release() {}
+    release(): void {}
 
     /**
      * Consume an encoded frame.
@@ -204,17 +198,15 @@ export class WebCodecsDecoder extends EncodedFrameConsumer {
     }
 
     /**
-     *
+     * Called when a frame is decoded.
      */
-    #onFrameDecoded = (decoded_frame: VideoFrame) => {
+    #onFrameDecoded = (decoded_frame: VideoFrame): void => {
         if (this.#last_frame) {
             this.#last_frame.close();
         }
 
         const meta_data = this.#meta_data_stack.shift()!;
-        this.applyFrameMetaData({ meta_data });
-
-        this.#frame_consumer.consumeDecodedFrame({ decoded_frame, meta_data });
+        super._onFrameDecoded({ decoded_frame, meta_data });
         this.#last_frame = decoded_frame;
     };
 }

@@ -30,7 +30,7 @@ export class Viewport extends EventTarget {
      * @internal
      * @deprecated
      */
-    #TO_REMOVE__markViewportAsReady() {
+    #TO_REMOVE__markViewportAsReady(): void {
         this.TO_REMOVE__ready = true;
         this.#core.TO_REMOVE__startIfReady();
     }
@@ -314,7 +314,7 @@ export class Viewport extends EventTarget {
     }: {
         world_position: Vec3;
         out_screen_position?: Vec3;
-    }) {
+    }): Vec3 {
         if (!this.#camera_projection) {
             throw new Error("No camera set on viewport");
         }
@@ -394,7 +394,7 @@ export class Viewport extends EventTarget {
     /**
      *
      */
-    #onCanvasClicked = async (e: MouseEvent) => {
+    #onCanvasClicked = async (e: MouseEvent): Promise<void> => {
         e.stopPropagation();
 
         const cursorData = this.#core.session.current_client?.cursor_data;

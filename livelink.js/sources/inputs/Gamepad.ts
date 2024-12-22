@@ -64,7 +64,7 @@ type GamepadReading = {
 /**
  *
  */
-function computebuttonReading(gamepad: BrowserGamepad) {
+function computebuttonReading(gamepad: BrowserGamepad): number {
     let buttonReading = 0;
     for (const i in XInputMaskMap) {
         const button = gamepad.buttons[i];
@@ -110,7 +110,7 @@ class GamepadDevice implements InputDevice {
     /**
      *
      */
-    setup() {
+    setup(): void {
         this.#handleGamepadInputs();
         window.addEventListener("focus", this.#onWindowFocused);
     }
@@ -118,7 +118,7 @@ class GamepadDevice implements InputDevice {
     /**
      *
      */
-    release() {
+    release(): void {
         if (this.#animation_frame) {
             cancelAnimationFrame(this.#animation_frame);
             this.#animation_frame = null;
@@ -129,7 +129,7 @@ class GamepadDevice implements InputDevice {
     /**
      *
      */
-    #onWindowFocused = () => {
+    #onWindowFocused = (): void => {
         if (!this.#animation_frame) {
             this.#handleGamepadInputs();
         }
@@ -138,7 +138,7 @@ class GamepadDevice implements InputDevice {
     /**
      *
      */
-    #handleGamepadInputs = () => {
+    #handleGamepadInputs = (): void => {
         if (!window.document.hasFocus()) {
             this.#animation_frame = null;
             return;
@@ -183,7 +183,7 @@ class GamepadDevice implements InputDevice {
     /**
      *
      */
-    #sendControllerAxis(gamepadIndex: number, ControllerAxisType: ControllerAxisType, value: number) {
+    #sendControllerAxis(gamepadIndex: number, ControllerAxisType: ControllerAxisType, value: number): void {
         var buffer = new ArrayBuffer(6);
         var bufferWriter = new DataView(buffer);
 
@@ -202,7 +202,7 @@ class GamepadDevice implements InputDevice {
     /**
      *
      */
-    #sendControllerButtons(gamepadIndex: number, buttonReading: number) {
+    #sendControllerButtons(gamepadIndex: number, buttonReading: number): void {
         var buffer = new ArrayBuffer(5);
         var bufferWriter = new DataView(buffer);
 
@@ -220,7 +220,11 @@ class GamepadDevice implements InputDevice {
     /**
      *
      */
-    #sendControllerInput = (gamepadIndex: number, previousReading: GamepadReading, gamepadReading: GamepadReading) => {
+    #sendControllerInput = (
+        gamepadIndex: number,
+        previousReading: GamepadReading,
+        gamepadReading: GamepadReading,
+    ): void => {
         // ftl-rendering-services rendering_viewer::installRequestedInputDevices only add
         // the gamepad of index zero and misses facilities to attach distinct gamepads to
         // distinct controllers (camera, characters, ...)

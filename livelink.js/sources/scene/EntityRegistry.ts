@@ -166,7 +166,7 @@ export class EntityRegistry {
     /**
      * Visits all entities in the registry and calls the given visitor function for each entity.
      */
-    visitEntities({ visitor }: { visitor: (entity: Entity) => void }) {
+    visitEntities({ visitor }: { visitor: (entity: Entity) => void }): void {
         for (const entity of this.#entities) {
             visitor(entity);
         }
@@ -198,7 +198,7 @@ export class EntityRegistry {
         component_descriptors,
     }: {
         component_descriptors: Record<string, ComponentDescriptor>;
-    }) {
+    }): void {
         for (const component_name in component_descriptors) {
             const defaultValue = {} as Record<string, unknown>;
             const component_descriptor = component_descriptors[component_name];
@@ -234,7 +234,7 @@ export class EntityRegistry {
     }: {
         entity_euid: string;
         updated_components: ComponentsRecord;
-    }) {
+    }): void {
         const entities = this.find({ entity_euid });
 
         if (entities.length === 0) {
@@ -250,7 +250,7 @@ export class EntityRegistry {
     /**
      * @internal
      */
-    _addEntityToUpdate({ component_type, entity }: { component_type: ComponentType; entity: Entity }) {
+    _addEntityToUpdate({ component_type, entity }: { component_type: ComponentType; entity: Entity }): void {
         const dirty_entities = this.#dirty_components.get(component_type);
         if (dirty_entities) {
             dirty_entities.add(entity);
@@ -260,7 +260,7 @@ export class EntityRegistry {
     /**
      * @internal
      */
-    _detachComponentFromEntity({ component_type, entity }: { component_type: ComponentType; entity: Entity }) {
+    _detachComponentFromEntity({ component_type, entity }: { component_type: ComponentType; entity: Entity }): void {
         const detached_components = this.#detached_components.get(component_type);
         if (detached_components) {
             detached_components.add(entity);
@@ -353,7 +353,7 @@ export class EntityRegistry {
     /**
      * @internal
      */
-    _clearUpdateList() {
+    _clearUpdateList(): void {
         for (const [component_type, entities] of this.#dirty_components) {
             const broadcast_set = this.#dirty_components_to_broadcast.get(component_type);
             for (const entity of entities) {
@@ -368,7 +368,7 @@ export class EntityRegistry {
     /**
      * @internal
      */
-    _clearDetachList() {
+    _clearDetachList(): void {
         for (const [_, entities] of this.#detached_components) {
             entities.clear();
         }
@@ -377,7 +377,7 @@ export class EntityRegistry {
     /**
      * @internal
      */
-    _clearBroadcastList() {
+    _clearBroadcastList(): void {
         for (const [_, entities] of this.#dirty_components_to_broadcast) {
             entities.clear();
         }

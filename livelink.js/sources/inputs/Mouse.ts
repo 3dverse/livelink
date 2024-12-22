@@ -1,8 +1,5 @@
 import { LivelinkCoreModule, InputOperation } from "@3dverse/livelink.core";
 import { Livelink } from "../Livelink";
-import { Viewport } from "../rendering/Viewport";
-import { Rect } from "../rendering/surfaces/Rect";
-import { RenderingSurface } from "../rendering/surfaces/RenderingSurface";
 import { InputDevice } from "./InputDevice";
 
 /**
@@ -68,7 +65,7 @@ export class Mouse implements InputDevice {
     /**
      *
      */
-    setup() {
+    setup(): void {
         this.#viewport.addEventListener("mousedown", this.#onMouseDown);
         window.addEventListener("mouseup", this.#onMouseUp);
         window.addEventListener("mousemove", this.#onMouseMove);
@@ -78,7 +75,7 @@ export class Mouse implements InputDevice {
     /**
      *
      */
-    release() {
+    release(): void {
         this.#viewport.removeEventListener("mousedown", this.#onMouseDown);
         window.removeEventListener("mouseup", this.#onMouseUp);
         window.removeEventListener("mousemove", this.#onMouseMove);
@@ -88,7 +85,7 @@ export class Mouse implements InputDevice {
     /**
      *
      */
-    #onMouseDown = (e: Event) => {
+    #onMouseDown = (e: Event): void => {
         const event = e as MouseEvent;
         if (event.button > 2) {
             console.warn("MouseInput: Unsupported mouse button", event.button);
@@ -108,7 +105,7 @@ export class Mouse implements InputDevice {
     /**
      *
      */
-    #onMouseUp = (e: MouseEvent) => {
+    #onMouseUp = (e: MouseEvent): void => {
         const event = e as MouseEvent;
         if (event.button > 2) {
             console.warn("MouseInput: Unsupported mouse button", event.button);
@@ -128,7 +125,7 @@ export class Mouse implements InputDevice {
     /**
      *
      */
-    #onMouseMove = (e: MouseEvent) => {
+    #onMouseMove = (e: MouseEvent): void => {
         const event = e as MouseEvent;
         const position = this.#getMousePosition(event);
         const input_data = this.#getMouseData(position.x, position.y);
@@ -144,7 +141,7 @@ export class Mouse implements InputDevice {
     /**
      *
      */
-    #getMousePosition(e: MouseEvent) {
+    #getMousePosition(e: MouseEvent): { x: number; y: number } {
         const event = e as MouseEvent;
         if (this.#isLocked) {
             this.#lastMousePosition.x += event.movementX;
@@ -159,14 +156,14 @@ export class Mouse implements InputDevice {
     /**
      *
      */
-    #onPointerLockChange = () => {
+    #onPointerLockChange = (): void => {
         this.#isLocked = document.pointerLockElement === this.#viewport;
     };
 
     /**
      *
      */
-    #getMouseData(PosX: number, PosY: number, bufferSize = 8) {
+    #getMouseData(PosX: number, PosY: number, bufferSize = 8): Uint8Array {
         const data = new ArrayBuffer(bufferSize);
         const bufferWriter = new DataView(data);
 

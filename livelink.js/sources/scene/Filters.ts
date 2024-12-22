@@ -11,21 +11,21 @@ const op_prio = {
 /**
  *
  */
-function is_operator(op: string) {
+function is_operator(op: string): boolean {
     return op_prio.hasOwnProperty(op);
 }
 
 /**
  *
  */
-function has_greater_precedence(op1: keyof typeof op_prio, op2: keyof typeof op_prio) {
+function has_greater_precedence(op1: keyof typeof op_prio, op2: keyof typeof op_prio): boolean {
     return op_prio[op1] > op_prio[op2];
 }
 
 /**
  * @internal
  */
-export function compute_rpn(filter_value: string) {
+export function compute_rpn(filter_value: string): string {
     const tokens = filter_value.split(" ");
     const output: Array<string> = [];
     const operators: Array<string> = [];

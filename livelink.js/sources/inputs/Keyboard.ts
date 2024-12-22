@@ -27,7 +27,7 @@ export class Keyboard implements InputDevice {
     /**
      *
      */
-    setup() {
+    setup(): void {
         window.addEventListener("keydown", this.#onKeyDown);
         window.addEventListener("keyup", this.#onKeyUp);
     }
@@ -35,7 +35,7 @@ export class Keyboard implements InputDevice {
     /**
      *
      */
-    release() {
+    release(): void {
         window.removeEventListener("keydown", this.#onKeyDown);
         window.removeEventListener("keyup", this.#onKeyUp);
     }
@@ -43,7 +43,7 @@ export class Keyboard implements InputDevice {
     /**
      *
      */
-    #onKeyDown = (event: KeyboardEvent) => {
+    #onKeyDown = (event: KeyboardEvent): void => {
         const keyData = this.#getKeyData(event);
         this.#instance._sendInput({
             input_state: {
@@ -56,7 +56,7 @@ export class Keyboard implements InputDevice {
     /**
      *
      */
-    #onKeyUp = (event: KeyboardEvent) => {
+    #onKeyUp = (event: KeyboardEvent): void => {
         const keyData = this.#getKeyData(event);
         this.#instance._sendInput({
             input_state: {
@@ -69,7 +69,7 @@ export class Keyboard implements InputDevice {
     /**
      *
      */
-    #getKeyData(event: KeyboardEvent) {
+    #getKeyData(event: KeyboardEvent): Uint8Array {
         const keyCode = this.#getLayoutAgnosticKeyCode(event);
         const KeyData = new Uint8Array(4);
         KeyData[0] = keyCode & 0xff;
@@ -82,7 +82,7 @@ export class Keyboard implements InputDevice {
     /**
      *
      */
-    #getLayoutAgnosticKeyCode(event: KeyboardEvent) {
+    #getLayoutAgnosticKeyCode(event: KeyboardEvent): number {
         const { code, key } = event;
 
         // If the code is not a key letter, then it's a special key.

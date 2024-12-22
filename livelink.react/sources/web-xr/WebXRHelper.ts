@@ -571,8 +571,8 @@ export class WebXRHelper {
                 view,
                 viewport,
                 frame_camera_transform: {
-                    position: current_viewport.camera_projection!.world_position,
-                    orientation: current_viewport.camera_projection!.world_orientation,
+                    position: current_viewport.camera_projection!.world_position as Vec3,
+                    orientation: current_viewport.camera_projection!.world_orientation as Quat,
                 },
             };
         });

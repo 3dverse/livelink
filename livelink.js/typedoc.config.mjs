@@ -9,7 +9,7 @@ const config = {
     categoryOrder: ["Main", "Session", "Scene", "Streaming", "Rendering", "Inputs"],
     excludeInternal: true,
     sort: ["kind", "source-order"],
-
+    plugin: ["typedoc-plugin-mermaid"],
     categorizeByGroup: false,
     navigation: {
         includeCategories: true,
