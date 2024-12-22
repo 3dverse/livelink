@@ -39,6 +39,7 @@ import RenderGraphSettings from "./react-ui/3-render-graph-settings";
 //------------------------------------------------------------------------------
 import LiveSkeletalAnimation from "./advanced/x-live-skeletal-animation";
 import WebXR from "./advanced/x-web-xr";
+import MPR from "./advanced/x-multiplanar-reconstruction";
 
 //------------------------------------------------------------------------------
 export const SAMPLES: Array<{
@@ -91,6 +92,6 @@ export const SAMPLES: Array<{
     },
     {
         categoryName: "Advanced",
-        list: [LiveSkeletalAnimation, WebXR],
+        list: [LiveSkeletalAnimation, WebXR, MPR],
     },
 ];

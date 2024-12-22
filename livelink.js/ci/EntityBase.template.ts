@@ -17,19 +17,24 @@ export class EntityBase extends EventTarget implements EntityInterface {
 {{componentAttributes}}
 
     /**
-     *
+     * @internal
      */
     get rtid(): RTID | null {
         return this.euid?.rtid ?? null;
     }
+
     /**
+     * The UUID of the entity.
      *
+     * Note that multiple entities can share the same UUID if they are different instances of the
+     * same entity brought by multiple instances of the same scene.
      */
     get id(): UUID | null {
         return this.euid?.value ?? null;
     }
+
     /**
-     *
+     * The name of the entity.
      */
     get name(): string {
         return this.debug_name?.value ?? "<unnamed>";
@@ -38,7 +43,7 @@ export class EntityBase extends EventTarget implements EntityInterface {
     /**
      *
      */
-    isInstantiated(): boolean {
+    protected _isInstantiated(): boolean {
         return this.euid !== null && this.euid.rtid !== BigInt(0);
     }
 

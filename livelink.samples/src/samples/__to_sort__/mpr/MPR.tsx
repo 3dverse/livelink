@@ -2,7 +2,7 @@
 import { useEffect, useRef } from "react";
 import LegacyCanvas from "../../../components/LegacyCanvas";
 import { useLivelinkInstance, DefaultCamera } from "@3dverse/livelink-react";
-import { Camera, Quat, RenderingSurface } from "@3dverse/livelink";
+import { CameraProjection, Quat, RenderingSurface } from "@3dverse/livelink";
 import CameraControls from "camera-controls";
 import * as THREE from "three";
 
@@ -10,7 +10,7 @@ import * as THREE from "three";
 CameraControls.install({ THREE });
 
 //------------------------------------------------------------------------------
-class MPRCamera extends Camera {
+class MPRCamera extends CameraProjection {
     static i = 0;
     cameraControls: CameraControls | null = null;
     onCreate() {

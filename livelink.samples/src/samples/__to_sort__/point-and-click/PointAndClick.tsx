@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 import { useCallback, useEffect, useRef } from "react";
-import { Camera, Entity, Vec2, Vec3, Viewport } from "@3dverse/livelink";
+import { CameraProjection, Entity, Vec2, Vec3, Viewport } from "@3dverse/livelink";
 import { useLivelinkInstance, DefaultCamera, useEntity } from "@3dverse/livelink-react";
 import LegacyCanvas from "../../../components/LegacyCanvas";
 import { ActionBar } from "../../../components/SamplePlayer/ActionBar";
@@ -52,7 +52,7 @@ export default function PointAndClick() {
     };
 
     //------------------------------------------------------------------------------
-    async function onConnected({ cameras }: { cameras: Array<Camera | null> }) {
+    async function onConnected({ cameras }: { cameras: Array<CameraProjection | null> }) {
         if (cameras.length === 0 || cameras[0] === null) {
             return;
         }

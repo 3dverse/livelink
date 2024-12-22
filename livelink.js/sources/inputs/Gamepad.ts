@@ -1,7 +1,11 @@
 import { LivelinkCoreModule } from "@3dverse/livelink.core";
 import type { Livelink } from "../Livelink";
 import type { InputDevice } from "./InputDevice";
-import type { BrowserGamepad } from "../types/browser";
+
+/**
+ *
+ */
+type BrowserGamepad = Gamepad;
 
 /**
  *
@@ -30,7 +34,6 @@ const XInputMaskMap = [
 /**
  *
  */
-
 const ControllerAxis = {
     LeftThumbstickX: 0,
     LeftThumbstickY: 1,
@@ -39,10 +42,10 @@ const ControllerAxis = {
     LeftTrigger: 4,
     RightTrigger: 5,
 } as const;
+
 /**
  *
  */
-
 type ControllerAxisType = (typeof ControllerAxis)[keyof typeof ControllerAxis];
 
 /**
@@ -61,7 +64,6 @@ type GamepadReading = {
 /**
  *
  */
-
 function computebuttonReading(gamepad: BrowserGamepad) {
     let buttonReading = 0;
     for (const i in XInputMaskMap) {
@@ -76,8 +78,7 @@ function computebuttonReading(gamepad: BrowserGamepad) {
 /**
  * @category Inputs
  */
-
-export class Gamepad implements InputDevice {
+class GamepadDevice implements InputDevice {
     /**
      *
      */
@@ -91,7 +92,7 @@ export class Gamepad implements InputDevice {
     /**
      *
      */
-    previousGamepadsReading: GamepadReading[] = [];
+    #previousGamepadsReading: GamepadReading[] = [];
 
     /*
      *
@@ -146,11 +147,11 @@ export class Gamepad implements InputDevice {
         const gamepadsReading = this.#computeGamepadsReading();
 
         gamepadsReading.forEach((gamepadReading, i) => {
-            const previousReading = this.previousGamepadsReading[i];
+            const previousReading = this.#previousGamepadsReading[i];
             if (previousReading && gamepadReading) {
                 this.#sendControllerInput(i, previousReading, gamepadReading);
             }
-            this.previousGamepadsReading[i] = gamepadReading;
+            this.#previousGamepadsReading[i] = gamepadReading;
         });
 
         this.#animation_frame = requestAnimationFrame(this.#handleGamepadInputs);
@@ -255,3 +256,5 @@ export class Gamepad implements InputDevice {
         }
     };
 }
+
+export { GamepadDevice as Gamepad };

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Camera, Entity, Livelink, Vec2, Vec3 } from "@3dverse/livelink";
+import { CameraProjection, Entity, Livelink, Vec2, Vec3 } from "@3dverse/livelink";
 import LegacyCanvas from "../../../components/LegacyCanvas";
 import { useLivelinkInstance, DefaultCamera, useEntity } from "@3dverse/livelink-react";
 import { Output, OutputItem, OutputValue } from "../../../styles/components/output";
@@ -69,7 +69,7 @@ export default function ConveyorBelt() {
         [setSelectedEntity],
     );
 
-    function onConnected({ cameras }: { instance: Livelink; cameras: Array<Camera | null> }) {
+    function onConnected({ cameras }: { instance: Livelink; cameras: Array<CameraProjection | null> }) {
         if (cameras.length === 0 || cameras[0] === null) {
             return;
         }

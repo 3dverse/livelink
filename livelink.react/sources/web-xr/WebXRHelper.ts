@@ -1,5 +1,15 @@
 //------------------------------------------------------------------------------
-import { Livelink, OffscreenSurface, RelativeRect, Viewport, Vec3, Quat, Entity, Camera } from "@3dverse/livelink";
+import {
+    Livelink,
+    OffscreenSurface,
+    RelativeRect,
+    Viewport,
+    Vec3,
+    Quat,
+    Entity,
+    CameraProjection,
+    FrameMetaData,
+} from "@3dverse/livelink";
 import { XRContext } from "@3dverse/livelink-react/sources/web-xr/XRContext";
 import { Quaternion, Vector3 } from "three";
 
@@ -555,13 +565,14 @@ export class WebXRHelper {
 
         this.#updateLiveLinkCameras(xr_views);
 
-        if (this.#context.meta_data && this.#context.meta_data.cameras.length > 0) {
+        if (this.#context.meta_data && this.#context.meta_data.current_client_camera_entities.length > 0) {
+            const cameras = (this.#context.meta_data as FrameMetaData).current_client_camera_entities;
+
             const views = xr_views.map(({ view, viewport }, index) => {
                 const current_viewport = this.#surface.viewports[index];
-                const { world_position: position, world_orientation: orientation } =
-                    this.#context.meta_data!.cameras.find(
-                        ({ camera_entity }) => camera_entity.id === current_viewport.camera?.camera_entity.id,
-                    )!;
+                const { world_position: position, world_orientation: orientation } = cameras.find(
+                    ({ camera_entity }) => camera_entity.id === current_viewport.camera_projection?.camera_entity.id,
+                )!;
 
                 return {
                     view,
@@ -645,7 +656,11 @@ export class WebXRHelper {
                       },
             );
             console.debug(`Viewport for ${xr_eye.view.eye} eye:`, rect);
-            const viewport = new Viewport(this.#liveLink!, this.#surface!, { rect });
+            const viewport = new Viewport({
+                core: this.#liveLink!,
+                rendering_surface: this.#surface!,
+                options: { rect },
+            });
 
             this.#viewports.push({
                 xr_view: xr_eye.view,
@@ -675,7 +690,10 @@ export class WebXRHelper {
                     },
                     options: { delete_on_client_disconnection: true, auto_broadcast: false },
                 });
-                livelink_viewport.camera = new Camera({ camera_entity: camera, viewport: livelink_viewport });
+                livelink_viewport.camera_projection = new CameraProjection({
+                    camera_entity: camera,
+                    viewport: livelink_viewport,
+                });
 
                 camera.perspective_lens = this.#computePerspectiveLens(
                     xr_view.projectionMatrix,

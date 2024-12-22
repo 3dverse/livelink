@@ -1,5 +1,4 @@
 //------------------------------------------------------------------------------
-import { Camera as LivelinkCamera } from "@3dverse/livelink";
 import {
     Livelink,
     Canvas,

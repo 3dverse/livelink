@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Camera, Entity, Livelink } from "@3dverse/livelink";
+import { CameraProjection, Entity, Livelink } from "@3dverse/livelink";
 import { useLivelinkInstance, DefaultCamera, useEntity } from "@3dverse/livelink-react";
 import LegacyCanvas from "../../../components/LegacyCanvas";
 import { ActionBar } from "../../../components/SamplePlayer/ActionBar";
@@ -96,7 +96,7 @@ export default function LabelingStation() {
         [instance, barriers, labelingCB, printer],
     );
 
-    function onConnected({ cameras }: { instance: Livelink; cameras: Array<Camera | null> }) {
+    function onConnected({ cameras }: { instance: Livelink; cameras: Array<CameraProjection | null> }) {
         if (cameras.length === 0 || cameras[0] === null) {
             return;
         }

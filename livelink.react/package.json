@@ -13,6 +13,7 @@
     "dev": "run-p dev:*",
     "dev:esbuild": "node esbuild.js dev",
     "dev:tsc": "tsc -w",
+    "typedoc": "typedoc",
     "clean": "rimraf dist"
   },
   "repository": {
@@ -27,7 +28,8 @@
   "homepage": "https://github.com/3dverse/livelink#readme",
   "dependencies": {
     "camera-controls": "^2.9.0",
-    "gl-matrix": "^3.4.3"
+    "gl-matrix": "^3.4.3",
+    "typedoc": "^0.27.5"
   },
   "devDependencies": {
     "@types/react": "^18.3.12",

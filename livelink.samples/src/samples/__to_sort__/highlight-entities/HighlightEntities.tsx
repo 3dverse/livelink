@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Camera, Entity, Vec3 } from "@3dverse/livelink";
+import { CameraProjection, Entity, Vec3 } from "@3dverse/livelink";
 import LegacyCanvas from "../../../components/LegacyCanvas";
 import { useLivelinkInstance, DefaultCamera } from "@3dverse/livelink-react";
 import { ActionBar } from "../../../components/SamplePlayer/ActionBar";
@@ -26,7 +26,7 @@ export default function HighlightEntities() {
         }
     };
 
-    async function onConnected({ cameras }: { cameras: Array<Camera | null> }) {
+    async function onConnected({ cameras }: { cameras: Array<CameraProjection | null> }) {
         if (cameras.length === 0 || cameras[0] === null) {
             return;
         }

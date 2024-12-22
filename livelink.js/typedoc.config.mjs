@@ -5,14 +5,15 @@ const config = {
     out: "docs",
     includeVersion: true,
     excludeCategories: [],
-    defaultCategory: "Other",
-    categoryOrder: ["*"],
+    //defaultCategory: "Other",
+    categoryOrder: ["Main", "Session", "Scene", "Streaming", "Rendering", "Inputs"],
     excludeInternal: true,
+    sort: ["kind", "source-order"],
 
     categorizeByGroup: false,
     navigation: {
         includeCategories: true,
-        includeGroups: false,
+        includeGroups: true,
     },
 };
 

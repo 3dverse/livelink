@@ -66,8 +66,8 @@ function RenderTargetSelector() {
     ] as const;
 
     useEffect(() => {
-        if (viewport && viewport.camera) {
-            viewport.camera.camera_entity.camera!.renderTargetIndex = selectedRenderTarget;
+        if (viewport && viewport.camera_projection) {
+            viewport.camera_projection.camera_entity.camera!.renderTargetIndex = selectedRenderTarget;
         }
     }, [viewport, selectedRenderTarget]);
 

@@ -22,7 +22,7 @@ export const ViewportContext = createContext<{
     viewport: Livelink.Viewport | null;
     viewportDomElement: HTMLDivElement | null;
     zIndex: number;
-    camera: Livelink.Camera | null;
+    camera: Livelink.CameraProjection | null;
 }>({
     viewport: null,
     viewportDomElement: null,
@@ -68,7 +68,7 @@ export function Viewport({
 
     //--------------------------------------------------------------------------
     const [viewport, setViewport] = useState<Livelink.Viewport | null>(null);
-    const [camera, setCamera] = useState<Livelink.Camera | null>(null);
+    const [camera, setCamera] = useState<Livelink.CameraProjection | null>(null);
     const viewportDomElement = useRef<HTMLDivElement>(null);
 
     //--------------------------------------------------------------------------
@@ -78,7 +78,7 @@ export function Viewport({
         }
 
         console.log("---- Resizing viewport", viewportDomElement.current);
-        viewport.rect = computeRelativeRect(viewportDomElement.current, canvas);
+        viewport.relative_rect = computeRelativeRect(viewportDomElement.current, canvas);
     }, [viewport, canvas, viewportDomElement.current]);
 
     //--------------------------------------------------------------------------
@@ -115,10 +115,14 @@ export function Viewport({
 
         const rect = computeRelativeRect(viewportDomElement.current, canvas);
 
-        const viewport = new Livelink.Viewport(instance, renderingSurface, {
-            rect,
-            z_index: zIndex,
-            render_target_index: renderTargetIndex,
+        const viewport = new Livelink.Viewport({
+            core: instance,
+            rendering_surface: renderingSurface,
+            options: {
+                rect,
+                z_index: zIndex,
+                render_target_index: renderTargetIndex,
+            },
         });
         console.log("---- Setting viewport", viewport.width, viewport.height, zIndex);
         instance.addViewports({ viewports: [viewport] });
@@ -139,8 +143,8 @@ export function Viewport({
         }
 
         console.log("---- Setting camera", cameraEntity);
-        viewport.camera = new Livelink.Camera({ camera_entity: cameraEntity, viewport });
-        setCamera(viewport.camera);
+        viewport.camera_projection = new Livelink.CameraProjection({ camera_entity: cameraEntity, viewport });
+        setCamera(viewport.camera_projection);
     }, [viewport, cameraEntity]);
 
     //--------------------------------------------------------------------------

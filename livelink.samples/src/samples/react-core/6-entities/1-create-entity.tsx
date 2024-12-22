@@ -74,7 +74,6 @@ function EntityCreator() {
     const SPAWN_SURFACE_SIZE = 3 as const;
 
     const createEntity = () => {
-        console.log("Creating entity");
         instance.scene.newEntity({
             name: "My Entity",
             components: {
@@ -94,7 +93,9 @@ function EntityCreator() {
 
     return (
         <div className="absolute flex h-full flex-col gap-2 top-4 left-4 w-1/5">
-            <button onClick={createEntity}>Create Entity</button>
+            <button className="button button-primary" onClick={createEntity}>
+                Create Entity
+            </button>
         </div>
     );
 }

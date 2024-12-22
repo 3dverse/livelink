@@ -5,7 +5,7 @@
 import type { Components } from "@3dverse/livelink.core";
 
 /**
- *
+ * @category Scene
  */
 export type ComponentsRecord = {
 {{componentAttributes}}

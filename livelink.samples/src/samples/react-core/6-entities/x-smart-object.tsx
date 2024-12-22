@@ -81,7 +81,8 @@ function LightComponent({ light }: { light: Entity }) {
                 min={0}
                 max={10}
                 value={light.point_light!.intensity!}
-                onMouseDown={e => e.stopPropagation()}
+                onPointerDown={e => e.stopPropagation()}
+                onPointerMove={e => e.stopPropagation()}
                 onChange={e => (light.point_light!.intensity = Number(e.target.value))}
             />
             <button

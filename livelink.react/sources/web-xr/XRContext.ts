@@ -1,4 +1,4 @@
-import { ContextProvider, CurrentFrameMetaData, Quat, Vec3 } from "@3dverse/livelink";
+import { ContextProvider, FrameMetaData, Quat, Vec3 } from "@3dverse/livelink";
 import { mat4, quat, vec2, vec3 } from "gl-matrix";
 
 type Canvas = HTMLCanvasElement | OffscreenCanvas;
@@ -30,7 +30,7 @@ export class XRContext extends ContextProvider {
     /**
      *
      */
-    #last_frame: { frame: VideoFrame | OffscreenCanvas; meta_data: CurrentFrameMetaData } | null = null;
+    #last_frame: { frame: VideoFrame | OffscreenCanvas; meta_data: FrameMetaData } | null = null;
 
     /**
      *
@@ -112,7 +112,7 @@ export class XRContext extends ContextProvider {
         frame: VideoFrame | OffscreenCanvas;
         left: number;
         top: number;
-        meta_data: CurrentFrameMetaData;
+        meta_data: FrameMetaData;
     }): void {
         this.#last_frame = frame;
     }
@@ -120,7 +120,7 @@ export class XRContext extends ContextProvider {
     /**
      *
      */
-    get meta_data(): CurrentFrameMetaData | null {
+    get meta_data(): FrameMetaData | null {
         return this.#last_frame?.meta_data || null;
     }
 

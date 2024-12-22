@@ -1,5 +1,11 @@
 import * as THREE from "three";
-import type { CurrentFrameMetaData, FrameCameraTransform, OverlayInterface, Viewport, Camera } from "@3dverse/livelink";
+import type {
+    CameraProjection,
+    FrameMetaData,
+    OverlayInterface,
+    Viewport,
+    FrameCameraTransform,
+} from "@3dverse/livelink";
 
 /**
  *
@@ -59,23 +65,23 @@ export class ThreeOverlay implements OverlayInterface {
         meta_data,
         output_canvas,
     }: {
-        meta_data: CurrentFrameMetaData;
+        meta_data: FrameMetaData;
         output_canvas: OffscreenCanvas | null;
     }): OffscreenCanvas | null {
-        const viewport_camera = this.#viewport.camera;
-        if (!viewport_camera) {
+        const viewport_camera_projection = this.#viewport.camera_projection;
+        if (!viewport_camera_projection) {
             return null;
         }
 
-        const metadata = meta_data.cameras.find(
-            ({ camera_entity }) => camera_entity.id === viewport_camera.camera_entity.id,
+        const metadata = meta_data.current_client_camera_entities.find(
+            ({ camera_entity }) => camera_entity.id === viewport_camera_projection.camera_entity.id,
         );
         if (!metadata) {
-            console.error("No metadata found for camera", viewport_camera.camera_entity.id);
+            console.error("No metadata found for camera", viewport_camera_projection.camera_entity.id);
             return null;
         }
 
-        this.#drawFrameForCamera({ metadata, viewport_camera });
+        this.#drawFrameForCamera({ metadata, viewport_camera_projection });
 
         if (output_canvas) {
             throw new Error("Not implemented");
@@ -87,11 +93,17 @@ export class ThreeOverlay implements OverlayInterface {
     /**
      *
      */
-    #drawFrameForCamera({ metadata, viewport_camera }: { metadata: FrameCameraTransform; viewport_camera: Camera }) {
+    #drawFrameForCamera({
+        metadata,
+        viewport_camera_projection,
+    }: {
+        metadata: FrameCameraTransform;
+        viewport_camera_projection: CameraProjection;
+    }) {
         this.camera.position.fromArray(metadata.world_position);
         this.camera.quaternion.fromArray(metadata.world_orientation);
         this.camera.updateMatrix();
-        this.camera.projectionMatrix.fromArray(viewport_camera.clip_from_view_matrix);
+        this.camera.projectionMatrix.fromArray(viewport_camera_projection.clip_from_view_matrix);
 
         this.#renderer.setViewport(0, 0, this.#viewport.width, this.#viewport.height);
         this.#renderer.render(this.#scene, this.camera);

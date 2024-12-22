@@ -2,13 +2,12 @@ import React, { type ReactElement } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import React3DElement from "./React3DElement";
 
-import {
-    CurrentFrameMetaData,
-    INFINITE_FAR_VALUE,
-    Vec3,
-    type OverlayInterface,
-    type Viewport,
-} from "@3dverse/livelink";
+import { FrameMetaData, Vec3, type OverlayInterface, type Viewport } from "@3dverse/livelink";
+
+/**
+ *
+ */
+const INFINITE_FAR_VALUE = 100000;
 
 /**
  *
@@ -81,8 +80,8 @@ export class ReactOverlay implements OverlayInterface {
     /**
      *
      */
-    draw(_: { meta_data: CurrentFrameMetaData }): OffscreenCanvas | null {
-        if (!this.#viewport.camera) {
+    draw(_: { meta_data: FrameMetaData }): OffscreenCanvas | null {
+        if (!this.#viewport.isValid()) {
             return null;
         }
 
@@ -141,7 +140,7 @@ export class ReactOverlay implements OverlayInterface {
      *
      */
     #computeElementScale({ screen_position, scale_factor }: { screen_position: Vec3; scale_factor: number }): number {
-        const camera = this.#viewport.camera?.camera_entity;
+        const camera = this.#viewport.camera_projection?.camera_entity;
         if (!camera) {
             throw new Error("Viewport has no camera");
         }

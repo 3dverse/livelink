@@ -23,5 +23,6 @@
     "types": ["@types/wicg-file-system-access"]
   },
   "include": ["src"],
+  "exclude": ["src/samples/__to_sort__"],
   "references": [{ "path": "./tsconfig.node.json" }]
 }

@@ -11,11 +11,17 @@ import React, {
 } from "react";
 
 //------------------------------------------------------------------------------
-import { LivelinkContext } from "./Livelink";
 import { RenderingSurface } from "@3dverse/livelink";
-import { ViewportContext } from "./Viewport";
 
 //------------------------------------------------------------------------------
+import { LivelinkContext } from "./Livelink";
+import { ViewportContext } from "./Viewport";
+
+/**
+ * A context provider that exposes the canvas element and the rendering surface.
+ * @param canvas - The canvas element.
+ * @param renderingSurface - The rendering surface.
+ */
 export const CanvasContext = createContext<{
     canvas: HTMLCanvasElement | null;
     renderingSurface: RenderingSurface | null;
@@ -39,13 +45,22 @@ type CanvasContext =
           contextAttributes?: undefined;
       };
 
-//------------------------------------------------------------------------------
+/**
+ * A component that provides a canvas element and a rendering surface.
+ * @param param0 - The canvas context.
+ * @property {ReactNode} children - The children to render.
+ * @property {"2d" | "webgl"} contextType - The context type of the canvas.
+ * @property {CanvasRenderingContext2DSettings | {WebGLContextAttributes & {boolean}}} contextAttributes - The context attributes of the canvas.
+ * @property {number} width - The width of the canvas.
+ * @property {number} height - The height of the canvas.
+ * @returns The canvas component.
+ */
 export function Canvas({
     children,
-    width,
-    height,
     contextType = "2d",
     contextAttributes,
+    width,
+    height,
     ...props
 }: PropsWithChildren<CanvasContext & HTMLProps<HTMLDivElement>>) {
     const { instance } = useContext(LivelinkContext);

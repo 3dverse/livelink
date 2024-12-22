@@ -4,7 +4,7 @@ import LegacyCanvas from "../../../components/LegacyCanvas";
 import { useLivelinkInstance, DefaultCamera } from "@3dverse/livelink-react";
 import CameraControls from "camera-controls";
 import * as THREE from "three";
-import { Camera } from "@3dverse/livelink";
+import { CameraProjection } from "@3dverse/livelink";
 
 //------------------------------------------------------------------------------
 
@@ -124,7 +124,7 @@ function sineOut(t: number) {
 }
 
 //------------------------------------------------------------------------------
-export class VanillaCamera extends Camera {
+export class VanillaCamera extends CameraProjection {
     private _speed = 1;
     onCreate() {
         this.local_transform = { position: [0, 3, 10] };

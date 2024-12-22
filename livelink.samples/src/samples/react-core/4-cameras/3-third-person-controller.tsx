@@ -2,14 +2,7 @@
 import { useCallback, useContext, useEffect, useState } from "react";
 
 //------------------------------------------------------------------------------
-import {
-    type Livelink as LivelinkInstance,
-    Camera as LivelinkCamera,
-    Entity,
-    Gamepad,
-    Keyboard,
-    Mouse,
-} from "@3dverse/livelink";
+import { type Livelink as LivelinkInstance, Entity, Gamepad, Keyboard, Mouse } from "@3dverse/livelink";
 import { LivelinkContext, Livelink, Viewport, ViewportContext, Canvas, useEntity } from "@3dverse/livelink-react";
 
 //------------------------------------------------------------------------------
@@ -48,13 +41,16 @@ function AppLayout() {
                 return null;
             }
 
-            const playerSceneEntity = await instance.scene.newEntity(
-                "PlayerSceneEntity",
-                { local_transform: [0, 0, 0], scene_ref: { value: characterControllerSceneUUID } },
-                {
+            const playerSceneEntity = await instance.scene.newEntity({
+                name: "PlayerSceneEntity",
+                components: {
+                    local_transform: { position: [0, 0, 0] },
+                    scene_ref: { value: characterControllerSceneUUID },
+                },
+                options: {
                     delete_on_client_disconnection: true,
                 },
-            );
+            });
 
             const children = await playerSceneEntity.getChildren();
             const thirdPersonController = children.find(child => child.script_map !== undefined);

@@ -2,7 +2,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import LegacyCanvas from "../../../components/LegacyCanvas";
 import { useLivelinkInstance, useEntity, DefaultCamera } from "@3dverse/livelink-react";
-import { Camera, Entity, Livelink, Vec2, Vec3 } from "@3dverse/livelink";
+import { CameraProjection, Entity, Livelink, Vec2, Vec3 } from "@3dverse/livelink";
 import { Output, OutputDivider, OutputItem, OutputTitle, OutputValue } from "../../../styles/components/output";
 import { ActionBar } from "../../../components/SamplePlayer/ActionBar";
 import { Range } from "react-daisyui";
@@ -83,7 +83,7 @@ export default function ConveyorBeltSorting() {
         [setSelectedEntity],
     );
 
-    function onConnected({ cameras }: { instance: Livelink; cameras: Array<Camera | null> }) {
+    function onConnected({ cameras }: { instance: Livelink; cameras: Array<CameraProjection | null> }) {
         if (cameras.length === 0 || cameras[0] === null) {
             return;
         }

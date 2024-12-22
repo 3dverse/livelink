@@ -1,33 +1,42 @@
 export type * from "@3dverse/livelink.core";
 
+export * from "../_prebuild/ComponentsRecord";
+
 export * from "./Livelink";
-export * from "./Session";
-export * from "./Client";
-export * from "./Entity";
-export * from "./Camera";
-export * from "./Scene";
-export * from "./Viewport";
-export * from "./AnimationSequenceController";
+export * from "./session/SessionInfo";
+export * from "./session/ClientInfo";
+export * from "./session/Session";
+export * from "./session/Client";
 
-export * from "./decoders/SoftwareDecoder";
-export * from "./decoders/WebCodecsDecoder";
-export * from "./decoders/EncodedFrameConsumer";
-export * from "./decoders/CurrentFrameMetaData";
-export * from "./decoders/FrameCameraTransform";
+export * from "./scene/Scene";
+export * from "./scene/Entity";
+export { Settings as SceneSettings } from "./scene/Settings";
+export * from "./scene/DataObject";
 
-export * from "./contexts/ContextProvider";
-export * from "./contexts/Context2D";
-export * from "./contexts/ContextWebGL";
+export * from "./rendering/Viewport";
+export * from "./rendering/CameraProjection";
 
-export * from "./surfaces/Rect";
-export * from "./surfaces/VirtualSurface";
-export * from "./surfaces/RenderingSurface";
-export * from "./surfaces/RenderingSurfaceBase";
-export * from "./surfaces/OffscreenSurface";
-export * from "./surfaces/OverlayInterface";
+export * from "./rendering/decoders/SoftwareDecoder";
+export * from "./rendering/decoders/WebCodecsDecoder";
+export * from "./rendering/decoders/EncodedFrameConsumer";
+export * from "./rendering/decoders/DecodedFrameConsumer";
+export * from "./rendering/decoders/FrameMetaData";
+export * from "./rendering/decoders/FrameCameraTransform";
 
+export * from "./rendering/contexts/ContextProvider";
+export * from "./rendering/contexts/Context2D";
+export * from "./rendering/contexts/ContextWebGL";
+
+export * from "./rendering/surfaces/Rect";
+export * from "./rendering/surfaces/VirtualSurface";
+export * from "./rendering/surfaces/RenderingSurface";
+export * from "./rendering/surfaces/RenderingSurfaceBase";
+export * from "./rendering/surfaces/OffscreenSurface";
+export * from "./rendering/surfaces/OverlayInterface";
+
+export * from "./inputs/InputDevice";
 export * from "./inputs/Keyboard";
-export * from "./inputs/Mouse";
 export * from "./inputs/Gamepad";
+export * from "./inputs/Mouse";
 
 export * from "./maths";

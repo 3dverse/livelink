@@ -3,7 +3,7 @@ import { useRef, useState } from "react";
 import { useLivelinkInstance } from "@3dverse/livelink-react";
 import LegacyCanvas from "../../../components/LegacyCanvas";
 import { ActionBar } from "../../../components/SamplePlayer/ActionBar";
-import { Camera, EncodedFrameConsumer, Livelink, Viewport, VirtualSurface } from "@3dverse/livelink";
+import { CameraProjection, EncodedFrameConsumer, Livelink, Viewport, VirtualSurface } from "@3dverse/livelink";
 
 //------------------------------------------------------------------------------
 class VideoWriter extends EncodedFrameConsumer {
@@ -80,7 +80,7 @@ export default function VideoCapture() {
                     if (!cameraRef.current) {
                         return;
                     }
-                    const camera = await inst.scene.findEntity(Camera, { entity_uuid: cameraRef.current });
+                    const camera = await inst.scene.findEntity(CameraProjection, { entity_uuid: cameraRef.current });
                     console.log({ camera });
                     if (camera) {
                         camera.viewport = viewports[0];

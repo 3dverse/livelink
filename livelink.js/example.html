@@ -1,0 +1,74 @@
+<html>
+    <body style="margin: 0; padding: 0">
+        <div class="canvas-container" style="width: 100vw; height: 100vh; background-color: #000">
+            <!-- CANVAS -->
+            <canvas
+                id="display-canvas"
+                tabindex="1"
+                oncontextmenu="event.preventDefault()"
+                style="width: 100%; height: 100%"
+            ></canvas>
+        </div>
+
+        <!-- APP ENTRYPOINT -->
+        <script type="module">
+            import {
+                Livelink,
+                RenderingSurface,
+                Viewport,
+                WebCodecsDecoder,
+            } from "https://unpkg.com/@3dverse/livelink/dist/index.mjs";
+
+            // Start a new session.
+            const instance = await Livelink.start({
+                scene_id: "322c6bf7-52eb-4197-ab42-a0924f71d72d",
+                token: "public_UjENe9mA-wgTBYvw",
+                is_transient: true,
+            });
+
+            // Make sure the browser supports WebCodecs.
+            const codec = await WebCodecsDecoder.findSupportedCodec();
+            if (!codec) {
+                throw new Error("WebCodecs not supported in this browser.");
+            }
+
+            // Create a rendering surface backed by the canvas element.
+            const surface = new RenderingSurface({
+                canvas_element: "display-canvas",
+                context_type: "2d",
+            });
+
+            // Setup a viewport taking up the entire canvas.
+            const viewport = new Viewport(instance, surface);
+            instance.addViewports({ viewports: [viewport] });
+
+            // Configure the remote server with the codec.
+            await instance.configureRemoteServer({ codec });
+
+            // Set the encoded frame consumer to be the WebCodecsDecoder.
+            await instance.setEncodedFrameConsumer({
+                encoded_frame_consumer: new WebCodecsDecoder(instance.default_decoded_frame_consumer),
+            });
+
+            // Create a camera entity.
+            const DEFAULT_RENDER_GRAPH_UUID = "398ee642-030a-45e7-95df-7147f6c43392";
+            const RENDER_GRAPH_SETTINGS = { grid: true, skybox: true, gradient: false };
+            const camera = await instance.newEntity({
+                name: "MyCamera",
+                components: {
+                    local_transform: { position: [0, 1, 5] },
+                    camera: { renderGraphRef: DEFAULT_RENDER_GRAPH_UUID, dataJSON: RENDER_GRAPH_SETTINGS },
+                    perspective_lens: {}, // Default values are fine.
+                },
+                options: { auto_broadcast: false },
+            });
+            // And attach it to the viewport.
+            viewport.camera_entity = camera;
+
+            //TODO: setup a camera controller
+
+            // We can now start streaming frames.
+            instance.startStreaming();
+        </script>
+    </body>
+</html>

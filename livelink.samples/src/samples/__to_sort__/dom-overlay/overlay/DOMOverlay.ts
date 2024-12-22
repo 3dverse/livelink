@@ -1,7 +1,7 @@
 import { DOMElement } from "./DOMElement";
 import { DOMViewport } from "./DOMViewport";
 
-import type { CurrentFrameMetaData, OverlayInterface, Viewport } from "@3dverse/livelink";
+import type { FrameMetaData, OverlayInterface, Viewport } from "@3dverse/livelink";
 import type { Vec2i } from "@3dverse/livelink.core";
 
 /**
@@ -101,16 +101,18 @@ export class DOMOverlay implements OverlayInterface {
     /**
      *
      */
-    drawFrame({ viewports, meta_data }: { viewports: Viewport[]; meta_data: CurrentFrameMetaData }): null {
+    drawFrame({ viewports, meta_data }: { viewports: Viewport[]; meta_data: FrameMetaData }): null {
         const dom_elements = Array.from(this.#elements.values());
         for (const viewport of viewports) {
             if (!this.#viewports.has(viewport)) {
                 continue;
             }
 
-            const frameTransform = meta_data.cameras.find(({ camera }) => camera === viewport.camera);
+            const frameTransform = meta_data.current_client_camera_entities.find(
+                ({ camera }) => camera === viewport.camera_projection?.camera_entity,
+            );
             if (!frameTransform) {
-                console.error("No metadata found for camera", viewport.camera);
+                console.error("No metadata found for camera", viewport.camera_projection?.camera_entity);
                 continue;
             }
 
