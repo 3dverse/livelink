@@ -47,7 +47,7 @@ export class DOMOverlay implements OverlayInterface {
             return;
         }
 
-        if (!viewport.camera) {
+        if (!viewport.camera_projection) {
             console.error("Viewport has no camera", viewport);
             return;
         }
@@ -101,24 +101,16 @@ export class DOMOverlay implements OverlayInterface {
     /**
      *
      */
-    drawFrame({ viewports, meta_data }: { viewports: Viewport[]; meta_data: FrameMetaData }): null {
-        const dom_elements = Array.from(this.#elements.values());
-        for (const viewport of viewports) {
-            if (!this.#viewports.has(viewport)) {
-                continue;
-            }
-
-            const frameTransform = meta_data.current_client_camera_entities.find(
-                ({ camera }) => camera === viewport.camera_projection?.camera_entity,
-            );
-            if (!frameTransform) {
-                console.error("No metadata found for camera", viewport.camera_projection?.camera_entity);
-                continue;
-            }
-
-            const dom_viewport = this.#viewports.get(viewport)!;
-            dom_viewport.draw({ dom_elements });
-        }
+    draw({ meta_data, output_canvas }: { meta_data: FrameMetaData; output_canvas: OffscreenCanvas | null }): null {
+        //const dom_elements = Array.from(this.#elements.values());
+        //for (const viewport of viewports) {
+        //    if (!this.#viewports.has(viewport)) {
+        //        continue;
+        //    }
+        //
+        //    const dom_viewport = this.#viewports.get(viewport)!;
+        //    dom_viewport.draw({ dom_elements });
+        //}
 
         return null;
     }

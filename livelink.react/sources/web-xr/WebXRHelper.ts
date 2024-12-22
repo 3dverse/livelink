@@ -539,7 +539,7 @@ export class WebXRHelper {
      * @param time
      * @param frame
      */
-    #onXRFrame = (_: DOMHighResTimeStamp, frame: XRFrame) => {
+    #onXRFrame = (_: DOMHighResTimeStamp, frame: XRFrame): void => {
         const session = this.session!;
 
         // Check for and respond to any gamepad state changes.
@@ -565,27 +565,20 @@ export class WebXRHelper {
 
         this.#updateLiveLinkCameras(xr_views);
 
-        if (this.#context.meta_data && this.#context.meta_data.current_client_camera_entities.length > 0) {
-            const cameras = (this.#context.meta_data as FrameMetaData).current_client_camera_entities;
+        const views = xr_views.map(({ view, viewport }, index) => {
+            const current_viewport = this.#surface.viewports[index];
+            return {
+                view,
+                viewport,
+                frame_camera_transform: {
+                    position: current_viewport.camera_projection!.world_position,
+                    orientation: current_viewport.camera_projection!.world_orientation,
+                },
+            };
+        });
 
-            const views = xr_views.map(({ view, viewport }, index) => {
-                const current_viewport = this.#surface.viewports[index];
-                const { world_position: position, world_orientation: orientation } = cameras.find(
-                    ({ camera_entity }) => camera_entity.id === current_viewport.camera_projection?.camera_entity.id,
-                )!;
-
-                return {
-                    view,
-                    viewport,
-                    frame_camera_transform: { position, orientation },
-                };
-            });
-
-            this.#unapplyCamerasOrigin(views);
-            this.#context.drawXRFrame({ xr_views: views });
-        } else {
-            console.warn("No camera meta data found in the XRContext.");
-        }
+        this.#unapplyCamerasOrigin(views);
+        this.#context.drawXRFrame({ xr_views: views });
 
         session.requestAnimationFrame(this.#onXRFrame);
     };

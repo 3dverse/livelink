@@ -7,13 +7,7 @@ export interface OverlayInterface {
     /**
      *
      */
-    draw({
-        meta_data,
-        output_canvas,
-    }: {
-        meta_data: FrameMetaData;
-        output_canvas: OffscreenCanvas | null;
-    }): OffscreenCanvas | null;
+    draw({ output_canvas }: { output_canvas: OffscreenCanvas | null }): OffscreenCanvas | null;
 
     /**
      *

@@ -18,11 +18,13 @@ export type FrameMetaData = {
     frame_counter: number;
 
     /**
+     * @internal
      * Camera transforms of each client viewport in the frame
      */
     current_client_camera_entities: Array<FrameCameraTransform & { viewport: Viewport }>;
 
     /**
+     * @internal
      * Camera transforms of each other client viewport in the frame
      */
     other_clients_camera_entities: Array<FrameCameraTransform>;

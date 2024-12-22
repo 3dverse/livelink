@@ -368,10 +368,10 @@ export class Viewport extends EventTarget {
     /**
      *
      */
-    drawOverlays({ meta_data }: { meta_data: FrameMetaData }): OffscreenCanvas | null {
+    drawOverlays(): OffscreenCanvas | null {
         let blendedFrame: OffscreenCanvas | null = null;
         for (const overlay of this.#overlays) {
-            const overlayFrame = overlay.draw({ meta_data, output_canvas: blendedFrame });
+            const overlayFrame = overlay.draw({ output_canvas: blendedFrame });
 
             if (!blendedFrame) {
                 blendedFrame = overlayFrame;

@@ -21,7 +21,6 @@ export * from "./rendering/decoders/WebCodecsDecoder";
 export * from "./rendering/decoders/EncodedFrameConsumer";
 export * from "./rendering/decoders/DecodedFrameConsumer";
 export * from "./rendering/decoders/FrameMetaData";
-export * from "./rendering/decoders/FrameCameraTransform";
 
 export * from "./rendering/contexts/ContextProvider";
 export * from "./rendering/contexts/Context2D";

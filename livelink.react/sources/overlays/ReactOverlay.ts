@@ -2,7 +2,7 @@ import React, { type ReactElement } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import React3DElement from "./React3DElement";
 
-import { FrameMetaData, Vec3, type OverlayInterface, type Viewport } from "@3dverse/livelink";
+import { Vec3, type OverlayInterface, type Viewport } from "@3dverse/livelink";
 
 /**
  *
@@ -80,7 +80,7 @@ export class ReactOverlay implements OverlayInterface {
     /**
      *
      */
-    draw(_: { meta_data: FrameMetaData }): OffscreenCanvas | null {
+    draw(): OffscreenCanvas | null {
         if (!this.#viewport.isValid()) {
             return null;
         }

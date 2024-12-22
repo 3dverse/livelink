@@ -67,17 +67,19 @@ export abstract class EncodedFrameConsumer {
      * @returns The current frame meta data
      */
     applyFrameMetaData({ meta_data }: { meta_data: FrameMetaData }): void {
-        this.#setCamerasGlobalTransform({ meta_data });
+        this.#setNotControlledCamerasGlobalTransform({ meta_data });
 
         for (const frame_camera_transform of meta_data.current_client_camera_entities) {
-            frame_camera_transform.viewport.camera_projection?.updateClipFromWorldMatrix({ frame_camera_transform });
+            frame_camera_transform.viewport.camera_projection?.updateFromFrameCameraTransform({
+                frame_camera_transform,
+            });
         }
     }
 
     /**
-     * Set the global transform of the cameras in the scene.
+     * Set the global transform of the cameras that are not controlled by the current client.
      */
-    #setCamerasGlobalTransform({ meta_data }: { meta_data: FrameMetaData }) {
+    #setNotControlledCamerasGlobalTransform({ meta_data }: { meta_data: FrameMetaData }) {
         for (const { camera_entity, world_position, world_orientation } of meta_data.other_clients_camera_entities) {
             // TODO: This should actually set the global transform not the local transform.
             camera_entity._mergeComponents({

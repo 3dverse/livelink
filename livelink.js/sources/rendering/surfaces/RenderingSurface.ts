@@ -158,7 +158,7 @@ export class RenderingSurface extends RenderingSurfaceBase {
         this.#context.drawFrame({ frame, left: this.offset[0], top: this.offset[1], meta_data });
 
         for (const viewport of this.viewports) {
-            const overlayFrame = viewport.drawOverlays({ meta_data });
+            const overlayFrame = viewport.drawOverlays();
             if (!overlayFrame) {
                 continue;
             }

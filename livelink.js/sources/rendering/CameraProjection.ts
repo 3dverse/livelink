@@ -31,6 +31,16 @@ export class CameraProjection {
     readonly viewport: Viewport;
 
     /**
+     * World space position of the camera as used by the currently processed frame.
+     */
+    #world_position: Vec3 = [0, 0, 0];
+
+    /**
+     * World space orientation of the camera as used by the currently processed frame.
+     */
+    #world_orientation: Quat = [1, 0, 0, 0];
+
+    /**
      * Transformation matrix from view space to clip space, aka the projection matrix.
      */
     #clip_from_view_matrix = mat4.create();
@@ -52,6 +62,20 @@ export class CameraProjection {
      */
     get clip_from_world_matrix(): Mat4 {
         return this.#clip_from_world_matrix as Mat4;
+    }
+
+    /**
+     * World space position of the camera as used by the currently processed frame.
+     */
+    get world_position(): Vec3 {
+        return this.#world_position;
+    }
+
+    /**
+     * World space orientation of the camera as used by the currently processed frame.
+     */
+    get world_orientation(): Quat {
+        return this.#world_orientation;
     }
 
     /**
@@ -126,12 +150,17 @@ export class CameraProjection {
     }
 
     /**
+     * @internal
+     *
      * Updates the transformation matrix from world space to clip space.
      *
      * @param params
      * @param params.frame_camera_transform - The frame camera transform data as found in the frame metadata.
      */
-    updateClipFromWorldMatrix({ frame_camera_transform }: { frame_camera_transform: FrameCameraTransform }) {
+    updateFromFrameCameraTransform({ frame_camera_transform }: { frame_camera_transform: FrameCameraTransform }) {
+        this.#world_position = frame_camera_transform.world_position;
+        this.#world_orientation = frame_camera_transform.world_orientation;
+
         const tmp_matrix = this.#clip_from_world_matrix;
         const view_from_world_matrix = mat4.invert(tmp_matrix, frame_camera_transform.world_from_view_matrix);
 

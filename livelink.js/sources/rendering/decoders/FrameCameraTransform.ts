@@ -2,7 +2,7 @@ import type { Mat4, Quat, Vec3 } from "@3dverse/livelink.core";
 import type { Entity } from "../../scene/Entity";
 
 /**
- * @category Streaming
+ * @internal
  */
 export type FrameCameraTransform = {
     /**
