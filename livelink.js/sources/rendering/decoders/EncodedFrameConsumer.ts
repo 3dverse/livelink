@@ -1,4 +1,7 @@
+//------------------------------------------------------------------------------
 import type { CodecType, Vec2i } from "@3dverse/livelink.core";
+
+//------------------------------------------------------------------------------
 import { FrameMetaData } from "./FrameMetaData";
 import { DecodedFrameConsumer } from "./DecodedFrameConsumer";
 
@@ -14,13 +17,9 @@ import { DecodedFrameConsumer } from "./DecodedFrameConsumer";
  * ```
  *
  * This class can be extended to create custom encoded frame consumers.
+ *
  * As an example, a custom consumer could be created to embed the encoded frames
  * in a video container format like MP4.
- *
- * Implementations of this class should call the applyFrameMetaData method as
- * soon as the frame is decoded to update the cameras in the scene so that any
- * compositor - like a WebGL canvas - can render the frame correctly.
- *
  *
  * {@link WebCodecsDecoder} and {@link SoftwareDecoder} are examples of classes that extend this class.
  *

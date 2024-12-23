@@ -369,7 +369,7 @@ export class EntityRegistry {
      * @internal
      */
     _clearDetachList(): void {
-        for (const [_, entities] of this.#detached_components) {
+        for (const [, entities] of this.#detached_components) {
             entities.clear();
         }
     }
@@ -378,7 +378,7 @@ export class EntityRegistry {
      * @internal
      */
     _clearBroadcastList(): void {
-        for (const [_, entities] of this.#dirty_components_to_broadcast) {
+        for (const [, entities] of this.#dirty_components_to_broadcast) {
             entities.clear();
         }
     }

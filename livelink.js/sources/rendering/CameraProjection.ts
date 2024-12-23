@@ -15,7 +15,18 @@ import { FrameCameraTransform } from "./decoders/FrameCameraTransform";
 const INFINITE_FAR_VALUE = 100000;
 
 /**
- * Holds the projection matrix of a camera entity.
+ * Holds the projection and transform matrices associated to a camera entity.
+ *
+ * The data in this class is guaranteed to be synchronized with the frame being rendered. It accounts for
+ * the delays that occur between the remote server and the client.
+ * The data it holds come from the frame meta data that are provided along with the frame sent by the server.
+ *
+ * As for the transform values in the camera entity, they are not guaranteed to be synchronized
+ * with the frame being rendered. This is due to the fact that the camera entity can be updated at any time,
+ * and might be too recent to be used in the current frame.
+ *
+ * In short, camera controllers should use the camera entity and frame drawers (RenderingSurface, Overlay, ...)
+ * should use the CameraProjection.
  *
  * @category Rendering
  */

@@ -7,6 +7,17 @@ import { Viewport } from "../Viewport";
 import { FrameMetaData } from "../decoders/FrameMetaData";
 
 /**
+ * Abstract class for rendering surfaces.
+ *
+ * A rendering surface represents the final destination of the rendered frame.
+ *
+ * It is usually backed by an HTML Canvas or an OffscreenCanvas.
+ *
+ * It can be split into multiple viewports, each with its own camera and render target.
+ * The rendering surface if responsible for holding the viewports and their configurations.
+ *
+ * It is finally responsible for drawing the portions of the final frame to its backing element.
+ *
  * @category Rendering
  */
 export abstract class RenderingSurfaceBase extends EventTarget {
@@ -21,19 +32,83 @@ export abstract class RenderingSurfaceBase extends EventTarget {
     offset: Vec2i = [0, 0];
 
     /**
-     *
+     * Width of the surface.
      */
     abstract get width(): number;
 
     /**
-     *
+     * Height of the surface.
      */
     abstract get height(): number;
 
     /**
-     *
+     * Returns the bounding rectangle of the surface.
      */
-    getViewportConfigs(width: number, height: number): Array<ViewportConfig & { z_index: number }> {
+    abstract getBoundingRect(): Rect;
+
+    /**
+     * Draws the portions of the frame associated with the viewports to the backing element.
+     *
+     * @param params
+     * @param params.frame - The frame to draw.
+     * @param params.meta_data - The metadata associated with the frame.
+     */
+    abstract drawFrame({ frame, meta_data }: { frame: VideoFrame | OffscreenCanvas; meta_data: FrameMetaData }): void;
+
+    /**
+     * Adds a viewport to the current surface.
+     *
+     * Note that the viewport knows which section of the surface it should draw to using
+     * its {@link Viewport.relative_rect} property.
+     *
+     * @param params
+     * @param params.viewport - The viewport to add.
+     */
+    addViewport({ viewport }: { viewport: Viewport }): void {
+        this.viewports.push(viewport);
+    }
+
+    /**
+     * Removes a viewport from the current surface.
+     *
+     * @param params
+     * @param params.viewport - The viewport to remove.
+     */
+    removeViewport({ viewport }: { viewport: Viewport }): void {
+        const index = this.viewports.indexOf(viewport);
+        if (index !== -1) {
+            this.viewports.splice(index, 1);
+        }
+    }
+
+    /**
+     * Releases the resources associated with the current surface.
+     */
+    release(): void {
+        for (const viewport of this.viewports) {
+            viewport.release();
+        }
+        this.viewports.length = 0;
+    }
+
+    /**
+     * Returns whether the current surface is valid.
+     */
+    isValid(): boolean {
+        return this.viewports.length > 0 && this.viewports.every(v => v.isValid());
+    }
+
+    /**
+     * @internal
+     * Returns the viewport configurations for the current surface.
+     */
+    _getViewportConfigs({
+        width,
+        height,
+    }: {
+        width: number;
+        height: number;
+    }): Array<ViewportConfig & { z_index: number }> {
         if (!this.isValid()) {
             throw new Error("Invalid config");
         }
@@ -48,48 +123,4 @@ export abstract class RenderingSurfaceBase extends EventTarget {
             z_index: viewport.z_index,
         }));
     }
-
-    /**
-     *
-     */
-    addViewport({ viewport }: { viewport: Viewport }): void {
-        this.viewports.push(viewport);
-    }
-
-    /**
-     *
-     */
-    removeViewport({ viewport }: { viewport: Viewport }): void {
-        const index = this.viewports.indexOf(viewport);
-        if (index !== -1) {
-            this.viewports.splice(index, 1);
-        }
-    }
-
-    /**
-     *
-     */
-    release(): void {
-        for (const viewport of this.viewports) {
-            viewport.release();
-        }
-        this.viewports.length = 0;
-    }
-
-    /**
-     *
-     */
-    isValid(): boolean {
-        return this.viewports.length > 0 && this.viewports.every(v => v.isValid());
-    }
-
-    /**
-     *
-     */
-    abstract getBoundingRect(): Rect;
-
-    /**
-     *
-     */
-    abstract drawFrame(frame: { frame: VideoFrame | OffscreenCanvas; meta_data: FrameMetaData }): void;
 }

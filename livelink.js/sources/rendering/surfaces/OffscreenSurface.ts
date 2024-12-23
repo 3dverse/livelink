@@ -1,9 +1,9 @@
 //------------------------------------------------------------------------------
+import { Rect } from "./Rect";
 import { Entity } from "../../scene/Entity";
+import { CanvasContextType } from "./RenderingSurface";
 import { FrameMetaData } from "../decoders/FrameMetaData";
 import { ContextProvider } from "../contexts/ContextProvider";
-import { Rect } from "./Rect";
-import { CanvasContextType } from "./RenderingSurface";
 import { RenderingSurfaceBase } from "./RenderingSurfaceBase";
 
 /**

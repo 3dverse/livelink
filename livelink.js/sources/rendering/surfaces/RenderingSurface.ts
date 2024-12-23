@@ -21,6 +21,12 @@ export type CanvasContextAttributes =
 export type CanvasContextType = "2d" | "webgl" | "webgl2";
 
 /**
+ * A rendering surface backed by an HTML canvas.
+ *
+ * The context can be specified as either 2D, WebGL or WebGL2 along with its attributes.
+ *
+ * The canvas is automatically resized to match the size of the HTML element it is attached to.
+ *
  * @category Rendering
  */
 export class RenderingSurface extends RenderingSurfaceBase {
@@ -28,40 +34,52 @@ export class RenderingSurface extends RenderingSurfaceBase {
      * HTML canvas on which we display the final composited frame.
      */
     #canvas: HTMLCanvasElement;
+
     /**
-     *
+     * The context used to draw the frame.
      */
     #context: ContextProvider;
+
     /**
-     *
+     * The auto resizer for the canvas.
      */
     #auto_resizer: CanvasAutoResizer;
 
     /**
-     * Dimensions of the HTML canvas in pixels.
+     * Width of the surface.
      */
     get width(): number {
         return this.#canvas.clientWidth;
     }
+
+    /**
+     * Height of the surface.
+     */
     get height(): number {
         return this.#canvas.clientHeight;
     }
+
+    /**
+     * Dimensions of the surface.
+     */
     get dimensions(): Vec2 {
         return [this.width, this.height];
     }
-    get aspect_ratio(): number {
-        return this.height > 0 ? this.width / this.height : 1;
-    }
 
     /**
-     * HTML Canvas Element
+     * HTML canvas on which the final frame is displayed.
      */
     get canvas(): HTMLCanvasElement {
         return this.#canvas;
     }
 
     /**
+     * Creates a new rendering surface.
      *
+     * @param params
+     * @param params.canvas_element - The HTML canvas element or its id.
+     * @param params.context_type - The type of context to create.
+     * @param params.context_attributes - The attributes of the context.
      */
     constructor({
         canvas_element,
@@ -107,7 +125,7 @@ export class RenderingSurface extends RenderingSurfaceBase {
     }
 
     /**
-     *
+     * Releases the resources associated with the surface.
      */
     release(): void {
         this.#auto_resizer.release();
@@ -115,26 +133,14 @@ export class RenderingSurface extends RenderingSurfaceBase {
     }
 
     /**
-     *
-     */
-    #onCanvasResized = (): void => {
-        this.#context.refreshSize();
-        this.dispatchEvent(new Event("on-resized"));
-
-        for (const viewport of this.viewports) {
-            viewport.onResize();
-        }
-    };
-
-    /**
-     *
+     * Returns the context of the surface.
      */
     getContext<ContextType extends ContextProvider>(): ContextType {
         return this.#context as ContextType;
     }
 
     /**
-     *
+     * Returns the bounding rectangle of the surface.
      */
     getBoundingRect(): Rect {
         const rect = this.canvas.getClientRects()[0];
@@ -152,7 +158,11 @@ export class RenderingSurface extends RenderingSurfaceBase {
     }
 
     /**
+     * Draws a frame to the surface.
      *
+     * @param params
+     * @param params.frame - The frame to draw.
+     * @param params.meta_data - The metadata associated with the frame.
      */
     drawFrame({ frame, meta_data }: { frame: VideoFrame | OffscreenCanvas; meta_data: FrameMetaData }): void {
         this.#context.drawFrame({ frame, left: this.offset[0], top: this.offset[1], meta_data });
@@ -170,4 +180,16 @@ export class RenderingSurface extends RenderingSurfaceBase {
             });
         }
     }
+
+    /**
+     * Resizes the surface.
+     */
+    #onCanvasResized = (): void => {
+        this.#context.refreshSize();
+        this.dispatchEvent(new Event("on-resized"));
+
+        for (const viewport of this.viewports) {
+            viewport.onResize();
+        }
+    };
 }

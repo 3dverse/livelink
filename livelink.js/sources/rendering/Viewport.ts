@@ -10,7 +10,6 @@ import { Livelink } from "../Livelink";
 import { Entity } from "../scene/Entity";
 import { RelativeRect } from "./surfaces/Rect";
 import { CameraProjection } from "./CameraProjection";
-import { FrameMetaData } from "./decoders/FrameMetaData";
 import { OverlayInterface } from "./surfaces/OverlayInterface";
 import { RenderingSurfaceBase } from "./surfaces/RenderingSurfaceBase";
 

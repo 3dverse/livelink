@@ -1,5 +1,4 @@
 import type { Vec2i } from "@3dverse/livelink.core";
-import { Viewport } from "../Viewport";
 
 /**
  * @internal
@@ -50,7 +49,7 @@ export class CanvasAutoResizer extends EventTarget {
     /**
      * Callback called by the observer when the canvas is resized.
      */
-    #onResized = (_: Array<ResizeObserverEntry>): void => {
+    #onResized = ({}: Array<ResizeObserverEntry>): void => {
         if (this.#resize_debounce_timeout !== 0) {
             clearTimeout(this.#resize_debounce_timeout);
         }
