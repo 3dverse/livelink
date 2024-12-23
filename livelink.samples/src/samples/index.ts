@@ -53,6 +53,7 @@ export const SAMPLES: Array<{
         useCustomLayout?: boolean;
         autoConnect?: boolean;
         element: JSX.Element;
+        code?: string;
     }>;
 }> = [
     {

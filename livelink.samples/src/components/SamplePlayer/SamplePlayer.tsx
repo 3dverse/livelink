@@ -80,6 +80,11 @@ export function SamplePlayer({
     return (
         <SamplePlayerContext.Provider value={{ connectionState, setConnectionState }}>
             <div className="w-full h-full flex gap-3 p-3 lg:pl-0 relative">
+                {code && (
+                    <SyntaxHighlighter language="jsx" style={codeTheme} className="left-0 top-0 max-w-[650px]">
+                        {code}
+                    </SyntaxHighlighter>
+                )}
                 <div className="w-full h-full gap-3 bg-[#1e222e] rounded-xl relative flex">
                     {useCustomLayout ? (
                         children
@@ -97,19 +102,12 @@ export function SamplePlayer({
                         </>
                     )}
                 </div>
+                {description && (
+                    <div>
+                        <Markdown>{description}</Markdown>
+                    </div>
+                )}
             </div>
-
-            {description && (
-                <div>
-                    <Markdown>{description}</Markdown>
-                </div>
-            )}
-
-            {code === "caca" && (
-                <SyntaxHighlighter language="jsx" style={codeTheme} className="absolute bottom-0 right-0 max-h-[150px]">
-                    {code}
-                </SyntaxHighlighter>
-            )}
         </SamplePlayerContext.Provider>
     );
 }

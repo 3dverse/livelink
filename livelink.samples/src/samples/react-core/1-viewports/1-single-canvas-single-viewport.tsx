@@ -11,6 +11,7 @@ const token = import.meta.env.VITE_PROD_PUBLIC_TOKEN;
 //------------------------------------------------------------------------------
 export default {
     path: import.meta.url,
+    code: import.meta.env.VITE_FILE_CONTENT,
     title: "Single Viewport",
     summary: "A single viewport inside a single canvas.",
     element: <App />,

@@ -7,7 +7,6 @@ import "./styles/index.css";
 import { RouterProvider, createHashRouter } from "react-router-dom";
 import { SAMPLES } from "./samples/index.ts";
 import { SamplePlayer } from "./components/SamplePlayer/SamplePlayer.tsx";
-import reactElementToJSXString from "react-element-to-jsx-string";
 import { resolveSamplePath } from "./components/SamplePlayer/index.tsx";
 
 const router = createHashRouter([
@@ -25,10 +24,7 @@ const router = createHashRouter([
                     description={sample.description}
                     useCustomLayout={sample.useCustomLayout}
                     autoConnect={sample.autoConnect}
-                    code={reactElementToJSXString(sample.element, {
-                        sortProps: false,
-                        showFunctions: true,
-                    })}
+                    code={sample.code}
                 >
                     {sample.element}
                 </SamplePlayer>
