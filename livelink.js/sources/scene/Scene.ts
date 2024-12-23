@@ -14,8 +14,8 @@ import { ComponentsRecord } from "../../_prebuild/ComponentsRecord";
 
 //------------------------------------------------------------------------------
 import { Entity } from "./Entity";
-import { Settings } from "./Settings";
 import { compute_rpn } from "./Filters";
+import { SceneSettings } from "./SceneSettings";
 import { EntityRef, ScriptDataObject } from "./DataObject";
 import { EntityRegistry } from "./EntityRegistry";
 
@@ -50,7 +50,7 @@ export class Scene extends EventTarget {
     /**
      * Scene settings
      */
-    public readonly settings = new Settings();
+    public readonly settings = new SceneSettings();
 
     /**
      * The core instance.

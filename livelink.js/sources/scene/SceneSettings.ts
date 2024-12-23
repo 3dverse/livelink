@@ -1,12 +1,15 @@
+//------------------------------------------------------------------------------
 import { SettingsBaseType, SettingType } from "@3dverse/livelink.core";
+
+//------------------------------------------------------------------------------
 import { SettingsBase } from "../../_prebuild/SettingsBase";
 
 /**
- * The settings of a scene.
+ * The scene settings.
  *
  * @category Scene
  */
-export class Settings extends SettingsBase {
+export class SceneSettings extends SettingsBase {
     /**
      * @internal
      */
