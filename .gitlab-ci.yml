@@ -127,7 +127,7 @@ js:livelink.three:build:
   needs:
     - job: js:livelink.js:build
       artifacts: true
-    - job: js:livelink.three:build
+    - job: js:livelink.react:build
       artifacts: true
   before_script:
     - tar -zxf ${LIVELINK_JS_PACKAGE}-*.tgz --strip-components=1 -C livelink.js
