@@ -3,6 +3,8 @@ import type { ClientInterface, ClientMetaData, RTID, UUID } from "@3dverse/livel
 
 //------------------------------------------------------------------------------
 import { ClientInfo, CursorData } from "./ClientInfo";
+import { Livelink } from "../Livelink";
+import { Entity } from "../scene/Entity";
 
 /**
  * A client in a session.
@@ -16,6 +18,11 @@ import { ClientInfo, CursorData } from "./ClientInfo";
  * @category Session
  */
 export class Client implements ClientInterface {
+    /**
+     * The Livelink core object.
+     */
+    readonly #core: Livelink;
+
     /**
      * Information about the client.
      */
@@ -69,9 +76,29 @@ export class Client implements ClientInterface {
     /**
      * @internal
      */
-    constructor({ client_info, client_meta_data }: { client_info: ClientInfo; client_meta_data: ClientMetaData }) {
+    constructor({
+        core,
+        client_info,
+        client_meta_data,
+    }: {
+        core: Livelink;
+        client_info: ClientInfo;
+        client_meta_data: ClientMetaData;
+    }) {
+        this.#core = core;
         this.#client_info = client_info;
         this._updateFromClientMetaData({ client_meta_data });
+    }
+
+    /**
+     *
+     */
+    async getHoveredEntity(): Promise<Entity | null> {
+        if (this.#cursor_data == null) {
+            return null;
+        }
+
+        return await this.#core.scene._getEntity({ entity_rtid: this.#cursor_data.hovered_entity_rtid });
     }
 
     /**

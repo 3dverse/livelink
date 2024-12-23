@@ -649,7 +649,7 @@ export class Livelink {
     #onFrameReceived = (e: Event): void => {
         const frame_data = (e as CustomEvent<FrameData>).detail;
 
-        this.session._updateClients({ client_data: frame_data.meta_data.clients });
+        this.session._updateClients({ core: this, client_data: frame_data.meta_data.clients });
         const meta_data = convertRawFrameMetaDataToFrameMetaData({
             raw_frame_meta_data: frame_data.meta_data,
             client_id: this.session.client_id!,

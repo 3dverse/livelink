@@ -230,6 +230,9 @@ export class Viewport extends EventTarget {
      * Activates picking on the viewport.
      *
      * If picking is activated, the viewport will emit an `on-entity-picked` event when it is clicked.
+     *
+     * @param params
+     * @param params.dom_element - The DOM element backing the viewport.
      */
     activatePicking({ dom_element }: { dom_element: HTMLElement }): void {
         this.#dom_element = dom_element;
@@ -396,15 +399,19 @@ export class Viewport extends EventTarget {
     #onCanvasClicked = async (e: MouseEvent): Promise<void> => {
         e.stopPropagation();
 
-        const cursorData = this.#core.session.current_client?.cursor_data;
-        if (!cursorData) {
-            return;
-        }
+        let detail = null;
 
-        const entity = await this.#core.scene._getEntity({ entity_rtid: cursorData.hovered_entity_rtid });
-        const detail = entity
-            ? { entity, ws_position: cursorData.hovered_ws_position, ws_normal: cursorData.hovered_ws_normal }
-            : null;
+        const cursorData = this.#core.session.current_client?.cursor_data;
+        if (cursorData) {
+            const entity = await this.#core.scene._getEntity({ entity_rtid: cursorData.hovered_entity_rtid });
+            if (entity) {
+                detail = {
+                    entity,
+                    ws_position: cursorData.hovered_ws_position,
+                    ws_normal: cursorData.hovered_ws_normal,
+                };
+            }
+        }
         this.dispatchEvent(new CustomEvent("on-entity-picked", { detail }));
     };
 }

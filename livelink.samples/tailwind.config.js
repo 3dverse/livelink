@@ -1,9 +1,7 @@
 /** @type {import('tailwindcss').Config} */
-import daisyui from "daisyui";
 
 export default {
     content: ["./index.html", "./src/**/*.{js,ts,jsx,tsx}"],
-    
     theme: {
         backgroundColor: {
             "ground": "hsl(var(--color-bg-ground-hsl), var(--tw-bg-opacity, 1))",
@@ -219,7 +217,6 @@ export default {
         },
     },
     variants: {},
-    // plugins: [daisyui],
     corePlugins: {
         outline: false,
     },

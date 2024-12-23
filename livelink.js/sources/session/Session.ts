@@ -383,7 +383,7 @@ export class Session extends EventTarget implements SessionInterface {
     /**
      * @internal
      */
-    _updateClients({ client_data }: { client_data: Array<ClientMetaData> }): void {
+    _updateClients({ core, client_data }: { core: Livelink; client_data: Array<ClientMetaData> }): void {
         for (const client_meta_data of client_data) {
             const client_id = client_meta_data.client_id;
 
@@ -395,7 +395,7 @@ export class Session extends EventTarget implements SessionInterface {
             if (client) {
                 this.#handleExistingClient({ client, client_meta_data });
             } else {
-                this.#handleNewClient({ client_meta_data });
+                this.#handleNewClient({ core, client_meta_data });
             }
         }
 
@@ -405,7 +405,13 @@ export class Session extends EventTarget implements SessionInterface {
     /**
      *
      */
-    async #handleNewClient({ client_meta_data }: { client_meta_data: ClientMetaData }): Promise<void> {
+    async #handleNewClient({
+        core,
+        client_meta_data,
+    }: {
+        core: Livelink;
+        client_meta_data: ClientMetaData;
+    }): Promise<void> {
         const client_id = client_meta_data.client_id;
 
         this.#clients_pending_identification.add(client_id);
@@ -424,7 +430,7 @@ export class Session extends EventTarget implements SessionInterface {
         }
 
         console.debug("--- Client joined", client_info);
-        const client = new Client({ client_info, client_meta_data });
+        const client = new Client({ core, client_info, client_meta_data });
         this.#onClientJoined({ client });
         this.#clients_pending_identification.delete(client_id);
     }

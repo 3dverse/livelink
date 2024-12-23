@@ -29,6 +29,7 @@ import Collaborators from "./react-core/5-clients/2-clients-avatars";
 
 //------------------------------------------------------------------------------
 import CreateEntity from "./react-core/6-entities/1-create-entity";
+import EntityPicking from "./react-core/6-entities/2-entity-picking";
 import SmartObject from "./react-core/6-entities/x-smart-object";
 
 //------------------------------------------------------------------------------
@@ -84,7 +85,7 @@ export const SAMPLES: Array<{
     },
     {
         categoryName: "Entities",
-        list: [CreateEntity, SmartObject],
+        list: [CreateEntity, EntityPicking, SmartObject],
     },
     {
         categoryName: "Widgets",

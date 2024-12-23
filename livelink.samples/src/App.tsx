@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { Outlet, useOutlet } from "react-router-dom";
 
 import { Home } from "./components/Home";
-import { BarsIcon } from "./components-system/common/icons/BarsIcon";
+import { BarsIcon } from "./components/BarsIcon";
 import { MainMenu } from "./components/MainMenu";
 
 //import { Livelink } from "@3dverse/livelink"

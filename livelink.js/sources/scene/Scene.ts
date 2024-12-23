@@ -64,6 +64,12 @@ export class Scene extends EventTarget {
     public readonly entity_registry = new EntityRegistry();
 
     /**
+     * The pending entity requests.
+     * Used to avoid duplicate requests for the same entity.
+     */
+    #pending_entity_requests = new Map<RTID, Promise<unknown>>();
+
+    /**
      * @internal
      */
     constructor(core: LivelinkCore) {
@@ -341,7 +347,15 @@ export class Scene extends EventTarget {
             return entity;
         }
 
-        await this.#resolveAncestors({ entity_rtid });
+        let promise = this.#pending_entity_requests.get(entity_rtid);
+        if (!promise) {
+            promise = this.#resolveAncestors({ entity_rtid });
+            this.#pending_entity_requests.set(entity_rtid, promise);
+        }
+
+        await promise;
+        this.#pending_entity_requests.delete(entity_rtid);
+
         return this.entity_registry.get({ entity_rtid });
     }
 
