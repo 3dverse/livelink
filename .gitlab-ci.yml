@@ -103,21 +103,6 @@ js:livelink.js:build:
     PACKAGE_DIR: livelink.js
     PACKAGE_PATH_NAME: 3dverse-livelink
 
-js:livelink.three:build:
-  extends:
-    - .build
-  variables:
-    PACKAGE_DIR: livelink.three
-    PACKAGE_PATH_NAME: 3dverse-livelink-three
-  needs:
-    - job: js:livelink.js:build
-      artifacts: true
-  before_script:
-    - tar -zxf ${LIVELINK_JS_PACKAGE}-*.tgz --strip-components=1 -C livelink.js
-    - !reference [.build, before_script]
-  rules:
-    - if: $CI_COMMIT_TAG == null
-
 js:livelink.react:build:
   extends:
     - .build
@@ -127,11 +112,26 @@ js:livelink.react:build:
   needs:
     - job: js:livelink.js:build
       artifacts: true
+  before_script:
+    - tar -zxf ${LIVELINK_JS_PACKAGE}-*.tgz --strip-components=1 -C livelink.js
+    - !reference [.build, before_script]
+  rules:
+    - if: $CI_COMMIT_TAG == null
+
+js:livelink.three:build:
+  extends:
+    - .build
+  variables:
+    PACKAGE_DIR: livelink.three
+    PACKAGE_PATH_NAME: 3dverse-livelink-three
+  needs:
+    - job: js:livelink.js:build
+      artifacts: true
     - job: js:livelink.three:build
       artifacts: true
   before_script:
     - tar -zxf ${LIVELINK_JS_PACKAGE}-*.tgz --strip-components=1 -C livelink.js
-    - tar -zxf ${LIVELINK_THREE_PACKAGE}-*.tgz --strip-components=1 -C livelink.three
+    - tar -zxf ${LIVELINK_REACT_PACKAGE}-*.tgz --strip-components=1 -C livelink.react
     - !reference [.build, before_script]
   rules:
     - if: $CI_COMMIT_TAG == null
@@ -145,11 +145,11 @@ js:livelink.react.ui:build:
   needs:
     - job: js:livelink.js:build
       artifacts: true
-    - job: js:livelink.react:build
-      artifacts: true
+    # - job: js:livelink.react:build
+    #   artifacts: true
   before_script:
     - tar -zxf ${LIVELINK_JS_PACKAGE}-*.tgz --strip-components=1 -C livelink.js
-    - tar -zxf ${LIVELINK_REACT_PACKAGE}-*.tgz --strip-components=1 -C livelink.react
+    # - tar -zxf ${LIVELINK_REACT_PACKAGE}-*.tgz --strip-components=1 -C livelink.react
     - !reference [.build, before_script]
   rules:
     - if: $CI_COMMIT_TAG == null
@@ -192,26 +192,6 @@ js:livelink.js:publish:
   rules:
     - if: $CI_COMMIT_TAG != null
 
-js:livelink.three:publish:
-  stage: deploy
-  extends:
-    - .publish
-  needs:
-    - job: js:livelink.three:build
-      artifacts: true
-  variables:
-    PACKAGE_NAME: livelink-three
-    PACKAGE_DIR: livelink.three
-    PACKAGE_PATH_NAME: $LIVELINK_THREE_PACKAGE
-  script:
-    - !reference [.update-version, script]
-    - !reference [.publish, script]
-  rules:
-    - if: $CI_COMMIT_REF_NAME == $CI_DEFAULT_BRANCH
-      changes:
-        - livelink.three/**/*
-        - livelink.three/*
-
 js:livelink.react:publish:
   stage: deploy
   extends:
@@ -231,6 +211,26 @@ js:livelink.react:publish:
       changes:
         - livelink.react/**/*
         - livelink.react/*
+
+js:livelink.three:publish:
+  stage: deploy
+  extends:
+    - .publish
+  needs:
+    - job: js:livelink.three:build
+      artifacts: true
+  variables:
+    PACKAGE_NAME: livelink-three
+    PACKAGE_DIR: livelink.three
+    PACKAGE_PATH_NAME: $LIVELINK_THREE_PACKAGE
+  script:
+    - !reference [.update-version, script]
+    - !reference [.publish, script]
+  rules:
+    - if: $CI_COMMIT_REF_NAME == $CI_DEFAULT_BRANCH
+      changes:
+        - livelink.three/**/*
+        - livelink.three/*
 
 js:livelink.react.ui:publish:
   stage: deploy
