@@ -14,4 +14,7 @@ export * from "./components/overlays/DOM3DOverlay";
 export * from "./components/overlays/DOM3DElement";
 export * from "./components/overlays/DOMEntity";
 
+export * from "./overlays/ReactOverlay";
+export * from "./overlays/React3DElement";
+
 export * from "./web-xr/WebXRHelper";

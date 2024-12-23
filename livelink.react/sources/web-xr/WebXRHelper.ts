@@ -39,7 +39,7 @@ function createPromiseWithResolvers<T>(): {
 }
 
 //------------------------------------------------------------------------------
-export type CamerasOriginTransform = {
+type CamerasOriginTransform = {
     position: Vec3;
     orientation: Quat;
 };
@@ -58,11 +58,11 @@ export class WebXRHelper {
     /**
      * Use it to shift the XRView camera transforms
      */
-    cameras_origin: CamerasOriginTransform | null = null;
+    #cameras_origin: CamerasOriginTransform | null = null;
 
     //--------------------------------------------------------------------------
     // References to livelink core
-    #liveLink: Livelink | null = null;
+    #core: Livelink | null = null;
 
     //--------------------------------------------------------------------------
     #surface: OffscreenSurface<"webgl", { xrCompatible: boolean }>;
@@ -81,7 +81,7 @@ export class WebXRHelper {
     //--------------------------------------------------------------------------
     /**
      * Test if the provided XR session mode is supported by this browser.
-     * @param sessionMode defines the XR session mode to test
+     * @param mode defines the XR session mode to test
      * @returns Resolves with boolean indicating if the provided session mode is
      * supported.
      */
@@ -127,9 +127,9 @@ export class WebXRHelper {
             await this.session.end().catch(error => console.warn("Could not end XR session:", error));
         }
 
-        if (this.#liveLink) {
+        if (this.#core) {
             for (const { livelink_viewport } of this.#viewports) {
-                this.#liveLink.removeViewport({ viewport: livelink_viewport });
+                this.#core.removeViewport({ viewport: livelink_viewport });
             }
         }
 
@@ -212,8 +212,8 @@ export class WebXRHelper {
      * @param enableScale
      */
     public async configureViewports(livelink: Livelink, enableScale: boolean = false): Promise<Array<Viewport>> {
-        this.#liveLink = livelink;
-        if (!this.#liveLink) {
+        this.#core = livelink;
+        if (!this.#core) {
             throw new Error("Failed to configure XR session, no LiveLink instance was provided.");
         }
 
@@ -224,7 +224,7 @@ export class WebXRHelper {
             this.#configureScaleFactor(xr_views);
         }
 
-        this.#liveLink.addViewports({ viewports: this.#viewports.map(v => v.livelink_viewport) });
+        this.#core.addViewports({ viewports: this.#viewports.map(v => v.livelink_viewport) });
         return this.#viewports.map(v => v.livelink_viewport);
     }
 
@@ -436,7 +436,7 @@ export class WebXRHelper {
      * @param cameras
      */
     #applyCamerasOrigin(cameras: readonly Entity[]) {
-        if (!this.cameras_origin) {
+        if (!this.#cameras_origin) {
             return;
         }
         // TODO: we probably shall identify the number of eyese better than
@@ -455,7 +455,7 @@ export class WebXRHelper {
             const { eye1, eye2 } = this.#transformEyes({
                 eye1: eye1_transform,
                 eye2: eye2_transform,
-                transform: this.cameras_origin,
+                transform: this.#cameras_origin,
                 inverse: false,
             });
             camera1.local_transform = {
@@ -476,7 +476,7 @@ export class WebXRHelper {
             };
             camera.local_transform = this.#transformSingleEye({
                 eye: eye_transform,
-                transform: this.cameras_origin,
+                transform: this.#cameras_origin,
                 inverse: false,
             });
         }
@@ -499,7 +499,7 @@ export class WebXRHelper {
             };
         }[],
     ) {
-        if (!this.cameras_origin) {
+        if (!this.#cameras_origin) {
             return;
         }
         // TODO: we probably shall identify the number of eyese better than
@@ -510,7 +510,7 @@ export class WebXRHelper {
             const { eye1, eye2 } = this.#transformEyes({
                 eye1: view1.frame_camera_transform,
                 eye2: view2.frame_camera_transform,
-                transform: this.cameras_origin,
+                transform: this.#cameras_origin,
                 inverse: true,
             });
             view1.frame_camera_transform = {
@@ -527,7 +527,7 @@ export class WebXRHelper {
             const view = views[0];
             view.frame_camera_transform = this.#transformSingleEye({
                 eye: view.frame_camera_transform,
-                transform: this.cameras_origin,
+                transform: this.#cameras_origin,
                 inverse: true,
             });
         }
@@ -650,7 +650,7 @@ export class WebXRHelper {
             );
             console.debug(`Viewport for ${xr_eye.view.eye} eye:`, rect);
             const viewport = new Viewport({
-                core: this.#liveLink!,
+                core: this.#core!,
                 rendering_surface: this.#surface!,
                 options: { rect },
             });
@@ -671,7 +671,7 @@ export class WebXRHelper {
     async createCameras(): Promise<Entity[]> {
         const cameras = await Promise.all(
             this.#viewports.map(async ({ xr_view, xr_viewport, livelink_viewport }, index) => {
-                const camera = await this.#liveLink!.scene.newEntity({
+                const camera = await this.#core!.scene.newEntity({
                     name: `XR_camera_${xr_view.eye}_${index}`,
                     components: {
                         local_transform: {},
