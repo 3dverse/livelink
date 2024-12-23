@@ -1,8 +1,17 @@
+//------------------------------------------------------------------------------
 import React, { PropsWithChildren, useEffect, useState } from "react";
-import { DOM3DElement } from "./DOM3DElement";
+
+//------------------------------------------------------------------------------
 import type { Components, Entity, Vec2i, Vec3 } from "@3dverse/livelink";
 
 //------------------------------------------------------------------------------
+import { DOM3DElement } from "./DOM3DElement";
+
+/**
+ * A component that renders a DOM element at the position of an entity.
+ *
+ * @category Components
+ */
 export function DOMEntity({
     entity,
     scaleFactor,

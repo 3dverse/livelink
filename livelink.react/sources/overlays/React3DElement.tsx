@@ -1,13 +1,10 @@
 import { vec3 } from "gl-matrix";
 import React, { type ReactElement } from "react";
-import type { Vec2i } from "@3dverse/livelink";
-
-export type ScaleTransform = (z_value: number) => number;
 
 /**
  *
  */
-export default class React3DElement {
+export class React3DElement {
     /**
      *
      */

@@ -1,11 +1,22 @@
+//------------------------------------------------------------------------------
 import React, { createContext, HTMLProps, PropsWithChildren, useContext, useEffect, useRef, useState } from "react";
-import { ReactOverlay } from "../../overlays/ReactOverlay";
-import { ViewportContext } from "../core/Viewport";
 
 //------------------------------------------------------------------------------
+import { ViewportContext } from "../core/Viewport";
+import { ReactOverlay } from "../../overlays/ReactOverlay";
+
+/**
+ * Context that provides an overlay.
+ *
+ * @category Context Providers
+ */
 export const OverlayContext = createContext<ReactOverlay | null>(null);
 
-//------------------------------------------------------------------------------
+/**
+ * A component that provides a DOM 3D overlay.
+ *
+ * @category Context Providers
+ */
 export function DOM3DOverlay({ children, ...props }: PropsWithChildren<HTMLProps<HTMLDivElement>>) {
     const containerRef = useRef<HTMLDivElement>(null);
     const [overlay, setOverlay] = useState<ReactOverlay | null>(null);

@@ -10,6 +10,8 @@ import { Livelink as LivelinkInstance, type UUID } from "@3dverse/livelink";
  *
  * Provides information about the current Livelink instance, connection status,
  * and a method to disconnect from the Livelink service.
+ *
+ * @category Context Providers
  */
 export const LivelinkContext = createContext<{
     /** The current Livelink instance or `null` if not connected. */
@@ -37,6 +39,8 @@ export const LivelinkContext = createContext<{
  * - `sessionId`: A valid UUID identifying the session to join.
  * - `sceneId`: Must be `undefined`.
  * - `isTransient`: Must be `undefined`.
+ *
+ * @inline
  */
 type SessionJoinMode = {
     sessionOpenMode: "join";
@@ -53,6 +57,8 @@ type SessionJoinMode = {
  * - `sceneId`: A valid UUID identifying the scene to use when starting the session.
  * - `sessionId`: Must be `undefined`.
  * - `isTransient`: Specifies whether the opened session is transient (non-persistent).
+ *
+ * @inline
  */
 type SessionJoinOrStart = {
     sessionOpenMode?: "start" | "join-or-start";
@@ -68,16 +74,20 @@ type SessionJoinOrStart = {
  * This type includes:
  * - `SessionJoinMode`: For joining an existing session.
  * - `SessionJoinOrStart`: For joining or starting a session based on the provided context.
+ *
+ * @inline
  */
-export type SessionOpenMode = SessionJoinMode | SessionJoinOrStart;
+type SessionOpenMode = SessionJoinMode | SessionJoinOrStart;
 
 /**
  * Parameters for establishing a Livelink connection.
  *
  * Extends `SessionOpenMode` to define the session behavior and includes additional
  * options for handling connection lifecycle events, UI components, and settings.
+ *
+ * @inline
  */
-export type LivelinkConnectParameters = {
+type LivelinkConnectParameters = {
     /**
      * Authentication token required to establish the connection.
      */
@@ -116,6 +126,8 @@ export type LivelinkConnectParameters = {
  * @property inactivityTimeoutModal - Optional React node displayed when an inactivity timeout occurs.
  * @property disconnectedModal - Optional React node displayed when the connection is lost.
  * @property sessionOpenMode - Specifies the mode for opening the session; defaults to `"join-or-start"`.
+ *
+ * @category Context Providers
  */
 export function LivelinkProvider({
     children,

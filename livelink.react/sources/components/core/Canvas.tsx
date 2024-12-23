@@ -21,6 +21,8 @@ import { ViewportContext } from "./Viewport";
  * A context provider that exposes the canvas element and the rendering surface.
  * @param canvas - The canvas element.
  * @param renderingSurface - The rendering surface.
+ *
+ * @category Context Providers
  */
 export const CanvasContext = createContext<{
     canvas: HTMLCanvasElement | null;
@@ -54,6 +56,8 @@ type CanvasContext =
  * @property {number} width - The width of the canvas.
  * @property {number} height - The height of the canvas.
  * @returns The canvas component.
+ *
+ * @category Context Providers
  */
 export function Canvas({
     children,

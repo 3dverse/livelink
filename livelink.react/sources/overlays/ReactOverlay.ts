@@ -1,8 +1,12 @@
+//------------------------------------------------------------------------------
 import React, { type ReactElement } from "react";
 import { createRoot, type Root } from "react-dom/client";
-import React3DElement from "./React3DElement";
 
-import { Vec3, type OverlayInterface, type Viewport } from "@3dverse/livelink";
+//------------------------------------------------------------------------------
+import type { Vec3, OverlayInterface, Viewport } from "@3dverse/livelink";
+
+//------------------------------------------------------------------------------
+import { React3DElement } from "./React3DElement";
 
 /**
  *

@@ -2,37 +2,74 @@
 import { useContext, useEffect, useReducer, useState } from "react";
 
 //------------------------------------------------------------------------------
-import {
-    Livelink as LivelinkInstance,
-    Entity,
-    type UUID,
-    ComponentsRecord,
-    RenderGraphDataObject,
-    EntityCreationOptions,
-    Vec3,
-    Quat,
-} from "@3dverse/livelink";
+import type { Entity, UUID, ComponentsRecord, EntityCreationOptions } from "@3dverse/livelink";
+
+//------------------------------------------------------------------------------
+import { Livelink as LivelinkInstance } from "@3dverse/livelink";
 
 //------------------------------------------------------------------------------
 import { LivelinkContext } from "../components/core/Livelink";
 
 /**
- * @description An entity provider.
+ * A reference to an entity.
+ *
+ * @inline
  */
-export type EntityId = { id: UUID };
+type EntityRef = {
+    /**
+     * The UUID of the entity.
+     */
+    id: UUID;
+
+    /**
+     * The UUIDs of the chain of linkers that brought the entity to the current scene.
+     */
+    linkage?: UUID[];
+};
 
 /**
- * @description An entity instance.
+ * An new entity instance.
+ *
+ * @inline
  */
-export type EntityInstance = { name: string; components: ComponentsRecord; options: EntityCreationOptions };
-export type EntityFinder = {
+type NewEntity = {
+    /**
+     * The name of the entity.
+     */
+    name: string;
+
+    /**
+     * The components to attach to the entity with their initial values.
+     */
+    components: ComponentsRecord;
+
+    /**
+     * The creation options of the entity.
+     */
+    options: EntityCreationOptions;
+};
+
+/**
+ * A function that finds an entity.
+ *
+ * @inline
+ */
+type EntityFinder = {
+    /**
+     * A callback that is called to find the entity.
+     */
     finder: ({ instance }: { instance: LivelinkInstance }) => Promise<Entity | null>;
 };
 
-export type EntityProvider = EntityId | EntityInstance | EntityFinder;
+/**
+ * A provider of an entity.
+ *
+ * @inline
+ */
+type EntityProvider = EntityRef | NewEntity | EntityFinder;
 
 /**
- * @description A hook that provides an entity and a flag indicating if the entity is pending loading.
+ * A hook that provides an entity and a flag indicating if the entity is pending loading.
  *
  * @example
  * ```tsx
@@ -45,10 +82,10 @@ export type EntityProvider = EntityId | EntityInstance | EntityFinder;
  * }
  * return <div>Entity found: {entity.name}</div>;
  * ```
+ * @param entityProvider - The entity provider.
+ * @returns The entity and a flag indicating if the entity is pending loading.
  *
  * @category Hooks
- * @param {EntityProvider} entityProvider - The entity provider.
- * @returns The entity and a flag indicating if the entity is pending loading.
  */
 export function useEntity(entityProvider: EntityProvider): { isPending: boolean; entity: Entity | null } {
     const { instance } = useContext(LivelinkContext);
@@ -57,7 +94,7 @@ export function useEntity(entityProvider: EntityProvider): { isPending: boolean;
     const [isPending, setIsPending] = useState(true);
     const [, forceUpdate] = useReducer(x => x + 1, 0);
 
-    const entityId = entityProvider as EntityId;
+    const entityRef = entityProvider as EntityRef;
     const entityFinder = entityProvider as EntityFinder;
 
     useEffect(() => {
@@ -68,7 +105,10 @@ export function useEntity(entityProvider: EntityProvider): { isPending: boolean;
         const resolveEntity = async () => {
             if ("id" in entityProvider) {
                 console.debug("---- Finding entity with id", entityProvider.id);
-                return await instance.scene.findEntity({ entity_uuid: entityProvider.id });
+                return await instance.scene.findEntity({
+                    entity_uuid: entityProvider.id,
+                    linkage: entityProvider.linkage,
+                });
             } else if ("components" in entityProvider) {
                 console.debug("---- Creating entity");
                 return await instance.scene.newEntity(entityProvider);
@@ -89,7 +129,7 @@ export function useEntity(entityProvider: EntityProvider): { isPending: boolean;
             setEntity(null);
             setIsPending(true);
         };
-    }, [instance, entityId.id, entityFinder.finder]);
+    }, [instance, entityRef.id, entityFinder.finder]);
 
     useEffect(() => {
         if (!entity) {
@@ -103,45 +143,4 @@ export function useEntity(entityProvider: EntityProvider): { isPending: boolean;
     }, [entity]);
 
     return { isPending, entity };
-}
-
-//------------------------------------------------------------------------------
-export function useCameraEntity(
-    props: {
-        name?: string;
-        position?: Vec3;
-        orientation?: Quat;
-        renderGraphRef?: UUID;
-        settings?: RenderGraphDataObject;
-        renderTargetIndex?: number;
-    } = {
-        name: "Camera",
-        position: [0, 1, 5],
-        orientation: [0, 0, 0, 1],
-        renderGraphRef: "398ee642-030a-45e7-95df-7147f6c43392",
-        renderTargetIndex: -1,
-    },
-): {
-    isPending: boolean;
-    cameraEntity: Entity | null;
-} {
-    const { isPending, entity: cameraEntity } = useEntity({
-        name: props.name ?? "Camera",
-        components: {
-            local_transform: { position: props.position ?? [0, 1, 5], orientation: props.orientation ?? [0, 0, 0, 1] },
-            camera: {
-                renderGraphRef: props.renderGraphRef ?? "398ee642-030a-45e7-95df-7147f6c43392",
-                dataJSON: props.settings ?? { grid: true, skybox: false, gradient: true },
-                renderTargetIndex: props.renderTargetIndex ?? -1,
-            },
-            perspective_lens: {
-                fovy: 60,
-                nearPlane: 0.1,
-                farPlane: 10000,
-            },
-        },
-        options: { auto_broadcast: false, delete_on_client_disconnection: true },
-    });
-
-    return { isPending, cameraEntity };
 }

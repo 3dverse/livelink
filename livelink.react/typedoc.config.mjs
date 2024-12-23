@@ -6,8 +6,10 @@ const config = {
     includeVersion: true,
     excludeCategories: [],
     defaultCategory: "Other",
-    categoryOrder: ["*"],
+    categoryOrder: ["*", "Other"],
     excludeInternal: true,
+    sort: ["kind", "source-order"],
+    kindSortOrder: ["Variable", "Function"],
 
     categorizeByGroup: false,
     navigation: {

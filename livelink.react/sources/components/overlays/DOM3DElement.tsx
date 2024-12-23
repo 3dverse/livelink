@@ -1,10 +1,18 @@
+//------------------------------------------------------------------------------
 import { createElement, Fragment, PropsWithChildren, useContext, useEffect, useState } from "react";
-import { OverlayContext } from "./DOM3DOverlay";
-
-import type { Vec2i, Vec3 } from "@3dverse/livelink";
-import type React3DElement from "../../overlays/React3DElement";
 
 //------------------------------------------------------------------------------
+import type { Vec3 } from "@3dverse/livelink";
+
+//------------------------------------------------------------------------------
+import { type React3DElement } from "../../overlays/React3DElement";
+import { OverlayContext } from "./DOM3DOverlay";
+
+/**
+ * A component that renders a 3D DOM element.
+ *
+ * @category Components
+ */
 export function DOM3DElement({
     worldPosition,
     scaleFactor,

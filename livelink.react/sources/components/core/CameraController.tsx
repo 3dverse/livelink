@@ -1,28 +1,23 @@
 //------------------------------------------------------------------------------
 import { useContext, useEffect } from "react";
-import { Entity } from "@3dverse/livelink";
+
+//------------------------------------------------------------------------------
+import { CameraControllerBase, Entity } from "@3dverse/livelink";
 
 //------------------------------------------------------------------------------
 import { ViewportContext } from "./Viewport";
 import { DefaultCameraController } from "../../controllers/DefaultCameraController";
 
-//------------------------------------------------------------------------------
-export interface CameraControllerInterface {
-    /**
-     *
-     */
-    release(): void;
-}
-
-//------------------------------------------------------------------------------
 /**
+ * A component that provides a camera controller.
  *
+ * @category Components
  */
 export function CameraController({
     controllerClass = DefaultCameraController,
 }: {
     controllerClass?: {
-        new (_: { camera_entity: Entity; dom_element: HTMLElement }): CameraControllerInterface;
+        new (_: { camera_entity: Entity; dom_element: HTMLElement }): CameraControllerBase;
     };
 }) {
     const { viewportDomElement, camera } = useContext(ViewportContext);
@@ -36,8 +31,10 @@ export function CameraController({
             dom_element: viewportDomElement,
             camera_entity: camera.camera_entity,
         });
+        controller.activate();
 
         return () => {
+            controller.deactivate();
             controller.release();
         };
     }, [viewportDomElement, camera]);

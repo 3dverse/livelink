@@ -87,6 +87,34 @@ export class Rect {
  */
 export class RelativeRect extends Rect {
     /**
+     * Creates a relative rect from the given DOM elements.
+     * It calculates the relative position and size of the element inside the parent element.
+     *
+     * @param params
+     * @param params.element - The element to get the relative rect from.
+     * @param params.parent - The parent element of the element.
+     *
+     * @returns The relative rect.
+     */
+    static from_dom_elements({ element, parent }: { element: HTMLElement; parent: HTMLElement }): RelativeRect {
+        const rect = element.getBoundingClientRect();
+        const parentRect = parent.getBoundingClientRect();
+
+        const relativePos = {
+            left: rect.left - parentRect.left,
+            top: rect.top - parentRect.top,
+        };
+
+        const PRECISION = 6 as const;
+        return new RelativeRect({
+            left: parseFloat((relativePos.left / parentRect.width).toPrecision(PRECISION)),
+            top: parseFloat((relativePos.top / parentRect.height).toPrecision(PRECISION)),
+            width: parseFloat((rect.width / parentRect.width).toPrecision(PRECISION)),
+            height: parseFloat((rect.height / parentRect.height).toPrecision(PRECISION)),
+        });
+    }
+
+    /**
      *
      */
     constructor({

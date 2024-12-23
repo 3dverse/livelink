@@ -17,7 +17,11 @@ import * as Livelink from "@3dverse/livelink";
 import { LivelinkContext } from "./Livelink";
 import { CanvasContext } from "./Canvas";
 
-//------------------------------------------------------------------------------
+/**
+ * Context that provides a viewport.
+ *
+ * @category Context Providers
+ */
 export const ViewportContext = createContext<{
     viewport: Livelink.Viewport | null;
     viewportDomElement: HTMLDivElement | null;
@@ -30,27 +34,10 @@ export const ViewportContext = createContext<{
     camera: null,
 });
 
-//------------------------------------------------------------------------------
-function computeRelativeRect(viewportDomElement: HTMLDivElement, canvas: HTMLCanvasElement) {
-    const clientRect = viewportDomElement.getBoundingClientRect();
-    const canvasPos = canvas.getBoundingClientRect();
-    const relativePos = {
-        left: clientRect.left - canvasPos.left,
-        top: clientRect.top - canvasPos.top,
-    };
-
-    const PRECISION = 6 as const;
-
-    return new Livelink.RelativeRect({
-        left: parseFloat((relativePos.left / canvasPos.width).toPrecision(PRECISION)),
-        top: parseFloat((relativePos.top / canvasPos.height).toPrecision(PRECISION)),
-        width: parseFloat((clientRect.width / canvasPos.width).toPrecision(PRECISION)),
-        height: parseFloat((clientRect.height / canvasPos.height).toPrecision(PRECISION)),
-    });
-}
-
 /**
+ * A component that provides a viewport.
  *
+ * @category Context Providers
  */
 export function Viewport({
     cameraEntity,
@@ -78,7 +65,10 @@ export function Viewport({
         }
 
         console.log("---- Resizing viewport", viewportDomElement.current);
-        viewport.relative_rect = computeRelativeRect(viewportDomElement.current, canvas);
+        viewport.relative_rect = Livelink.RelativeRect.from_dom_elements({
+            element: viewportDomElement.current,
+            parent: canvas,
+        });
     }, [viewport, canvas, viewportDomElement.current]);
 
     //--------------------------------------------------------------------------
@@ -113,7 +103,7 @@ export function Viewport({
             return;
         }
 
-        const rect = computeRelativeRect(viewportDomElement.current, canvas);
+        const rect = Livelink.RelativeRect.from_dom_elements({ element: viewportDomElement.current, parent: canvas });
 
         const viewport = new Livelink.Viewport({
             core: instance,

@@ -7,10 +7,18 @@ import { Client } from "@3dverse/livelink";
 //------------------------------------------------------------------------------
 import { LivelinkContext } from "./Livelink";
 
-//------------------------------------------------------------------------------
+/**
+ * Context that provides a list of all clients connected to the current session.
+ *
+ * @category Context Providers
+ */
 export const ClientsContext = createContext<{ clients: Array<Client> }>({ clients: [] });
 
-//------------------------------------------------------------------------------
+/**
+ * Provides a list of all clients connected to the current session.
+ *
+ * @category Context Providers
+ */
 function ClientsProvider({ children }: PropsWithChildren) {
     const { instance } = useContext(LivelinkContext);
 

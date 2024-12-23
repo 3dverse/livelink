@@ -1,13 +1,6 @@
 //------------------------------------------------------------------------------
-import { Entity } from "@3dverse/livelink";
-import {
-    Livelink,
-    Canvas,
-    Viewport,
-    CameraController,
-    CameraControllerInterface,
-    useCameraEntity,
-} from "@3dverse/livelink-react";
+import { CameraControllerBase, Entity } from "@3dverse/livelink";
+import { Livelink, Canvas, Viewport, CameraController, useCameraEntity } from "@3dverse/livelink-react";
 
 //------------------------------------------------------------------------------
 import { DisconnectedModal, LoadingSpinner, sampleCanvasClassName } from "../../../components/SamplePlayer";
@@ -39,21 +32,21 @@ function App() {
 }
 
 //------------------------------------------------------------------------------
-class CustomCameraController implements CameraControllerInterface {
-    release(): void {
-        clearInterval(this.#interval);
-    }
-
+class CustomCameraController extends CameraControllerBase {
     #speed = 1;
     #elapsedTime: number = 0;
-    #interval: number;
+
     constructor({ camera_entity }: { camera_entity: Entity; dom_element: HTMLElement }) {
-        const PERIOD = 1000 / 60;
-        this.#interval = setInterval(() => {
-            camera_entity.local_transform!.position![1] = 1 + Math.sin(this.#elapsedTime * 0.001) * this.#speed;
-            this.#elapsedTime += PERIOD;
-        }, PERIOD);
+        super({ camera_entity });
     }
+
+    update(): void {
+        const PERIOD = 1000 / 60;
+        this._camera_entity.local_transform!.position![1] = 1 + Math.sin(this.#elapsedTime * 0.001) * this.#speed;
+        this.#elapsedTime += PERIOD;
+    }
+
+    release(): void {}
 }
 
 //------------------------------------------------------------------------------

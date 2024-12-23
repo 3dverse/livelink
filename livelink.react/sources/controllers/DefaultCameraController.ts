@@ -1,6 +1,8 @@
 //------------------------------------------------------------------------------
+import { CameraControllerBase, Entity } from "@3dverse/livelink";
+
+//------------------------------------------------------------------------------
 import CameraControls from "camera-controls";
-import { Entity } from "@3dverse/livelink";
 
 //------------------------------------------------------------------------------
 import {
@@ -17,8 +19,6 @@ import {
     Raycaster,
 } from "three";
 
-import { CameraControllerInterface } from "../components/core/CameraController";
-
 CameraControls.install({
     THREE: {
         Vector2,
@@ -33,17 +33,16 @@ CameraControls.install({
     },
 });
 
-//------------------------------------------------------------------------------
-export class DefaultCameraController implements CameraControllerInterface {
+/**
+ * A camera controller that uses the `camera-controls` library.
+ *
+ * @category Camera Controllers
+ */
+export class DefaultCameraController extends CameraControllerBase {
     /**
      *
      */
     readonly cameraControls: CameraControls;
-
-    /**
-     *
-     */
-    readonly camera_entity: Entity;
 
     /**
      *
@@ -59,9 +58,16 @@ export class DefaultCameraController implements CameraControllerInterface {
      *
      */
     constructor({ camera_entity, dom_element }: { camera_entity: Entity; dom_element: HTMLElement }) {
-        this.camera_entity = camera_entity;
+        super({ camera_entity });
         this.cameraControls = new CameraControls(this.#createCamera(), dom_element);
         this.#initController();
+    }
+
+    /**
+     *
+     */
+    update(): void {
+        this.cameraControls.update(this.clock.getDelta());
     }
 
     /**
@@ -76,10 +82,10 @@ export class DefaultCameraController implements CameraControllerInterface {
      */
     #createCamera() {
         const camera = new PerspectiveCamera(
-            this.camera_entity.perspective_lens!.fovy,
-            this.camera_entity.perspective_lens!.aspectRatio,
-            this.camera_entity.perspective_lens!.nearPlane,
-            this.camera_entity.perspective_lens!.farPlane,
+            this._camera_entity.perspective_lens!.fovy,
+            this._camera_entity.perspective_lens!.aspectRatio,
+            this._camera_entity.perspective_lens!.nearPlane,
+            this._camera_entity.perspective_lens!.farPlane,
         );
 
         return camera;
@@ -90,26 +96,16 @@ export class DefaultCameraController implements CameraControllerInterface {
      */
     #initController() {
         this.cameraControls.setOrbitPoint(0, 0, 0);
-        this.cameraControls.setPosition(...this.camera_entity.local_transform!.position!);
+        this.cameraControls.setPosition(...this._camera_entity.local_transform!.position!);
         this.cameraControls.addEventListener("update", this.#onCameraUpdate);
-        requestAnimationFrame(this.#updateCamera);
     }
-
-    /**
-     *
-     */
-    #updateCamera = () => {
-        const delta = this.clock.getDelta();
-        this.cameraControls.update(delta);
-        requestAnimationFrame(this.#updateCamera);
-    };
 
     /**
      *
      */
     #onCameraUpdate = () => {
         this.cameraControls.camera.getWorldQuaternion(this.global_orientation);
-        this.cameraControls.camera.position.toArray(this.camera_entity.local_transform!.position);
-        this.global_orientation.toArray(this.camera_entity.local_transform!.orientation);
+        this.cameraControls.camera.position.toArray(this._camera_entity.local_transform!.position);
+        this.global_orientation.toArray(this._camera_entity.local_transform!.orientation);
     };
 }
