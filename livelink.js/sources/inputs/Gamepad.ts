@@ -184,8 +184,8 @@ class GamepadDevice implements InputDevice {
      *
      */
     #sendControllerAxis(gamepadIndex: number, ControllerAxisType: ControllerAxisType, value: number): void {
-        var buffer = new ArrayBuffer(6);
-        var bufferWriter = new DataView(buffer);
+        const buffer = new ArrayBuffer(6);
+        const bufferWriter = new DataView(buffer);
 
         bufferWriter.setUint8(0, gamepadIndex);
         bufferWriter.setUint8(1, ControllerAxisType);
@@ -203,8 +203,8 @@ class GamepadDevice implements InputDevice {
      *
      */
     #sendControllerButtons(gamepadIndex: number, buttonReading: number): void {
-        var buffer = new ArrayBuffer(5);
-        var bufferWriter = new DataView(buffer);
+        const buffer = new ArrayBuffer(5);
+        const bufferWriter = new DataView(buffer);
 
         bufferWriter.setUint8(0, gamepadIndex);
         bufferWriter.setUint16(1, buttonReading, true);

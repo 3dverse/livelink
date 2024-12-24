@@ -384,14 +384,14 @@ export class Scene extends EventTarget {
         target_entities.forEach(target => {
             target.onScriptEventTarget({
                 event_name: event.event_name,
-                data_object: event.data_object,
+                data_object: event.data_object as ScriptDataObject,
                 emitter_rtid: event.emitter_rtid,
             });
         });
 
         emitter?.onScriptEventEmitter({
             event_name: event.event_name,
-            data_object: event.data_object,
+            data_object: event.data_object as ScriptDataObject,
             target_rtids: event.target_rtids,
         });
     };
@@ -580,7 +580,7 @@ export class Scene extends EventTarget {
         data_object: ScriptDataObject | null;
         entity_name: string;
     }): Promise<Entity | null> {
-        if (!data_object?.hasOwnProperty(entity_name)) {
+        if (!data_object || !Object.prototype.hasOwnProperty.call(data_object, entity_name)) {
             return null;
         }
         const entity_ref = data_object[entity_name] as EntityRef;

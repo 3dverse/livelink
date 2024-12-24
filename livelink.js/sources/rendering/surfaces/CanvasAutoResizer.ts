@@ -49,7 +49,7 @@ export class CanvasAutoResizer extends EventTarget {
     /**
      * Callback called by the observer when the canvas is resized.
      */
-    #onResized = ({}: Array<ResizeObserverEntry>): void => {
+    #onResized = (): void => {
         if (this.#resize_debounce_timeout !== 0) {
             clearTimeout(this.#resize_debounce_timeout);
         }

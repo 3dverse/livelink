@@ -7,7 +7,6 @@ import {
     useCameraEntity,
     LivelinkContext,
     ViewportContext,
-    Clients,
 } from "@3dverse/livelink-react";
 
 //------------------------------------------------------------------------------

@@ -12,7 +12,7 @@ const op_prio = {
  *
  */
 function is_operator(op: string): boolean {
-    return op_prio.hasOwnProperty(op);
+    return Object.prototype.hasOwnProperty.call(op_prio, op);
 }
 
 /**

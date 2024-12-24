@@ -2,30 +2,13 @@
 import { useContext, useEffect, useReducer, useState } from "react";
 
 //------------------------------------------------------------------------------
-import type { Entity, UUID, ComponentsRecord, EntityCreationOptions } from "@3dverse/livelink";
+import type { Entity, EntityRef, ComponentsRecord, EntityCreationOptions } from "@3dverse/livelink";
 
 //------------------------------------------------------------------------------
 import { Livelink as LivelinkInstance } from "@3dverse/livelink";
 
 //------------------------------------------------------------------------------
 import { LivelinkContext } from "../components/core/Livelink";
-
-/**
- * A reference to an entity.
- *
- * @inline
- */
-type EntityRef = {
-    /**
-     * The UUID of the entity.
-     */
-    id: UUID;
-
-    /**
-     * The UUIDs of the chain of linkers that brought the entity to the current scene.
-     */
-    linkage?: UUID[];
-};
 
 /**
  * An new entity instance.
@@ -103,10 +86,10 @@ export function useEntity(entityProvider: EntityProvider): { isPending: boolean;
         }
 
         const resolveEntity = async () => {
-            if ("id" in entityProvider) {
-                console.debug("---- Finding entity with id", entityProvider.id);
+            if ("originalEUID" in entityProvider) {
+                console.debug("---- Finding entity with id", entityProvider.originalEUID);
                 return await instance.scene.findEntity({
-                    entity_uuid: entityProvider.id,
+                    entity_uuid: entityProvider.originalEUID,
                     linkage: entityProvider.linkage,
                 });
             } else if ("components" in entityProvider) {
@@ -129,7 +112,7 @@ export function useEntity(entityProvider: EntityProvider): { isPending: boolean;
             setEntity(null);
             setIsPending(true);
         };
-    }, [instance, entityRef.id, entityFinder.finder]);
+    }, [instance, entityRef.originalEUID, entityFinder.finder]);
 
     useEffect(() => {
         if (!entity) {

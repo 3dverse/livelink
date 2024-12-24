@@ -60,11 +60,6 @@ export class EntityRegistry {
     #dirty_components_to_broadcast = new Map<ComponentType, Set<Entity>>();
 
     /**
-     * The elapsed time since the start.
-     */
-    #elapsed_time = 0;
-
-    /**
      * The serializer used to serialize and deserialize components.
      */
     #serializer: Serializer | null = null;
@@ -340,10 +335,11 @@ export class EntityRegistry {
 
         for (const [component_type, entities] of this.#dirty_components_to_broadcast) {
             for (const entity of entities) {
-                msg[entity.id!] = msg[entity.id!] ?? {};
-                //@ts-ignore
-                msg[entity.id!][component_type] = entity[component_type];
-                hasData = true;
+                if (entity.id && entity[component_type]) {
+                    msg[entity.id] = msg[entity.id] ?? {};
+                    msg[entity.id][component_type] = entity[component_type];
+                    hasData = true;
+                }
             }
         }
 

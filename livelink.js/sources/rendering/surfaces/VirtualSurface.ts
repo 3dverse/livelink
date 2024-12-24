@@ -1,5 +1,4 @@
 import { Rect } from "./Rect";
-import { FrameMetaData } from "../decoders/FrameMetaData";
 import { RenderingSurfaceBase } from "./RenderingSurfaceBase";
 
 /**
@@ -51,5 +50,5 @@ export class VirtualSurface extends RenderingSurfaceBase {
     /**
      * Do nothing.
      */
-    drawFrame({}: { frame: VideoFrame | OffscreenCanvas; meta_data: FrameMetaData }): void {}
+    drawFrame(): void {}
 }

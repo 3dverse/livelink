@@ -8,6 +8,7 @@ import { ComponentsRecord } from "../../_prebuild/ComponentsRecord";
 //------------------------------------------------------------------------------
 import { Scene } from "./Scene";
 import { ComponentHandler, ComponentHandlers, LocalTransformHandler } from "./ComponentHandler";
+import { ScriptDataObject } from "./DataObject";
 
 /**
  *
@@ -190,7 +191,7 @@ export class Entity extends EntityBase {
         emitter_rtid,
     }: {
         event_name: string;
-        data_object: Record<string, {}> | null;
+        data_object: ScriptDataObject | null;
         emitter_rtid: RTID;
     }): void {
         this.dispatchEvent(
@@ -214,7 +215,7 @@ export class Entity extends EntityBase {
         target_rtids,
     }: {
         event_name: string;
-        data_object: Record<string, {}> | null;
+        data_object: ScriptDataObject | null;
         target_rtids: RTID[];
     }): void {
         this.dispatchEvent(
@@ -265,9 +266,11 @@ export class Entity extends EntityBase {
         dispatch_event?: boolean;
     }): void {
         this._proxy_state = "off";
-        for (const key in components) {
-            //@ts-ignore
-            //eslint-disable-next-line
+
+        for (const strKey in components) {
+            const key = strKey as keyof ComponentsRecord;
+            //@ts-expect-error: typescript doesn't like the assignment to this[key] as the attribute might be readonly,
+            // even if we know it's not.
             this[key] = { ...this[key], ...components[key] };
         }
         this._proxy_state = "on";
@@ -286,9 +289,10 @@ export class Entity extends EntityBase {
 
         // The update message from the editor is guaranteed to contain only valid components
         // so we don't need to merge with the current values.
-        for (const key in components) {
-            //@ts-ignore
-            //eslint-disable-next-line
+        for (const strKey in components) {
+            const key = strKey as keyof ComponentsRecord;
+            //@ts-expect-error: typescript doesn't like the assignment to this[key] as the attribute might be readonly,
+            // even if we know it's not.
             this[key] = components[key];
         }
         this._proxy_state = "on";
@@ -343,7 +347,8 @@ export class Entity extends EntityBase {
         this._proxy_state = "off";
         for (const [component_type, default_value] of component_default_values) {
             if (this[component_type]) {
-                //@ts-ignore
+                //@ts-expect-error: typescript doesn't like the assignment to this[component_type] as the attribute
+                // might be readonly,
                 this[component_type] = { ...structuredClone(default_value), ...this[component_type] };
             }
         }

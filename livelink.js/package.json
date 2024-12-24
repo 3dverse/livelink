@@ -11,6 +11,7 @@
   "scripts": {
     "prebuild": "node ci/auto-generate.js ../node_modules/ ci/ ./_prebuild/",
     "build": "node esbuild.js && tsc",
+    "lint": "eslint sources/**/*",
     "clean": "rimraf _prebuild dist docs",
     "dev": "run-p dev:*",
     "dev:esbuild": "node esbuild.js dev",
@@ -32,13 +33,13 @@
     "cross-env": "^7.0.3",
     "esbuild": "^0.24.0",
     "eslint": "^9.17.0",
-    "eslint-plugin-unused-imports": "^4.1.4",
+    "globals": "^15.14.0",
     "npm-run-all": "^4.1.5",
     "rimraf": "^6.0.1",
     "typedoc": "^0.27.5",
     "typedoc-plugin-markdown": "^4.3.2",
     "typedoc-plugin-mermaid": "^1.12.0",
     "typescript": "^5.7.2",
-    "typescript-eslint": "^8.18.1"
+    "typescript-eslint": "^8.18.2"
   }
 }

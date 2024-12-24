@@ -78,16 +78,16 @@ export class EntityBase extends EventTarget implements EntityInterface {
         delete components.euid;
 
         for (const component_type in components) {
-            //@ts-ignore
+            //@ts-expect-error - to fix this components should be of type ComponentsRecord
+            // on the core side.
             this[component_type] = components[component_type];
         }
 
         // Remove any undefined component
         for (const k of Object.keys(this)) {
-            //@ts-ignore
-            if (this[k] === undefined) {
-                //@ts-ignore
-                delete this[k];
+            const key = k as keyof EntityBase;
+            if (this[key] === undefined) {
+                delete this[key];
             }
         }
     }
@@ -96,7 +96,7 @@ export class EntityBase extends EventTarget implements EntityInterface {
      * @internal
      */
     toJSON() {
-        let serialized: Record<string, unknown> = {};
+        const serialized: Record<string, unknown> = {};
         for (const p in this) {
             if (this._isSerializableComponent(p, this[p])) {
                 serialized[p as string] = this[p];
@@ -108,7 +108,7 @@ export class EntityBase extends EventTarget implements EntityInterface {
     /**
      * @internal
      */
-    public _isSerializableComponent(prop: PropertyKey, v: any) {
+    public _isSerializableComponent(prop: PropertyKey, v: unknown) {
         return (
             typeof prop === "string" &&
             v !== undefined &&

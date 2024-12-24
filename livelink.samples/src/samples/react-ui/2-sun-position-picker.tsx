@@ -51,7 +51,7 @@ const SUN_ENTITY_ID = "23e6b1cc-5e04-42c4-b179-12447556a170" as const;
 
 //------------------------------------------------------------------------------
 function SunWidget() {
-    const { isPending, entity: theSun } = useEntity({ id: SUN_ENTITY_ID });
+    const { isPending, entity: theSun } = useEntity({ originalEUID: SUN_ENTITY_ID });
 
     if (!isPending && !theSun) {
         console.error("There's no sun entity in the scene");

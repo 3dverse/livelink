@@ -3,9 +3,9 @@ import type { CodecType, Vec2i } from "@3dverse/livelink.core";
 import { LivelinkCoreModule } from "@3dverse/livelink.core";
 
 //------------------------------------------------------------------------------
-// @ts-ignore
+//@ts-expect-error - Broadway is not a module
 import BWDecoder from "../../../external/Decoder.js";
-// @ts-ignore
+//@ts-expect-error - YUVCanvas is not a module
 import YUVCanvas from "../../../external/YUVCanvas.js";
 
 //------------------------------------------------------------------------------
@@ -68,7 +68,6 @@ export class SoftwareDecoder extends EncodedFrameConsumer {
     /**
      * Broadway software decoder instance.
      */
-    //eslint-disable-next-line
     #broadway_sw_decoder: IBWDecoder = new BWDecoder();
 
     /**
@@ -114,7 +113,6 @@ export class SoftwareDecoder extends EncodedFrameConsumer {
 
         this.#offscreen_canvas = new OffscreenCanvas(frame_dimensions[0], frame_dimensions[1]);
 
-        //eslint-disable-next-line
         this.#yuv_canvas = new YUVCanvas({
             canvas: this.#offscreen_canvas,
             width: frame_dimensions[0],
