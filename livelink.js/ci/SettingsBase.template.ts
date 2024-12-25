@@ -3,7 +3,7 @@
  * This file has been generated automatically from ftl-schemas
  */
 
-import type { Settings } from "@3dverse/livelink.core";
+import type { SceneSettings } from "@3dverse/livelink.core";
 
 /**
  *

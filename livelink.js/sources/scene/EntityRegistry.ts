@@ -10,10 +10,8 @@ import type {
     UpdateEntitiesFromBytesMessage,
     ComponentSerializer,
     ComponentDescriptor,
+    ComponentsRecord,
 } from "@3dverse/livelink.core";
-
-//------------------------------------------------------------------------------
-import { ComponentsRecord } from "../../_prebuild/ComponentsRecord";
 
 //------------------------------------------------------------------------------
 import { Entity } from "./Entity";
@@ -337,6 +335,7 @@ export class EntityRegistry {
             for (const entity of entities) {
                 if (entity.id && entity[component_type]) {
                     msg[entity.id] = msg[entity.id] ?? {};
+                    //@ts-expect-error - figure out why this doesn't work
                     msg[entity.id][component_type] = entity[component_type];
                     hasData = true;
                 }

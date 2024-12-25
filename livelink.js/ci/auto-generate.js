@@ -15,7 +15,7 @@ const componentTypeDeclarationFile = path.join(
 );
 const settingsTypeDeclarationFile = path.join(
     nodeModulePath,
-    "@3dverse/livelink.core/dist/_prebuild/types/settings.d.ts",
+    "@3dverse/livelink.core/dist/_prebuild/types/sceneSettings.d.ts",
 );
 
 //------------------------------------------------------------------------------
@@ -36,8 +36,10 @@ function generateEntityBase() {
     const exports = checker.getExportsAndPropertiesOfModule(exportSymbol || sourceFile.symbol);
 
     // For now filter only types with comments. This might not work for in the future.
-    const componentExports = exports.filter(symbol =>
-        symbol.declarations.some(declaration => declaration.jsDoc?.some(jsDoc => jsDoc.comment?.length > 0)),
+    const componentExports = exports.filter(
+        symbol =>
+            symbol.declarations.some(declaration => declaration.jsDoc?.some(jsDoc => jsDoc.comment?.length > 0)) &&
+            symbol.name !== "Euid",
     );
 
     const componentAttributes = componentExports.map(symbol => {
@@ -53,11 +55,6 @@ function generateEntityBase() {
 
     //--------------------------------------------------------------------------
     applyTemplate("EntityBase.template.ts", path.join("EntityBase.ts"), {
-        componentAttributes: componentAttributes.join("\n\n"),
-    });
-
-    //--------------------------------------------------------------------------
-    applyTemplate("ComponentsRecord.template.ts", path.join("ComponentsRecord.ts"), {
         componentAttributes: componentAttributes.join("\n\n"),
     });
 }
@@ -81,7 +78,7 @@ function generateSettingsBase() {
     //--------------------------------------------------------------------------
     applyTemplate("SettingsBase.template.ts", path.join("SettingsBase.ts"), {
         settingsAttributes: settingsType
-            .map(type => `    ${pascalCaseToSnakeCase(type)}?: Settings.${type};`)
+            .map(type => `    ${pascalCaseToSnakeCase(type)}?: SceneSettings.${type};`)
             .join("\n"),
     });
 }

@@ -113,7 +113,7 @@ export class EntityBase extends EventTarget implements EntityInterface {
             typeof prop === "string" &&
             v !== undefined &&
             prop[0] !== "_" &&
-            Object.values(LivelinkCoreModule.Enums.ComponentHash).includes(prop)
+            Object.values(LivelinkCoreModule.Enums.ComponentsHashes).includes(prop)
         );
     }
 }

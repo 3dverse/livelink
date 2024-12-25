@@ -17,7 +17,7 @@ import {
     Text,
     Tooltip,
 } from "@chakra-ui/react";
-import { Entity } from "@3dverse/livelink";
+import { Entity, RenderGraphDataObject } from "@3dverse/livelink";
 import { getAssetDescription, setUserToken } from "@3dverse/api";
 import { FaArrowRotateLeft, FaFolder, FaFolderOpen } from "react-icons/fa6";
 
@@ -86,7 +86,7 @@ export const RenderGraphSettings = ({
     }, [userToken, cameraEntity]);
 
     //------------------------------------------------------------------------------
-    const onChange = (attributeName: string, attributeValue: boolean | number | number[]) => {
+    const onChange = (attributeName: string, attributeValue: RenderGraphDataObject[string]) => {
         if (!cameraEntity?.camera?.dataJSON) {
             return null;
         }
@@ -96,7 +96,7 @@ export const RenderGraphSettings = ({
     };
 
     //------------------------------------------------------------------------------
-    const onResetInput = (attributeName: string, defaultValue: boolean | number | number[]) => {
+    const onResetInput = (attributeName: string, defaultValue: RenderGraphDataObject[string]) => {
         onChange(attributeName, defaultValue);
     };
 
@@ -220,7 +220,9 @@ export const RenderGraphSettings = ({
                                             type={input.type}
                                             value={value}
                                             defaultValue={input.default}
-                                            onChange={(_, value) => onChange(input.name, value)}
+                                            onChange={(_, value) =>
+                                                onChange(input.name, value as RenderGraphDataObject[string])
+                                            }
                                         />
                                         <Tooltip
                                             label="Reset"

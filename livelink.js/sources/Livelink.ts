@@ -1,5 +1,6 @@
 //------------------------------------------------------------------------------
 import type {
+    ActivityWatcher,
     ClientConfig,
     ClientConfigResponse,
     CodecType,
@@ -31,7 +32,6 @@ import { InputDevice } from "./inputs/InputDevice";
 
 import { Session, SessionSelector } from "./session/Session";
 import { SessionInfo } from "./session/SessionInfo";
-import { ActivityWatcher } from "@3dverse/livelink.core/dist/sources/controllers/ActivityWatcher";
 
 /**
  * This class represents the Livelink connection between the client and the 3dverse server holding

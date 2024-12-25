@@ -1,7 +1,5 @@
 export type * from "@3dverse/livelink.core";
 
-export * from "../_prebuild/ComponentsRecord";
-
 export * from "./Livelink";
 
 export * from "./session/Client";
@@ -11,8 +9,6 @@ export * from "./session/SessionInfo";
 
 export * from "./scene/Scene";
 export * from "./scene/Entity";
-export * from "./scene/DataObject";
-export * from "./scene/SceneSettings";
 
 export * from "./rendering/Viewport";
 export * from "./rendering/CameraProjection";

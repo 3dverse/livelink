@@ -7,16 +7,15 @@ import type {
     ScriptEvent,
     EditorEntity,
     ComponentType,
+    ComponentsRecord,
+    ScriptDataObject,
+    EntityRef,
 } from "@3dverse/livelink.core";
-
-//------------------------------------------------------------------------------
-import { ComponentsRecord } from "../../_prebuild/ComponentsRecord";
 
 //------------------------------------------------------------------------------
 import { Entity } from "./Entity";
 import { compute_rpn } from "./Filters";
 import { SceneSettings } from "./SceneSettings";
-import { EntityRef, ScriptDataObject } from "./DataObject";
 import { EntityRegistry } from "./EntityRegistry";
 
 /**

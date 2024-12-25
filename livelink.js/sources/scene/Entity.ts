@@ -1,14 +1,19 @@
 //------------------------------------------------------------------------------
-import type { ComponentType, EditorEntity, RTID, UUID } from "@3dverse/livelink.core";
+import type {
+    ComponentsRecord,
+    ComponentType,
+    EditorEntity,
+    RTID,
+    ScriptDataObject,
+    UUID,
+} from "@3dverse/livelink.core";
 
 //------------------------------------------------------------------------------
 import { EntityBase } from "../../_prebuild/EntityBase";
-import { ComponentsRecord } from "../../_prebuild/ComponentsRecord";
 
 //------------------------------------------------------------------------------
 import { Scene } from "./Scene";
 import { ComponentHandler, ComponentHandlers, LocalTransformHandler } from "./ComponentHandler";
-import { ScriptDataObject } from "./DataObject";
 
 /**
  *

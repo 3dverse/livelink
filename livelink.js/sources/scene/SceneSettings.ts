@@ -1,5 +1,5 @@
 //------------------------------------------------------------------------------
-import { SettingsBaseType, SettingType } from "@3dverse/livelink.core";
+import { SceneSettingsRecord, SceneSettingType } from "@3dverse/livelink.core";
 
 //------------------------------------------------------------------------------
 import { SettingsBase } from "../../_prebuild/SettingsBase";
@@ -20,9 +20,10 @@ export class SceneSettings extends SettingsBase {
     /**
      * @internal
      */
-    _init(settings: SettingsBaseType): void {
-        for (const key in settings) {
-            this[key as SettingType] = settings[key as SettingType];
+    _init(settings: SceneSettingsRecord): void {
+        for (const strKey in settings) {
+            const key = strKey as SceneSettingType;
+            this[key] = settings[key];
         }
     }
 }
