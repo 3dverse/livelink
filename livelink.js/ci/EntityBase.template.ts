@@ -50,7 +50,7 @@ export class EntityBase extends EventTarget implements EntityInterface {
     /**
      *
      */
-    protected _setEuid(euid: UUID) {
+    protected _setEuid(euid: UUID): void {
         this.euid = { value: euid, rtid: BigInt(0) };
     }
 
@@ -62,7 +62,7 @@ export class EntityBase extends EventTarget implements EntityInterface {
     /**
      *
      */
-    protected _initFromEditorEntity({ editor_entity }: { editor_entity: EditorEntity }) {
+    protected _initFromEditorEntity({ editor_entity }: { editor_entity: EditorEntity }): void {
         const components = editor_entity.components;
         if (!components.euid) {
             throw new Error("Trying to parse an entity without EUID");
@@ -95,7 +95,7 @@ export class EntityBase extends EventTarget implements EntityInterface {
     /**
      * @internal
      */
-    toJSON() {
+    toJSON(): Record<string, unknown> {
         const serialized: Record<string, unknown> = {};
         for (const p in this) {
             if (this._isSerializableComponent(p, this[p])) {
@@ -108,7 +108,7 @@ export class EntityBase extends EventTarget implements EntityInterface {
     /**
      * @internal
      */
-    public _isSerializableComponent(prop: PropertyKey, v: unknown) {
+    public _isSerializableComponent(prop: PropertyKey, v: unknown): boolean {
         return (
             typeof prop === "string" &&
             v !== undefined &&

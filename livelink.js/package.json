@@ -11,7 +11,7 @@
   "scripts": {
     "prebuild": "node ci/auto-generate.js ../node_modules/ ci/ ./_prebuild/",
     "build": "node esbuild.js && tsc",
-    "lint": "eslint sources/**/*",
+    "lint": "eslint sources _prebuild",
     "clean": "rimraf _prebuild dist docs",
     "dev": "run-p dev:*",
     "dev:esbuild": "node esbuild.js dev",
@@ -23,7 +23,7 @@
   },
   "license": "ISC",
   "dependencies": {
-    "@3dverse/livelink.core": "^0.7.13",
+    "@3dverse/livelink.core": "^0.8.0",
     "gl-matrix": "^3.4.3"
   },
   "devDependencies": {
