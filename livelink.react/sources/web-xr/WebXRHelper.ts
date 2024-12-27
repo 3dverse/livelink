@@ -8,7 +8,6 @@ import {
     Quat,
     Entity,
     CameraProjection,
-    FrameMetaData,
 } from "@3dverse/livelink";
 import { XRContext } from "@3dverse/livelink-react/sources/web-xr/XRContext";
 import { Quaternion, Vector3 } from "three";
@@ -211,21 +210,27 @@ export class WebXRHelper {
      * @param livelink
      * @param enableScale
      */
-    public async configureViewports(livelink: Livelink, enableScale: boolean = false): Promise<Array<Viewport>> {
+    public async configureViewports(livelink: Livelink, enableScale: boolean = false): Promise<Viewport[]> {
         this.#core = livelink;
         if (!this.#core) {
             throw new Error("Failed to configure XR session, no LiveLink instance was provided.");
         }
 
         const xr_views = await this.#getXRViews();
-
-        this.#configureLivelinkViewports(xr_views);
+        this.#computeLivelinkViewportRects(xr_views);
         if (enableScale) {
             this.#configureScaleFactor(xr_views);
         }
 
-        this.#core.addViewports({ viewports: this.#viewports.map(v => v.livelink_viewport) });
-        return this.#viewports.map(v => v.livelink_viewport);
+        const viewports: Viewport[] = [];
+        let index = 0;
+        for (const { xr_view, xr_viewport, livelink_viewport } of this.#viewports) {
+            await this.#setupViewport({ index, xr_view, xr_viewport, viewport: livelink_viewport });
+            viewports.push(livelink_viewport);
+            index++;
+        }
+        this.#core.addViewports({ viewports });
+        return viewports;
     }
 
     //--------------------------------------------------------------------------
@@ -613,7 +618,7 @@ export class WebXRHelper {
      * Compute the livelink viewports rects.
      * @param xr_views
      */
-    #configureLivelinkViewports(xr_views: readonly XRView[]) {
+    #computeLivelinkViewportRects(xr_views: readonly XRView[]) {
         const gl_layer = this.session!.renderState.baseLayer!;
         const xr_eyes = xr_views.map(view => ({
             view,
@@ -665,50 +670,54 @@ export class WebXRHelper {
 
     //--------------------------------------------------------------------------
     /**
-     * Create the livelink cameras.
+     * Create the livelink camera with its lens & set the viewport camera projection.
      * @return Resolves with the created WebXRCamera instances
      */
-    async createCameras(): Promise<Entity[]> {
-        const cameras = await Promise.all(
-            this.#viewports.map(async ({ xr_view, xr_viewport, livelink_viewport }, index) => {
-                const camera = await this.#core!.scene.newEntity({
-                    name: `XR_camera_${xr_view.eye}_${index}`,
-                    components: {
-                        local_transform: {},
-                        perspective_lens: {},
-                        camera: {
-                            renderGraphRef: "398ee642-030a-45e7-95df-7147f6c43392",
-                            dataJSON: { grid: false, displayBackground: false },
-                        },
-                    },
-                    options: { delete_on_client_disconnection: true, auto_broadcast: false },
-                });
-                livelink_viewport.camera_projection = new CameraProjection({
-                    camera_entity: camera,
-                    viewport: livelink_viewport,
-                });
+    async #setupViewport({
+        index,
+        xr_view,
+        xr_viewport,
+        viewport,
+    }: {
+        index: number;
+        xr_view: XRView;
+        xr_viewport: XRViewport;
+        viewport: Viewport;
+    }): Promise<Entity> {
+        const camera = await this.#core!.scene.newEntity({
+            name: `XR_camera_${xr_view.eye}_${index}`,
+            components: {
+                local_transform: {},
+                perspective_lens: {},
+                camera: {
+                    renderGraphRef: "398ee642-030a-45e7-95df-7147f6c43392",
+                    dataJSON: { grid: false, displayBackground: false },
+                },
+            },
+            options: { delete_on_client_disconnection: true, auto_broadcast: false },
+        });
+        viewport.camera_projection = new CameraProjection({
+            camera_entity: camera,
+            viewport,
+        });
 
-                camera.perspective_lens = this.#computePerspectiveLens(
-                    xr_view.projectionMatrix,
-                    livelink_viewport.width,
-                    livelink_viewport.height,
-                );
-
-                camera.tags = {
-                    value: [
-                        `viewport_x = ${xr_viewport.x.toString()}`,
-                        `viewport_y = ${xr_viewport.y.toString()}`,
-                        `viewport_width = ${xr_viewport.width.toString()}`,
-                        `viewport_height = ${xr_viewport.height.toString()}`,
-                        `recommanded_scale = ${xr_view.recommendedViewportScale?.toString() || "?"}`,
-                    ],
-                };
-
-                return camera;
-            }),
+        camera.perspective_lens = this.#computePerspectiveLens(
+            xr_view.projectionMatrix,
+            viewport.width,
+            viewport.height,
         );
 
-        return cameras;
+        camera.tags = {
+            value: [
+                `viewport_x = ${xr_viewport.x.toString()}`,
+                `viewport_y = ${xr_viewport.y.toString()}`,
+                `viewport_width = ${xr_viewport.width.toString()}`,
+                `viewport_height = ${xr_viewport.height.toString()}`,
+                `recommanded_scale = ${xr_view.recommendedViewportScale?.toString() || "?"}`,
+            ],
+        };
+
+        return camera;
     }
 
     //--------------------------------------------------------------------------

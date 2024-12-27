@@ -51,9 +51,7 @@ export function WebXR({ children, mode }: PropsWithChildren<{ mode: XRSessionMod
             return;
         }
 
-        webXRHelper.createCameras().then(() => {
-            webXRHelper.start();
-        });
+        webXRHelper.start();
     }, [viewports, webXRHelper]);
 
     return (
