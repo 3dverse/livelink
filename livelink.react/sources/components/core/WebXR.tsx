@@ -36,7 +36,7 @@ export function WebXR({ children, mode }: PropsWithChildren<{ mode: XRSessionMod
             webXRHelper.release();
             setWebXRHelper(null);
         };
-    }, [mode, containerRef.current]);
+    }, [mode]);
 
     useEffect(() => {
         if (!webXRHelper || !instance) {
