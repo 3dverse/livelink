@@ -70,7 +70,10 @@ type EntityProvider = EntityRef | NewEntity | EntityFinder;
  *
  * @category Hooks
  */
-export function useEntity(entityProvider: EntityProvider): { isPending: boolean; entity: Entity | null } {
+export function useEntity(entityProvider: EntityProvider & { forceUpdateOnEntityUpdate?: boolean }): {
+    isPending: boolean;
+    entity: Entity | null;
+} {
     const { instance } = useContext(LivelinkContext);
 
     const [entity, setEntity] = useState<Entity | null>(null);
@@ -79,6 +82,7 @@ export function useEntity(entityProvider: EntityProvider): { isPending: boolean;
 
     const entityRef = entityProvider as EntityRef;
     const entityFinder = entityProvider as EntityFinder;
+    const forceUpdateOnEntityUpdate = entityProvider.forceUpdateOnEntityUpdate ?? false;
 
     useEffect(() => {
         if (!instance) {
@@ -115,15 +119,16 @@ export function useEntity(entityProvider: EntityProvider): { isPending: boolean;
     }, [instance, entityRef.originalEUID, entityFinder.finder]);
 
     useEffect(() => {
-        if (!entity) {
+        if (!entity || !forceUpdateOnEntityUpdate) {
             return;
         }
+
         entity.addEventListener("entity-updated", forceUpdate);
 
         return () => {
             entity.removeEventListener("entity-updated", forceUpdate);
         };
-    }, [entity]);
+    }, [entity, forceUpdateOnEntityUpdate]);
 
     return { isPending, entity };
 }

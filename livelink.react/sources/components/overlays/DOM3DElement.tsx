@@ -36,7 +36,7 @@ export function DOM3DElement({
         return () => {
             overlay.removeElement({ element });
         };
-    }, [overlay, children]);
+    }, [overlay, children, scaleFactor]);
 
     useEffect(() => {
         if (!elementHandle) {
@@ -44,7 +44,7 @@ export function DOM3DElement({
         }
 
         elementHandle.world_position = worldPosition;
-    }, [elementHandle, worldPosition]);
+    }, [elementHandle, worldPosition[0], worldPosition[1], worldPosition[2]]);
 
     return null;
 }

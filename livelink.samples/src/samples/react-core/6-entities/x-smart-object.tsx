@@ -35,7 +35,10 @@ function App() {
 //------------------------------------------------------------------------------
 function AppLayout() {
     const { cameraEntity } = useCameraEntity();
-    const { entity: light } = useEntity({ originalEUID: "a9b10115-a52b-459b-9660-e67ea8155fbe" });
+    const { entity: light } = useEntity({
+        originalEUID: "a9b10115-a52b-459b-9660-e67ea8155fbe",
+        forceUpdateOnEntityUpdate: true,
+    });
 
     return (
         <Canvas className={sampleCanvasClassName}>

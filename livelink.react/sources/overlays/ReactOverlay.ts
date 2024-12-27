@@ -64,13 +64,10 @@ export class ReactOverlay implements OverlayInterface {
      *
      */
     removeElement({ element }: { element: ReactElement }) {
-        const dom3DElement = this.#elements.get(element);
-        if (!dom3DElement) {
+        if (!this.#elements.delete(element)) {
             console.warn(`Element not found in dom overlay`);
             return;
         }
-
-        this.#elements.delete(element);
     }
 
     /**
