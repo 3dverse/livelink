@@ -1,8 +1,8 @@
 //------------------------------------------------------------------------------
-import { glMatrix, mat4, vec3 } from "gl-matrix";
+import { glMatrix, mat3, mat4, vec3 } from "gl-matrix";
 
 //------------------------------------------------------------------------------
-import type { Components, Mat4, Quat, Vec3 } from "@3dverse/livelink.core";
+import type { Components, Mat4, Quat, Vec2, Vec3 } from "@3dverse/livelink.core";
 
 //------------------------------------------------------------------------------
 import { Entity } from "../scene/Entity";
@@ -13,6 +13,11 @@ import { FrameCameraTransform } from "./decoders/FrameCameraTransform";
  *
  */
 const INFINITE_FAR_VALUE = 100000;
+
+/**
+ * A ray in 3D space.
+ */
+export type Ray = { origin: Vec3; direction: Vec3 };
 
 /**
  * Holds the projection and transform matrices associated to a camera entity.
@@ -62,17 +67,36 @@ export class CameraProjection {
     #clip_from_world_matrix = mat4.create();
 
     /**
+     * Transformation matrix from clip space to world space, aka the global transformation matrix.
+     */
+    #world_from_view_matrix = mat4.create();
+
+    /**
      * Transformation matrix from view space to clip space, aka the projection matrix.
      */
-    get clip_from_view_matrix(): Mat4 {
+    get clip_from_view_matrix(): Readonly<Mat4> {
         return this.#clip_from_view_matrix as Mat4;
     }
 
     /**
      * Transformation matrix from world space to clip space, aka the model-view-projection matrix.
      */
-    get clip_from_world_matrix(): Mat4 {
+    get clip_from_world_matrix(): Readonly<Mat4> {
         return this.#clip_from_world_matrix as Mat4;
+    }
+
+    /**
+     * Transformation matrix from clip space to world space, the inverse of model-view-projection matrix.
+     */
+    get world_from_clip_matrix(): Readonly<Mat4> {
+        return mat4.invert(mat4.create(), this.#clip_from_world_matrix) as Mat4;
+    }
+
+    /**
+     * Transformation matrix from clip space to world space, aka the global transformation matrix.
+     */
+    get world_from_view_matrix(): Readonly<Mat4> {
+        return this.#world_from_view_matrix as Mat4;
     }
 
     /**
@@ -149,6 +173,117 @@ export class CameraProjection {
     }
 
     /**
+     * Projects a clip space position to world space.
+     *
+     * @param param
+     * @param param.clip_position - The position in clip space to project.
+     * @param param.out_world_position - The output position in world space.
+     *
+     * @returns The position in world space.
+     */
+    projectClipToWorld({
+        clip_position,
+        out_world_position = vec3.create() as Vec3,
+    }: {
+        clip_position: Vec3;
+        out_world_position?: Vec3;
+    }): Vec3 {
+        vec3.transformMat4(out_world_position, clip_position, this.world_from_clip_matrix);
+        return out_world_position as Vec3;
+    }
+
+    /**
+     * Computes a ray from the camera origin to the given screen coordinates.
+     * (0, 0) is the top-left corner of the viewport, (1, 1) is the bottom-right corner.
+     *
+     * @param param
+     * @param param.screen_position - The screen coordinates to compute the ray from.
+
+     * @returns The ray.
+     */
+    computeRayFromScreenPosition({ screen_position }: { screen_position: Vec2 }): Ray {
+        const clip_position = this.#screenPositionToClipPosition({ screen_position });
+        return this.computeRayFromClipPosition({ clip_position });
+    }
+
+    /**
+     * Computes a ray from the camera origin to the given clip coordinates.
+     * (-1, -1) is the bottom-left corner of the viewport, (1, 1) is the top-right corner.
+     *
+     * @param param
+     * @param param.clip_position - The clip coordinates to compute the ray from.
+     *
+     * @returns The ray.
+     */
+    computeRayFromClipPosition({ clip_position }: { clip_position: Vec3 }): Ray {
+        if (this.camera_entity.perspective_lens) {
+            return this.#computeRayWithPerspectiveProjection({ clip_position });
+        } else if (this.camera_entity.orthographic_lens) {
+            return this.#computeRayWithOrthographicProjection({ clip_position });
+        } else {
+            throw new Error("Camera entity must have a perspective or orthographic lens component");
+        }
+    }
+
+    /**
+     * Computes a ray from the camera origin to the given screen coordinates using perspective projection.
+     *
+     * @param param
+     * @param param.clip_position - The screen coordinates to compute the ray from.
+     *
+     * @returns The ray.
+     */
+    #computeRayWithPerspectiveProjection({ clip_position }: { clip_position: Vec3 }): Ray {
+        const ray: Ray = {
+            origin: vec3.fromValues(...this.#world_position) as Vec3,
+            direction: vec3.create() as Vec3,
+        };
+
+        this.projectClipToWorld({ clip_position, out_world_position: ray.direction });
+
+        vec3.sub(ray.direction, ray.direction, ray.origin);
+        vec3.normalize(ray.direction, ray.direction);
+
+        return ray;
+    }
+
+    /**
+     * Computes a ray from the camera origin to the given screen coordinates using orthographic projection.
+     *
+     * @param param
+     * @param param.clip_position - The screen coordinates to compute the ray from.
+     *
+     * @returns The ray.
+     */
+    #computeRayWithOrthographicProjection({ clip_position }: { clip_position: Vec3 }): Ray {
+        const { zNear, zFar } = this.camera_entity.orthographic_lens as Required<Components.OrthographicLens>;
+
+        const ray: Ray = {
+            origin: vec3.fromValues(clip_position[0], clip_position[1], (zNear + zFar) / (zNear - zFar)) as Vec3,
+            direction: vec3.fromValues(0, 0, -1) as Vec3,
+        };
+
+        this.projectClipToWorld({ clip_position, out_world_position: ray.origin });
+
+        const affinedMatrix = mat3.fromMat4(mat3.create(), this.world_from_view_matrix);
+        vec3.transformMat3(ray.direction, ray.direction, affinedMatrix);
+
+        return ray;
+    }
+
+    /**
+     * Converts a screen position to a clip position.
+     *
+     * @param param
+     * @param param.screen_position - The screen position to convert.
+     *
+     * @returns The clip position.
+     */
+    #screenPositionToClipPosition({ screen_position }: { screen_position: Vec2 }): Vec3 {
+        return vec3.fromValues(screen_position[0] * 2 - 1, 1 - screen_position[1] * 2, 0.5) as Vec3;
+    }
+
+    /**
      * Updates the projection matrix of the camera entity.
      * This method should be called whenever the camera entity or viewport changes.
      */
@@ -171,6 +306,7 @@ export class CameraProjection {
     updateFromFrameCameraTransform({ frame_camera_transform }: { frame_camera_transform: FrameCameraTransform }): void {
         this.#world_position = frame_camera_transform.world_position;
         this.#world_orientation = frame_camera_transform.world_orientation;
+        this.#world_from_view_matrix = Array.from(frame_camera_transform.world_from_view_matrix) as Mat4;
 
         const tmp_matrix = this.#clip_from_world_matrix;
         const view_from_world_matrix = mat4.invert(tmp_matrix, frame_camera_transform.world_from_view_matrix);
