@@ -41,6 +41,7 @@ import RenderGraphSettings from "./react-ui/3-render-graph-settings";
 import LiveSkeletalAnimation from "./advanced/x-live-skeletal-animation";
 import WebXR from "./advanced/x-web-xr";
 import MPR from "./advanced/x-multiplanar-reconstruction";
+import CullingBoxGeometry from "./advanced/x-culling-box-geometry";
 
 //------------------------------------------------------------------------------
 export const SAMPLES: Array<{
@@ -94,6 +95,6 @@ export const SAMPLES: Array<{
     },
     {
         categoryName: "Advanced",
-        list: [LiveSkeletalAnimation, WebXR, MPR],
+        list: [LiveSkeletalAnimation, WebXR, MPR, CullingBoxGeometry],
     },
 ];

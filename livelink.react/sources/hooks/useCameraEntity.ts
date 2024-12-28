@@ -20,6 +20,7 @@ export function useCameraEntity(
         name?: string;
         position?: Vec3;
         orientation?: Quat;
+        eulerOrientation?: Vec3;
         renderGraphRef?: UUID;
         settings?: RenderGraphDataObject;
         renderTargetIndex?: number;
@@ -27,6 +28,7 @@ export function useCameraEntity(
         name: "Camera",
         position: [0, 1, 5],
         orientation: [0, 0, 0, 1],
+        eulerOrientation: [0, 0, 0],
         renderGraphRef: "398ee642-030a-45e7-95df-7147f6c43392",
         renderTargetIndex: -1,
     },
@@ -37,7 +39,11 @@ export function useCameraEntity(
     const { isPending, entity: cameraEntity } = useEntity({
         name: props.name ?? "Camera",
         components: {
-            local_transform: { position: props.position ?? [0, 1, 5], orientation: props.orientation ?? [0, 0, 0, 1] },
+            local_transform: {
+                position: props.position ?? [0, 1, 5],
+                orientation: !props.eulerOrientation ? (props.orientation ?? [0, 0, 0, 1]) : undefined,
+                eulerOrientation: props.eulerOrientation,
+            },
             camera: {
                 renderGraphRef: props.renderGraphRef ?? "398ee642-030a-45e7-95df-7147f6c43392",
                 dataJSON: props.settings ?? { grid: true, skybox: false, gradient: true },
