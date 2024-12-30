@@ -586,15 +586,7 @@ export class Livelink {
         // Retrieve a session key
         await this.session.registerClient();
 
-        const { component_descriptors, settings, serializer } = await this.#core.connect({
-            session: this.session,
-            editor_url: Livelink._editor_url,
-        });
-
-        this.scene.entity_registry._configureComponentDefaultValues({ component_descriptors });
-        this.scene.entity_registry._configureComponentSerializer({ serializer });
-
-        this.scene.settings._init(settings);
+        await this.#core.connect({ session: this.session, editor_url: Livelink._editor_url });
 
         this.#core.addEventListener({
             target: "editor",
@@ -671,19 +663,15 @@ export class Livelink {
         broadcastsPerSecond?: number;
     }): void {
         this.#update_interval = setInterval(() => {
-            const updateMsg = this.scene.entity_registry._getEntitiesToUpdate();
-            if (updateMsg !== null) {
-                if (updateMsg.binary) {
-                    this.#core.updateEntitiesFromBytes(updateMsg.message);
-                } else {
-                    this.#core.updateEntitiesFromJson(updateMsg.message);
-                }
+            const updateCmd = this.scene.entity_registry._getEntitiesToUpdate();
+            if (updateCmd.length > 0) {
+                this.#core.updateEntities(updateCmd);
                 this.scene.entity_registry._clearUpdateList();
             }
 
-            const detachMsg = this.scene.entity_registry._getComponentsToDetach();
-            if (detachMsg !== null) {
-                this.#core.removeComponents(detachMsg);
+            const detachCmd = this.scene.entity_registry._getComponentsToDetach();
+            if (detachCmd.length > 0) {
+                this.#core.removeComponents(detachCmd);
                 this.scene.entity_registry._clearDetachList();
             }
         }, 1000 / updatesPerSecond);

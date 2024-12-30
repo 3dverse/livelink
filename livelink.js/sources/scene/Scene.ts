@@ -9,7 +9,7 @@ import type {
     ComponentType,
     ComponentsRecord,
     ScriptDataObject,
-    EntityRef,
+    Components,
 } from "@3dverse/livelink.core";
 
 //------------------------------------------------------------------------------
@@ -130,11 +130,14 @@ export class Scene extends EventTarget {
         componentsArray,
         options,
     }: {
-        componentsArray: Array<{ name: string; components: ComponentsRecord }>;
+        componentsArray: Array<{ name: string; components: ComponentsRecord & { euid: Components.Euid } }>;
         options?: EntityCreationOptions;
     }): Promise<Array<Entity>> {
         const entities = componentsArray.map(this.#createEntityProxy);
-        const editor_entities = await this.#core.createEntities({ entities, options });
+        const editor_entities = await this.#core.createEntities({
+            entities: componentsArray.map(v => v.components),
+            options,
+        });
         for (let i = 0; i < entities.length; i++) {
             await this.#instantiateEntity({ entity: entities[i], editor_entity: editor_entities[i], options });
         }
@@ -514,7 +517,7 @@ export class Scene extends EventTarget {
      *  Add ancestors to the entity registry.
      */
     async #resolveAncestors({ entity_rtid }: { entity_rtid: RTID }): Promise<Array<EditorEntity>> {
-        const ancestor_editor_entities = await this.#core.resolveAncestors({ entity_rtid: BigInt(entity_rtid) });
+        const ancestor_editor_entities = await this.#core.resolveAncestors({ entity_rtid });
 
         await this.#addEditorEntities({
             editor_entities: ancestor_editor_entities,
@@ -547,7 +550,7 @@ export class Scene extends EventTarget {
         }
 
         const entity = await this.#extractEntityFromEventDataObject({
-            data_object: event.data_object as ScriptDataObject,
+            data_object: event.data_object,
             entity_name: "hEntity",
         });
 
@@ -576,13 +579,12 @@ export class Scene extends EventTarget {
         data_object,
         entity_name,
     }: {
-        data_object: ScriptDataObject | null;
+        data_object: ScriptDataObject;
         entity_name: string;
     }): Promise<Entity | null> {
-        if (!data_object || !Object.prototype.hasOwnProperty.call(data_object, entity_name)) {
-            return null;
-        }
-        const entity_ref = data_object[entity_name] as EntityRef;
-        return this.findEntity({ entity_uuid: entity_ref.originalEUID, linkage: entity_ref.linkage });
+        const entity_ref = data_object[entity_name];
+        return typeof entity_ref === "object" && "originalEUID" in entity_ref
+            ? this.findEntity({ entity_uuid: entity_ref.originalEUID, linkage: entity_ref.linkage })
+            : null;
     }
 }

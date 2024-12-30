@@ -39,7 +39,8 @@ function generateEntityBase() {
     const componentExports = exports.filter(
         symbol =>
             symbol.declarations.some(declaration => declaration.jsDoc?.some(jsDoc => jsDoc.comment?.length > 0)) &&
-            symbol.name !== "Euid",
+            symbol.name !== "Euid" &&
+            symbol.name !== "ScriptElement",
     );
 
     const componentAttributes = componentExports.map(symbol => {
@@ -56,6 +57,8 @@ function generateEntityBase() {
     //--------------------------------------------------------------------------
     applyTemplate("EntityBase.template.ts", path.join("EntityBase.ts"), {
         componentAttributes: componentAttributes.join("\n\n"),
+        componentNames:
+            componentExports.map(symbol => `        "${pascalCaseToSnakeCase(symbol.name)}"`).join(",\n") + ",",
     });
 }
 

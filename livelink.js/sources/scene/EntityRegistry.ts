@@ -2,15 +2,11 @@
 import type {
     RTID,
     UUID,
-    Serializer,
-    UpdateEntitiesFromJsonMessage,
-    ComponentType,
-    RemoveComponentsCommand,
     UpdateComponentsCommand,
-    UpdateEntitiesFromBytesMessage,
-    ComponentSerializer,
     ComponentDescriptor,
     ComponentsRecord,
+    ComponentTypeName,
+    ComponentType,
 } from "@3dverse/livelink.core";
 
 //------------------------------------------------------------------------------
@@ -45,27 +41,33 @@ export class EntityRegistry {
     /**
      * List of dirty entities sorted by component type.
      */
-    #dirty_components = new Map<ComponentType, Set<Entity>>();
+    #dirty_components = new Map<ComponentTypeName, Set<Entity>>();
 
     /**
      * List of dirty entities having detached components sorted by component type.
      */
-    #detached_components = new Map<ComponentType, Set<Entity>>();
+    #detached_components = new Map<ComponentTypeName, Set<Entity>>();
 
     /**
      * List of dirty entities that need to be broadcasted to the editor sorted by component type.
      */
-    #dirty_components_to_broadcast = new Map<ComponentType, Set<Entity>>();
-
-    /**
-     * The serializer used to serialize and deserialize components.
-     */
-    #serializer: Serializer | null = null;
+    #dirty_components_to_broadcast = new Map<ComponentTypeName, Set<Entity>>();
 
     /**
      * Default values for all component attributes.
      */
-    #component_default_values = new Map<ComponentType, object>();
+    #component_default_values = new Map<ComponentTypeName, object>();
+
+    /**
+     *
+     */
+    constructor() {
+        for (const component_name of Entity.component_names) {
+            this.#dirty_components.set(component_name, new Set<Entity>());
+            this.#detached_components.set(component_name, new Set<Entity>());
+            this.#dirty_components_to_broadcast.set(component_name, new Set<Entity>());
+        }
+    }
 
     /**
      * Adds a new entity in the registry. The entity must be valid, i.e. have valid RTID and EUID and must not have the
@@ -167,22 +169,6 @@ export class EntityRegistry {
 
     /**
      * @internal
-     * Configures the serializer used to serialize and deserialize components.
-     *
-     * @param serializer The serializer to use.
-     */
-    _configureComponentSerializer({ serializer }: { serializer: Serializer }): void {
-        this.#serializer = serializer;
-
-        for (const component_name of this.#serializer.component_names) {
-            this.#dirty_components.set(component_name, new Set<Entity>());
-            this.#detached_components.set(component_name, new Set<Entity>());
-            this.#dirty_components_to_broadcast.set(component_name, new Set<Entity>());
-        }
-    }
-
-    /**
-     * @internal
      * Configures the default values for all component attributes.
      *
      * @param component_descriptors The component descriptors to use.
@@ -190,9 +176,10 @@ export class EntityRegistry {
     _configureComponentDefaultValues({
         component_descriptors,
     }: {
-        component_descriptors: Record<string, ComponentDescriptor>;
+        component_descriptors: Record<ComponentTypeName, ComponentDescriptor>;
     }): void {
-        for (const component_name in component_descriptors) {
+        for (const key in component_descriptors) {
+            const component_name = key as ComponentTypeName;
             const defaultValue = {} as Record<string, unknown>;
             const component_descriptor = component_descriptors[component_name];
             for (const attribute of component_descriptor.attributes) {
@@ -207,14 +194,14 @@ export class EntityRegistry {
                 }
             }
 
-            this.#component_default_values.set(component_name as ComponentType, defaultValue);
+            this.#component_default_values.set(component_name, defaultValue);
         }
     }
 
     /**
      * @internal
      */
-    _getComponentDefaultValue({ component_type }: { component_type: ComponentType }): object {
+    _getComponentDefaultValue({ component_type }: { component_type: ComponentTypeName }): object {
         return this.#component_default_values.get(component_type) ?? {};
     }
 
@@ -243,7 +230,7 @@ export class EntityRegistry {
     /**
      * @internal
      */
-    _addEntityToUpdate({ component_type, entity }: { component_type: ComponentType; entity: Entity }): void {
+    _addEntityToUpdate({ component_type, entity }: { component_type: ComponentTypeName; entity: Entity }): void {
         const dirty_entities = this.#dirty_components.get(component_type);
         if (dirty_entities) {
             dirty_entities.add(entity);
@@ -253,7 +240,13 @@ export class EntityRegistry {
     /**
      * @internal
      */
-    _detachComponentFromEntity({ component_type, entity }: { component_type: ComponentType; entity: Entity }): void {
+    _detachComponentFromEntity({
+        component_type,
+        entity,
+    }: {
+        component_type: ComponentTypeName;
+        entity: Entity;
+    }): void {
         const detached_components = this.#detached_components.get(component_type);
         if (detached_components) {
             detached_components.add(entity);
@@ -263,65 +256,65 @@ export class EntityRegistry {
     /**
      * @internal
      */
-    _getEntitiesToUpdate():
-        | {
-              binary: true;
-              message: UpdateEntitiesFromBytesMessage;
-          }
-        | {
-              binary: false;
-              message: UpdateEntitiesFromJsonMessage;
-          }
-        | null {
-        let binary = true;
-        const message = {
-            components: [] as Array<{
-                component_type: ComponentType;
-                entities: Set<Entity>;
-                component_serializer?: ComponentSerializer;
-            }>,
-        };
+    _getEntitiesToUpdate(): Array<{
+        component_type: ComponentTypeName;
+        entity_rtids: Array<RTID>;
+        components: Array<ComponentType>;
+    }> {
+        const cmd: Array<{
+            component_type: ComponentTypeName;
+            entity_rtids: Array<RTID>;
+            components: Array<ComponentType>;
+        }> = [];
 
         for (const [component_type, entities] of this.#dirty_components) {
-            if (entities.size !== 0) {
-                const component_serializer = this.#serializer!.getComponentSerializer(component_type);
-                if (!component_serializer) {
-                    binary = false;
-                }
-                message.components.push({
-                    component_type,
-                    component_serializer,
-                    entities,
-                });
+            if (entities.size === 0) {
+                continue;
             }
+
+            const msg = {
+                component_type,
+                entity_rtids: new Array<RTID>(entities.size),
+                components: new Array<ComponentType>(entities.size),
+            };
+
+            let i = 0;
+            for (const entity of entities) {
+                if (entity.rtid && entity[component_type]) {
+                    msg.entity_rtids[i] = entity.rtid;
+                    msg.components[i] = entity[component_type];
+                    i++;
+                }
+            }
+
+            cmd.push(msg);
         }
 
-        return message.components.length > 0
-            ? ({ binary, message } as
-                  | {
-                        binary: true;
-                        message: UpdateEntitiesFromBytesMessage;
-                    }
-                  | {
-                        binary: false;
-                        message: UpdateEntitiesFromJsonMessage;
-                    })
-            : null;
+        return cmd;
     }
 
     /**
      * @internal
      */
-    _getComponentsToDetach(): RemoveComponentsCommand | null {
-        const msg = { components: [] as Array<{ component_type: ComponentType; entities: Set<Entity> }> };
+    _getComponentsToDetach(): Array<{ component_type: ComponentTypeName; entity_rtids: Array<RTID> }> {
+        const cmd: Array<{ component_type: ComponentTypeName; entity_rtids: Array<RTID> }> = [];
 
         for (const [component_type, entities] of this.#detached_components) {
             if (entities.size !== 0) {
-                msg.components.push({ component_type, entities });
+                const msg = { component_type, entity_rtids: new Array<RTID>(entities.size) };
+                let i = 0;
+                for (const entity of entities) {
+                    if (entity.rtid) {
+                        msg.entity_rtids[i++] = entity.rtid;
+                    }
+                }
+                if (i > 0) {
+                    cmd.push(msg);
+                }
             }
         }
 
-        return msg.components.length > 0 ? msg : null;
+        return cmd;
     }
 
     /**
@@ -335,8 +328,7 @@ export class EntityRegistry {
             for (const entity of entities) {
                 if (entity.id && entity[component_type]) {
                     msg[entity.id] = msg[entity.id] ?? {};
-                    //@ts-expect-error - figure out why this doesn't work
-                    msg[entity.id][component_type] = entity[component_type];
+                    (msg[entity.id][component_type] as ComponentType) = entity[component_type];
                     hasData = true;
                 }
             }

@@ -1,9 +1,9 @@
 import type { Entity } from "./Entity";
-import type { ComponentType } from "@3dverse/livelink.core";
+import type { ComponentTypeName } from "@3dverse/livelink.core";
 
 import { quaternionFromEuler, quaternionToEuler } from "../maths";
 
-export type ComponentHandlers = Record<ComponentType | "default", typeof ComponentHandler>;
+export type ComponentHandlers = Record<ComponentTypeName | "default", typeof ComponentHandler>;
 
 /**
  * @internal
@@ -15,7 +15,7 @@ export class ComponentHandler {
      */
     constructor(
         private readonly _entity: Entity,
-        private readonly _component_type: ComponentType,
+        private readonly _component_type: ComponentTypeName,
     ) {}
 
     /**
