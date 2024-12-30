@@ -8,6 +8,7 @@ import {
     Quat,
     Entity,
     CameraProjection,
+    RenderGraphDataObject,
 } from "@3dverse/livelink";
 import { XRContext } from "@3dverse/livelink-react/sources/web-xr/XRContext";
 import { Quaternion, Vector3 } from "three";
@@ -73,6 +74,7 @@ export class WebXRHelper {
     //--------------------------------------------------------------------------
     // WebXR API references
     session: XRSession | null = null;
+    mode: XRSessionMode = "inline";
     #reference_space: XRReferenceSpace | null = null;
     #xr_viewports: XRViewport[] = [];
     #animationFrameRequestId: number = 0;
@@ -162,6 +164,8 @@ export class WebXRHelper {
      * @param options
      */
     public async initialize(mode: XRSessionMode, options: XRSessionInit = {}): Promise<void> {
+        this.mode = mode;
+
         if (!WebXRHelper.isSessionSupported(mode)) {
             throw new Error(`WebXR "${mode}" not supported`);
         }
@@ -222,10 +226,21 @@ export class WebXRHelper {
             this.#configureScaleFactor(xr_views);
         }
 
+        // AR session needs the FTL background to be pure black for the XRContext shader to simulate the background
+        // transparency while the feature to send the background mask frame from FTL to the client is not implemented.
+        const isAR = this.mode === "immersive-ar";
+        this.fakeAlpha = isAR;
+        const dataJSON = isAR
+            ? {
+                  grid: false,
+                  displayBackground: false,
+              }
+            : undefined;
+
         const viewports: Viewport[] = [];
         let index = 0;
         for (const { xr_view, xr_viewport, livelink_viewport } of this.#viewports) {
-            await this.#setupViewport({ index, xr_view, xr_viewport, viewport: livelink_viewport });
+            await this.#setupViewport({ index, xr_view, xr_viewport, viewport: livelink_viewport, dataJSON });
             viewports.push(livelink_viewport);
             index++;
         }
@@ -678,11 +693,13 @@ export class WebXRHelper {
         xr_view,
         xr_viewport,
         viewport,
+        dataJSON,
     }: {
         index: number;
         xr_view: XRView;
         xr_viewport: XRViewport;
         viewport: Viewport;
+        dataJSON?: RenderGraphDataObject;
     }): Promise<Entity> {
         const camera = await this.#core!.scene.newEntity({
             name: `XR_camera_${xr_view.eye}_${index}`,
@@ -691,7 +708,7 @@ export class WebXRHelper {
                 perspective_lens: {},
                 camera: {
                     renderGraphRef: "398ee642-030a-45e7-95df-7147f6c43392",
-                    dataJSON: { grid: false, displayBackground: false },
+                    dataJSON,
                 },
             },
             options: { delete_on_client_disconnection: true, auto_broadcast: false },
