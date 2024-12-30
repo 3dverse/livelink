@@ -134,9 +134,7 @@ function XRButton({ mode, enterXR }: { mode: XRSessionMode; enterXR: (mode: XRSe
                 setMessage(`${modeTitle} not supported`);
                 return;
             }
-
             await loadScript(variant_launch_sdk_url);
-            window.removeEventListener("vlaunch-initialized", onVlaunchInitialized);
             window.addEventListener("vlaunch-initialized", onVlaunchInitialized, { once: true });
         });
 
