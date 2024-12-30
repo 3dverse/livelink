@@ -47,8 +47,7 @@ function AppLayout() {
 
     useEffect(() => {
         if (instance) {
-            instance.activity_watcher.inactivity_warning = 3;
-            instance.activity_watcher.inactivity_timeout = 10;
+            instance.activity_watcher.setTimeouts({ warn_after_seconds: 3, timeout_after_seconds: 10 });
         }
     }, [instance]);
 

@@ -106,7 +106,7 @@ export class Scene extends EventTarget {
         options,
     }: {
         name: string;
-        components: ComponentsRecord;
+        components: Partial<ComponentsRecord>;
         options?: EntityCreationOptions;
     }): Promise<Entity> {
         const entity = this.#createEntityProxy({ name, components });
@@ -449,7 +449,7 @@ export class Scene extends EventTarget {
     /**
      *
      */
-    #createEntityProxy = ({ name, components }: { name: string; components: ComponentsRecord }): Entity => {
+    #createEntityProxy = ({ name, components }: { name: string; components: Partial<ComponentsRecord> }): Entity => {
         const entity = new Entity({ scene: this, name, components });
         return new Proxy(entity, Entity.handler);
     };

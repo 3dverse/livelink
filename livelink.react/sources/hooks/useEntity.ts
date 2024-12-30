@@ -24,7 +24,7 @@ type NewEntity = {
     /**
      * The components to attach to the entity with their initial values.
      */
-    components: ComponentsRecord;
+    components: Partial<ComponentsRecord>;
 
     /**
      * The creation options of the entity.

@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
+import { DynamicLoader } from "@3dverse/livelink.core";
 import type { HighlightMode, Vec2, Vec3 } from "@3dverse/livelink.core";
-import { LivelinkCoreModule } from "@3dverse/livelink.core";
 
 //------------------------------------------------------------------------------
 import { vec3 } from "gl-matrix";
@@ -270,7 +270,7 @@ export class Viewport extends EventTarget {
      */
     async castScreenSpaceRay({
         screen_position,
-        mode = LivelinkCoreModule.Enums.HighlightMode.None,
+        mode = DynamicLoader.Enums.HighlightMode.None,
     }: {
         screen_position: Vec2;
         mode: HighlightMode;

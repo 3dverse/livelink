@@ -125,9 +125,9 @@ function SkeletonController() {
 
         jointGizmo!.addEventListener("rotationAngle-changed", e => {
             const joint = e.target.object!;
-            const jointIndex = parseInt(joint.name);
+            const bone_index = parseInt(joint.name);
             const partial_pose: SkeletonPartialPose = {
-                orientations: new Map().set(jointIndex, joint.quaternion.toArray()),
+                orientations: [{ bone_index, value: joint.quaternion.toArray() }],
             };
             instance.sendSkeletonPose({ controller, partial_pose });
         });
@@ -182,7 +182,10 @@ function handleUserControlledSkeleton(instance: LivelinkInstance | null, control
     // Update livelink skeleton
     if (instance && controller) {
         const partial_pose: SkeletonPartialPose = {
-            orientations: new Map(joints!.map((joint, jointIndex) => [jointIndex, joint.quaternion.toArray()])),
+            orientations: joints!.map((joint, bone_index) => ({
+                bone_index,
+                value: joint.quaternion.toArray(),
+            })),
         };
         instance.sendSkeletonPose({ controller, partial_pose });
     }
@@ -219,7 +222,7 @@ function handleAnimatedSkeleton(animation: string, instance: LivelinkInstance | 
         if (instance && controller) {
             const rotations = chosenAnimation[frameIndex].rotations;
             const partial_pose: SkeletonPartialPose = {
-                orientations: new Map(rotations.map((quat, jointIndex) => [jointIndex, quat])),
+                orientations: rotations.map((quat, bone_index) => ({ bone_index, value: quat })),
             };
             instance.sendSkeletonPose({
                 controller,

@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 import type { CodecType, Vec2i } from "@3dverse/livelink.core";
-import { LivelinkCoreModule } from "@3dverse/livelink.core";
+import { DynamicLoader } from "@3dverse/livelink.core";
 
 //------------------------------------------------------------------------------
 //@ts-expect-error - Broadway is not a module
@@ -107,7 +107,7 @@ export class SoftwareDecoder extends EncodedFrameConsumer {
         codec: CodecType;
         frame_dimensions: Vec2i;
     }): Promise<EncodedFrameConsumer> {
-        if (codec !== LivelinkCoreModule.Enums.CodecType.h264) {
+        if (codec !== DynamicLoader.Enums.CodecType.h264) {
             throw new Error("Software decoder supports only h264 encoding");
         }
 

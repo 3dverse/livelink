@@ -245,7 +245,10 @@ export function LivelinkProvider({
             {showInactivityWarning && InactivityWarningPanel && (
                 <InactivityWarningPanel
                     warningDuration={warningDuration}
-                    onActivityDetected={() => setInactivityWarning(false)}
+                    onActivityDetected={() => {
+                        setInactivityWarning(false);
+                        instance?.activity_watcher.reset();
+                    }}
                 />
             )}
             {children}

@@ -1,6 +1,6 @@
 import { InputDevice } from "./InputDevice";
 import { Livelink } from "../Livelink";
-import { LivelinkCoreModule } from "@3dverse/livelink.core";
+import { DynamicLoader } from "@3dverse/livelink.core";
 
 /**
  * @category Inputs
@@ -47,7 +47,7 @@ export class Keyboard implements InputDevice {
         const keyData = this.#getKeyData(event);
         this.#instance._sendInput({
             input_state: {
-                input_operation: LivelinkCoreModule.Enums.InputOperation.on_key_down,
+                input_operation: DynamicLoader.Enums.InputOperation.on_key_down,
                 input_data: keyData,
             },
         });
@@ -60,7 +60,7 @@ export class Keyboard implements InputDevice {
         const keyData = this.#getKeyData(event);
         this.#instance._sendInput({
             input_state: {
-                input_operation: LivelinkCoreModule.Enums.InputOperation.on_key_up,
+                input_operation: DynamicLoader.Enums.InputOperation.on_key_up,
                 input_data: keyData,
             },
         });

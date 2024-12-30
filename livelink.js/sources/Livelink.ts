@@ -16,7 +16,7 @@ import type {
     Vec2i,
     ViewportConfigs,
 } from "@3dverse/livelink.core";
-import { LivelinkCoreModule } from "@3dverse/livelink.core";
+import { DynamicLoader } from "@3dverse/livelink.core";
 
 //------------------------------------------------------------------------------
 import { EncodedFrameConsumer } from "./rendering/decoders/EncodedFrameConsumer";
@@ -236,7 +236,7 @@ export class Livelink {
      * @throws If the session could not be joined
      */
     static async join({ session }: { session: Session }): Promise<Livelink> {
-        await LivelinkCoreModule.init();
+        await DynamicLoader.load();
 
         console.debug("Joining session:", session);
         return new Livelink({ session }).#connect();
@@ -320,7 +320,7 @@ export class Livelink {
      */
     private constructor({ session }: { session: Session }) {
         this.session = session;
-        this.#core = new LivelinkCoreModule.Core();
+        this.#core = new DynamicLoader.Core();
         this.scene = new Scene(this.#core);
     }
 
@@ -395,7 +395,7 @@ export class Livelink {
      * @returns A promise to the client configuration response.
      */
     async configureRemoteServer({
-        codec = LivelinkCoreModule.Enums.CodecType.h264,
+        codec = DynamicLoader.Enums.CodecType.h264,
     }: {
         codec?: CodecType;
     }): Promise<ClientConfigResponse> {
@@ -515,7 +515,12 @@ export class Livelink {
     async configureHeadlessClient(): Promise<ClientConfigResponse> {
         const client_config: ClientConfig = {
             remote_canvas_size: [8, 8],
-            encoder_config: { codec: LivelinkCoreModule.Enums.CodecType.h264, profile: 1, frame_rate: 30, lossy: true },
+            encoder_config: {
+                codec: DynamicLoader.Enums.CodecType.h264,
+                profile: 1,
+                frame_rate: 30,
+                lossy: true,
+            },
             supported_devices: {
                 keyboard: true,
                 mouse: false,

@@ -1,4 +1,4 @@
-import { LivelinkCoreModule, InputOperation } from "@3dverse/livelink.core";
+import { DynamicLoader, InputOperation } from "@3dverse/livelink.core";
 import { Livelink } from "../Livelink";
 import { InputDevice } from "./InputDevice";
 
@@ -49,14 +49,14 @@ export class Mouse implements InputDevice {
         if (!Mouse.#operations) {
             Mouse.#operations = {
                 down: [
-                    LivelinkCoreModule.Enums.InputOperation.lbutton_down,
-                    LivelinkCoreModule.Enums.InputOperation.mbutton_down,
-                    LivelinkCoreModule.Enums.InputOperation.rbutton_down,
+                    DynamicLoader.Enums.InputOperation.lbutton_down,
+                    DynamicLoader.Enums.InputOperation.mbutton_down,
+                    DynamicLoader.Enums.InputOperation.rbutton_down,
                 ],
                 up: [
-                    LivelinkCoreModule.Enums.InputOperation.lbutton_up,
-                    LivelinkCoreModule.Enums.InputOperation.mbutton_up,
-                    LivelinkCoreModule.Enums.InputOperation.rbutton_up,
+                    DynamicLoader.Enums.InputOperation.lbutton_up,
+                    DynamicLoader.Enums.InputOperation.mbutton_up,
+                    DynamicLoader.Enums.InputOperation.rbutton_up,
                 ],
             };
         }
@@ -129,7 +129,7 @@ export class Mouse implements InputDevice {
         const event = e as MouseEvent;
         const position = this.#getMousePosition(event);
         const input_data = this.#getMouseData(position.x, position.y);
-        const input_operation = LivelinkCoreModule.Enums.InputOperation.mouse_move;
+        const input_operation = DynamicLoader.Enums.InputOperation.mouse_move;
         this.#instance._sendInput({
             input_state: {
                 input_operation,

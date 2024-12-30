@@ -1,7 +1,7 @@
 //------------------------------------------------------------------------------
 import type {
     ComponentsRecord,
-    ComponentTypeName,
+    ComponentName,
     EditorEntity,
     RTID,
     ScriptDataObject,
@@ -19,7 +19,7 @@ import { ComponentHandler, ComponentHandlers, LocalTransformHandler } from "./Co
  *
  */
 type InitFromEditor = { editor_entity: EditorEntity };
-type InitFromComponents = { name: string; components?: ComponentsRecord };
+type InitFromComponents = { name: string; components?: Partial<ComponentsRecord> };
 type EntityInitOptions = InitFromEditor | InitFromComponents;
 
 /**
@@ -61,7 +61,7 @@ export class Entity extends EntityBase {
     /**
      *
      */
-    private _proxy_state: EntityAutoUpdateState = "on";
+    private _proxy_state: EntityAutoUpdateState = "off";
 
     /**
      *
@@ -179,7 +179,7 @@ export class Entity extends EntityBase {
     /**
      * @internal
      */
-    private _initFromComponents({ name, components }: { name: string; components?: ComponentsRecord }): void {
+    private _initFromComponents({ name, components }: { name: string; components?: Partial<ComponentsRecord> }): void {
         this.debug_name = { value: name };
         if (components) {
             this._mergeComponents({ components, dispatch_event: false });
@@ -267,9 +267,10 @@ export class Entity extends EntityBase {
         components,
         dispatch_event = true,
     }: {
-        components: ComponentsRecord;
+        components: Partial<ComponentsRecord>;
         dispatch_event?: boolean;
     }): void {
+        const actual_proxy_state = this._proxy_state;
         this._proxy_state = "off";
 
         for (const strKey in components) {
@@ -278,7 +279,7 @@ export class Entity extends EntityBase {
             // even if we know it's not.
             this[key] = { ...this[key], ...components[key] };
         }
-        this._proxy_state = "on";
+        this._proxy_state = actual_proxy_state;
 
         if (dispatch_event) {
             this.dispatchEvent(new CustomEvent("entity-updated"));
@@ -308,7 +309,7 @@ export class Entity extends EntityBase {
     /**
      * @internal
      */
-    _tryMarkingAsDirty({ component_type }: { component_type: ComponentTypeName }): boolean {
+    _tryMarkingAsDirty({ component_type }: { component_type: ComponentName }): boolean {
         if (this._isInstantiated()) {
             // Register to appropriate dirty list
             this._scene.entity_registry._addEntityToUpdate({ component_type, entity: this });
@@ -322,7 +323,7 @@ export class Entity extends EntityBase {
     /**
      * @internal
      */
-    _tryMarkingAsDeleted({ component_type }: { component_type: ComponentTypeName }): boolean {
+    _tryMarkingAsDeleted({ component_type }: { component_type: ComponentName }): boolean {
         if (this._isInstantiated()) {
             // Register to appropriate dirty list
             this._scene.entity_registry._detachComponentFromEntity({ component_type, entity: this });
@@ -347,7 +348,7 @@ export class Entity extends EntityBase {
     _addComponentDefaultValues({
         component_default_values,
     }: {
-        component_default_values: ReadonlyMap<ComponentTypeName, object>;
+        component_default_values: ReadonlyMap<ComponentName, object>;
     }): void {
         this._proxy_state = "off";
         for (const [component_type, default_value] of component_default_values) {
@@ -363,7 +364,7 @@ export class Entity extends EntityBase {
     /**
      * @internal
      */
-    _getComponentDefaultValue({ component_type }: { component_type: ComponentTypeName }): object {
+    _getComponentDefaultValue({ component_type }: { component_type: ComponentName }): object {
         return this._scene.entity_registry._getComponentDefaultValue({ component_type });
     }
 
@@ -398,7 +399,7 @@ export class Entity extends EntityBase {
                 //console.log("GET COMPONENT", entity,prop);
                 const serializableComponentsProxies =
                     Object.getPrototypeOf(entity).constructor.serializableComponentsProxies;
-                const component_type = prop as ComponentTypeName;
+                const component_type = prop as ComponentName;
 
                 const Handler =
                     serializableComponentsProxies[component_type] ?? serializableComponentsProxies["default"];
@@ -416,10 +417,10 @@ export class Entity extends EntityBase {
             if (entity._isSerializableComponent(prop, v)) {
                 //console.log("SET COMPONENT", prop, v);
                 const defaultValue = entity._getComponentDefaultValue({
-                    component_type: prop as ComponentTypeName,
+                    component_type: prop as ComponentName,
                 });
                 v = { ...structuredClone(defaultValue), ...v };
-                entity._tryMarkingAsDirty({ component_type: prop as ComponentTypeName });
+                entity._tryMarkingAsDirty({ component_type: prop as ComponentName });
             }
 
             return Reflect.set(entity, prop, v);
@@ -429,7 +430,7 @@ export class Entity extends EntityBase {
             //@ts-ignore
             if (entity[prop] !== undefined) {
                 //console.log("DELETE COMPONENT", prop);
-                entity._tryMarkingAsDeleted({ component_type: prop as ComponentTypeName });
+                entity._tryMarkingAsDeleted({ component_type: prop as ComponentName });
             }
 
             return Reflect.deleteProperty(entity, prop);

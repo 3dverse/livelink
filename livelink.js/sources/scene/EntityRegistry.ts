@@ -5,8 +5,8 @@ import type {
     UpdateComponentsCommand,
     ComponentDescriptor,
     ComponentsRecord,
-    ComponentTypeName,
     ComponentType,
+    ComponentName,
 } from "@3dverse/livelink.core";
 
 //------------------------------------------------------------------------------
@@ -41,22 +41,22 @@ export class EntityRegistry {
     /**
      * List of dirty entities sorted by component type.
      */
-    #dirty_components = new Map<ComponentTypeName, Set<Entity>>();
+    #dirty_components = new Map<ComponentName, Set<Entity>>();
 
     /**
      * List of dirty entities having detached components sorted by component type.
      */
-    #detached_components = new Map<ComponentTypeName, Set<Entity>>();
+    #detached_components = new Map<ComponentName, Set<Entity>>();
 
     /**
      * List of dirty entities that need to be broadcasted to the editor sorted by component type.
      */
-    #dirty_components_to_broadcast = new Map<ComponentTypeName, Set<Entity>>();
+    #dirty_components_to_broadcast = new Map<ComponentName, Set<Entity>>();
 
     /**
      * Default values for all component attributes.
      */
-    #component_default_values = new Map<ComponentTypeName, object>();
+    #component_default_values = new Map<ComponentName, object>();
 
     /**
      *
@@ -176,10 +176,10 @@ export class EntityRegistry {
     _configureComponentDefaultValues({
         component_descriptors,
     }: {
-        component_descriptors: Record<ComponentTypeName, ComponentDescriptor>;
+        component_descriptors: Record<ComponentName, ComponentDescriptor>;
     }): void {
         for (const key in component_descriptors) {
-            const component_name = key as ComponentTypeName;
+            const component_name = key as ComponentName;
             const defaultValue = {} as Record<string, unknown>;
             const component_descriptor = component_descriptors[component_name];
             for (const attribute of component_descriptor.attributes) {
@@ -201,7 +201,7 @@ export class EntityRegistry {
     /**
      * @internal
      */
-    _getComponentDefaultValue({ component_type }: { component_type: ComponentTypeName }): object {
+    _getComponentDefaultValue({ component_type }: { component_type: ComponentName }): object {
         return this.#component_default_values.get(component_type) ?? {};
     }
 
@@ -230,7 +230,7 @@ export class EntityRegistry {
     /**
      * @internal
      */
-    _addEntityToUpdate({ component_type, entity }: { component_type: ComponentTypeName; entity: Entity }): void {
+    _addEntityToUpdate({ component_type, entity }: { component_type: ComponentName; entity: Entity }): void {
         const dirty_entities = this.#dirty_components.get(component_type);
         if (dirty_entities) {
             dirty_entities.add(entity);
@@ -240,13 +240,7 @@ export class EntityRegistry {
     /**
      * @internal
      */
-    _detachComponentFromEntity({
-        component_type,
-        entity,
-    }: {
-        component_type: ComponentTypeName;
-        entity: Entity;
-    }): void {
+    _detachComponentFromEntity({ component_type, entity }: { component_type: ComponentName; entity: Entity }): void {
         const detached_components = this.#detached_components.get(component_type);
         if (detached_components) {
             detached_components.add(entity);
@@ -257,12 +251,12 @@ export class EntityRegistry {
      * @internal
      */
     _getEntitiesToUpdate(): Array<{
-        component_type: ComponentTypeName;
+        component_type: ComponentName;
         entity_rtids: Array<RTID>;
         components: Array<ComponentType>;
     }> {
         const cmd: Array<{
-            component_type: ComponentTypeName;
+            component_type: ComponentName;
             entity_rtids: Array<RTID>;
             components: Array<ComponentType>;
         }> = [];
@@ -296,8 +290,8 @@ export class EntityRegistry {
     /**
      * @internal
      */
-    _getComponentsToDetach(): Array<{ component_type: ComponentTypeName; entity_rtids: Array<RTID> }> {
-        const cmd: Array<{ component_type: ComponentTypeName; entity_rtids: Array<RTID> }> = [];
+    _getComponentsToDetach(): Array<{ component_type: ComponentName; entity_rtids: Array<RTID> }> {
+        const cmd: Array<{ component_type: ComponentName; entity_rtids: Array<RTID> }> = [];
 
         for (const [component_type, entities] of this.#detached_components) {
             if (entities.size !== 0) {

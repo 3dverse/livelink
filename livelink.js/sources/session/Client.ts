@@ -1,5 +1,5 @@
 //------------------------------------------------------------------------------
-import type { ClientInterface, ClientMetaData, RTID, UUID } from "@3dverse/livelink.core";
+import type { ClientMetaData, RTID, UUID } from "@3dverse/livelink.core";
 
 //------------------------------------------------------------------------------
 import { ClientInfo, CursorData } from "./ClientInfo";
@@ -17,7 +17,7 @@ import { Entity } from "../scene/Entity";
  *
  * @category Session
  */
-export class Client implements ClientInterface {
+export class Client {
     /**
      * The Livelink core object.
      */
