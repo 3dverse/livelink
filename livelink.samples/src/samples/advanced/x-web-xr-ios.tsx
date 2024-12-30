@@ -30,24 +30,6 @@ export default {
 };
 
 //------------------------------------------------------------------------------
-// Dynamic script loading using the DOM
-function loadScript(url: string) {
-    return new Promise<void>((resolve, reject) => {
-        let script: HTMLScriptElement | null = document.querySelector(`script[src="${url}"]`);
-        if (script) {
-            resolve();
-            return;
-        }
-        script = document.createElement("script");
-        script.src = url;
-        script.async = true;
-        script.onload = () => resolve();
-        script.onerror = () => reject(new Error(`Failed to load script: ${url}`));
-        document.body.appendChild(script);
-    });
-}
-
-//------------------------------------------------------------------------------
 function App() {
     const [xrMode, setXRMode] = useState<XRSessionMode | null>(null);
 
@@ -94,32 +76,46 @@ function AppLayout() {
 
 //------------------------------------------------------------------------------
 function XRButton({ mode, enterXR }: { mode: XRSessionMode; enterXR: (mode: XRSessionMode) => void }) {
-    const urlParams = new URLSearchParams(window.location.search);
-    const inClipApp = urlParams.get("inClipApp") !== null;
     const [isSessionSupported, setIsSessionSupported] = useState(false);
     const [message, setMessage] = useState("");
     const modeTitle = mode.replace("immersive-", "").toUpperCase();
 
     //--------------------------------------------------------------------------
+    // Dynamic script loading using the DOM
+    function loadScript(url: string) {
+        return new Promise<Event | void>((resolve, reject) => {
+            let script: HTMLScriptElement | null = document.querySelector(`script[src="${url}"]`);
+            if (script) {
+                resolve();
+                return;
+            }
+            script = document.createElement("script");
+            script.src = url;
+            script.async = true;
+            script.onload = event => resolve(event);
+            script.onerror = event => reject(event);
+            document.body.appendChild(script);
+        });
+    }
+
+    //--------------------------------------------------------------------------
     // Variant launch sdk initialization event listener.
-    // If platform is iOS and variant launch is required then reload the page
-    // with the Variant Launch URL to open its iOS Clip App on the sample page.
     function onVlaunchInitialized(event: Event) {
         const customEvent = event as CustomEvent;
         console.debug("vlaunch-initialized:", customEvent);
 
-        if (!customEvent.detail?.launchRequired) {
-            // Inside Variant Launch AR Clip app (iOS), or a device supporting WebXR
-            setMessage(`Enter ${modeTitle}`);
-            setIsSessionSupported(true);
+        if (customEvent.detail?.launchRequired) {
+            // Load Variant Launch URL to reload the sample inside Variant
+            // Launch iOS Clip App.
+            const { VLaunch } = window as unknown as any;
+            const url = window.location.href;
+            window.location.href = VLaunch.getLaunchUrl(url);
             return;
         }
-
-        const { VLaunch } = window as unknown as any;
-        const hasSearchParams = Boolean(window.location.search);
-        const searchParams = (hasSearchParams ? "&" : "?") + "inClipApp";
-        let url = window.location.href + searchParams;
-        window.location.href = VLaunch.getLaunchUrl(url);
+        WebXRHelper.isSessionSupported(mode).then(async supported => {
+            setMessage(supported ? `Enter ${modeTitle}` : `${modeTitle} is not supported.`);
+            setIsSessionSupported(supported);
+        });
     }
 
     //--------------------------------------------------------------------------
@@ -128,14 +124,41 @@ function XRButton({ mode, enterXR }: { mode: XRSessionMode; enterXR: (mode: XRSe
             setMessage("WebXR requires a secure context (https).");
             return;
         }
-
         WebXRHelper.isSessionSupported(mode).then(async supported => {
-            if (!supported && inClipApp) {
-                setMessage(`${modeTitle} not supported`);
+            if (supported) {
+                // Not on an iOS device requiring Variant Launch SDK for WebXR,
+                // Or variant Launch SDK is already loaded.
+                setMessage(`Enter ${modeTitle}`);
+                setIsSessionSupported(true);
                 return;
             }
-            await loadScript(variant_launch_sdk_url);
-            window.addEventListener("vlaunch-initialized", onVlaunchInitialized, { once: true });
+
+            const { VLaunch } = window as unknown as any;
+            if (VLaunch) {
+                // Variant Launch SDK is already loaded and WebXR not supported.
+                setMessage(`${modeTitle} is not supported.`);
+                return;
+            }
+
+            if (!variant_launch_sdk_key) {
+                // Missing Variant Launch SDK in .env file
+                setMessage("Error: launch.variant3d.com SDK key is not defined");
+                return;
+            }
+
+            // Load Variant Launch SDK
+            loadScript(variant_launch_sdk_url)
+                .then(() => {
+                    const { VLaunch } = window as unknown as any;
+                    if (!VLaunch) {
+                        throw new Error("Failed to load launch.variant3d.com SDK, verify SDK key.");
+                    }
+                    window.addEventListener("vlaunch-initialized", onVlaunchInitialized, { once: true });
+                })
+                .catch(error => {
+                    setMessage(error.toString());
+                    throw error;
+                });
         });
 
         return () => {
