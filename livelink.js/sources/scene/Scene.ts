@@ -5,7 +5,6 @@ import type {
     UUID,
     EntityCreationCoreOptions,
     ScriptEvent,
-    EditorEntity,
     ComponentType,
     ComponentsRecord,
     ScriptDataObject,
@@ -109,10 +108,11 @@ export class Scene extends EventTarget {
         components: Partial<ComponentsRecord>;
         options?: EntityCreationOptions;
     }): Promise<Entity> {
-        const entity = this.#createEntityProxy({ name, components });
-        const editor_entity = await this.#core.spawnEntity({ entity, options });
-        this.#instantiateEntity({ entity, editor_entity, options });
-        return entity;
+        const components_with_euid = await this.#core.spawnEntity({
+            components: { debug_name: { value: name }, ...components },
+            options,
+        });
+        return this.#createEntityProxy({ components: components_with_euid, options });
     }
 
     /**
@@ -121,27 +121,24 @@ export class Scene extends EventTarget {
      * It creates all entities in a single call to the core.
      *
      * @param params
-     * @param params.componentsArray - An array of objects with the name and components of each entity.
+     * @param params.components_array - An array of objects with the name and components of each entity.
      * @param params.options - Additional options for the entity creation.
      *
      * @returns A promise that resolves to an array of the created entities.
      */
     async newEntities({
-        componentsArray,
+        components_array,
         options,
     }: {
-        componentsArray: Array<{ name: string; components: ComponentsRecord & { euid: Components.Euid } }>;
+        components_array: Array<Partial<ComponentsRecord> & { euid?: { value: UUID } }>;
         options?: EntityCreationOptions;
     }): Promise<Array<Entity>> {
-        const entities = componentsArray.map(this.#createEntityProxy);
-        const editor_entities = await this.#core.createEntities({
-            entities: componentsArray.map(v => v.components),
+        const components_with_euid_array = await this.#core.createEntities({
+            components: components_array,
             options,
         });
-        for (let i = 0; i < entities.length; i++) {
-            await this.#instantiateEntity({ entity: entities[i], editor_entity: editor_entities[i], options });
-        }
-        return entities;
+
+        return components_with_euid_array.map(components => this.#createEntityProxy({ components, options }));
     }
 
     /**
@@ -449,62 +446,39 @@ export class Scene extends EventTarget {
     /**
      *
      */
-    #createEntityProxy = ({ name, components }: { name: string; components: Partial<ComponentsRecord> }): Entity => {
-        const entity = new Entity({ scene: this, name, components });
+    #createEntityProxy = ({
+        components,
+        options,
+    }: {
+        components: Partial<ComponentsRecord> & { euid: Components.Euid };
+        options?: EntityCreationOptions;
+    }): Entity => {
+        const entity = new Entity({ scene: this, components, options });
         return new Proxy(entity, Entity.handler);
     };
 
     /**
      *
      */
-    #instantiateEntity({
-        entity,
-        editor_entity,
-        options,
-    }: {
-        entity: Entity;
-        editor_entity: EditorEntity;
-        options?: EntityCreationOptions;
-    }): void {
-        entity._instantiate({
-            editor_entity,
-            proxy_state: options?.disable_proxy === true ? "off" : "on",
-        });
-
-        if (!options) {
-            return;
-        }
-
-        if (options.auto_broadcast !== undefined) {
-            entity.auto_broadcast = options.auto_broadcast ? "on" : "off";
-        }
-
-        if (options.auto_update !== undefined) {
-            entity.auto_update = options.auto_update ? "on" : "off";
-        }
-    }
-
-    /**
-     *
-     */
     #addEditorEntities({
-        editor_entities,
+        responses,
         resolve_ancestors,
     }: {
-        editor_entities: Array<EditorEntity>;
+        responses: Array<{
+            entity: Partial<ComponentsRecord> & { euid: Components.Euid };
+            ancestors: Array<Partial<ComponentsRecord> & { euid: Components.Euid }>;
+        }>;
         resolve_ancestors: boolean;
     }): Promise<Array<Entity>> {
-        const resolveEntities = editor_entities.map(async editor_entity => {
-            let entity = this.entity_registry.get({ entity_rtid: BigInt(editor_entity.rtid) });
+        const resolveEntities = responses.map(async res => {
+            const entity_rtid = BigInt(res.entity.euid.rtid);
+            let entity = this.entity_registry.get({ entity_rtid });
 
             if (!entity) {
-                entity = new Entity({ scene: this, editor_entity });
-                entity = new Proxy(entity, Entity.handler);
-
-                this.entity_registry.add({ entity });
+                entity = this.#createEntityProxy({ components: res.entity });
 
                 if (resolve_ancestors) {
-                    await this.#resolveAncestors({ entity_rtid: BigInt(editor_entity.rtid) });
+                    await this.#resolveAncestors({ entity_rtid });
                 }
             }
 
@@ -516,11 +490,11 @@ export class Scene extends EventTarget {
     /**
      *  Add ancestors to the entity registry.
      */
-    async #resolveAncestors({ entity_rtid }: { entity_rtid: RTID }): Promise<Array<EditorEntity>> {
+    async #resolveAncestors({ entity_rtid }: { entity_rtid: RTID }): Promise<Array<ComponentsRecord>> {
         const ancestor_editor_entities = await this.#core.resolveAncestors({ entity_rtid });
 
         await this.#addEditorEntities({
-            editor_entities: ancestor_editor_entities,
+            responses: ancestor_editor_entities,
             resolve_ancestors: false,
         });
 

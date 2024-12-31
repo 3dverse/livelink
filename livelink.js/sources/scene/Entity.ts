@@ -1,26 +1,12 @@
 //------------------------------------------------------------------------------
-import type {
-    ComponentsRecord,
-    ComponentName,
-    EditorEntity,
-    RTID,
-    ScriptDataObject,
-    UUID,
-} from "@3dverse/livelink.core";
+import type { ComponentsRecord, ComponentName, RTID, ScriptDataObject, UUID, Components } from "@3dverse/livelink.core";
 
 //------------------------------------------------------------------------------
 import { EntityBase } from "../../_prebuild/EntityBase";
 
 //------------------------------------------------------------------------------
-import { Scene } from "./Scene";
+import { EntityCreationOptions, Scene } from "./Scene";
 import { ComponentHandler, ComponentHandlers, LocalTransformHandler } from "./ComponentHandler";
-
-/**
- *
- */
-type InitFromEditor = { editor_entity: EditorEntity };
-type InitFromComponents = { name: string; components?: Partial<ComponentsRecord> };
-type EntityInitOptions = InitFromEditor | InitFromComponents;
 
 /**
  *
@@ -134,15 +120,33 @@ export class Entity extends EntityBase {
     /**
      * @internal
      */
-    constructor({ scene, ...init }: { scene: Scene } & EntityInitOptions) {
+    constructor({
+        scene,
+        components,
+        options,
+    }: {
+        scene: Scene;
+        components: Partial<ComponentsRecord> & { euid: Components.Euid };
+        options?: EntityCreationOptions;
+    }) {
         super();
 
         this._scene = scene;
+        this._initFromComponents({ components });
 
-        if ("editor_entity" in init) {
-            this._initFromEditorEntity({ editor_entity: init.editor_entity });
-        } else {
-            this._initFromComponents({ name: init.name, components: init.components });
+        this._proxy_state = options?.disable_proxy === true ? "off" : "on";
+        this._scene.entity_registry.add({ entity: this });
+
+        if (!options) {
+            return;
+        }
+
+        if (options.auto_broadcast !== undefined) {
+            this.auto_broadcast = options.auto_broadcast ? "on" : "off";
+        }
+
+        if (options.auto_update !== undefined) {
+            this.auto_update = options.auto_update ? "on" : "off";
         }
     }
 
@@ -179,11 +183,12 @@ export class Entity extends EntityBase {
     /**
      * @internal
      */
-    private _initFromComponents({ name, components }: { name: string; components?: Partial<ComponentsRecord> }): void {
-        this.debug_name = { value: name };
-        if (components) {
-            this._mergeComponents({ components, dispatch_event: false });
-        }
+    private _initFromComponents({
+        components,
+    }: {
+        components: Partial<ComponentsRecord> & { euid: Components.Euid };
+    }): void {
+        this._mergeComponents({ components, dispatch_event: false });
     }
 
     /**
@@ -236,7 +241,7 @@ export class Entity extends EntityBase {
 
     /**
      * @internal
-     */
+     *
     _instantiate({
         editor_entity,
         proxy_state = "on",
@@ -252,6 +257,7 @@ export class Entity extends EntityBase {
         this._scene.entity_registry.add({ entity: this });
         this._proxy_state = proxy_state;
     }
+    */
 
     /**
      * @internal
