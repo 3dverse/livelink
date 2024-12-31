@@ -36,6 +36,7 @@ import SmartObject from "./react-core/6-entities/x-smart-object";
 import ActivityWatcher from "./react-ui/1-activity-watcher";
 import SunPositionPicker from "./react-ui/2-sun-position-picker";
 import RenderGraphSettings from "./react-ui/3-render-graph-settings";
+import ViewCube from "./react-ui/4-view-cube";
 
 //------------------------------------------------------------------------------
 import LiveSkeletalAnimation from "./advanced/x-live-skeletal-animation";
@@ -92,7 +93,7 @@ export const SAMPLES: Array<{
     },
     {
         categoryName: "Widgets",
-        list: [ActivityWatcher, SunPositionPicker, RenderGraphSettings],
+        list: [ActivityWatcher, SunPositionPicker, RenderGraphSettings, ViewCube],
     },
     {
         categoryName: "Advanced",

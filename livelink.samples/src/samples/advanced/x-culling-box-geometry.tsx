@@ -208,7 +208,6 @@ function BoxGeometryHandles({ boxGeometryEntity }: { boxGeometryEntity: Entity }
             <div
                 className="bg-[#FFFFFF] border border-[#000000] p-2 rounded-xl cursor-grab"
                 onPointerDown={handle.onPointerDown}
-                role={handle.worldPosition.join(",")}
             />
         </DOM3DElement>
     ));
