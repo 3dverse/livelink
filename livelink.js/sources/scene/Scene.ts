@@ -60,7 +60,7 @@ export class Scene extends EventTarget {
      * @internal
      * Registry of entities discovered until now.
      */
-    public readonly entity_registry = new EntityRegistry();
+    public readonly _entity_registry = new EntityRegistry();
 
     /**
      * The pending entity requests.
@@ -164,7 +164,7 @@ export class Scene extends EventTarget {
         entity_uuid: UUID;
         linkage?: Array<UUID>;
     }): Promise<Entity | null> {
-        const foundEntity = this.entity_registry
+        const foundEntity = this._entity_registry
             .find({ entity_euid: entity_uuid })
             .find(
                 entity =>
@@ -203,7 +203,7 @@ export class Scene extends EventTarget {
             }
         }
 
-        const entity = this.entity_registry.get({ entity_rtid: entity_response.components.euid.rtid });
+        const entity = this._entity_registry.get({ entity_rtid: entity_response.components.euid.rtid });
         if (entity) {
             return entity;
         }
@@ -223,7 +223,7 @@ export class Scene extends EventTarget {
      * @returns A promise that resolves to an array of entities with the given UUID.
      */
     async findEntities({ entity_uuid }: { entity_uuid: UUID }): Promise<Array<Entity>> {
-        const foundEntities = this.entity_registry.find({ entity_euid: entity_uuid });
+        const foundEntities = this._entity_registry.find({ entity_euid: entity_uuid });
         if (foundEntities.length > 0) {
             return foundEntities;
         }
@@ -243,7 +243,7 @@ export class Scene extends EventTarget {
     async deleteEntities({ entities }: { entities: Array<Entity> }): Promise<void> {
         await this.#core.deleteEntities({ entity_uuids: entities.map(e => e.id) });
         for (const entity of entities) {
-            this.entity_registry.remove({ entity });
+            this._entity_registry.remove({ entity });
         }
     }
 
@@ -361,7 +361,7 @@ export class Scene extends EventTarget {
             return null;
         }
 
-        const entity = this.entity_registry.get({ entity_rtid });
+        const entity = this._entity_registry.get({ entity_rtid });
         if (entity) {
             return entity;
         }
@@ -392,7 +392,7 @@ export class Scene extends EventTarget {
             return;
         }
 
-        const emitter = this.entity_registry.get({ entity_rtid: event.emitter_rtid });
+        const emitter = this._entity_registry.get({ entity_rtid: event.emitter_rtid });
 
         // Handle physics events
         if (event.event_name.startsWith(PHYSICS_EVENT_MAP_ID)) {
@@ -401,7 +401,7 @@ export class Scene extends EventTarget {
 
         // Handle custom script events
         const target_entities = event.target_rtids
-            .map(rtid => this.entity_registry.get({ entity_rtid: rtid }))
+            .map(rtid => this._entity_registry.get({ entity_rtid: rtid }))
             .filter(e => e !== null) as Array<Entity>;
 
         target_entities.forEach(target => {
@@ -459,7 +459,7 @@ export class Scene extends EventTarget {
         entity_rtid: RTID;
         is_visible: boolean;
     }): Promise<void> {
-        const entity = this.entity_registry.get({ entity_rtid });
+        const entity = this._entity_registry.get({ entity_rtid });
         if (entity) {
             entity._onVisibilityChanged({ is_visible });
         }

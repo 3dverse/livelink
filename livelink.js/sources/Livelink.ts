@@ -599,7 +599,7 @@ export class Livelink {
             handler: (event: Event) => {
                 const e = event as CustomEvent<Record<UUID, EntityUpdatedEvent>>;
                 for (const entity_euid in e.detail) {
-                    this.scene.entity_registry._updateEntityFromEvent({
+                    this.scene._entity_registry._updateEntityFromEvent({
                         entity_euid,
                         updated_components: e.detail[entity_euid].updatedComponents,
                     });
@@ -650,7 +650,7 @@ export class Livelink {
         const meta_data = convertRawFrameMetaDataToFrameMetaData({
             raw_frame_meta_data: frame_data.meta_data,
             client_id: this.session.client_id!,
-            entity_registry: this.scene.entity_registry,
+            entity_registry: this.scene._entity_registry,
             viewports: this.viewports,
         });
 
@@ -668,24 +668,24 @@ export class Livelink {
         broadcastsPerSecond?: number;
     }): void {
         this.#update_interval = setInterval(() => {
-            const updateCmd = this.scene.entity_registry._getEntitiesToUpdate();
+            const updateCmd = this.scene._entity_registry._getEntitiesToUpdate();
             if (updateCmd.length > 0) {
                 this.#core.updateEntities(updateCmd);
-                this.scene.entity_registry._clearUpdateList();
+                this.scene._entity_registry._clearUpdateList();
             }
 
-            const detachCmd = this.scene.entity_registry._getComponentsToDetach();
+            const detachCmd = this.scene._entity_registry._getComponentsToDetach();
             if (detachCmd.length > 0) {
                 this.#core.removeComponents(detachCmd);
-                this.scene.entity_registry._clearDetachList();
+                this.scene._entity_registry._clearDetachList();
             }
         }, 1000 / updatesPerSecond);
 
         this.#broadcast_interval = setInterval(() => {
-            const msg = this.scene.entity_registry._getEntitiesToBroadcast();
+            const msg = this.scene._entity_registry._getEntitiesToBroadcast();
             if (msg !== null) {
                 this.#core.updateComponents(msg);
-                this.scene.entity_registry._clearBroadcastList();
+                this.scene._entity_registry._clearBroadcastList();
             }
         }, 1000 / broadcastsPerSecond);
     }

@@ -137,7 +137,7 @@ export class Entity extends EntityBase {
         this._parent = parent;
         this._mergeComponents({ components, dispatch_event: false });
 
-        this._scene.entity_registry.add({ entity: this });
+        this._scene._entity_registry.add({ entity: this });
 
         this._proxy_state = options?.disable_proxy === true ? "off" : "on";
 
@@ -275,7 +275,7 @@ export class Entity extends EntityBase {
      * @internal
      */
     _markComponentAsDirty({ component_type }: { component_type: ComponentName }): void {
-        this._scene.entity_registry._addEntityToUpdate({ component_type, entity: this });
+        this._scene._entity_registry._addEntityToUpdate({ component_type, entity: this });
         this.dispatchEvent(new CustomEvent("entity-updated"));
     }
 
@@ -283,7 +283,7 @@ export class Entity extends EntityBase {
      * @internal
      */
     _markComponentAsDeleted({ component_type }: { component_type: ComponentName }): void {
-        this._scene.entity_registry._detachComponentFromEntity({ component_type, entity: this });
+        this._scene._entity_registry._detachComponentFromEntity({ component_type, entity: this });
         this.dispatchEvent(new CustomEvent("entity-updated"));
     }
 
