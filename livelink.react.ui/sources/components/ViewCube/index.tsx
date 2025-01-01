@@ -6,8 +6,9 @@ import type { Entity, Vec3 } from "@3dverse/livelink";
 export const ViewCube = ({
     cameraEntity,
     size = 100,
+    perspective = "none",
     children,
-}: PropsWithChildren<{ cameraEntity: Entity; size?: number }>) => {
+}: PropsWithChildren<{ cameraEntity: Entity; size?: number; perspective?: string }>) => {
     const [cubeOrientation, setCubeOrientation] = useState<Vec3>([0, 0, 0]);
 
     useEffect(() => {
@@ -37,7 +38,7 @@ export const ViewCube = ({
                     .scene {
                         width: ${size}px;
                         height: ${size}px;
-                        perspective: 600px;
+                        perspective: ${perspective};
                     }
 
                     .cube {
@@ -45,7 +46,7 @@ export const ViewCube = ({
                         height: 100%;
                         position: relative;
                         transform-style: preserve-3d;
-                        transform: translateZ(-${size}px)
+                        transform: translateZ(-${size}px);
                     }
 
                     .cube__face {

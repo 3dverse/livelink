@@ -69,10 +69,11 @@ function StyledViewCube({ cameraEntity }: { cameraEntity: Entity }) {
         local_transform.position = position;
     };
 
-    const cubeFace = "border-2 border-[#000] font-bold text-[#fff] text-center cursor-pointer";
+    const cubeSize = 100;
+    const cubeFace = `w-[${cubeSize}px] h-[${cubeSize}px] border-2 border-[#000] font-bold text-[#fff] text-center cursor-pointer`;
     const radius = 5;
     return (
-        <ViewCube cameraEntity={cameraEntity} size={100}>
+        <ViewCube cameraEntity={cameraEntity} size={cubeSize} perspective={"600px"}>
             <div
                 className={cubeFace}
                 style={{ background: "hsla(  0, 100%, 50%, 0.7)" }}
