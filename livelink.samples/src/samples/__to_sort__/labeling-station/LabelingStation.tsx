@@ -63,7 +63,7 @@ export default function LabelingStation() {
 
                 class Label extends Entity {
                     onCreate() {
-                        this.lineage = { parentUUID: entity.id! };
+                        this.lineage = { parentUUID: entity.id };
                         this.local_transform = {
                             position: [0.25, 0.25, 0.5],
                             orientation: [0.707, 0, 0, 0.707],

@@ -5,10 +5,10 @@ import type {
     UUID,
     EntityCreationCoreOptions,
     ScriptEvent,
-    ComponentType,
     ComponentsRecord,
     ScriptDataObject,
     Components,
+    ComponentName,
 } from "@3dverse/livelink.core";
 
 //------------------------------------------------------------------------------
@@ -16,6 +16,7 @@ import { Entity } from "./Entity";
 import { compute_rpn } from "./Filters";
 import { SceneSettings } from "./SceneSettings";
 import { EntityRegistry } from "./EntityRegistry";
+import { EntityResponse } from "@3dverse/livelink.core/dist/sources/EntityFinder";
 
 /**
  * @inline
@@ -65,7 +66,7 @@ export class Scene extends EventTarget {
      * The pending entity requests.
      * Used to avoid duplicate requests for the same entity.
      */
-    #pending_entity_requests = new Map<RTID, Promise<unknown>>();
+    #pending_entity_requests = new Map<RTID, Promise<Array<EntityResponse>>>();
 
     /**
      * @internal
@@ -103,16 +104,19 @@ export class Scene extends EventTarget {
         name,
         components,
         options,
+        parent = null,
     }: {
         name: string;
         components: Partial<ComponentsRecord>;
         options?: EntityCreationOptions;
+        parent?: Entity | null;
     }): Promise<Entity> {
+        const lineage: Components.Lineage | undefined = parent ? { parentUUID: parent.id } : undefined;
         const components_with_euid = await this.#core.spawnEntity({
-            components: { debug_name: { value: name }, ...components },
+            components: { debug_name: { value: name }, ...components, lineage },
             options,
         });
-        return this.#createEntityProxy({ components: components_with_euid, options });
+        return this.#createEntityProxy({ parent, components: components_with_euid, options });
     }
 
     /**
@@ -138,7 +142,10 @@ export class Scene extends EventTarget {
             options,
         });
 
-        return components_with_euid_array.map(components => this.#createEntityProxy({ components, options }));
+        //TODO: compute each entity's parent
+        return components_with_euid_array.map(components =>
+            this.#createEntityProxy({ parent: null, components, options }),
+        );
     }
 
     /**
@@ -169,17 +176,40 @@ export class Scene extends EventTarget {
             return foundEntity;
         }
 
-        const editor_entity = await this.#core.getEntity({ entity_uuid, linkage });
-        if (!editor_entity) {
+        const entity_reponses = await this.#core.findEntities({ euid: entity_uuid, linkage });
+        if (entity_reponses.length === 0) {
             return null;
         }
 
-        const entities = await this.#addEditorEntities({
-            editor_entities: [editor_entity],
-            resolve_ancestors: true,
-        });
-        return entities[0];
+        return this.#resolveEntityResponse(entity_reponses[0]);
     }
+
+    /**
+     *
+     */
+    #resolveEntityResponses({ entity_responses }: { entity_responses: Array<EntityResponse> }): Array<Entity> {
+        return entity_responses.map(this.#resolveEntityResponse);
+    }
+
+    /**
+     *
+     */
+    #resolveEntityResponse = (entity_response: EntityResponse): Entity => {
+        let parent: Entity | null = null;
+
+        if (entity_response.ancestors) {
+            for (const ancestor of entity_response.ancestors) {
+                parent = this.#resolveEntityResponse(ancestor);
+            }
+        }
+
+        const entity = this.entity_registry.get({ entity_rtid: entity_response.components.euid.rtid });
+        if (entity) {
+            return entity;
+        }
+
+        return this.#createEntityProxy({ parent, components: entity_response.components });
+    };
 
     /**
      * Find entities by their UUID.
@@ -198,12 +228,8 @@ export class Scene extends EventTarget {
             return foundEntities;
         }
 
-        const editor_entities = await this.#core.findEntitiesByEUID({ entity_uuid });
-        if (editor_entities.length === 0) {
-            return [];
-        }
-
-        return this.#addEditorEntities({ editor_entities, resolve_ancestors: true });
+        const entity_responses = await this.#core.findEntities({ euid: entity_uuid });
+        return this.#resolveEntityResponses({ entity_responses });
     }
 
     /**
@@ -215,7 +241,7 @@ export class Scene extends EventTarget {
      * @returns A promise that resolves when the entities are deleted.
      */
     async deleteEntities({ entities }: { entities: Array<Entity> }): Promise<void> {
-        await this.#core.deleteEntities({ entity_uuids: entities.map(e => e.id!) });
+        await this.#core.deleteEntities({ entity_uuids: entities.map(e => e.id) });
         for (const entity of entities) {
             this.entity_registry.remove({ entity });
         }
@@ -239,7 +265,7 @@ export class Scene extends EventTarget {
     }): Promise<void> {
         this.#core.highlightEntities({
             highlightEntitiesMessage: {
-                entities: entities.map(e => e.rtid!),
+                entities: entities.map(e => e.rtid),
                 keep_old_selection,
             },
         });
@@ -275,8 +301,8 @@ export class Scene extends EventTarget {
         this.#core.fireEvent({
             event_map_id,
             event_name,
-            emitter_entity: emitter_entity ? emitter_entity.rtid! : 0n,
-            target_entities: target_entities.map(e => e.rtid!),
+            emitter_entity: emitter_entity ? emitter_entity.rtid : 0n,
+            target_entities: target_entities.map(e => e.rtid),
             data_object,
         });
     }
@@ -307,11 +333,8 @@ export class Scene extends EventTarget {
      *  @deprecated
      */
     async findEntitiesByNames({ entity_names }: { entity_names: Array<string> }): Promise<Array<Entity>> {
-        const editor_entities = await this.#core.findEntitiesByNames({
-            entity_names,
-        });
-
-        return this.#addEditorEntities({ editor_entities, resolve_ancestors: true });
+        const entity_responses = await this.#core.findEntities({ names: entity_names });
+        return this.#resolveEntityResponses({ entity_responses });
     }
 
     /**
@@ -321,14 +344,11 @@ export class Scene extends EventTarget {
         mandatory_components,
         forbidden_components,
     }: {
-        mandatory_components: Array<ComponentType>;
-        forbidden_components?: Array<ComponentType>;
+        mandatory_components: Array<ComponentName>;
+        forbidden_components?: Array<ComponentName>;
     }): Promise<Array<Entity>> {
-        const editor_entities = await this.#core.findEntitiesWithComponents({
-            mandatory_components,
-            forbidden_components,
-        });
-        return this.#addEditorEntities({ editor_entities, resolve_ancestors: true });
+        const entity_responses = await this.#core.findEntities({ mandatory_components, forbidden_components });
+        return this.#resolveEntityResponses({ entity_responses });
     }
 
     /**
@@ -348,14 +368,18 @@ export class Scene extends EventTarget {
 
         let promise = this.#pending_entity_requests.get(entity_rtid);
         if (!promise) {
-            promise = this.#resolveAncestors({ entity_rtid });
+            console.log("Requesting entity", entity_rtid);
+            promise = this.#core.findEntities({ rtid: entity_rtid });
             this.#pending_entity_requests.set(entity_rtid, promise);
         }
 
-        await promise;
+        const entity_responses = await promise;
         this.#pending_entity_requests.delete(entity_rtid);
+        if (entity_responses.length === 0) {
+            return null;
+        }
 
-        return this.entity_registry.get({ entity_rtid });
+        return this.#resolveEntityResponse(entity_responses[0]);
     }
 
     /**
@@ -381,14 +405,14 @@ export class Scene extends EventTarget {
             .filter(e => e !== null) as Array<Entity>;
 
         target_entities.forEach(target => {
-            target.onScriptEventTarget({
+            target._onScriptEventTarget({
                 event_name: event.event_name,
                 data_object: event.data_object as ScriptDataObject,
                 emitter_rtid: event.emitter_rtid,
             });
         });
 
-        emitter?.onScriptEventEmitter({
+        emitter?._onScriptEventEmitter({
             event_name: event.event_name,
             data_object: event.data_object as ScriptDataObject,
             target_rtids: event.target_rtids,
@@ -398,11 +422,9 @@ export class Scene extends EventTarget {
     /**
      * @internal
      */
-    async _getChildren({ entity_rtid }: { entity_rtid: RTID }): Promise<Array<Entity>> {
-        const editor_entities = await this.#core.getChildren({ entity_rtid });
-        const children = await this.#addEditorEntities({ editor_entities, resolve_ancestors: false });
-        children.forEach(child => child._setParent(this.entity_registry.get({ entity_rtid })!));
-        return children;
+    async _getChildren({ entity }: { entity: Entity }): Promise<Array<Entity>> {
+        const children_components = await this.#core.getChildren({ entity_rtid: entity.rtid });
+        return children_components.map(components => this.#createEntityProxy({ parent: entity, components }));
     }
 
     /**
@@ -447,19 +469,21 @@ export class Scene extends EventTarget {
      *
      */
     #createEntityProxy = ({
+        parent,
         components,
         options,
     }: {
+        parent: Entity | null;
         components: Partial<ComponentsRecord> & { euid: Components.Euid };
         options?: EntityCreationOptions;
     }): Entity => {
-        const entity = new Entity({ scene: this, components, options });
+        const entity = new Entity({ scene: this, parent, components, options });
         return new Proxy(entity, Entity.handler);
     };
 
     /**
      *
-     */
+     *
     #addEditorEntities({
         responses,
         resolve_ancestors,
@@ -486,10 +510,11 @@ export class Scene extends EventTarget {
         });
         return Promise.all(resolveEntities);
     }
+    */
 
     /**
      *  Add ancestors to the entity registry.
-     */
+     *
     async #resolveAncestors({ entity_rtid }: { entity_rtid: RTID }): Promise<Array<ComponentsRecord>> {
         const ancestor_editor_entities = await this.#core.resolveAncestors({ entity_rtid });
 
@@ -511,6 +536,7 @@ export class Scene extends EventTarget {
 
         return ancestor_editor_entities;
     }
+    */
 
     /**
      *

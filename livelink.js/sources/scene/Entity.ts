@@ -9,11 +9,6 @@ import { EntityCreationOptions, Scene } from "./Scene";
 import { ComponentHandler, ComponentHandlers, LocalTransformHandler } from "./ComponentHandler";
 
 /**
- *
- */
-class InvalidEntityError extends Error {}
-
-/**
  * @category Scene
  */
 export type EntityAutoUpdateState = "on" | "off";
@@ -30,7 +25,8 @@ export type EntityAutoUpdateState = "on" | "off";
  * property is set to "on" and broadcasted to other clients if the `auto_broadcast` property is
  * set to "on".
  *
- * This class provides helper methods to retrieve the parent entity and the children entities.
+ * On top of providing direct access to the components, this class provides helper methods to
+ * retrieve the parent entity and the children entities.
  *
  * This class cannot be instantiated directly.
  * Use the {@link Scene.newEntity} or {@link Scene.newEntities} methods on an existing scene to
@@ -62,7 +58,7 @@ export class Entity extends EntityBase {
     /**
      *
      */
-    private _parentEntity: Entity | null = null;
+    private _parent: Entity | null = null;
 
     /**
      * Whether the entity has its components updates sent to the server.
@@ -103,7 +99,7 @@ export class Entity extends EntityBase {
      * Set whether the entity is visible.
      */
     set is_visible(is_visible: boolean) {
-        this._scene._setEntityVisibility({ entity_rtid: this.rtid!, is_visible });
+        this._scene._setEntityVisibility({ entity_rtid: this.rtid, is_visible });
         this._is_visible = is_visible;
     }
 
@@ -111,10 +107,14 @@ export class Entity extends EntityBase {
      * The parent entity of this entity or null if it has no parent.
      */
     get parent(): Entity | null {
-        if (!this.rtid) {
-            throw new InvalidEntityError();
-        }
-        return this._parentEntity;
+        return this._parent;
+    }
+
+    /**
+     *
+     */
+    set parent(parent: Entity | null) {
+        throw new Error("Not implemented");
     }
 
     /**
@@ -122,20 +122,24 @@ export class Entity extends EntityBase {
      */
     constructor({
         scene,
+        parent = null,
         components,
         options,
     }: {
         scene: Scene;
+        parent: Entity | null;
         components: Partial<ComponentsRecord> & { euid: Components.Euid };
         options?: EntityCreationOptions;
     }) {
-        super();
+        super({ euid: components.euid });
 
         this._scene = scene;
-        this._initFromComponents({ components });
+        this._parent = parent;
+        this._mergeComponents({ components, dispatch_event: false });
+
+        this._scene.entity_registry.add({ entity: this });
 
         this._proxy_state = options?.disable_proxy === true ? "off" : "on";
-        this._scene.entity_registry.add({ entity: this });
 
         if (!options) {
             return;
@@ -154,48 +158,29 @@ export class Entity extends EntityBase {
      *
      */
     async getChildren(): Promise<Entity[]> {
-        if (!this.rtid) {
-            throw new InvalidEntityError();
-        }
-
-        return await this._scene._getChildren({ entity_rtid: this.rtid });
+        return await this._scene._getChildren({ entity: this });
     }
 
     /**
      * @experimental
      */
     async assignClientToScripts({ client_uuid }: { client_uuid: UUID }): Promise<void> {
-        if (!this.rtid) {
-            throw new InvalidEntityError();
-        }
-
         if (!this.script_map || !this.script_map.elements) {
             throw new Error("Entity has no scripts");
         }
         const script_ids = Object.keys(this.script_map.elements);
         await Promise.all(
             script_ids.map(script_id =>
-                this._scene._assignClientToScripts({ client_uuid, entity_rtid: this.rtid!, script_uuid: script_id }),
+                this._scene._assignClientToScripts({ client_uuid, entity_rtid: this.rtid, script_uuid: script_id }),
             ),
         );
     }
 
     /**
      * @internal
-     */
-    private _initFromComponents({
-        components,
-    }: {
-        components: Partial<ComponentsRecord> & { euid: Components.Euid };
-    }): void {
-        this._mergeComponents({ components, dispatch_event: false });
-    }
-
-    /**
-     * @internal
      * @experimental
      */
-    onScriptEventTarget({
+    _onScriptEventTarget({
         event_name,
         data_object,
         emitter_rtid,
@@ -219,7 +204,7 @@ export class Entity extends EntityBase {
      * @internal
      * @experimental
      */
-    onScriptEventEmitter({
+    _onScriptEventEmitter({
         event_name,
         data_object,
         target_rtids,
@@ -241,33 +226,6 @@ export class Entity extends EntityBase {
 
     /**
      * @internal
-     *
-    _instantiate({
-        editor_entity,
-        proxy_state = "on",
-    }: {
-        editor_entity: EditorEntity;
-        proxy_state: EntityAutoUpdateState;
-    }): void {
-        if (this._isInstantiated()) {
-            throw new Error("Entity is already instantiated");
-        }
-
-        this._initFromEditorEntity({ editor_entity });
-        this._scene.entity_registry.add({ entity: this });
-        this._proxy_state = proxy_state;
-    }
-    */
-
-    /**
-     * @internal
-     */
-    _setParent(entity: Entity | null): void {
-        this._parentEntity = entity;
-    }
-
-    /**
-     * @internal
      */
     _mergeComponents({
         components,
@@ -279,11 +237,11 @@ export class Entity extends EntityBase {
         const actual_proxy_state = this._proxy_state;
         this._proxy_state = "off";
 
-        for (const strKey in components) {
-            const key = strKey as keyof ComponentsRecord;
+        for (const key in components) {
+            const component_name = key as ComponentName;
             //@ts-expect-error: typescript doesn't like the assignment to this[key] as the attribute might be readonly,
             // even if we know it's not.
-            this[key] = { ...this[key], ...components[key] };
+            this[component_name] = { ...this[component_name], ...components[component_name] };
         }
         this._proxy_state = actual_proxy_state;
 
@@ -297,17 +255,18 @@ export class Entity extends EntityBase {
      */
     _setComponentsFromEditor({ components }: { components: ComponentsRecord }): void {
         // Turn off the proxy as this is already a validated message from the editor.
+        const actual_proxy_state = this._proxy_state;
         this._proxy_state = "off";
 
         // The update message from the editor is guaranteed to contain only valid components
         // so we don't need to merge with the current values.
-        for (const strKey in components) {
-            const key = strKey as keyof ComponentsRecord;
-            //@ts-expect-error: typescript doesn't like the assignment to this[key] as the attribute might be readonly,
-            // even if we know it's not.
-            this[key] = components[key];
+        for (const key in components) {
+            const component_name = key as ComponentName;
+            //@ts-expect-error: typescript doesn't like the assignment to this[component_name] as the attribute might
+            // be readonly, but we know it's not.
+            this[component_name] = components[component_name];
         }
-        this._proxy_state = "on";
+        this._proxy_state = actual_proxy_state;
 
         this.dispatchEvent(new CustomEvent("entity-updated"));
     }
@@ -315,29 +274,17 @@ export class Entity extends EntityBase {
     /**
      * @internal
      */
-    _tryMarkingAsDirty({ component_type }: { component_type: ComponentName }): boolean {
-        if (this._isInstantiated()) {
-            // Register to appropriate dirty list
-            this._scene.entity_registry._addEntityToUpdate({ component_type, entity: this });
-            this.dispatchEvent(new CustomEvent("entity-updated"));
-            return true;
-        }
-
-        return false;
+    _markComponentAsDirty({ component_type }: { component_type: ComponentName }): void {
+        this._scene.entity_registry._addEntityToUpdate({ component_type, entity: this });
+        this.dispatchEvent(new CustomEvent("entity-updated"));
     }
 
     /**
      * @internal
      */
-    _tryMarkingAsDeleted({ component_type }: { component_type: ComponentName }): boolean {
-        if (this._isInstantiated()) {
-            // Register to appropriate dirty list
-            this._scene.entity_registry._detachComponentFromEntity({ component_type, entity: this });
-            this.dispatchEvent(new CustomEvent("entity-updated"));
-            return true;
-        }
-
-        return false;
+    _markComponentAsDeleted({ component_type }: { component_type: ComponentName }): void {
+        this._scene.entity_registry._detachComponentFromEntity({ component_type, entity: this });
+        this.dispatchEvent(new CustomEvent("entity-updated"));
     }
 
     /**
@@ -346,32 +293,6 @@ export class Entity extends EntityBase {
     _onVisibilityChanged({ is_visible }: { is_visible: boolean }): void {
         this._is_visible = is_visible;
         this.dispatchEvent(new CustomEvent("visibility-changed", { detail: { is_visible } }));
-    }
-
-    /**
-     * @internal
-     */
-    _addComponentDefaultValues({
-        component_default_values,
-    }: {
-        component_default_values: ReadonlyMap<ComponentName, object>;
-    }): void {
-        this._proxy_state = "off";
-        for (const [component_type, default_value] of component_default_values) {
-            if (this[component_type]) {
-                //@ts-expect-error: typescript doesn't like the assignment to this[component_type] as the attribute
-                // might be readonly,
-                this[component_type] = { ...structuredClone(default_value), ...this[component_type] };
-            }
-        }
-        this._proxy_state = "on";
-    }
-
-    /**
-     * @internal
-     */
-    _getComponentDefaultValue({ component_type }: { component_type: ComponentName }): object {
-        return this._scene.entity_registry._getComponentDefaultValue({ component_type });
     }
 
     /**
@@ -422,11 +343,7 @@ export class Entity extends EntityBase {
 
             if (entity._isSerializableComponent(prop, v)) {
                 //console.log("SET COMPONENT", prop, v);
-                const defaultValue = entity._getComponentDefaultValue({
-                    component_type: prop as ComponentName,
-                });
-                v = { ...structuredClone(defaultValue), ...v };
-                entity._tryMarkingAsDirty({ component_type: prop as ComponentName });
+                entity._markComponentAsDirty({ component_type: prop as ComponentName });
             }
 
             return Reflect.set(entity, prop, v);
@@ -436,7 +353,7 @@ export class Entity extends EntityBase {
             //@ts-ignore
             if (entity[prop] !== undefined) {
                 //console.log("DELETE COMPONENT", prop);
-                entity._tryMarkingAsDeleted({ component_type: prop as ComponentName });
+                entity._markComponentAsDeleted({ component_type: prop as ComponentName });
             }
 
             return Reflect.deleteProperty(entity, prop);

@@ -88,7 +88,6 @@ export class EntityRegistry {
             );
         }
 
-        entity._addComponentDefaultValues({ component_default_values: this.#component_default_values });
         this.#entities.add(entity);
         this.#entity_rtid_lut.set(entity.rtid, entity);
         const entities = this.#entity_euid_lut.get(entity.id);

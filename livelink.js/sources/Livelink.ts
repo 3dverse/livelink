@@ -480,7 +480,7 @@ export class Livelink {
      */
     sendSkeletonPose({ controller, partial_pose }: { controller: Entity; partial_pose: SkeletonPartialPose }): void {
         this.#core.sendSkeletonPose({
-            controller_rtid: controller.rtid!,
+            controller_rtid: controller.rtid,
             partial_pose,
         });
     }

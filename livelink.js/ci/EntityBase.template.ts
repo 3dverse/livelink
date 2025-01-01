@@ -18,15 +18,15 @@ export class EntityBase extends EventTarget {
     /**
      *
      */
-    private euid: Components.Euid | null = null;
+    private euid: Components.Euid;
 
 {{componentAttributes}}
 
     /**
      * @internal
      */
-    get rtid(): RTID | null {
-        return this.euid?.rtid ?? null;
+    get rtid(): RTID {
+        return this.euid.rtid;
     }
 
     /**
@@ -35,8 +35,8 @@ export class EntityBase extends EventTarget {
      * Note that multiple entities can share the same UUID if they are different instances of the
      * same entity brought by multiple instances of the same scene.
      */
-    get id(): UUID | null {
-        return this.euid?.value ?? null;
+    get id(): UUID {
+        return this.euid.value;
     }
 
     /**
@@ -49,55 +49,15 @@ export class EntityBase extends EventTarget {
     /**
      *
      */
-    protected _isInstantiated(): boolean {
-        return this.euid !== null && this.euid.rtid !== BigInt(0);
-    }
-
-    /**
-     *
-     */
-    protected _setEuid(euid: UUID): void {
-        this.euid = { value: euid, rtid: BigInt(0) };
-    }
-
-    /**
-     *
-     */
     protected _is_visible: boolean = true;
 
     /**
      *
-     *
-    protected _initFromEditorEntity({ editor_entity }: { editor_entity: EditorEntity }): void {
-        const components = editor_entity.components;
-        if (!components.euid) {
-            throw new Error("Trying to parse an entity without EUID");
-        }
-
-        this.euid = {
-            value: (components.euid as { value: UUID }).value,
-            rtid: BigInt(editor_entity.rtid),
-        };
-
-        this._is_visible = editor_entity.isVisible;
-
-        delete components.euid;
-
-        for (const component_type in components) {
-            //@ts-expect-error - to fix this components should be of type ComponentsRecord
-            // on the core side.
-            this[component_type] = components[component_type];
-        }
-
-        // Remove any undefined component
-        for (const k of Object.keys(this)) {
-            const key = k as keyof EntityBase;
-            if (this[key] === undefined) {
-                delete this[key];
-            }
-        }
+     */
+    constructor({ euid }: { euid: Components.Euid }) {
+        super();
+        this.euid = euid;
     }
-    */
 
     /**
      * @internal

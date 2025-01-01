@@ -39,7 +39,7 @@ export class ComponentHandler {
      */
     set(component: object, prop: PropertyKey, v: any): boolean {
         //console.log("SET ATTRIBUTE", prop, v);
-        this._entity._tryMarkingAsDirty({ component_type: this._component_type });
+        this._entity._markComponentAsDirty({ component_type: this._component_type });
         return Reflect.set(component, prop, v);
     }
 
@@ -48,12 +48,8 @@ export class ComponentHandler {
      */
     deleteProperty(component: object, prop: PropertyKey): boolean {
         //console.log("DELETE ATTRIBUTE", prop);
-        const defaultValue = this._entity._getComponentDefaultValue({
-            component_type: this._component_type,
-        }) as Record<PropertyKey, unknown>;
-        this._entity._tryMarkingAsDirty({ component_type: this._component_type });
-
-        return Reflect.set(component, prop, structuredClone(defaultValue[prop]));
+        this._entity._markComponentAsDirty({ component_type: this._component_type });
+        return Reflect.deleteProperty(component, prop);
     }
 }
 
