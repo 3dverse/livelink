@@ -1,12 +1,5 @@
 //------------------------------------------------------------------------------
-import type {
-    RTID,
-    UUID,
-    UpdateComponentsCommand,
-    ComponentsRecord,
-    ComponentType,
-    ComponentName,
-} from "@3dverse/livelink.core";
+import type { RTID, UUID, ComponentsRecord, ComponentName, UpdateEntityCommand } from "@3dverse/livelink.core";
 
 //------------------------------------------------------------------------------
 import { Entity } from "./Entity";
@@ -40,28 +33,12 @@ export class EntityRegistry {
     /**
      * List of dirty entities sorted by component type.
      */
-    #dirty_components = new Map<ComponentName, Set<Entity>>();
-
-    /**
-     * List of dirty entities having detached components sorted by component type.
-     */
-    #detached_components = new Map<ComponentName, Set<Entity>>();
+    #dirty_entities = new Set<Entity>();
 
     /**
      * List of dirty entities that need to be broadcasted to the editor sorted by component type.
      */
-    #dirty_components_to_broadcast = new Map<ComponentName, Set<Entity>>();
-
-    /**
-     *
-     */
-    constructor() {
-        for (const component_name of Entity.component_names) {
-            this.#dirty_components.set(component_name, new Set<Entity>());
-            this.#detached_components.set(component_name, new Set<Entity>());
-            this.#dirty_components_to_broadcast.set(component_name, new Set<Entity>());
-        }
-    }
+    #entities_to_persist = new Map<Entity, Set<ComponentName>>();
 
     /**
      * Adds a new entity in the registry. The entity must be valid, i.e. have valid RTID and EUID and must not have the
@@ -71,10 +48,6 @@ export class EntityRegistry {
      * @throws Error if the entity is invalid or if an entity with the same RTID is already registered.
      */
     add({ entity }: { entity: Entity }): void {
-        if (!entity.rtid || !entity.id) {
-            throw new Error("Trying to add an entity without a EUID to the registry.");
-        }
-
         const existingEntity = this.#entity_rtid_lut.get(entity.rtid);
         if (existingEntity) {
             throw new Error(
@@ -100,10 +73,6 @@ export class EntityRegistry {
      * @throws Error if the entity is not registered in the registry.
      */
     remove({ entity }: { entity: Entity }): void {
-        if (!entity.rtid || !entity.id) {
-            throw new Error("Trying to remove an entity without a EUID from the registry.");
-        }
-
         if (!this.#entity_rtid_lut.delete(entity.rtid)) {
             throw new Error(`Trying to remove entity ${entity.rtid} which has not been registred to the RTID LUT.`);
         }
@@ -152,15 +121,6 @@ export class EntityRegistry {
     }
 
     /**
-     * Visits all entities in the registry and calls the given visitor function for each entity.
-     */
-    visitEntities({ visitor }: { visitor: (entity: Entity) => void }): void {
-        for (const entity of this.#entities) {
-            visitor(entity);
-        }
-    }
-
-    /**
      * @internal
      */
     _updateEntityFromEvent({
@@ -185,137 +145,74 @@ export class EntityRegistry {
     /**
      * @internal
      */
-    _addEntityToUpdate({ component_type, entity }: { component_type: ComponentName; entity: Entity }): void {
-        const dirty_entities = this.#dirty_components.get(component_type);
-        if (dirty_entities) {
-            dirty_entities.add(entity);
-        }
+    _addDirtyEntity({ entity }: { entity: Entity }): void {
+        this.#dirty_entities.add(entity);
     }
 
     /**
      * @internal
      */
-    _detachComponentFromEntity({ component_type, entity }: { component_type: ComponentName; entity: Entity }): void {
-        const detached_components = this.#detached_components.get(component_type);
-        if (detached_components) {
-            detached_components.add(entity);
-        }
+    _removeEntityFromBroadcastList({ entity }: { entity: Entity }): void {
+        this.#entities_to_persist.delete(entity);
     }
 
     /**
      * @internal
      */
-    _getEntitiesToUpdate(): Array<{
-        component_type: ComponentName;
-        entity_rtids: Array<RTID>;
-        components: Array<ComponentType>;
-    }> {
-        const cmd: Array<{
-            component_type: ComponentName;
-            entity_rtids: Array<RTID>;
-            components: Array<ComponentType>;
-        }> = [];
+    _getEntitiesToUpdate(): Array<UpdateEntityCommand> {
+        const update_command = new Array<UpdateEntityCommand>(this.#dirty_entities.size);
 
-        for (const [component_type, entities] of this.#dirty_components) {
-            if (entities.size === 0) {
-                continue;
-            }
-
-            const msg = {
-                component_type,
-                entity_rtids: new Array<RTID>(entities.size),
-                components: new Array<ComponentType>(entities.size),
+        let i = 0;
+        for (const entity of this.#dirty_entities) {
+            update_command[i++] = {
+                entity_components: entity,
+                dirty_components: entity._dirty_components,
+                deleted_components: entity._deleted_components,
             };
 
-            let i = 0;
-            for (const entity of entities) {
-                if (entity.rtid && entity[component_type]) {
-                    msg.entity_rtids[i] = entity.rtid;
-                    msg.components[i] = entity[component_type];
-                    i++;
-                }
+            if (entity.auto_broadcast === "on") {
+                this.#updateBroadcastList({ entity });
             }
 
-            cmd.push(msg);
+            entity._clearDirtyState();
         }
 
-        return cmd;
+        this.#dirty_entities.clear();
+
+        return update_command;
     }
 
     /**
      * @internal
      */
-    _getComponentsToDetach(): Array<{ component_type: ComponentName; entity_rtids: Array<RTID> }> {
-        const cmd: Array<{ component_type: ComponentName; entity_rtids: Array<RTID> }> = [];
+    _getEntitiesToPersist(): Array<UpdateEntityCommand> {
+        const update_command = new Array<UpdateEntityCommand>(this.#entities_to_persist.size);
 
-        for (const [component_type, entities] of this.#detached_components) {
-            if (entities.size !== 0) {
-                const msg = { component_type, entity_rtids: new Array<RTID>(entities.size) };
-                let i = 0;
-                for (const entity of entities) {
-                    if (entity.rtid) {
-                        msg.entity_rtids[i++] = entity.rtid;
-                    }
-                }
-                if (i > 0) {
-                    cmd.push(msg);
-                }
+        let i = 0;
+        for (const [entity, component_names] of this.#entities_to_persist) {
+            update_command[i++] = {
+                entity_components: entity,
+                dirty_components: Array.from(component_names),
+                deleted_components: [],
+            };
+        }
+
+        this.#entities_to_persist.clear();
+
+        return update_command;
+    }
+
+    /**
+     * @internal
+     */
+    #updateBroadcastList({ entity }: { entity: Entity }): void {
+        const broadcast_data = this.#entities_to_persist.get(entity);
+        if (!broadcast_data) {
+            this.#entities_to_persist.set(entity, new Set([...entity._dirty_components]));
+        } else {
+            for (const component_name of entity._dirty_components) {
+                broadcast_data.add(component_name);
             }
-        }
-
-        return cmd;
-    }
-
-    /**
-     * @internal
-     */
-    _getEntitiesToBroadcast(): UpdateComponentsCommand | null {
-        const msg: UpdateComponentsCommand = {};
-        let hasData = false;
-
-        for (const [component_type, entities] of this.#dirty_components_to_broadcast) {
-            for (const entity of entities) {
-                if (entity.id && entity[component_type]) {
-                    msg[entity.id] = msg[entity.id] ?? {};
-                    (msg[entity.id][component_type] as ComponentType) = entity[component_type];
-                    hasData = true;
-                }
-            }
-        }
-
-        return hasData ? msg : null;
-    }
-
-    /**
-     * @internal
-     */
-    _clearUpdateList(): void {
-        for (const [component_type, entities] of this.#dirty_components) {
-            const broadcast_set = this.#dirty_components_to_broadcast.get(component_type);
-            for (const entity of entities) {
-                if (entity.auto_broadcast === "on") {
-                    broadcast_set!.add(entity);
-                }
-            }
-            entities.clear();
-        }
-    }
-
-    /**
-     * @internal
-     */
-    _clearDetachList(): void {
-        for (const [, entities] of this.#detached_components) {
-            entities.clear();
-        }
-    }
-
-    /**
-     * @internal
-     */
-    _clearBroadcastList(): void {
-        for (const [, entities] of this.#dirty_components_to_broadcast) {
-            entities.clear();
         }
     }
 }

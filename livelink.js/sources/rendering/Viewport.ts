@@ -275,7 +275,7 @@ export class Viewport extends EventTarget {
         screen_position: Vec2;
         mode: HighlightMode;
     }): Promise<{ entity: Entity; world_position: Vec3; world_normal: Vec3 } | null> {
-        if (!this.#camera_projection || !this.#camera_projection.camera_entity.rtid) {
+        if (!this.#camera_projection) {
             return null;
         }
 

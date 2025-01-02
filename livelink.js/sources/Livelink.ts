@@ -668,24 +668,16 @@ export class Livelink {
         broadcastsPerSecond?: number;
     }): void {
         this.#update_interval = setInterval(() => {
-            const updateCmd = this.scene._entity_registry._getEntitiesToUpdate();
-            if (updateCmd.length > 0) {
-                this.#core.updateEntities(updateCmd);
-                this.scene._entity_registry._clearUpdateList();
-            }
-
-            const detachCmd = this.scene._entity_registry._getComponentsToDetach();
-            if (detachCmd.length > 0) {
-                this.#core.removeComponents(detachCmd);
-                this.scene._entity_registry._clearDetachList();
+            const update_commands = this.scene._entity_registry._getEntitiesToUpdate();
+            if (update_commands.length > 0) {
+                this.#core.updateEntities({ update_commands, persist: false });
             }
         }, 1000 / updatesPerSecond);
 
         this.#broadcast_interval = setInterval(() => {
-            const msg = this.scene._entity_registry._getEntitiesToBroadcast();
-            if (msg !== null) {
-                this.#core.updateComponents(msg);
-                this.scene._entity_registry._clearBroadcastList();
+            const update_commands = this.scene._entity_registry._getEntitiesToPersist();
+            if (update_commands.length > 0) {
+                this.#core.updateEntities({ update_commands, persist: true });
             }
         }, 1000 / broadcastsPerSecond);
     }

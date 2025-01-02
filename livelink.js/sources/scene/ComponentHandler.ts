@@ -15,7 +15,7 @@ export class ComponentHandler {
      */
     constructor(
         private readonly _entity: Entity,
-        private readonly _component_type: ComponentName,
+        private readonly _component_name: ComponentName,
     ) {}
 
     /**
@@ -28,7 +28,7 @@ export class ComponentHandler {
             //@ts-ignore
             if ((typeof component[prop] === "object" && component[prop] !== null) || Array.isArray(component[prop])) {
                 //@ts-ignore
-                return new Proxy(component[prop], new ComponentHandler(this._entity, this._component_type));
+                return new Proxy(component[prop], new ComponentHandler(this._entity, this._component_name));
             }
         }
         return Reflect.get(component, prop);
@@ -39,7 +39,7 @@ export class ComponentHandler {
      */
     set(component: object, prop: PropertyKey, v: any): boolean {
         //console.log("SET ATTRIBUTE", prop, v);
-        this._entity._markComponentAsDirty({ component_type: this._component_type });
+        this._entity._markComponentAsDirty({ component_name: this._component_name });
         return Reflect.set(component, prop, v);
     }
 
@@ -48,7 +48,7 @@ export class ComponentHandler {
      */
     deleteProperty(component: object, prop: PropertyKey): boolean {
         //console.log("DELETE ATTRIBUTE", prop);
-        this._entity._markComponentAsDirty({ component_type: this._component_type });
+        this._entity._markComponentAsDirty({ component_name: this._component_name });
         return Reflect.deleteProperty(component, prop);
     }
 }

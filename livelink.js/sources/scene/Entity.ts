@@ -58,6 +58,16 @@ export class Entity extends EntityBase {
     /**
      *
      */
+    private __dirty_components = new Set<ComponentName>();
+
+    /**
+     *
+     */
+    private __deleted_components = new Set<ComponentName>();
+
+    /**
+     *
+     */
     private _parent: Entity | null = null;
 
     /**
@@ -86,6 +96,9 @@ export class Entity extends EntityBase {
      */
     set auto_broadcast(state: EntityAutoUpdateState) {
         this._auto_broadcast = state;
+        if (state === "off") {
+            this._scene._entity_registry._removeEntityFromBroadcastList({ entity: this });
+        }
     }
 
     /**
@@ -115,6 +128,20 @@ export class Entity extends EntityBase {
      */
     set parent(parent: Entity | null) {
         throw new Error("Not implemented");
+    }
+
+    /**
+     * @internal
+     */
+    get _dirty_components(): Array<ComponentName> {
+        return Array.from(this.__dirty_components);
+    }
+
+    /**
+     * @internal
+     */
+    get _deleted_components(): Array<ComponentName> {
+        return Array.from(this.__deleted_components);
     }
 
     /**
@@ -278,17 +305,27 @@ export class Entity extends EntityBase {
     /**
      * @internal
      */
-    _markComponentAsDirty({ component_type }: { component_type: ComponentName }): void {
-        this._scene._entity_registry._addEntityToUpdate({ component_type, entity: this });
+    _markComponentAsDirty({ component_name }: { component_name: ComponentName }): void {
+        this.__dirty_components.add(component_name);
+        this._scene._entity_registry._addDirtyEntity({ entity: this });
         this.dispatchEvent(new CustomEvent("entity-updated"));
     }
 
     /**
      * @internal
      */
-    _markComponentAsDeleted({ component_type }: { component_type: ComponentName }): void {
-        this._scene._entity_registry._detachComponentFromEntity({ component_type, entity: this });
+    _markComponentAsDeleted({ component_name }: { component_name: ComponentName }): void {
+        this.__deleted_components.add(component_name);
+        this._scene._entity_registry._addDirtyEntity({ entity: this });
         this.dispatchEvent(new CustomEvent("entity-updated"));
+    }
+
+    /**
+     * @internal
+     */
+    _clearDirtyState(): void {
+        this.__dirty_components.clear();
+        this.__deleted_components.clear();
     }
 
     /**
@@ -330,11 +367,11 @@ export class Entity extends EntityBase {
                 //console.log("GET COMPONENT", entity,prop);
                 const serializableComponentsProxies =
                     Object.getPrototypeOf(entity).constructor.serializableComponentsProxies;
-                const component_type = prop as ComponentName;
+                const component_name = prop as ComponentName;
 
                 const Handler =
-                    serializableComponentsProxies[component_type] ?? serializableComponentsProxies["default"];
-                return new Proxy(entity[component_type]!, new Handler(entity, component_type));
+                    serializableComponentsProxies[component_name] ?? serializableComponentsProxies["default"];
+                return new Proxy(entity[component_name]!, new Handler(entity, component_name));
             }
 
             return value;
@@ -347,7 +384,8 @@ export class Entity extends EntityBase {
 
             if (entity._isSerializableComponent(prop, v)) {
                 //console.log("SET COMPONENT", prop, v);
-                entity._markComponentAsDirty({ component_type: prop as ComponentName });
+                v = entity._scene._sanitizeComponentValue({ component_name: prop as ComponentName, value: v });
+                entity._markComponentAsDirty({ component_name: prop as ComponentName });
             }
 
             return Reflect.set(entity, prop, v);
@@ -357,7 +395,7 @@ export class Entity extends EntityBase {
             //@ts-ignore
             if (entity[prop] !== undefined) {
                 //console.log("DELETE COMPONENT", prop);
-                entity._markComponentAsDeleted({ component_type: prop as ComponentName });
+                entity._markComponentAsDeleted({ component_name: prop as ComponentName });
             }
 
             return Reflect.deleteProperty(entity, prop);

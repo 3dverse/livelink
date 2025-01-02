@@ -18,7 +18,7 @@ export class EntityBase extends EventTarget {
     /**
      *
      */
-    private euid: Components.Euid;
+    readonly euid: Components.Euid;
 
 {{componentAttributes}}
 

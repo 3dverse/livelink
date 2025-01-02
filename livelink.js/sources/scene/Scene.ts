@@ -10,6 +10,7 @@ import type {
     Components,
     ComponentName,
     EntityResponse,
+    ComponentType,
 } from "@3dverse/livelink.core";
 
 //------------------------------------------------------------------------------
@@ -476,6 +477,19 @@ export class Scene extends EventTarget {
         if (entity) {
             entity._onVisibilityChanged({ is_visible });
         }
+    }
+
+    /**
+     * @internal
+     */
+    _sanitizeComponentValue<_ComponentName extends ComponentName>({
+        component_name,
+        value,
+    }: {
+        component_name: _ComponentName;
+        value: Partial<ComponentType<_ComponentName>>;
+    }): ComponentType<_ComponentName> {
+        return this.#core.sanitizeComponentValue({ component_name, value });
     }
 
     /**
