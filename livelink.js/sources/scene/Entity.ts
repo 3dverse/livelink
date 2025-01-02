@@ -137,7 +137,11 @@ export class Entity extends EntityBase {
         this._parent = parent;
         this._mergeComponents({ components, dispatch_event: false });
 
-        this._scene._entity_registry.add({ entity: this });
+        for (const key in this) {
+            if (this[key] === undefined) {
+                delete this[key];
+            }
+        }
 
         this._proxy_state = options?.disable_proxy === true ? "off" : "on";
 
