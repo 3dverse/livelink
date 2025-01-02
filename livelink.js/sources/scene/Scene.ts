@@ -176,7 +176,11 @@ export class Scene extends EventTarget {
             return foundEntity;
         }
 
-        const entity_reponses = await this.#core.findEntities({ euid: entity_uuid, linkage });
+        const entity_reponses = await this.#core.findEntities({
+            query: { euid: entity_uuid, linkage },
+            options: { include_ancestors: true },
+        });
+
         if (entity_reponses.length === 0) {
             return null;
         }
@@ -228,7 +232,10 @@ export class Scene extends EventTarget {
             return foundEntities;
         }
 
-        const entity_responses = await this.#core.findEntities({ euid: entity_uuid });
+        const entity_responses = await this.#core.findEntities({
+            query: { euid: entity_uuid },
+            options: { include_ancestors: true },
+        });
         return this.#resolveEntityResponses({ entity_responses });
     }
 
@@ -333,7 +340,10 @@ export class Scene extends EventTarget {
      *  @deprecated
      */
     async findEntitiesByNames({ entity_names }: { entity_names: Array<string> }): Promise<Array<Entity>> {
-        const entity_responses = await this.#core.findEntities({ names: entity_names });
+        const entity_responses = await this.#core.findEntities({
+            query: { names: entity_names },
+            options: { include_ancestors: true },
+        });
         return this.#resolveEntityResponses({ entity_responses });
     }
 
@@ -347,7 +357,10 @@ export class Scene extends EventTarget {
         mandatory_components: Array<ComponentName>;
         forbidden_components?: Array<ComponentName>;
     }): Promise<Array<Entity>> {
-        const entity_responses = await this.#core.findEntities({ mandatory_components, forbidden_components });
+        const entity_responses = await this.#core.findEntities({
+            query: { mandatory_components, forbidden_components },
+            options: { include_ancestors: true },
+        });
         return this.#resolveEntityResponses({ entity_responses });
     }
 
@@ -369,7 +382,7 @@ export class Scene extends EventTarget {
         let promise = this.#pending_entity_requests.get(entity_rtid);
         if (!promise) {
             console.log("Requesting entity", entity_rtid);
-            promise = this.#core.findEntities({ rtid: entity_rtid });
+            promise = this.#core.findEntities({ query: { rtid: entity_rtid } });
             this.#pending_entity_requests.set(entity_rtid, promise);
         }
 
@@ -477,8 +490,9 @@ export class Scene extends EventTarget {
         components: Partial<ComponentsRecord> & { euid: Components.Euid };
         options?: EntityCreationOptions;
     }): Entity => {
-        const entity = new Entity({ scene: this, parent, components, options });
-        return new Proxy(entity, Entity.handler);
+        const entity = new Proxy(new Entity({ scene: this, parent, components, options }), Entity.handler);
+        this._entity_registry.add({ entity });
+        return entity;
     };
 
     /**
