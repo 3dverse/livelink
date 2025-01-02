@@ -9,6 +9,7 @@ import type {
     ScriptDataObject,
     Components,
     ComponentName,
+    EntityResponse,
 } from "@3dverse/livelink.core";
 
 //------------------------------------------------------------------------------
@@ -16,7 +17,6 @@ import { Entity } from "./Entity";
 import { compute_rpn } from "./Filters";
 import { SceneSettings } from "./SceneSettings";
 import { EntityRegistry } from "./EntityRegistry";
-import { EntityResponse } from "@3dverse/livelink.core/dist/sources/EntityFinder";
 
 /**
  * @inline
