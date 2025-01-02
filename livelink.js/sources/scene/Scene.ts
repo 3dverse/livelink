@@ -497,63 +497,6 @@ export class Scene extends EventTarget {
 
     /**
      *
-     *
-    #addEditorEntities({
-        responses,
-        resolve_ancestors,
-    }: {
-        responses: Array<{
-            entity: Partial<ComponentsRecord> & { euid: Components.Euid };
-            ancestors: Array<Partial<ComponentsRecord> & { euid: Components.Euid }>;
-        }>;
-        resolve_ancestors: boolean;
-    }): Promise<Array<Entity>> {
-        const resolveEntities = responses.map(async res => {
-            const entity_rtid = BigInt(res.entity.euid.rtid);
-            let entity = this.entity_registry.get({ entity_rtid });
-
-            if (!entity) {
-                entity = this.#createEntityProxy({ components: res.entity });
-
-                if (resolve_ancestors) {
-                    await this.#resolveAncestors({ entity_rtid });
-                }
-            }
-
-            return entity;
-        });
-        return Promise.all(resolveEntities);
-    }
-    */
-
-    /**
-     *  Add ancestors to the entity registry.
-     *
-    async #resolveAncestors({ entity_rtid }: { entity_rtid: RTID }): Promise<Array<ComponentsRecord>> {
-        const ancestor_editor_entities = await this.#core.resolveAncestors({ entity_rtid });
-
-        await this.#addEditorEntities({
-            responses: ancestor_editor_entities,
-            resolve_ancestors: false,
-        });
-
-        ancestor_editor_entities.forEach(ancestor_editor_entity => {
-            const ancestor_entity = this.entity_registry.get({
-                entity_rtid: BigInt(ancestor_editor_entity.rtid),
-            });
-
-            ancestor_editor_entity.children.forEach(child_rtid => {
-                const child_entity = this.entity_registry.get({ entity_rtid: BigInt(child_rtid) });
-                child_entity?._setParent(ancestor_entity);
-            });
-        });
-
-        return ancestor_editor_entities;
-    }
-    */
-
-    /**
-     *
      */
     async #handlePhysicsScriptEvent({ emitter, event }: { emitter: Entity | null; event: ScriptEvent }): Promise<void> {
         // if the emitter entity is not found,
