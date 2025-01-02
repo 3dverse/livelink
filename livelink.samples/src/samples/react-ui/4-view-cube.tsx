@@ -70,48 +70,49 @@ function StyledViewCube({ cameraEntity }: { cameraEntity: Entity }) {
     };
 
     const cubeSize = 100;
-    const cubeFace = `w-[${cubeSize}px] h-[${cubeSize}px] border-2 border-[#000] font-bold text-[#fff] text-center cursor-pointer`;
+    const cubeFace = `border-2 border-[#000] font-bold text-[#fff] text-center cursor-pointer`;
+    const commonStyle = { width: cubeSize, height: cubeSize, lineHeight: `${cubeSize}px` };
     const radius = 5;
     return (
         <ViewCube cameraEntity={cameraEntity} size={cubeSize} perspective={"600px"}>
             <div
                 className={cubeFace}
-                style={{ background: "hsla(  0, 100%, 50%, 0.7)" }}
+                style={{ ...commonStyle, background: "hsla(  0, 100%, 50%, 0.7)" }}
                 onClick={() => setCameraPosition([0, 0, radius])}
             >
                 Front
             </div>
             <div
                 className={cubeFace}
-                style={{ background: "hsla( 60, 100%, 50%, 0.7)" }}
+                style={{ ...commonStyle, background: "hsla( 60, 100%, 50%, 0.7)" }}
                 onClick={() => setCameraPosition([0, 0, -radius])}
             >
                 Back
             </div>
             <div
                 className={cubeFace}
-                style={{ background: "hsla(120, 100%, 50%, 0.7)" }}
+                style={{ ...commonStyle, background: "hsla(120, 100%, 50%, 0.7)" }}
                 onClick={() => setCameraPosition([radius, 0, 0])}
             >
                 Right
             </div>
             <div
                 className={cubeFace}
-                style={{ background: "hsla(180, 100%, 50%, 0.7)" }}
+                style={{ ...commonStyle, background: "hsla(180, 100%, 50%, 0.7)" }}
                 onClick={() => setCameraPosition([-radius, 0, 0])}
             >
                 Left
             </div>
             <div
                 className={cubeFace}
-                style={{ background: "hsla(240, 100%, 50%, 0.7)" }}
+                style={{ ...commonStyle, background: "hsla(240, 100%, 50%, 0.7)" }}
                 onClick={() => setCameraPosition([0, radius, 0])}
             >
                 Top
             </div>
             <div
                 className={cubeFace}
-                style={{ background: "hsla(300, 100%, 50%, 0.7)" }}
+                style={{ ...commonStyle, background: "hsla(300, 100%, 50%, 0.7)" }}
                 onClick={() => setCameraPosition([0, -radius, 0])}
             >
                 Bottom

@@ -53,7 +53,6 @@ export const ViewCube = ({
                         position: absolute;
                         width: ${size}px;
                         height: ${size}px;
-                        line-height: ${size}px;
                     }
 
                     .cube__face--front  { transform: rotateY(  0deg) translateZ(${Math.floor(size * 0.5)}px); }
