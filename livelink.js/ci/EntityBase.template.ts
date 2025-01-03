@@ -44,6 +44,14 @@ export abstract class EntityBase extends EventTarget {
     }
 
     /**
+     *
+     */
+    toJSON(): object {
+        const { euid, ...components } = this.#core;
+        return { euid: { value: euid.value }, ...components} ;
+    }
+
+    /**
      * Sets the value of a component. Used by the component setters.
      *
      * @internal

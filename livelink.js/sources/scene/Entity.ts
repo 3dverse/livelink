@@ -47,37 +47,37 @@ export class Entity extends EntityBase {
     /**
      *
      */
-    private readonly _scene: Scene;
+    readonly #scene: Scene;
 
     /**
      *
      */
-    private _auto_update: EntityAutoUpdateState = "on";
+    readonly #dirty_components = new Set<ComponentName>();
 
     /**
      *
      */
-    private _auto_broadcast: EntityAutoUpdateState = "on";
+    readonly #deleted_components = new Set<ComponentName>();
 
     /**
      *
      */
-    private __dirty_components = new Set<ComponentName>();
+    #auto_update: EntityAutoUpdateState = "on";
 
     /**
      *
      */
-    private __deleted_components = new Set<ComponentName>();
+    #auto_broadcast: EntityAutoUpdateState = "on";
 
     /**
      *
      */
-    private _parent: Entity | null = null;
+    #parent: Entity | null = null;
 
     /**
      *
      */
-    private _is_visible: boolean = true;
+    #is_visible: boolean = true;
 
     /**
      * @internal
@@ -107,30 +107,30 @@ export class Entity extends EntityBase {
      * Whether the entity has its components updates sent to the server.
      */
     get auto_update(): EntityAutoUpdateState {
-        return this._auto_update;
+        return this.#auto_update;
     }
 
     /**
      * Set whether the entity has its components updates sent to the server.
      */
     set auto_update(state: EntityAutoUpdateState) {
-        this._auto_update = state;
+        this.#auto_update = state;
     }
 
     /**
      * Whether the entity has its components updates broadcasted to other clients.
      */
     get auto_broadcast(): EntityAutoUpdateState {
-        return this._auto_broadcast;
+        return this.#auto_broadcast;
     }
 
     /**
      * Set whether the entity has its components updates broadcasted to other clients.
      */
     set auto_broadcast(state: EntityAutoUpdateState) {
-        this._auto_broadcast = state;
+        this.#auto_broadcast = state;
         if (state === "off") {
-            this._scene._entity_registry._removeEntityFromBroadcastList({ entity: this });
+            this.#scene._entity_registry._removeEntityFromBroadcastList({ entity: this });
         }
     }
 
@@ -138,22 +138,22 @@ export class Entity extends EntityBase {
      * Whether the entity is visible.
      */
     get is_visible(): boolean {
-        return this._is_visible;
+        return this.#is_visible;
     }
 
     /**
      * Set whether the entity is visible.
      */
     set is_visible(is_visible: boolean) {
-        this._scene._setEntityVisibility({ entity_rtid: this.rtid, is_visible });
-        this._is_visible = is_visible;
+        this.#scene._setEntityVisibility({ entity_rtid: this.rtid, is_visible });
+        this.#is_visible = is_visible;
     }
 
     /**
      * The parent entity of this entity or null if it has no parent.
      */
     get parent(): Entity | null {
-        return this._parent;
+        return this.#parent;
     }
 
     /**
@@ -167,14 +167,14 @@ export class Entity extends EntityBase {
      * @internal
      */
     get _dirty_components(): Array<ComponentName> {
-        return Array.from(this.__dirty_components);
+        return Array.from(this.#dirty_components);
     }
 
     /**
      * @internal
      */
     get _deleted_components(): Array<ComponentName> {
-        return Array.from(this.__deleted_components);
+        return Array.from(this.#deleted_components);
     }
 
     /**
@@ -193,10 +193,10 @@ export class Entity extends EntityBase {
     }) {
         super({ euid: components.euid });
 
-        this._scene = scene;
-        this._parent = parent;
+        this.#scene = scene;
+        this.#parent = parent;
         this._mergeComponents({ components, dispatch_event: false });
-        this._scene._entity_registry.add({ entity: this });
+        this.#scene._entity_registry.add({ entity: this });
 
         if (!options) {
             return;
@@ -215,7 +215,7 @@ export class Entity extends EntityBase {
      *
      */
     async getChildren(): Promise<Entity[]> {
-        return await this._scene._getChildren({ entity: this });
+        return await this.#scene._getChildren({ entity: this });
     }
 
     /**
@@ -228,7 +228,7 @@ export class Entity extends EntityBase {
         const script_ids = Object.keys(this.script_map.elements);
         await Promise.all(
             script_ids.map(script_id =>
-                this._scene._assignClientToScripts({ client_uuid, entity_rtid: this.rtid, script_uuid: script_id }),
+                this.#scene._assignClientToScripts({ client_uuid, entity_rtid: this.rtid, script_uuid: script_id }),
             ),
         );
     }
@@ -307,8 +307,8 @@ export class Entity extends EntityBase {
      * @internal
      */
     _markComponentAsDirty({ component_name }: { component_name: ComponentName }): void {
-        this.__dirty_components.add(component_name);
-        this._scene._entity_registry._addDirtyEntity({ entity: this });
+        this.#dirty_components.add(component_name);
+        this.#scene._entity_registry._addDirtyEntity({ entity: this });
         this.dispatchEvent(new CustomEvent("entity-updated"));
     }
 
@@ -316,8 +316,8 @@ export class Entity extends EntityBase {
      * @internal
      */
     _markComponentAsDeleted({ component_name }: { component_name: ComponentName }): void {
-        this.__deleted_components.add(component_name);
-        this._scene._entity_registry._addDirtyEntity({ entity: this });
+        this.#deleted_components.add(component_name);
+        this.#scene._entity_registry._addDirtyEntity({ entity: this });
         this.dispatchEvent(new CustomEvent("entity-updated"));
     }
 
@@ -325,43 +325,16 @@ export class Entity extends EntityBase {
      * @internal
      */
     _clearDirtyState(): void {
-        this.__dirty_components.clear();
-        this.__deleted_components.clear();
+        this.#dirty_components.clear();
+        this.#deleted_components.clear();
     }
 
     /**
      * @internal
      */
     _onVisibilityChanged({ is_visible }: { is_visible: boolean }): void {
-        this._is_visible = is_visible;
+        this.#is_visible = is_visible;
         this.dispatchEvent(new CustomEvent("visibility-changed", { detail: { is_visible } }));
-    }
-
-    /**
-     * FIXME: This is not used anywhere. Should we remove it?
-     */
-    toJSON(): Record<string, unknown> {
-        console.log("Hellooooooooooooooooooo, I am hereeeeeeeeeeeeeee. I want to stay aliiiiiiiiiiiive");
-        const serialized: Record<string, unknown> = {};
-        for (const component_name of EntityBase.component_names) {
-            const value = this[component_name];
-            if (value !== undefined) {
-                serialized[component_name] = value;
-            }
-        }
-        return serialized;
-    }
-
-    /**
-     * @internal
-     */
-    public _isSerializableComponent(prop: PropertyKey, v: unknown): boolean {
-        return (
-            typeof prop === "string" &&
-            v !== undefined &&
-            prop[0] !== "_" &&
-            EntityBase.component_names.includes(prop as ComponentName)
-        );
     }
 
     /**
@@ -385,12 +358,13 @@ export class Entity extends EntityBase {
 
         if (value === undefined) {
             this._markComponentAsDeleted({ component_name });
+            Reflect.deleteProperty(this, `#${component_name}`);
             return undefined;
         }
 
         if (value === "default") {
             // Setting the value to undefined will resolve to the default values
-            value = this._scene._sanitizeComponentValue({ component_name, value: undefined });
+            value = this.#scene._sanitizeComponentValue({ component_name, value: undefined });
         }
 
         if (ref === undefined) {
@@ -415,7 +389,7 @@ export class Entity extends EntityBase {
         component_name: _ComponentName;
         value: Partial<ComponentType<_ComponentName>> | undefined;
     }): void {
-        const existing_component = Reflect.get(this, `#${component_name}_value`);
+        const existing_component = Reflect.get(this, `#${component_name}`);
         if (existing_component) {
             Object.assign(existing_component, value);
             return;
@@ -440,9 +414,9 @@ export class Entity extends EntityBase {
             Entity.serializableComponentsProxies[component_name] ?? Entity.serializableComponentsProxies["default"];
 
         // FIXME: this will not compute euler orientations
-        const sanitized_value = this._scene._sanitizeComponentValue({ component_name, value });
+        const sanitized_value = this.#scene._sanitizeComponentValue({ component_name, value });
         // Keep an accessible reference to the proxied component value
-        Reflect.set(this, `#${component_name}_value`, sanitized_value);
+        Reflect.set(this, `#${component_name}`, sanitized_value);
 
         return new Proxy(sanitized_value, new Handler(this, component_name)) as ComponentType<_ComponentName>;
     }
