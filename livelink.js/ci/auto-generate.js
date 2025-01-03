@@ -29,15 +29,9 @@ const pascalCaseToSnakeCase = str =>
 //------------------------------------------------------------------------------
 function generateComponentAccessors(componentName, componentType, componentDescription) {
     return `
-    /**
-     * Internal value of the ${componentName} component.
-     * Should not be accessed directly, use the ${componentName} property instead.
-     */
-    private _${componentName}?: Components.${componentType};
-
     ${componentDescription}
     get ${componentName}() : Components.${componentType} | undefined {
-        return this._${componentName};
+        return Reflect.get(this, "#${componentName}") as Components.${componentType} | undefined;
     }
 
     set ${componentName}(value: Partial<Components.${componentType}> | DefaultValue | undefined) {

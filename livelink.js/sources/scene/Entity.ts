@@ -345,10 +345,9 @@ export class Entity extends EntityBase {
         component_name: _ComponentName;
         value: Partial<ComponentType<_ComponentName>> | DefaultValue | undefined;
     }): void {
-        const existing_value = Reflect.get(this, `_${component_name}`);
-
+        const is_component_attached = Reflect.has(this, `_${component_name}`);
         if (value === undefined) {
-            if (!existing_value) {
+            if (!is_component_attached) {
                 return;
             }
 
@@ -361,34 +360,10 @@ export class Entity extends EntityBase {
             value = undefined;
         }
 
-        if (existing_value) {
-            Object.assign(existing_value, value);
-        } else {
-            this.#createComponentProxy({ component_name, value });
-        }
-
+        //FIXME: This will not patch euler orientation by using the LocalTransformHandler,
+        // but we might want to get rid of it
+        this.#unsafeSetComponentValue({ component_name, value });
         this._markComponentAsDirty({ component_name });
-    }
-
-    /**
-     * Instantiates a proxy for the given component.
-     * Proxy is used to mark the entity as dirty if the component attributes are modified.
-     */
-    #createComponentProxy<_ComponentName extends ComponentName>({
-        component_name,
-        value,
-    }: {
-        component_name: _ComponentName;
-        value: Partial<ComponentType<_ComponentName>> | undefined;
-    }): void {
-        const Handler =
-            Entity.serializableComponentsProxies[component_name] ?? Entity.serializableComponentsProxies["default"];
-
-        const sanitized_value = this._scene._sanitizeComponentValue({ component_name, value });
-        const proxy = new Proxy(sanitized_value, new Handler(this, component_name));
-
-        Reflect.set(this, `#unsafe_${component_name}`, sanitized_value);
-        Reflect.set(this, `_${component_name}`, proxy);
     }
 
     /**
@@ -401,13 +376,34 @@ export class Entity extends EntityBase {
         component_name: _ComponentName;
         value: Partial<ComponentType<_ComponentName>> | undefined;
     }): void {
-        const existing_component = Reflect.get(this, `#unsafe_${component_name}`);
+        const existing_component = Reflect.get(this, `#${component_name}_value`);
         if (existing_component) {
             Object.assign(existing_component, value);
             return;
         }
 
-        this.#createComponentProxy({ component_name, value });
+        this.#attachComponent({ component_name, value });
+    }
+
+    /**
+     * Attach a component to the entity, by instantiating a proxy for it.
+     * Proxy is used to mark the entity as dirty if the component attributes are modified.
+     */
+    #attachComponent<_ComponentName extends ComponentName>({
+        component_name,
+        value,
+    }: {
+        component_name: _ComponentName;
+        value: Partial<ComponentType<_ComponentName>> | undefined;
+    }): void {
+        const Handler =
+            Entity.serializableComponentsProxies[component_name] ?? Entity.serializableComponentsProxies["default"];
+
+        const sanitized_value = this._scene._sanitizeComponentValue({ component_name, value });
+        const proxy = new Proxy(sanitized_value, new Handler(this, component_name));
+
+        Reflect.set(this, `#${component_name}_value`, sanitized_value);
+        Reflect.set(this, `#${component_name}`, proxy);
     }
 
     /**
