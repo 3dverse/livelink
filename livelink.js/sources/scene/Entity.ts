@@ -52,11 +52,6 @@ export class Entity extends EntityBase {
     /**
      *
      */
-    private _proxy_state: EntityAutoUpdateState = "off";
-
-    /**
-     *
-     */
     private _auto_update: EntityAutoUpdateState = "on";
 
     /**
@@ -173,8 +168,6 @@ export class Entity extends EntityBase {
         this._parent = parent;
         this._mergeComponents({ components, dispatch_event: false });
 
-        this._proxy_state = options?.disable_proxy === true ? "off" : "on";
-
         if (!options) {
             return;
         }
@@ -268,39 +261,14 @@ export class Entity extends EntityBase {
         components: PartialComponentsRecord;
         dispatch_event?: boolean;
     }): void {
-        const actual_proxy_state = this._proxy_state;
-        this._proxy_state = "off";
-
         for (const key in components) {
             const component_name = key as ComponentName;
-            //@ts-expect-error: typescript doesn't like the assignment to this[key] as the attribute might be readonly,
-            // even if we know it's not.
-            this[component_name] = { ...this[component_name], ...components[component_name] };
+            this.#unsafeSetComponentValue({ component_name, value: components[component_name] });
         }
-        this._proxy_state = actual_proxy_state;
 
         if (dispatch_event) {
             this.dispatchEvent(new CustomEvent("entity-updated"));
         }
-    }
-
-    /**
-     * @internal
-     */
-    _setComponentsFromEditor({ components }: { components: ComponentsRecord }): void {
-        // Turn off the proxy as this is already a validated message from the editor.
-        const actual_proxy_state = this._proxy_state;
-        this._proxy_state = "off";
-
-        // The update message from the editor is guaranteed to contain only valid components
-        // so we don't need to merge with the current values.
-        for (const key in components) {
-            const component_name = key as ComponentName;
-            this[component_name] = components[component_name];
-        }
-        this._proxy_state = actual_proxy_state;
-
-        this.dispatchEvent(new CustomEvent("entity-updated"));
     }
 
     /**
@@ -338,9 +306,10 @@ export class Entity extends EntityBase {
     }
 
     /**
-     * @internal
+     * FIXME: This is not used anywhere. Should we remove it?
      */
     toJSON(): Record<string, unknown> {
+        console.log("Hellooooooooooooooooooo, I am hereeeeeeeeeeeeeee. I want to stay aliiiiiiiiiiiive");
         const serialized: Record<string, unknown> = {};
         for (const component_name of EntityBase.component_names) {
             const value = this[component_name];
@@ -364,6 +333,9 @@ export class Entity extends EntityBase {
     }
 
     /**
+     * Implementation of the EntityBase method.
+     * Called by each component setters.
+     *
      * @internal
      */
     protected _setComponentValue<_ComponentName extends ComponentName>({
@@ -373,7 +345,13 @@ export class Entity extends EntityBase {
         component_name: _ComponentName;
         value: Partial<ComponentType<_ComponentName>> | DefaultValue | undefined;
     }): void {
+        const existing_value = Reflect.get(this, `_${component_name}`);
+
         if (value === undefined) {
+            if (!existing_value) {
+                return;
+            }
+
             Reflect.deleteProperty(this, `_${component_name}`);
             this._markComponentAsDeleted({ component_name });
             return;
@@ -383,16 +361,53 @@ export class Entity extends EntityBase {
             value = undefined;
         }
 
+        if (existing_value) {
+            Object.assign(existing_value, value);
+        } else {
+            this.#createComponentProxy({ component_name, value });
+        }
+
+        this._markComponentAsDirty({ component_name });
+    }
+
+    /**
+     * Instantiates a proxy for the given component.
+     * Proxy is used to mark the entity as dirty if the component attributes are modified.
+     */
+    #createComponentProxy<_ComponentName extends ComponentName>({
+        component_name,
+        value,
+    }: {
+        component_name: _ComponentName;
+        value: Partial<ComponentType<_ComponentName>> | undefined;
+    }): void {
         const Handler =
             Entity.serializableComponentsProxies[component_name] ?? Entity.serializableComponentsProxies["default"];
 
-        const proxy = new Proxy(
-            this._scene._sanitizeComponentValue({ component_name, value }),
-            new Handler(this, component_name),
-        );
+        const sanitized_value = this._scene._sanitizeComponentValue({ component_name, value });
+        const proxy = new Proxy(sanitized_value, new Handler(this, component_name));
 
+        Reflect.set(this, `#unsafe_${component_name}`, sanitized_value);
         Reflect.set(this, `_${component_name}`, proxy);
-        this._markComponentAsDirty({ component_name });
+    }
+
+    /**
+     * Set the values of a component without marking it as dirty.
+     */
+    #unsafeSetComponentValue<_ComponentName extends ComponentName>({
+        component_name,
+        value,
+    }: {
+        component_name: _ComponentName;
+        value: Partial<ComponentType<_ComponentName>> | undefined;
+    }): void {
+        const existing_component = Reflect.get(this, `#unsafe_${component_name}`);
+        if (existing_component) {
+            Object.assign(existing_component, value);
+            return;
+        }
+
+        this.#createComponentProxy({ component_name, value });
     }
 
     /**

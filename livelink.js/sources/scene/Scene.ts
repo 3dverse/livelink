@@ -25,7 +25,6 @@ import { EntityRegistry } from "./EntityRegistry";
  * @category Scene
  */
 export type EntityCreationOptions = EntityCreationCoreOptions & {
-    disable_proxy?: boolean;
     auto_broadcast?: boolean;
     auto_update?: boolean;
 };

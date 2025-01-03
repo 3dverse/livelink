@@ -138,7 +138,7 @@ export class EntityRegistry {
         }
 
         for (const entity of entities) {
-            entity._setComponentsFromEditor({ components: updated_components });
+            entity._mergeComponents({ components: updated_components, dispatch_event: true });
         }
     }
 
