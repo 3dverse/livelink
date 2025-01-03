@@ -5,13 +5,12 @@ import type {
     UUID,
     EntityCreationCoreOptions,
     ScriptEvent,
-    ComponentsRecord,
     ScriptDataObject,
     Components,
     ComponentName,
     EntityResponse,
     ComponentType,
-    PartialComponentsRecord,
+    ComponentsManifest,
 } from "@3dverse/livelink.core";
 
 //------------------------------------------------------------------------------
@@ -108,16 +107,16 @@ export class Scene extends EventTarget {
         parent = null,
     }: {
         name: string;
-        components: PartialComponentsRecord;
+        components: ComponentsManifest;
         options?: EntityCreationOptions;
         parent?: Entity | null;
     }): Promise<Entity> {
         const lineage: Partial<Components.Lineage> | undefined = parent ? { parentUUID: parent.id } : undefined;
-        const components_with_euid = await this.#core.spawnEntity({
+        const entity_core = await this.#core.spawnEntity({
             components: { debug_name: { value: name }, ...components, lineage },
             options,
         });
-        return this.#createEntityProxy({ parent, components: components_with_euid, options });
+        return new Entity({ scene: this, parent, components: entity_core, options });
     }
 
     /**
@@ -135,7 +134,7 @@ export class Scene extends EventTarget {
         components_array,
         options,
     }: {
-        components_array: Array<PartialComponentsRecord & { euid?: { value: UUID } }>;
+        components_array: Array<ComponentsManifest>;
         options?: EntityCreationOptions;
     }): Promise<Array<Entity>> {
         const components_with_euid_array = await this.#core.createEntities({
@@ -144,8 +143,8 @@ export class Scene extends EventTarget {
         });
 
         //TODO: compute each entity's parent
-        return components_with_euid_array.map(components =>
-            this.#createEntityProxy({ parent: null, components, options }),
+        return components_with_euid_array.map(
+            components => new Entity({ scene: this, parent: null, components, options }),
         );
     }
 
@@ -213,7 +212,7 @@ export class Scene extends EventTarget {
             return entity;
         }
 
-        return this.#createEntityProxy({ parent, components: entity_response.components });
+        return new Entity({ scene: this, parent, components: entity_response.components });
     };
 
     /**
@@ -382,7 +381,6 @@ export class Scene extends EventTarget {
 
         let promise = this.#pending_entity_requests.get(entity_rtid);
         if (!promise) {
-            console.log("Requesting entity", entity_rtid);
             promise = this.#core.findEntities({ query: { rtid: entity_rtid } });
             this.#pending_entity_requests.set(entity_rtid, promise);
         }
@@ -438,7 +436,7 @@ export class Scene extends EventTarget {
      */
     async _getChildren({ entity }: { entity: Entity }): Promise<Array<Entity>> {
         const children_components = await this.#core.getChildren({ entity_rtid: entity.rtid });
-        return children_components.map(components => this.#createEntityProxy({ parent: entity, components }));
+        return children_components.map(components => new Entity({ scene: this, parent: entity, components }));
     }
 
     /**
@@ -491,23 +489,6 @@ export class Scene extends EventTarget {
     }): ComponentType<_ComponentName> {
         return this.#core.sanitizeComponentValue({ component_name, value });
     }
-
-    /**
-     *
-     */
-    #createEntityProxy = ({
-        parent,
-        components,
-        options,
-    }: {
-        parent: Entity | null;
-        components: Partial<ComponentsRecord> & { euid: Components.Euid };
-        options?: EntityCreationOptions;
-    }): Entity => {
-        const entity = new Entity({ scene: this, parent, components, options });
-        this._entity_registry.add({ entity });
-        return entity;
-    };
 
     /**
      *
