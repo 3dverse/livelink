@@ -1,13 +1,13 @@
 //------------------------------------------------------------------------------
 import type {
-    ComponentsRecord,
     ComponentName,
     RTID,
     ScriptDataObject,
     UUID,
-    Components,
     ComponentType,
-    PartialComponentsRecord,
+    EntityCore,
+    ComponentsManifest,
+    ComponentsRecord,
 } from "@3dverse/livelink.core";
 
 //------------------------------------------------------------------------------
@@ -73,6 +73,35 @@ export class Entity extends EntityBase {
      *
      */
     private _parent: Entity | null = null;
+
+    /**
+     *
+     */
+    private _is_visible: boolean = true;
+
+    /**
+     * @internal
+     */
+    get rtid(): RTID {
+        return this.euid.rtid;
+    }
+
+    /**
+     * The UUID of the entity.
+     *
+     * Note that multiple entities can share the same UUID if they are different instances of the
+     * same entity brought by multiple instances of the same scene.
+     */
+    get id(): UUID {
+        return this.euid.value;
+    }
+
+    /**
+     * The name of the entity.
+     */
+    get name(): string {
+        return this.debug_name?.value ?? "<unnamed>";
+    }
 
     /**
      * Whether the entity has its components updates sent to the server.
@@ -159,7 +188,7 @@ export class Entity extends EntityBase {
     }: {
         scene: Scene;
         parent: Entity | null;
-        components: Partial<ComponentsRecord> & { euid: Components.Euid };
+        components: EntityCore;
         options?: EntityCreationOptions;
     }) {
         super({ euid: components.euid });
@@ -167,6 +196,7 @@ export class Entity extends EntityBase {
         this._scene = scene;
         this._parent = parent;
         this._mergeComponents({ components, dispatch_event: false });
+        this._scene._entity_registry.add({ entity: this });
 
         if (!options) {
             return;
@@ -258,12 +288,14 @@ export class Entity extends EntityBase {
         components,
         dispatch_event = true,
     }: {
-        components: PartialComponentsRecord;
+        components: EntityCore | ComponentsManifest | Partial<ComponentsRecord>;
         dispatch_event?: boolean;
     }): void {
         for (const key in components) {
             const component_name = key as ComponentName;
-            this.#unsafeSetComponentValue({ component_name, value: components[component_name] });
+            if (key !== "euid") {
+                this.#unsafeSetComponentValue({ component_name, value: components[component_name] });
+            }
         }
 
         if (dispatch_event) {
@@ -339,34 +371,38 @@ export class Entity extends EntityBase {
      * @internal
      */
     protected _setComponentValue<_ComponentName extends ComponentName>({
+        ref,
         component_name,
         value,
     }: {
+        ref: ComponentType<_ComponentName> | undefined;
         component_name: _ComponentName;
         value: Partial<ComponentType<_ComponentName>> | DefaultValue | undefined;
-    }): void {
-        const existing_component_value = Reflect.get(this, `#${component_name}`);
-        if (value === undefined) {
-            if (!existing_component_value) {
-                return;
-            }
+    }): ComponentType<_ComponentName> | undefined {
+        if (value === undefined && ref === undefined) {
+            return undefined;
+        }
 
-            Reflect.deleteProperty(this, `_${component_name}`);
+        if (value === undefined) {
             this._markComponentAsDeleted({ component_name });
-            return;
+            return undefined;
         }
 
         if (value === "default") {
-            value = undefined;
+            // Setting the value to undefined will resolve to the default values
+            value = this._scene._sanitizeComponentValue({ component_name, value: undefined });
         }
 
-        if (existing_component_value) {
-            Object.assign(existing_component_value, value);
-            return;
+        if (ref === undefined) {
+            this._markComponentAsDirty({ component_name });
+            return this.#createComponentProxy({ component_name, value });
         }
 
-        this.#attachComponent({ component_name, value });
-        this._markComponentAsDirty({ component_name });
+        if (ref !== undefined) {
+            // Proxy will mark the entity as dirty if the component attributes are modified
+            Object.assign(ref, value);
+            return ref;
+        }
     }
 
     /**
@@ -385,30 +421,30 @@ export class Entity extends EntityBase {
             return;
         }
 
-        this.#attachComponent({ component_name, value });
+        const proxy = this.#createComponentProxy({ component_name, value });
+        this._unsafeSetComponentValue({ component_name, value: proxy });
     }
 
     /**
      * Attach a component to the entity, by instantiating a proxy for it.
      * Proxy is used to mark the entity as dirty if the component attributes are modified.
-     *
      */
-    #attachComponent<_ComponentName extends ComponentName>({
+    #createComponentProxy<_ComponentName extends ComponentName>({
         component_name,
         value,
     }: {
         component_name: _ComponentName;
         value: Partial<ComponentType<_ComponentName>> | undefined;
-    }): void {
+    }): ComponentType<_ComponentName> {
         const Handler =
             Entity.serializableComponentsProxies[component_name] ?? Entity.serializableComponentsProxies["default"];
 
         // FIXME: this will not compute euler orientations
         const sanitized_value = this._scene._sanitizeComponentValue({ component_name, value });
-        const proxy = new Proxy(sanitized_value, new Handler(this, component_name));
-
+        // Keep an accessible reference to the proxied component value
         Reflect.set(this, `#${component_name}_value`, sanitized_value);
-        Reflect.set(this, `#${component_name}`, proxy);
+
+        return new Proxy(sanitized_value, new Handler(this, component_name)) as ComponentType<_ComponentName>;
     }
 
     /**

@@ -28,16 +28,14 @@ const pascalCaseToSnakeCase = str =>
 
 //------------------------------------------------------------------------------
 function generateComponentAccessors(componentName, componentType, componentDescription) {
-    return `
-    ${componentDescription}
+    return `    ${componentDescription}
     get ${componentName}() : Components.${componentType} | undefined {
-        return Reflect.get(this, "#${componentName}") as Components.${componentType} | undefined;
+        return this.#core.${componentName};
     }
 
     set ${componentName}(value: Partial<Components.${componentType}> | DefaultValue | undefined) {
-        this._setComponentValue({component_name: "${componentName}", value});
-    }
-`;
+        this.#core.${componentName} = this._setComponentValue({ ref: this.#core.${componentName}, component_name: "${componentName}", value });
+    }`;
 }
 
 //------------------------------------------------------------------------------
@@ -64,7 +62,7 @@ function generateEntityBase() {
 
     //--------------------------------------------------------------------------
     applyTemplate("EntityBase.template.ts", path.join("EntityBase.ts"), {
-        componentAttributes: componentAttributes.join(""),
+        componentAttributes: componentAttributes.join("\n\n"),
         componentNames:
             componentExports.map(symbol => `        "${pascalCaseToSnakeCase(symbol.name)}"`).join(",\n") + ",",
     });
