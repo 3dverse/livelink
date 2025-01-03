@@ -11,11 +11,11 @@ const outputFolder = process.argv[4] || "../_prebuild";
 //------------------------------------------------------------------------------
 const componentTypeDeclarationFile = path.join(
     nodeModulePath,
-    "@3dverse/livelink.core/dist/_prebuild/types/components.d.ts",
+    "@3dverse/livelink.core/dist/_prebuild/engine_types/components.d.ts",
 );
 const settingsTypeDeclarationFile = path.join(
     nodeModulePath,
-    "@3dverse/livelink.core/dist/_prebuild/types/sceneSettings.d.ts",
+    "@3dverse/livelink.core/dist/_prebuild/engine_types/sceneSettings.d.ts",
 );
 
 //------------------------------------------------------------------------------
@@ -27,6 +27,26 @@ const pascalCaseToSnakeCase = str =>
         .toLowerCase();
 
 //------------------------------------------------------------------------------
+function generateComponentAccessors(componentName, componentType, componentDescription) {
+    return `
+    /**
+     * Internal value of the ${componentName} component.
+     * Should not be accessed directly, use the ${componentName} property instead.
+     */
+    private _${componentName}?: Components.${componentType};
+
+    ${componentDescription}
+    get ${componentName}() : Components.${componentType} | undefined {
+        return this._${componentName};
+    }
+
+    set ${componentName}(value: Partial<Components.${componentType}> | DefaultValue | undefined) {
+        this._setComponentValue({component_name: "${componentName}", value});
+    }
+`;
+}
+
+//------------------------------------------------------------------------------
 function generateEntityBase() {
     const program = ts.createProgram([componentTypeDeclarationFile], {});
     const checker = program.getTypeChecker();
@@ -35,13 +55,7 @@ function generateEntityBase() {
     const exportSymbol = checker.getSymbolAtLocation(sourceFile?.getChildAt(0));
     const exports = checker.getExportsAndPropertiesOfModule(exportSymbol || sourceFile.symbol);
 
-    // For now filter only types with comments. This might not work for in the future.
-    const componentExports = exports.filter(
-        symbol =>
-            symbol.declarations.some(declaration => declaration.jsDoc?.some(jsDoc => jsDoc.comment?.length > 0)) &&
-            symbol.name !== "Euid" &&
-            symbol.name !== "ScriptElement",
-    );
+    const componentExports = exports.filter(symbol => symbol.name !== "Euid" && symbol.name !== "ScriptElement");
 
     const componentAttributes = componentExports.map(symbol => {
         const declaration = symbol.declarations[0];
@@ -49,14 +63,14 @@ function generateEntityBase() {
 
         const name = pascalCaseToSnakeCase(symbol.name);
         const type = symbol.name;
-        const comment = jsDoc.getText().replace(/\n/g, "\n    ");
+        const comment = jsDoc?.getText().replace(/\n/g, "\n    ") || "";
 
-        return `    ${comment}\n    ${name}?: Components.${type};`;
+        return generateComponentAccessors(name, type, comment);
     });
 
     //--------------------------------------------------------------------------
     applyTemplate("EntityBase.template.ts", path.join("EntityBase.ts"), {
-        componentAttributes: componentAttributes.join("\n\n"),
+        componentAttributes: componentAttributes.join(""),
         componentNames:
             componentExports.map(symbol => `        "${pascalCaseToSnakeCase(symbol.name)}"`).join(",\n") + ",",
     });
@@ -67,6 +81,10 @@ function generateSettingsBase() {
     const program = ts.createProgram([settingsTypeDeclarationFile], {});
     const checker = program.getTypeChecker();
     const sourceFile = program.getSourceFile(settingsTypeDeclarationFile);
+    if (!sourceFile) {
+        console.error("Could not find source file", settingsTypeDeclarationFile);
+        throw new Error("Could not find source file");
+    }
 
     const exportSymbol = checker.getSymbolAtLocation(sourceFile?.getChildAt(0));
     const exports = checker.getExportsAndPropertiesOfModule(exportSymbol || sourceFile.symbol);

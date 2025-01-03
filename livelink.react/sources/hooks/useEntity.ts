@@ -2,7 +2,7 @@
 import { useContext, useEffect, useReducer, useState } from "react";
 
 //------------------------------------------------------------------------------
-import type { Entity, EntityRef, ComponentsRecord, EntityCreationOptions } from "@3dverse/livelink";
+import type { Entity, EntityRef, EntityCreationOptions, PartialComponentsRecord } from "@3dverse/livelink";
 
 //------------------------------------------------------------------------------
 import { Livelink as LivelinkInstance } from "@3dverse/livelink";
@@ -24,7 +24,7 @@ type NewEntity = {
     /**
      * The components to attach to the entity with their initial values.
      */
-    components: Partial<ComponentsRecord>;
+    components: PartialComponentsRecord;
 
     /**
      * The creation options of the entity.

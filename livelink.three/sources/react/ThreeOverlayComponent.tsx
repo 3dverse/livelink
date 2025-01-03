@@ -1,6 +1,6 @@
 import { useContext, useEffect } from "react";
-import * as THREE from "three";
 import { ViewportContext } from "@3dverse/livelink-react";
+import type * as THREE from "three";
 
 import { ThreeOverlay } from "../ThreeOverlay";
 

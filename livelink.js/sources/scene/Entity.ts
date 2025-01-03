@@ -1,8 +1,17 @@
 //------------------------------------------------------------------------------
-import type { ComponentsRecord, ComponentName, RTID, ScriptDataObject, UUID, Components } from "@3dverse/livelink.core";
+import type {
+    ComponentsRecord,
+    ComponentName,
+    RTID,
+    ScriptDataObject,
+    UUID,
+    Components,
+    ComponentType,
+    PartialComponentsRecord,
+} from "@3dverse/livelink.core";
 
 //------------------------------------------------------------------------------
-import { EntityBase } from "../../_prebuild/EntityBase";
+import { EntityBase, type DefaultValue } from "../../_prebuild/EntityBase";
 
 //------------------------------------------------------------------------------
 import { EntityCreationOptions, Scene } from "./Scene";
@@ -164,12 +173,6 @@ export class Entity extends EntityBase {
         this._parent = parent;
         this._mergeComponents({ components, dispatch_event: false });
 
-        for (const key in this) {
-            if (this[key] === undefined) {
-                delete this[key];
-            }
-        }
-
         this._proxy_state = options?.disable_proxy === true ? "off" : "on";
 
         if (!options) {
@@ -262,7 +265,7 @@ export class Entity extends EntityBase {
         components,
         dispatch_event = true,
     }: {
-        components: Partial<ComponentsRecord>;
+        components: PartialComponentsRecord;
         dispatch_event?: boolean;
     }): void {
         const actual_proxy_state = this._proxy_state;
@@ -293,8 +296,6 @@ export class Entity extends EntityBase {
         // so we don't need to merge with the current values.
         for (const key in components) {
             const component_name = key as ComponentName;
-            //@ts-expect-error: typescript doesn't like the assignment to this[component_name] as the attribute might
-            // be readonly, but we know it's not.
             this[component_name] = components[component_name];
         }
         this._proxy_state = actual_proxy_state;
@@ -339,67 +340,66 @@ export class Entity extends EntityBase {
     /**
      * @internal
      */
-    static serializableComponentsProxies = {
-        ["local_transform"]: LocalTransformHandler,
-        ["default"]: ComponentHandler,
-    } as ComponentHandlers;
+    toJSON(): Record<string, unknown> {
+        const serialized: Record<string, unknown> = {};
+        for (const component_name of EntityBase.component_names) {
+            const value = this[component_name];
+            if (value !== undefined) {
+                serialized[component_name] = value;
+            }
+        }
+        return serialized;
+    }
 
     /**
      * @internal
      */
-    /* eslint-disable */
-    static handler = {
-        get(entity: Entity, prop: PropertyKey, receiver: unknown): unknown {
-            const value = Reflect.get(entity, prop, receiver);
-            if (
-                typeof value === "function" &&
-                ["addEventListener", "removeEventListener", "dispatchEvent"].includes(prop as string)
-            ) {
-                return value.bind(entity);
-            }
+    public _isSerializableComponent(prop: PropertyKey, v: unknown): boolean {
+        return (
+            typeof prop === "string" &&
+            v !== undefined &&
+            prop[0] !== "_" &&
+            EntityBase.component_names.includes(prop as ComponentName)
+        );
+    }
 
-            if (entity._proxy_state === "off") {
-                return value;
-            }
+    /**
+     * @internal
+     */
+    protected _setComponentValue<_ComponentName extends ComponentName>({
+        component_name,
+        value,
+    }: {
+        component_name: _ComponentName;
+        value: Partial<ComponentType<_ComponentName>> | DefaultValue | undefined;
+    }): void {
+        if (value === undefined) {
+            Reflect.deleteProperty(this, `_${component_name}`);
+            this._markComponentAsDeleted({ component_name });
+            return;
+        }
 
-            //@ts-ignore
-            if (entity._isSerializableComponent(prop, entity[prop])) {
-                //console.log("GET COMPONENT", entity,prop);
-                const serializableComponentsProxies =
-                    Object.getPrototypeOf(entity).constructor.serializableComponentsProxies;
-                const component_name = prop as ComponentName;
+        if (value === "default") {
+            value = undefined;
+        }
 
-                const Handler =
-                    serializableComponentsProxies[component_name] ?? serializableComponentsProxies["default"];
-                return new Proxy(entity[component_name]!, new Handler(entity, component_name));
-            }
+        const Handler =
+            Entity.serializableComponentsProxies[component_name] ?? Entity.serializableComponentsProxies["default"];
 
-            return value;
-        },
+        const proxy = new Proxy(
+            this._scene._sanitizeComponentValue({ component_name, value }),
+            new Handler(this, component_name),
+        );
 
-        set(entity: Entity, prop: PropertyKey, v: any): boolean {
-            if (entity._proxy_state === "off") {
-                return Reflect.set(entity, prop, v);
-            }
+        Reflect.set(this, `_${component_name}`, proxy);
+        this._markComponentAsDirty({ component_name });
+    }
 
-            if (entity._isSerializableComponent(prop, v)) {
-                //console.log("SET COMPONENT", prop, v);
-                v = entity._scene._sanitizeComponentValue({ component_name: prop as ComponentName, value: v });
-                entity._markComponentAsDirty({ component_name: prop as ComponentName });
-            }
-
-            return Reflect.set(entity, prop, v);
-        },
-
-        deleteProperty(entity: Entity, prop: PropertyKey): boolean {
-            //@ts-ignore
-            if (entity[prop] !== undefined) {
-                //console.log("DELETE COMPONENT", prop);
-                entity._markComponentAsDeleted({ component_name: prop as ComponentName });
-            }
-
-            return Reflect.deleteProperty(entity, prop);
-        },
-    };
-    /* eslint-enable */
+    /**
+     * @internal
+     */
+    static serializableComponentsProxies = {
+        ["local_transform"]: LocalTransformHandler,
+        ["default"]: ComponentHandler,
+    } as ComponentHandlers;
 }

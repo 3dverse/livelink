@@ -48,7 +48,9 @@ export const RenderGraphSettings = ({
     cameraEntity: Entity | null;
 }) => {
     //------------------------------------------------------------------------------
-    const [originalDataJSON, setOriginalDataJSON] = useState(cameraEntity?.camera?.dataJSON);
+    const [originalDataJSON, setOriginalDataJSON] = useState<RenderGraphDataObject | undefined>(
+        cameraEntity?.camera?.dataJSON,
+    );
     const [dataJSON, setDataJSON] = useState(cameraEntity?.camera?.dataJSON);
     const [renderGraphDescription, setRenderGraphDescription] = useState<Category | null>(null);
 
@@ -103,10 +105,10 @@ export const RenderGraphSettings = ({
     //------------------------------------------------------------------------------
     const onResetAllInputs = () => {
         if (!cameraEntity?.camera?.dataJSON) {
-            return null;
+            return;
         }
 
-        cameraEntity.camera.dataJSON = originalDataJSON;
+        cameraEntity.camera.dataJSON = originalDataJSON ?? {};
         setDataJSON(originalDataJSON);
     };
 

@@ -11,6 +11,7 @@ import type {
     ComponentName,
     EntityResponse,
     ComponentType,
+    PartialComponentsRecord,
 } from "@3dverse/livelink.core";
 
 //------------------------------------------------------------------------------
@@ -108,11 +109,11 @@ export class Scene extends EventTarget {
         parent = null,
     }: {
         name: string;
-        components: Partial<ComponentsRecord>;
+        components: PartialComponentsRecord;
         options?: EntityCreationOptions;
         parent?: Entity | null;
     }): Promise<Entity> {
-        const lineage: Components.Lineage | undefined = parent ? { parentUUID: parent.id } : undefined;
+        const lineage: Partial<Components.Lineage> | undefined = parent ? { parentUUID: parent.id } : undefined;
         const components_with_euid = await this.#core.spawnEntity({
             components: { debug_name: { value: name }, ...components, lineage },
             options,
@@ -135,7 +136,7 @@ export class Scene extends EventTarget {
         components_array,
         options,
     }: {
-        components_array: Array<Partial<ComponentsRecord> & { euid?: { value: UUID } }>;
+        components_array: Array<PartialComponentsRecord & { euid?: { value: UUID } }>;
         options?: EntityCreationOptions;
     }): Promise<Array<Entity>> {
         const components_with_euid_array = await this.#core.createEntities({
@@ -487,7 +488,7 @@ export class Scene extends EventTarget {
         value,
     }: {
         component_name: _ComponentName;
-        value: Partial<ComponentType<_ComponentName>>;
+        value: Partial<ComponentType<_ComponentName>> | undefined;
     }): ComponentType<_ComponentName> {
         return this.#core.sanitizeComponentValue({ component_name, value });
     }
@@ -504,7 +505,7 @@ export class Scene extends EventTarget {
         components: Partial<ComponentsRecord> & { euid: Components.Euid };
         options?: EntityCreationOptions;
     }): Entity => {
-        const entity = new Proxy(new Entity({ scene: this, parent, components, options }), Entity.handler);
+        const entity = new Entity({ scene: this, parent, components, options });
         this._entity_registry.add({ entity });
         return entity;
     };

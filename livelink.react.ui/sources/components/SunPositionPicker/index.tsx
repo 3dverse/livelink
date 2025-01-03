@@ -47,7 +47,7 @@ export const SunPositionPicker = ({
     const bgCanvasRef = useRef<HTMLCanvasElement>(null);
     const sunCanvasRef = useRef<HTMLCanvasElement>(null);
     const movingLightHintRef = useRef<HTMLDivElement>(null);
-    const [shadowCaster, setShadowCaster] = useState<Components.ShadowCaster>({});
+    const [shadowCaster, setShadowCaster] = useState<Partial<Components.ShadowCaster>>({});
 
     //------------------------------------------------------------------------------
     const onToggleShadows = () => {
