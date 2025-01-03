@@ -219,7 +219,10 @@ export class CameraProjection {
         if (this.camera_entity.perspective_lens) {
             return this.#computeRayWithPerspectiveProjection({ clip_position });
         } else if (this.camera_entity.orthographic_lens) {
-            return this.#computeRayWithOrthographicProjection({ clip_position });
+            return this.#computeRayWithOrthographicProjection({
+                lens: this.camera_entity.orthographic_lens,
+                clip_position,
+            });
         } else {
             throw new Error("Camera entity must have a perspective or orthographic lens component");
         }
@@ -255,8 +258,14 @@ export class CameraProjection {
      *
      * @returns The ray.
      */
-    #computeRayWithOrthographicProjection({ clip_position }: { clip_position: Vec3 }): Ray {
-        const { zNear, zFar } = this.camera_entity.orthographic_lens as Required<Components.OrthographicLens>;
+    #computeRayWithOrthographicProjection({
+        lens,
+        clip_position,
+    }: {
+        lens: Components.OrthographicLens;
+        clip_position: Vec3;
+    }): Ray {
+        const { zNear, zFar } = lens;
 
         const ray: Ray = {
             origin: vec3.fromValues(clip_position[0], clip_position[1], (zNear + zFar) / (zNear - zFar)) as Vec3,
@@ -289,9 +298,9 @@ export class CameraProjection {
      */
     updateProjectionMatrix(): void {
         if (this.camera_entity.perspective_lens) {
-            this.#computePerspectiveProjection();
+            this.#computePerspectiveProjection({ lens: this.camera_entity.perspective_lens });
         } else if (this.camera_entity.orthographic_lens) {
-            this.#computeOrthographicProjection();
+            this.#computeOrthographicProjection({ lens: this.camera_entity.orthographic_lens });
         }
     }
 
@@ -321,8 +330,7 @@ export class CameraProjection {
     /**
      *
      */
-    #computePerspectiveProjection(): void {
-        const lens = this.camera_entity.perspective_lens as Required<Components.PerspectiveLens>;
+    #computePerspectiveProjection({ lens }: { lens: Components.PerspectiveLens }): void {
         mat4.perspective(
             this.#clip_from_view_matrix,
             glMatrix.toRadian(lens.fovy),
@@ -335,8 +343,7 @@ export class CameraProjection {
     /**
      *
      */
-    #computeOrthographicProjection(): void {
-        const lens = this.camera_entity.orthographic_lens as Required<Components.OrthographicLens>;
+    #computeOrthographicProjection({ lens }: { lens: Components.OrthographicLens }): void {
         mat4.ortho(this.#clip_from_view_matrix, lens.left, lens.right, lens.bottom, lens.top, lens.zNear, lens.zFar);
     }
 }

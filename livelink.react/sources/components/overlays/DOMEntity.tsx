@@ -33,7 +33,7 @@ export function DOMEntity({
         }
 
         const updatePosition = () => {
-            const local_transform = entity.local_transform as Required<Components.LocalTransform>;
+            const local_transform = entity.local_transform!;
             setWorldPosition(local_transform.position);
         };
 

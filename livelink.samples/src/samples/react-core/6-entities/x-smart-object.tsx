@@ -91,8 +91,7 @@ function LightComponent({ light }: { light: Entity }) {
             <button
                 className="button button-primary"
                 onClick={() => {
-                    delete light.point_light!.color;
-                    delete light.point_light!.intensity;
+                    light.point_light = "default";
                 }}
             >
                 Reset

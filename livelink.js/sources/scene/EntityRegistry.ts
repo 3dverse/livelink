@@ -128,7 +128,7 @@ export class EntityRegistry {
         updated_components,
     }: {
         entity_euid: string;
-        updated_components: ComponentsRecord;
+        updated_components: Partial<ComponentsRecord>;
     }): void {
         const entities = this.find({ entity_euid });
 

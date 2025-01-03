@@ -42,7 +42,7 @@ class CustomCameraController extends CameraControllerBase {
 
     update(): void {
         const PERIOD = 1000 / 60;
-        this._camera_entity.local_transform!.position![1] = 1 + Math.sin(this.#elapsedTime * 0.001) * this.#speed;
+        this._camera_entity.local_transform!.position[1] = 1 + Math.sin(this.#elapsedTime * 0.001) * this.#speed;
         this.#elapsedTime += PERIOD;
     }
 

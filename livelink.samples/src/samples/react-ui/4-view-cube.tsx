@@ -55,7 +55,7 @@ function AppLayout() {
 //------------------------------------------------------------------------------
 function StyledViewCube({ cameraEntity }: { cameraEntity: Entity }) {
     const setCameraPosition = (position: Vec3) => {
-        const local_transform = cameraEntity.local_transform as Required<Components.LocalTransform>;
+        const local_transform = cameraEntity.local_transform!;
 
         const lookAt = (target: Vec3): Vec3 => {
             const camera = new Object3D();

@@ -465,12 +465,12 @@ export class WebXRHelper {
             const camera1 = cameras[0];
             const camera2 = cameras[1];
             const eye1_transform = {
-                position: camera1.local_transform!.position!,
-                orientation: camera1.local_transform!.orientation!,
+                position: camera1.local_transform!.position,
+                orientation: camera1.local_transform!.orientation,
             };
             const eye2_transform = {
-                position: camera2.local_transform!.position!,
-                orientation: camera2.local_transform!.orientation!,
+                position: camera2.local_transform!.position,
+                orientation: camera2.local_transform!.orientation,
             };
             const { eye1, eye2 } = this.#transformEyes({
                 eye1: eye1_transform,
@@ -491,8 +491,8 @@ export class WebXRHelper {
         if (cameras.length === 1) {
             const camera = cameras[0];
             const eye_transform = {
-                position: camera.local_transform!.position!,
-                orientation: camera.local_transform!.orientation!,
+                position: camera.local_transform!.position,
+                orientation: camera.local_transform!.orientation,
             };
             camera.local_transform = this.#transformSingleEye({
                 eye: eye_transform,

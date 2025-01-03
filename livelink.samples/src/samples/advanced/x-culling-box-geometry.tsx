@@ -133,13 +133,13 @@ function BoxGeometryMesh({
 
         const updateObjectsTransform = () => {
             // TODO: This should actually get the global transform not the local transform.
-            const globalTransform = boxGeometryEntity.local_transform as Required<Components.LocalTransform>;
+            const globalTransform = boxGeometryEntity.local_transform!;
             globalTransformObject.position.fromArray(globalTransform.position);
             globalTransformObject.quaternion.fromArray(globalTransform.orientation);
             globalTransformObject.scale.fromArray(globalTransform.scale);
             globalTransformObject.updateMatrixWorld();
 
-            const boxGeometry = boxGeometryEntity.box_geometry as Required<Components.BoxGeometry>;
+            const boxGeometry = boxGeometryEntity.box_geometry!;
             dimensionObject.position.fromArray(boxGeometry.offset);
             dimensionObject.scale.fromArray(boxGeometry.dimension);
             dimensionObject.updateMatrixWorld();
@@ -235,7 +235,7 @@ function createBoxGeometryHandle({
     const nullifyAxis = new THREE.Vector3(1 - absAxis.x, 1 - absAxis.y, 1 - absAxis.z);
 
     //--------------------------------------------------------------------------
-    const boxGeometry = boxGeometryEntity.box_geometry as Required<Components.BoxGeometry>;
+    const boxGeometry = boxGeometryEntity.box_geometry!;
     const dimensions = new THREE.Vector3().fromArray(boxGeometry.dimension);
     const offset = new THREE.Vector3().fromArray(boxGeometry.offset);
 
@@ -285,7 +285,7 @@ function createBoxGeometryHandle({
     //--------------------------------------------------------------------------
     function computeWorldComponents(): { local_from_world: THREE.Matrix4; world_position: THREE.Vector3 } {
         // TODO: This should actually get the global transform not the local transform.
-        const globalTransform = boxGeometryEntity.local_transform as Required<Components.LocalTransform>;
+        const globalTransform = boxGeometryEntity.local_transform!;
 
         const world_position = new THREE.Vector3().fromArray(globalTransform.position);
         const world_orientation = new THREE.Quaternion().fromArray(globalTransform.orientation);
