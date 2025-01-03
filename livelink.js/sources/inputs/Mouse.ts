@@ -1,4 +1,4 @@
-import { DynamicLoader, InputOperation } from "@3dverse/livelink.core";
+import { InputOperation } from "@3dverse/livelink.core";
 import { Livelink } from "../Livelink";
 import { InputDevice } from "./InputDevice";
 
@@ -30,14 +30,6 @@ export class Mouse implements InputDevice {
     /**
      *
      */
-    static #operations: {
-        down: [InputOperation, InputOperation, InputOperation];
-        up: [InputOperation, InputOperation, InputOperation];
-    } | null = null;
-
-    /**
-     *
-     */
     constructor(instance: Livelink, viewportDiv?: HTMLDivElement) {
         if (!viewportDiv) {
             throw new Error("MouseInput: viewport div is required.");
@@ -45,21 +37,6 @@ export class Mouse implements InputDevice {
         this.#instance = instance;
         this.#viewport = viewportDiv;
         this.name = "mouse";
-
-        if (!Mouse.#operations) {
-            Mouse.#operations = {
-                down: [
-                    DynamicLoader.Enums.InputOperation.lbutton_down,
-                    DynamicLoader.Enums.InputOperation.mbutton_down,
-                    DynamicLoader.Enums.InputOperation.rbutton_down,
-                ],
-                up: [
-                    DynamicLoader.Enums.InputOperation.lbutton_up,
-                    DynamicLoader.Enums.InputOperation.mbutton_up,
-                    DynamicLoader.Enums.InputOperation.rbutton_up,
-                ],
-            };
-        }
     }
 
     /**
@@ -93,10 +70,9 @@ export class Mouse implements InputDevice {
         }
         const position = this.#getMousePosition(event);
         const input_data = this.#getMouseData(position.x, position.y);
-        const input_operation = Mouse.#operations!.down[event.button];
         this.#instance._sendInput({
             input_state: {
-                input_operation,
+                input_operation: ["lbutton_down", "mbutton_down", "rbutton_down"][event.button] as InputOperation,
                 input_data,
             },
         });
@@ -113,10 +89,9 @@ export class Mouse implements InputDevice {
         }
         const position = this.#getMousePosition(event);
         const input_data = this.#getMouseData(position.x, position.y);
-        const input_operation = Mouse.#operations!.up[event.button];
         this.#instance._sendInput({
             input_state: {
-                input_operation,
+                input_operation: ["lbutton_up", "mbutton_up", "rbutton_up"][event.button] as InputOperation,
                 input_data,
             },
         });
@@ -129,13 +104,7 @@ export class Mouse implements InputDevice {
         const event = e as MouseEvent;
         const position = this.#getMousePosition(event);
         const input_data = this.#getMouseData(position.x, position.y);
-        const input_operation = DynamicLoader.Enums.InputOperation.mouse_move;
-        this.#instance._sendInput({
-            input_state: {
-                input_operation,
-                input_data,
-            },
-        });
+        this.#instance._sendInput({ input_state: { input_operation: "mouse_move", input_data } });
     };
 
     /**

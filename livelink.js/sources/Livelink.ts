@@ -394,14 +394,10 @@ export class Livelink {
      *
      * @returns A promise to the client configuration response.
      */
-    async configureRemoteServer({
-        codec = DynamicLoader.Enums.CodecType.h264,
-    }: {
-        codec?: CodecType;
-    }): Promise<ClientConfigResponse> {
+    async configureRemoteServer({ codec = "h264" }: { codec?: CodecType }): Promise<ClientConfigResponse> {
         const client_config: ClientConfig = {
             remote_canvas_size: this.#remote_rendering_surface.computeRemoteCanvasSize({ codec }),
-            encoder_config: { codec, profile: 1, frame_rate: 60, lossy: true },
+            encoder_config: { codec, profile: "main", frame_rate: 60, lossy: true },
             supported_devices: { keyboard: true, mouse: true, gamepad: true, hololens: false, touchscreen: false },
         };
 
@@ -516,8 +512,8 @@ export class Livelink {
         const client_config: ClientConfig = {
             remote_canvas_size: [8, 8],
             encoder_config: {
-                codec: DynamicLoader.Enums.CodecType.h264,
-                profile: 1,
+                codec: "h264",
+                profile: "main",
                 frame_rate: 30,
                 lossy: true,
             },

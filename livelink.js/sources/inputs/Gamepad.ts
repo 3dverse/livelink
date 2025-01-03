@@ -1,4 +1,3 @@
-import { DynamicLoader } from "@3dverse/livelink.core";
 import type { Livelink } from "../Livelink";
 import type { InputDevice } from "./InputDevice";
 
@@ -193,7 +192,7 @@ class GamepadDevice implements InputDevice {
 
         this.#instance._sendInput({
             input_state: {
-                input_operation: DynamicLoader.Enums.InputOperation.gamepad_axis,
+                input_operation: "gamepad_axis",
                 input_data: new Uint8Array(buffer),
             },
         });
@@ -211,7 +210,7 @@ class GamepadDevice implements InputDevice {
 
         this.#instance._sendInput({
             input_state: {
-                input_operation: DynamicLoader.Enums.InputOperation.gamepad_buttons,
+                input_operation: "gamepad_buttons",
                 input_data: new Uint8Array(buffer),
             },
         });

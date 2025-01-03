@@ -13,8 +13,6 @@ function ThreeOverlayComponent({ scene }: { scene: THREE.Scene }) {
             return;
         }
 
-        console.warn("---- Adding ThreeOverlay", viewport);
-
         const overlay = new ThreeOverlay({ viewport, scene });
         viewport.addOverlay({ overlay });
 

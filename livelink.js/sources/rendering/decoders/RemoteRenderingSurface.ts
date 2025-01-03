@@ -1,5 +1,5 @@
 //------------------------------------------------------------------------------
-import { DynamicLoader, type CodecType, type Vec2i, type Vec2ui16, type ViewportConfig } from "@3dverse/livelink.core";
+import type { CodecType, Vec2i, Vec2ui16, ViewportConfig } from "@3dverse/livelink.core";
 
 //------------------------------------------------------------------------------
 import { Livelink } from "../../Livelink";
@@ -167,7 +167,7 @@ export class RemoteRenderingSurface implements DecodedFrameConsumer {
      *
      */
     computeRemoteCanvasSize({ codec }: { codec: CodecType }): Vec2ui16 {
-        if (codec === DynamicLoader.Enums.CodecType.h265) {
+        if (codec === "h265") {
             const HEVC_MACROBLOCK_SIZE: Vec2i = [64, 64] as const;
             this.#size_multiple = HEVC_MACROBLOCK_SIZE;
             this.#computeSurfaceSize();

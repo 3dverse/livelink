@@ -1,6 +1,5 @@
 //------------------------------------------------------------------------------
 import type { CodecType, Vec2i } from "@3dverse/livelink.core";
-import { DynamicLoader } from "@3dverse/livelink.core";
 
 //------------------------------------------------------------------------------
 import { FrameMetaData } from "./FrameMetaData";
@@ -57,11 +56,8 @@ export class WebCodecsDecoder extends EncodedFrameConsumer {
     static get #codecs(): ReadonlyMap<CodecType, string[]> {
         return Object.freeze(
             new Map<CodecType, string[]>([
-                [DynamicLoader.Enums.CodecType.h265, ["hvc1.1.6.L123.00"]],
-                [
-                    DynamicLoader.Enums.CodecType.h264,
-                    ["avc1.42001E", "avc1.42002A", "avc1.42E01E", "avc1.64001f", "avc1.42002A"],
-                ],
+                ["h265", ["hvc1.1.6.L123.00"]],
+                ["h264", ["avc1.42001E", "avc1.42002A", "avc1.42E01E", "avc1.64001f", "avc1.42002A"]],
             ]),
         );
     }
@@ -96,7 +92,7 @@ export class WebCodecsDecoder extends EncodedFrameConsumer {
 
         for (const hardwareAcceleration of hardwareAccelerations) {
             // Skipping hardware decoding for H264, as it has delay issues.
-            if (codec === DynamicLoader.Enums.CodecType.h264 && hardwareAcceleration === "prefer-hardware") {
+            if (codec === "h264" && hardwareAcceleration === "prefer-hardware") {
                 continue;
             }
 
