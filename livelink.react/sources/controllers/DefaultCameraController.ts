@@ -106,9 +106,6 @@ export class DefaultCameraController extends CameraControllerBase {
     #onCameraUpdate = () => {
         this.cameraControls.camera.getWorldQuaternion(this.global_orientation);
         this.cameraControls.camera.position.toArray(this._camera_entity.local_transform!.position);
-        //FIXME: The following line does not update the eulerOrientation of the local_transform
-        // LocalTransformHandler setter is not called.
-        // -> this.global_orientation.toArray(this._camera_entity.local_transform!.orientation);
-        this._camera_entity.local_transform!.orientation = this.global_orientation.toArray();
+        this.global_orientation.toArray(this._camera_entity.local_transform!.orientation);
     };
 }

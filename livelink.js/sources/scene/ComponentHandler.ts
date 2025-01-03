@@ -14,7 +14,7 @@ export class ComponentHandler {
      *
      */
     constructor(
-        private readonly _entity: Entity,
+        protected readonly _entity: Entity,
         private readonly _component_name: ComponentName,
     ) {}
 
@@ -22,14 +22,10 @@ export class ComponentHandler {
      *
      */
     get(component: object, prop: PropertyKey): unknown {
-        //console.log("GET ATTRIBUTE", prop);
         //@ts-ignore
-        if (prop[0] !== "_") {
+        if ((typeof component[prop] === "object" && component[prop] !== null) || Array.isArray(component[prop])) {
             //@ts-ignore
-            if ((typeof component[prop] === "object" && component[prop] !== null) || Array.isArray(component[prop])) {
-                //@ts-ignore
-                return new Proxy(component[prop], new ComponentHandler(this._entity, this._component_name));
-            }
+            return new Proxy(component[prop], new ComponentHandler(this._entity, this._component_name));
         }
         return Reflect.get(component, prop);
     }
@@ -38,7 +34,7 @@ export class ComponentHandler {
      *
      */
     set(component: object, prop: PropertyKey, v: any): boolean {
-        //console.log("SET ATTRIBUTE", prop, v);
+        //console.trace("SET ATTRIBUTE", prop, v);
         this._entity._markComponentAsDirty({ component_name: this._component_name });
         return Reflect.set(component, prop, v);
     }
@@ -54,9 +50,53 @@ export class ComponentHandler {
 }
 
 /**
- *
+ * CRAPCRAPCRAPCRAPCRAPCRAP ?
  */
 export class LocalTransformHandler extends ComponentHandler {
+    /**
+     * CRAPCRAPCRAPCRAPCRAPCRAPCRAPCRAPCRAPCRAPCRAPCRAPCRAPCRAPCRAP
+     */
+    get(component: object, prop: PropertyKey): unknown {
+        switch (prop) {
+            case "orientation": {
+                const entity = this._entity;
+                //@ts-ignore
+                return new Proxy(component[prop], {
+                    set: (target, prop, value) => {
+                        const returnValue = Reflect.set(target, prop, value);
+                        Reflect.set(
+                            component,
+                            "eulerOrientation",
+                            quaternionToEuler(Reflect.get(component, "orientation")),
+                        );
+
+                        entity._markComponentAsDirty({ component_name: "local_transform" });
+                        return returnValue;
+                    },
+                });
+            }
+            case "eulerOrientation": {
+                const entity = this._entity;
+                //@ts-ignore
+                return new Proxy(component[prop], {
+                    set: (target, prop, value) => {
+                        const returnValue = Reflect.set(target, prop, value);
+                        Reflect.set(
+                            component,
+                            "orientation",
+                            quaternionFromEuler(Reflect.get(component, "eulerOrientation")),
+                        );
+
+                        entity._markComponentAsDirty({ component_name: "local_transform" });
+                        return returnValue;
+                    },
+                });
+            }
+        }
+
+        return super.get(component, prop);
+    }
+
     /**
      *
      */

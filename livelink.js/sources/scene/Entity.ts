@@ -345,9 +345,9 @@ export class Entity extends EntityBase {
         component_name: _ComponentName;
         value: Partial<ComponentType<_ComponentName>> | DefaultValue | undefined;
     }): void {
-        const is_component_attached = Reflect.has(this, `_${component_name}`);
+        const existing_component_value = Reflect.get(this, `#${component_name}`);
         if (value === undefined) {
-            if (!is_component_attached) {
+            if (!existing_component_value) {
                 return;
             }
 
@@ -360,9 +360,12 @@ export class Entity extends EntityBase {
             value = undefined;
         }
 
-        //FIXME: This will not patch euler orientation by using the LocalTransformHandler,
-        // but we might want to get rid of it
-        this.#unsafeSetComponentValue({ component_name, value });
+        if (existing_component_value) {
+            Object.assign(existing_component_value, value);
+            return;
+        }
+
+        this.#attachComponent({ component_name, value });
         this._markComponentAsDirty({ component_name });
     }
 
@@ -388,6 +391,7 @@ export class Entity extends EntityBase {
     /**
      * Attach a component to the entity, by instantiating a proxy for it.
      * Proxy is used to mark the entity as dirty if the component attributes are modified.
+     *
      */
     #attachComponent<_ComponentName extends ComponentName>({
         component_name,
@@ -399,6 +403,7 @@ export class Entity extends EntityBase {
         const Handler =
             Entity.serializableComponentsProxies[component_name] ?? Entity.serializableComponentsProxies["default"];
 
+        // FIXME: this will not compute euler orientations
         const sanitized_value = this._scene._sanitizeComponentValue({ component_name, value });
         const proxy = new Proxy(sanitized_value, new Handler(this, component_name));
 
