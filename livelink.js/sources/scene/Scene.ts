@@ -4,13 +4,13 @@ import type {
     RTID,
     UUID,
     EntityCreationCoreOptions,
-    ScriptEvent,
     ScriptDataObject,
     Components,
     ComponentName,
     EntityResponse,
     ComponentType,
     ComponentsManifest,
+    Events,
 } from "@3dverse/livelink.core";
 
 //------------------------------------------------------------------------------
@@ -397,9 +397,7 @@ export class Scene extends EventTarget {
     /**
      * @internal
      */
-    _onScriptEventReceived = async (e: Event): Promise<void> => {
-        const event = (e as CustomEvent<ScriptEvent>).detail;
-
+    _onScriptEventReceived = async (event: Events.ScriptEventTriggeredEvent): Promise<void> => {
         if (event.emitter_rtid === 0n) {
             return;
         }
@@ -493,7 +491,13 @@ export class Scene extends EventTarget {
     /**
      *
      */
-    async #handlePhysicsScriptEvent({ emitter, event }: { emitter: Entity | null; event: ScriptEvent }): Promise<void> {
+    async #handlePhysicsScriptEvent({
+        emitter,
+        event,
+    }: {
+        emitter: Entity | null;
+        event: Events.ScriptEventTriggeredEvent;
+    }): Promise<void> {
         // if the emitter entity is not found,
         // it means that the entity does not have any event listeners, therefore nobody
         // is interested in the event.

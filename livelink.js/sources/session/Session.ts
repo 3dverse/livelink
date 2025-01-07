@@ -1,5 +1,5 @@
 //------------------------------------------------------------------------------
-import type { ClientMetaData, SessionInterface, UUID } from "@3dverse/livelink.core";
+import type { ClientMetaData, Events, SessionInterface, UUID } from "@3dverse/livelink.core";
 
 //------------------------------------------------------------------------------
 import { Client } from "./Client";
@@ -376,9 +376,9 @@ export class Session extends EventTarget implements SessionInterface {
     /**
      * @internal
      */
-    _onDisconnected(e: Event): void {
-        this.dispatchEvent(new CustomEvent("on-disconnected", { detail: (e as CustomEvent<unknown>).detail }));
-    }
+    _onDisconnected = (e: Events.DisconnectedEvent): void => {
+        this.dispatchEvent(new CustomEvent("on-disconnected", { detail: e.reason }));
+    };
 
     /**
      * @internal

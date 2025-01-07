@@ -4,17 +4,15 @@ import type {
     ClientConfig,
     ClientConfigResponse,
     CodecType,
-    EntityUpdatedEvent,
-    FrameData,
+    Events,
     InputState,
     LivelinkCore,
-    RTID,
     ScreenSpaceRayQuery,
     ScreenSpaceRayResult,
     SkeletonPartialPose,
     UUID,
     Vec2i,
-    ViewportConfigs,
+    ViewportConfig,
 } from "@3dverse/livelink.core";
 import { DynamicLoader } from "@3dverse/livelink.core";
 
@@ -330,17 +328,9 @@ export class Livelink {
      * Note that the session is not closed, it can be reconnected later.
      */
     async disconnect(): Promise<void> {
-        this.#core.removeEventListener({
-            target: "gateway",
-            event_name: "on-script-event-received",
-            handler: e => this.scene._onScriptEventReceived(e),
-        });
+        this.#core.removeEventListener("on-script-event-received", this.scene._onScriptEventReceived);
 
-        this.#core.removeEventListener({
-            target: "gateway",
-            event_name: "on-frame-received",
-            handler: this.#onFrameReceived,
-        });
+        this.#core.removeEventListener("on-frame-received", this.#onFrameReceived);
 
         if (this.#update_interval !== 0) {
             clearInterval(this.#update_interval);
@@ -548,7 +538,7 @@ export class Livelink {
     /**
      * @internal
      */
-    _setViewports({ viewport_configs }: { viewport_configs: ViewportConfigs }): void {
+    _setViewports({ viewport_configs }: { viewport_configs: Array<ViewportConfig> }): void {
         this.#core.setViewports({ viewport_configs });
     }
 
@@ -589,49 +579,22 @@ export class Livelink {
 
         await this.#core.connect({ session: this.session, editor_url: Livelink._editor_url });
 
-        this.#core.addEventListener({
-            target: "editor",
-            event_name: "entities-updated",
-            handler: (event: Event) => {
-                const e = event as CustomEvent<Record<UUID, EntityUpdatedEvent>>;
-                for (const entity_euid in e.detail) {
-                    this.scene._entity_registry._updateEntityFromEvent({
-                        entity_euid,
-                        updated_components: e.detail[entity_euid].updatedComponents,
-                    });
-                }
+        this.#core.addEventListener("on-entities-updated", ({ updated_entities }: Events.EntitiesUpdatedEvent) => {
+            for (const { entity_euid, updated_components } of updated_entities) {
+                this.scene._entity_registry._updateEntityFromEvent({ entity_euid, updated_components });
+            }
+        });
+
+        this.#core.addEventListener(
+            "on-entity-visibility-changed",
+            ({ entity_rtid, is_visible }: Events.EntityVisibilityChangedEvent) => {
+                this.scene._onEntityVisibilityChanged({ entity_rtid, is_visible });
             },
-        });
+        );
 
-        this.#core.addEventListener({
-            target: "editor",
-            event_name: "entity-visibility-changed",
-            handler: e => {
-                const event = e as CustomEvent<{ entityRTID: RTID; isVisible: boolean }>;
-                this.scene._onEntityVisibilityChanged({
-                    entity_rtid: event.detail.entityRTID,
-                    is_visible: event.detail.isVisible,
-                });
-            },
-        });
-
-        this.#core.addEventListener({
-            target: "gateway",
-            event_name: "on-script-event-received",
-            handler: e => this.scene._onScriptEventReceived(e),
-        });
-
-        this.#core.addEventListener({
-            target: "gateway",
-            event_name: "on-frame-received",
-            handler: this.#onFrameReceived,
-        });
-
-        this.#core.addEventListener({
-            target: "gateway",
-            event_name: "on-disconnected",
-            handler: e => this.session._onDisconnected(e),
-        });
+        this.#core.addEventListener("on-script-event-received", this.scene._onScriptEventReceived);
+        this.#core.addEventListener("on-frame-received", this.#onFrameReceived);
+        this.#core.addEventListener("on-disconnected", this.session._onDisconnected);
 
         return this;
     }
@@ -639,9 +602,7 @@ export class Livelink {
     /**
      *
      */
-    #onFrameReceived = (e: Event): void => {
-        const frame_data = (e as CustomEvent<FrameData>).detail;
-
+    #onFrameReceived = (frame_data: Events.FrameReceivedEvent): void => {
         this.session._updateClients({ core: this, client_data: frame_data.meta_data.clients });
         const meta_data = convertRawFrameMetaDataToFrameMetaData({
             raw_frame_meta_data: frame_data.meta_data,
