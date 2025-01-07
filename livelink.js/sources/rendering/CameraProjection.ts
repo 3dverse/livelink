@@ -22,12 +22,12 @@ export type Ray = { origin: Vec3; direction: Vec3 };
 /**
  * Holds the projection and transform matrices associated to a camera entity.
  *
- * The data in this class is guaranteed to be synchronized with the frame being rendered. It accounts for
- * the delays that occur between the remote server and the client.
+ * The data in this class is guaranteed to be synchronized with the frame being rendered.
+ * It accounts for the delays that occur between the remote server and the client.
  * The data it holds come from the frame meta data that are provided along with the frame sent by the server.
  *
  * As for the transform values in the camera entity, they are not guaranteed to be synchronized
- * with the frame being rendered. This is due to the fact that the camera entity can be updated at any time,
+ * with the frame being rendered. This is because the camera entity can be updated at any time,
  * and might be too recent to be used in the current frame.
  *
  * In short, camera controllers should use the camera entity and frame drawers (RenderingSurface, Overlay, ...)
@@ -67,7 +67,7 @@ export class CameraProjection {
     #clip_from_world_matrix = mat4.create();
 
     /**
-     * Transformation matrix from clip space to world space, aka the global transformation matrix.
+     * Transformation matrix from view space to world space, aka the inverse of the view matrix.
      */
     #world_from_view_matrix = mat4.create();
 
@@ -86,14 +86,14 @@ export class CameraProjection {
     }
 
     /**
-     * Transformation matrix from clip space to world space, the inverse of model-view-projection matrix.
+     * Transformation matrix from clip space to world space, aka the inverse of model-view-projection matrix.
      */
     get world_from_clip_matrix(): Readonly<Mat4> {
         return mat4.invert(mat4.create(), this.#clip_from_world_matrix) as Mat4;
     }
 
     /**
-     * Transformation matrix from clip space to world space, aka the global transformation matrix.
+     * Transformation matrix from view space to world space, aka the inverse of the view matrix.
      */
     get world_from_view_matrix(): Readonly<Mat4> {
         return this.#world_from_view_matrix as Mat4;

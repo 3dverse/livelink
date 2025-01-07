@@ -56,6 +56,15 @@ We import the necessary classes from the Livelink library using the ES6 module s
 
 ## Start a New Session
 
+First start by making sure that the browser supports WebCodecs.
+
+```javascript
+const codec = await WebCodecsDecoder.findSupportedCodec();
+if (!codec) {
+    throw new Error("WebCodecs not supported in this browser.");
+}
+```
+
 To be able to use the Livelink API, we need to start a new session.
 
 We do this by calling the `Livelink.start` method with the necessary parameters:
@@ -73,23 +82,14 @@ This is mandatory to be able to use the Livelink API.
 Creating a session triggers the dynamic loading of the Livelink Core module that is the actual backbone of the API
 that implements the communication protocol with the server.
 
-If you want to use your own scene, you can just replace `scene_id` and `token` with your own values.
+> 💡 If you want to use your own scene, you can just replace `scene_id` and `token` with your own values.
 
 ## Streaming Pipeline
 
-At this point we created a new sessio on the server.
+At this point we created a new session on the server.
 The server will wait for us to configure our client to start streaming frames.
 
 The next step is to configure our streaming pipeline.
-
-First start by making sure that the browser supports WebCodecs.
-
-```javascript
-const codec = await WebCodecsDecoder.findSupportedCodec();
-if (!codec) {
-    throw new Error("WebCodecs not supported in this browser.");
-}
-```
 
 ### Rendering Surface and Viewport
 
@@ -108,7 +108,7 @@ instance.addViewports({ viewports: [viewport] });
 
 In here you can customize the layout of the frame by adding multipe viewports and arranging them as you see fit.
 
-Note you must assign a camera entity to each viewport for it to actually render anything.
+You must assign a camera entity to each viewport for it to actually render anything.
 
 Before doing that we need to configure the remote server with the codec we found earlier.
 
@@ -122,7 +122,7 @@ await instance.setEncodedFrameConsumer({
 });
 ```
 
-Note that you must have setup the viewports before configuring the remote server, otherwise the resolution of the
+You must have setup the viewports before configuring the remote server, otherwise the resolution of the
 frames won't be set correctly.
 
 ### Camera
@@ -183,6 +183,12 @@ instance.startStreaming();
                 WebCodecsDecoder,
             } from "https://unpkg.com/@3dverse/livelink/dist/index.mjs";
 
+            // Make sure the browser supports WebCodecs.
+            const codec = await WebCodecsDecoder.findSupportedCodec();
+            if (!codec) {
+                throw new Error("WebCodecs not supported in this browser.");
+            }
+
             // Start a new session.
             const instance = await Livelink.start({
                 scene_id: "322c6bf7-52eb-4197-ab42-a0924f71d72d",
@@ -190,17 +196,8 @@ instance.startStreaming();
                 is_transient: true,
             });
 
-            // Make sure the browser supports WebCodecs.
-            const codec = await WebCodecsDecoder.findSupportedCodec();
-            if (!codec) {
-                throw new Error("WebCodecs not supported in this browser.");
-            }
-
             // Create a rendering surface backed by the canvas element.
-            const surface = new RenderingSurface({
-                canvas_element: "display-canvas",
-                context_type: "2d",
-            });
+            const surface = new RenderingSurface({ canvas_element: "display-canvas", context_type: "2d" });
 
             // Setup a viewport taking up the entire canvas.
             const viewport = new Viewport(instance, surface);

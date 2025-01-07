@@ -19,18 +19,18 @@
                 WebCodecsDecoder,
             } from "https://unpkg.com/@3dverse/livelink/dist/index.mjs";
 
+            // First, make sure the browser supports WebCodecs.
+            const codec = await WebCodecsDecoder.findSupportedCodec();
+            if (!codec) {
+                throw new Error("WebCodecs not supported in this browser.");
+            }
+
             // Start a new session.
             const instance = await Livelink.start({
                 scene_id: "322c6bf7-52eb-4197-ab42-a0924f71d72d",
                 token: "public_UjENe9mA-wgTBYvw",
                 is_transient: true,
             });
-
-            // Make sure the browser supports WebCodecs.
-            const codec = await WebCodecsDecoder.findSupportedCodec();
-            if (!codec) {
-                throw new Error("WebCodecs not supported in this browser.");
-            }
 
             // Create a rendering surface backed by the canvas element.
             const surface = new RenderingSurface({
