@@ -11,7 +11,7 @@ import {
     RenderGraphDataObject,
 } from "@3dverse/livelink";
 import { XRContext } from "@3dverse/livelink-react/sources/web-xr/XRContext";
-import { Quaternion, Vector3 } from "three";
+import { Quaternion, Vector3 } from "threejs-math";
 
 //------------------------------------------------------------------------------
 import { WebXRInputRelay } from "./WebXRInputRelay";

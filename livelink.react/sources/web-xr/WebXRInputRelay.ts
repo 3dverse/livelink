@@ -1,5 +1,5 @@
 //------------------------------------------------------------------------------
-import { Matrix4 } from "three";
+import { Matrix4 } from "threejs-math";
 import { fetchProfile, MotionController } from "@webxr-input-profiles/motion-controllers";
 
 //------------------------------------------------------------------------------
@@ -169,7 +169,7 @@ export class WebXRInputRelay {
         // Update the pose of the boxes to sync with the controller.
         const pose = frame.getPose(source.gripSpace!, refSpace);
         if (pose) {
-            box.matrix.fromArray(pose.transform.matrix);
+            box.matrix.fromArray(pose.transform.matrix as unknown as number[]);
         }
     }
 

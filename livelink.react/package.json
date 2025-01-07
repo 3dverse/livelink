@@ -28,11 +28,13 @@
   "homepage": "https://github.com/3dverse/livelink#readme",
   "dependencies": {
     "@3dverse/livelink-camera-controls": "^0.3.1",
-    "gl-matrix": "^3.4.3"
+    "gl-matrix": "^3.4.3",
+    "threejs-math": "^0.147.0"
   },
   "devDependencies": {
     "@types/react": "^18.3.12",
     "@types/react-dom": "^18.3.1",
+    "@types/webxr": "^0.5.20",
     "@webxr-input-profiles/motion-controllers": "^1.0.0",
     "esbuild": "^0.24.0",
     "npm-run-all": "^4.1.5",
