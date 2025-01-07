@@ -114,4 +114,4 @@ function applyTemplate(templateFileName, outputSchemaName, dictionnary) {
 
 //------------------------------------------------------------------------------
 generateEntityBase();
-generateSettingsBase();
+//generateSettingsBase();

@@ -1,4 +1,4 @@
-import type { RawFrameMetaData, Mat4, Quat, UUID, Vec3 } from "@3dverse/livelink.core";
+import type { Mat4, Quat, Events, UUID, Vec3 } from "@3dverse/livelink.core";
 import { FrameCameraTransform } from "./FrameCameraTransform";
 import { EntityRegistry } from "../../scene/EntityRegistry";
 import { Viewport } from "../Viewport";
@@ -39,7 +39,7 @@ export function convertRawFrameMetaDataToFrameMetaData({
     entity_registry,
     viewports,
 }: {
-    raw_frame_meta_data: RawFrameMetaData;
+    raw_frame_meta_data: Events.RawFrameMetaData;
     client_id: UUID;
     entity_registry: EntityRegistry;
     viewports: Array<Viewport>;

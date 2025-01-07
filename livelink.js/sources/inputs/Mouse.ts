@@ -1,4 +1,4 @@
-import { InputOperation } from "@3dverse/livelink.core";
+import { Enums } from "@3dverse/livelink.core";
 import { Livelink } from "../Livelink";
 import { InputDevice } from "./InputDevice";
 
@@ -72,7 +72,7 @@ export class Mouse implements InputDevice {
         const input_data = this.#getMouseData(position.x, position.y);
         this.#instance._sendInput({
             input_state: {
-                input_operation: ["lbutton_down", "mbutton_down", "rbutton_down"][event.button] as InputOperation,
+                input_operation: ["lbutton_down", "mbutton_down", "rbutton_down"][event.button] as Enums.InputOperation,
                 input_data,
             },
         });
@@ -91,7 +91,7 @@ export class Mouse implements InputDevice {
         const input_data = this.#getMouseData(position.x, position.y);
         this.#instance._sendInput({
             input_state: {
-                input_operation: ["lbutton_up", "mbutton_up", "rbutton_up"][event.button] as InputOperation,
+                input_operation: ["lbutton_up", "mbutton_up", "rbutton_up"][event.button] as Enums.InputOperation,
                 input_data,
             },
         });

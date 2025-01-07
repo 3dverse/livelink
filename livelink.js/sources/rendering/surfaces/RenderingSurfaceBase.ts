@@ -1,5 +1,5 @@
 //------------------------------------------------------------------------------
-import { Vec2i, ViewportConfig } from "@3dverse/livelink.core";
+import { Vec2i, Commands } from "@3dverse/livelink.core";
 
 //------------------------------------------------------------------------------
 import { Rect } from "./Rect";
@@ -108,7 +108,7 @@ export abstract class RenderingSurfaceBase extends EventTarget {
     }: {
         width: number;
         height: number;
-    }): Array<ViewportConfig & { z_index: number }> {
+    }): Array<Commands.ViewportConfig & { z_index: number }> {
         if (!this.isValid()) {
             throw new Error("Invalid config");
         }

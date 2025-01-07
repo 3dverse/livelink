@@ -1,5 +1,5 @@
 //------------------------------------------------------------------------------
-import type { CodecType, Vec2i, Vec2ui16, ViewportConfig } from "@3dverse/livelink.core";
+import type { Enums, Commands, Vec2i, Vec2u16 } from "@3dverse/livelink.core";
 
 //------------------------------------------------------------------------------
 import { Livelink } from "../../Livelink";
@@ -39,19 +39,19 @@ export class RemoteRenderingSurface implements DecodedFrameConsumer {
     /**
      * Surface actual dimensions.
      */
-    #dimensions: Vec2ui16 = [0, 0];
+    #dimensions: Vec2u16 = [0, 0];
 
     /**
      * Because of the way the encoder works, pixels may be grouped in macroblocks,
      * to avoid artifacts the surface dimensions must be a multiple of a power of 2.
      * This multiple value depends on the encoder used.
      */
-    #size_multiple: Vec2ui16 = [32, 32];
+    #size_multiple: Vec2u16 = [32, 32];
 
     /**
      * Surface dimensions in pixels rounded up to the next multiple of 8.
      */
-    get dimensions(): Vec2ui16 {
+    get dimensions(): Vec2u16 {
         return this.#dimensions;
     }
     get width(): number {
@@ -75,8 +75,8 @@ export class RemoteRenderingSurface implements DecodedFrameConsumer {
     /**
      * Config for all registered viewports.
      */
-    get #config(): Array<ViewportConfig> {
-        const result: Array<ViewportConfig & { z_index: number }> = [];
+    get #config(): Array<Commands.ViewportConfig> {
+        const result: Array<Commands.ViewportConfig & { z_index: number }> = [];
         for (const surface of this.#surfaces) {
             result.push(...surface._getViewportConfigs({ width: this.width, height: this.height }));
         }
@@ -166,7 +166,7 @@ export class RemoteRenderingSurface implements DecodedFrameConsumer {
     /**
      *
      */
-    computeRemoteCanvasSize({ codec }: { codec: CodecType }): Vec2ui16 {
+    computeRemoteCanvasSize({ codec }: { codec: Enums.CodecType }): Vec2u16 {
         if (codec === "h265") {
             const HEVC_MACROBLOCK_SIZE: Vec2i = [64, 64] as const;
             this.#size_multiple = HEVC_MACROBLOCK_SIZE;

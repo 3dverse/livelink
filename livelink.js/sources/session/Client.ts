@@ -1,5 +1,5 @@
 //------------------------------------------------------------------------------
-import type { ClientMetaData, RTID, UUID } from "@3dverse/livelink.core";
+import type { Events, RTID, UUID } from "@3dverse/livelink.core";
 
 //------------------------------------------------------------------------------
 import { ClientInfo, CursorData } from "./ClientInfo";
@@ -83,7 +83,7 @@ export class Client {
     }: {
         core: Livelink;
         client_info: ClientInfo;
-        client_meta_data: ClientMetaData;
+        client_meta_data: Events.ClientMetaData;
     }) {
         this.#core = core;
         this.#client_info = client_info;
@@ -104,7 +104,7 @@ export class Client {
     /**
      * @internal
      */
-    _updateFromClientMetaData({ client_meta_data }: { client_meta_data: ClientMetaData }): void {
+    _updateFromClientMetaData({ client_meta_data }: { client_meta_data: Events.ClientMetaData }): void {
         this.#camera_rtids = client_meta_data.viewports.map(v => v.camera_rtid);
 
         if (client_meta_data.hovered_entity_rtid != 0n) {

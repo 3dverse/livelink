@@ -1,18 +1,13 @@
 //------------------------------------------------------------------------------
 import type {
     ActivityWatcher,
-    ClientConfig,
-    ClientConfigResponse,
-    CodecType,
+    Enums,
+    Commands,
     Events,
-    InputState,
     LivelinkCore,
-    ScreenSpaceRayQuery,
-    ScreenSpaceRayResult,
-    SkeletonPartialPose,
+    Queries,
     UUID,
     Vec2i,
-    ViewportConfig,
 } from "@3dverse/livelink.core";
 import { DynamicLoader } from "@3dverse/livelink.core";
 
@@ -234,7 +229,7 @@ export class Livelink {
      * @throws If the session could not be joined
      */
     static async join({ session }: { session: Session }): Promise<Livelink> {
-        await DynamicLoader.load();
+        await DynamicLoader.load("1.0");
 
         console.debug("Joining session:", session);
         return new Livelink({ session }).#connect();
@@ -258,7 +253,7 @@ export class Livelink {
     /**
      * The codec used by the renderer.
      */
-    #codec: CodecType | null = null;
+    #codec: Enums.CodecType | null = null;
 
     /**
      * The rendering surface as seen by the renderer.
@@ -384,8 +379,12 @@ export class Livelink {
      *
      * @returns A promise to the client configuration response.
      */
-    async configureRemoteServer({ codec = "h264" }: { codec?: CodecType }): Promise<ClientConfigResponse> {
-        const client_config: ClientConfig = {
+    async configureRemoteServer({
+        codec = "h264",
+    }: {
+        codec?: Enums.CodecType;
+    }): Promise<Commands.ClientConfigResponse> {
+        const client_config: Commands.ClientConfig = {
             remote_canvas_size: this.#remote_rendering_surface.computeRemoteCanvasSize({ codec }),
             encoder_config: { codec, profile: "main", frame_rate: 60, lossy: true },
             supported_devices: { keyboard: true, mouse: true, gamepad: true, hololens: false, touchscreen: false },
@@ -464,7 +463,13 @@ export class Livelink {
      * @param params.controller The entity having the animation controller component.
      * @param params.partial_pose The partial pose to send.
      */
-    sendSkeletonPose({ controller, partial_pose }: { controller: Entity; partial_pose: SkeletonPartialPose }): void {
+    sendSkeletonPose({
+        controller,
+        partial_pose,
+    }: {
+        controller: Entity;
+        partial_pose: Commands.SkeletonPartialPose;
+    }): void {
         this.#core.sendSkeletonPose({
             controller_rtid: controller.rtid,
             partial_pose,
@@ -498,8 +503,8 @@ export class Livelink {
     /**
      * @experimental
      */
-    async configureHeadlessClient(): Promise<ClientConfigResponse> {
-        const client_config: ClientConfig = {
+    async configureHeadlessClient(): Promise<Commands.ClientConfigResponse> {
+        const client_config: Commands.ClientConfig = {
             remote_canvas_size: [8, 8],
             encoder_config: {
                 codec: "h264",
@@ -524,7 +529,7 @@ export class Livelink {
     /**
      * @internal
      */
-    _sendInput({ input_state }: { input_state: InputState }): void {
+    _sendInput({ input_state }: { input_state: Commands.InputStateData }): void {
         this.#core.sendInputState({ input_state });
     }
 
@@ -538,7 +543,7 @@ export class Livelink {
     /**
      * @internal
      */
-    _setViewports({ viewport_configs }: { viewport_configs: Array<ViewportConfig> }): void {
+    _setViewports({ viewport_configs }: { viewport_configs: Array<Commands.ViewportConfig> }): void {
         this.#core.setViewports({ viewport_configs });
     }
 
@@ -548,8 +553,8 @@ export class Livelink {
     async _castScreenSpaceRay({
         screenSpaceRayQuery,
     }: {
-        screenSpaceRayQuery: ScreenSpaceRayQuery;
-    }): Promise<ScreenSpaceRayResult> {
+        screenSpaceRayQuery: Queries.ScreenSpaceRayQuery;
+    }): Promise<Queries.ScreenSpaceRayResponse> {
         return this.#core.castScreenSpaceRay({ screenSpaceRayQuery });
     }
 

@@ -1,5 +1,5 @@
 //------------------------------------------------------------------------------
-import type { ClientMetaData, Events, SessionInterface, UUID } from "@3dverse/livelink.core";
+import type { Events, SessionInterface, UUID } from "@3dverse/livelink.core";
 
 //------------------------------------------------------------------------------
 import { Client } from "./Client";
@@ -383,7 +383,7 @@ export class Session extends EventTarget implements SessionInterface {
     /**
      * @internal
      */
-    _updateClients({ core, client_data }: { core: Livelink; client_data: Array<ClientMetaData> }): void {
+    _updateClients({ core, client_data }: { core: Livelink; client_data: Array<Events.ClientMetaData> }): void {
         for (const client_meta_data of client_data) {
             const client_id = client_meta_data.client_id;
 
@@ -410,7 +410,7 @@ export class Session extends EventTarget implements SessionInterface {
         client_meta_data,
     }: {
         core: Livelink;
-        client_meta_data: ClientMetaData;
+        client_meta_data: Events.ClientMetaData;
     }): Promise<void> {
         const client_id = client_meta_data.client_id;
 
@@ -438,14 +438,20 @@ export class Session extends EventTarget implements SessionInterface {
     /**
      *
      */
-    #handleExistingClient({ client, client_meta_data }: { client: Client; client_meta_data: ClientMetaData }): void {
+    #handleExistingClient({
+        client,
+        client_meta_data,
+    }: {
+        client: Client;
+        client_meta_data: Events.ClientMetaData;
+    }): void {
         client._updateFromClientMetaData({ client_meta_data });
     }
 
     /**
      *
      */
-    #removeDisconnectedClients({ client_data }: { client_data: Array<ClientMetaData> }): void {
+    #removeDisconnectedClients({ client_data }: { client_data: Array<Events.ClientMetaData> }): void {
         const client_ids = client_data.map(d => d.client_id);
 
         for (const [client_id] of this.#clients) {

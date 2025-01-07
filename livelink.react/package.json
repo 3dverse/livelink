@@ -27,7 +27,7 @@
   },
   "homepage": "https://github.com/3dverse/livelink#readme",
   "dependencies": {
-    "@3dverse/livelink-camera-controls": "^0.3.0",
+    "@3dverse/livelink-camera-controls": "^0.3.1",
     "gl-matrix": "^3.4.3"
   },
   "devDependencies": {

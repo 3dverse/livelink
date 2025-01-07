@@ -1,5 +1,5 @@
 //------------------------------------------------------------------------------
-import type { CodecType, Vec2i } from "@3dverse/livelink.core";
+import type { Enums, Vec2i } from "@3dverse/livelink.core";
 
 //------------------------------------------------------------------------------
 import { FrameMetaData } from "./FrameMetaData";
@@ -32,7 +32,7 @@ export class WebCodecsDecoder extends EncodedFrameConsumer {
      *
      * @returns The codec that is supported by the browser, or null if the WebCodecs API is not supported or no codec is supported by the browser.
      */
-    public static async findSupportedCodec(): Promise<CodecType | null> {
+    public static async findSupportedCodec(): Promise<Enums.CodecType | null> {
         if (typeof VideoDecoder === "undefined") {
             console.log("WebCodecs not supported");
             return null;
@@ -53,9 +53,9 @@ export class WebCodecsDecoder extends EncodedFrameConsumer {
     /**
      * A map of codecs supported by Livelink.core and their corresponding WebCodecs codec strings.
      */
-    static get #codecs(): ReadonlyMap<CodecType, string[]> {
+    static get #codecs(): ReadonlyMap<Enums.CodecType, string[]> {
         return Object.freeze(
-            new Map<CodecType, string[]>([
+            new Map<Enums.CodecType, string[]>([
                 ["h265", ["hvc1.1.6.L123.00"]],
                 ["h264", ["avc1.42001E", "avc1.42002A", "avc1.42E01E", "avc1.64001f", "avc1.42002A"]],
             ]),
@@ -69,7 +69,7 @@ export class WebCodecsDecoder extends EncodedFrameConsumer {
         codec,
         frame_dimensions,
     }: {
-        codec: CodecType;
+        codec: Enums.CodecType;
         frame_dimensions?: Vec2i;
     }): Promise<VideoDecoderSupport | null> {
         if (typeof VideoDecoder === "undefined") {
@@ -146,7 +146,7 @@ export class WebCodecsDecoder extends EncodedFrameConsumer {
         codec,
         frame_dimensions,
     }: {
-        codec: CodecType;
+        codec: Enums.CodecType;
         frame_dimensions: Vec2i;
     }): Promise<EncodedFrameConsumer> {
         const supportedConfig = await WebCodecsDecoder.#findSupportedConfig({

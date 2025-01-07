@@ -1,5 +1,5 @@
 //------------------------------------------------------------------------------
-import type { CodecType, Vec2i } from "@3dverse/livelink.core";
+import type { Enums, Vec2i } from "@3dverse/livelink.core";
 
 //------------------------------------------------------------------------------
 import { FrameMetaData } from "./FrameMetaData";
@@ -63,7 +63,7 @@ export abstract class EncodedFrameConsumer {
         codec,
         frame_dimensions,
     }: {
-        codec: CodecType;
+        codec: Enums.CodecType;
         frame_dimensions: Vec2i;
     }): Promise<EncodedFrameConsumer>;
 

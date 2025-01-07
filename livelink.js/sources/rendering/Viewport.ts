@@ -1,5 +1,5 @@
 //------------------------------------------------------------------------------
-import type { HighlightMode, Vec2, Vec3 } from "@3dverse/livelink.core";
+import type { Enums, Vec2, Vec3 } from "@3dverse/livelink.core";
 
 //------------------------------------------------------------------------------
 import { vec3 } from "gl-matrix";
@@ -272,7 +272,7 @@ export class Viewport extends EventTarget {
         mode = "None",
     }: {
         screen_position: Vec2;
-        mode: HighlightMode;
+        mode: Enums.HighlightMode;
     }): Promise<{ entity: Entity; world_position: Vec3; world_normal: Vec3 } | null> {
         if (!this.#camera_projection) {
             return null;

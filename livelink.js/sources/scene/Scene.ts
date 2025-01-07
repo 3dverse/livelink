@@ -3,7 +3,6 @@ import type {
     LivelinkCore,
     RTID,
     UUID,
-    EntityCreationCoreOptions,
     ScriptDataObject,
     Components,
     ComponentName,
@@ -16,14 +15,14 @@ import type {
 //------------------------------------------------------------------------------
 import { Entity } from "./Entity";
 import { compute_rpn } from "./Filters";
-import { SceneSettings } from "./SceneSettings";
 import { EntityRegistry } from "./EntityRegistry";
 
 /**
  * @inline
  * @category Scene
  */
-export type EntityCreationOptions = EntityCreationCoreOptions & {
+export type EntityCreationOptions = {
+    delete_on_client_disconnection?: boolean;
     auto_broadcast?: boolean;
     auto_update?: boolean;
 };
@@ -46,11 +45,6 @@ const PHYSICS_EVENT_MAP_ID = "7a8cc05e-8659-4b23-99d1-1352d13e2020" as const;
  * @category Scene
  */
 export class Scene extends EventTarget {
-    /**
-     * Scene settings
-     */
-    public readonly settings = new SceneSettings();
-
     /**
      * The core instance.
      */
@@ -112,11 +106,12 @@ export class Scene extends EventTarget {
         parent?: Entity | null;
     }): Promise<Entity> {
         const lineage: Partial<Components.Lineage> | undefined = parent ? { parentUUID: parent.id } : undefined;
-        const entity_core = await this.#core.spawnEntity({
-            components: { debug_name: { value: name }, ...components, lineage },
-            options,
+        const entity_cores = await this.#core.createEntities({
+            components: [{ debug_name: { value: name }, ...components, lineage }],
+            delete_on_client_disconnection: options?.delete_on_client_disconnection ?? false,
+            is_transient: true,
         });
-        return new Entity({ scene: this, parent, components: entity_core, options });
+        return new Entity({ scene: this, parent, components: entity_cores[0], options });
     }
 
     /**
@@ -137,15 +132,14 @@ export class Scene extends EventTarget {
         components_array: Array<ComponentsManifest>;
         options?: EntityCreationOptions;
     }): Promise<Array<Entity>> {
-        const components_with_euid_array = await this.#core.createEntities({
+        const entity_cores = await this.#core.createEntities({
             components: components_array,
-            options,
+            delete_on_client_disconnection: options?.delete_on_client_disconnection ?? false,
+            is_transient: true,
         });
 
         //TODO: compute each entity's parent
-        return components_with_euid_array.map(
-            components => new Entity({ scene: this, parent: null, components, options }),
-        );
+        return entity_cores.map(components => new Entity({ scene: this, parent: null, components, options }));
     }
 
     /**
