@@ -600,7 +600,7 @@ export class Livelink {
 
         this.#core.addEventListener("on-script-event-received", this.scene._onScriptEventReceived);
         this.#core.addEventListener("on-frame-received", this.#onFrameReceived);
-        this.#core.addEventListener("on-disconnected", this.session._onDisconnected, { once: true });
+        this.#core.addEventListener("on-disconnected", this.session._onDisconnected);
         this.#core.addEventListener("on-activity-warning", this.session._onInactivityWarning);
 
         return this;

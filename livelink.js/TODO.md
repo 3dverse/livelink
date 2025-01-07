@@ -5,7 +5,7 @@
 - [ ] Camera controllers
 - [ ] Use TypedEventTarget for events
     - Livelink
-        - [ ] viewports-added
+        - [x] TO_REMOVE\_\_viewports-added
     - Rendering
         - [ ] on-entity-picked (Viewport)
         - [ ] on-resized (CanvasAutoResizer, RenderingSurface, OffscreenSurface)
@@ -13,9 +13,9 @@
         - [ ] entity-updated
         - [ ] visibility-changed
     - Session
-        - [ ] on-disconnected
-        - [ ] client-joined
-        - [ ] client-left
+        - [x] on-disconnected
+        - [x] client-joined
+        - [x] client-left
 - [x] Check if we can save on Entity Proxy by defining accessors for each component
     - One drawback is that we can't delete components with `delete entity.component`
     - We can use `entity.component = undefined` instead
