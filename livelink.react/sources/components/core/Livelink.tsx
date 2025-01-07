@@ -179,7 +179,7 @@ export function LivelinkProvider({
                     instance.startStreaming();
                     setIsConnecting(false);
                 });
-                instance.activity_watcher.addEventListener("on-warning", onInactivityWarning);
+                instance.session.addEventListener("on-inactivity-warning", onInactivityWarning);
             })
             .catch(error => {
                 console.debug("Failed to connect to Livelink", error);
@@ -189,7 +189,7 @@ export function LivelinkProvider({
             });
 
         return () => {
-            instance?.activity_watcher.removeEventListener("on-warning", onInactivityWarning);
+            instance?.session.removeEventListener("on-inactivity-warning", onInactivityWarning);
             setInstance(null);
             setIsConnecting(true);
             setIsConnectionLost(false);
@@ -207,10 +207,10 @@ export function LivelinkProvider({
         // the GatewayController.authenticateClient or EditorController.connectToSession of livelink-core.
         // Also nothing's notify the livelink user of a loss of the EditorConnection.
 
-        const onDisconnectedHandler = (event: Event) => {
+        const onDisconnectedHandler = (event: Livelink.DisconnectedEvent) => {
             setIsConnectionLost(true);
             setInactivityWarning(false);
-            setConnectionError((event as CustomEvent<{ reason: string }>).detail.reason);
+            setConnectionError(event.reason);
         };
 
         instance.session.addEventListener("on-disconnected", onDisconnectedHandler);
@@ -259,7 +259,7 @@ export function LivelinkProvider({
 //------------------------------------------------------------------------------
 function configureClient(instance: LivelinkInstance) {
     const configure = async () => {
-        instance.session.removeEventListener("viewports-added", configure);
+        instance.session.removeEventListener("TO_REMOVE__viewports-added", configure);
 
         console.log("-- Configuring client");
         const webcodec = await Livelink.WebCodecsDecoder.findSupportedCodec();
@@ -275,7 +275,7 @@ function configureClient(instance: LivelinkInstance) {
         instance.TO_REMOVE__startIfReady();
     };
 
-    instance.session.addEventListener("viewports-added", configure);
+    instance.session.addEventListener("TO_REMOVE__viewports-added", configure);
 }
 
 //------------------------------------------------------------------------------

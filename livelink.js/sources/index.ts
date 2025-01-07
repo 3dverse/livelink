@@ -6,6 +6,7 @@ export * from "./session/Client";
 export * from "./session/Session";
 export * from "./session/ClientInfo";
 export * from "./session/SessionInfo";
+export * from "./session/SessionEvents";
 
 export * from "./scene/Scene";
 export * from "./scene/Entity";

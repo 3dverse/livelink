@@ -25,6 +25,7 @@ import { InputDevice } from "./inputs/InputDevice";
 
 import { Session, SessionSelector } from "./session/Session";
 import { SessionInfo } from "./session/SessionInfo";
+import { TO_REMOVE__ViewportsAddedEvent } from "./session/SessionEvents";
 
 /**
  * This class represents the Livelink connection between the client and the 3dverse server holding
@@ -355,7 +356,7 @@ export class Livelink {
      */
     addViewports({ viewports }: { viewports: Array<Viewport> }): void {
         this.#remote_rendering_surface.addViewports({ viewports });
-        this.session.dispatchEvent(new CustomEvent("viewports-added", { detail: { viewports } }));
+        this.session._dispatchEvent(new TO_REMOVE__ViewportsAddedEvent({ viewports }));
     }
 
     /**
@@ -599,7 +600,8 @@ export class Livelink {
 
         this.#core.addEventListener("on-script-event-received", this.scene._onScriptEventReceived);
         this.#core.addEventListener("on-frame-received", this.#onFrameReceived);
-        this.#core.addEventListener("on-disconnected", this.session._onDisconnected);
+        this.#core.addEventListener("on-disconnected", this.session._onDisconnected, { once: true });
+        this.#core.addEventListener("on-activity-warning", this.session._onInactivityWarning);
 
         return this;
     }

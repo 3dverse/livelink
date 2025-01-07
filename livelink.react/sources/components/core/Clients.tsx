@@ -31,14 +31,14 @@ function ClientsProvider({ children }: PropsWithChildren) {
 
         const onClientsChanged = () => setClients(instance.session.other_clients);
 
-        instance.session.addEventListener("client-joined", onClientsChanged);
-        instance.session.addEventListener("client-left", onClientsChanged);
+        instance.session.addEventListener("on-client-joined", onClientsChanged);
+        instance.session.addEventListener("on-client-left", onClientsChanged);
 
         onClientsChanged();
 
         return () => {
-            instance.session.removeEventListener("client-joined", onClientsChanged);
-            instance.session.removeEventListener("client-left", onClientsChanged);
+            instance.session.removeEventListener("on-client-joined", onClientsChanged);
+            instance.session.removeEventListener("on-client-left", onClientsChanged);
             setClients([]);
         };
     }, [instance]);

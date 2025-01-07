@@ -6,6 +6,14 @@ import { Client } from "./Client";
 import { Livelink } from "../Livelink";
 import { ClientInfo } from "./ClientInfo";
 import { SessionInfo } from "./SessionInfo";
+import { TypedEventTarget } from "../TypedEventTarget";
+import {
+    ClientJoinedEvent,
+    ClientLeftEvent,
+    DisconnectedEvent,
+    InactivityWarningEvent,
+    SessionEvents,
+} from "./SessionEvents";
 
 /**
  * @internal
@@ -52,7 +60,7 @@ export type SessionSelector = ({ sessions }: { sessions: Array<SessionInfo> }) =
  *
  * @category Session
  */
-export class Session extends EventTarget implements SessionInterface {
+export class Session extends TypedEventTarget<SessionEvents> implements SessionInterface {
     /**
      * Create a new session.
      *
@@ -377,7 +385,16 @@ export class Session extends EventTarget implements SessionInterface {
      * @internal
      */
     _onDisconnected = (e: Events.DisconnectedEvent): void => {
-        this.dispatchEvent(new CustomEvent("on-disconnected", { detail: e.reason }));
+        this._dispatchEvent(new DisconnectedEvent({ reason: e.reason }));
+    };
+
+    /**
+     * @internal
+     */
+    _onInactivityWarning = (e: Events.ActivityWarningEvent): void => {
+        this._dispatchEvent(
+            new InactivityWarningEvent({ seconds_remaining: e.seconds_remaining, reset_timer: e.resetTimer }),
+        );
     };
 
     /**
@@ -467,7 +484,7 @@ export class Session extends EventTarget implements SessionInterface {
     #onClientJoined({ client }: { client: Client }): void {
         this.#clients.set(client.id, client);
         if (client.id !== this.client_id) {
-            this.dispatchEvent(new CustomEvent("client-joined", { detail: client }));
+            this._dispatchEvent(new ClientJoinedEvent({ client }));
         }
     }
 
@@ -478,7 +495,7 @@ export class Session extends EventTarget implements SessionInterface {
         const client = this.getClient({ client_id });
         if (client) {
             this.#clients.delete(client_id);
-            this.dispatchEvent(new CustomEvent("client-left", { detail: client }));
+            this._dispatchEvent(new ClientLeftEvent({ client }));
         }
     }
 
