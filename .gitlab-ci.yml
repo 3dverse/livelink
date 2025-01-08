@@ -42,12 +42,19 @@ variables:
     - |
       set -e
       latest_published_version=$(npm show @3dverse/$PACKAGE_NAME version)
-      current_version=$(node -e "console.log(require('./package.json').version)")
+      npm install semver --no-save
 
-      if [ "$latest_published_version" != "$current_version" ]; then
-        npm version $latest_published_version --no-git-tag-version
+      semver_script="const semver = require('semver'); \
+      const latest = '$latest_published_version'; \
+      const current = require('./package.json').version; \
+      if(semver.gt(latest, current)) { \
+        console.log(semver.inc(latest, 'patch')); \
+      }"
+
+      new_package_version=$(node -e "$semver_script")
+      if [ "$new_package_version" != "" ]; then
+        npm version $new_package_version --no-git-tag-version
       fi
-      npm version patch --no-git-tag-version
 
 .publish:
   stage: deploy
