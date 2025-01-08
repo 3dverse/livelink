@@ -305,6 +305,7 @@ js:livelink.js:docs-trigger:
   variables:
     # This variable will be used in the triggered downstream pipeline to download the generated docs artifact.
     LIVELINK_JS_PACKAGE_URL: ${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/${PACKAGE_DIR}/${CI_COMMIT_TAG}/docs-md.tgz
+    SYNC_LIVELINK_JS: "true"
   rules:
     - if: $CI_COMMIT_TAG
     - when: never
