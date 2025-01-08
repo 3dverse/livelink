@@ -47,7 +47,7 @@ variables:
       semver_script="const semver = require('semver'); \
       const latest = '$latest_published_version'; \
       const current = require('./package.json').version; \
-      if(semver.gt(latest, current)) { \
+      if(semver.gte(latest, current)) { \
         console.log(semver.inc(latest, 'patch')); \
       }"
 
