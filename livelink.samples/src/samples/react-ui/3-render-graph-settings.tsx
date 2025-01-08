@@ -20,7 +20,7 @@ const token = import.meta.env.VITE_PROD_PUBLIC_TOKEN;
 
 //------------------------------------------------------------------------------
 export default {
-    path: import.meta.url,
+    path: import.meta.VITE_FILE_NAME,
     title: "Render Graph Settings",
     summary: "A widget that displays all settings of a given render graph.",
     element: <App />,

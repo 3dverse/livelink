@@ -45,7 +45,8 @@ function fileContentPlugin() {
             return {
                 code: `
                     const fileContent = ${JSON.stringify(fileContent)};
-                    import.meta.env.VITE_FILE_CONTENT = fileContent;
+                    import.meta.VITE_FILE_NAME = "${id}";
+                    import.meta.VITE_FILE_CONTENT = fileContent;
                     ${src}
                 `,
             };

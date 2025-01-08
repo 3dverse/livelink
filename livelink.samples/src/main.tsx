@@ -9,6 +9,21 @@ import { SAMPLES } from "./samples/index.ts";
 import { SamplePlayer } from "./components/SamplePlayer/SamplePlayer.tsx";
 import { resolveSamplePath } from "./components/SamplePlayer/index.tsx";
 
+// This allow to augment the global scope of vite with new properties
+declare global {
+    interface ImportMeta {
+        /**
+         * Current source file name.
+         */
+        readonly VITE_FILE_NAME: string;
+
+        /**
+         * Current source file content without transpilation.
+         */
+        readonly VITE_FILE_CONTENT: string;
+    }
+}
+
 const router = createHashRouter([
     {
         path: "/",

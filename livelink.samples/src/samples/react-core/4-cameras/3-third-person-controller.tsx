@@ -15,7 +15,7 @@ const characterControllerSceneUUID = "55e9d2cc-27c8-43e0-b014-0363be83de55";
 
 //------------------------------------------------------------------------------
 export default {
-    path: import.meta.url,
+    path: import.meta.VITE_FILE_NAME,
     title: "Third Person Controller",
     summary: "A character controller via a third person camera setup.",
     autoConnect: false,

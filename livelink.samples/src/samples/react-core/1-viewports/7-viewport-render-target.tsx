@@ -11,8 +11,8 @@ const token = import.meta.env.VITE_PROD_PUBLIC_TOKEN;
 
 //------------------------------------------------------------------------------
 export default {
-    path: import.meta.url,
-    code: import.meta.env.VITE_FILE_CONTENT,
+    path: import.meta.VITE_FILE_NAME,
+    code: import.meta.VITE_FILE_CONTENT,
     title: "Viewport Render Target",
     summary: "Shows how to change the index of the displayed render target for a viewport.",
     element: <App />,

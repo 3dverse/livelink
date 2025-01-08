@@ -10,7 +10,7 @@ const token = import.meta.env.VITE_PROD_PUBLIC_TOKEN;
 
 //------------------------------------------------------------------------------
 export default {
-    path: import.meta.url,
+    path: import.meta.VITE_FILE_NAME,
     title: "MPR",
     summary: "MPR views for DICOM imaging.",
     element: <App />,

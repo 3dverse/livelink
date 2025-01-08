@@ -11,7 +11,7 @@ const token = import.meta.env.VITE_PROD_PUBLIC_TOKEN;
 
 //------------------------------------------------------------------------------
 export default {
-    path: import.meta.url,
+    path: import.meta.VITE_FILE_NAME,
     title: "Sun Position Picker",
     summary: "A widget that lets you modify the sun position",
     element: <App />,

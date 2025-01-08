@@ -19,7 +19,7 @@ const token = import.meta.env.VITE_PROD_PUBLIC_TOKEN;
 
 //------------------------------------------------------------------------------
 export default {
-    path: import.meta.url,
+    path: import.meta.VITE_FILE_NAME,
     title: "Activity Watcher",
     summary: "A panel that detects activity when the inactivity timout is triggered.",
     element: <App />,

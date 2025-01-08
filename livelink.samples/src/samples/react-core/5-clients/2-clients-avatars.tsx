@@ -35,7 +35,7 @@ const token = import.meta.env.VITE_PROD_PUBLIC_TOKEN;
 
 //------------------------------------------------------------------------------
 export default {
-    path: import.meta.url,
+    path: import.meta.VITE_FILE_NAME,
     title: "Client Avatars",
     summary: "Shows other clients connected to the current session as avatars rendered on a DOM overlay.",
     useCustomLayout: true,

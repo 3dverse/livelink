@@ -10,8 +10,8 @@ const token = import.meta.env.VITE_PROD_PUBLIC_TOKEN;
 
 //------------------------------------------------------------------------------
 export default {
-    path: import.meta.url,
-    code: import.meta.env.VITE_FILE_CONTENT,
+    path: import.meta.VITE_FILE_NAME,
+    code: import.meta.VITE_FILE_CONTENT,
     title: "Double Canvas",
     summary: "Two canvases, each with their own viewport.",
     element: <App />,

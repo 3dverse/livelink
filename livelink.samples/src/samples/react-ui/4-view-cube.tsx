@@ -13,7 +13,7 @@ const token = import.meta.env.VITE_PROD_PUBLIC_TOKEN;
 
 //------------------------------------------------------------------------------
 export default {
-    path: import.meta.url,
+    path: import.meta.VITE_FILE_NAME,
     title: "View Cube",
     summary: "A cube that represents the camera direction.",
     element: <App />,

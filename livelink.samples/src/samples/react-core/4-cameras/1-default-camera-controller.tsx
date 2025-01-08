@@ -10,7 +10,7 @@ const token = import.meta.env.VITE_PROD_PUBLIC_TOKEN;
 
 //------------------------------------------------------------------------------
 export default {
-    path: import.meta.url,
+    path: import.meta.VITE_FILE_NAME,
     title: "Default Controller",
     summary: "Shows how to customize the default camera controller.",
     element: <App />,

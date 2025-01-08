@@ -24,7 +24,7 @@ const scene_id = "d19ecb53-6488-48c1-a085-fab7de85b189";
 
 //------------------------------------------------------------------------------
 export default {
-    path: import.meta.url,
+    path: import.meta.VITE_FILE_NAME,
     title: "Join Session",
     summary: "Start by creating a session on one canvas then join it from another canvas.",
     useCustomLayout: true,
