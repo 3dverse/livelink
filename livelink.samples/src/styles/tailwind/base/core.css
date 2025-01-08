@@ -6,10 +6,7 @@ html {
 }
 
 body {
-    @apply text-base text-primary;
-    background-color: var(--color-bg-ground);
-    min-height: 100vh;
-    overflow-x: hidden;
+    @apply text-base text-primary bg-ground min-h-screen overflow-x-hidden;
 
     font-family: var(--font-family-secondary);
     -webkit-font-smoothing: antialiased;

@@ -10,7 +10,7 @@ export function MainMenu({ isOpen, onClose }: { isOpen: boolean; onClose: () => 
             {isOpen && (
                 <div
                     className={`
-                         z-20 lg:hidden absolute top-0 left-0 w-screen h-full bg-underground transition-opacity opacity-0 cursor-pointer
+                        z-20 lg:hidden absolute top-0 left-0 w-screen h-full bg-underground transition-opacity opacity-0 cursor-pointer
                         ${isOpen ? "opacity-80" : ""}
                     `}
                     onClick={onClose}
@@ -24,10 +24,13 @@ export function MainMenu({ isOpen, onClose }: { isOpen: boolean; onClose: () => 
                     className="relative w-80 h-full flex flex-col bg-ground shadow-2xl lg:shadow-none z-20"
                     onClick={onClose}
                 >
-                    <header className="mt-6 mb-3 px-5">
-                        <NavLink to="/" className="flex items-center gap-3 pl-3 font-primary text-lg">
-                            <img src="https://console.3dverse.com/static/logo/3dverse-wordmark.svg" className="h-6" />
-                            3dverse Samples
+                    <header className="mt-6 mb-2 px-6">
+                        <NavLink
+                            to="/"
+                            className="flex items-start gap-3 pl-3 font-primary text-secondary text-md font-[500] tracking-wider"
+                        >
+                            <img src="https://3dverse.com/logo/3dverse-wordmark.svg" className="h-4 mt-[3px]" />
+                            Samples
                         </NavLink>
                     </header>
                     <ul className="flex flex-col gap-6 h-full px-5 py-4 text-secondary overflow-auto">
@@ -42,7 +45,7 @@ export function MainMenu({ isOpen, onClose }: { isOpen: boolean; onClose: () => 
                                         to={resolveSamplePath(s.path)}
                                         className={({ isActive }) =>
                                             [
-                                                "button button-ghost py-1 text-sm justify-start rounded-xl",
+                                                "button button-ghost py-[3px] text-xs justify-start rounded-xl",
                                                 isActive ? "active" : "",
                                             ].join(" ")
                                         }
