@@ -1,0 +1,16 @@
+@layer base {
+    .glow-effect {
+        @apply relative;
+
+        &:before {
+            content: "";
+            background-color: color-mix(in srgb, var(--color-bg-ground) 94%, var(--color-content-secondary));
+            mix-blend-mode: screen;
+            @apply absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[150%] max-w-48 xl:max-w-72 aspect-square rounded-full blur-[50px] xl:blur-[70px] pointer-events-none;
+        }
+
+        &--lg:before {
+            @apply max-w-[24rem] blur-[80px];
+        }
+    }
+}
