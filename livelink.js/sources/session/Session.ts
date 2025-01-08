@@ -391,7 +391,7 @@ export class Session extends TypedEventTarget<SessionEvents> implements SessionI
     /**
      * @internal
      */
-    _onInactivityWarning = (e: Events.ActivityWarningEvent): void => {
+    _onInactivityWarning = (e: Events.InactivityWarningEvent): void => {
         this._dispatchEvent(
             new InactivityWarningEvent({ seconds_remaining: e.seconds_remaining, reset_timer: e.resetTimer }),
         );

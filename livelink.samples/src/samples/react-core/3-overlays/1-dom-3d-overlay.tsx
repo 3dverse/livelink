@@ -65,7 +65,7 @@ function AppLayout() {
                     </DOM3DElement>
                     <DOM3DElement worldPosition={[0, 0, -5]} scaleFactor={0.0025}>
                         <>
-                            <img src="https://console.3dverse.com/static/logo/3dverse-wordmark.svg" className="h-60" />
+                            <img src="https://cdn.3dverse.com/assets/3dverse-wordmark.svg" className="h-60" />
                             <p className="bg-underground p-4 rounded-lg">Any DOM element can be used.</p>
                         </>
                     </DOM3DElement>

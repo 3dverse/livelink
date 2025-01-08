@@ -1,13 +1,16 @@
 //------------------------------------------------------------------------------
-import { CameraControllerBase, Entity } from "@3dverse/livelink";
 import CameraControls, { Clock } from "@3dverse/livelink-camera-controls";
+
+//------------------------------------------------------------------------------
+import { CameraControllerBase } from "./CameraControllerBase";
+import { Entity } from "../scene/Entity";
 
 /**
  * A camera controller that uses the `camera-controls` library.
  *
- * @category Camera Controllers
+ * @category Rendering
  */
-export class DefaultCameraController extends CameraControllerBase {
+export class CameraController extends CameraControllerBase {
     /**
      *
      */
@@ -25,7 +28,7 @@ export class DefaultCameraController extends CameraControllerBase {
         super({ camera_entity });
 
         const lens = camera_entity.perspective_lens || camera_entity.orthographic_lens;
-        if(!lens) {
+        if (!lens) {
             throw new Error("Camera entity must have a perspective or orthographic lens");
         }
 
@@ -50,7 +53,7 @@ export class DefaultCameraController extends CameraControllerBase {
     /**
      *
      */
-    #initController() {
+    #initController(): void {
         this.cameraControls.setOrbitPoint(0, 0, 0);
         this.cameraControls.setPosition(...this._camera_entity.local_transform!.position);
         this.cameraControls.addEventListener("update", this.#onCameraUpdate);
@@ -59,7 +62,7 @@ export class DefaultCameraController extends CameraControllerBase {
     /**
      *
      */
-    #onCameraUpdate = () => {
+    #onCameraUpdate = (): void => {
         this.cameraControls.position.toArray(this._camera_entity.local_transform!.position);
         this.cameraControls.orientation.toArray(this._camera_entity.local_transform!.orientation);
     };

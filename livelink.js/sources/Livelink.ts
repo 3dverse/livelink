@@ -230,7 +230,7 @@ export class Livelink {
      * @throws If the session could not be joined
      */
     static async join({ session }: { session: Session }): Promise<Livelink> {
-        await DynamicLoader.load("1.0");
+        await DynamicLoader.load();
 
         console.debug("Joining session:", session);
         return new Livelink({ session }).#connect();
@@ -601,7 +601,7 @@ export class Livelink {
         this.#core.addEventListener("on-script-event-received", this.scene._onScriptEventReceived);
         this.#core.addEventListener("on-frame-received", this.#onFrameReceived);
         this.#core.addEventListener("on-disconnected", this.session._onDisconnected);
-        this.#core.addEventListener("on-activity-warning", this.session._onInactivityWarning);
+        this.#core.addEventListener("on-inactivity-warning", this.session._onInactivityWarning);
 
         return this;
     }

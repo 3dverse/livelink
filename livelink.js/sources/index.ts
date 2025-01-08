@@ -12,6 +12,7 @@ export * from "./scene/Scene";
 export * from "./scene/Entity";
 
 export * from "./rendering/Viewport";
+export * from "./rendering/CameraController";
 export * from "./rendering/CameraProjection";
 export * from "./rendering/CameraControllerBase";
 
@@ -21,6 +22,7 @@ export * from "./rendering/decoders/WebCodecsDecoder";
 export * from "./rendering/decoders/EncodedFrameConsumer";
 export * from "./rendering/decoders/DecodedFrameConsumer";
 
+export * from "./rendering/contexts/XRContext";
 export * from "./rendering/contexts/Context2D";
 export * from "./rendering/contexts/ContextWebGL";
 export * from "./rendering/contexts/ContextProvider";

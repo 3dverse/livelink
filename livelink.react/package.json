@@ -26,11 +26,7 @@
     "url": "https://github.com/3dverse/livelink/issues"
   },
   "homepage": "https://github.com/3dverse/livelink#readme",
-  "dependencies": {
-    "@3dverse/livelink-camera-controls": "^0.3.1",
-    "gl-matrix": "^3.4.3",
-    "threejs-math": "^0.147.0"
-  },
+  "dependencies": {},
   "devDependencies": {
     "@types/react": "^18.3.12",
     "@types/react-dom": "^18.3.1",

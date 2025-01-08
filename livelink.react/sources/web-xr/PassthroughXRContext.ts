@@ -1,5 +1,4 @@
 import { ContextProvider, FrameMetaData, Quat, Vec3 } from "@3dverse/livelink";
-import { mat4, quat, vec3 } from "gl-matrix";
 
 type Canvas = HTMLCanvasElement | OffscreenCanvas;
 

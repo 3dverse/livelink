@@ -1,6 +1,16 @@
-import { ContextProvider, FrameMetaData, Quat, Vec3 } from "@3dverse/livelink";
+//------------------------------------------------------------------------------
+import type { Quat, Vec3 } from "@3dverse/livelink.core";
+
+//------------------------------------------------------------------------------
 import { mat4, quat, vec2, vec3 } from "gl-matrix";
 
+//------------------------------------------------------------------------------
+import { ContextProvider } from "./ContextProvider";
+import type { FrameMetaData } from "../decoders/FrameMetaData";
+
+/**
+ *
+ */
 type Canvas = HTMLCanvasElement | OffscreenCanvas;
 
 /**
@@ -57,8 +67,6 @@ export class XRContext extends ContextProvider {
      */
     #billboard_position: vec3 = vec3.create();
     #billboard_model_matrix: mat4 = mat4.create();
-    #billboard_translation_matrix: mat4 = mat4.create();
-    #billboard_orientation_matrix: mat4 = mat4.create();
     #projection_offset: vec2 = vec2.create();
 
     /**
@@ -71,7 +79,7 @@ export class XRContext extends ContextProvider {
     /**
      *
      */
-    get native() {
+    get native(): WebGLRenderingContext | WebGL2RenderingContext {
         return this.#context;
     }
 

@@ -23,18 +23,20 @@
   },
   "license": "ISC",
   "dependencies": {
-    "@3dverse/livelink.core": "^1.0.0",
-    "gl-matrix": "^3.4.3"
+    "@3dverse/livelink.core": "^1.0.3",
+    "@3dverse/livelink-camera-controls": "^0.3.1",
+    "gl-matrix": "^3.4.3",
+    "threejs-math": "^0.147.0"
   },
   "devDependencies": {
     "@eslint/js": "^9.17.0",
     "@typescript-eslint/eslint-plugin": "^8.18.1",
     "@typescript-eslint/parser": "^8.18.1",
+    "@types/webxr": "^0.5.20",
     "cross-env": "^7.0.3",
     "esbuild": "^0.24.0",
     "eslint": "^9.17.0",
     "globals": "^15.14.0",
-    "npm-run-all": "^4.1.5",
     "rimraf": "^6.0.1",
     "typedoc": "^0.27.5",
     "typedoc-plugin-markdown": "^4.4.1",

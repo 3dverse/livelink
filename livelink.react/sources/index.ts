@@ -1,8 +1,6 @@
 export * from "./hooks/useEntity";
 export * from "./hooks/useCameraEntity";
 
-export * from "./controllers/DefaultCameraController";
-
 export * from "./components/core/Livelink";
 export * from "./components/core/Clients";
 export * from "./components/core/Canvas";

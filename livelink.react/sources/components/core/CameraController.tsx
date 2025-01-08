@@ -2,11 +2,10 @@
 import { useContext, useEffect } from "react";
 
 //------------------------------------------------------------------------------
-import { CameraControllerBase, Entity } from "@3dverse/livelink";
+import { CameraController as DefaultCameraController, CameraControllerBase, Entity } from "@3dverse/livelink";
 
 //------------------------------------------------------------------------------
 import { ViewportContext } from "./Viewport";
-import { DefaultCameraController } from "../../controllers/DefaultCameraController";
 
 /**
  * A component that provides a camera controller.
