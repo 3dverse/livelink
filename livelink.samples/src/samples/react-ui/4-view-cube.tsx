@@ -1,7 +1,7 @@
 //------------------------------------------------------------------------------
 import { Livelink, Canvas, Viewport, useCameraEntity, CameraController } from "@3dverse/livelink-react";
 import { ViewCube, InactivityWarning } from "@3dverse/livelink-react-ui";
-import type { Components, Entity, Vec3 } from "@3dverse/livelink";
+import type { Entity, Vec3 } from "@3dverse/livelink";
 import { Object3D } from "three";
 
 //------------------------------------------------------------------------------

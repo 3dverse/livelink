@@ -1,5 +1,5 @@
 //------------------------------------------------------------------------------
-import type { Entity, Components, Vec3, Vec2, CameraProjection, Viewport as LiveliveViewport } from "@3dverse/livelink";
+import type { Entity, Vec3, Vec2, CameraProjection, Viewport as LiveliveViewport } from "@3dverse/livelink";
 import {
     Livelink,
     Canvas,

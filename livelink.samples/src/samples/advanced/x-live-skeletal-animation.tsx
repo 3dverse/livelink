@@ -1,5 +1,5 @@
 //------------------------------------------------------------------------------
-import { Entity, Livelink as LivelinkInstance } from "@3dverse/livelink";
+import { Entity, Livelink as LivelinkInstance, Commands } from "@3dverse/livelink";
 import {
     Livelink,
     Canvas,
@@ -23,7 +23,6 @@ import { droid_walk } from "./animations/droid_walk.ts";
 import { droid_tpose } from "./animations/droid_tpose.ts";
 import { joint_parents } from "./animations/droid_skeleton.ts";
 import { useContext, useEffect, useRef, useState } from "react";
-import { SkeletonPartialPose } from "@3dverse/livelink";
 
 //------------------------------------------------------------------------------
 const token = import.meta.env.VITE_PROD_PUBLIC_TOKEN;
@@ -126,7 +125,7 @@ function SkeletonController() {
         jointGizmo!.addEventListener("rotationAngle-changed", e => {
             const joint = e.target.object!;
             const bone_index = parseInt(joint.name);
-            const partial_pose: SkeletonPartialPose = {
+            const partial_pose: Commands.SkeletonPartialPose = {
                 orientations: [{ bone_index, value: joint.quaternion.toArray() }],
             };
             instance.sendSkeletonPose({ controller, partial_pose });
@@ -181,7 +180,7 @@ function handleUserControlledSkeleton(instance: LivelinkInstance | null, control
 
     // Update livelink skeleton
     if (instance && controller) {
-        const partial_pose: SkeletonPartialPose = {
+        const partial_pose: Commands.SkeletonPartialPose = {
             orientations: joints!.map((joint, bone_index) => ({
                 bone_index,
                 value: joint.quaternion.toArray(),
@@ -221,7 +220,7 @@ function handleAnimatedSkeleton(animation: string, instance: LivelinkInstance | 
         // Update livelink skeleton
         if (instance && controller) {
             const rotations = chosenAnimation[frameIndex].rotations;
-            const partial_pose: SkeletonPartialPose = {
+            const partial_pose: Commands.SkeletonPartialPose = {
                 orientations: rotations.map((quat, bone_index) => ({ bone_index, value: quat })),
             };
             instance.sendSkeletonPose({
