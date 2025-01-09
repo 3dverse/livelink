@@ -1,11 +1,18 @@
 //------------------------------------------------------------------------------
-import { Livelink, Canvas, Viewport, useCameraEntity, CameraController } from "@3dverse/livelink-react";
+import {
+    Livelink,
+    Canvas,
+    Viewport,
+    useCameraEntity,
+    CameraController,
+    CameraControllerContext,
+} from "@3dverse/livelink-react";
 import { ViewCube, InactivityWarning } from "@3dverse/livelink-react-ui";
 import type { Entity, Vec3 } from "@3dverse/livelink";
-import { Object3D } from "three";
 
 //------------------------------------------------------------------------------
 import { DisconnectedModal, LoadingOverlay } from "../../components/SamplePlayer";
+import { useContext } from "react";
 
 //------------------------------------------------------------------------------
 const scene_id = "6391ff06-c881-441d-8ada-4184b2050751";
@@ -41,12 +48,13 @@ function AppLayout() {
     return (
         <Canvas className="w-full h-full">
             <Viewport cameraEntity={cameraEntity} className="w-full h-full">
-                <CameraController />
-                {cameraEntity && (
-                    <div className="absolute bottom-4 right-4 m-4">
-                        <StyledViewCube cameraEntity={cameraEntity} />
-                    </div>
-                )}
+                <CameraController>
+                    {cameraEntity && (
+                        <div className="absolute bottom-4 right-4 m-4">
+                            <StyledViewCube cameraEntity={cameraEntity} />
+                        </div>
+                    )}
+                </CameraController>
             </Viewport>
         </Canvas>
     );
@@ -54,19 +62,14 @@ function AppLayout() {
 
 //------------------------------------------------------------------------------
 function StyledViewCube({ cameraEntity }: { cameraEntity: Entity }) {
+    const { cameraController } = useContext(CameraControllerContext);
+
+    if (!cameraController) {
+        return null;
+    }
+
     const setCameraPosition = (position: Vec3) => {
-        const local_transform = cameraEntity.local_transform!;
-
-        const lookAt = (target: Vec3): Vec3 => {
-            const camera = new Object3D();
-            camera.position.set(target[0], target[1], target[2]);
-            camera.lookAt(position[0], position[1], position[2]);
-
-            return [camera.rotation.x, camera.rotation.y, camera.rotation.z].map(radianToDegree) as Vec3;
-        };
-
-        local_transform.eulerOrientation = lookAt([0, 0, 0]);
-        local_transform.position = position;
+        cameraController.setLookAt(...position, 0, 0, 0, true);
     };
 
     const cubeSize = 100;
@@ -120,6 +123,3 @@ function StyledViewCube({ cameraEntity }: { cameraEntity: Entity }) {
         </ViewCube>
     );
 }
-
-//------------------------------------------------------------------------------
-const radianToDegree = (radian: number): number => (radian * 180) / Math.PI;

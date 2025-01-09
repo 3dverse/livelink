@@ -54,7 +54,7 @@ export class CameraProjection {
     /**
      * World space orientation of the camera as used by the currently processed frame.
      */
-    #world_orientation: Quat = [1, 0, 0, 0];
+    #world_orientation: Quat = [0, 0, 0, 1];
 
     /**
      * Transformation matrix from view space to clip space, aka the projection matrix.
