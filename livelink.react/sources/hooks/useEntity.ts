@@ -2,7 +2,15 @@
 import { useContext, useEffect, useReducer, useState } from "react";
 
 //------------------------------------------------------------------------------
-import type { Entity, EntityRef, EntityCreationOptions, ComponentsManifest } from "@3dverse/livelink";
+import type {
+    Entity,
+    EntityRef,
+    EntityCreationOptions,
+    ComponentsManifest,
+    FindEntityQuery,
+    UUID,
+    ComponentName,
+} from "@3dverse/livelink";
 
 //------------------------------------------------------------------------------
 import { Livelink as LivelinkInstance } from "@3dverse/livelink";
@@ -49,7 +57,7 @@ type EntityFinder = {
  *
  * @inline
  */
-type EntityProvider = EntityRef | NewEntity | EntityFinder;
+type EntityProvider = NewEntity | EntityFinder | FindEntityQuery;
 
 /**
  * A hook that provides an entity and a flag indicating if the entity is pending loading.
@@ -80,7 +88,13 @@ export function useEntity(entityProvider: EntityProvider & { forceUpdateOnEntity
     const [isPending, setIsPending] = useState(true);
     const [, forceUpdate] = useReducer(x => x + 1, 0);
 
-    const entityRef = entityProvider as EntityRef;
+    const findEntityQuery = entityProvider as {
+        euid?: UUID;
+        linkage?: Array<UUID>;
+        names?: Array<string>;
+        mandatory_components?: Array<ComponentName>;
+        forbidden_components?: Array<ComponentName>;
+    };
     const entityFinder = entityProvider as EntityFinder;
     const forceUpdateOnEntityUpdate = entityProvider.forceUpdateOnEntityUpdate ?? false;
 
@@ -89,19 +103,30 @@ export function useEntity(entityProvider: EntityProvider & { forceUpdateOnEntity
             return;
         }
 
-        const resolveEntity = async () => {
-            if ("originalEUID" in entityProvider) {
-                console.debug("---- Finding entity with id", entityProvider.originalEUID);
-                return await instance.scene.findEntity({
-                    entity_uuid: entityProvider.originalEUID,
-                    linkage: entityProvider.linkage,
-                });
-            } else if ("components" in entityProvider) {
+        const resolveEntity = async (): Promise<Entity | null> => {
+            if ("components" in entityProvider) {
                 console.debug("---- Creating entity");
                 return await instance.scene.newEntity(entityProvider);
-            } else {
+            } else if ("finder" in entityProvider) {
                 return await entityProvider.finder({ instance });
+            } else if ("linkage" in findEntityQuery) {
+                return await instance.scene.findEntity({
+                    entity_uuid: findEntityQuery.euid!,
+                    linkage: findEntityQuery.linkage,
+                });
+            } else if ("euid" in findEntityQuery) {
+                return (await instance.scene.findEntities({ entity_uuid: findEntityQuery.euid! }))[0];
+            } else if ("names" in findEntityQuery) {
+                return (await instance.scene.findEntitiesByNames({ entity_names: findEntityQuery.names! }))[0];
+            } else if ("mandatory_components" in findEntityQuery) {
+                return (
+                    await instance.scene.findEntitiesWithComponents({
+                        mandatory_components: findEntityQuery.mandatory_components!,
+                        forbidden_components: findEntityQuery.forbidden_components,
+                    })
+                )[0];
             }
+            return null;
         };
 
         resolveEntity()
@@ -116,7 +141,15 @@ export function useEntity(entityProvider: EntityProvider & { forceUpdateOnEntity
             setEntity(null);
             setIsPending(true);
         };
-    }, [instance, entityRef.originalEUID, entityFinder.finder]);
+    }, [
+        instance,
+        findEntityQuery.euid,
+        findEntityQuery.linkage,
+        findEntityQuery.names,
+        findEntityQuery.mandatory_components,
+        findEntityQuery.forbidden_components,
+        entityFinder.finder,
+    ]);
 
     useEffect(() => {
         if (!entity || !forceUpdateOnEntityUpdate) {

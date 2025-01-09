@@ -114,7 +114,7 @@ function ThreeJSCanvas() {
 //------------------------------------------------------------------------------
 function SkeletonController() {
     const { instance } = useContext(LivelinkContext);
-    const { entity: controller } = useEntity({ originalEUID: "dbe0b7de-fd0c-46d8-a90c-8a9f2f896002" });
+    const { entity: controller } = useEntity({ euid: "dbe0b7de-fd0c-46d8-a90c-8a9f2f896002" });
 
     const [animation, setAnimation] = useState<string | null>(null);
 

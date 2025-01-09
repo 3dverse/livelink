@@ -1,5 +1,5 @@
 //------------------------------------------------------------------------------
-import type { Entity, Vec3 } from "@3dverse/livelink";
+import { Entity, Vec3 } from "@3dverse/livelink";
 import { Livelink, Canvas, Viewport, CameraController, useCameraEntity, useEntity } from "@3dverse/livelink-react";
 import { LoadingOverlay } from "@3dverse/livelink-react-ui";
 
@@ -7,14 +7,15 @@ import { LoadingOverlay } from "@3dverse/livelink-react-ui";
 import { DisconnectedModal } from "../../../components/SamplePlayer";
 
 //------------------------------------------------------------------------------
-const scene_id = "80ec3064-df96-41fa-be93-c6dbeb985278";
 const token = import.meta.env.VITE_PROD_PUBLIC_TOKEN;
+const scene_id = "ced50bcf-6bbc-46d1-872a-dad99efdb8d6";
 
 //------------------------------------------------------------------------------
 export default {
     path: import.meta.VITE_FILE_NAME,
-    title: "Smart Object",
-    summary: "Link an entity to a React component.",
+    title: "Finding Entities",
+    summary: "How to find multiples entities in one query.",
+    useCustomLayout: true,
     element: <App />,
 };
 
@@ -35,17 +36,43 @@ function App() {
 
 //------------------------------------------------------------------------------
 function AppLayout() {
-    const { cameraEntity } = useCameraEntity();
-    const { entity: light } = useEntity({
-        euid: "a9b10115-a52b-459b-9660-e67ea8155fbe",
+    const { cameraEntity } = useCameraEntity({
+        position: [0, 8, 15],
+        settings: {
+            gradient: false,
+            skybox: true,
+            grid: false,
+            brightness: 0.1,
+            ambientIntensity: 0.1,
+            volumetricLighting: true,
+            bloom: true,
+            bloomStrength: 0.05,
+            bloomThreshold: 0,
+        },
+    });
+    const { entity: light1 } = useEntity({
+        euid: "82b75c7f-85f4-490c-9ae2-0f46fe271d79",
         forceUpdateOnEntityUpdate: true,
     });
-
+    const { entity: light2 } = useEntity({
+        euid: "955dee9a-cdfa-4a57-8394-739dda2d1b4d",
+        forceUpdateOnEntityUpdate: true,
+    });
+    const { entity: light3 } = useEntity({
+        euid: "dbd47a00-5e49-428b-9bb5-85bf9c5f5d7b",
+        forceUpdateOnEntityUpdate: true,
+    });
     return (
         <Canvas className="w-full h-full">
             <Viewport cameraEntity={cameraEntity} className="w-full h-full">
                 <CameraController />
-                {light && <LightComponent light={light} />}
+                <div className="absolute top-6 right-6">
+                    {[light1, light2, light3].map(light => {
+                        if (light) {
+                            return <LightComponent key={light.id} light={light} />;
+                        }
+                    })}
+                </div>
             </Viewport>
         </Canvas>
     );
@@ -71,7 +98,7 @@ function LightComponent({ light }: { light: Entity }) {
     }
 
     return (
-        <div className="absolute top-6 left-6">
+        <div className="">
             <input
                 type="color"
                 className="p-1 h-10 w-14 block bg-white border border-gray-200 cursor-pointer rounded-lg disabled:opacity-50 disabled:pointer-events-none"
@@ -83,7 +110,7 @@ function LightComponent({ light }: { light: Entity }) {
             <input
                 type="range"
                 min={0}
-                max={10}
+                max={100}
                 value={light.point_light!.intensity!}
                 onPointerDown={e => e.stopPropagation()}
                 onPointerMove={e => e.stopPropagation()}
