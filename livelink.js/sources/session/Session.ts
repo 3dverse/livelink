@@ -429,8 +429,13 @@ export class Session extends TypedEventTarget<SessionEvents> implements SessionI
         core: Livelink;
         client_meta_data: Events.ClientMetaData;
     }): Promise<void> {
-        const client_id = client_meta_data.client_id;
+        // If the client has no viewports, it means that it is not yet fully connected.
+        // Skip it for now, it will be handled when it would be fully connected.
+        if (client_meta_data.viewports.length === 0) {
+            return;
+        }
 
+        const client_id = client_meta_data.client_id;
         this.#clients_pending_identification.add(client_id);
         let client_info: ClientInfo | null = null;
 
