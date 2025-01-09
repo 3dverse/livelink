@@ -56,7 +56,8 @@ function fileContentPlugin() {
 
 function patchCodeSample(sourceCode: string, token: string): string {
     // Remove the 'export default' statement and its associated exported code
-    const exportDefaultRegex = /\s\/\/\-+\sexport\s+default\s+{[\s\S]*?};\s/gm;
     const viteImportToken = "import.meta.env.VITE_PROD_PUBLIC_TOKEN";
-    return sourceCode.replace(exportDefaultRegex, "").replace(viteImportToken, `"${token}"`);
+    return sourceCode
+        .replace(/export\s+default\s+{[^]*?};\s*|import\s+{[^}]*}\s+from\s+["'][^"']*SamplePlayer["'];\s*/g, "")
+        .replace(viteImportToken, `"${token}"`);
 }
