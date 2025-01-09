@@ -172,12 +172,12 @@
 
     /* Shadows */
 
-    --shadow-sm: 0 1px 2px 0 black;
-    --shadow-md: 0 4px 6px -1px black, 0 2px 4px -2px black;
-    --shadow-lg: 0 10px 15px -3px black, 0 4px 6px -4px black;
-    --shadow-xl: 0 20px 25px -5px black, 0 8px 10px -6px black;
-    --shadow-2xl: 0 25px 50px -12px black;
-    --shadow-3xl: 0 35px 60px -15px black;
+    --shadow-sm: 0 1px 2px 0 oklab(0 0 0 / 0.5);
+    --shadow-md: 0 4px 6px -1px oklab(0 0 0 / 0.5), 0 2px 4px -2px oklab(0 0 0 / 0.5);
+    --shadow-lg: 0 10px 15px -3px oklab(0 0 0 / 0.2), 0 4px 6px -4px oklab(0 0 0 / 0.5);
+    --shadow-xl: 0 20px 25px -5px oklab(0 0 0 / 0.2), 0 8px 10px -6px oklab(0 0 0 / 0.5);
+    --shadow-2xl: 0 25px 50px -12px oklab(0 0 0 / 0.5);
+    --shadow-3xl: 0 35px 60px -15px oklab(0 0 0 / 0.5);
 
     /* Colors palette */
 
