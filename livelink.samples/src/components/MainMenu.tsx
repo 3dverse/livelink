@@ -36,7 +36,7 @@ export function MainMenu({ isOpen, onClose }: { isOpen: boolean; onClose: () => 
                     <ul className="flex flex-col gap-6 h-full px-5 py-4 text-secondary overflow-auto">
                         {SAMPLES.map((category, i) => (
                             <li key={i}>
-                                <p className="mb-1 pl-4 text-2xs uppercase text-tertiary opacity-80 tracking-wider">
+                                <p className="mb-1 pl-3 text-2xs uppercase text-tertiary opacity-80 tracking-wider">
                                     {category.categoryName}
                                 </p>
                                 {category.list.map((s, y) => (

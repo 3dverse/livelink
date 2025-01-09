@@ -1,9 +1,10 @@
 import { createContext, PropsWithChildren, useEffect, useState } from "react";
-import { ActionBar } from "./ActionBar";
 import Markdown from "react-markdown";
 import { PrismLight as SyntaxHighlighter } from "react-syntax-highlighter";
-import { vscDarkPlus as codeTheme } from "react-syntax-highlighter/dist/esm/styles/prism";
+import { nightOwl as codeTheme } from "react-syntax-highlighter/dist/esm/styles/prism";
 import tsx from "react-syntax-highlighter/dist/esm/languages/prism/tsx";
+import { ActionBar } from "./ActionBar";
+import { CopyCodeButton } from "./CopyCodeButton";
 
 //------------------------------------------------------------------------------
 SyntaxHighlighter.registerLanguage("tsx", tsx);
@@ -79,11 +80,21 @@ export function SamplePlayer({
 
     return (
         <SamplePlayerContext.Provider value={{ connectionState, setConnectionState }}>
-            <div className="w-full h-full flex gap-3 p-3 lg:pl-0 relative">
+            <div className="w-full h-full flex flex-col-reverse xl:flex-row gap-3 p-3 lg:pl-0 relative">
                 {code && (
-                    <SyntaxHighlighter language="jsx" style={codeTheme} className="left-0 top-0 max-w-[650px]">
-                        {code}
-                    </SyntaxHighlighter>
+                    <article className="relative max-w-[40ch] md:max-w-[50ch] bg-overground rounded-xl">
+                        <header className="flex justify-between gap-3 px-3 py-3 border-b border-quaternary">
+                            <p className="text-xs text-tertiary">{title}</p>
+                            <CopyCodeButton code={code} />
+                        </header>
+                        <SyntaxHighlighter
+                            language="jsx"
+                            style={codeTheme}
+                            className="h-full !m-0 !bg-transparent !text-[.8em] "
+                        >
+                            {code}
+                        </SyntaxHighlighter>
+                    </article>
                 )}
                 <div className="w-full h-full gap-3 bg-[#1e222e] rounded-xl relative flex">
                     {useCustomLayout ? (

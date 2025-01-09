@@ -1,7 +1,7 @@
 @layer base {
     .button {
         @apply flex items-center justify-center px-3 py-2 text-primary text-md tracking-wide font-normal rounded-md cursor-pointer;
-        transition-property: box-shadow, background-color, opacity;
+        transition-property: box-shadow, border-color, background-color, opacity;
         transition-duration: 0.25s;
     }
 
@@ -30,12 +30,12 @@
     }
 
     .button-secondary {
-        @apply opacity-60 bg-underground;
+        @apply opacity-80 bg-underground;
 
         &:hover,
         &:focus,
         &:active {
-            @apply opacity-80;
+            @apply opacity-100;
         }
     }
 
@@ -51,7 +51,14 @@
     }
 
     .button-outline {
-        @apply border border-secondary;
+        @apply text-tertiary border border-secondary;
+
+        &.active,
+        &:hover,
+        &:focus,
+        &:active {
+            @apply text-secondary;
+        }
     }
 
     /* Sizes */
@@ -62,6 +69,14 @@
 
     .button-sm {
         @apply text-sm px-3 py-1;
+    }
+
+    .button-xs {
+        @apply text-2xs px-2 py-px;
+    }
+
+    .button-2xs {
+        @apply text-2xs px-[6px] py-px;
     }
 
     /* Misc */
