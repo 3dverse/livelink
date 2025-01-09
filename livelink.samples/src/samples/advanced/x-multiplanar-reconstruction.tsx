@@ -2,7 +2,7 @@
 import { Livelink, Canvas, Viewport, CameraController, useCameraEntity } from "@3dverse/livelink-react";
 
 //------------------------------------------------------------------------------
-import { DisconnectedModal, LoadingSpinner, sampleCanvasClassName } from "../../components/SamplePlayer";
+import { DisconnectedModal, LoadingOverlay } from "../../components/SamplePlayer";
 
 //------------------------------------------------------------------------------
 const scene_id = "59705a36-56ed-49b3-b4fc-4b6cd69eb82c";
@@ -22,7 +22,7 @@ function App() {
         <Livelink
             sceneId={scene_id}
             token={token}
-            LoadingPanel={LoadingSpinner}
+            LoadingPanel={LoadingOverlay}
             ConnectionErrorPanel={DisconnectedModal}
         >
             <AppLayout />
@@ -42,24 +42,24 @@ function AppLayout() {
     return (
         <div className="flex basis-full p-2 gap-2 flex-row">
             <div className="flex basis-full gap-2 flex-col">
-                <Canvas className={sampleCanvasClassName}>
+                <Canvas className="w-full h-full">
                     <Viewport cameraEntity={cameraEntity1} className="w-full h-full">
                         <CameraController />
                     </Viewport>
                 </Canvas>
-                <Canvas className={sampleCanvasClassName}>
+                <Canvas className="w-full h-full">
                     <Viewport cameraEntity={cameraEntity2} className="w-full h-full">
                         <CameraController />
                     </Viewport>
                 </Canvas>
             </div>
             <div className="flex basis-full gap-2 flex-col">
-                <Canvas className={sampleCanvasClassName}>
+                <Canvas className="w-full h-full">
                     <Viewport cameraEntity={cameraEntity2} className="w-full h-full">
                         <CameraController />
                     </Viewport>
                 </Canvas>
-                <Canvas className={sampleCanvasClassName}>
+                <Canvas className="w-full h-full">
                     <Viewport cameraEntity={cameraEntity2} className="w-full h-full">
                         <CameraController />
                     </Viewport>

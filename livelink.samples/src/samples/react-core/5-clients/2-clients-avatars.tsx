@@ -22,12 +22,7 @@ import {
 import BoringAvatar from "boring-avatars";
 
 //------------------------------------------------------------------------------
-import {
-    DisconnectedModal,
-    LoadingSpinner,
-    sampleCanvasClassName,
-    SamplePlayer,
-} from "../../../components/SamplePlayer";
+import { DisconnectedModal, LoadingOverlay, SamplePlayer } from "../../../components/SamplePlayer";
 
 //------------------------------------------------------------------------------
 const scene_id = "545cb90f-a3e0-4531-9d98-0fc6d9131097";
@@ -61,7 +56,7 @@ function SessionCreator({ setSessionId }: { setSessionId: (sessionId: UUID | nul
             <Livelink
                 sceneId={scene_id}
                 token={token}
-                LoadingPanel={LoadingSpinner}
+                LoadingPanel={LoadingOverlay}
                 ConnectionErrorPanel={DisconnectedModal}
             >
                 <SessionSniffer setSessionId={setSessionId} />
@@ -89,7 +84,7 @@ function SessionJoiner({ sessionId }: { sessionId: UUID | null }) {
                 sessionId={sessionId}
                 sessionOpenMode="join"
                 token={token}
-                LoadingPanel={LoadingSpinner}
+                LoadingPanel={LoadingOverlay}
                 ConnectionErrorPanel={DisconnectedModal}
             >
                 <Clients>
@@ -105,7 +100,7 @@ function AppLayout() {
     const { cameraEntity } = useCameraEntity();
 
     return (
-        <Canvas className={sampleCanvasClassName}>
+        <Canvas className="w-full h-full">
             <Viewport cameraEntity={cameraEntity} className="w-full h-full">
                 <CameraController />
                 <Avatars />

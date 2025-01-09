@@ -3,7 +3,7 @@ import { Livelink, Canvas, Viewport, CameraController, useCameraEntity, useEntit
 import type { Entity, Vec3 } from "@3dverse/livelink";
 
 //------------------------------------------------------------------------------
-import { DisconnectedModal, LoadingSpinner, sampleCanvasClassName } from "../../../components/SamplePlayer";
+import { DisconnectedModal, LoadingOverlay } from "../../../components/SamplePlayer";
 
 //------------------------------------------------------------------------------
 const scene_id = "80ec3064-df96-41fa-be93-c6dbeb985278";
@@ -23,7 +23,7 @@ function App() {
         <Livelink
             sceneId={scene_id}
             token={token}
-            LoadingPanel={LoadingSpinner}
+            LoadingPanel={LoadingOverlay}
             ConnectionErrorPanel={DisconnectedModal}
             isTransient={true}
         >
@@ -41,7 +41,7 @@ function AppLayout() {
     });
 
     return (
-        <Canvas className={sampleCanvasClassName}>
+        <Canvas className="w-full h-full">
             <Viewport cameraEntity={cameraEntity} className="w-full h-full">
                 <CameraController />
                 {light && <LightComponent light={light} />}

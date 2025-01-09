@@ -3,7 +3,7 @@ import { Livelink, Canvas, Viewport, useEntity, useCameraEntity, CameraControlle
 import { SunPositionPicker } from "@3dverse/livelink-react-ui";
 
 //------------------------------------------------------------------------------
-import { DisconnectedModal, LoadingSpinner, sampleCanvasClassName } from "../../components/SamplePlayer";
+import { DisconnectedModal, LoadingOverlay } from "../../components/SamplePlayer";
 
 //------------------------------------------------------------------------------
 const scene_id = "bfadafe7-7d75-4e8d-ba55-3b65c4b1d994";
@@ -24,7 +24,7 @@ function App() {
             token={token}
             sceneId={scene_id}
             isTransient={true}
-            LoadingPanel={LoadingSpinner}
+            LoadingPanel={LoadingOverlay}
             ConnectionErrorPanel={DisconnectedModal}
         >
             <AppLayout />
@@ -37,7 +37,7 @@ function AppLayout() {
     const { cameraEntity } = useCameraEntity({ settings: { atmosphere: true, gradient: false } });
 
     return (
-        <Canvas className={sampleCanvasClassName}>
+        <Canvas className="w-full h-full">
             <Viewport cameraEntity={cameraEntity} className="w-full h-full">
                 <CameraController />
                 <SunWidget />

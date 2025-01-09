@@ -6,7 +6,7 @@ import type { UUID } from "@3dverse/livelink";
 import { Livelink, Canvas, Viewport, useCameraEntity, CameraController } from "@3dverse/livelink-react";
 
 //------------------------------------------------------------------------------
-import { DisconnectedModal, LoadingSpinner, sampleCanvasClassName } from "../../../components/SamplePlayer";
+import { DisconnectedModal, LoadingOverlay } from "../../../components/SamplePlayer";
 
 //------------------------------------------------------------------------------
 const token = import.meta.env.VITE_PROD_PUBLIC_TOKEN;
@@ -34,7 +34,7 @@ function App() {
                 <Livelink
                     sceneId={selectedSceneId}
                     token={token}
-                    LoadingPanel={LoadingSpinner}
+                    LoadingPanel={LoadingOverlay}
                     ConnectionErrorPanel={DisconnectedModal}
                 >
                     <AppLayout />
@@ -50,7 +50,7 @@ function AppLayout() {
     const { cameraEntity } = useCameraEntity();
 
     return (
-        <Canvas className={sampleCanvasClassName}>
+        <Canvas className="w-full h-full">
             <Viewport cameraEntity={cameraEntity} className="w-full h-full">
                 <CameraController />
             </Viewport>

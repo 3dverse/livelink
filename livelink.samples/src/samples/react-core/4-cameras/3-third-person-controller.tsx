@@ -6,7 +6,7 @@ import { type Livelink as LivelinkInstance, Entity, Gamepad, Keyboard, Mouse } f
 import { LivelinkContext, Livelink, Viewport, ViewportContext, Canvas, useEntity } from "@3dverse/livelink-react";
 
 //------------------------------------------------------------------------------
-import { LoadingSpinner, sampleCanvasClassName } from "../../../components/SamplePlayer";
+import { LoadingOverlay } from "../../../components/SamplePlayer";
 
 //------------------------------------------------------------------------------
 const token = import.meta.env.VITE_PROD_PUBLIC_TOKEN;
@@ -25,7 +25,7 @@ export default {
 //------------------------------------------------------------------------------
 function App() {
     return (
-        <Livelink sceneId={scene_id} token={token} LoadingPanel={LoadingSpinner}>
+        <Livelink sceneId={scene_id} token={token} LoadingPanel={LoadingOverlay}>
             <AppLayout />
         </Livelink>
     );
@@ -72,7 +72,7 @@ function AppLayout() {
     const [startSimulation, setStartSimulation] = useState<boolean>(false);
 
     return (
-        <Canvas className={sampleCanvasClassName}>
+        <Canvas className="w-full h-full">
             <Viewport cameraEntity={cameraEntity} className="w-full h-full">
                 {startSimulation && <SimulationStarter />}
             </Viewport>

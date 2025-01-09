@@ -96,7 +96,7 @@ export function SamplePlayer({
                         </SyntaxHighlighter>
                     </article>
                 )}
-                <div className="w-full h-full gap-3 bg-[#1e222e] rounded-xl relative flex">
+                <div className="grow h-full gap-3 bg-[#1e222e] rounded-xl relative flex overflow-clip">
                     {useCustomLayout ? (
                         children
                     ) : (

@@ -16,7 +16,7 @@ import * as THREE from "three";
 import { PointerEventHandler, useContext, useEffect, useMemo, useState } from "react";
 
 //------------------------------------------------------------------------------
-import { DisconnectedModal, LoadingSpinner, sampleCanvasClassName } from "../../components/SamplePlayer";
+import { DisconnectedModal, LoadingOverlay } from "../../components/SamplePlayer";
 
 //------------------------------------------------------------------------------
 const scene_id = "8f3c24c1-720e-4d2c-b0e7-f623e4feb7be";
@@ -37,7 +37,7 @@ function App() {
         <Livelink
             sceneId={scene_id}
             token={token}
-            LoadingPanel={LoadingSpinner}
+            LoadingPanel={LoadingOverlay}
             ConnectionErrorPanel={DisconnectedModal}
         >
             <AppLayout />
@@ -50,7 +50,7 @@ function AppLayout() {
     const { cameraEntity } = useCameraEntity({ position: [20, 20, 20], eulerOrientation: [-45, 45, 0] });
 
     return (
-        <Canvas className={sampleCanvasClassName}>
+        <Canvas className="w-full h-full">
             <Viewport cameraEntity={cameraEntity} className="w-full h-full">
                 <CameraController />
                 <CullingBoxGeometryWidget initialSize={[20, 10, 20]} />

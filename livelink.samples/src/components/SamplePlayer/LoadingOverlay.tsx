@@ -3,10 +3,14 @@ export const LoadingOverlay = ({ stage = "Connecting to 3dverse..." }: { stage?:
     return (
         <div
             className={`
+                absolute
                 glow-effect
+                h-full
                 w-full
+                z-30
+                bg-ground
                 flex flex-col grow justify-center items-center gap-2
-                before:bg-[color-mix(in_srgb,var(--color-bg-foreground)_98%,var(--color-content-secondary))] before:z-[0]
+                before:bg-[color-mix(in_srgb,var(--color-bg-foreground)_90%,var(--color-content-secondary))]
             `}
         >
             <svg

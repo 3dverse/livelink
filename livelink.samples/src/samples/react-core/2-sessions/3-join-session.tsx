@@ -9,12 +9,7 @@ import {
 } from "@3dverse/livelink-react";
 
 //------------------------------------------------------------------------------
-import {
-    DisconnectedModal,
-    LoadingSpinner,
-    sampleCanvasClassName,
-    SamplePlayer,
-} from "../../../components/SamplePlayer";
+import { DisconnectedModal, LoadingOverlay, SamplePlayer } from "../../../components/SamplePlayer";
 import { useContext, useEffect, useState } from "react";
 import { UUID } from "@3dverse/livelink";
 
@@ -50,7 +45,7 @@ function SessionCreator({ setSessionId }: { setSessionId: (sessionId: UUID | nul
             <Livelink
                 sceneId={scene_id}
                 token={token}
-                LoadingPanel={LoadingSpinner}
+                LoadingPanel={LoadingOverlay}
                 ConnectionErrorPanel={DisconnectedModal}
             >
                 <SessionSniffer setSessionId={setSessionId} />
@@ -76,7 +71,7 @@ function SessionJoiner({ sessionId }: { sessionId: UUID | null }) {
                 sessionId={sessionId}
                 sessionOpenMode="join"
                 token={token}
-                LoadingPanel={LoadingSpinner}
+                LoadingPanel={LoadingOverlay}
                 ConnectionErrorPanel={DisconnectedModal}
             >
                 <AppLayout />
@@ -90,7 +85,7 @@ function AppLayout() {
     const { cameraEntity } = useCameraEntity();
 
     return (
-        <Canvas className={sampleCanvasClassName}>
+        <Canvas className="w-full h-full">
             <Viewport cameraEntity={cameraEntity} className="w-full h-full">
                 <CameraController />
             </Viewport>

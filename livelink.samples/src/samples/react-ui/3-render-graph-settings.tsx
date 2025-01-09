@@ -11,7 +11,7 @@ import {
 import { InactivityWarning, RenderGraphSettings } from "@3dverse/livelink-react-ui";
 
 //------------------------------------------------------------------------------
-import { DisconnectedModal, LoadingSpinner, sampleCanvasClassName } from "../../components/SamplePlayer";
+import { DisconnectedModal, LoadingOverlay } from "../../components/SamplePlayer";
 import { useContext } from "react";
 
 //------------------------------------------------------------------------------
@@ -32,7 +32,7 @@ function App() {
         <Livelink
             sceneId={scene_id}
             token={token}
-            LoadingPanel={LoadingSpinner}
+            LoadingPanel={LoadingOverlay}
             ConnectionErrorPanel={DisconnectedModal}
             InactivityWarningPanel={InactivityWarning}
         >
@@ -46,7 +46,7 @@ function AppLayout() {
     const { cameraEntity } = useCameraEntity();
 
     return (
-        <Canvas className={sampleCanvasClassName}>
+        <Canvas className="w-full h-full">
             <Viewport cameraEntity={cameraEntity} className="w-full h-full">
                 <CameraController />
                 <RenderGraphWidget />
