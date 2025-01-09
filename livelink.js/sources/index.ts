@@ -14,7 +14,6 @@ export * from "./scene/Entity";
 export * from "./rendering/Viewport";
 export * from "./rendering/CameraController";
 export * from "./rendering/CameraProjection";
-export * from "./rendering/CameraControllerBase";
 
 export * from "./rendering/decoders/FrameMetaData";
 export * from "./rendering/decoders/SoftwareDecoder";

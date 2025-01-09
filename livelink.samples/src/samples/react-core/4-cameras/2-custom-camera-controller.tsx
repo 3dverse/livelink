@@ -1,6 +1,9 @@
 //------------------------------------------------------------------------------
-import { CameraControllerBase, Entity } from "@3dverse/livelink";
-import { Livelink, Canvas, Viewport, CameraController, useCameraEntity } from "@3dverse/livelink-react";
+import { useEffect } from "react";
+
+//------------------------------------------------------------------------------
+import { Entity } from "@3dverse/livelink";
+import { Livelink, Canvas, Viewport, useCameraEntity } from "@3dverse/livelink-react";
 
 //------------------------------------------------------------------------------
 import { DisconnectedModal, LoadingOverlay } from "../../../components/SamplePlayer";
@@ -32,32 +35,33 @@ function App() {
 }
 
 //------------------------------------------------------------------------------
-class CustomCameraController extends CameraControllerBase {
-    #speed = 1;
-    #elapsedTime: number = 0;
-
-    constructor({ camera_entity }: { camera_entity: Entity; dom_element: HTMLElement }) {
-        super({ camera_entity });
-    }
-
-    update(): void {
-        const PERIOD = 1000 / 60;
-        this._camera_entity.local_transform!.position[1] = 1 + Math.sin(this.#elapsedTime * 0.001) * this.#speed;
-        this.#elapsedTime += PERIOD;
-    }
-
-    release(): void {}
-}
-
-//------------------------------------------------------------------------------
 function AppLayout() {
-    const { cameraEntity } = useCameraEntity();
+    const { cameraEntity } = useCameraEntity({ position: [0, 0, 10] });
 
     return (
         <Canvas className="w-full h-full">
             <Viewport cameraEntity={cameraEntity} className="w-full h-full">
-                <CameraController controllerClass={CustomCameraController} />
+                <CustomController cameraEntity={cameraEntity} />
             </Viewport>
         </Canvas>
     );
+}
+
+//------------------------------------------------------------------------------
+function CustomController({ cameraEntity }: { cameraEntity: Entity | null }) {
+    useEffect(() => {
+        if (!cameraEntity) {
+            return;
+        }
+
+        const interval = setInterval(() => {
+            cameraEntity.local_transform!.position[1] = Math.cos(Date.now() * 0.001) * 5;
+        }, 1000 / 60);
+
+        return () => {
+            clearInterval(interval);
+        };
+    }, [cameraEntity]);
+
+    return null;
 }

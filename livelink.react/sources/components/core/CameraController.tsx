@@ -1,11 +1,22 @@
 //------------------------------------------------------------------------------
-import { useContext, useEffect } from "react";
+import React, { createContext, PropsWithChildren, useContext, useEffect, useState } from "react";
 
 //------------------------------------------------------------------------------
-import { CameraController as DefaultCameraController, CameraControllerBase, Entity } from "@3dverse/livelink";
+import { CameraController as DefaultCameraController, Entity, Viewport } from "@3dverse/livelink";
 
 //------------------------------------------------------------------------------
 import { ViewportContext } from "./Viewport";
+
+/**
+ * Context that provides a camera controller.
+ *
+ * @category Context Providers
+ */
+export const CameraControllerContext = createContext<{
+    cameraController: DefaultCameraController | null;
+}>({
+    cameraController: null,
+});
 
 /**
  * A component that provides a camera controller.
@@ -13,30 +24,27 @@ import { ViewportContext } from "./Viewport";
  * @category Components
  */
 export function CameraController({
-    controllerClass = DefaultCameraController,
-}: {
-    controllerClass?: {
-        new (_: { camera_entity: Entity; dom_element: HTMLElement }): CameraControllerBase;
-    };
-}) {
+    _preset = "orbital",
+    children,
+}: PropsWithChildren & { _preset?: "orbital" | "fly" }) {
     const { viewportDomElement, camera } = useContext(ViewportContext);
-
+    const [cameraController, setCameraController] = useState<DefaultCameraController | null>(null);
     useEffect(() => {
         if (!viewportDomElement || !camera) {
             return;
         }
 
-        const controller = new controllerClass({
-            dom_element: viewportDomElement,
+        const controller = new DefaultCameraController({
             camera_entity: camera.camera_entity,
+            dom_element: viewportDomElement,
         });
-        controller.activate();
+        setCameraController(controller);
 
         return () => {
-            controller.deactivate();
             controller.release();
+            setCameraController(null);
         };
     }, [viewportDomElement, camera]);
 
-    return null;
+    return <CameraControllerContext.Provider value={{ cameraController }}>{children}</CameraControllerContext.Provider>;
 }

@@ -10,6 +10,14 @@ export default [
     {
         rules: {
             "@typescript-eslint/explicit-function-return-type": "error",
+            "@typescript-eslint/no-unused-vars": [
+                "warn", // or "error"
+                {
+                    argsIgnorePattern: "^_",
+                    varsIgnorePattern: "^_",
+                    caughtErrorsIgnorePattern: "^_",
+                },
+            ],
         },
     },
 ];

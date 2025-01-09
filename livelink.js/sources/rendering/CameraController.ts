@@ -1,69 +1,112 @@
 //------------------------------------------------------------------------------
+import { Components } from "@3dverse/livelink.core";
 import CameraControls, { Clock } from "@3dverse/livelink-camera-controls";
 
 //------------------------------------------------------------------------------
-import { CameraControllerBase } from "./CameraControllerBase";
 import { Entity } from "../scene/Entity";
 
 /**
- * A camera controller that uses the `camera-controls` library.
+ * A camera controller based on the `camera-controls` library.
  *
  * @category Rendering
  */
-export class CameraController extends CameraControllerBase {
+export class CameraController extends CameraControls {
     /**
      *
      */
-    readonly cameraControls: CameraControls;
-
-    /**
-     *
-     */
-    readonly clock: Clock = new Clock();
+    #camera_entity: Entity;
 
     /**
      *
      */
-    constructor({ camera_entity, dom_element }: { camera_entity: Entity; dom_element: HTMLElement }) {
-        super({ camera_entity });
+    #clock: Clock = new Clock();
 
-        const lens = camera_entity.perspective_lens || camera_entity.orthographic_lens;
-        if (!lens) {
-            throw new Error("Camera entity must have a perspective or orthographic lens");
-        }
+    /**
+     *
+     */
+    #update_interval: number = 0;
 
-        this.cameraControls = new CameraControls(camera_entity.local_transform!, lens, dom_element);
+    /**
+     *
+     */
+    constructor({
+        camera_entity,
+        dom_element,
+        activate = true,
+    }: {
+        camera_entity: Entity;
+        dom_element: HTMLElement;
+        activate?: boolean;
+    }) {
+        super(camera_entity.local_transform!, getLens(camera_entity), dom_element);
+
+        this.#camera_entity = camera_entity;
+
         this.#initController();
-    }
 
-    /**
-     *
-     */
-    update(): void {
-        this.cameraControls.update(this.clock.getDelta());
+        if (activate) {
+            this.activate();
+        }
     }
 
     /**
      *
      */
     release(): void {
-        this.cameraControls.dispose();
+        this.deactivate();
+        this.dispose();
+    }
+
+    /**
+     *
+     */
+    activate(): void {
+        if (this.#update_interval !== 0) {
+            return;
+        }
+
+        this.#update_interval = setInterval(() => {
+            this.update(this.#clock.getDelta());
+        }, 1000 / 60);
+    }
+
+    /**
+     *
+     */
+    deactivate(): void {
+        if (this.#update_interval === 0) {
+            return;
+        }
+
+        clearInterval(this.#update_interval);
+        this.#update_interval = 0;
     }
 
     /**
      *
      */
     #initController(): void {
-        this.cameraControls.setOrbitPoint(0, 0, 0);
-        this.cameraControls.setPosition(...this._camera_entity.local_transform!.position);
-        this.cameraControls.addEventListener("update", this.#onCameraUpdate);
+        this.setOrbitPoint(0, 0, 0);
+        this.setPosition(...this.#camera_entity.local_transform!.position);
+        this.addEventListener("update", this.#onCameraUpdate);
     }
 
     /**
      *
      */
     #onCameraUpdate = (): void => {
-        this.cameraControls.position.toArray(this._camera_entity.local_transform!.position);
-        this.cameraControls.orientation.toArray(this._camera_entity.local_transform!.orientation);
+        this.position.toArray(this.#camera_entity.local_transform!.position);
+        this.orientation.toArray(this.#camera_entity.local_transform!.orientation);
     };
+}
+
+/**
+ *
+ */
+function getLens(camera_entity: Entity): Components.PerspectiveLens | Components.OrthographicLens {
+    const lens = camera_entity.perspective_lens || camera_entity.orthographic_lens;
+    if (!lens) {
+        throw new Error("Camera entity must have a perspective or orthographic lens");
+    }
+    return lens;
 }

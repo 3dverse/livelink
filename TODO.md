@@ -2,7 +2,9 @@
 
 ## Critical
 
-- [ ] Camera controllers
+### Livelink
+
+- [x] Opinionated Camera controller
 - [ ] Use TypedEventTarget for events
     - Livelink
         - [x] TO_REMOVE\_\_viewports-added
@@ -19,6 +21,21 @@
 - [x] Check if we can save on Entity Proxy by defining accessors for each component
     - One drawback is that we can't delete components with `delete entity.component`
     - We can use `entity.component = undefined` instead
+
+### Livelink React
+
+- [ ] useEntities = search for multiple entities
+
+### Livelink React UI
+
+- [ ] Move LoadingOverlay to from Samples to livelink-react-ui
+
+### Samples
+
+- [ ] Camera controller Fly mode
+- [ ] Camera controller Orbit mode
+- [ ] Controller settings
+- [ ] Scene refs
 
 ## Nice to have
 
