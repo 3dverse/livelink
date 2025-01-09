@@ -2,6 +2,7 @@
 import { useContext, useEffect, useState } from "react";
 
 //------------------------------------------------------------------------------
+import type { UUID } from "@3dverse/livelink";
 import {
     Livelink,
     Clients,
@@ -12,10 +13,10 @@ import {
     useCameraEntity,
     CameraController,
 } from "@3dverse/livelink-react";
+import { LoadingOverlay } from "@3dverse/livelink-react-ui";
 
 //------------------------------------------------------------------------------
-import { DisconnectedModal, LoadingOverlay, SamplePlayer } from "../../../components/SamplePlayer";
-import { UUID } from "@3dverse/livelink";
+import { DisconnectedModal, SamplePlayer } from "../../../components/SamplePlayer";
 
 //------------------------------------------------------------------------------
 const token = import.meta.env.VITE_PROD_PUBLIC_TOKEN;

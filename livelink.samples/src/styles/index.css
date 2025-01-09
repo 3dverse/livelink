@@ -9,12 +9,10 @@
 @import "./tailwind/base/button.css";
 @import "./tailwind/base/core.css";
 @import "./tailwind/base/container.css";
-@import "./tailwind/base/glow-effect.css";
 @import "./tailwind/base/select.css";
 
 /* Component */
 @import "./tailwind/components/canvas.css";
-@import "./tailwind/components/loader-progress-bar-indeterminate.css";
 
 @keyframes spin {
     to {

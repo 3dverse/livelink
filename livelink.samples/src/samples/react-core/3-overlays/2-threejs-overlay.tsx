@@ -1,15 +1,14 @@
 //------------------------------------------------------------------------------
 import { useMemo } from "react";
-
-//------------------------------------------------------------------------------
-import { Livelink, Canvas, Viewport, CameraController, useCameraEntity } from "@3dverse/livelink-react";
-import { ThreeOverlay } from "@3dverse/livelink-three/react";
-
-//------------------------------------------------------------------------------
 import * as THREE from "three";
 
 //------------------------------------------------------------------------------
-import { DisconnectedModal, LoadingOverlay } from "../../../components/SamplePlayer";
+import { Livelink, Canvas, Viewport, CameraController, useCameraEntity } from "@3dverse/livelink-react";
+import { LoadingOverlay } from "@3dverse/livelink-react-ui";
+import { ThreeOverlay } from "@3dverse/livelink-three/react";
+
+//------------------------------------------------------------------------------
+import { DisconnectedModal } from "../../../components/SamplePlayer";
 
 //------------------------------------------------------------------------------
 const scene_id = "812f58e2-e735-484e-bf47-a7faf9e10128";

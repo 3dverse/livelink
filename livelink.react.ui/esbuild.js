@@ -10,7 +10,7 @@ const commonBuildOptions = {
     minify: true,
     platform: "browser",
     external: [...Object.keys(pkg.peerDependencies || {})],
-    sourcemap: true,
+    sourcemap: true
 };
 
 //------------------------------------------------------------------------------

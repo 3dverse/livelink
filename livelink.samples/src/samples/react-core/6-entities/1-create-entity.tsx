@@ -1,4 +1,7 @@
 //------------------------------------------------------------------------------
+import { useContext } from "react";
+
+//------------------------------------------------------------------------------
 import {
     Livelink,
     Canvas,
@@ -7,10 +10,10 @@ import {
     useCameraEntity,
     LivelinkContext,
 } from "@3dverse/livelink-react";
+import { LoadingOverlay } from "@3dverse/livelink-react-ui";
 
 //------------------------------------------------------------------------------
-import { DisconnectedModal, LoadingOverlay } from "../../../components/SamplePlayer";
-import { useContext } from "react";
+import { DisconnectedModal } from "../../../components/SamplePlayer";
 
 //------------------------------------------------------------------------------
 const scene_id = "191d4055-030d-4dc9-8d3a-0e5bf3590e0c";

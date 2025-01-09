@@ -1,10 +1,9 @@
 //------------------------------------------------------------------------------
 import { useContext, useEffect, useState } from "react";
+import BoringAvatar from "boring-avatars";
 
 //------------------------------------------------------------------------------
 import { Livelink as LivelinkInstance, Client, Entity, UUID } from "@3dverse/livelink";
-
-//------------------------------------------------------------------------------
 import {
     CameraController,
     Canvas,
@@ -17,12 +16,10 @@ import {
     useCameraEntity,
     Viewport,
 } from "@3dverse/livelink-react";
+import { LoadingOverlay } from "@3dverse/livelink-react-ui";
 
 //------------------------------------------------------------------------------
-import BoringAvatar from "boring-avatars";
-
-//------------------------------------------------------------------------------
-import { DisconnectedModal, LoadingOverlay, SamplePlayer } from "../../../components/SamplePlayer";
+import { DisconnectedModal, SamplePlayer } from "../../../components/SamplePlayer";
 
 //------------------------------------------------------------------------------
 const scene_id = "545cb90f-a3e0-4531-9d98-0fc6d9131097";

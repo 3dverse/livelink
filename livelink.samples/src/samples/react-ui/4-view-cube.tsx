@@ -1,4 +1,8 @@
 //------------------------------------------------------------------------------
+import { useContext } from "react";
+
+//------------------------------------------------------------------------------
+import type { Entity, Vec3 } from "@3dverse/livelink";
 import {
     Livelink,
     Canvas,
@@ -7,12 +11,10 @@ import {
     CameraController,
     CameraControllerContext,
 } from "@3dverse/livelink-react";
-import { ViewCube, InactivityWarning } from "@3dverse/livelink-react-ui";
-import type { Entity, Vec3 } from "@3dverse/livelink";
+import { ViewCube, InactivityWarning, LoadingOverlay } from "@3dverse/livelink-react-ui";
 
 //------------------------------------------------------------------------------
-import { DisconnectedModal, LoadingOverlay } from "../../components/SamplePlayer";
-import { useContext } from "react";
+import { DisconnectedModal } from "../../components/SamplePlayer";
 
 //------------------------------------------------------------------------------
 const scene_id = "6391ff06-c881-441d-8ada-4184b2050751";

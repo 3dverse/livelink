@@ -1,4 +1,8 @@
 //------------------------------------------------------------------------------
+import { PointerEventHandler, useContext, useEffect, useMemo, useState } from "react";
+import * as THREE from "three";
+
+//------------------------------------------------------------------------------
 import type { Entity, Vec3, Vec2, CameraProjection, Viewport as LiveliveViewport } from "@3dverse/livelink";
 import {
     Livelink,
@@ -12,11 +16,10 @@ import {
     ViewportContext,
 } from "@3dverse/livelink-react";
 import { ThreeOverlay } from "@3dverse/livelink-three/react";
-import * as THREE from "three";
-import { PointerEventHandler, useContext, useEffect, useMemo, useState } from "react";
+import { LoadingOverlay } from "@3dverse/livelink-react-ui";
 
 //------------------------------------------------------------------------------
-import { DisconnectedModal, LoadingOverlay } from "../../components/SamplePlayer";
+import { DisconnectedModal } from "../../components/SamplePlayer";
 
 //------------------------------------------------------------------------------
 const scene_id = "8f3c24c1-720e-4d2c-b0e7-f623e4feb7be";

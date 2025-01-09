@@ -2,11 +2,12 @@
 import { useCallback, useContext, useEffect, useState } from "react";
 
 //------------------------------------------------------------------------------
-import { type Livelink as LivelinkInstance, Entity, Gamepad, Keyboard, Mouse } from "@3dverse/livelink";
+import { type Livelink as LivelinkInstance, type Entity, Gamepad, Keyboard, Mouse } from "@3dverse/livelink";
 import { LivelinkContext, Livelink, Viewport, ViewportContext, Canvas, useEntity } from "@3dverse/livelink-react";
+import { LoadingOverlay } from "@3dverse/livelink-react-ui";
 
 //------------------------------------------------------------------------------
-import { LoadingOverlay } from "../../../components/SamplePlayer";
+import { DisconnectedModal } from "../../../components/SamplePlayer";
 
 //------------------------------------------------------------------------------
 const token = import.meta.env.VITE_PROD_PUBLIC_TOKEN;
@@ -25,7 +26,12 @@ export default {
 //------------------------------------------------------------------------------
 function App() {
     return (
-        <Livelink sceneId={scene_id} token={token} LoadingPanel={LoadingOverlay}>
+        <Livelink
+            sceneId={scene_id}
+            token={token}
+            LoadingPanel={LoadingOverlay}
+            ConnectionErrorPanel={DisconnectedModal}
+        >
             <AppLayout />
         </Livelink>
     );

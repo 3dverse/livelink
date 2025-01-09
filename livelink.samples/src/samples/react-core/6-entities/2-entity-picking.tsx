@@ -1,4 +1,8 @@
 //------------------------------------------------------------------------------
+import { useContext, useEffect, useState } from "react";
+
+//------------------------------------------------------------------------------
+import { type Entity, Mouse } from "@3dverse/livelink";
 import {
     Livelink,
     Canvas,
@@ -8,11 +12,10 @@ import {
     LivelinkContext,
     ViewportContext,
 } from "@3dverse/livelink-react";
+import { LoadingOverlay } from "@3dverse/livelink-react-ui";
 
 //------------------------------------------------------------------------------
-import { DisconnectedModal, LoadingOverlay } from "../../../components/SamplePlayer";
-import { useContext, useEffect, useState } from "react";
-import { Entity, Mouse } from "@3dverse/livelink";
+import { DisconnectedModal } from "../../../components/SamplePlayer";
 
 //------------------------------------------------------------------------------
 const scene_id = "a5dbe3a0-2056-48e7-a53e-3725cb770084";

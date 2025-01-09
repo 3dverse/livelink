@@ -9,9 +9,10 @@ import {
     useCameraEntity,
     CameraController,
 } from "@3dverse/livelink-react";
+import { LoadingOverlay } from "@3dverse/livelink-react-ui";
 
 //------------------------------------------------------------------------------
-import { DisconnectedModal, LoadingOverlay, SamplePlayer } from "../../components/SamplePlayer";
+import { DisconnectedModal, SamplePlayer } from "../../components/SamplePlayer";
 
 //------------------------------------------------------------------------------
 import * as THREE from "three";

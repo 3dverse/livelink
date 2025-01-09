@@ -1,9 +1,9 @@
 //------------------------------------------------------------------------------
 import { Livelink, Canvas, Viewport, useEntity, useCameraEntity, CameraController } from "@3dverse/livelink-react";
-import { SunPositionPicker } from "@3dverse/livelink-react-ui";
+import { LoadingOverlay, SunPositionPicker } from "@3dverse/livelink-react-ui";
 
 //------------------------------------------------------------------------------
-import { DisconnectedModal, LoadingOverlay } from "../../components/SamplePlayer";
+import { DisconnectedModal } from "../../components/SamplePlayer";
 
 //------------------------------------------------------------------------------
 const scene_id = "bfadafe7-7d75-4e8d-ba55-3b65c4b1d994";

@@ -11,9 +11,10 @@ import {
     CameraController,
     useCameraEntity,
 } from "@3dverse/livelink-react";
+import { LoadingOverlay } from "@3dverse/livelink-react-ui";
 
 //------------------------------------------------------------------------------
-import { DisconnectedModal, LoadingOverlay } from "../../components/SamplePlayer";
+import { DisconnectedModal } from "../../components/SamplePlayer";
 
 //------------------------------------------------------------------------------
 const scene_id = "8f3c24c1-720e-4d2c-b0e7-f623e4feb7be";
