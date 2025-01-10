@@ -5,13 +5,12 @@ import { useContext, useEffect, useState } from "react";
 import type { UUID } from "@3dverse/livelink";
 import {
     Livelink,
-    Clients,
     Canvas,
     Viewport,
-    ClientsContext,
     LivelinkContext,
     useCameraEntity,
     CameraController,
+    useClients,
 } from "@3dverse/livelink-react";
 import { LoadingOverlay } from "@3dverse/livelink-react-ui";
 
@@ -62,9 +61,7 @@ function SessionCreator({
                 ConnectionErrorPanel={DisconnectedModal}
             >
                 <SessionSniffer setSessionId={setSessionId} />
-                <Clients>
-                    <AppLayout />
-                </Clients>
+                <AppLayout />
             </Livelink>
         </SamplePlayer>
     );
@@ -91,9 +88,7 @@ function SessionJoiner({ sessionId }: { sessionId: UUID | null }) {
                 LoadingPanel={LoadingOverlay}
                 ConnectionErrorPanel={DisconnectedModal}
             >
-                <Clients>
-                    <AppLayout />
-                </Clients>
+                <AppLayout />
             </Livelink>
         </SamplePlayer>
     );
@@ -130,7 +125,7 @@ function SessionSniffer({
 //------------------------------------------------------------------------------
 function ClientList() {
     const { instance } = useContext(LivelinkContext);
-    const { clients } = useContext(ClientsContext);
+    const { clients } = useClients();
     const prettifyUsername = (username: string) =>
         username.substring(username.lastIndexOf("_") + 1);
 

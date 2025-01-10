@@ -1,25 +1,18 @@
 //------------------------------------------------------------------------------
-import React, { createContext, PropsWithChildren, useContext, useEffect, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 
 //------------------------------------------------------------------------------
 import { Client } from "@3dverse/livelink";
 
 //------------------------------------------------------------------------------
-import { LivelinkContext } from "./Livelink";
-
-/**
- * Context that provides a list of all clients connected to the current session.
- *
- * @category Context Providers
- */
-export const ClientsContext = createContext<{ clients: Array<Client> }>({ clients: [] });
+import { LivelinkContext } from "../components/core/Livelink";
 
 /**
  * Provides a list of all clients connected to the current session.
  *
  * @category Context Providers
  */
-function ClientsProvider({ children }: PropsWithChildren) {
+export function useClients() {
     const { instance } = useContext(LivelinkContext);
 
     const [clients, setClients] = useState<Array<Client>>([]);
@@ -43,8 +36,5 @@ function ClientsProvider({ children }: PropsWithChildren) {
         };
     }, [instance]);
 
-    return <ClientsContext.Provider value={{ clients }}>{children}</ClientsContext.Provider>;
+    return { clients };
 }
-
-//------------------------------------------------------------------------------
-export { ClientsProvider as Clients };

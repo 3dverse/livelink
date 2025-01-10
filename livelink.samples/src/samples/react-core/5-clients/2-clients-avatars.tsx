@@ -7,13 +7,12 @@ import type { Client, Entity, UUID } from "@3dverse/livelink";
 import {
     CameraController,
     Canvas,
-    Clients,
-    ClientsContext,
     DOM3DOverlay,
     DOMEntity,
     Livelink,
     LivelinkContext,
     useCameraEntity,
+    useClients,
     Viewport,
 } from "@3dverse/livelink-react";
 import { LoadingOverlay } from "@3dverse/livelink-react-ui";
@@ -66,9 +65,7 @@ function SessionCreator({
                 ConnectionErrorPanel={DisconnectedModal}
             >
                 <SessionSniffer setSessionId={setSessionId} />
-                <Clients>
-                    <AppLayout />
-                </Clients>
+                <AppLayout />
             </Livelink>
         </SamplePlayer>
     );
@@ -95,9 +92,7 @@ function SessionJoiner({ sessionId }: { sessionId: UUID | null }) {
                 LoadingPanel={LoadingOverlay}
                 ConnectionErrorPanel={DisconnectedModal}
             >
-                <Clients>
-                    <AppLayout />
-                </Clients>
+                <AppLayout />
             </Livelink>
         </SamplePlayer>
     );
@@ -134,7 +129,7 @@ function SessionSniffer({
 //------------------------------------------------------------------------------
 function Avatars() {
     const { instance } = useContext(LivelinkContext);
-    const { clients } = useContext(ClientsContext);
+    const { clients } = useClients();
     const [watchedClient, setWatchedClient] = useState<Client | null>(null);
 
     useEffect(() => {
@@ -184,6 +179,11 @@ const AvatarList = ({
                             setWatchedClient(
                                 client !== watchedClient ? client : null,
                             )
+                        }
+                        className={
+                            client === watchedClient
+                                ? "border-2 rounded-full border-accent"
+                                : ""
                         }
                     >
                         <Avatar client={client} />
