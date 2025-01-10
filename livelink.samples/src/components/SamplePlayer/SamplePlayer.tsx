@@ -97,6 +97,7 @@ export function SamplePlayer({
                             language="jsx"
                             style={codeTheme}
                             className="h-full !m-0 !bg-transparent !text-[.8em] "
+                            showLineNumbers
                         >
                             {code}
                         </SyntaxHighlighter>
