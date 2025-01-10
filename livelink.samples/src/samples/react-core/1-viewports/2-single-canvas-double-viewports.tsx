@@ -38,7 +38,7 @@ function AppLayout() {
     const { cameraEntity: cameraEntity2 } = useCameraEntity();
 
     return (
-        <Canvas className="flex">
+        <Canvas className="flex max-h-screen">
             <Viewport cameraEntity={cameraEntity1} className="basis-[60%]">
                 <CameraController />
             </Viewport>

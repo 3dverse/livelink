@@ -38,7 +38,7 @@ function AppLayout() {
     const { cameraEntity: pipCamera } = useCameraEntity();
 
     return (
-        <Canvas className="w-full h-full">
+        <Canvas className="max-h-screen">
             <Viewport cameraEntity={mainCamera} className="w-full h-full">
                 <CameraController />
                 <Viewport

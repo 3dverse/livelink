@@ -39,12 +39,12 @@ function AppLayout() {
 
     return (
         <div className="flex basis-full gap-2">
-            <Canvas className="w-full h-full">
+            <Canvas>
                 <Viewport cameraEntity={cameraEntity1} className="w-full h-full">
                     <CameraController />
                 </Viewport>
             </Canvas>
-            <Canvas className="w-full h-full">
+            <Canvas>
                 <Viewport cameraEntity={cameraEntity2} className="w-full h-full">
                     <CameraController />
                 </Viewport>

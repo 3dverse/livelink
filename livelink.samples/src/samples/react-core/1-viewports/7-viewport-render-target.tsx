@@ -38,7 +38,7 @@ function AppLayout() {
     const { cameraEntity } = useCameraEntity();
 
     return (
-        <Canvas className="w-full h-full">
+        <Canvas className="max-h-screen">
             <Viewport cameraEntity={cameraEntity} className="w-full h-full">
                 <CameraController />
                 <DebugViewports cameraEntity={cameraEntity} />
