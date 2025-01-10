@@ -64,7 +64,7 @@ export function Viewport({
             return;
         }
 
-        console.log("---- Resizing viewport", viewportDomElement.current);
+        console.debug("---- Resizing viewport", viewportDomElement.current);
         viewport.relative_rect = Livelink.RelativeRect.from_dom_elements({
             element: viewportDomElement.current,
             parent: canvas,
@@ -139,7 +139,7 @@ export function Viewport({
             return;
         }
 
-        console.log("---- Setting camera", cameraEntity);
+        console.debug("---- Setting camera", cameraEntity);
         viewport.camera_projection = new Livelink.CameraProjection({ camera_entity: cameraEntity, viewport });
         setCamera(viewport.camera_projection);
     }, [viewport, cameraEntity]);

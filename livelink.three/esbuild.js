@@ -27,20 +27,33 @@ const buildOptions = [
 
 //------------------------------------------------------------------------------
 const devBuildOptions = {
-    ...commonBuildOptions,
-    ...buildOptions[0],
+    minify: false,
+};
+
+const prodBuildOptions = {
+    minify: true,
+    pure: ["console.debug"],
 };
 
 //------------------------------------------------------------------------------
 (async () => {
     if (process.argv.includes("dev")) {
-        const ctx = await esbuild.context(devBuildOptions);
-        await ctx.watch();
+        for (const buildOption of buildOptions) {
+            const options = {
+                ...commonBuildOptions,
+                ...buildOption,
+                ...devBuildOptions,
+            };
+
+            const ctx = await esbuild.context(options);
+            await ctx.watch();
+        }
+
         return;
     }
 
-    for (const options of buildOptions) {
-        console.log(`Building ${options.format}...`);
-        await esbuild.build({ ...commonBuildOptions, ...options });
+    for (const buildOption of buildOptions) {
+        console.log(`Building ${buildOption.format}...`);
+        await esbuild.build({ ...commonBuildOptions, ...buildOption, ...prodBuildOptions });
     }
 })();

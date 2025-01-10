@@ -1,3 +1,5 @@
+/* eslint-disable */
+
 //------------------------------------------------------------------------------
 const pkg = require("./package.json");
 const esbuild = require("esbuild");
@@ -7,7 +9,6 @@ const commonBuildOptions = {
     entryPoints: ["./sources/index.ts"],
     outdir: "dist",
     bundle: true,
-    minify: true,
     platform: "neutral",
     mainFields: ["browser", "module", "main"],
     external: [...Object.keys(pkg.peerDependencies || {})],
@@ -31,23 +32,34 @@ const buildOptions = [
 ];
 
 //------------------------------------------------------------------------------
+const devBuildOptions = {
+    minify: false,
+};
+
+const prodBuildOptions = {
+    minify: true,
+    pure: ["console.debug"],
+};
+
+//------------------------------------------------------------------------------
 (async () => {
     if (process.argv.includes("dev")) {
-        for (const options of buildOptions) {
-            const devBuildOptions = {
+        for (const buildOption of buildOptions) {
+            const options = {
                 ...commonBuildOptions,
-                ...options,
+                ...buildOption,
+                ...devBuildOptions,
             };
 
-            const ctx = await esbuild.context(devBuildOptions);
+            const ctx = await esbuild.context(options);
             await ctx.watch();
         }
 
         return;
     }
 
-    for (const options of buildOptions) {
-        console.log(`Building ${options.format}...`);
-        await esbuild.build({ ...commonBuildOptions, ...options });
+    for (const buildOption of buildOptions) {
+        console.log(`Building ${buildOption.format}...`);
+        await esbuild.build({ ...commonBuildOptions, ...buildOption, ...prodBuildOptions });
     }
 })();

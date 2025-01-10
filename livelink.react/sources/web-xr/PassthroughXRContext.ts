@@ -188,7 +188,7 @@ export class PassthroughXRContext extends ContextProvider {
         gl.shaderSource(vertex_shader, vertex_shader_source);
         gl.compileShader(vertex_shader);
         if (!gl.getShaderParameter(vertex_shader, gl.COMPILE_STATUS)) {
-            console.log("Vertex shader failed to compile: " + gl.getShaderInfoLog(vertex_shader));
+            console.error("Vertex shader failed to compile: " + gl.getShaderInfoLog(vertex_shader));
         }
 
         // Fragment shader
@@ -204,7 +204,7 @@ export class PassthroughXRContext extends ContextProvider {
         gl.shaderSource(fragment_shader, fragment_shader_source);
         gl.compileShader(fragment_shader);
         if (!gl.getShaderParameter(fragment_shader, gl.COMPILE_STATUS)) {
-            console.log("Fragment shader failed to compile: " + gl.getShaderInfoLog(fragment_shader));
+            console.error("Fragment shader failed to compile: " + gl.getShaderInfoLog(fragment_shader));
         }
 
         // Shader program
@@ -214,7 +214,7 @@ export class PassthroughXRContext extends ContextProvider {
         gl.linkProgram(shader_program);
         gl.useProgram(shader_program);
         if (!gl.getProgramParameter(shader_program, gl.LINK_STATUS)) {
-            console.log("Program failed to compile: " + gl.getProgramInfoLog(shader_program));
+            console.error("Program failed to compile: " + gl.getProgramInfoLog(shader_program));
         }
         gl.useProgram(shader_program);
         this.#shader_program = shader_program;

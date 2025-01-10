@@ -261,7 +261,7 @@ function configureClient(instance: LivelinkInstance) {
     const configure = async () => {
         instance.session.removeEventListener("TO_REMOVE__viewports-added", configure);
 
-        console.log("-- Configuring client");
+        console.debug("-- Configuring client");
         const webcodec = await Livelink.WebCodecsDecoder.findSupportedCodec();
         await instance.configureRemoteServer({ codec: webcodec || undefined });
 

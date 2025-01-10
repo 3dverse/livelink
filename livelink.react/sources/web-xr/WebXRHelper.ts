@@ -291,7 +291,7 @@ export class WebXRHelper {
 
         this.#camera_fovy = new_fov * (180 / Math.PI);
 
-        console.log(
+        console.debug(
             `%cFOV: ${original_fov * (180 / Math.PI)} -> ${this.#camera_fovy}, scale factor: ${this.#context.scale_factor}`,
             "color: orange; font-weight: bold; font-size: 1.5em",
         );

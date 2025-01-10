@@ -133,7 +133,7 @@ export class EntityRegistry {
         const entities = this.find({ entity_euid });
 
         if (entities.length === 0) {
-            console.log("Received an update for an undiscovered entity", entity_euid);
+            console.debug("Received an update for an undiscovered entity", entity_euid);
             return;
         }
 

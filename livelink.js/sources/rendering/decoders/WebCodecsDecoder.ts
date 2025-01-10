@@ -34,19 +34,19 @@ export class WebCodecsDecoder extends EncodedFrameConsumer {
      */
     public static async findSupportedCodec(): Promise<Enums.CodecType | null> {
         if (typeof VideoDecoder === "undefined") {
-            console.log("WebCodecs not supported");
+            console.debug("WebCodecs not supported");
             return null;
         }
 
         for (const codec of this.#codecs.keys()) {
             const supportedConfig = await WebCodecsDecoder.#findSupportedConfig({ codec });
             if (supportedConfig) {
-                console.log("Found a supported codec", supportedConfig.config!.codec);
+                console.debug("Found a supported codec", supportedConfig.config!.codec);
                 return codec;
             }
         }
 
-        console.log("No supported codec found");
+        console.debug("No supported web codec found");
         return null;
     }
 
@@ -164,7 +164,7 @@ export class WebCodecsDecoder extends EncodedFrameConsumer {
         });
 
         this.#decoder.configure(supportedConfig.config!);
-        console.log("Codec configured", supportedConfig.config);
+        console.debug("Codec configured", supportedConfig.config);
 
         return this;
     }

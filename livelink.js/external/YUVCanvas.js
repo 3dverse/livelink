@@ -380,14 +380,14 @@
         gl.shaderSource(vertexShader, vertexShaderScript);
         gl.compileShader(vertexShader);
         if (!gl.getShaderParameter(vertexShader, gl.COMPILE_STATUS)) {
-            console.log("Vertex shader failed to compile: " + gl.getShaderInfoLog(vertexShader));
+            console.error("Vertex shader failed to compile: " + gl.getShaderInfoLog(vertexShader));
         }
 
         var fragmentShader = gl.createShader(gl.FRAGMENT_SHADER);
         gl.shaderSource(fragmentShader, fragmentShaderScript);
         gl.compileShader(fragmentShader);
         if (!gl.getShaderParameter(fragmentShader, gl.COMPILE_STATUS)) {
-            console.log("Fragment shader failed to compile: " + gl.getShaderInfoLog(fragmentShader));
+            console.error("Fragment shader failed to compile: " + gl.getShaderInfoLog(fragmentShader));
         }
 
         var program = gl.createProgram();
@@ -395,7 +395,7 @@
         gl.attachShader(program, fragmentShader);
         gl.linkProgram(program);
         if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
-            console.log("Program failed to compile: " + gl.getProgramInfoLog(program));
+            console.error("Program failed to compile: " + gl.getProgramInfoLog(program));
         }
 
         gl.useProgram(program);

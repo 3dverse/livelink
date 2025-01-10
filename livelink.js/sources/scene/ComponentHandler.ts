@@ -43,7 +43,7 @@ export class ComponentHandler {
      *
      */
     deleteProperty(component: object, prop: PropertyKey): boolean {
-        //console.log("DELETE ATTRIBUTE", prop);
+        //console.debug("DELETE ATTRIBUTE", prop);
         this._entity._markComponentAsDirty({ component_name: this._component_name });
         return Reflect.deleteProperty(component, prop);
     }
