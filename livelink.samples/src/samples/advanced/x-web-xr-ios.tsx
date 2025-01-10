@@ -19,7 +19,8 @@ import { DisconnectedModal } from "../../components/SamplePlayer";
 //------------------------------------------------------------------------------
 const scene_id = "8f3c24c1-720e-4d2c-b0e7-f623e4feb7be";
 const token = import.meta.env.VITE_PROD_PUBLIC_TOKEN;
-const variant_launch_sdk_key = import.meta.env.VITE_WEBXR_VARIANT_LAUNCH_SDK_KEY;
+const variant_launch_sdk_key = import.meta.env
+    .VITE_WEBXR_VARIANT_LAUNCH_SDK_KEY;
 const variant_launch_sdk_url = `https://launchar.app/sdk/v1?key=${variant_launch_sdk_key}&redirect=true`;
 
 //------------------------------------------------------------------------------
@@ -44,7 +45,10 @@ function App() {
             {xrMode ? (
                 <WebXR mode={xrMode}>
                     <div className="fixed top-4 left-4">
-                        <button className="button button-primary" onClick={() => setXRMode(null)}>
+                        <button
+                            className="button button-primary"
+                            onClick={() => setXRMode(null)}
+                        >
                             Exit XR
                         </button>
                     </div>
@@ -76,7 +80,13 @@ function AppLayout() {
 }
 
 //------------------------------------------------------------------------------
-function XRButton({ mode, enterXR }: { mode: XRSessionMode; enterXR: (mode: XRSessionMode) => void }) {
+function XRButton({
+    mode,
+    enterXR,
+}: {
+    mode: XRSessionMode;
+    enterXR: (mode: XRSessionMode) => void;
+}) {
     const [isSessionSupported, setIsSessionSupported] = useState(false);
     const [message, setMessage] = useState("");
     const modeTitle = mode.replace("immersive-", "").toUpperCase();
@@ -85,7 +95,9 @@ function XRButton({ mode, enterXR }: { mode: XRSessionMode; enterXR: (mode: XRSe
     // Dynamic script loading using the DOM
     function loadScript(url: string) {
         return new Promise<Event | void>((resolve, reject) => {
-            let script: HTMLScriptElement | null = document.querySelector(`script[src="${url}"]`);
+            let script: HTMLScriptElement | null = document.querySelector(
+                `script[src="${url}"]`,
+            );
             if (script) {
                 resolve();
                 return;
@@ -114,7 +126,11 @@ function XRButton({ mode, enterXR }: { mode: XRSessionMode; enterXR: (mode: XRSe
             return;
         }
         WebXRHelper.isSessionSupported(mode).then(async supported => {
-            setMessage(supported ? `Enter ${modeTitle}` : `${modeTitle} is not supported.`);
+            setMessage(
+                supported
+                    ? `Enter ${modeTitle}`
+                    : `${modeTitle} is not supported.`,
+            );
             setIsSessionSupported(supported);
         });
     }
@@ -143,7 +159,9 @@ function XRButton({ mode, enterXR }: { mode: XRSessionMode; enterXR: (mode: XRSe
 
             if (!variant_launch_sdk_key) {
                 // Missing Variant Launch SDK in .env file
-                setMessage("Error: launch.variant3d.com SDK key is not defined");
+                setMessage(
+                    "Error: launch.variant3d.com SDK key is not defined",
+                );
                 return;
             }
 
@@ -152,9 +170,15 @@ function XRButton({ mode, enterXR }: { mode: XRSessionMode; enterXR: (mode: XRSe
                 .then(() => {
                     const { VLaunch } = window as unknown as any;
                     if (!VLaunch) {
-                        throw new Error("Failed to load launch.variant3d.com SDK, verify SDK key.");
+                        throw new Error(
+                            "Failed to load launch.variant3d.com SDK, verify SDK key.",
+                        );
                     }
-                    window.addEventListener("vlaunch-initialized", onVlaunchInitialized, { once: true });
+                    window.addEventListener(
+                        "vlaunch-initialized",
+                        onVlaunchInitialized,
+                        { once: true },
+                    );
                 })
                 .catch(error => {
                     setMessage(error.toString());
@@ -163,13 +187,19 @@ function XRButton({ mode, enterXR }: { mode: XRSessionMode; enterXR: (mode: XRSe
         });
 
         return () => {
-            window.removeEventListener("vlaunch-initialized", onVlaunchInitialized);
+            window.removeEventListener(
+                "vlaunch-initialized",
+                onVlaunchInitialized,
+            );
         };
     }, [mode]);
 
     return (
         <button
-            className={"button button-primary" + (!isSessionSupported ? " opacity-50" : "")}
+            className={
+                "button button-primary" +
+                (!isSessionSupported ? " opacity-50" : "")
+            }
             onClick={() => enterXR(mode)}
             disabled={!isSessionSupported}
             style={isSessionSupported ? {} : { cursor: "not-allowed" }}

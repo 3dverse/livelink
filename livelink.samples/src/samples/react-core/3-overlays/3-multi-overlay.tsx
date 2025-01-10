@@ -66,16 +66,23 @@ function AppLayout() {
                 <ThreeOverlay scene={scene} />
 
                 <DOM3DOverlay>
-                    <DOM3DElement worldPosition={[0, 1.5, 0]} scaleFactor={0.0025}>
+                    <DOM3DElement
+                        worldPosition={[0, 1.5, 0]}
+                        scaleFactor={0.0025}
+                    >
                         <p className="bg-ground p-4 rounded-lg select-none pointer-events-none">
                             ↑ Over me is a Three.js rendered cube ↑
                             <br />↓ Beneath me is a 3dverse rendered cube ↓
                         </p>
                     </DOM3DElement>
 
-                    <DOM3DElement worldPosition={[-3, 1.5, -1]} scaleFactor={0.0025}>
+                    <DOM3DElement
+                        worldPosition={[-3, 1.5, -1]}
+                        scaleFactor={0.0025}
+                    >
                         <p className="bg-informative-800 opacity-80 p-4 rounded-lg select-none pointer-events-none">
-                            Note that there's no depth composition between layers.
+                            Note that there's no depth composition between
+                            layers.
                             <br />
                             DOM 3D elements will always appear on top.
                             <br />

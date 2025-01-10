@@ -1,5 +1,11 @@
 //------------------------------------------------------------------------------
-import { Livelink, Canvas, Viewport, CameraController, useCameraEntity } from "@3dverse/livelink-react";
+import {
+    Livelink,
+    Canvas,
+    Viewport,
+    CameraController,
+    useCameraEntity,
+} from "@3dverse/livelink-react";
 import { LoadingOverlay } from "@3dverse/livelink-react-ui";
 
 //------------------------------------------------------------------------------
@@ -38,10 +44,16 @@ function AppLayout() {
     const { cameraEntity: pipCamera } = useCameraEntity();
     return (
         <Canvas className="max-h-screen">
-            <Viewport cameraEntity={mainCamera} className="relative w-full h-full">
+            <Viewport
+                cameraEntity={mainCamera}
+                className="relative w-full h-full"
+            >
                 <CameraController />
                 <Canvas className="top-20 right-4 w-1/4 aspect-video border border-tertiary rounded-xl shadow-xl">
-                    <Viewport cameraEntity={pipCamera} className="w-full h-full">
+                    <Viewport
+                        cameraEntity={pipCamera}
+                        className="w-full h-full"
+                    >
                         <CameraController />
                     </Viewport>
                 </Canvas>

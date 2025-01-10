@@ -2,8 +2,21 @@
 import { useCallback, useContext, useEffect, useState } from "react";
 
 //------------------------------------------------------------------------------
-import { type Livelink as LivelinkInstance, type Entity, Gamepad, Keyboard, Mouse } from "@3dverse/livelink";
-import { LivelinkContext, Livelink, Viewport, ViewportContext, Canvas, useEntity } from "@3dverse/livelink-react";
+import {
+    type Livelink as LivelinkInstance,
+    type Entity,
+    Gamepad,
+    Keyboard,
+    Mouse,
+} from "@3dverse/livelink";
+import {
+    LivelinkContext,
+    Livelink,
+    Viewport,
+    ViewportContext,
+    Canvas,
+    useEntity,
+} from "@3dverse/livelink-react";
 import { LoadingOverlay } from "@3dverse/livelink-react-ui";
 
 //------------------------------------------------------------------------------
@@ -42,7 +55,11 @@ function AppLayout() {
     const { instance } = useContext(LivelinkContext);
 
     const instantiatePlayerSceneAndFindThirdPersonCamera = useCallback(
-        async ({ instance }: { instance: LivelinkInstance }): Promise<Entity | null> => {
+        async ({
+            instance,
+        }: {
+            instance: LivelinkInstance;
+        }): Promise<Entity | null> => {
             if (!instance) {
                 return null;
             }
@@ -59,12 +76,18 @@ function AppLayout() {
             });
 
             const children = await playerSceneEntity.getChildren();
-            const thirdPersonController = children.find(child => child.script_map !== undefined);
-            const thirdPersonCameraEntity = children.find(child => child.camera !== undefined);
+            const thirdPersonController = children.find(
+                child => child.script_map !== undefined,
+            );
+            const thirdPersonCameraEntity = children.find(
+                child => child.camera !== undefined,
+            );
 
             console.log("Assigning client to scripts");
             if (thirdPersonController && instance.session.client_id) {
-                thirdPersonController.assignClientToScripts({ client_uuid: instance.session.client_id });
+                thirdPersonController.assignClientToScripts({
+                    client_uuid: instance.session.client_id,
+                });
             }
 
             setStartSimulation(true);
@@ -74,7 +97,9 @@ function AppLayout() {
         [instance],
     );
 
-    const { entity: cameraEntity } = useEntity({ finder: instantiatePlayerSceneAndFindThirdPersonCamera });
+    const { entity: cameraEntity } = useEntity({
+        finder: instantiatePlayerSceneAndFindThirdPersonCamera,
+    });
     const [startSimulation, setStartSimulation] = useState<boolean>(false);
 
     return (

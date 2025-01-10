@@ -42,7 +42,10 @@ function App() {
             {xrMode ? (
                 <WebXR mode={xrMode}>
                     <div className="fixed top-4 left-4">
-                        <button className="button button-primary" onClick={() => setXRMode(null)}>
+                        <button
+                            className="button button-primary"
+                            onClick={() => setXRMode(null)}
+                        >
                             Exit XR
                         </button>
                     </div>
@@ -75,7 +78,13 @@ function AppLayout() {
 }
 
 //------------------------------------------------------------------------------
-function XRButton({ mode, enterXR }: { mode: XRSessionMode; enterXR: (mode: XRSessionMode) => void }) {
+function XRButton({
+    mode,
+    enterXR,
+}: {
+    mode: XRSessionMode;
+    enterXR: (mode: XRSessionMode) => void;
+}) {
     const [isSessionSupported, setIsSessionSupported] = useState(false);
     const [message, setMessage] = useState("");
     const xrModeTitle = mode.endsWith("ar") ? "AR" : "VR";
@@ -97,7 +106,10 @@ function XRButton({ mode, enterXR }: { mode: XRSessionMode; enterXR: (mode: XRSe
 
     return (
         <button
-            className={"button button-primary" + (!isSessionSupported ? " opacity-50" : "")}
+            className={
+                "button button-primary" +
+                (!isSessionSupported ? " opacity-50" : "")
+            }
             onClick={() => enterXR(mode)}
             disabled={!isSessionSupported}
             style={isSessionSupported ? {} : { cursor: "not-allowed" }}

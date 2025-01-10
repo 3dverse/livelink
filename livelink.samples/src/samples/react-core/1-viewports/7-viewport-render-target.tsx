@@ -1,6 +1,12 @@
 //------------------------------------------------------------------------------
 import type { Entity } from "@3dverse/livelink";
-import { Livelink, Canvas, Viewport, CameraController, useCameraEntity } from "@3dverse/livelink-react";
+import {
+    Livelink,
+    Canvas,
+    Viewport,
+    CameraController,
+    useCameraEntity,
+} from "@3dverse/livelink-react";
 import { LoadingOverlay } from "@3dverse/livelink-react-ui";
 
 //------------------------------------------------------------------------------
@@ -15,7 +21,8 @@ export default {
     path: import.meta.VITE_FILE_NAME,
     code: import.meta.VITE_FILE_CONTENT,
     title: "Viewport Render Target",
-    summary: "Shows how to change the index of the displayed render target for a viewport.",
+    summary:
+        "Shows how to change the index of the displayed render target for a viewport.",
     element: <App />,
 };
 

@@ -3,7 +3,13 @@ import { useMemo } from "react";
 import * as THREE from "three";
 
 //------------------------------------------------------------------------------
-import { Livelink, Canvas, Viewport, CameraController, useCameraEntity } from "@3dverse/livelink-react";
+import {
+    Livelink,
+    Canvas,
+    Viewport,
+    CameraController,
+    useCameraEntity,
+} from "@3dverse/livelink-react";
 import { LoadingOverlay } from "@3dverse/livelink-react-ui";
 import { ThreeOverlay } from "@3dverse/livelink-three/react";
 
@@ -18,7 +24,8 @@ const token = import.meta.env.VITE_PROD_PUBLIC_TOKEN;
 export default {
     path: import.meta.VITE_FILE_NAME,
     title: "Three.js Overlay",
-    summary: "A viewport with a Three.js overlay that displays a Three.js scene rendered on top of the 3dverse scene.",
+    summary:
+        "A viewport with a Three.js overlay that displays a Three.js scene rendered on top of the 3dverse scene.",
     element: <App />,
 };
 

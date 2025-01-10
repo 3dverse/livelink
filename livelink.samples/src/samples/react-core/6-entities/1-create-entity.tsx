@@ -82,14 +82,23 @@ function EntityCreator() {
             components: {
                 local_transform: {
                     position: [
-                        Math.random() * SPAWN_SURFACE_SIZE * 2 - SPAWN_SURFACE_SIZE,
+                        Math.random() * SPAWN_SURFACE_SIZE * 2 -
+                            SPAWN_SURFACE_SIZE,
                         0,
                         Math.random() * (SPAWN_SURFACE_SIZE - 1) * 2 - 2,
                     ],
-                    scale: [0.1 + Math.random(), 0.1 + Math.random(), 0.1 + Math.random()],
+                    scale: [
+                        0.1 + Math.random(),
+                        0.1 + Math.random(),
+                        0.1 + Math.random(),
+                    ],
                 },
                 mesh_ref: { value: "0577814f-4677-420b-89e8-1e5a4dd56914" },
-                material_ref: { value: MATERIAL_REFS[Math.floor(Math.random() * MATERIAL_REFS.length)] },
+                material_ref: {
+                    value: MATERIAL_REFS[
+                        Math.floor(Math.random() * MATERIAL_REFS.length)
+                    ],
+                },
             },
         });
     };

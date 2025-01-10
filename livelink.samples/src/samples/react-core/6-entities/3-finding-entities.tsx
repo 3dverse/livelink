@@ -1,6 +1,13 @@
 //------------------------------------------------------------------------------
 import { Entity, Vec3 } from "@3dverse/livelink";
-import { Livelink, Canvas, Viewport, CameraController, useCameraEntity, useEntity } from "@3dverse/livelink-react";
+import {
+    Livelink,
+    Canvas,
+    Viewport,
+    CameraController,
+    useCameraEntity,
+    useEntity,
+} from "@3dverse/livelink-react";
 import { LoadingOverlay } from "@3dverse/livelink-react-ui";
 
 //------------------------------------------------------------------------------
@@ -69,7 +76,9 @@ function AppLayout() {
                 <div className="absolute top-6 right-6">
                     {[light1, light2, light3].map(light => {
                         if (light) {
-                            return <LightComponent key={light.id} light={light} />;
+                            return (
+                                <LightComponent key={light.id} light={light} />
+                            );
                         }
                     })}
                 </div>
@@ -105,7 +114,11 @@ function LightComponent({ light }: { light: Entity }) {
                 id="hs-color-input"
                 value={rgbToHex(light.point_light!.color!)}
                 title="Choose your color"
-                onChange={e => (light.point_light!.color = hexToRgb(e.target.value.substring(1)))}
+                onChange={e =>
+                    (light.point_light!.color = hexToRgb(
+                        e.target.value.substring(1),
+                    ))
+                }
             />
             <input
                 type="range"
@@ -114,7 +127,9 @@ function LightComponent({ light }: { light: Entity }) {
                 value={light.point_light!.intensity!}
                 onPointerDown={e => e.stopPropagation()}
                 onPointerMove={e => e.stopPropagation()}
-                onChange={e => (light.point_light!.intensity = Number(e.target.value))}
+                onChange={e =>
+                    (light.point_light!.intensity = Number(e.target.value))
+                }
             />
             <button
                 className="button button-primary"

@@ -1,5 +1,9 @@
 //------------------------------------------------------------------------------
-import { Entity, Livelink as LivelinkInstance, Commands } from "@3dverse/livelink";
+import {
+    Entity,
+    Livelink as LivelinkInstance,
+    Commands,
+} from "@3dverse/livelink";
 import {
     Livelink,
     Canvas,
@@ -105,7 +109,10 @@ function ThreeJSCanvas() {
     return (
         <div className="w-full h-full flex pl-3 py-3">
             <div className="grow" ref={containerRef}>
-                <canvas className="absolute rounded-xl" ref={threeJSCanvasRef} />
+                <canvas
+                    className="absolute rounded-xl"
+                    ref={threeJSCanvasRef}
+                />
             </div>
         </div>
     );
@@ -114,7 +121,9 @@ function ThreeJSCanvas() {
 //------------------------------------------------------------------------------
 function SkeletonController() {
     const { instance } = useContext(LivelinkContext);
-    const { entity: controller } = useEntity({ euid: "dbe0b7de-fd0c-46d8-a90c-8a9f2f896002" });
+    const { entity: controller } = useEntity({
+        euid: "dbe0b7de-fd0c-46d8-a90c-8a9f2f896002",
+    });
 
     const [animation, setAnimation] = useState<string | null>(null);
 
@@ -127,7 +136,9 @@ function SkeletonController() {
             const joint = e.target.object!;
             const bone_index = parseInt(joint.name);
             const partial_pose: Commands.SkeletonPartialPose = {
-                orientations: [{ bone_index, value: joint.quaternion.toArray() }],
+                orientations: [
+                    { bone_index, value: joint.quaternion.toArray() },
+                ],
             };
             instance.sendSkeletonPose({ controller, partial_pose });
         });
@@ -143,7 +154,11 @@ function SkeletonController() {
             return;
         }
 
-        const intervalId = handleAnimatedSkeleton(animation, instance, controller);
+        const intervalId = handleAnimatedSkeleton(
+            animation,
+            instance,
+            controller,
+        );
         return () => {
             clearInterval(intervalId);
         };
@@ -169,7 +184,10 @@ let joints: Array<THREE.Object3D> | undefined = undefined;
 let jointGizmo: TransformControls | undefined = undefined;
 
 //------------------------------------------------------------------------------
-function handleUserControlledSkeleton(instance: LivelinkInstance | null, controller: Entity | null) {
+function handleUserControlledSkeleton(
+    instance: LivelinkInstance | null,
+    controller: Entity | null,
+) {
     // Attach joint gizmo to root
     jointGizmo!.attach(joints![0]);
 
@@ -192,7 +210,11 @@ function handleUserControlledSkeleton(instance: LivelinkInstance | null, control
 }
 
 //------------------------------------------------------------------------------
-function handleAnimatedSkeleton(animation: string, instance: LivelinkInstance | null, controller: Entity | null) {
+function handleAnimatedSkeleton(
+    animation: string,
+    instance: LivelinkInstance | null,
+    controller: Entity | null,
+) {
     // Disable joint gizmo for animations
     jointGizmo!.detach();
 
@@ -215,14 +237,22 @@ function handleAnimatedSkeleton(animation: string, instance: LivelinkInstance | 
         // Update 3js skeleton
         for (let jointIndex = 0; jointIndex < joints!.length; ++jointIndex) {
             const quat = chosenAnimation[frameIndex].rotations[jointIndex];
-            joints![jointIndex].quaternion.set(quat[0], quat[1], quat[2], quat[3]);
+            joints![jointIndex].quaternion.set(
+                quat[0],
+                quat[1],
+                quat[2],
+                quat[3],
+            );
         }
 
         // Update livelink skeleton
         if (instance && controller) {
             const rotations = chosenAnimation[frameIndex].rotations;
             const partial_pose: Commands.SkeletonPartialPose = {
-                orientations: rotations.map((quat, bone_index) => ({ bone_index, value: quat })),
+                orientations: rotations.map((quat, bone_index) => ({
+                    bone_index,
+                    value: quat,
+                })),
             };
             instance.sendSkeletonPose({
                 controller,
@@ -248,7 +278,9 @@ function setUpThreeJsSkeleton(canvas: HTMLCanvasElement) {
 
     // Camera and orbital camera controller
     const camera = new THREE.PerspectiveCamera(75, width / height, 0.1, 1000);
-    camera.setRotationFromQuaternion(new THREE.Quaternion(-0.2716, -0.2716, -0.1473, -0.0421));
+    camera.setRotationFromQuaternion(
+        new THREE.Quaternion(-0.2716, -0.2716, -0.1473, -0.0421),
+    );
     camera.position.set(-0.6189, 2.4, 1.6689);
     const orbit = new OrbitControls(camera, renderer.domElement);
 
@@ -285,8 +317,12 @@ function setUpThreeJsSkeleton(canvas: HTMLCanvasElement) {
     scene.add(xAxis);
 
     // Bone space positions and rotations
-    const jointPositions = droid_tpose.positions!.map(pos => new THREE.Vector3(pos[0], pos[1], pos[2]));
-    const jointRotations = droid_tpose.rotations.map(rot => new THREE.Quaternion(rot[0], rot[1], rot[2], rot[3]));
+    const jointPositions = droid_tpose.positions!.map(
+        pos => new THREE.Vector3(pos[0], pos[1], pos[2]),
+    );
+    const jointRotations = droid_tpose.rotations.map(
+        rot => new THREE.Quaternion(rot[0], rot[1], rot[2], rot[3]),
+    );
     const jointRaycastLayer = 1;
     const jointMaterial = new THREE.MeshBasicMaterial({
         color: 0xcfe5fd,
@@ -299,7 +335,10 @@ function setUpThreeJsSkeleton(canvas: HTMLCanvasElement) {
     // Calculate maxDistanceBetweenJoints to scale joint/bone meshes accordingly
     let maxDistanceBetweenJoints = 0;
     for (let i = 1; i < jointPositions.length; ++i) {
-        maxDistanceBetweenJoints = Math.max(jointPositions[i].length(), maxDistanceBetweenJoints);
+        maxDistanceBetweenJoints = Math.max(
+            jointPositions[i].length(),
+            maxDistanceBetweenJoints,
+        );
     }
 
     joints = [];
@@ -309,7 +348,8 @@ function setUpThreeJsSkeleton(canvas: HTMLCanvasElement) {
 
         // Calculate some info of parent joint
         const parentJointIndex = joint_parents[i];
-        const parentJoint = parentJointIndex === -1 ? null : joints[parentJointIndex];
+        const parentJoint =
+            parentJointIndex === -1 ? null : joints[parentJointIndex];
         const parentJointWorldPos = new THREE.Vector3();
         let distanceToParentJoint = 0.2;
         if (parentJoint) {
@@ -318,7 +358,8 @@ function setUpThreeJsSkeleton(canvas: HTMLCanvasElement) {
         }
 
         // Create joint
-        const jointRadius = (0.035 * distanceToParentJoint) / maxDistanceBetweenJoints;
+        const jointRadius =
+            (0.035 * distanceToParentJoint) / maxDistanceBetweenJoints;
         const jointGeom = new THREE.SphereGeometry(jointRadius, 32, 16);
         const joint = new THREE.Mesh(jointGeom, jointMaterial);
         joint.name = i.toString();
@@ -329,13 +370,19 @@ function setUpThreeJsSkeleton(canvas: HTMLCanvasElement) {
             scene.attach(joint);
         }
         joint.position.set(jointPosition.x, jointPosition.y, jointPosition.z);
-        joint.quaternion.set(jointRotation.x, jointRotation.y, jointRotation.z, jointRotation.w);
+        joint.quaternion.set(
+            jointRotation.x,
+            jointRotation.y,
+            jointRotation.z,
+            jointRotation.w,
+        );
         const jointWorldPos = joint.getWorldPosition(new THREE.Vector3());
         joints.push(joint);
 
         // Bone between Joints
         if (parentJoint) {
-            const boneRadius = (0.04 * distanceToParentJoint) / maxDistanceBetweenJoints;
+            const boneRadius =
+                (0.04 * distanceToParentJoint) / maxDistanceBetweenJoints;
             const pointCloseToParent = new THREE.Vector3()
                 .subVectors(parentJointWorldPos, jointWorldPos)
                 .multiplyScalar(0.9)

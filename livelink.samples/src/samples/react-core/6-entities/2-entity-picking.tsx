@@ -78,29 +78,55 @@ function EntityPicker() {
             const event = e as CustomEvent<{ entity: Entity } | null>;
             setPickedEntity(event.detail?.entity ?? null);
 
-            instance.scene.highlightEntities({ entities: event.detail?.entity ? [event.detail.entity] : [] });
+            instance.scene.highlightEntities({
+                entities: event.detail?.entity ? [event.detail.entity] : [],
+            });
         });
 
         viewportDomElement.addEventListener("pointermove", async () => {
-            viewportDomElement.style.cursor = instance.session.current_client?.cursor_data ? "pointer" : "default";
-            setHoveredEntity((await instance.session.current_client?.getHoveredEntity()) ?? null);
+            viewportDomElement.style.cursor = instance.session.current_client
+                ?.cursor_data
+                ? "pointer"
+                : "default";
+            setHoveredEntity(
+                (await instance.session.current_client?.getHoveredEntity()) ??
+                    null,
+            );
         });
     }, [viewport, viewportDomElement]);
     //TEMPTEMPTEMPTEMPTEMPTEMPTEMPTEMPTEMPTEMPTEMPTEMPTEMPTEMPTEMPTEMPTEMPTEMP
 
     return (
         <div className="absolute m-4 flex flex-col gap-4">
-            <EntityPanel label="Hovered entity" color="bg-informative-500" entity={hoveredEntity} />
-            <EntityPanel label="Picked entity" color="bg-positive-500" entity={pickedEntity} />
+            <EntityPanel
+                label="Hovered entity"
+                color="bg-informative-500"
+                entity={hoveredEntity}
+            />
+            <EntityPanel
+                label="Picked entity"
+                color="bg-positive-500"
+                entity={pickedEntity}
+            />
         </div>
     );
 }
 
 //------------------------------------------------------------------------------
-function EntityPanel({ label, entity, color }: { label: string; color: string; entity: Entity | null }) {
+function EntityPanel({
+    label,
+    entity,
+    color,
+}: {
+    label: string;
+    color: string;
+    entity: Entity | null;
+}) {
     return (
         <div>
-            <span className="bg-ground p-2 rounded-xl rounded-r-none">{label}</span>
+            <span className="bg-ground p-2 rounded-xl rounded-r-none">
+                {label}
+            </span>
             <span
                 className={`p-2 rounded-xl rounded-l-none text-primary-dark font-semibold ${entity ? color : "bg-negative-500"}`}
             >

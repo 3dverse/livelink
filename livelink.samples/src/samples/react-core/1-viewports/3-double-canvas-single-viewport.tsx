@@ -1,5 +1,11 @@
 //------------------------------------------------------------------------------
-import { Livelink, Canvas, Viewport, CameraController, useCameraEntity } from "@3dverse/livelink-react";
+import {
+    Livelink,
+    Canvas,
+    Viewport,
+    CameraController,
+    useCameraEntity,
+} from "@3dverse/livelink-react";
 import { LoadingOverlay } from "@3dverse/livelink-react-ui";
 
 //------------------------------------------------------------------------------
@@ -40,12 +46,18 @@ function AppLayout() {
     return (
         <div className="flex basis-full gap-2">
             <Canvas>
-                <Viewport cameraEntity={cameraEntity1} className="w-full h-full">
+                <Viewport
+                    cameraEntity={cameraEntity1}
+                    className="w-full h-full"
+                >
                     <CameraController />
                 </Viewport>
             </Canvas>
             <Canvas>
-                <Viewport cameraEntity={cameraEntity2} className="w-full h-full">
+                <Viewport
+                    cameraEntity={cameraEntity2}
+                    className="w-full h-full"
+                >
                     <CameraController />
                 </Viewport>
             </Canvas>

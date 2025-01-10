@@ -1,5 +1,12 @@
 //------------------------------------------------------------------------------
-import { Livelink, Canvas, Viewport, useEntity, useCameraEntity, CameraController } from "@3dverse/livelink-react";
+import {
+    Livelink,
+    Canvas,
+    Viewport,
+    useEntity,
+    useCameraEntity,
+    CameraController,
+} from "@3dverse/livelink-react";
 import { LoadingOverlay, SunPositionPicker } from "@3dverse/livelink-react-ui";
 
 //------------------------------------------------------------------------------
@@ -34,7 +41,9 @@ function App() {
 
 //------------------------------------------------------------------------------
 function AppLayout() {
-    const { cameraEntity } = useCameraEntity({ settings: { atmosphere: true, gradient: false } });
+    const { cameraEntity } = useCameraEntity({
+        settings: { atmosphere: true, gradient: false },
+    });
 
     return (
         <Canvas className="w-full h-full">

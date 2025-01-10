@@ -11,7 +11,11 @@ import {
     useCameraEntity,
     CameraController,
 } from "@3dverse/livelink-react";
-import { InactivityWarning, LoadingOverlay, RenderGraphSettings } from "@3dverse/livelink-react-ui";
+import {
+    InactivityWarning,
+    LoadingOverlay,
+    RenderGraphSettings,
+} from "@3dverse/livelink-react-ui";
 
 //------------------------------------------------------------------------------
 import { DisconnectedModal } from "../../components/SamplePlayer";
@@ -69,7 +73,10 @@ function RenderGraphWidget() {
     return (
         <aside className="absolute top-4 left-4 bg-ground rounded-lg p-2">
             <p className="text-xs">Render graph settings</p>
-            <RenderGraphSettings userToken={instance.session.token} cameraEntity={camera.camera_entity} />
+            <RenderGraphSettings
+                userToken={instance.session.token}
+                cameraEntity={camera.camera_entity}
+            />
         </aside>
     );
 }

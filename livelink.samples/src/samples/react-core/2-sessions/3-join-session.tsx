@@ -14,7 +14,10 @@ import {
 import { LoadingOverlay } from "@3dverse/livelink-react-ui";
 
 //------------------------------------------------------------------------------
-import { DisconnectedModal, SamplePlayer } from "../../../components/SamplePlayer";
+import {
+    DisconnectedModal,
+    SamplePlayer,
+} from "../../../components/SamplePlayer";
 
 //------------------------------------------------------------------------------
 const token = import.meta.env.VITE_PROD_PUBLIC_TOKEN;
@@ -24,7 +27,8 @@ const scene_id = "d19ecb53-6488-48c1-a085-fab7de85b189";
 export default {
     path: import.meta.VITE_FILE_NAME,
     title: "Join Session",
-    summary: "Start by creating a session on one canvas then join it from another canvas.",
+    summary:
+        "Start by creating a session on one canvas then join it from another canvas.",
     useCustomLayout: true,
     element: <App />,
 };
@@ -42,7 +46,11 @@ function App() {
 }
 
 //------------------------------------------------------------------------------
-function SessionCreator({ setSessionId }: { setSessionId: (sessionId: UUID | null) => void }) {
+function SessionCreator({
+    setSessionId,
+}: {
+    setSessionId: (sessionId: UUID | null) => void;
+}) {
     return (
         <SamplePlayer autoConnect={false} title={"Create Session"}>
             <Livelink
@@ -63,7 +71,9 @@ function SessionJoiner({ sessionId }: { sessionId: UUID | null }) {
     if (!sessionId) {
         return (
             <div className="w-full h-full flex-col content-center justify-center">
-                <h1 className="text-center font-medium">Start by creating a session</h1>
+                <h1 className="text-center font-medium">
+                    Start by creating a session
+                </h1>
             </div>
         );
     }
@@ -97,7 +107,11 @@ function AppLayout() {
 }
 
 //------------------------------------------------------------------------------
-function SessionSniffer({ setSessionId }: { setSessionId: (sessionId: UUID | null) => void }) {
+function SessionSniffer({
+    setSessionId,
+}: {
+    setSessionId: (sessionId: UUID | null) => void;
+}) {
     const { instance } = useContext(LivelinkContext);
     useEffect(() => {
         setSessionId(instance?.session.session_id ?? null);

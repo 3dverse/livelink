@@ -23,7 +23,8 @@ const token = import.meta.env.VITE_PROD_PUBLIC_TOKEN;
 export default {
     path: import.meta.VITE_FILE_NAME,
     title: "Camera Render Target",
-    summary: "Shows how to change the index of the displayed render target for a camera.",
+    summary:
+        "Shows how to change the index of the displayed render target for a camera.",
     element: <App />,
 };
 
@@ -70,7 +71,8 @@ function RenderTargetSelector() {
 
     useEffect(() => {
         if (viewport && viewport.camera_projection) {
-            viewport.camera_projection.camera_entity.camera!.renderTargetIndex = selectedRenderTarget;
+            viewport.camera_projection.camera_entity.camera!.renderTargetIndex =
+                selectedRenderTarget;
         }
     }, [viewport, selectedRenderTarget]);
 
@@ -79,7 +81,9 @@ function RenderTargetSelector() {
             <select
                 className="select select-primary min-w-[20rem]"
                 value={selectedRenderTarget}
-                onChange={event => setRenderTarget(Number.parseInt(event.target.value))}
+                onChange={event =>
+                    setRenderTarget(Number.parseInt(event.target.value))
+                }
             >
                 {RENDER_TARGETS.map(item => (
                     <option key={item.index} value={item.index}>

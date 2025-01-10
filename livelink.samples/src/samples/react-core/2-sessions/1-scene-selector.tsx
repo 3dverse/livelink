@@ -3,7 +3,13 @@ import { useState } from "react";
 
 //------------------------------------------------------------------------------
 import type { UUID } from "@3dverse/livelink";
-import { Livelink, Canvas, Viewport, useCameraEntity, CameraController } from "@3dverse/livelink-react";
+import {
+    Livelink,
+    Canvas,
+    Viewport,
+    useCameraEntity,
+    CameraController,
+} from "@3dverse/livelink-react";
 import { LoadingOverlay } from "@3dverse/livelink-react-ui";
 
 //------------------------------------------------------------------------------
@@ -41,7 +47,10 @@ function App() {
                     <AppLayout />
                 </Livelink>
             )}
-            <SceneSelector selectedSceneId={selectedSceneId} setSceneId={setSceneId} />
+            <SceneSelector
+                selectedSceneId={selectedSceneId}
+                setSceneId={setSceneId}
+            />
         </>
     );
 }

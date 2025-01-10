@@ -3,7 +3,12 @@ import { useEffect } from "react";
 
 //------------------------------------------------------------------------------
 import { Entity } from "@3dverse/livelink";
-import { Livelink, Canvas, Viewport, useCameraEntity } from "@3dverse/livelink-react";
+import {
+    Livelink,
+    Canvas,
+    Viewport,
+    useCameraEntity,
+} from "@3dverse/livelink-react";
 import { LoadingOverlay } from "@3dverse/livelink-react-ui";
 
 //------------------------------------------------------------------------------
@@ -56,7 +61,8 @@ function CustomController({ cameraEntity }: { cameraEntity: Entity | null }) {
         }
 
         const interval = setInterval(() => {
-            cameraEntity.local_transform!.position[1] = Math.cos(Date.now() * 0.001) * 5;
+            cameraEntity.local_transform!.position[1] =
+                Math.cos(Date.now() * 0.001) * 5;
         }, 1000 / 60);
 
         return () => {

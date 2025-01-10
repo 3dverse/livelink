@@ -23,7 +23,8 @@ const token = import.meta.env.VITE_PROD_PUBLIC_TOKEN;
 export default {
     path: import.meta.VITE_FILE_NAME,
     title: "Activity Watcher",
-    summary: "A panel that detects activity when the inactivity timout is triggered.",
+    summary:
+        "A panel that detects activity when the inactivity timout is triggered.",
     element: <App />,
 };
 
@@ -49,7 +50,10 @@ function AppLayout() {
 
     useEffect(() => {
         if (instance) {
-            instance.activity_watcher.setTimeouts({ warn_after_seconds: 3, timeout_after_seconds: 10 });
+            instance.activity_watcher.setTimeouts({
+                warn_after_seconds: 3,
+                timeout_after_seconds: 10,
+            });
         }
     }, [instance]);
 

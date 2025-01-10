@@ -16,7 +16,10 @@ import {
 import { LoadingOverlay } from "@3dverse/livelink-react-ui";
 
 //------------------------------------------------------------------------------
-import { DisconnectedModal, SamplePlayer } from "../../../components/SamplePlayer";
+import {
+    DisconnectedModal,
+    SamplePlayer,
+} from "../../../components/SamplePlayer";
 
 //------------------------------------------------------------------------------
 const token = import.meta.env.VITE_PROD_PUBLIC_TOKEN;
@@ -44,7 +47,11 @@ function App() {
 }
 
 //------------------------------------------------------------------------------
-function SessionCreator({ setSessionId }: { setSessionId: (sessionId: UUID | null) => void }) {
+function SessionCreator({
+    setSessionId,
+}: {
+    setSessionId: (sessionId: UUID | null) => void;
+}) {
     return (
         <SamplePlayer title={"Create Session"}>
             <Livelink
@@ -67,7 +74,9 @@ function SessionJoiner({ sessionId }: { sessionId: UUID | null }) {
     if (!sessionId) {
         return (
             <div className="w-full h-full flex-col content-center justify-center">
-                <h1 className="text-center font-medium">Waiting for the main session to join</h1>
+                <h1 className="text-center font-medium">
+                    Waiting for the main session to join
+                </h1>
             </div>
         );
     }
@@ -104,7 +113,11 @@ function AppLayout() {
 }
 
 //------------------------------------------------------------------------------
-function SessionSniffer({ setSessionId }: { setSessionId: (sessionId: UUID | null) => void }) {
+function SessionSniffer({
+    setSessionId,
+}: {
+    setSessionId: (sessionId: UUID | null) => void;
+}) {
     const { instance } = useContext(LivelinkContext);
     useEffect(() => {
         setSessionId(instance?.session.session_id ?? null);
@@ -117,14 +130,18 @@ function SessionSniffer({ setSessionId }: { setSessionId: (sessionId: UUID | nul
 function ClientList() {
     const { instance } = useContext(LivelinkContext);
     const { clients } = useContext(ClientsContext);
-    const prettifyUsername = (username: string) => username.substring(username.lastIndexOf("_") + 1);
+    const prettifyUsername = (username: string) =>
+        username.substring(username.lastIndexOf("_") + 1);
 
     return (
         <ul className="absolute right-0 bottom-0 flex flex-col-reverse">
             <li className="bg-informative-800 p-2 m-1 rounded-full text-3xs">{`Current Client = ${instance?.session.client_id}`}</li>
             {clients.map((client, i) => {
                 return (
-                    <li key={client.id} className="bg-foreground p-2 m-1 rounded-full text-3xs">
+                    <li
+                        key={client.id}
+                        className="bg-foreground p-2 m-1 rounded-full text-3xs"
+                    >
                         {`Client[${i}] = ${prettifyUsername(client.username)}`}
                     </li>
                 );
