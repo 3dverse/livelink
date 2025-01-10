@@ -100,6 +100,10 @@ export class RelativeRect extends Rect {
         const rect = element.getBoundingClientRect();
         const parentRect = parent.getBoundingClientRect();
 
+        if (!rect.width || !rect.height) {
+            throw new Error(`Element has an invalid size : [${rect.width} x ${rect.height}].`);
+        }
+
         const relativePos = {
             left: rect.left - parentRect.left,
             top: rect.top - parentRect.top,

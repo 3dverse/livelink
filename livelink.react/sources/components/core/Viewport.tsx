@@ -103,27 +103,34 @@ export function Viewport({
             return;
         }
 
-        const rect = Livelink.RelativeRect.from_dom_elements({ element: viewportDomElement.current, parent: canvas });
+        try {
+            const rect = Livelink.RelativeRect.from_dom_elements({
+                element: viewportDomElement.current,
+                parent: canvas,
+            });
 
-        const viewport = new Livelink.Viewport({
-            core: instance,
-            rendering_surface: renderingSurface,
-            options: {
-                rect,
-                z_index: zIndex,
-                render_target_index: renderTargetIndex,
-            },
-        });
-        console.log("---- Setting viewport", viewport.width, viewport.height, zIndex);
-        instance.addViewports({ viewports: [viewport] });
-        setViewport(viewport);
+            const viewport = new Livelink.Viewport({
+                core: instance,
+                rendering_surface: renderingSurface,
+                options: {
+                    rect,
+                    z_index: zIndex,
+                    render_target_index: renderTargetIndex,
+                },
+            });
+            console.debug("---- Setting viewport", viewport.width, viewport.height, zIndex);
+            instance.addViewports({ viewports: [viewport] });
+            setViewport(viewport);
 
-        return () => {
-            console.log("---- Removing viewport");
-            instance.removeViewport({ viewport });
-            viewport.release();
-            setViewport(null);
-        };
+            return () => {
+                console.debug("---- Removing viewport");
+                instance.removeViewport({ viewport });
+                viewport.release();
+                setViewport(null);
+            };
+        } catch (error) {
+            console.error("Failed to mount viewport", viewportDomElement.current, error);
+        }
     }, [instance, renderingSurface, canvas, zIndex]);
 
     //--------------------------------------------------------------------------

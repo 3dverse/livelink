@@ -79,6 +79,16 @@ export function Canvas({
         }
 
         console.debug("--- Setting rendering surface");
+
+        const rect = canvasRef.current.getBoundingClientRect();
+        if (!rect.width || !rect.height) {
+            console.error(
+                `Canvas element has an invalid size : [${rect.width} x ${rect.height}] it will not be mounted as a rendering surface.`,
+                canvasRef.current,
+            );
+            return;
+        }
+
         const surface = new RenderingSurface({
             canvas_element: canvasRef.current,
             context_type: contextType,
