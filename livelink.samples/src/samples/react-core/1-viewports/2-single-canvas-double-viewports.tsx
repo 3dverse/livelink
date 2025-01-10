@@ -45,10 +45,19 @@ function AppLayout() {
 
     return (
         <Canvas className="flex max-h-screen">
-            <Viewport cameraEntity={cameraEntity1} className="basis-[60%]">
+            <Viewport
+                cameraEntity={cameraEntity1}
+                className="basis-[60%]"
+                style={{
+                    width: "500px",
+                    height: "500px",
+                    position: "absolute",
+                    marginLeft: "-500px",
+                }}
+            >
                 <CameraController />
             </Viewport>
-            <Viewport cameraEntity={cameraEntity2} className="grow">
+            <Viewport cameraEntity={cameraEntity2}>
                 <CameraController />
             </Viewport>
         </Canvas>
