@@ -36,6 +36,7 @@ const scene_id = "aff417e2-1b41-4f65-a78c-3b3f9b97a5ae";
 //------------------------------------------------------------------------------
 export default {
     path: import.meta.VITE_FILE_NAME,
+    code: import.meta.VITE_FILE_CONTENT,
     title: "Live Skeletal Animation",
     summary:
         "Shows a 3dverse skeleton driven by a Three.js one that can be either controlled by the user or by a local animation.",

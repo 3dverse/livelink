@@ -22,6 +22,7 @@ const scene_id_2 = "965602b4-c522-41a1-9102-1dee1062f351";
 //------------------------------------------------------------------------------
 export default {
     path: import.meta.VITE_FILE_NAME,
+    code: import.meta.VITE_FILE_CONTENT,
     title: "Multi Session",
     summary: "Two different sessions running on the same web page.",
     useCustomLayout: true,

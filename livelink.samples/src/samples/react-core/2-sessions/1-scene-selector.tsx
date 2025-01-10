@@ -25,6 +25,7 @@ const scenes = [
 //------------------------------------------------------------------------------
 export default {
     path: import.meta.VITE_FILE_NAME,
+    code: import.meta.VITE_FILE_CONTENT,
     title: "Scene Selector",
     summary: "Change scene using the same app setup",
     useCustomLayout: true,

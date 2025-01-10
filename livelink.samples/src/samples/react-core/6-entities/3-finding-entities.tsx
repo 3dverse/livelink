@@ -20,6 +20,7 @@ const scene_id = "ced50bcf-6bbc-46d1-872a-dad99efdb8d6";
 //------------------------------------------------------------------------------
 export default {
     path: import.meta.VITE_FILE_NAME,
+    code: import.meta.VITE_FILE_CONTENT,
     title: "Finding Entities",
     summary: "How to find multiples entities in one query.",
     useCustomLayout: true,

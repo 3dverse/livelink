@@ -23,6 +23,7 @@ const token = import.meta.env.VITE_PROD_PUBLIC_TOKEN;
 //------------------------------------------------------------------------------
 export default {
     path: import.meta.VITE_FILE_NAME,
+    code: import.meta.VITE_FILE_CONTENT,
     title: "Three.js Overlay",
     summary:
         "A viewport with a Three.js overlay that displays a Three.js scene rendered on top of the 3dverse scene.",

@@ -38,6 +38,7 @@ export function SamplePlayer({
     autoConnect?: boolean;
 }>) {
     const [connectionState, setConnectionState] = useState<ConnectionState>(autoConnect ? "connected" : "disconnected");
+    const [showCode, setShowCode] = useState(true);
 
     useEffect(() => {
         if (connectionState === "reconnect") {
@@ -81,11 +82,16 @@ export function SamplePlayer({
     return (
         <SamplePlayerContext.Provider value={{ connectionState, setConnectionState }}>
             <div className="w-full h-full flex flex-col-reverse xl:flex-row gap-3 p-3 lg:pl-0 relative">
-                {code && (
+                {code && showCode && (
                     <article className="relative max-h-[50%] xl:max-h-none max-w-[40ch] md:max-w-[50ch] bg-overground rounded-xl overflow-y-clip">
                         <header className="flex justify-between gap-3 px-3 py-3 border-b border-quaternary">
                             <p className="text-xs text-tertiary">{title}</p>
-                            <CopyCodeButton code={code} />
+                            <div className="flex items-center gap-2">
+                                <CopyCodeButton code={code} />
+                                <button className="button button-outline button-2xs" onClick={() => setShowCode(false)}>
+                                    Hide
+                                </button>
+                            </div>
                         </header>
                         <SyntaxHighlighter
                             language="jsx"
