@@ -58,7 +58,7 @@ export class WebXRHelper {
     /**
      * Use it to shift the XRView camera transforms
      */
-    #cameras_origin: CamerasOriginTransform | null = null;
+    cameras_origin: CamerasOriginTransform | null = null;
 
     //--------------------------------------------------------------------------
     // References to livelink core
@@ -456,7 +456,7 @@ export class WebXRHelper {
      * @param cameras
      */
     #applyCamerasOrigin(cameras: readonly Entity[]) {
-        if (!this.#cameras_origin) {
+        if (!this.cameras_origin) {
             return;
         }
         // TODO: we probably shall identify the number of eyese better than
@@ -475,7 +475,7 @@ export class WebXRHelper {
             const { eye1, eye2 } = this.#transformEyes({
                 eye1: eye1_transform,
                 eye2: eye2_transform,
-                transform: this.#cameras_origin,
+                transform: this.cameras_origin,
                 inverse: false,
             });
             camera1.local_transform = {
@@ -496,7 +496,7 @@ export class WebXRHelper {
             };
             camera.local_transform = this.#transformSingleEye({
                 eye: eye_transform,
-                transform: this.#cameras_origin,
+                transform: this.cameras_origin,
                 inverse: false,
             });
         }
@@ -519,7 +519,7 @@ export class WebXRHelper {
             };
         }[],
     ) {
-        if (!this.#cameras_origin) {
+        if (!this.cameras_origin) {
             return;
         }
         // TODO: we probably shall identify the number of eyese better than
@@ -530,7 +530,7 @@ export class WebXRHelper {
             const { eye1, eye2 } = this.#transformEyes({
                 eye1: view1.frame_camera_transform,
                 eye2: view2.frame_camera_transform,
-                transform: this.#cameras_origin,
+                transform: this.cameras_origin,
                 inverse: true,
             });
             view1.frame_camera_transform = {
@@ -547,7 +547,7 @@ export class WebXRHelper {
             const view = views[0];
             view.frame_camera_transform = this.#transformSingleEye({
                 eye: view.frame_camera_transform,
-                transform: this.#cameras_origin,
+                transform: this.cameras_origin,
                 inverse: true,
             });
         }

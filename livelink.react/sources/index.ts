@@ -16,3 +16,4 @@ export * from "./overlays/ReactOverlay";
 export * from "./overlays/React3DElement";
 
 export * from "./web-xr/WebXRHelper";
+export * from "./web-xr/WebXRInputRelay";
