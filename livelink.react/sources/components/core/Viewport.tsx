@@ -17,6 +17,11 @@ import * as Livelink from "@3dverse/livelink";
 import { LivelinkContext } from "./Livelink";
 import { CanvasContext } from "./Canvas";
 
+//------------------------------------------------------------------------------
+type UnionKeys<T> = T extends T ? keyof T : never;
+type StrictUnionHelper<T, TAll> = T extends any ? T & Partial<Record<Exclude<UnionKeys<TAll>, keyof T>, never>> : never;
+type StrictUnion<T> = StrictUnionHelper<T, T>;
+
 /**
  * Context that provides a viewport.
  *
@@ -40,14 +45,28 @@ export const ViewportContext = createContext<{
  * @category Context Providers
  */
 export function Viewport({
-    cameraEntity,
     renderTargetIndex = -1,
     children,
     ...props
-}: PropsWithChildren & {
-    cameraEntity: Livelink.Entity | null;
-    renderTargetIndex?: number;
-} & HTMLProps<HTMLDivElement>) {
+}: PropsWithChildren<
+    StrictUnion<
+        | {
+              cameraEntity: Livelink.Entity | null;
+          }
+        | {
+              client: Livelink.Client;
+              cameraIndex?: number;
+          }
+    > & {
+        renderTargetIndex?: number;
+    } & HTMLProps<HTMLDivElement>
+>) {
+    const { cameraEntity, client, cameraIndex, ...otherProps } = props as {
+        cameraEntity?: Livelink.Entity | null;
+        cameraIndex?: number;
+        client?: Livelink.Client;
+    } & HTMLProps<HTMLDivElement>;
+
     //--------------------------------------------------------------------------
     const { instance } = useContext(LivelinkContext);
     const { renderingSurface, canvas } = useContext(CanvasContext);
@@ -55,6 +74,7 @@ export function Viewport({
 
     //--------------------------------------------------------------------------
     const [viewport, setViewport] = useState<Livelink.Viewport | null>(null);
+    const [clientCameraEntity, setClientCameraEntity] = useState<Livelink.Entity | null>(null);
     const [camera, setCamera] = useState<Livelink.CameraProjection | null>(null);
     const viewportDomElement = useRef<HTMLDivElement>(null);
 
@@ -135,14 +155,25 @@ export function Viewport({
 
     //--------------------------------------------------------------------------
     useEffect(() => {
-        if (!viewport || !cameraEntity) {
+        if (client) {
+            client.getCameraEntities().then(cameraEntities => {
+                setClientCameraEntity(cameraEntities[cameraIndex ?? 0]);
+            });
+        } else {
+            setClientCameraEntity(cameraEntity ?? null);
+        }
+    }, [cameraEntity, client, cameraIndex]);
+
+    //--------------------------------------------------------------------------
+    useEffect(() => {
+        if (!viewport || !clientCameraEntity) {
             return;
         }
 
-        console.debug("---- Setting camera", cameraEntity);
-        viewport.camera_projection = new Livelink.CameraProjection({ camera_entity: cameraEntity, viewport });
+        console.debug("---- Setting camera", clientCameraEntity);
+        viewport.camera_projection = new Livelink.CameraProjection({ camera_entity: clientCameraEntity, viewport });
         setCamera(viewport.camera_projection);
-    }, [viewport, cameraEntity]);
+    }, [viewport, clientCameraEntity]);
 
     //--------------------------------------------------------------------------
     return (
@@ -154,7 +185,7 @@ export function Viewport({
                 camera: camera,
             }}
         >
-            <div ref={viewportDomElement} role={"viewport"} {...props}>
+            <div ref={viewportDomElement} role={"viewport"} {...otherProps}>
                 {children}
             </div>
         </ViewportContext.Provider>

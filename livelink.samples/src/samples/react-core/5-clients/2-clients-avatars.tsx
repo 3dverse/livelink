@@ -3,12 +3,7 @@ import { useContext, useEffect, useState } from "react";
 import BoringAvatar from "boring-avatars";
 
 //------------------------------------------------------------------------------
-import {
-    Livelink as LivelinkInstance,
-    Client,
-    Entity,
-    UUID,
-} from "@3dverse/livelink";
+import type { Client, Entity, UUID } from "@3dverse/livelink";
 import {
     CameraController,
     Canvas,
@@ -156,11 +151,7 @@ function Avatars() {
         <>
             <DOM3DOverlay>
                 {clients.map(client => (
-                    <Avatar3D
-                        key={client.id}
-                        client={client}
-                        instance={instance}
-                    />
+                    <Avatar3D key={client.id} client={client} />
                 ))}
             </DOM3DOverlay>
             <AvatarList
@@ -205,31 +196,13 @@ const AvatarList = ({
 
 //------------------------------------------------------------------------------
 const PiPViewport = ({ watchedClient }: { watchedClient: Client | null }) => {
-    //TEMPTEMPTEMPTEMP
-    const { instance } = useContext(LivelinkContext);
-    const [clientCameraEntity, setClientCameraEntity] = useState<Entity | null>(
-        null,
-    );
-    useEffect(() => {
-        if (instance && watchedClient && watchedClient.camera_rtids[0]) {
-            instance.scene
-                //@ts-ignore: camera entities should be resolved by livelink.js
-                ._getEntity({ entity_rtid: watchedClient.camera_rtids[0] })
-                .then(setClientCameraEntity);
-        }
-    });
-    //TEMPTEMPTEMPTEMP
-
     if (!watchedClient) {
         return null;
     }
 
     return (
         <Canvas className="absolute top-20 w-1/3 h-1/6 right-8 border border-tertiary rounded-lg shadow-2x">
-            <Viewport
-                className="w-full h-full"
-                cameraEntity={clientCameraEntity}
-            />
+            <Viewport className="w-full h-full" client={watchedClient} />
         </Canvas>
     );
 };
@@ -244,29 +217,20 @@ const Avatar = ({ client }: { client: Client }) => {
 };
 
 //------------------------------------------------------------------------------
-const Avatar3D = ({
-    instance,
-    client,
-}: {
-    instance: LivelinkInstance;
-    client: Client;
-}) => {
-    //TEMPTEMPTEMPTEMP
+const Avatar3D = ({ client }: { client: Client }) => {
     const [clientCameraEntity, setClientCameraEntity] = useState<Entity | null>(
         null,
     );
+
     useEffect(() => {
-        if (client.camera_rtids[0]) {
-            instance.scene
-                //@ts-ignore: camera entities should be resolved by livelink.js
-                ._getEntity({ entity_rtid: client.camera_rtids[0] })
-                .then(setClientCameraEntity);
-        }
+        client
+            .getCameraEntities()
+            .then(cameraEntities => setClientCameraEntity(cameraEntities[0]));
     });
+
     if (!clientCameraEntity) {
         return null;
     }
-    //TEMPTEMPTEMPTEMP
 
     return (
         <DOMEntity
