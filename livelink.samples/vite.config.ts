@@ -58,6 +58,9 @@ function patchCodeSample(sourceCode: string, token: string): string {
     // Remove the 'export default' statement and its associated exported code
     const viteImportToken = "import.meta.env.VITE_PROD_PUBLIC_TOKEN";
     return sourceCode
-        .replace(/export\s+default\s+{[^]*?};\s*|import\s+{[^}]*}\s+from\s+["'][^"']*SamplePlayer["'];\s*/g, "")
+        .replace(
+            /(\s\/\/\-+)?\sexport\s+default\s+{[^]*?};\n|(\s\/\/\-+)?\simport\s+{[^}]*}\s+from\s+["'][^"']*SamplePlayer["'];\n/g,
+            "",
+        )
         .replace(viteImportToken, `"${token}"`);
 }
