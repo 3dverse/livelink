@@ -143,7 +143,7 @@ export function LivelinkProvider({
     const [instance, setInstance] = useState<LivelinkInstance | null>(null);
     const [isConnecting, setIsConnecting] = useState(true);
     const [isConnectionLost, setIsConnectionLost] = useState(false);
-    const [showInactivityWarning, setInactivityWarning] = useState(false);
+    const [inactivityWarning, setInactivityWarning] = useState<Livelink.InactivityWarningEvent | null>(null);
     const [connectionError, setConnectionError] = useState<string>("Unknown error");
 
     const disconnect = useCallback(() => instance?.disconnect(), [instance]);
@@ -166,8 +166,8 @@ export function LivelinkProvider({
             }
         };
 
-        const onInactivityWarning = () => {
-            setInactivityWarning(true);
+        const onActivityDetected = () => {
+            setInactivityWarning(null);
         };
 
         connect({ sessionOpenMode, sceneId, sessionId } as SessionOpenMode)
@@ -179,7 +179,8 @@ export function LivelinkProvider({
                     instance.startStreaming();
                     setIsConnecting(false);
                 });
-                instance.session.addEventListener("on-inactivity-warning", onInactivityWarning);
+                instance.session.addEventListener("on-inactivity-warning", setInactivityWarning);
+                instance.session.addEventListener("on-activity-detected", onActivityDetected);
             })
             .catch(error => {
                 console.debug("Failed to connect to Livelink", error);
@@ -189,11 +190,13 @@ export function LivelinkProvider({
             });
 
         return () => {
-            instance?.session.removeEventListener("on-inactivity-warning", onInactivityWarning);
+            instance?.session.removeEventListener("on-inactivity-warning", setInactivityWarning);
+            instance?.session.removeEventListener("on-activity-detected", onActivityDetected);
+
             setInstance(null);
             setIsConnecting(true);
             setIsConnectionLost(false);
-            setInactivityWarning(false);
+            setInactivityWarning(null);
         };
     }, [token, sessionOpenMode, sceneId, sessionId, isTransient]);
 
@@ -209,7 +212,7 @@ export function LivelinkProvider({
 
         const onDisconnectedHandler = (event: Livelink.DisconnectedEvent) => {
             setIsConnectionLost(true);
-            setInactivityWarning(false);
+            setInactivityWarning(null);
             setConnectionError(event.reason);
         };
 
@@ -227,10 +230,6 @@ export function LivelinkProvider({
         };
     }, [instance]);
 
-    const warningDuration = instance
-        ? instance.activity_watcher.inactivity_timeout - instance.activity_watcher.inactivity_warning
-        : 0;
-
     return (
         <LivelinkContext.Provider
             value={{
@@ -242,12 +241,12 @@ export function LivelinkProvider({
         >
             {isConnecting && LoadingPanel && <LoadingPanel stage={""} />}
             {isConnectionLost && ConnectionErrorPanel && <ConnectionErrorPanel error={connectionError} />}
-            {showInactivityWarning && InactivityWarningPanel && (
+            {inactivityWarning && InactivityWarningPanel && (
                 <InactivityWarningPanel
-                    warningDuration={warningDuration}
+                    warningDuration={inactivityWarning.seconds_remaining}
                     onActivityDetected={() => {
-                        setInactivityWarning(false);
-                        instance?.activity_watcher.reset();
+                        inactivityWarning.resetTimer();
+                        setInactivityWarning(null);
                     }}
                 />
             )}

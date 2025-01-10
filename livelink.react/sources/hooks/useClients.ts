@@ -10,7 +10,7 @@ import { LivelinkContext } from "../components/core/Livelink";
 /**
  * Provides a list of all clients connected to the current session.
  *
- * @category Context Providers
+ * @category Hooks
  */
 export function useClients() {
     const { instance } = useContext(LivelinkContext);
