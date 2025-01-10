@@ -149,7 +149,20 @@ export function Viewport({
                 setViewport(null);
             };
         } catch (error) {
-            console.error("Failed to mount viewport", viewportDomElement.current, error);
+            if (error instanceof Livelink.OutOfBoundsError) {
+                console.error(
+                    "A viewport MUST be contained into its parent Canvas bounds",
+                    viewportDomElement.current,
+                    canvas,
+                );
+            } else if (error instanceof Livelink.InvalidSizeError) {
+                console.error(
+                    `Viewport element has an invalid size : [${error.rect.width} x ${error.rect.height}].`,
+                    canvas,
+                );
+            } else {
+                console.error("Failed to mount viewport", viewportDomElement.current, error);
+            }
         }
     }, [instance, renderingSurface, canvas, zIndex]);
 

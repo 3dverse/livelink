@@ -83,6 +83,50 @@ export class Rect {
 }
 
 /**
+ * Occurs when an element has an invalid size.
+ * @category Rendering
+ */
+export class InvalidSizeError extends Error {
+    /**
+     * Element bounds.
+     */
+    rect: DOMRect;
+
+    /**
+     *
+     */
+    constructor(rect: DOMRect) {
+        super(`Element has an invalid size : [${rect.width} x ${rect.height}]`);
+        this.rect = rect;
+    }
+}
+
+/**
+ * Occurs when an element is not contained into its parent bounds.
+ * @category Rendering
+ */
+export class OutOfBoundsError extends Error {
+    /**
+     * Element bounds.
+     */
+    rect: DOMRect;
+
+    /**
+     * Parent bounds.
+     */
+    parentRect: DOMRect;
+
+    /**
+     *
+     */
+    constructor(rect: DOMRect, parentRect: DOMRect) {
+        super("Element MUST be contained into its parent bounds.");
+        this.rect = rect;
+        this.parentRect = parentRect;
+    }
+}
+
+/**
  * @category Rendering
  */
 export class RelativeRect extends Rect {
@@ -94,6 +138,9 @@ export class RelativeRect extends Rect {
      * @param params.element - The element to get the relative rect from.
      * @param params.parent - The parent element of the element.
      *
+     * @throws {InvalidSizeError} - If the element has an invalid size.
+     * @throws {OutOfBoundsError} - If the element is not contained into its parent bounds.
+     *
      * @returns The relative rect.
      */
     static from_dom_elements({ element, parent }: { element: HTMLElement; parent: HTMLElement }): RelativeRect {
@@ -101,13 +148,22 @@ export class RelativeRect extends Rect {
         const parentRect = parent.getBoundingClientRect();
 
         if (!rect.width || !rect.height) {
-            throw new Error(`Element has an invalid size : [${rect.width} x ${rect.height}].`);
+            throw new InvalidSizeError(rect);
         }
 
         const relativePos = {
             left: rect.left - parentRect.left,
             top: rect.top - parentRect.top,
         };
+
+        if (
+            relativePos.left < 0 ||
+            relativePos.top < 0 ||
+            relativePos.left + rect.width > parentRect.width ||
+            relativePos.top + rect.height > parentRect.height
+        ) {
+            throw new OutOfBoundsError(rect, parentRect);
+        }
 
         const PRECISION = 6 as const;
         return new RelativeRect({
