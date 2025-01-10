@@ -61,6 +61,18 @@ export class InactivityWarningEvent extends Event {
 }
 
 /**
+ * Event emitted when activity is detected after a period of inactivity.
+ */
+export class ActivityDetectedEvent extends Event {
+    /**
+     * @internal
+     */
+    constructor() {
+        super("on-activity-detected");
+    }
+}
+
+/**
  * Event emitted when a client joins the session.
  */
 export class ClientJoinedEvent extends Event {
@@ -101,6 +113,7 @@ export class ClientLeftEvent extends Event {
  */
 export type SessionEvents = {
     "on-inactivity-warning": InactivityWarningEvent;
+    "on-activity-detected": ActivityDetectedEvent;
     "on-disconnected": DisconnectedEvent;
     "on-client-joined": ClientJoinedEvent;
     "on-client-left": ClientLeftEvent;

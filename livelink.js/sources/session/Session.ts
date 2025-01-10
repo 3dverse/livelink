@@ -8,6 +8,7 @@ import { ClientInfo } from "./ClientInfo";
 import { SessionInfo } from "./SessionInfo";
 import { TypedEventTarget } from "../TypedEventTarget";
 import {
+    ActivityDetectedEvent,
     ClientJoinedEvent,
     ClientLeftEvent,
     DisconnectedEvent,
@@ -395,6 +396,13 @@ export class Session extends TypedEventTarget<SessionEvents> implements SessionI
         this._dispatchEvent(
             new InactivityWarningEvent({ seconds_remaining: e.seconds_remaining, reset_timer: e.resetTimer }),
         );
+    };
+
+    /**
+     * @internal
+     */
+    _onActivityDetected = (_: Events.ActivityDetectedEvent): void => {
+        this._dispatchEvent(new ActivityDetectedEvent());
     };
 
     /**

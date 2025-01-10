@@ -602,6 +602,7 @@ export class Livelink {
         this.#core.addEventListener("on-frame-received", this.#onFrameReceived);
         this.#core.addEventListener("on-disconnected", this.session._onDisconnected);
         this.#core.addEventListener("on-inactivity-warning", this.session._onInactivityWarning);
+        this.#core.addEventListener("on-activity-detected", this.session._onActivityDetected);
 
         return this;
     }
