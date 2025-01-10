@@ -212,8 +212,8 @@ const PiPViewport = ({ watchedClient }: { watchedClient: Client | null }) => {
     );
     useEffect(() => {
         if (instance && watchedClient && watchedClient.camera_rtids[0]) {
-            //@ts-ignore: camera entities should be resolved by livelink.js
             instance.scene
+                //@ts-ignore: camera entities should be resolved by livelink.js
                 ._getEntity({ entity_rtid: watchedClient.camera_rtids[0] })
                 .then(setClientCameraEntity);
         }
@@ -257,8 +257,8 @@ const Avatar3D = ({
     );
     useEffect(() => {
         if (client.camera_rtids[0]) {
-            //@ts-ignore: camera entities should be resolved by livelink.js
             instance.scene
+                //@ts-ignore: camera entities should be resolved by livelink.js
                 ._getEntity({ entity_rtid: client.camera_rtids[0] })
                 .then(setClientCameraEntity);
         }
