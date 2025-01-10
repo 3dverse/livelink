@@ -161,5 +161,6 @@ export class ReactOverlay implements OverlayInterface {
      */
     release(): void {
         this.#elements.clear();
+        this.#root.unmount();
     }
 }
