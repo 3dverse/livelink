@@ -2,7 +2,7 @@
 import { useContext, useEffect, useState } from "react";
 
 //------------------------------------------------------------------------------
-import { type Entity, Mouse } from "@3dverse/livelink";
+import type { Entity } from "@3dverse/livelink";
 import {
     Livelink,
     Canvas,

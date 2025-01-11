@@ -1,5 +1,5 @@
 //------------------------------------------------------------------------------
-import { useCallback, useContext, useEffect, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 
 //------------------------------------------------------------------------------
 import {
@@ -15,7 +15,6 @@ import {
     Viewport,
     ViewportContext,
     Canvas,
-    useEntity,
 } from "@3dverse/livelink-react";
 import { LoadingOverlay } from "@3dverse/livelink-react-ui";
 
