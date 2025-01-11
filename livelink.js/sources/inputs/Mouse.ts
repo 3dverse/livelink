@@ -25,12 +25,12 @@ export class Mouse implements InputDevice {
     /**
      *
      */
-    #viewport: HTMLDivElement;
+    #viewport: HTMLElement;
 
     /**
      *
      */
-    constructor(instance: Livelink, viewportDiv?: HTMLDivElement) {
+    constructor(instance: Livelink, viewportDiv?: HTMLElement) {
         if (!viewportDiv) {
             throw new Error("MouseInput: viewport div is required.");
         }

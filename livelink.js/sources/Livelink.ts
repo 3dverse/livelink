@@ -481,8 +481,8 @@ export class Livelink {
      * @experimental
      */
     addInputDevice<DeviceType extends InputDevice>(
-        device_type: { new (_: Livelink, viewport?: HTMLDivElement): DeviceType },
-        viewport?: HTMLDivElement,
+        device_type: { new (_: Livelink, viewport?: HTMLElement): DeviceType },
+        viewport?: HTMLElement,
     ): void {
         const device = new device_type(this, viewport);
         device.setup();

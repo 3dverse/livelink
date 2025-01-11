@@ -11,6 +11,7 @@ import { RelativeRect } from "./surfaces/Rect";
 import { CameraProjection } from "./CameraProjection";
 import { OverlayInterface } from "./surfaces/OverlayInterface";
 import { RenderingSurfaceBase } from "./surfaces/RenderingSurfaceBase";
+import { Mouse } from "../inputs/Mouse";
 
 /**
  * A viewport is a rendering area on a {@link RenderingSurfaceBase} that is associated with a
@@ -236,6 +237,7 @@ export class Viewport extends EventTarget {
     activatePicking({ dom_element }: { dom_element: HTMLElement }): void {
         this.#dom_element = dom_element;
         this.#dom_element.addEventListener("click", this.#onCanvasClicked);
+        this.#core.addInputDevice(Mouse, dom_element);
     }
 
     /**
@@ -244,8 +246,11 @@ export class Viewport extends EventTarget {
      * If picking is deactivated, the viewport will no longer emit an `on-entity-picked` event when it is clicked.
      */
     deactivatePicking(): void {
-        this.#dom_element?.removeEventListener("click", this.#onCanvasClicked);
-        this.#dom_element = null;
+        if (this.#dom_element) {
+            this.#core.removeInputDevice({ device_name: "mouse" });
+            this.#dom_element.removeEventListener("click", this.#onCanvasClicked);
+            this.#dom_element = null;
+        }
     }
 
     /**

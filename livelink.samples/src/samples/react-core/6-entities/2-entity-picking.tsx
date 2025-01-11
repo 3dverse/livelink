@@ -72,8 +72,6 @@ function EntityPicker() {
             return;
         }
 
-        instance.addInputDevice(Mouse, viewportDomElement);
-
         viewport.activatePicking({ dom_element: viewportDomElement });
         viewport.addEventListener("on-entity-picked", e => {
             const event = e as CustomEvent<{ entity: Entity } | null>;
