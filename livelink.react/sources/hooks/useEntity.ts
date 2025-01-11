@@ -13,9 +13,6 @@ import type {
 } from "@3dverse/livelink";
 
 //------------------------------------------------------------------------------
-import { Livelink as LivelinkInstance } from "@3dverse/livelink";
-
-//------------------------------------------------------------------------------
 import { LivelinkContext } from "../components/core/Livelink";
 
 /**
@@ -41,23 +38,11 @@ type NewEntity = {
 };
 
 /**
- * A function that finds an entity.
- *
- * @inline
- */
-type EntityFinder = {
-    /**
-     * A callback that is called to find the entity.
-     */
-    finder: ({ instance }: { instance: LivelinkInstance }) => Promise<Entity | null>;
-};
-
-/**
  * A provider of an entity.
  *
  * @inline
  */
-type EntityProvider = NewEntity | EntityFinder | FindEntityQuery;
+type EntityProvider = NewEntity | FindEntityQuery;
 
 /**
  * A hook that provides an entity and a flag indicating if the entity is pending loading.
@@ -95,7 +80,6 @@ export function useEntity(entityProvider: EntityProvider & { forceUpdateOnEntity
         mandatory_components?: Array<ComponentName>;
         forbidden_components?: Array<ComponentName>;
     };
-    const entityFinder = entityProvider as EntityFinder;
     const forceUpdateOnEntityUpdate = entityProvider.forceUpdateOnEntityUpdate ?? false;
 
     useEffect(() => {
@@ -107,8 +91,6 @@ export function useEntity(entityProvider: EntityProvider & { forceUpdateOnEntity
             if ("components" in entityProvider) {
                 console.debug("---- Creating entity");
                 return await instance.scene.newEntity(entityProvider);
-            } else if ("finder" in entityProvider) {
-                return await entityProvider.finder({ instance });
             } else if ("linkage" in findEntityQuery) {
                 return await instance.scene.findEntity({
                     entity_uuid: findEntityQuery.euid!,
@@ -148,7 +130,6 @@ export function useEntity(entityProvider: EntityProvider & { forceUpdateOnEntity
         findEntityQuery.names,
         findEntityQuery.mandatory_components,
         findEntityQuery.forbidden_components,
-        entityFinder.finder,
     ]);
 
     useEffect(() => {

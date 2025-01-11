@@ -4,6 +4,7 @@
 
 ### Livelink
 
+- [ ] Rethink Input Devices
 - [x] Opinionated Camera controller
 - [ ] Use TypedEventTarget for events
     - Livelink
@@ -28,7 +29,8 @@
 
 ### Livelink React UI
 
-- [ ] Move LoadingOverlay to from Samples to livelink-react-ui
+- [x] Move LoadingOverlay to from Samples to livelink-react-ui
+- [ ] Move DisconnectModal to from Samples to livelink-react-ui
 
 ### Samples
 

@@ -55,16 +55,14 @@ function App() {
 function AppLayout() {
     const { instance } = useContext(LivelinkContext);
 
-    const instantiatePlayerSceneAndFindThirdPersonCamera = useCallback(
-        async ({
-            instance,
-        }: {
-            instance: LivelinkInstance;
-        }): Promise<Entity | null> => {
-            if (!instance) {
-                return null;
-            }
+    useEffect(() => {
+        if (!instance) {
+            return;
+        }
 
+        async function instantiatePlayerSceneAndFindThirdPersonCamera(
+            instance: LivelinkInstance,
+        ) {
             const playerSceneEntity = await instance.scene.newEntity({
                 name: "PlayerSceneEntity",
                 components: {
@@ -93,15 +91,13 @@ function AppLayout() {
 
             setStartSimulation(true);
 
-            return thirdPersonCameraEntity ?? null;
-        },
-        [instance],
-    );
+            setCameraEntity(thirdPersonCameraEntity ?? null);
+        }
+        instantiatePlayerSceneAndFindThirdPersonCamera(instance);
+    }, [instance]);
 
-    const { entity: cameraEntity } = useEntity({
-        finder: instantiatePlayerSceneAndFindThirdPersonCamera,
-    });
     const [startSimulation, setStartSimulation] = useState<boolean>(false);
+    const [cameraEntity, setCameraEntity] = useState<Entity | null>(null);
 
     return (
         <Canvas className="w-full h-full">
