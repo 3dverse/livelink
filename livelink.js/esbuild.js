@@ -1,7 +1,6 @@
 /* eslint-disable */
 
 //------------------------------------------------------------------------------
-const pkg = require("./package.json");
 const esbuild = require("esbuild");
 
 //------------------------------------------------------------------------------
@@ -10,8 +9,8 @@ const commonBuildOptions = {
     outdir: "dist",
     bundle: true,
     platform: "neutral",
+    packages: "external",
     mainFields: ["browser", "module", "main"],
-    external: [...Object.keys(pkg.peerDependencies || {})],
     sourcemap: true,
     define: {
         API_HOSTNAME: `"api.3dverse.com"`,

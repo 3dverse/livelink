@@ -1,5 +1,4 @@
 //------------------------------------------------------------------------------
-const pkg = require("./package.json");
 const esbuild = require("esbuild");
 
 //------------------------------------------------------------------------------
@@ -9,7 +8,7 @@ const commonBuildOptions = {
     bundle: true,
     minify: true,
     platform: "browser",
-    external: [...Object.keys(pkg.peerDependencies || {})],
+    packages: "external",
     sourcemap: true,
 };
 
