@@ -1,5 +1,5 @@
 //------------------------------------------------------------------------------
-import { useEffect, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 
 //------------------------------------------------------------------------------
 import type { Entity } from "@3dverse/livelink";
@@ -9,6 +9,7 @@ import {
     Viewport,
     CameraController,
     useCameraEntity,
+    LivelinkContext,
 } from "@3dverse/livelink-react";
 import { LoadingOverlay } from "@3dverse/livelink-react-ui";
 
@@ -44,6 +45,7 @@ function App() {
 
 //------------------------------------------------------------------------------
 function AppLayout() {
+    const { instance } = useContext(LivelinkContext);
     const { cameraEntity } = useCameraEntity();
     const [pickedEntity, setPickedEntity] = useState<{ entity: Entity } | null>(
         null,
@@ -55,6 +57,12 @@ function AppLayout() {
     useEffect(() => {
         document.body.style.cursor = hoveredEntity ? "pointer" : "default";
     }, [hoveredEntity]);
+
+    useEffect(() => {
+        instance?.scene.highlightEntities({
+            entities: pickedEntity ? [pickedEntity.entity] : [],
+        });
+    }, [pickedEntity]);
 
     return (
         <>

@@ -10,7 +10,7 @@
     - Livelink
         - [x] TO_REMOVE\_\_viewports-added
     - Rendering
-        - [ ] on-entity-picked (Viewport)
+        - [x] on-entity-picked (Viewport)
         - [ ] on-resized (CanvasAutoResizer, RenderingSurface, OffscreenSurface)
     - Entity
         - [ ] entity-updated
