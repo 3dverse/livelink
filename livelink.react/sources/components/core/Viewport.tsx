@@ -47,6 +47,8 @@ export const ViewportContext = createContext<{
  * @category Context Providers
  */
 export function Viewport({
+    setHoveredEntity,
+    setPickedEntity,
     renderTargetIndex = -1,
     children,
     ...props
@@ -60,6 +62,12 @@ export function Viewport({
               cameraIndex?: number;
           }
     > & {
+        setHoveredEntity?: (
+            data: { entity: Livelink.Entity; ws_position: Livelink.Vec3; ws_normal: Livelink.Vec3 } | null,
+        ) => void;
+        setPickedEntity?: (
+            data: { entity: Livelink.Entity; ws_position: Livelink.Vec3; ws_normal: Livelink.Vec3 } | null,
+        ) => void;
         renderTargetIndex?: number;
     } & HTMLProps<HTMLDivElement>
 >): JSX.Element {
@@ -138,8 +146,10 @@ export function Viewport({
                     rect,
                     z_index: zIndex,
                     render_target_index: renderTargetIndex,
+                    dom_element: viewportDomElement.current,
                 },
             });
+
             console.debug("---- Setting viewport", viewport.width, viewport.height, zIndex);
             instance.addViewports({ viewports: [viewport] });
             setViewport(viewport);
@@ -189,6 +199,47 @@ export function Viewport({
         viewport.camera_projection = new Livelink.CameraProjection({ camera_entity: clientCameraEntity, viewport });
         setCamera(viewport.camera_projection);
     }, [viewport, clientCameraEntity]);
+
+    //--------------------------------------------------------------------------
+    useEffect(() => {
+        if (!viewport) {
+            return;
+        }
+
+        const onEntityPicked = (e: Livelink.EntityPickedEvent): void =>
+            setPickedEntity?.(
+                e.picked_entity && e.ws_position && e.ws_normal
+                    ? { entity: e.picked_entity, ws_position: e.ws_position, ws_normal: e.ws_normal }
+                    : null,
+            );
+        if (setPickedEntity) {
+            viewport.activatePicking();
+            viewport.addEventListener("on-entity-picked", onEntityPicked);
+        }
+
+        const onEntityHovered = (e: Livelink.EntityHoveredEvent): void =>
+            setHoveredEntity?.(
+                e.hovered_entity && e.ws_position && e.ws_normal
+                    ? { entity: e.hovered_entity, ws_position: e.ws_position, ws_normal: e.ws_normal }
+                    : null,
+            );
+        if (setHoveredEntity) {
+            viewport.activateHovering();
+            viewport.addEventListener("on-entity-hovered", onEntityHovered);
+        }
+
+        return (): void => {
+            if (setPickedEntity) {
+                viewport.removeEventListener("on-entity-picked", onEntityPicked);
+                viewport.deactivatePicking();
+            }
+
+            if (setHoveredEntity) {
+                viewport.removeEventListener("on-entity-hovered", onEntityHovered);
+                viewport.deactivateHovering();
+            }
+        };
+    }, [viewport, setPickedEntity, setHoveredEntity]);
 
     //--------------------------------------------------------------------------
     return (

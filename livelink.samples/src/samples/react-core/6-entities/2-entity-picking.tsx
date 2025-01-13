@@ -1,5 +1,5 @@
 //------------------------------------------------------------------------------
-import { useContext, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 
 //------------------------------------------------------------------------------
 import type { Entity } from "@3dverse/livelink";
@@ -9,8 +9,6 @@ import {
     Viewport,
     CameraController,
     useCameraEntity,
-    LivelinkContext,
-    ViewportContext,
 } from "@3dverse/livelink-react";
 import { LoadingOverlay } from "@3dverse/livelink-react-ui";
 
@@ -47,54 +45,45 @@ function App() {
 //------------------------------------------------------------------------------
 function AppLayout() {
     const { cameraEntity } = useCameraEntity();
+    const [pickedEntity, setPickedEntity] = useState<{ entity: Entity } | null>(
+        null,
+    );
+    const [hoveredEntity, setHoveredEntity] = useState<{
+        entity: Entity;
+    } | null>(null);
+
+    useEffect(() => {
+        document.body.style.cursor = hoveredEntity ? "pointer" : "default";
+    }, [hoveredEntity]);
 
     return (
-        <Canvas className="w-full h-full">
-            <Viewport cameraEntity={cameraEntity} className="w-full h-full">
-                <CameraController />
-                <EntityPicker />
-            </Viewport>
-        </Canvas>
+        <>
+            <Canvas className="w-full h-full">
+                <Viewport
+                    cameraEntity={cameraEntity}
+                    setHoveredEntity={setHoveredEntity}
+                    setPickedEntity={setPickedEntity}
+                    className="w-full h-full"
+                >
+                    <CameraController />
+                </Viewport>
+            </Canvas>
+            <EntityStatusPanel
+                hoveredEntity={hoveredEntity?.entity ?? null}
+                pickedEntity={pickedEntity?.entity ?? null}
+            />
+        </>
     );
 }
 
 //------------------------------------------------------------------------------
-function EntityPicker() {
-    //TEMPTEMPTEMPTEMPTEMPTEMPTEMPTEMPTEMPTEMPTEMPTEMPTEMPTEMPTEMPTEMPTEMPTEMP
-    const { instance } = useContext(LivelinkContext);
-    const { viewport, viewportDomElement } = useContext(ViewportContext);
-
-    const [pickedEntity, setPickedEntity] = useState<Entity | null>(null);
-    const [hoveredEntity, setHoveredEntity] = useState<Entity | null>(null);
-
-    useEffect(() => {
-        if (!instance || !viewport || !viewportDomElement) {
-            return;
-        }
-
-        viewport.activatePicking({ dom_element: viewportDomElement });
-        viewport.addEventListener("on-entity-picked", e => {
-            const event = e as CustomEvent<{ entity: Entity } | null>;
-            setPickedEntity(event.detail?.entity ?? null);
-
-            instance.scene.highlightEntities({
-                entities: event.detail?.entity ? [event.detail.entity] : [],
-            });
-        });
-
-        viewportDomElement.addEventListener("pointermove", async () => {
-            viewportDomElement.style.cursor = instance.session.current_client
-                ?.cursor_data
-                ? "pointer"
-                : "default";
-            setHoveredEntity(
-                (await instance.session.current_client?.getHoveredEntity()) ??
-                    null,
-            );
-        });
-    }, [viewport, viewportDomElement]);
-    //TEMPTEMPTEMPTEMPTEMPTEMPTEMPTEMPTEMPTEMPTEMPTEMPTEMPTEMPTEMPTEMPTEMPTEMP
-
+function EntityStatusPanel({
+    hoveredEntity,
+    pickedEntity,
+}: {
+    hoveredEntity: Entity | null;
+    pickedEntity: Entity | null;
+}) {
     return (
         <div className="absolute m-4 flex flex-col gap-4">
             <EntityPanel

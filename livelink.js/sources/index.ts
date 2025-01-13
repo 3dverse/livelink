@@ -12,6 +12,7 @@ export * from "./scene/Scene";
 export * from "./scene/Entity";
 
 export * from "./rendering/Viewport";
+export * from "./rendering/ViewportEvents";
 export * from "./rendering/CameraController";
 export * from "./rendering/CameraProjection";
 

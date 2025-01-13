@@ -6,12 +6,16 @@ import { vec3 } from "gl-matrix";
 
 //------------------------------------------------------------------------------
 import { Livelink } from "../Livelink";
+import { Mouse } from "../inputs/Mouse";
 import { Entity } from "../scene/Entity";
+import { TypedEventTarget } from "../TypedEventTarget";
+
 import { RelativeRect } from "./surfaces/Rect";
-import { CameraProjection } from "./CameraProjection";
 import { OverlayInterface } from "./surfaces/OverlayInterface";
 import { RenderingSurfaceBase } from "./surfaces/RenderingSurfaceBase";
-import { Mouse } from "../inputs/Mouse";
+
+import { CameraProjection } from "./CameraProjection";
+import { EntityHoveredEvent, EntityPickedEvent, ViewportEvents } from "./ViewportEvents";
 
 /**
  * A viewport is a rendering area on a {@link RenderingSurfaceBase} that is associated with a
@@ -23,7 +27,7 @@ import { Mouse } from "../inputs/Mouse";
  *
  * @category Rendering
  */
-export class Viewport extends EventTarget {
+export class Viewport extends TypedEventTarget<ViewportEvents> {
     //TEMPTEMPTEMPTEMPTEMPTEMPTEMPTEMPTEMPTEMPTEMPTEMPTEMPTEMPTEMPTEMP
     /**
      * @internal
@@ -38,17 +42,40 @@ export class Viewport extends EventTarget {
      * @deprecated
      */
     TO_REMOVE__ready: boolean = false;
+    /**
+     * Reference count of mouse usage
+     */
+    #TO_REMOVE__mouse_reference_count: number = 0;
+    /**
+     *
+     */
+    #TO_REMOVE__tryEnablingMouse(): void {
+        const dom_element = this.#checkDomElement();
+        if (this.#TO_REMOVE__mouse_reference_count === 0) {
+            this.#core.addInputDevice(Mouse, dom_element);
+        }
+        this.#TO_REMOVE__mouse_reference_count++;
+    }
+    /**
+     *
+     */
+    #TO_REMOVE__tryDisablingMouse(): void {
+        this.#TO_REMOVE__mouse_reference_count--;
+        if (this.#TO_REMOVE__mouse_reference_count === 0) {
+            this.#core.removeInputDevice({ device_name: "mouse" });
+        }
+    }
     //TEMPTEMPTEMPTEMPTEMPTEMPTEMPTEMPTEMPTEMPTEMPTEMPTEMPTEMPTEMPTEMP
 
     /**
      * The Livelink core used to send commands.
      */
-    #core: Livelink;
+    readonly #core: Livelink;
 
     /**
      * The rendering surface on which the viewport is displayed.
      */
-    #rendering_surface: RenderingSurfaceBase;
+    readonly #rendering_surface: RenderingSurfaceBase;
 
     /**
      * The camera projection used to render the scene.
@@ -58,7 +85,7 @@ export class Viewport extends EventTarget {
     /**
      * Overlays that are rendered on top of the viewport.
      */
-    #overlays: Array<OverlayInterface> = [];
+    readonly #overlays: Array<OverlayInterface> = [];
 
     /**
      * The z-index of the viewport.
@@ -73,7 +100,7 @@ export class Viewport extends EventTarget {
     /**
      * The DOM element used for picking.
      */
-    #dom_element: HTMLElement | null = null;
+    readonly #dom_element: HTMLElement | null = null;
 
     /**
      * The index of the render target that is rendered on the viewport.
@@ -192,6 +219,7 @@ export class Viewport extends EventTarget {
      * @param params.options.rect - The relative position and size of the viewport in relation to the rendering surface.
      * @param params.options.render_target_index - The index of the render target that is rendered on the viewport.
      * @param params.options.z_index - The z-index of the viewport.
+     * @param params.options.dom_element - The DOM element used for picking.
      */
     constructor({
         core,
@@ -200,7 +228,7 @@ export class Viewport extends EventTarget {
     }: {
         core: Livelink;
         rendering_surface: RenderingSurfaceBase;
-        options?: { rect?: RelativeRect; render_target_index?: number; z_index?: number };
+        options?: { rect?: RelativeRect; render_target_index?: number; z_index?: number; dom_element?: HTMLElement };
     }) {
         super();
         this.#core = core;
@@ -208,6 +236,7 @@ export class Viewport extends EventTarget {
         this.#relative_rect = new RelativeRect(options?.rect ?? { left: 0, top: 0, width: 1, height: 1 });
         this.#render_target_index = options?.render_target_index ?? -1;
         this.#z_index = options?.z_index ?? 0;
+        this.#dom_element = options?.dom_element ?? null;
     }
 
     /**
@@ -224,6 +253,7 @@ export class Viewport extends EventTarget {
      */
     release(): void {
         this.deactivatePicking();
+        this.deactivateHovering();
     }
 
     /**
@@ -234,10 +264,10 @@ export class Viewport extends EventTarget {
      * @param params
      * @param params.dom_element - The DOM element backing the viewport.
      */
-    activatePicking({ dom_element }: { dom_element: HTMLElement }): void {
-        this.#dom_element = dom_element;
-        this.#dom_element.addEventListener("click", this.#onCanvasClicked);
-        this.#core.addInputDevice(Mouse, dom_element);
+    activatePicking(): void {
+        const dom_element = this.#checkDomElement();
+        dom_element.addEventListener("click", this.#onCanvasClicked);
+        this.#TO_REMOVE__tryEnablingMouse();
     }
 
     /**
@@ -246,11 +276,38 @@ export class Viewport extends EventTarget {
      * If picking is deactivated, the viewport will no longer emit an `on-entity-picked` event when it is clicked.
      */
     deactivatePicking(): void {
-        if (this.#dom_element) {
-            this.#core.removeInputDevice({ device_name: "mouse" });
-            this.#dom_element.removeEventListener("click", this.#onCanvasClicked);
-            this.#dom_element = null;
-        }
+        const dom_element = this.#checkDomElement();
+        dom_element.removeEventListener("click", this.#onCanvasClicked);
+        this.#TO_REMOVE__tryDisablingMouse();
+    }
+
+    /**
+     * @experimental
+     *
+     * Activates entity hovering on the viewport.
+     *
+     * If hovering is activated, the viewport will emit an `on-entity-hovered` event when it is hovered.
+     *
+     * @param params
+     * @param params.dom_element - The DOM element backing the viewport.
+     */
+    activateHovering(): void {
+        const dom_element = this.#checkDomElement();
+        dom_element.addEventListener("pointermove", this.#onPointerMove);
+        this.#TO_REMOVE__tryEnablingMouse();
+    }
+
+    /**
+     * @experimental
+     *
+     * Deactivates entity hovering on the viewport.
+     *
+     * If hovering is deactivated, the viewport will no longer emit an `on-entity-hovered` event when it is hovered.
+     */
+    deactivateHovering(): void {
+        const dom_element = this.#checkDomElement();
+        dom_element.removeEventListener("pointermove", this.#onPointerMove);
+        this.#TO_REMOVE__tryDisablingMouse();
     }
 
     /**
@@ -400,22 +457,66 @@ export class Viewport extends EventTarget {
     /**
      *
      */
+    #checkDomElement(): HTMLElement {
+        if (!this.#dom_element) {
+            throw new Error("No DOM element set on viewport");
+        }
+
+        return this.#dom_element;
+    }
+
+    /**
+     *
+     */
     #onCanvasClicked = async (e: MouseEvent): Promise<void> => {
         e.stopPropagation();
 
-        let detail = null;
+        let data = null;
 
         const cursorData = this.#core.session.current_client?.cursor_data;
         if (cursorData) {
             const entity = await this.#core.scene._getEntity({ entity_rtid: cursorData.hovered_entity_rtid });
             if (entity) {
-                detail = {
+                data = {
                     entity,
                     ws_position: cursorData.hovered_ws_position,
                     ws_normal: cursorData.hovered_ws_normal,
                 };
             }
         }
-        this.dispatchEvent(new CustomEvent("on-entity-picked", { detail }));
+        this._dispatchEvent(
+            new EntityPickedEvent({
+                picked_entity: data?.entity ?? null,
+                ws_position: data?.ws_position ?? null,
+                ws_normal: data?.ws_normal ?? null,
+            }),
+        );
+    };
+
+    /**
+     *
+     */
+    #onPointerMove = async (): Promise<void> => {
+        let data = null;
+
+        const cursorData = this.#core.session.current_client?.cursor_data;
+        if (cursorData) {
+            const entity = await this.#core.scene._getEntity({ entity_rtid: cursorData.hovered_entity_rtid });
+            if (entity) {
+                data = {
+                    entity,
+                    ws_position: cursorData.hovered_ws_position,
+                    ws_normal: cursorData.hovered_ws_normal,
+                };
+            }
+        }
+
+        this._dispatchEvent(
+            new EntityHoveredEvent({
+                hovered_entity: data?.entity ?? null,
+                ws_position: data?.ws_position ?? null,
+                ws_normal: data?.ws_normal ?? null,
+            }),
+        );
     };
 }
