@@ -43,26 +43,34 @@ export const SunPositionPicker = ({
     sun?: Entity | null;
     hasShadowToggle?: Boolean;
 }) => {
-    //------------------------------------------------------------------------------
+    //--------------------------------------------------------------------------
     const bgCanvasRef = useRef<HTMLCanvasElement>(null);
     const sunCanvasRef = useRef<HTMLCanvasElement>(null);
     const movingLightHintRef = useRef<HTMLDivElement>(null);
-    const [shadowCaster, setShadowCaster] = useState<Partial<Components.ShadowCaster>>({});
+    const [shadowCasterSavedState, setShadowCasterSavedState] = useState<Partial<Components.ShadowCaster>>({});
+    const [hasShadows, setHasShadows] = useState(Boolean(sun?.shadow_caster));
 
-    //------------------------------------------------------------------------------
+    //--------------------------------------------------------------------------
+    useEffect(() => {
+        setHasShadows(Boolean(sun?.shadow_caster));
+    }, [sun]);
+
+    //--------------------------------------------------------------------------
     const onToggleShadows = () => {
         if (!sun) {
             return "No sun entity";
         }
         if (sun.shadow_caster) {
-            setShadowCaster(sun.shadow_caster);
-            delete sun.shadow_caster;
+            setShadowCasterSavedState(sun.shadow_caster);
+            sun.shadow_caster = undefined;
+            setHasShadows(false);
         } else {
-            sun.shadow_caster = shadowCaster;
+            sun.shadow_caster = shadowCasterSavedState;
+            setHasShadows(true);
         }
     };
 
-    //------------------------------------------------------------------------------
+    //--------------------------------------------------------------------------
     useEffect(() => {
         const canvas = bgCanvasRef.current;
 
@@ -128,7 +136,7 @@ export const SunPositionPicker = ({
 
         let isMouseDown = false;
 
-        const [initX, initY] = eulerToSunPosition(sun.local_transform!.eulerOrientation!);
+        const [initX, initY] = eulerToSunPosition(sun.local_transform!.eulerOrientation);
 
         let sunX = initX * RADIUS + centerX;
         let sunY = initY * RADIUS + centerY;
@@ -210,7 +218,7 @@ export const SunPositionPicker = ({
                 1 - sunZ / RADIUS,
             ] as Vec3;
 
-            sun.local_transform!.eulerOrientation = sunToPositionToEuler(normalizedPosition);
+            sun.local_transform!.eulerOrientation = sunPositionToEuler(normalizedPosition);
         };
 
         const onMouseDown = (event: PointerEvent) => {
@@ -271,7 +279,7 @@ export const SunPositionPicker = ({
         };
     }, [sun]);
 
-    //------------------------------------------------------------------------------
+    //--------------------------------------------------------------------------
     // UI
     return (
         <Provider>
@@ -286,11 +294,7 @@ export const SunPositionPicker = ({
                     {!sun && <Skeleton />}
                 </div>
                 {hasShadowToggle && (
-                    <ShadowCheckbox
-                        isDisabled={!sun}
-                        isChecked={Boolean(sun?.shadow_caster)}
-                        onChange={onToggleShadows}
-                    />
+                    <ShadowCheckbox isDisabled={!sun} isChecked={hasShadows} onChange={onToggleShadows} />
                 )}
             </Flex>
         </Provider>
@@ -399,7 +403,7 @@ const Skeleton = () => {
 };
 
 //------------------------------------------------------------------------------
-const sunToPositionToEuler = (sunPosition: Vec3): Vec3 => {
+const sunPositionToEuler = (sunPosition: Vec3): Vec3 => {
     const [sunX, sunY] = sunPosition;
     const distance = Math.sqrt(sunX * sunX + sunY * sunY);
     const normalizedPosition = [sunX / distance, sunY / distance];
@@ -413,7 +417,7 @@ const sunToPositionToEuler = (sunPosition: Vec3): Vec3 => {
 const eulerToSunPosition = (euler: Vec3): Vec2 => {
     const [pitch, yaw] = euler;
     const yaw_radiants = (yaw * Math.PI) / 180;
-    const distance = pitch / 90 + 1;
+    const distance = Math.max(-1, Math.min(pitch / 90 + 1, 1));
     const sunX = -Math.cos(yaw_radiants + Math.PI / 2) * distance;
     const sunY = Math.sin(yaw_radiants + Math.PI / 2) * distance;
     return [sunX, sunY];
