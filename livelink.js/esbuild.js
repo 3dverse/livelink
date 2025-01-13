@@ -33,6 +33,7 @@ const buildOptions = [
 //------------------------------------------------------------------------------
 const devBuildOptions = {
     minify: false,
+    packages: "bundle",
 };
 
 const prodBuildOptions = {
