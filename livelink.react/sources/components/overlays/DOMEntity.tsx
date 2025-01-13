@@ -2,7 +2,7 @@
 import React, { PropsWithChildren, useEffect, useState } from "react";
 
 //------------------------------------------------------------------------------
-import type { Components, Entity, Vec2i, Vec3 } from "@3dverse/livelink";
+import type { Entity, Vec3 } from "@3dverse/livelink";
 
 //------------------------------------------------------------------------------
 import { DOM3DElement } from "./DOM3DElement";
@@ -19,7 +19,7 @@ export function DOMEntity({
 }: PropsWithChildren<{
     entity: Entity | null;
     scaleFactor?: number;
-}>) {
+}>): JSX.Element {
     const [worldPosition, setWorldPosition] = useState<Vec3>([0, 0, 0]);
 
     useEffect(() => {
@@ -32,13 +32,13 @@ export function DOMEntity({
             return;
         }
 
-        const updatePosition = () => {
+        const updatePosition = (): void => {
             const local_transform = entity.local_transform!;
             setWorldPosition(local_transform.position);
         };
 
         entity.addEventListener("entity-updated", updatePosition);
-        return () => {
+        return (): void => {
             entity.removeEventListener("entity-updated", updatePosition);
         };
     }, [entity]);

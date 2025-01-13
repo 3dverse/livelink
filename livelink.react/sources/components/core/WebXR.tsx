@@ -26,7 +26,7 @@ export const WebXRContext = createContext<{
  * @param param0
  * @returns
  */
-export function WebXR({ children, mode }: PropsWithChildren<{ mode: XRSessionMode }>) {
+export function WebXR({ children, mode }: PropsWithChildren<{ mode: XRSessionMode }>): JSX.Element {
     //--------------------------------------------------------------------------
     const { instance } = useContext(LivelinkContext);
 
@@ -52,7 +52,7 @@ export function WebXR({ children, mode }: PropsWithChildren<{ mode: XRSessionMod
                 setWebXRHelper(webXRHelper);
             });
 
-        return () => {
+        return (): void => {
             webXRHelper.release();
             setWebXRHelper(null);
         };

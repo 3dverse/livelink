@@ -49,7 +49,7 @@ export class ReactOverlay implements OverlayInterface {
     /**
      *
      */
-    addElement({ element, scale_factor }: { element: ReactElement; scale_factor?: number }) {
+    addElement({ element, scale_factor }: { element: ReactElement; scale_factor?: number }): React3DElement {
         if (this.#elements.has(element)) {
             console.warn(`Element already added to dom overlay`);
             return this.#elements.get(element)!;
@@ -63,10 +63,9 @@ export class ReactOverlay implements OverlayInterface {
     /**
      *
      */
-    removeElement({ element }: { element: ReactElement }) {
+    removeElement({ element }: { element: ReactElement }): void {
         if (!this.#elements.delete(element)) {
             console.warn(`Element not found in dom overlay`);
-            return;
         }
     }
 

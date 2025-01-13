@@ -6,6 +6,7 @@ export * from "./components/core/Livelink";
 export * from "./components/core/Canvas";
 export * from "./components/core/Viewport";
 export * from "./components/core/CameraController";
+export { CameraController as DefaultCameraController } from "@3dverse/livelink";
 export * from "./components/core/WebXR";
 
 export * from "./components/overlays/DOM3DOverlay";

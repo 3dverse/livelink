@@ -19,7 +19,9 @@ import { CanvasContext } from "./Canvas";
 
 //------------------------------------------------------------------------------
 type UnionKeys<T> = T extends T ? keyof T : never;
-type StrictUnionHelper<T, TAll> = T extends any ? T & Partial<Record<Exclude<UnionKeys<TAll>, keyof T>, never>> : never;
+type StrictUnionHelper<T, TAll> = T extends unknown
+    ? T & Partial<Record<Exclude<UnionKeys<TAll>, keyof T>, never>>
+    : never;
 type StrictUnion<T> = StrictUnionHelper<T, T>;
 
 /**
@@ -60,7 +62,7 @@ export function Viewport({
     > & {
         renderTargetIndex?: number;
     } & HTMLProps<HTMLDivElement>
->) {
+>): JSX.Element {
     const { cameraEntity, client, cameraIndex, ...otherProps } = props as {
         cameraEntity?: Livelink.Entity | null;
         cameraIndex?: number;
@@ -99,7 +101,7 @@ export function Viewport({
 
         const resizeObserver = new ResizeObserver(onResize);
         resizeObserver.observe(viewportDomElement.current);
-        return () => {
+        return (): void => {
             resizeObserver.disconnect();
         };
     }, [viewportDomElement.current, onResize]);
@@ -111,7 +113,7 @@ export function Viewport({
         }
 
         renderingSurface.addEventListener("on-resized", onResize);
-        return () => {
+        return (): void => {
             renderingSurface.removeEventListener("on-resized", onResize);
         };
     }, [renderingSurface, onResize]);
@@ -142,7 +144,7 @@ export function Viewport({
             instance.addViewports({ viewports: [viewport] });
             setViewport(viewport);
 
-            return () => {
+            return (): void => {
                 console.debug("---- Removing viewport");
                 instance.removeViewport({ viewport });
                 viewport.release();

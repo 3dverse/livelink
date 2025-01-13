@@ -50,7 +50,7 @@ export class GamepadBoxSet {
         }
 
         this.axesBoxes = [];
-        let axesBoxCount = Math.ceil(axesCount / 2);
+        const axesBoxCount = Math.ceil(axesCount / 2);
         for (let i = 0; i < axesBoxCount; ++i) {
             this.axesBoxes.push({
                 dx: 0,
@@ -62,7 +62,7 @@ export class GamepadBoxSet {
     }
 
     //--------------------------------------------------------------------------
-    updateState(gamepad: Gamepad) {
+    updateState(gamepad: Gamepad): void {
         // The boxes associated with any given button will turn green if
         // touched and red if pressed. The box height will also scale based
         // on the button's value to make it appear like a button being pushed.
@@ -91,19 +91,19 @@ export class WebXRInputRelay {
     static eventTarget = new EventTarget();
 
     //--------------------------------------------------------------------------
-    static onInputSourcesChange = async (event: XRInputSourcesChangeEvent) => {
+    static onInputSourcesChange = async (event: XRInputSourcesChangeEvent): Promise<void> => {
         // This library matches XRInputSource profiles to available controller models for us.
         const DEFAULT_PROFILES_PATH = "https://cdn.jsdelivr.net/npm/@webxr-input-profiles/assets@1.0/dist/profiles";
 
-        for (let inputSource of event.added) {
+        for (const inputSource of event.added) {
             const { handedness } = inputSource;
-            // @ts-ignore fetchProfile type definition is wrong, it returns a Promise
+            // @ts-expect-error fetchProfile type definition is wrong, it returns a Promise
             const { profile, assetPath } = await (fetchProfile(inputSource, DEFAULT_PROFILES_PATH) as Promise<{
-                profile: object;
+                profile: { fallbackProfileIds: string[] };
                 assetPath?: string;
             }>);
             const controller = new MotionController(inputSource, profile, assetPath!) as WebXRMotionController;
-            controller.fallbackProfileIds = (profile as any).fallbackProfileIds;
+            controller.fallbackProfileIds = profile.fallbackProfileIds;
             this.motionController[handedness] = controller;
             console.debug(`WebXR motion controller for ${handedness} hand:`, controller);
 
@@ -126,7 +126,7 @@ export class WebXRInputRelay {
             );
             this.boxTable[handedness] = new GamepadBoxSet(handedness, buttons.length, axes.length);
         }
-        for (let inputSource of event.removed) {
+        for (const inputSource of event.removed) {
             const { handedness } = inputSource;
             delete this.motionController[handedness];
             delete this.boxTable[handedness];
@@ -135,7 +135,7 @@ export class WebXRInputRelay {
     };
 
     //--------------------------------------------------------------------------
-    static processInputSource(source: XRInputSource, frame: XRFrame, refSpace: XRReferenceSpace) {
+    static processInputSource(source: XRInputSource, frame: XRFrame, refSpace: XRReferenceSpace): void {
         // console.debug("webxr input source", source);
         WebXRInputRelay.#processGamepad(source, frame, refSpace);
         // TODO: see how to draw the input source models
@@ -143,7 +143,7 @@ export class WebXRInputRelay {
     }
 
     //--------------------------------------------------------------------------
-    static #processGamepad(source: XRInputSource, frame: XRFrame, refSpace: XRReferenceSpace) {
+    static #processGamepad(source: XRInputSource, frame: XRFrame, refSpace: XRReferenceSpace): void {
         const { gamepad, handedness } = source;
         if (!gamepad) {
             return;
@@ -180,8 +180,8 @@ export class WebXRInputRelay {
      * Automatically adds the appropriate visual elements for all input sources.
      * @param frame
      * @param refSpace
-     */
-    static #drawInputSource(source: XRInputSource, frame: XRFrame, refSpace: XRReferenceSpace) {
+     *
+    static #drawInputSource(source: XRInputSource, frame: XRFrame, refSpace: XRReferenceSpace): void {
         const targetRayPose = frame.getPose(source.targetRaySpace, refSpace);
         if (!targetRayPose) {
             return;
@@ -199,7 +199,7 @@ export class WebXRInputRelay {
         // for both handheld and gaze-based input sources.
 
         // Check and see if the pointer is pointing at any selectable objects.
-        let hitResult = this.#hitTest(targetRayPose.transform);
+        const hitResult = this.#hitTest(targetRayPose.transform);
 
         // TODO: render hit cursor depends on hitResult data or flying ray
         if (hitResult) {
@@ -210,7 +210,7 @@ export class WebXRInputRelay {
         }
 
         if (source.gripSpace) {
-            let gripPose = frame.getPose(source.gripSpace, refSpace);
+            const gripPose = frame.getPose(source.gripSpace, refSpace);
 
             // Any time that we have a grip matrix, we'll render a controller.
             if (gripPose) {
@@ -219,6 +219,7 @@ export class WebXRInputRelay {
             }
         }
     }
+    */
 
     //--------------------------------------------------------------------------
     // https://github.com/immersive-web/webxr-samples/blob/4d4cd6bddc3b5ae5e3791bcf38faaaac61c3a4a5/js/render/core/node.js
@@ -226,10 +227,11 @@ export class WebXRInputRelay {
      * In charge of testing the hit of the laser pointer with the entities of the scene.
      * @param rigidTransform In charge
      * @returns
-     */
-    static #hitTest(rigidTransform: XRRigidTransform) {
+     *
+    static #hitTest(_rigidTransform: XRRigidTransform): unknown {
         // TODO: Implement a live link picking and/or physx raycast to test the hit
         // of the laser pointer?
         return {};
     }
+    */
 }

@@ -12,7 +12,7 @@ import { LivelinkContext } from "../components/core/Livelink";
  *
  * @category Hooks
  */
-export function useClients() {
+export function useClients(): { clients: Array<Client> } {
     const { instance } = useContext(LivelinkContext);
 
     const [clients, setClients] = useState<Array<Client>>([]);
@@ -22,14 +22,14 @@ export function useClients() {
             return;
         }
 
-        const onClientsChanged = () => setClients(instance.session.other_clients);
+        const onClientsChanged = (): void => setClients(instance.session.other_clients);
 
         instance.session.addEventListener("on-client-joined", onClientsChanged);
         instance.session.addEventListener("on-client-left", onClientsChanged);
 
         onClientsChanged();
 
-        return () => {
+        return (): void => {
             instance.session.removeEventListener("on-client-joined", onClientsChanged);
             instance.session.removeEventListener("on-client-left", onClientsChanged);
             setClients([]);

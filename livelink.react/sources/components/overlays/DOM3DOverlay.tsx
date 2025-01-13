@@ -17,7 +17,7 @@ export const OverlayContext = createContext<ReactOverlay | null>(null);
  *
  * @category Context Providers
  */
-export function DOM3DOverlay({ children, ...props }: PropsWithChildren<HTMLProps<HTMLDivElement>>) {
+export function DOM3DOverlay({ children, ...props }: PropsWithChildren<HTMLProps<HTMLDivElement>>): JSX.Element {
     const containerRef = useRef<HTMLDivElement>(null);
     const [overlay, setOverlay] = useState<ReactOverlay | null>(null);
     const { viewport } = useContext(ViewportContext);
@@ -32,7 +32,7 @@ export function DOM3DOverlay({ children, ...props }: PropsWithChildren<HTMLProps
 
         setOverlay(overlay);
 
-        return () => {
+        return (): void => {
             viewport.removeOverlay({ overlay });
         };
     }, [viewport, containerRef]);

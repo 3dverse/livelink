@@ -20,7 +20,7 @@ export function DOM3DElement({
 }: PropsWithChildren<{
     worldPosition: Vec3;
     scaleFactor?: number;
-}>) {
+}>): null {
     const overlay = useContext(OverlayContext);
     const [elementHandle, setElementHandle] = useState<React3DElement | null>(null);
 
@@ -34,7 +34,7 @@ export function DOM3DElement({
         handle.world_position = worldPosition;
         setElementHandle(handle);
 
-        return () => {
+        return (): void => {
             overlay.removeElement({ element });
         };
     }, [overlay, children, scaleFactor]);

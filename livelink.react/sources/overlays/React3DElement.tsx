@@ -41,7 +41,7 @@ export class React3DElement {
     /**
      * @internal
      */
-    _render({ z_index }: { z_index: number }) {
+    _render({ z_index }: { z_index: number }): ReactElement {
         const transformStyle = `
             translate(-50%,-50%)
             translate(${this.screen_position[0]}px, ${this.screen_position[1]}px)`;

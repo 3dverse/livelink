@@ -49,7 +49,7 @@ export class PassthroughXRContext extends ContextProvider {
     /**
      *
      */
-    get native() {
+    get native(): WebGLRenderingContext | WebGL2RenderingContext {
         return this.#context;
     }
 

@@ -4,7 +4,6 @@ import { useContext, useEffect, useReducer, useState } from "react";
 //------------------------------------------------------------------------------
 import type {
     Entity,
-    EntityRef,
     EntityCreationOptions,
     ComponentsManifest,
     FindEntityQuery,
@@ -119,7 +118,7 @@ export function useEntity(entityProvider: EntityProvider & { forceUpdateOnEntity
                 setIsPending(false);
             });
 
-        return () => {
+        return (): void => {
             setEntity(null);
             setIsPending(true);
         };
@@ -139,7 +138,7 @@ export function useEntity(entityProvider: EntityProvider & { forceUpdateOnEntity
 
         entity.addEventListener("entity-updated", forceUpdate);
 
-        return () => {
+        return (): void => {
             entity.removeEventListener("entity-updated", forceUpdate);
         };
     }, [entity, forceUpdateOnEntityUpdate]);

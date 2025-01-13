@@ -15,7 +15,6 @@ import { RenderingSurface } from "@3dverse/livelink";
 
 //------------------------------------------------------------------------------
 import { LivelinkContext } from "./Livelink";
-import { ViewportContext } from "./Viewport";
 
 /**
  * A context provider that exposes the canvas element and the rendering surface.
@@ -66,7 +65,7 @@ export function Canvas({
     width,
     height,
     ...props
-}: PropsWithChildren<CanvasContext & HTMLProps<HTMLDivElement>>) {
+}: PropsWithChildren<CanvasContext & HTMLProps<HTMLDivElement>>): JSX.Element {
     const { instance } = useContext(LivelinkContext);
     const { canvas: parentCanvas } = useContext(CanvasContext);
 
@@ -97,7 +96,7 @@ export function Canvas({
 
         setRenderingSurface(surface);
 
-        return () => {
+        return (): void => {
             console.debug("--- Removing rendering surface");
             surface.release();
             setRenderingSurface(null);

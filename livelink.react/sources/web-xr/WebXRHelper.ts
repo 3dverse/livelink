@@ -143,7 +143,7 @@ export class WebXRHelper {
      * channel is set highest intensity among rgb channels for all pixels with
      * all rgb intensities inferior than 0.1.
      */
-    get fakeAlpha() {
+    get fakeAlpha(): boolean {
         return this.#context.fake_alpha_enabled;
     }
 
@@ -258,7 +258,7 @@ export class WebXRHelper {
         const { promise, resolve, reject } = createPromiseWithResolvers<Readonly<Array<XRView>>>();
 
         let remaining_attempts = 200;
-        const onFirstXRFrame = async (_: DOMHighResTimeStamp, frame: XRFrame) => {
+        const onFirstXRFrame = async (_: DOMHighResTimeStamp, frame: XRFrame): Promise<Array<XRView> | undefined> => {
             const xr_views = frame.getViewerPose(this.#reference_space!)?.views;
             if (!xr_views) {
                 if (--remaining_attempts > 0) {
@@ -348,7 +348,7 @@ export class WebXRHelper {
         eye: { position: Vec3; orientation: Quat };
         transform: { position: Vec3; orientation: Quat };
         inverse?: boolean;
-    }) {
+    }): { position: Vec3; orientation: Quat } {
         // TODO: this might probably be more clear and efficient if implemented
         // with matrix operations.
         // Transformation to apply
@@ -389,7 +389,7 @@ export class WebXRHelper {
         eye2: { position: Vec3; orientation: Quat };
         transform: { position: Vec3; orientation: Quat };
         inverse?: boolean;
-    }) {
+    }): { eye1: { position: Vec3; orientation: Quat }; eye2: { position: Vec3; orientation: Quat } } {
         // TODO: this might probably be more clear and efficient if implemented
         // with matrix operations.
         // Eyes: order does not matter
@@ -455,7 +455,7 @@ export class WebXRHelper {
      * eye(s) transform in the world.
      * @param cameras
      */
-    #applyCamerasOrigin(cameras: readonly Entity[]) {
+    #applyCamerasOrigin(cameras: readonly Entity[]): void {
         if (!this.cameras_origin) {
             return;
         }
@@ -518,7 +518,7 @@ export class WebXRHelper {
                 orientation: Quat;
             };
         }[],
-    ) {
+    ): void {
         if (!this.cameras_origin) {
             return;
         }
@@ -633,7 +633,7 @@ export class WebXRHelper {
      * Compute the livelink viewports rects.
      * @param xr_views
      */
-    #computeLivelinkViewportRects(xr_views: readonly XRView[]) {
+    #computeLivelinkViewportRects(xr_views: readonly XRView[]): void {
         const gl_layer = this.session!.renderState.baseLayer!;
         const xr_eyes = xr_views.map(view => ({
             view,

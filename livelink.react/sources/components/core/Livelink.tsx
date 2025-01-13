@@ -139,7 +139,7 @@ export function LivelinkProvider({
     InactivityWarningPanel,
     ConnectionErrorPanel,
     sessionOpenMode = "join-or-start",
-}: PropsWithChildren<LivelinkConnectParameters>) {
+}: PropsWithChildren<LivelinkConnectParameters>): JSX.Element {
     const [instance, setInstance] = useState<LivelinkInstance | null>(null);
     const [isConnecting, setIsConnecting] = useState(true);
     const [isConnectionLost, setIsConnectionLost] = useState(false);
@@ -149,16 +149,21 @@ export function LivelinkProvider({
     const disconnect = useCallback(() => instance?.disconnect(), [instance]);
 
     useEffect(() => {
-        const connect = async ({ sessionOpenMode, sceneId, sessionId }: SessionOpenMode) => {
+        const connect = async ({
+            sessionOpenMode,
+            sceneId,
+            sessionId,
+        }: SessionOpenMode): Promise<Livelink.Livelink> => {
             switch (sessionOpenMode) {
                 case "start":
                     return LivelinkInstance.start({ scene_id: sceneId, token, is_transient: isTransient });
-                case "join":
+                case "join": {
                     const session = await Livelink.Session.findById({ session_id: sessionId, token });
                     if (!session) {
                         throw new Error(`Session '${sessionId}' not found on scene '${sceneId}'`);
                     }
                     return LivelinkInstance.join({ session });
+                }
                 case "join-or-start":
                     return LivelinkInstance.join_or_start({ scene_id: sceneId, token, is_transient: isTransient });
                 default:
@@ -166,7 +171,7 @@ export function LivelinkProvider({
             }
         };
 
-        const onActivityDetected = () => {
+        const onActivityDetected = (): void => {
             setInactivityWarning(null);
         };
 
@@ -189,7 +194,7 @@ export function LivelinkProvider({
                 setConnectionError(error);
             });
 
-        return () => {
+        return (): void => {
             instance?.session.removeEventListener("on-inactivity-warning", setInactivityWarning);
             instance?.session.removeEventListener("on-activity-detected", onActivityDetected);
 
@@ -210,7 +215,7 @@ export function LivelinkProvider({
         // the GatewayController.authenticateClient or EditorController.connectToSession of livelink-core.
         // Also nothing's notify the livelink user of a loss of the EditorConnection.
 
-        const onDisconnectedHandler = (event: Livelink.DisconnectedEvent) => {
+        const onDisconnectedHandler = (event: Livelink.DisconnectedEvent): void => {
             setIsConnectionLost(true);
             setInactivityWarning(null);
             setConnectionError(event.reason);
@@ -218,14 +223,14 @@ export function LivelinkProvider({
 
         instance.session.addEventListener("on-disconnected", onDisconnectedHandler);
 
-        return () => {
+        return (): void => {
             instance.session.removeEventListener("on-disconnected", onDisconnectedHandler);
         };
     }, [instance]);
 
     // Disconnect when unmounted
     useEffect(() => {
-        return () => {
+        return (): void => {
             instance?.disconnect();
         };
     }, [instance]);
@@ -256,8 +261,8 @@ export function LivelinkProvider({
 }
 
 //------------------------------------------------------------------------------
-function configureClient(instance: LivelinkInstance) {
-    const configure = async () => {
+function configureClient(instance: LivelinkInstance): void {
+    const configure = async (): Promise<void> => {
         instance.session.removeEventListener("TO_REMOVE__viewports-added", configure);
 
         console.debug("-- Configuring client");
