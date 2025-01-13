@@ -1,8 +1,17 @@
 //------------------------------------------------------------------------------
-import React, { createContext, PropsWithChildren, useContext, useEffect, useState } from "react";
+import React, {
+    createContext,
+    forwardRef,
+    PropsWithChildren,
+    Ref,
+    useContext,
+    useEffect,
+    useImperativeHandle,
+    useState,
+} from "react";
 
 //------------------------------------------------------------------------------
-import { CameraController as DefaultCameraController, Entity, Viewport } from "@3dverse/livelink";
+import { CameraController as DefaultCameraController } from "@3dverse/livelink";
 
 //------------------------------------------------------------------------------
 import { ViewportContext } from "./Viewport";
@@ -23,12 +32,14 @@ export const CameraControllerContext = createContext<{
  *
  * @category Components
  */
-export function CameraController({
-    _preset = "orbital",
-    children,
-}: PropsWithChildren & { _preset?: "orbital" | "fly" }) {
+export const CameraController = forwardRef(function CameraController(
+    { _preset = "orbital", children }: PropsWithChildren & { _preset?: "orbital" | "fly" },
+    ref: Ref<DefaultCameraController | null>,
+) {
     const { viewportDomElement, camera } = useContext(ViewportContext);
     const [cameraController, setCameraController] = useState<DefaultCameraController | null>(null);
+    useImperativeHandle(ref, () => cameraController, [cameraController]);
+
     useEffect(() => {
         if (!viewportDomElement || !camera) {
             return;
@@ -40,11 +51,11 @@ export function CameraController({
         });
         setCameraController(controller);
 
-        return () => {
+        return (): void => {
             controller.release();
             setCameraController(null);
         };
     }, [viewportDomElement, camera]);
 
     return <CameraControllerContext.Provider value={{ cameraController }}>{children}</CameraControllerContext.Provider>;
-}
+});
