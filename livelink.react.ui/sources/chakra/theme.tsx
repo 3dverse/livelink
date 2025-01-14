@@ -25,9 +25,6 @@ export const theme = extendTheme({
                 fontFamily: "var(--font-family-secondary)",
                 scrollbarColor: "var(--color-border-primary) transparent",
             },
-            "*": {
-                scrollbarWidth: "thin",
-            },
         }),
     },
     semanticTokens: {
