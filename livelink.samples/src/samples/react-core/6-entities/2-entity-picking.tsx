@@ -93,7 +93,7 @@ function EntityStatusPanel({
     pickedEntity: Entity | null;
 }) {
     return (
-        <div className="absolute m-4 flex flex-col gap-4">
+        <div className="absolute flex flex-col gap-4 m-4">
             <EntityPanel
                 label="Hovered entity"
                 color="bg-informative-500"

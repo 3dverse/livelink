@@ -105,7 +105,7 @@ function EntityCreator() {
     };
 
     return (
-        <div className="absolute flex h-full flex-col gap-2 top-4 left-4 w-1/5">
+        <div className="absolute top-4 left-4">
             <button className="button button-primary" onClick={createEntity}>
                 Create Entity
             </button>
