@@ -24,7 +24,7 @@ import {
 } from "../../../components/SamplePlayer";
 
 //------------------------------------------------------------------------------
-const scene_id = "545cb90f-a3e0-4531-9d98-0fc6d9131097";
+const scene_id = "0bb2690b-7962-4c66-baa9-35f83e66e866";
 const token = import.meta.env.VITE_PROD_PUBLIC_TOKEN;
 
 //------------------------------------------------------------------------------
