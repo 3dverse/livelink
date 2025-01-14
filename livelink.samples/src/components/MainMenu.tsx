@@ -78,7 +78,7 @@ export function MainMenu() {
                         </button>
                     </header>
 
-                    <ul className="flex flex-col gap-6 h-full px-5 text-secondary overflow-y-auto">
+                    <ul className="flex flex-col gap-6 h-full px-5 pb-2 text-secondary overflow-y-auto">
                         {SAMPLES.map((category, i) => (
                             <li key={i}>
                                 <p className="mb-1 pl-3 text-2xs uppercase text-tertiary tracking-wider opacity-80">
