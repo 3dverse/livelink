@@ -9,7 +9,7 @@ const commonBuildOptions = {
     outdir: "dist",
     bundle: true,
     platform: "neutral",
-    packages: "external",
+    packages: "bundle",
     mainFields: ["browser", "module", "main"],
     sourcemap: true,
     define: {
@@ -33,7 +33,6 @@ const buildOptions = [
 //------------------------------------------------------------------------------
 const devBuildOptions = {
     minify: false,
-    packages: "bundle",
 };
 
 const prodBuildOptions = {
