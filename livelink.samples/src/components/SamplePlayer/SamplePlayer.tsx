@@ -81,7 +81,24 @@ export function SamplePlayer({
 
     return (
         <SamplePlayerContext.Provider value={{ connectionState, setConnectionState }}>
-            <div className="w-full h-full flex flex-col-reverse xl:flex-row gap-3 p-3 lg:pl-0 relative">
+            <div className="w-full h-full flex flex-col xl:flex-row gap-3 p-3 relative">
+                <div className="grow h-full gap-3 bg-[#1e222e] rounded-xl relative flex overflow-clip">
+                    {useCustomLayout ? (
+                        children
+                    ) : (
+                        <>
+                            {mountChildren && children}
+                            {mountPlayButton && (
+                                <div className="w-full h-full flex-col content-center justify-center">
+                                    {connectButton}
+                                    <h1 className="text-center font-medium">{title}</h1>
+                                    <h2 className="text-center font-extralight">{summary}</h2>
+                                </div>
+                            )}
+                            {mountActionBar && <ActionBar disconnect={() => setConnectionState("disconnected")} />}
+                        </>
+                    )}
+                </div>
                 {code && showCode && (
                     <article className="relative max-h-[50%] xl:max-h-none max-w-[40ch] md:max-w-[50ch] bg-overground rounded-xl overflow-y-clip">
                         <header className="flex justify-between gap-3 px-3 py-3 border-b border-quaternary">
@@ -103,23 +120,6 @@ export function SamplePlayer({
                         </SyntaxHighlighter>
                     </article>
                 )}
-                <div className="grow h-full gap-3 bg-[#1e222e] rounded-xl relative flex overflow-clip">
-                    {useCustomLayout ? (
-                        children
-                    ) : (
-                        <>
-                            {mountChildren && children}
-                            {mountPlayButton && (
-                                <div className="w-full h-full flex-col content-center justify-center">
-                                    {connectButton}
-                                    <h1 className="text-center font-medium">{title}</h1>
-                                    <h2 className="text-center font-extralight">{summary}</h2>
-                                </div>
-                            )}
-                            {mountActionBar && <ActionBar disconnect={() => setConnectionState("disconnected")} />}
-                        </>
-                    )}
-                </div>
                 {description && (
                     <div>
                         <Markdown>{description}</Markdown>
