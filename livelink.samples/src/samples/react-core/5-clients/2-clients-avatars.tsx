@@ -57,7 +57,7 @@ function SessionCreator({
     setSessionId: (sessionId: UUID | null) => void;
 }) {
     return (
-        <SamplePlayer autoConnect={true} title={"Create Session"}>
+        <SamplePlayer autoConnect={true} title="Create Session">
             <Livelink
                 sceneId={scene_id}
                 token={token}
@@ -84,7 +84,7 @@ function SessionJoiner({ sessionId }: { sessionId: UUID | null }) {
     }
 
     return (
-        <SamplePlayer autoConnect={true} title={"Join Session"}>
+        <SamplePlayer autoConnect={true} title="Join Session">
             <Livelink
                 sessionId={sessionId}
                 sessionOpenMode="join"
@@ -171,7 +171,7 @@ const AvatarList = ({
 }) => {
     return (
         <div className="absolute right-40 top-4">
-            <div className="avatar-group flex gap-1 rtl:space-x-reverse ">
+            <div className="avatar-group flex gap-1 rtl:space-x-reverse">
                 {clients.map(client => (
                     <button
                         key={client.id}

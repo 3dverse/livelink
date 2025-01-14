@@ -49,7 +49,7 @@ function App() {
     return (
         <>
             <ThreeJSCanvas />
-            <SamplePlayer title={"3dverse Skeleton"}>
+            <SamplePlayer title="3dverse Skeleton">
                 <Livelink
                     sceneId={scene_id}
                     token={token}
@@ -108,7 +108,7 @@ function ThreeJSCanvas() {
     }, []);
 
     return (
-        <div className="w-full h-full flex pl-3 py-3">
+        <div className="flex w-full h-full pl-3 py-3">
             <div className="grow" ref={containerRef}>
                 <canvas
                     className="absolute rounded-xl"

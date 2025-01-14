@@ -91,7 +91,7 @@ function StyledViewCube({ cameraEntity }: { cameraEntity: Entity }) {
         <ViewCube
             cameraEntity={cameraEntity}
             size={cubeSize}
-            perspective={"600px"}
+            perspective="600px"
         >
             <div
                 className={cubeFace}

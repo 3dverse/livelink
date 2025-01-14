@@ -58,7 +58,7 @@ function App() {
                 <>
                     <AppLayout />
 
-                    <div className="absolute w-full top-4 flex items-center justify-center gap-4">
+                    <div className="absolute top-4 flex items-center justify-center gap-4 w-full">
                         <XRButton mode="immersive-ar" enterXR={setXRMode} />
                     </div>
                 </>

@@ -33,7 +33,7 @@ export default {
 function App() {
     return (
         <div className="relative flex w-full h-full">
-            <SamplePlayer autoConnect={false} title={"First Scene Session"}>
+            <SamplePlayer autoConnect={false} title="First Scene Session">
                 <Livelink
                     sceneId={scene_id_1}
                     token={token}
@@ -43,7 +43,7 @@ function App() {
                     <AppLayout />
                 </Livelink>
             </SamplePlayer>
-            <SamplePlayer autoConnect={false} title={"Second Scene Session"}>
+            <SamplePlayer autoConnect={false} title="Second Scene Session">
                 <Livelink
                     sceneId={scene_id_2}
                     token={token}

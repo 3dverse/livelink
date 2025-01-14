@@ -53,7 +53,7 @@ function SessionCreator({
     setSessionId: (sessionId: UUID | null) => void;
 }) {
     return (
-        <SamplePlayer title={"Create Session"}>
+        <SamplePlayer title="Create Session">
             <Livelink
                 sceneId={scene_id}
                 token={token}
@@ -80,7 +80,7 @@ function SessionJoiner({ sessionId }: { sessionId: UUID | null }) {
     }
 
     return (
-        <SamplePlayer title={"Join Session"}>
+        <SamplePlayer title="Join Session">
             <Livelink
                 sessionId={sessionId}
                 sessionOpenMode="join"

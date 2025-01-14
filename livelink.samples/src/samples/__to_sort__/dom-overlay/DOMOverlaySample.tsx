@@ -58,7 +58,7 @@ export default function DOMOverlaySample() {
     }, [instance, canvasRef, containerRef]);
 
     return (
-        <div className="w-full h-full flex gap-3 p-3 lg:pl-0">
+        <div className="flex gap-3 w-full h-full p-3 lg:pl-0">
             <div className="relative flex basis-full">
                 <div className="absolute basis-full z-10 pointer-events-none" ref={containerRef} />
                 <LegacyCanvas canvasRef={canvasRef} />

@@ -13,13 +13,15 @@ export function DisconnectedModal({ error }: { error: string }) {
     return (
         <div
             className={
-                "w-full h-full absolute z-20 flex items-center justify-center pointer-events-none backdrop-brightness-[25%]"
+                "absolute z-20 flex items-center justify-center w-full h-full backdrop-brightness-[25%] pointer-events-none"
             }
         >
-            <div className="bg-ground p-4 flex items-center justify-center flex-col gap-4 pointer-events-auto rounded-xl">
-                <p>You have been disconnected from the server.</p>
-                <p>
-                    Reason: <span className="bg-warning-500 p-1 rounded-xl">{error}</span>
+            <div className="px-10 py-8 flex items-center justify-center flex-col gap-6 bg-ground rounded-xl pointer-events-auto">
+                <p className="text-center">
+                    You have been disconnected from the server.
+                    <span className="block mt-1">
+                        Reason: <span className="px-2 py-[2px] bg-warning-500 rounded-full capitalize">{error}</span>
+                    </span>
                 </p>
                 {setConnectionState && (
                     <button

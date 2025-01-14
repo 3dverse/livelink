@@ -39,7 +39,7 @@ export function MainMenu() {
                     className="button button-outline button-icon absolute top-3 left-3 bg-underground text-primary animate-appear-right z-10"
                     onClick={() => setIsCollapsed(!isCollapsed)}
                 >
-                    <BarsIcon />
+                    <BarsIcon className="w-5 h-5" />
                 </button>
             )}
 
@@ -80,7 +80,7 @@ export function MainMenu() {
                     <ul className="flex flex-col gap-6 h-full px-5 text-secondary overflow-y-auto">
                         {SAMPLES.map((category, i) => (
                             <li key={i}>
-                                <p className="mb-1 pl-3 text-2xs uppercase text-tertiary opacity-80 tracking-wider">
+                                <p className="mb-1 pl-3 text-2xs uppercase text-tertiary tracking-wider opacity-80">
                                     {category.categoryName}
                                 </p>
                                 {category.list.map((s, y) => (

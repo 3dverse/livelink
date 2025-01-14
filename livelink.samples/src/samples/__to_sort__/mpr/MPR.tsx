@@ -110,7 +110,7 @@ export default function MPR() {
     }, []);
 
     return (
-        <div className="w-full h-full grid grid-cols-2 gap-3 grid-rows-2 p-3 lg:pl-0">
+        <div className="grid grid-cols-2 gap-3 grid-rows-2 w-full h-full p-3 lg:pl-0">
             <LegacyCanvas canvasRef={canvasRef1} />
             <LegacyCanvas canvasRef={canvasRef2} />
             <LegacyCanvas canvasRef={canvasRef3} />

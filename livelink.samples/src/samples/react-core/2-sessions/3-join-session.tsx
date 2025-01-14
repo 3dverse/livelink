@@ -53,7 +53,7 @@ function SessionCreator({
     setSessionId: (sessionId: UUID | null) => void;
 }) {
     return (
-        <SamplePlayer autoConnect={false} title={"Create Session"}>
+        <SamplePlayer autoConnect={false} title="Create Session">
             <Livelink
                 sceneId={scene_id}
                 token={token}
@@ -71,16 +71,14 @@ function SessionCreator({
 function SessionJoiner({ sessionId }: { sessionId: UUID | null }) {
     if (!sessionId) {
         return (
-            <div className="w-full h-full flex-col content-center justify-center">
-                <h1 className="text-center font-medium">
-                    Start by creating a session
-                </h1>
+            <div className="flex flex-col items-center justify-center w-full h-full">
+                <p className="text-center">Start by creating a session</p>
             </div>
         );
     }
 
     return (
-        <SamplePlayer autoConnect={false} title={"Join Session"}>
+        <SamplePlayer autoConnect={false} title="Join Session">
             <Livelink
                 sessionId={sessionId}
                 sessionOpenMode="join"

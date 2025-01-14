@@ -82,7 +82,7 @@ export const LoadingOverlay = ({ stage = "Connecting to 3dverse..." }: { stage?:
                 flexDirection="column"
                 justifyContent="center"
                 alignItems="center"
-                gap={"1rem"}
+                gap="1rem"
             >
                 {/* Tried to emulate the before, does not work either */}
                 <Box
@@ -93,7 +93,7 @@ export const LoadingOverlay = ({ stage = "Connecting to 3dverse..." }: { stage?:
                     bg="color-mix(in_srgb,var(--color-bg-foreground)_90%,var(--color-content-secondary))"
                 />
 
-                <Box width="40px" height="56px">
+                <div className="w-8 h-8 mb-4">
                     <svg
                         viewBox="0 0 40 56"
                         fill="none"
@@ -140,7 +140,7 @@ export const LoadingOverlay = ({ stage = "Connecting to 3dverse..." }: { stage?:
                             </linearGradient>
                         </defs>
                     </svg>
-                </Box>
+                </div>
                 <div className="loader-progress-bar-indeterminate" role="progressbar">
                     <div className="loader-progress-bar-indeterminate__track" />
                 </div>
