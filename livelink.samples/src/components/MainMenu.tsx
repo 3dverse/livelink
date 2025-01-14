@@ -5,6 +5,7 @@ import { SAMPLES } from "../samples/index.ts";
 import { resolveSamplePath } from "./SamplePlayer/index.tsx";
 import { BarsIcon } from "./icons/BarsIcon.tsx";
 import { CollapseIcon } from "./icons/CollapseIcon.tsx";
+import { LOCAL_STORAGE_KEYS, useLocalStorage } from "../lib/localStorage.ts";
 
 //------------------------------------------------------------------------------
 const BREAKPOINT_LG = 991;
@@ -12,12 +13,12 @@ const BREAKPOINT_LG = 991;
 //------------------------------------------------------------------------------
 export function MainMenu() {
     //--------------------------------------------------------------------------
-    const [isCollapsed, setCollapsed] = useState<boolean>(false);
+    const [isCollapsed, setIsCollapsed] = useLocalStorage<boolean>(LOCAL_STORAGE_KEYS.IS_MAIN_MENU_COLLAPSED, false);
     const [isScreenWidthLG, setScreenWidthLG] = useState<boolean>();
 
     //--------------------------------------------------------------------------
     const onCollapse = () => {
-        setCollapsed(true);
+        setIsCollapsed(true);
     };
 
     //--------------------------------------------------------------------------
@@ -36,7 +37,7 @@ export function MainMenu() {
             {isCollapsed && (
                 <button
                     className="button button-outline button-icon absolute top-5 left-5 bg-underground text-primary animate-appear-right z-10"
-                    onClick={() => setCollapsed(!isCollapsed)}
+                    onClick={() => setIsCollapsed(!isCollapsed)}
                 >
                     <BarsIcon />
                 </button>
