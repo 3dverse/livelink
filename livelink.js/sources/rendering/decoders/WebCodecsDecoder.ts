@@ -173,6 +173,7 @@ export class WebCodecsDecoder extends EncodedFrameConsumer {
      * Release any resources used by the decoder.
      */
     release(): void {
+        this.#last_frame?.close();
         this.#decoder?.close();
     }
 
