@@ -7,7 +7,6 @@ import {
     type Entity,
     Gamepad,
     Keyboard,
-    Mouse,
 } from "@3dverse/livelink";
 import {
     LivelinkContext,
@@ -110,10 +109,10 @@ function AppLayout() {
 //------------------------------------------------------------------------------
 function SimulationStarter() {
     const { instance } = useContext(LivelinkContext);
-    const { viewportDomElement } = useContext(ViewportContext);
+    const { viewport, viewportDomElement } = useContext(ViewportContext);
 
     useEffect(() => {
-        if (!instance || !viewportDomElement) {
+        if (!instance || !viewport || !viewportDomElement) {
             return;
         }
 
@@ -123,7 +122,7 @@ function SimulationStarter() {
 
         instance.addInputDevice(Keyboard);
         instance.addInputDevice(Gamepad);
-        instance.addInputDevice(Mouse, viewportDomElement);
+        instance.devices.mouse.enableOnViewport({ viewport });
 
         instance.startSimulation();
     }, [instance, viewportDomElement]);

@@ -248,7 +248,6 @@ function BoxGeometryHandles({
                         axis,
                         boxGeometryEntity,
                         viewport,
-                        viewportDomElement,
                     }),
                 ),
             );
@@ -280,12 +279,10 @@ function createBoxGeometryHandle({
     axis,
     boxGeometryEntity,
     viewport,
-    viewportDomElement,
 }: {
     axis: THREE.Vector3;
     boxGeometryEntity: Entity;
     viewport: LiveliveViewport;
-    viewportDomElement: HTMLDivElement;
 }): GeometryHandle {
     //--------------------------------------------------------------------------
     const ray = new THREE.Ray();
@@ -333,7 +330,6 @@ function createBoxGeometryHandle({
         }
 
         //----------------------------------------------------------------------
-        const viewport_rect = viewportDomElement.getBoundingClientRect();
         const cameraDirection = new THREE.Vector3(
             0.0,
             0.0,
@@ -352,7 +348,7 @@ function createBoxGeometryHandle({
             computeRayFromPointerEvent({
                 event,
                 ray,
-                viewport_rect,
+                viewport,
                 camera_projection,
             });
 
@@ -407,18 +403,17 @@ function createBoxGeometryHandle({
     function computeRayFromPointerEvent({
         event,
         ray,
-        viewport_rect,
+        viewport,
         camera_projection,
     }: {
         event: PointerEvent;
         ray: THREE.Ray;
-        viewport_rect: DOMRect;
+        viewport: LiveliveViewport;
         camera_projection: CameraProjection;
     }) {
-        const screen_position: Vec2 = [
-            (event.clientX - viewport_rect.left) / viewport_rect.width,
-            (event.clientY - viewport_rect.top) / viewport_rect.height,
-        ];
+        const screen_position: Vec2 = viewport.getScreenPositionFromEvent({
+            event,
+        });
 
         const { origin, direction } =
             camera_projection.computeRayFromScreenPosition({

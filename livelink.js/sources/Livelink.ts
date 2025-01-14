@@ -26,6 +26,7 @@ import { InputDevice } from "./inputs/InputDevice";
 import { Session, SessionSelector } from "./session/Session";
 import { SessionInfo } from "./session/SessionInfo";
 import { TO_REMOVE__ViewportsAddedEvent } from "./session/SessionEvents";
+import { Mouse } from "./inputs/Mouse";
 
 /**
  * This class represents the Livelink connection between the client and the 3dverse server holding
@@ -272,6 +273,11 @@ export class Livelink {
     #input_devices: Array<InputDevice> = [];
 
     /**
+     *
+     */
+    #mouse: Mouse;
+
+    /**
      * Interval between updates sent to the renderer.
      */
     #update_interval = 0;
@@ -316,6 +322,7 @@ export class Livelink {
         this.session = session;
         this.#core = new DynamicLoader.Core();
         this.scene = new Scene(this.#core);
+        this.#mouse = new Mouse(this);
     }
 
     /**
@@ -475,6 +482,13 @@ export class Livelink {
             controller_rtid: controller.rtid,
             partial_pose,
         });
+    }
+
+    /**
+     * @experimental
+     */
+    get devices(): { mouse: Mouse } {
+        return { mouse: this.#mouse };
     }
 
     /**

@@ -6,7 +6,6 @@ import { vec3 } from "gl-matrix";
 
 //------------------------------------------------------------------------------
 import { Livelink } from "../Livelink";
-import { Mouse } from "../inputs/Mouse";
 import { Entity } from "../scene/Entity";
 import { TypedEventTarget } from "../TypedEventTarget";
 
@@ -42,30 +41,6 @@ export class Viewport extends TypedEventTarget<ViewportEvents> {
      * @deprecated
      */
     TO_REMOVE__ready: boolean = false;
-    /**
-     * Reference count of mouse usage
-     */
-    #TO_REMOVE__mouse_reference_count: number = 0;
-    /**
-     *
-     */
-    #TO_REMOVE__tryEnablingMouse(): void {
-        const dom_element = this.#checkDomElement();
-        if (this.#TO_REMOVE__mouse_reference_count === 0) {
-            this.#core.addInputDevice(Mouse, dom_element);
-        }
-        this.#TO_REMOVE__mouse_reference_count++;
-    }
-    /**
-     *
-     */
-    #TO_REMOVE__tryDisablingMouse(): void {
-        this.#TO_REMOVE__mouse_reference_count--;
-        if (this.#TO_REMOVE__mouse_reference_count === 0) {
-            this.#core.removeInputDevice({ device_name: "mouse" });
-        }
-    }
-    //TEMPTEMPTEMPTEMPTEMPTEMPTEMPTEMPTEMPTEMPTEMPTEMPTEMPTEMPTEMPTEMP
 
     /**
      * The Livelink core used to send commands.
@@ -107,6 +82,16 @@ export class Viewport extends TypedEventTarget<ViewportEvents> {
      * -1 means the default render target.
      */
     #render_target_index: number = -1;
+
+    /**
+     *  Whether picking is enabled on the viewport.
+     */
+    #picking_enabled: boolean = false;
+
+    /**
+     *  Whether hovering is enabled on the viewport.
+     */
+    #hovering_enabled: boolean = false;
 
     /**
      * The rendering surface on which the viewport is displayed.
@@ -265,9 +250,15 @@ export class Viewport extends TypedEventTarget<ViewportEvents> {
      * @param params.dom_element - The DOM element backing the viewport.
      */
     activatePicking(): void {
-        const dom_element = this.#checkDomElement();
-        dom_element.addEventListener("click", this.#onCanvasClicked);
-        this.#TO_REMOVE__tryEnablingMouse();
+        if (this.#picking_enabled) {
+            return;
+        }
+
+        const dom_element = this._checkDomElement();
+        this.#core.devices.mouse.enableOnViewport({ viewport: this });
+        dom_element.addEventListener("click", this.#onClick);
+
+        this.#picking_enabled = true;
     }
 
     /**
@@ -276,9 +267,15 @@ export class Viewport extends TypedEventTarget<ViewportEvents> {
      * If picking is deactivated, the viewport will no longer emit an `on-entity-picked` event when it is clicked.
      */
     deactivatePicking(): void {
-        const dom_element = this.#checkDomElement();
-        dom_element.removeEventListener("click", this.#onCanvasClicked);
-        this.#TO_REMOVE__tryDisablingMouse();
+        if (!this.#picking_enabled) {
+            return;
+        }
+
+        const dom_element = this._checkDomElement();
+        this.#core.devices.mouse.disableFromViewport({ viewport: this });
+        dom_element.removeEventListener("click", this.#onClick);
+
+        this.#picking_enabled = false;
     }
 
     /**
@@ -292,9 +289,15 @@ export class Viewport extends TypedEventTarget<ViewportEvents> {
      * @param params.dom_element - The DOM element backing the viewport.
      */
     activateHovering(): void {
-        const dom_element = this.#checkDomElement();
+        if (this.#hovering_enabled) {
+            return;
+        }
+
+        const dom_element = this._checkDomElement();
+        this.#core.devices.mouse.enableOnViewport({ viewport: this });
         dom_element.addEventListener("pointermove", this.#onPointerMove);
-        this.#TO_REMOVE__tryEnablingMouse();
+
+        this.#hovering_enabled = true;
     }
 
     /**
@@ -305,9 +308,15 @@ export class Viewport extends TypedEventTarget<ViewportEvents> {
      * If hovering is deactivated, the viewport will no longer emit an `on-entity-hovered` event when it is hovered.
      */
     deactivateHovering(): void {
-        const dom_element = this.#checkDomElement();
+        if (!this.#hovering_enabled) {
+            return;
+        }
+
+        const dom_element = this._checkDomElement();
+        this.#core.devices.mouse.disableFromViewport({ viewport: this });
         dom_element.removeEventListener("pointermove", this.#onPointerMove);
-        this.#TO_REMOVE__tryDisablingMouse();
+
+        this.#hovering_enabled = false;
     }
 
     /**
@@ -455,9 +464,9 @@ export class Viewport extends TypedEventTarget<ViewportEvents> {
     }
 
     /**
-     *
+     * @internal
      */
-    #checkDomElement(): HTMLElement {
+    _checkDomElement(): HTMLElement {
         if (!this.#dom_element) {
             throw new Error("No DOM element set on viewport");
         }
@@ -466,9 +475,34 @@ export class Viewport extends TypedEventTarget<ViewportEvents> {
     }
 
     /**
+     * Return the screen position from a mouse event.
+     *
+     * @param params
+     * @param params.event - The mouse event.
+     *
+     * @returns The screen position as a Vec2.
+     * (0, 0) is the top-left corner of the viewport, (1, 1) is the bottom-right corner.
+     */
+    getScreenPositionFromEvent({ event }: { event: MouseEvent }): Vec2 {
+        return this._getScreenPosition({ position: [event.clientX, event.clientY] });
+    }
+
+    /**
+     * @internal
+     */
+    _getScreenPosition({ position }: { position: Vec2 }): Vec2 {
+        const bounding_rect = this._checkDomElement().getBoundingClientRect();
+
+        const posX = (position[0] - bounding_rect.left) / bounding_rect.width;
+        const posY = (position[1] - bounding_rect.top) / bounding_rect.height;
+
+        return [posX, posY];
+    }
+
+    /**
      *
      */
-    #onCanvasClicked = async (e: MouseEvent): Promise<void> => {
+    #onClick = async (e: MouseEvent): Promise<void> => {
         e.stopPropagation();
 
         let data = null;
