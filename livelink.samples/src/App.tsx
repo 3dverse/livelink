@@ -16,7 +16,7 @@ function App() {
     return (
         <div className="flex h-screen">
             <MainMenu />
-            <div className="grow">{outlet ? <Outlet /> : <Home />}</div>
+            {outlet ? <Outlet /> : <Home />}
         </div>
     );
 }

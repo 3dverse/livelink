@@ -1,13 +1,7 @@
 import { createContext, PropsWithChildren, useEffect, useState } from "react";
 import Markdown from "react-markdown";
-import { PrismLight as SyntaxHighlighter } from "react-syntax-highlighter";
-import { nightOwl as codeTheme } from "react-syntax-highlighter/dist/esm/styles/prism";
-import tsx from "react-syntax-highlighter/dist/esm/languages/prism/tsx";
 import { ActionBar } from "./ActionBar";
-import { CopyCodeButton } from "./CopyCodeButton";
-
-//------------------------------------------------------------------------------
-SyntaxHighlighter.registerLanguage("tsx", tsx);
+import { CodeBlock } from "./CodeBlock";
 
 //------------------------------------------------------------------------------
 export type ConnectionState = "disconnected" | "connected" | "connection-lost" | "reconnect";
@@ -38,7 +32,6 @@ export function SamplePlayer({
     autoConnect?: boolean;
 }>) {
     const [connectionState, setConnectionState] = useState<ConnectionState>(autoConnect ? "connected" : "disconnected");
-    const [showCode, setShowCode] = useState(true);
 
     useEffect(() => {
         if (connectionState === "reconnect") {
@@ -81,8 +74,8 @@ export function SamplePlayer({
 
     return (
         <SamplePlayerContext.Provider value={{ connectionState, setConnectionState }}>
-            <div className="w-full h-full flex flex-col xl:flex-row gap-3 p-3 relative">
-                <div className="grow h-full gap-3 bg-[#1e222e] rounded-xl relative flex overflow-clip">
+            <div className="relative flex flex-col xl:flex-row gap-3 w-full h-full p-3">
+                <div className="grow relative flex h-full gap-3 bg-[#1e222e] rounded-xl overflow-clip">
                     {useCustomLayout ? (
                         children
                     ) : (
@@ -99,31 +92,12 @@ export function SamplePlayer({
                         </>
                     )}
                 </div>
-                {code && showCode && (
-                    <article className="relative max-h-[50%] xl:max-h-none max-w-[40ch] md:max-w-[50ch] bg-overground rounded-xl overflow-y-clip">
-                        <header className="flex justify-between gap-3 px-3 py-3 border-b border-quaternary">
-                            <p className="text-xs text-tertiary">{title}</p>
-                            <div className="flex items-center gap-2">
-                                <CopyCodeButton code={code} />
-                                <button className="button button-outline button-2xs" onClick={() => setShowCode(false)}>
-                                    Hide
-                                </button>
-                            </div>
-                        </header>
-                        <SyntaxHighlighter
-                            language="jsx"
-                            style={codeTheme}
-                            className="h-full !m-0 !bg-transparent !text-[.8em] "
-                            showLineNumbers
-                        >
-                            {code}
-                        </SyntaxHighlighter>
-                    </article>
-                )}
+
+                {code && <CodeBlock code={code} title={title} />}
                 {description && (
-                    <div>
+                    <article>
                         <Markdown>{description}</Markdown>
-                    </div>
+                    </article>
                 )}
             </div>
         </SamplePlayerContext.Provider>

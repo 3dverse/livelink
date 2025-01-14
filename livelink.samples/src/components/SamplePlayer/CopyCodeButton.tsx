@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { CopyIcon } from "../icons/CopyIcon";
 
 //------------------------------------------------------------------------------
 export const CopyCodeButton = ({ code, className }: { code: string; className?: string }) => {
@@ -25,7 +26,8 @@ export const CopyCodeButton = ({ code, className }: { code: string; className?: 
             >
                 Copied
             </p>
-            <button className="button button-outline button-2xs" onClick={onCopy}>
+            <button className="button button-outline button-xs" onClick={onCopy}>
+                <CopyIcon className="w-3 h-3 mr-2" />
                 Copy
             </button>
         </div>
