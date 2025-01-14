@@ -39,7 +39,7 @@ function App() {
     const [sessionId, setSessionId] = useState<UUID | null>(null);
 
     return (
-        <div className="w-full h-full flex relative pl-3">
+        <div className="relative flex w-full h-full">
             <SessionCreator setSessionId={setSessionId} />
             <SessionJoiner sessionId={sessionId} />
         </div>

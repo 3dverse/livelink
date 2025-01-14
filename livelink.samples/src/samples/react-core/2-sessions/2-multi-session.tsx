@@ -32,7 +32,7 @@ export default {
 //------------------------------------------------------------------------------
 function App() {
     return (
-        <div className="w-full h-full flex relative pl-3">
+        <div className="relative flex w-full h-full">
             <SamplePlayer autoConnect={false} title={"First Scene Session"}>
                 <Livelink
                     sceneId={scene_id_1}

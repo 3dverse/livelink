@@ -43,7 +43,7 @@ function App() {
     const [sessionId, setSessionId] = useState<UUID | null>(null);
 
     return (
-        <div className="w-full h-full flex relative pl-3">
+        <div className="relative flex w-full h-full">
             <SessionCreator setSessionId={setSessionId} />
             <SessionJoiner sessionId={sessionId} />
         </div>
@@ -180,11 +180,10 @@ const AvatarList = ({
                                 client !== watchedClient ? client : null,
                             )
                         }
-                        className={
-                            client === watchedClient
-                                ? "border-2 rounded-full border-accent"
-                                : ""
-                        }
+                        className={`
+                            border-2 rounded-full
+                            ${client === watchedClient ? " border-accent" : "border-transparent"}
+                        `}
                     >
                         <Avatar client={client} />
                     </button>
