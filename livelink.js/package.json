@@ -24,7 +24,7 @@
   "license": "ISC",
   "dependencies": {
     "@3dverse/livelink.core": "^1.0.6",
-    "@3dverse/livelink-camera-controls": "^0.3.2",
+    "@3dverse/livelink-camera-controls": "^0.3.3",
     "gl-matrix": "^3.4.3",
     "threejs-math": "^0.147.0"
   },
