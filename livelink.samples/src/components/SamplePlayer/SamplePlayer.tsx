@@ -65,7 +65,7 @@ export function SamplePlayer({
     return (
         <SamplePlayerContext.Provider value={{ connectionState, setConnectionState }}>
             <div className="relative flex flex-col xl:flex-row gap-3 w-full h-full p-3">
-                <div className="grow relative flex gap-3 h-full bg-[#1e222e] rounded-xl overflow-clip">
+                <div className="grow relative flex gap-3 h-full bg-overground rounded-xl overflow-clip">
                     {useCustomLayout ? (
                         children
                     ) : (

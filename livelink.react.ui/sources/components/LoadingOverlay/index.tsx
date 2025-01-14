@@ -65,7 +65,7 @@ export const LoadingOverlay = ({ stage = "Connecting to 3dverse..." }: { stage?:
                 position="absolute"
                 height="100%"
                 width="100%"
-                bgColor="bg.ground"
+                bgColor="bg.overground"
                 flexDirection="column"
                 justifyContent="center"
                 alignItems="center"
