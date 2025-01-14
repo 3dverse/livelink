@@ -106,7 +106,7 @@ export function Canvas({
     return (
         <CanvasContext.Provider value={{ canvas: canvasRef.current, renderingSurface }}>
             <div
-                role="canvas-container"
+                data-role="canvas-container"
                 style={computeCanvasContainerStyle({ parentCanvas, width, height })}
                 {...props}
             >

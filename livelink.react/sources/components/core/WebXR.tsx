@@ -83,7 +83,7 @@ export function WebXR({ children, mode }: PropsWithChildren<{ mode: XRSessionMod
                 webXRHelper,
             }}
         >
-            <div role="webxr-dom-overlay" ref={containerRef}>
+            <div data-role="webxr-dom-overlay" ref={containerRef}>
                 {children}
             </div>
         </WebXRContext.Provider>

@@ -251,7 +251,7 @@ export function Viewport({
                 camera: camera,
             }}
         >
-            <div ref={viewportDomElement} role={"viewport"} {...otherProps}>
+            <div ref={viewportDomElement} data-role="viewport" {...otherProps}>
                 {children}
             </div>
         </ViewportContext.Provider>
