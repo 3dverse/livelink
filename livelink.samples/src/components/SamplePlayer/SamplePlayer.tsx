@@ -44,18 +44,8 @@ export function SamplePlayer({
     const mountPlayButton = connectionState === "disconnected";
 
     const connectButton = (
-        <button onClick={() => setConnectionState("connected")} className="relative w-32 h-32 m-auto flex">
-            <svg
-                version="1.1"
-                id="play"
-                xmlns="http://www.w3.org/2000/svg"
-                xmlnsXlink="http://www.w3.org/1999/xlink"
-                x="0px"
-                y="0px"
-                viewBox="0 0 100 100"
-                enableBackground="new 0 0 100 100"
-                xmlSpace="preserve"
-            >
+        <button onClick={() => setConnectionState("connected")} className="w-20 h-20">
+            <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
                 <path
                     className="stroke-solid"
                     fill="none"
@@ -82,10 +72,10 @@ export function SamplePlayer({
                         <>
                             {mountChildren && children}
                             {mountPlayButton && (
-                                <div className="w-full h-full flex-col content-center justify-center">
+                                <div className="grow flex flex-col items-center justify-center">
                                     {connectButton}
-                                    <h1 className="text-center font-medium">{title}</h1>
-                                    <h2 className="text-center font-extralight">{summary}</h2>
+                                    <h1 className="mt-6 text-center font-medium">{title}</h1>
+                                    <h2 className="mt-px text-xs text-center font-normal text-tertiary">{summary}</h2>
                                 </div>
                             )}
                             {mountActionBar && <ActionBar disconnect={() => setConnectionState("disconnected")} />}

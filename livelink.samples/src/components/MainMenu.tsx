@@ -36,7 +36,7 @@ export function MainMenu() {
             {/* Toggle button */}
             {isCollapsed && (
                 <button
-                    className="button button-outline button-icon absolute top-5 left-5 bg-underground text-primary animate-appear-right z-10"
+                    className="button button-outline button-icon absolute top-3 left-3 bg-underground text-primary animate-appear-right z-10"
                     onClick={() => setIsCollapsed(!isCollapsed)}
                 >
                     <BarsIcon />
