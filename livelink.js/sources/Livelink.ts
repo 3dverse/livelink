@@ -21,12 +21,13 @@ import { Viewport } from "./rendering/Viewport";
 import { Scene } from "./scene/Scene";
 import { Entity } from "./scene/Entity";
 
-import { InputDevice } from "./inputs/InputDevice";
-
 import { Session, SessionSelector } from "./session/Session";
 import { SessionInfo } from "./session/SessionInfo";
 import { TO_REMOVE__ViewportsAddedEvent } from "./session/SessionEvents";
+
 import { Mouse } from "./inputs/Mouse";
+import { Keyboard } from "./inputs/Keyboard";
+import { Gamepad } from "./inputs/Gamepad";
 
 /**
  * This class represents the Livelink connection between the client and the 3dverse server holding
@@ -268,14 +269,19 @@ export class Livelink {
     #encoded_frame_consumer: EncodedFrameConsumer | null = null;
 
     /**
-     * List of active input devices.
-     */
-    #input_devices: Array<InputDevice> = [];
-
-    /**
-     *
+     * Mouse input device.
      */
     #mouse: Mouse;
+
+    /**
+     * Keyboard input device.
+     */
+    #keyboard: Keyboard;
+
+    /**
+     * Gamepad input device.
+     */
+    #gamepad: Gamepad;
 
     /**
      * Interval between updates sent to the renderer.
@@ -323,6 +329,8 @@ export class Livelink {
         this.#core = new DynamicLoader.Core();
         this.scene = new Scene(this.#core);
         this.#mouse = new Mouse(this);
+        this.#keyboard = new Keyboard(this);
+        this.#gamepad = new Gamepad(this);
     }
 
     /**
@@ -350,7 +358,6 @@ export class Livelink {
         await this.session.close();
 
         this.#remote_rendering_surface.release();
-        this.#input_devices.forEach(d => d.release());
 
         await this.#core.disconnect();
     }
@@ -487,32 +494,12 @@ export class Livelink {
     /**
      * @experimental
      */
-    get devices(): { mouse: Mouse } {
-        return { mouse: this.#mouse };
-    }
-
-    /**
-     * @experimental
-     */
-    addInputDevice<DeviceType extends InputDevice>(
-        device_type: { new (_: Livelink, viewport?: HTMLElement): DeviceType },
-        viewport?: HTMLElement,
-    ): void {
-        const device = new device_type(this, viewport);
-        device.setup();
-        this.#input_devices.push(device);
-    }
-
-    /**
-     * @experimental
-     */
-    removeInputDevice({ device_name }: { device_name: string }): void {
-        const device = this.#input_devices.find(d => d.name === device_name);
-        if (!device) {
-            throw new Error(`Input device with name '${device_name}' not found`);
-        }
-        device.release();
-        this.#input_devices = this.#input_devices.filter(d => d.name !== device_name);
+    get devices(): Readonly<{ mouse: Mouse; keyboard: Keyboard; gamepad: Gamepad }> {
+        return {
+            mouse: this.#mouse,
+            keyboard: this.#keyboard,
+            gamepad: this.#gamepad,
+        };
     }
 
     /**

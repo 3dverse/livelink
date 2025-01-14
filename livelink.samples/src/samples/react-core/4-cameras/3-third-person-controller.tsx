@@ -5,8 +5,6 @@ import { useContext, useEffect, useState } from "react";
 import {
     type Livelink as LivelinkInstance,
     type Entity,
-    Gamepad,
-    Keyboard,
 } from "@3dverse/livelink";
 import {
     LivelinkContext,
@@ -120,8 +118,8 @@ function SimulationStarter() {
 
         viewportDomElement.requestPointerLock();
 
-        instance.addInputDevice(Keyboard);
-        instance.addInputDevice(Gamepad);
+        instance.devices.keyboard.enable();
+        instance.devices.gamepad.enable();
         instance.devices.mouse.enableOnViewport({ viewport });
 
         instance.startSimulation();

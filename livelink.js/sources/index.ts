@@ -37,6 +37,5 @@ export * from "./rendering/surfaces/RenderingSurfaceBase";
 export * from "./inputs/Mouse";
 export * from "./inputs/Gamepad";
 export * from "./inputs/Keyboard";
-export * from "./inputs/InputDevice";
 
 export * from "./maths";

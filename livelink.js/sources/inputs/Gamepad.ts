@@ -1,5 +1,4 @@
 import type { Livelink } from "../Livelink";
-import type { InputDevice } from "./InputDevice";
 
 /**
  *
@@ -77,12 +76,7 @@ function computebuttonReading(gamepad: BrowserGamepad): number {
 /**
  * @category Inputs
  */
-class GamepadDevice implements InputDevice {
-    /**
-     *
-     */
-    name: string;
-
+class GamepadDevice {
     /**
      *
      */
@@ -103,13 +97,12 @@ class GamepadDevice implements InputDevice {
      */
     constructor(instance: Livelink) {
         this.#instance = instance;
-        this.name = "gamepads";
     }
 
     /**
      *
      */
-    setup(): void {
+    enable(): void {
         this.#handleGamepadInputs();
         window.addEventListener("focus", this.#onWindowFocused);
     }
@@ -117,7 +110,7 @@ class GamepadDevice implements InputDevice {
     /**
      *
      */
-    release(): void {
+    disable(): void {
         if (this.#animation_frame) {
             cancelAnimationFrame(this.#animation_frame);
             this.#animation_frame = null;
@@ -138,12 +131,15 @@ class GamepadDevice implements InputDevice {
      *
      */
     #handleGamepadInputs = (): void => {
+        const gamepadsReading = this.#computeGamepadsReading();
+
         if (!window.document.hasFocus()) {
             this.#animation_frame = null;
+            for (let i = 0; i < gamepadsReading.length; i++) {
+                this.#resetControllerInput(i);
+            }
             return;
         }
-
-        const gamepadsReading = this.#computeGamepadsReading();
 
         gamepadsReading.forEach((gamepadReading, i) => {
             const previousReading = this.#previousGamepadsReading[i];
@@ -156,6 +152,10 @@ class GamepadDevice implements InputDevice {
         this.#animation_frame = requestAnimationFrame(this.#handleGamepadInputs);
     };
 
+    /**
+     *
+     * @returns
+     */
     #computeGamepadsReading = (): GamepadReading[] => {
         const gamepads = navigator.getGamepads();
 
@@ -257,6 +257,19 @@ class GamepadDevice implements InputDevice {
         if (gamepadReading.buttons != previousReading.buttons) {
             this.#sendControllerButtons(gamepadIndex, gamepadReading.buttons);
         }
+    };
+
+    /**
+     *
+     */
+    #resetControllerInput = (gamepadIndex: number): void => {
+        this.#sendControllerAxis(gamepadIndex, ControllerAxis.LeftThumbstickX, 0);
+        this.#sendControllerAxis(gamepadIndex, ControllerAxis.LeftThumbstickY, 0);
+        this.#sendControllerAxis(gamepadIndex, ControllerAxis.RightThumbstickX, 0);
+        this.#sendControllerAxis(gamepadIndex, ControllerAxis.RightThumbstickY, 0);
+        this.#sendControllerAxis(gamepadIndex, ControllerAxis.LeftTrigger, 0);
+        this.#sendControllerAxis(gamepadIndex, ControllerAxis.RightTrigger, 0);
+        this.#sendControllerButtons(gamepadIndex, 0);
     };
 }
 

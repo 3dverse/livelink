@@ -1,15 +1,9 @@
-import { InputDevice } from "./InputDevice";
 import { Livelink } from "../Livelink";
 
 /**
  * @category Inputs
  */
-export class Keyboard implements InputDevice {
-    /**
-     *
-     */
-    name: string;
-
+export class Keyboard {
     /**
      *
      */
@@ -20,23 +14,26 @@ export class Keyboard implements InputDevice {
      */
     constructor(instance: Livelink) {
         this.#instance = instance;
-        this.name = "keyboard";
     }
 
     /**
      *
      */
-    setup(): void {
+    enable(): void {
         window.addEventListener("keydown", this.#onKeyDown);
         window.addEventListener("keyup", this.#onKeyUp);
+        window.addEventListener("blur", this.#resetInputs);
     }
 
     /**
      *
      */
-    release(): void {
+    disable(): void {
         window.removeEventListener("keydown", this.#onKeyDown);
         window.removeEventListener("keyup", this.#onKeyUp);
+        window.removeEventListener("blur", this.#resetInputs);
+
+        this.#resetInputs();
     }
 
     /**
@@ -61,6 +58,17 @@ export class Keyboard implements InputDevice {
             input_state: {
                 input_operation: "on_key_up",
                 input_data: keyData,
+            },
+        });
+    };
+
+    /**
+     *
+     */
+    #resetInputs = (): void => {
+        this.#instance._sendInput({
+            input_state: {
+                input_operation: "reset",
             },
         });
     };
