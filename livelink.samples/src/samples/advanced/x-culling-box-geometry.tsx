@@ -268,7 +268,7 @@ function BoxGeometryHandles({
     return geometryHandles.map((handle, index) => (
         <DOM3DElement worldPosition={handle.worldPosition} key={index}>
             <div
-                className="bg-[#FFFFFF] border border-[#000000] p-2 rounded-xl cursor-grab"
+                className="bg-[white] border border-[black] p-2 rounded-xl cursor-grab"
                 onPointerDown={handle.onPointerDown}
             />
         </DOM3DElement>

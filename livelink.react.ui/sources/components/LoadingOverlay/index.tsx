@@ -144,7 +144,7 @@ export const LoadingOverlay = ({ stage = "Connecting to 3dverse..." }: { stage?:
                 <div className="loader-progress-bar-indeterminate" role="progressbar">
                     <div className="loader-progress-bar-indeterminate__track" />
                 </div>
-                <p className="font-primary font-[500] text-tertiary text-2xs tracking-wide">{stage}</p>
+                <p className="font-primary font-medium text-tertiary text-2xs tracking-wide">{stage}</p>
             </Flex>
         </>
     );

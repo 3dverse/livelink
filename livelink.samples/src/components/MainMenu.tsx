@@ -63,7 +63,7 @@ export function MainMenu() {
                     <header className="flex justify-between mt-6 mb-4 pl-5 pr-1">
                         <NavLink
                             to="/"
-                            className="flex items-start gap-3 pl-3 font-primary text-secondary text-md font-[500] tracking-wider"
+                            className="flex items-start gap-3 pl-3 font-primary text-secondary text-md font-medium tracking-wider"
                         >
                             <img
                                 src="https://3dverse.com/logo/3dverse-wordmark.svg"

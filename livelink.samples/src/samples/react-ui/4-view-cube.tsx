@@ -80,7 +80,7 @@ function StyledViewCube({ cameraEntity }: { cameraEntity: Entity }) {
     };
 
     const cubeSize = 100;
-    const cubeFace = `border-2 border-[#000] font-bold text-[#fff] text-center cursor-pointer`;
+    const cubeFace = `border-2 border-[black] font-bold text-[white] text-center cursor-pointer`;
     const commonStyle = {
         width: cubeSize,
         height: cubeSize,
