@@ -64,10 +64,14 @@ export function MainMenu() {
                             to="/"
                             className="flex items-start gap-3 pl-3 font-primary text-secondary text-md font-[500] tracking-wider"
                         >
-                            <img src="https://3dverse.com/logo/3dverse-wordmark.svg" className="h-4 mt-[3px]" />
+                            <img
+                                src="https://3dverse.com/logo/3dverse-wordmark.svg"
+                                className="h-4 mt-[3px]"
+                                alt="3dverse"
+                            />
                             Samples
                         </NavLink>
-                        <button onClick={onCollapse}>
+                        <button className="button button-icon" onClick={onCollapse}>
                             <CollapseIcon className="w-3 h-3" />
                         </button>
                     </header>
