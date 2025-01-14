@@ -14,7 +14,7 @@ const BREAKPOINT_LG = 991;
 export function MainMenu() {
     //--------------------------------------------------------------------------
     const [isCollapsed, setIsCollapsed] = useLocalStorage<boolean>(LOCAL_STORAGE_KEYS.IS_MAIN_MENU_COLLAPSED, false);
-    const [isScreenWidthLG, setScreenWidthLG] = useState<boolean>();
+    const [isScreenLargerThanLG, setIsScreenLargerThanLG] = useState<boolean>();
 
     //--------------------------------------------------------------------------
     const onCollapse = () => {
@@ -24,8 +24,9 @@ export function MainMenu() {
     //--------------------------------------------------------------------------
     useEffect(() => {
         const handleResize = () => {
-            setScreenWidthLG(window.innerWidth > BREAKPOINT_LG);
+            setIsScreenLargerThanLG(window.innerWidth > BREAKPOINT_LG);
         };
+        handleResize();
         window.addEventListener("resize", handleResize);
         return () => window.removeEventListener("resize", handleResize);
     }, []);
@@ -58,7 +59,7 @@ export function MainMenu() {
             >
                 <div
                     className="relative w-80 h-full flex flex-col bg-ground shadow-2xl lg:shadow-none z-20"
-                    onClick={!isScreenWidthLG ? onCollapse : undefined}
+                    onClick={isScreenLargerThanLG ? undefined : onCollapse}
                 >
                     <header className="flex justify-between mt-6 mb-4 pl-5 pr-1">
                         <NavLink
