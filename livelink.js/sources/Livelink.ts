@@ -538,10 +538,9 @@ export class Livelink {
     /**
      * @internal
      */
-    _resize({ size }: { size: Vec2i }): void {
-        this.#core.resize({ size });
-        //FIXME: This should be performed when a resize event is received from the server
-        this.#encoded_frame_consumer?.resize({ frame_dimensions: size });
+    async _resize({ size }: { size: Vec2i }): Promise<void> {
+        const { size: remote_size } = await this.#core.resize({ size });
+        this.#encoded_frame_consumer?.resize({ frame_dimensions: remote_size });
     }
 
     /**
