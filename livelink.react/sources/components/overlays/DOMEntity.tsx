@@ -38,6 +38,7 @@ export function DOMEntity({
         };
 
         entity.addEventListener("entity-updated", updatePosition);
+        updatePosition();
         return (): void => {
             entity.removeEventListener("entity-updated", updatePosition);
         };
