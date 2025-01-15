@@ -41,7 +41,7 @@ export class WebCodecsDecoder extends EncodedFrameConsumer {
         for (const codec of this.#codecs.keys()) {
             const supportedConfig = await WebCodecsDecoder.#findSupportedConfig({ codec });
             if (supportedConfig) {
-                console.debug("Found a supported codec", supportedConfig.config!.codec);
+                console.debug("Found a supported codec", supportedConfig.codec);
                 return codec;
             }
         }
@@ -71,7 +71,7 @@ export class WebCodecsDecoder extends EncodedFrameConsumer {
     }: {
         codec: Enums.CodecType;
         frame_dimensions?: Vec2i;
-    }): Promise<VideoDecoderSupport | null> {
+    }): Promise<VideoDecoderConfig | null> {
         if (typeof VideoDecoder === "undefined") {
             return null;
         }
@@ -100,7 +100,7 @@ export class WebCodecsDecoder extends EncodedFrameConsumer {
                 config.codec = hXXX_codec;
                 const supportedConfig = await VideoDecoder.isConfigSupported({ ...config, hardwareAcceleration });
                 if (supportedConfig.supported && supportedConfig.config) {
-                    return supportedConfig;
+                    return supportedConfig.config;
                 }
             }
         }
@@ -112,6 +112,11 @@ export class WebCodecsDecoder extends EncodedFrameConsumer {
      * The decoder instance.
      */
     #decoder: VideoDecoder | null = null;
+
+    /**
+     *
+     */
+    #video_decoder_config: VideoDecoderConfig | null = null;
 
     /**
      * A flag to indicate if the first frame has been received.
@@ -149,6 +154,8 @@ export class WebCodecsDecoder extends EncodedFrameConsumer {
         codec: Enums.CodecType;
         frame_dimensions: Vec2i;
     }): Promise<EncodedFrameConsumer> {
+        this.release();
+
         const supportedConfig = await WebCodecsDecoder.#findSupportedConfig({
             codec,
             frame_dimensions,
@@ -163,10 +170,23 @@ export class WebCodecsDecoder extends EncodedFrameConsumer {
             error: (e): void => console.error(e.message),
         });
 
-        this.#decoder.configure(supportedConfig.config!);
-        console.debug("Codec configured", supportedConfig.config);
+        this.#video_decoder_config = supportedConfig;
+        this.#decoder.configure(this.#video_decoder_config);
+        console.debug("Codec configured", this.#video_decoder_config);
 
         return this;
+    }
+
+    /**
+     *
+     */
+    resize({ frame_dimensions }: { frame_dimensions: Vec2i }): void {
+        if (this.#decoder && this.#video_decoder_config) {
+            this.#video_decoder_config.codedWidth = frame_dimensions[0];
+            this.#video_decoder_config.codedHeight = frame_dimensions[1];
+            this.#first_frame = false;
+            this.#decoder.configure(this.#video_decoder_config);
+        }
     }
 
     /**

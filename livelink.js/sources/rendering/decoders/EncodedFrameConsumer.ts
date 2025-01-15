@@ -68,6 +68,11 @@ export abstract class EncodedFrameConsumer {
     }): Promise<EncodedFrameConsumer>;
 
     /**
+     * Resize the consumer with the new frame dimensions.
+     */
+    abstract resize({ frame_dimensions }: { frame_dimensions: Vec2i }): void;
+
+    /**
      * Release any resources used by the consumer.
      */
     abstract release(): void;

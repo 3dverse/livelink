@@ -540,6 +540,8 @@ export class Livelink {
      */
     _resize({ size }: { size: Vec2i }): void {
         this.#core.resize({ size });
+        //FIXME: This should be performed when a resize event is received from the server
+        this.#encoded_frame_consumer?.resize({ frame_dimensions: size });
     }
 
     /**

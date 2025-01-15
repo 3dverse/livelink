@@ -19,6 +19,16 @@ interface YUVCanvas {
     /**
      *
      */
+    width: number;
+
+    /**
+     *
+     */
+    height: number;
+
+    /**
+     *
+     */
     constructor: (_: { canvas: OffscreenCanvas; width: number; height: number }) => void;
 
     /**
@@ -121,6 +131,21 @@ export class SoftwareDecoder extends EncodedFrameConsumer {
         this.#broadway_sw_decoder.onPictureDecoded = this.#onFrameDecoded;
 
         return Promise.resolve(this);
+    }
+
+    /**
+     *
+     */
+    resize({ frame_dimensions }: { frame_dimensions: Vec2i }): void {
+        if (this.#offscreen_canvas) {
+            this.#offscreen_canvas.width = frame_dimensions[0];
+            this.#offscreen_canvas.height = frame_dimensions[1];
+        }
+
+        if (this.#yuv_canvas) {
+            this.#yuv_canvas.width = frame_dimensions[0];
+            this.#yuv_canvas.height = frame_dimensions[1];
+        }
     }
 
     /**
