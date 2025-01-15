@@ -1,5 +1,5 @@
 //------------------------------------------------------------------------------
-import React, { createContext, PropsWithChildren, useCallback, useEffect, useState } from "react";
+import React, { createContext, PropsWithChildren, useCallback, useEffect, useRef, useState } from "react";
 
 //------------------------------------------------------------------------------
 import * as Livelink from "@3dverse/livelink";
@@ -110,6 +110,17 @@ type LivelinkConnectParameters = {
 } & SessionOpenMode;
 
 /**
+ * Connection promises map.
+ *
+ * To deal with React strict mode, and avoiding to create a session multiple times,
+ * we need to keep track of the connection promises. The promises are stored
+ * using the connection parameters as key.
+ *
+ * @internal
+ */
+type ConnectionPromisesMap = Map<string, Promise<Livelink.Livelink>>;
+
+/**
  * Provides the Livelink context and manages the lifecycle of a Livelink connection.
  *
  * This component initializes and maintains a connection to the Livelink service
@@ -145,6 +156,7 @@ export function LivelinkProvider({
     const [isConnectionLost, setIsConnectionLost] = useState(false);
     const [inactivityWarning, setInactivityWarning] = useState<Livelink.InactivityWarningEvent | null>(null);
     const [connectionError, setConnectionError] = useState<string>("Unknown error");
+    const connectionPromises = useRef<ConnectionPromisesMap>(new Map());
 
     const disconnect = useCallback(() => instance?.disconnect(), [instance]);
 
@@ -171,12 +183,42 @@ export function LivelinkProvider({
             }
         };
 
+        /**
+         * To deal with React strict mode, and avoiding to create a session multiple times,
+         * we need to keep track of the connection promises. The promises are stored
+         * using the connection parameters as key.
+         *
+         * @returns The connection promise for the given parameters.
+         */
+        const getOrCreateConnectionPromise = (params: LivelinkConnectParameters): Promise<Livelink.Livelink> => {
+            const key = getConnectionPromiseKey(params);
+            let promise = connectionPromises.current.get(key);
+            if (!promise) {
+                promise = connect(params).then(instance => {
+                    connectionPromises.current.delete(key);
+                    return instance;
+                });
+                connectionPromises.current.set(key, promise);
+            }
+            return promise;
+        };
+
+        /**
+         * Abort controller to avoid side effects when the component is unmounted.
+         */
+        const abort_controller = new AbortController();
+
         const onActivityDetected = (): void => {
             setInactivityWarning(null);
         };
 
-        connect({ sessionOpenMode, sceneId, sessionId } as SessionOpenMode)
+        getOrCreateConnectionPromise({ sessionOpenMode, sceneId, sessionId, token } as LivelinkConnectParameters)
             .then(instance => {
+                // if the component is unmounted, stop right here, and do not proceed with the connection
+                if (abort_controller.signal.aborted) {
+                    return;
+                }
+
                 console.debug("Connected to Livelink", instance);
                 configureClient(instance);
                 setInstance(instance);
@@ -184,6 +226,7 @@ export function LivelinkProvider({
                     instance.startStreaming();
                     setIsConnecting(false);
                 });
+
                 instance.session.addEventListener("on-inactivity-warning", setInactivityWarning);
                 instance.session.addEventListener("on-activity-detected", onActivityDetected);
             })
@@ -195,6 +238,8 @@ export function LivelinkProvider({
             });
 
         return (): void => {
+            abort_controller.abort();
+
             instance?.session.removeEventListener("on-inactivity-warning", setInactivityWarning);
             instance?.session.removeEventListener("on-activity-detected", onActivityDetected);
 
@@ -280,6 +325,11 @@ function configureClient(instance: LivelinkInstance): void {
     };
 
     instance.session.addEventListener("TO_REMOVE__viewports-added", configure);
+}
+
+//------------------------------------------------------------------------------
+function getConnectionPromiseKey(params: LivelinkConnectParameters): string {
+    return JSON.stringify(params);
 }
 
 //------------------------------------------------------------------------------
