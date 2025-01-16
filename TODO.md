@@ -44,3 +44,11 @@
 ## Nice to have
 
 - [ ] Check if it's worth using https://github.com/ros2jsguy/threejs-math
+
+## Internal ?
+
+- [ ] Livelink.viewports
+- [ ] Client.camera_rtids
+- [ ] Entity.auto_update
+- [ ] Entity.auto_broadcast
+- [ ] Entity.findEntities
