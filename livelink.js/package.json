@@ -2,9 +2,13 @@
   "name": "@3dverse/livelink",
   "version": "0.8.12",
   "description": "",
-  "main": "./dist/index.cjs",
-  "module": "./dist/index.mjs",
-  "typings": "./dist/sources/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/sources/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.cjs"
+    }
+  },
   "files": [
     "dist"
   ],
