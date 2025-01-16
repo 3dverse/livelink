@@ -170,7 +170,7 @@ export class EntityRegistry {
                 deleted_components: entity._deleted_components,
             };
 
-            if (entity.auto_broadcast === "on") {
+            if (entity.auto_broadcast) {
                 this.#updateBroadcastList({ entity });
             }
 

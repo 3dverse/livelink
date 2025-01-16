@@ -4,9 +4,10 @@ import { CanvasAutoResizer } from "./CanvasAutoResizer";
 import { RenderingSurfaceBase } from "./RenderingSurfaceBase";
 import { Rect } from "./Rect";
 
-import type { Vec2 } from "@3dverse/livelink.core";
+import type { Vec2, Vec2i } from "@3dverse/livelink.core";
 import type { ContextProvider } from "../contexts/ContextProvider";
 import type { FrameMetaData } from "../decoders/FrameMetaData";
+import { RenderingSurfaceResizedEvent } from "./RenderingSurfaceEvents";
 
 /**
  * @category Rendering
@@ -119,8 +120,7 @@ export class RenderingSurface extends RenderingSurfaceBase {
 
         this.canvas.width = this.canvas.clientWidth;
         this.canvas.height = this.canvas.clientHeight;
-        this.#auto_resizer = new CanvasAutoResizer(this.canvas);
-        this.#auto_resizer.addEventListener("on-resized", this.#onCanvasResized);
+        this.#auto_resizer = new CanvasAutoResizer({ canvas: this.canvas, onResized: this.#onCanvasResized });
         this.#context.refreshSize();
     }
 
@@ -184,9 +184,9 @@ export class RenderingSurface extends RenderingSurfaceBase {
     /**
      * Resizes the surface.
      */
-    #onCanvasResized = (): void => {
+    #onCanvasResized = (_: { old_size: Vec2i; new_size: Vec2i }): void => {
         this.#context.refreshSize();
-        this.dispatchEvent(new Event("on-resized"));
+        this._dispatchEvent(new RenderingSurfaceResizedEvent());
 
         for (const viewport of this.viewports) {
             viewport.onResize();

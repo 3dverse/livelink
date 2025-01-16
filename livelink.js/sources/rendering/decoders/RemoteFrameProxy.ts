@@ -9,10 +9,10 @@ import { DecodedFrameConsumer } from "./DecodedFrameConsumer";
 import { FrameMetaData } from "./FrameMetaData";
 
 /**
- * A remote rendering surface represents the total available area for the remote
- * renderer to draw on.
- * The dimensions of this surface MUST be divisble by 8 for the encoder to work
- * properly.
+ * A remote frame proxy represents the surface on which the remote renderer will draw.
+ *
+ * It is responsible for computing the total required area for the remote renderer to draw on
+ * and splitting this area into viewports.
  *
  * This drawing area is split into viewports. Each viewport must have an
  * associated camera.
@@ -22,10 +22,9 @@ import { FrameMetaData } from "./FrameMetaData";
  * renderer and spliting the decoded frame into areas corresponding to their
  * respective viewports.
  *
- * @category Streaming
- *
+ * @internal
  */
-export class RemoteRenderingSurface implements DecodedFrameConsumer {
+export class RemoteFrameProxy implements DecodedFrameConsumer {
     /**
      * Owning Livelink instance.
      */
@@ -93,6 +92,23 @@ export class RemoteRenderingSurface implements DecodedFrameConsumer {
     /**
      *
      */
+    init(): void {
+        this.#onFrameLayoutModified();
+    }
+
+    /**
+     *
+     */
+    release(): void {
+        for (const surface of this.#surfaces) {
+            surface.release();
+        }
+        this.#surfaces.length = 0;
+    }
+
+    /**
+     *
+     */
     consumeDecodedFrame({
         decoded_frame,
         meta_data,
@@ -111,7 +127,8 @@ export class RemoteRenderingSurface implements DecodedFrameConsumer {
      * @param viewport The viewport to attach to the surface
      */
     addViewport({ viewport }: { viewport: Viewport }): void {
-        this.addViewports({ viewports: [viewport] });
+        this.#addViewport({ viewport });
+        this.#onFrameLayoutModified();
     }
 
     /**
@@ -121,16 +138,9 @@ export class RemoteRenderingSurface implements DecodedFrameConsumer {
      */
     addViewports({ viewports }: { viewports: Array<Viewport> }): void {
         for (const viewport of viewports) {
-            viewport.rendering_surface.addViewport({ viewport });
-
-            if (this.#surfaces.indexOf(viewport.rendering_surface) === -1) {
-                console.debug("Adding a new surface", viewport.rendering_surface);
-                viewport.rendering_surface.addEventListener("on-resized", this.#onViewportResized);
-                this.#surfaces.push(viewport.rendering_surface);
-            }
+            this.#addViewport({ viewport });
         }
-
-        this.#onViewportResized();
+        this.#onFrameLayoutModified();
     }
 
     /**
@@ -148,25 +158,18 @@ export class RemoteRenderingSurface implements DecodedFrameConsumer {
         viewport.release();
 
         if (surface.viewports.length === 0) {
-            surface.removeEventListener("on-resized", this.#onViewportResized);
+            surface.removeEventListener("on-rendering-surface-resized", this.#onFrameLayoutModified);
             surface.release();
             this.#surfaces.splice(index, 1);
         }
 
-        this.#onViewportResized();
+        this.#onFrameLayoutModified();
     }
 
     /**
      *
      */
-    init(): void {
-        this.#onViewportResized();
-    }
-
-    /**
-     *
-     */
-    computeRemoteCanvasSize({ codec }: { codec: Enums.CodecType }): Vec2u16 {
+    _computeRemoteCanvasSize({ codec }: { codec: Enums.CodecType }): Vec2u16 {
         if (codec === "h265") {
             const HEVC_MACROBLOCK_SIZE: Vec2i = [64, 64] as const;
             this.#size_multiple = HEVC_MACROBLOCK_SIZE;
@@ -179,16 +182,6 @@ export class RemoteRenderingSurface implements DecodedFrameConsumer {
     /**
      *
      */
-    release(): void {
-        for (const surface of this.#surfaces) {
-            surface.release();
-        }
-        this.#surfaces.length = 0;
-    }
-
-    /**
-     *
-     */
     #isValid(): boolean {
         return this.#surfaces.every(s => s.isValid());
     }
@@ -196,7 +189,29 @@ export class RemoteRenderingSurface implements DecodedFrameConsumer {
     /**
      *
      */
-    #onViewportResized = (): void => {
+    #addViewport({ viewport }: { viewport: Viewport }): void {
+        viewport.rendering_surface.addViewport({ viewport });
+
+        if (this.#surfaces.includes(viewport.rendering_surface)) {
+            return;
+        }
+
+        this.#addSurface({ surface: viewport.rendering_surface });
+    }
+
+    /**
+     *
+     */
+    #addSurface({ surface }: { surface: RenderingSurfaceBase }): void {
+        console.debug("Adding a new surface", surface);
+        surface.addEventListener("on-rendering-surface-resized", this.#onFrameLayoutModified);
+        this.#surfaces.push(surface);
+    }
+
+    /**
+     *
+     */
+    #onFrameLayoutModified = (): void => {
         const need_to_resize = this.#computeSurfaceSize();
 
         if (this.#core.isConfigured() && this.#isValid()) {
@@ -209,6 +224,9 @@ export class RemoteRenderingSurface implements DecodedFrameConsumer {
         }
     };
 
+    /**
+     *
+     */
     #next_multiple = (n: number, multiple: number): number => {
         return Math.floor(n) + (Math.floor(n) % multiple === 0 ? 0 : multiple - (Math.floor(n) % multiple));
     };

@@ -120,9 +120,9 @@ export function Viewport({
             return;
         }
 
-        renderingSurface.addEventListener("on-resized", onResize);
+        renderingSurface.addEventListener("on-rendering-surface-resized", onResize);
         return (): void => {
-            renderingSurface.removeEventListener("on-resized", onResize);
+            renderingSurface.removeEventListener("on-rendering-surface-resized", onResize);
         };
     }, [renderingSurface, onResize]);
 

@@ -18,11 +18,6 @@ import { EntityCreationOptions, Scene } from "./Scene";
 import { ComponentHandler, ComponentHandlers, LocalTransformHandler } from "./ComponentHandler";
 
 /**
- * @category Scene
- */
-export type EntityAutoUpdateState = "on" | "off";
-
-/**
  * An entity in a scene.
  *
  * An entity is a collection of components.
@@ -60,14 +55,14 @@ export class Entity extends EntityBase {
     readonly #deleted_components = new Set<ComponentName>();
 
     /**
-     *
+     * @deprecated
      */
-    #auto_update: EntityAutoUpdateState = "on";
+    #auto_update: boolean = true;
 
     /**
-     *
+     * @deprecated
      */
-    #auto_broadcast: EntityAutoUpdateState = "on";
+    #auto_broadcast: boolean = true;
 
     /**
      *
@@ -104,32 +99,36 @@ export class Entity extends EntityBase {
     }
 
     /**
+     * @deprecated
      * Whether the entity has its components updates sent to the server.
      */
-    get auto_update(): EntityAutoUpdateState {
+    get auto_update(): boolean {
         return this.#auto_update;
     }
 
     /**
+     * @deprecated
      * Set whether the entity has its components updates sent to the server.
      */
-    set auto_update(state: EntityAutoUpdateState) {
+    set auto_update(state: boolean) {
         this.#auto_update = state;
     }
 
     /**
+     * @deprecated
      * Whether the entity has its components updates broadcasted to other clients.
      */
-    get auto_broadcast(): EntityAutoUpdateState {
+    get auto_broadcast(): boolean {
         return this.#auto_broadcast;
     }
 
     /**
+     * @deprecated
      * Set whether the entity has its components updates broadcasted to other clients.
      */
-    set auto_broadcast(state: EntityAutoUpdateState) {
+    set auto_broadcast(state: boolean) {
         this.#auto_broadcast = state;
-        if (state === "off") {
+        if (state === false) {
             this.#scene._entity_registry._removeEntityFromBroadcastList({ entity: this });
         }
     }
@@ -203,11 +202,11 @@ export class Entity extends EntityBase {
         }
 
         if (options.auto_broadcast !== undefined) {
-            this.auto_broadcast = options.auto_broadcast ? "on" : "off";
+            this.auto_broadcast = options.auto_broadcast;
         }
 
         if (options.auto_update !== undefined) {
-            this.auto_update = options.auto_update ? "on" : "off";
+            this.auto_update = options.auto_update;
         }
     }
 

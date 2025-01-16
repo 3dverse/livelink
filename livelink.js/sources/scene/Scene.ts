@@ -19,11 +19,24 @@ import { EntityRegistry } from "./EntityRegistry";
 
 /**
  * @inline
- * @category Scene
+ * @internal
  */
 export type EntityCreationOptions = {
+    /**
+     * Whether to delete the entity when the client disconnects.
+     */
     delete_on_client_disconnection?: boolean;
+
+    /**
+     * @deprecated
+     * Whether to broadcast the entity automatically.
+     */
     auto_broadcast?: boolean;
+
+    /**
+     * @deprecated
+     * Whether to update the entity automatically.
+     */
     auto_update?: boolean;
 };
 
@@ -44,7 +57,7 @@ const PHYSICS_EVENT_MAP_ID = "7a8cc05e-8659-4b23-99d1-1352d13e2020" as const;
  *
  * @category Scene
  */
-export class Scene extends EventTarget {
+export class Scene {
     /**
      * The core instance.
      */
@@ -66,7 +79,6 @@ export class Scene extends EventTarget {
      * @internal
      */
     constructor(core: LivelinkCore) {
-        super();
         this.#core = core;
     }
 

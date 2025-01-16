@@ -181,9 +181,11 @@ instance.startStreaming();
                 RenderingSurface,
                 Viewport,
                 WebCodecsDecoder,
+                CameraProjection,
+                CameraController,
             } from "https://unpkg.com/@3dverse/livelink/dist/index.mjs";
 
-            // Make sure the browser supports WebCodecs.
+            // First, make sure the browser supports WebCodecs.
             const codec = await WebCodecsDecoder.findSupportedCodec();
             if (!codec) {
                 throw new Error("WebCodecs not supported in this browser.");
@@ -196,11 +198,16 @@ instance.startStreaming();
                 is_transient: true,
             });
 
+            const canvas_element = document.getElementById("display-canvas");
+
             // Create a rendering surface backed by the canvas element.
-            const surface = new RenderingSurface({ canvas_element: "display-canvas", context_type: "2d" });
+            const rendering_surface = new RenderingSurface({
+                canvas_element: canvas_element,
+                context_type: "2d",
+            });
 
             // Setup a viewport taking up the entire canvas.
-            const viewport = new Viewport(instance, surface);
+            const viewport = new Viewport({ core: instance, rendering_surface });
             instance.addViewports({ viewports: [viewport] });
 
             // Configure the remote server with the codec.
@@ -216,7 +223,7 @@ instance.startStreaming();
             // Create a camera entity.
             const DEFAULT_RENDER_GRAPH_UUID = "398ee642-030a-45e7-95df-7147f6c43392";
             const RENDER_GRAPH_SETTINGS = { grid: true, skybox: true, gradient: false };
-            const camera = await instance.newEntity({
+            const camera = await instance.scene.newEntity({
                 name: "MyCamera",
                 components: {
                     local_transform: { position: [0, 1, 5] },
@@ -225,10 +232,12 @@ instance.startStreaming();
                 },
                 options: { auto_broadcast: false },
             });
-            // And attach it to the viewport.
-            viewport.camera_entity = camera;
 
-            //TODO: setup a camera controller
+            // And attach it to the viewport.
+            viewport.camera_projection = new CameraProjection({ camera_entity: camera, viewport });
+
+            // Setup a camera controller
+            const controller = new CameraController({ camera_entity: camera, dom_element: canvas_element });
 
             // We can now start streaming frames.
             instance.startStreaming();

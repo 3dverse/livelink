@@ -15,7 +15,7 @@ import { DynamicLoader } from "@3dverse/livelink.core";
 import { EncodedFrameConsumer } from "./rendering/decoders/EncodedFrameConsumer";
 import { DecodedFrameConsumer } from "./rendering/decoders/DecodedFrameConsumer";
 import { convertRawFrameMetaDataToFrameMetaData } from "./rendering/decoders/FrameMetaData";
-import { RemoteRenderingSurface } from "./rendering/decoders/RemoteRenderingSurface";
+import { RemoteFrameProxy } from "./rendering/decoders/RemoteFrameProxy";
 import { Viewport } from "./rendering/Viewport";
 
 import { Scene } from "./scene/Scene";
@@ -54,8 +54,9 @@ import { Gamepad } from "./inputs/Gamepad";
  * - {@link Livelink.startStreaming} to start streaming the remotely rendered frames.
  *
  * ### Input devices
- * Input devices can be added to the Livelink instance using the {@link Livelink.addInputDevice}
- * method. The input devices are responsible for sending periodically their state to the server.
+ * Input devices can be activated and deactivated to the Livelink instance using the
+ * {@link Livelink.devices} property.
+ * The input devices are responsible for sending periodically their state to the server.
  *
  * ### Starting a new session
  *
@@ -261,7 +262,7 @@ export class Livelink {
     /**
      * The rendering surface as seen by the renderer.
      */
-    #remote_rendering_surface = new RemoteRenderingSurface(this);
+    #remote_rendering_surface = new RemoteFrameProxy(this);
 
     /**
      * User provided frame consumer designed to receive the encoded frames sent by the renderer.
@@ -400,7 +401,7 @@ export class Livelink {
         codec?: Enums.CodecType;
     }): Promise<Commands.ClientConfigResponse> {
         const client_config: Commands.ClientConfig = {
-            remote_canvas_size: this.#remote_rendering_surface.computeRemoteCanvasSize({ codec }),
+            remote_canvas_size: this.#remote_rendering_surface._computeRemoteCanvasSize({ codec }),
             encoder_config: { codec, profile: "main", frame_rate: 60, lossy: true },
             supported_devices: { keyboard: true, mouse: true, gamepad: true, hololens: false, touchscreen: false },
         };

@@ -33,6 +33,7 @@ export * from "./rendering/surfaces/RenderingSurface";
 export * from "./rendering/surfaces/OffscreenSurface";
 export * from "./rendering/surfaces/OverlayInterface";
 export * from "./rendering/surfaces/RenderingSurfaceBase";
+export * from "./rendering/surfaces/RenderingSurfaceEvents";
 
 export * from "./inputs/Mouse";
 export * from "./inputs/Gamepad";

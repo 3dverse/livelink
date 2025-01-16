@@ -41,6 +41,7 @@ export class Viewport extends TypedEventTarget<ViewportEvents> {
      * @deprecated
      */
     TO_REMOVE__ready: boolean = false;
+    //TEMPTEMPTEMPTEMPTEMPTEMPTEMPTEMPTEMPTEMPTEMPTEMPTEMPTEMPTEMPTEMP
 
     /**
      * The Livelink core used to send commands.
@@ -53,14 +54,19 @@ export class Viewport extends TypedEventTarget<ViewportEvents> {
     readonly #rendering_surface: RenderingSurfaceBase;
 
     /**
-     * The camera projection used to render the scene.
-     */
-    #camera_projection: CameraProjection | null = null;
-
-    /**
      * Overlays that are rendered on top of the viewport.
      */
     readonly #overlays: Array<OverlayInterface> = [];
+
+    /**
+     * The DOM element used for picking.
+     */
+    readonly #dom_element: HTMLElement | null = null;
+
+    /**
+     * The camera projection used to render the scene.
+     */
+    #camera_projection: CameraProjection | null = null;
 
     /**
      * The z-index of the viewport.
@@ -71,11 +77,6 @@ export class Viewport extends TypedEventTarget<ViewportEvents> {
      * The relative position and size of the viewport in relation to the rendering surface.
      */
     #relative_rect: RelativeRect;
-
-    /**
-     * The DOM element used for picking.
-     */
-    readonly #dom_element: HTMLElement | null = null;
 
     /**
      * The index of the render target that is rendered on the viewport.
@@ -245,9 +246,6 @@ export class Viewport extends TypedEventTarget<ViewportEvents> {
      * Activates picking on the viewport.
      *
      * If picking is activated, the viewport will emit an `on-entity-picked` event when it is clicked.
-     *
-     * @param params
-     * @param params.dom_element - The DOM element backing the viewport.
      */
     activatePicking(): void {
         if (this.#picking_enabled) {
@@ -264,7 +262,7 @@ export class Viewport extends TypedEventTarget<ViewportEvents> {
     /**
      * Deactivates picking on the viewport.
      *
-     * If picking is deactivated, the viewport will no longer emit an `on-entity-picked` event when it is clicked.
+     * If picking is deactivated, the viewport will no longer emit an {@link EntityPickedEvent} event when it is clicked.
      */
     deactivatePicking(): void {
         if (!this.#picking_enabled) {
@@ -283,10 +281,7 @@ export class Viewport extends TypedEventTarget<ViewportEvents> {
      *
      * Activates entity hovering on the viewport.
      *
-     * If hovering is activated, the viewport will emit an `on-entity-hovered` event when it is hovered.
-     *
-     * @param params
-     * @param params.dom_element - The DOM element backing the viewport.
+     * If hovering is activated, the viewport will emit an {@link EntityHoveredEvent} event when it is hovered.
      */
     activateHovering(): void {
         if (this.#hovering_enabled) {

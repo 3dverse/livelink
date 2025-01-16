@@ -16,6 +16,8 @@ const INFINITE_FAR_VALUE = 100000;
 
 /**
  * A ray in 3D space.
+ *
+ * @category Rendering
  */
 export type Ray = { origin: Vec3; direction: Vec3 };
 

@@ -3,6 +3,9 @@ import { Viewport } from "../rendering/Viewport";
 
 /**
  * @deprecated
+ *
+ * @event
+ * @category Session
  */
 export class TO_REMOVE__ViewportsAddedEvent extends Event {
     /**
@@ -21,6 +24,9 @@ export class TO_REMOVE__ViewportsAddedEvent extends Event {
 
 /**
  * Event emitted when the session is disconnected.
+ *
+ * @event
+ * @category Session
  */
 export class DisconnectedEvent extends Event {
     /**
@@ -39,6 +45,9 @@ export class DisconnectedEvent extends Event {
 
 /**
  * Event emitted when the client is about to be disconnected due to inactivity.
+ *
+ * @event
+ * @category Session
  */
 export class InactivityWarningEvent extends Event {
     /**
@@ -62,6 +71,9 @@ export class InactivityWarningEvent extends Event {
 
 /**
  * Event emitted when activity is detected after a period of inactivity.
+ *
+ * @event
+ * @category Session
  */
 export class ActivityDetectedEvent extends Event {
     /**
@@ -74,6 +86,9 @@ export class ActivityDetectedEvent extends Event {
 
 /**
  * Event emitted when a client joins the session.
+ *
+ * @event
+ * @category Session
  */
 export class ClientJoinedEvent extends Event {
     /**
@@ -92,6 +107,9 @@ export class ClientJoinedEvent extends Event {
 
 /**
  * Event emitted when a client leaves the session.
+ *
+ * @event
+ * @category Session
  */
 export class ClientLeftEvent extends Event {
     /**
@@ -109,7 +127,8 @@ export class ClientLeftEvent extends Event {
 }
 
 /**
- *
+ * @event
+ * @category Session
  */
 export type SessionEvents = {
     "on-inactivity-warning": InactivityWarningEvent;

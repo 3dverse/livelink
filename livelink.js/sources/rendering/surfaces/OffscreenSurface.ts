@@ -5,6 +5,7 @@ import { CanvasContextType } from "./RenderingSurface";
 import { FrameMetaData } from "../decoders/FrameMetaData";
 import { ContextProvider } from "../contexts/ContextProvider";
 import { RenderingSurfaceBase } from "./RenderingSurfaceBase";
+import { RenderingSurfaceResizedEvent } from "./RenderingSurfaceEvents";
 
 /**
  * @category Rendering
@@ -133,6 +134,6 @@ export class OffscreenSurface<ContextType extends CanvasContextType, ContextOpti
      */
     set resolution_scale(scale: number) {
         this.#resolution_scale = scale;
-        this.dispatchEvent(new Event("on-resized"));
+        this._dispatchEvent(new RenderingSurfaceResizedEvent());
     }
 }

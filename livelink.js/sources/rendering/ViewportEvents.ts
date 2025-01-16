@@ -5,6 +5,9 @@ import { Entity } from "../scene/Entity";
  * @experimental
  *
  * The event that is fired when an entity is hovered.
+ *
+ * @event
+ * @category Rendering
  */
 export class EntityHoveredEvent extends Event {
     /**
@@ -43,6 +46,9 @@ export class EntityHoveredEvent extends Event {
 
 /**
  * The event that is fired when an entity is picked.
+ *
+ * @event
+ * @category Rendering
  */
 export class EntityPickedEvent extends Event {
     /**
@@ -80,7 +86,8 @@ export class EntityPickedEvent extends Event {
 }
 
 /**
- *
+ * @event
+ * @category Rendering
  */
 export type ViewportEvents = {
     "on-entity-picked": EntityPickedEvent;

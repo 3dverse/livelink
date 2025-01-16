@@ -5,7 +5,7 @@ import type { Vec2i } from "@3dverse/livelink.core";
  *
  * A helper class auto resizing a canvas with debouncing.
  */
-export class CanvasAutoResizer extends EventTarget {
+export class CanvasAutoResizer {
     /**
      * The observed canvas.
      */
@@ -27,13 +27,23 @@ export class CanvasAutoResizer extends EventTarget {
     #resize_debounce_timeout_duration_in_ms = 500 as const;
 
     /**
+     * Callback to call when the canvas is resized.
+     */
+    #onResizedCallback: ({ old_size, new_size }: { old_size: Vec2i; new_size: Vec2i }) => void;
+
+    /**
      * Constructs an auto resizer for the provided canvas.
      */
-    constructor(canvas: HTMLCanvasElement) {
-        super();
-
+    constructor({
+        canvas,
+        onResized,
+    }: {
+        canvas: HTMLCanvasElement;
+        onResized: ({ old_size, new_size }: { old_size: Vec2i; new_size: Vec2i }) => void;
+    }) {
         this.#canvas = canvas;
         this.#observer = new ResizeObserver(this.#onResized);
+        this.#onResizedCallback = onResized;
 
         // My watch begins...
         this.#observer.observe(this.#canvas);
@@ -76,7 +86,7 @@ export class CanvasAutoResizer extends EventTarget {
             return;
         }
 
-        super.dispatchEvent(new CustomEvent("on-resized", { detail: { old_size, new_size } }));
+        this.#onResizedCallback({ old_size, new_size });
     };
 
     /**

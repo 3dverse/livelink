@@ -5,6 +5,8 @@ import { Vec2i, Commands } from "@3dverse/livelink.core";
 import { Rect } from "./Rect";
 import { Viewport } from "../Viewport";
 import { FrameMetaData } from "../decoders/FrameMetaData";
+import { RenderingSurfaceEvents } from "./RenderingSurfaceEvents";
+import { TypedEventTarget } from "../../TypedEventTarget";
 
 /**
  * Abstract class for rendering surfaces.
@@ -20,7 +22,7 @@ import { FrameMetaData } from "../decoders/FrameMetaData";
  *
  * @category Rendering
  */
-export abstract class RenderingSurfaceBase extends EventTarget {
+export abstract class RenderingSurfaceBase extends TypedEventTarget<RenderingSurfaceEvents> {
     /**
      * List of viewports bound to the current surface.
      */

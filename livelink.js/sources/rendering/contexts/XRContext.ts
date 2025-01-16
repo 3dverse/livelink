@@ -9,12 +9,8 @@ import { ContextProvider } from "./ContextProvider";
 import type { FrameMetaData } from "../decoders/FrameMetaData";
 
 /**
- *
- */
-type Canvas = HTMLCanvasElement | OffscreenCanvas;
-
-/**
- *
+ * @experimental
+ * @category Rendering
  */
 export class XRContext extends ContextProvider {
     /**
@@ -94,7 +90,7 @@ export class XRContext extends ContextProvider {
      *
      */
     constructor(
-        canvas: Canvas,
+        canvas: HTMLCanvasElement | OffscreenCanvas,
         context_type: "webgl" | "webgl2" = "webgl",
         context_attributes?: WebGLContextAttributes & { xrCompatible?: boolean },
     ) {

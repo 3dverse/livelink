@@ -4,14 +4,16 @@
 
 ### Livelink
 
-- [ ] Rethink Input Devices
+- [ ] Rewrite WebXR and move it to Livelink.js
+- [x] Rename RemoteRenderingSurface to something without "Surface"
+- [x] Rethink Input Devices
 - [x] Opinionated Camera controller
 - [ ] Use TypedEventTarget for events
     - Livelink
         - [x] TO_REMOVE\_\_viewports-added
     - Rendering
         - [x] on-entity-picked (Viewport)
-        - [ ] on-resized (CanvasAutoResizer, RenderingSurface, OffscreenSurface)
+        - [x] on-resized (CanvasAutoResizer, RenderingSurface, OffscreenSurface)
     - Entity
         - [ ] entity-updated
         - [ ] visibility-changed
