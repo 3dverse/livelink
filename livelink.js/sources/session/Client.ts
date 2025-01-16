@@ -78,7 +78,7 @@ export class Client {
      */
     async getCameraEntities(): Promise<Array<Entity>> {
         const entities = await Promise.all(
-            this.#camera_rtids.map(rtid => this.#core.scene._getEntity({ entity_rtid: rtid })),
+            this.#camera_rtids.map(rtid => this.#core.scene._findEntity({ entity_rtid: rtid })),
         );
 
         return entities.filter(entity => entity != null) as Array<Entity>;
@@ -109,7 +109,7 @@ export class Client {
             return null;
         }
 
-        return await this.#core.scene._getEntity({ entity_rtid: this.#cursor_data.hovered_entity_rtid });
+        return await this.#core.scene._findEntity({ entity_rtid: this.#cursor_data.hovered_entity_rtid });
     }
 
     /**

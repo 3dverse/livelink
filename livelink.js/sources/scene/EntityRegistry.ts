@@ -1,5 +1,5 @@
 //------------------------------------------------------------------------------
-import type { RTID, UUID, ComponentsRecord, ComponentName, UpdateEntityCommand } from "@3dverse/livelink.core";
+import type { RTID, UUID, ComponentName, UpdateEntityCommand } from "@3dverse/livelink.core";
 
 //------------------------------------------------------------------------------
 import { Entity } from "./Entity";
@@ -118,28 +118,6 @@ export class EntityRegistry {
      */
     find({ entity_euid }: { entity_euid: UUID }): Array<Entity> {
         return this.#entity_euid_lut.get(entity_euid) ?? [];
-    }
-
-    /**
-     * @internal
-     */
-    _updateEntityFromEvent({
-        entity_euid,
-        updated_components,
-    }: {
-        entity_euid: UUID;
-        updated_components: Partial<ComponentsRecord>;
-    }): void {
-        const entities = this.find({ entity_euid });
-
-        if (entities.length === 0) {
-            console.debug("Received an update for an undiscovered entity", entity_euid);
-            return;
-        }
-
-        for (const entity of entities) {
-            entity._mergeComponents({ components: updated_components, dispatch_event: true });
-        }
     }
 
     /**

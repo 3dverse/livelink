@@ -356,7 +356,7 @@ export class Viewport extends TypedEventTarget<ViewportEvents> {
             return null;
         }
 
-        const entity = await this.#core.scene._getEntity({ entity_rtid: res.entity_rtid });
+        const entity = await this.#core.scene._findEntity({ entity_rtid: res.entity_rtid });
         if (entity === null) {
             return null;
         }
@@ -504,7 +504,7 @@ export class Viewport extends TypedEventTarget<ViewportEvents> {
 
         const cursorData = this.#core.session.current_client?.cursor_data;
         if (cursorData) {
-            const entity = await this.#core.scene._getEntity({ entity_rtid: cursorData.hovered_entity_rtid });
+            const entity = await this.#core.scene._findEntity({ entity_rtid: cursorData.hovered_entity_rtid });
             if (entity) {
                 data = {
                     entity,
@@ -530,7 +530,7 @@ export class Viewport extends TypedEventTarget<ViewportEvents> {
 
         const cursorData = this.#core.session.current_client?.cursor_data;
         if (cursorData) {
-            const entity = await this.#core.scene._getEntity({ entity_rtid: cursorData.hovered_entity_rtid });
+            const entity = await this.#core.scene._findEntity({ entity_rtid: cursorData.hovered_entity_rtid });
             if (entity) {
                 data = {
                     entity,

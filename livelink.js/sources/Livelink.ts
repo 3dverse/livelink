@@ -590,7 +590,7 @@ export class Livelink {
 
         this.#core.addEventListener("on-entities-updated", ({ updated_entities }: Events.EntitiesUpdatedEvent) => {
             for (const { entity_euid, updated_components } of updated_entities) {
-                this.scene._entity_registry._updateEntityFromEvent({ entity_euid, updated_components });
+                this.scene._updateEntityFromEvent({ entity_euid, updated_components });
             }
         });
 

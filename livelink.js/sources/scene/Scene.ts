@@ -10,6 +10,7 @@ import type {
     ComponentType,
     ComponentsManifest,
     Events,
+    ComponentsRecord,
 } from "@3dverse/livelink.core";
 
 //------------------------------------------------------------------------------
@@ -18,8 +19,10 @@ import { compute_rpn } from "./Filters";
 import { EntityRegistry } from "./EntityRegistry";
 
 /**
+ * Options for creating a new entity.
+ *
  * @inline
- * @internal
+ * @category Scene
  */
 export type EntityCreationOptions = {
     /**
@@ -375,7 +378,7 @@ export class Scene {
      *
      * Get an entity by its RTID.
      */
-    async _getEntity({ entity_rtid }: { entity_rtid: RTID }): Promise<Entity | null> {
+    async _findEntity({ entity_rtid }: { entity_rtid: RTID }): Promise<Entity | null> {
         if (entity_rtid === 0n) {
             return null;
         }
@@ -478,6 +481,28 @@ export class Scene {
         const entity = this._entity_registry.get({ entity_rtid });
         if (entity) {
             entity._onVisibilityChanged({ is_visible });
+        }
+    }
+
+    /**
+     * @internal
+     */
+    _updateEntityFromEvent({
+        entity_euid,
+        updated_components,
+    }: {
+        entity_euid: UUID;
+        updated_components: Partial<ComponentsRecord>;
+    }): void {
+        const entities = this._entity_registry.find({ entity_euid });
+
+        if (entities.length === 0) {
+            console.log("Received an update for an undiscovered entity", entity_euid);
+            return;
+        }
+
+        for (const entity of entities) {
+            entity._mergeComponents({ components: updated_components, dispatch_event: true });
         }
     }
 
