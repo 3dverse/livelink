@@ -340,8 +340,6 @@ export class Livelink {
      * Note that the session is not closed, it can be reconnected later.
      */
     async disconnect(): Promise<void> {
-        this.#core.removeEventListener("on-script-event-received", this.scene._onScriptEventReceived);
-
         this.#core.removeEventListener("on-frame-received", this.#onFrameReceived);
 
         if (this.#update_interval !== 0) {
@@ -601,7 +599,6 @@ export class Livelink {
             },
         );
 
-        this.#core.addEventListener("on-script-event-received", this.scene._onScriptEventReceived);
         this.#core.addEventListener("on-frame-received", this.#onFrameReceived);
         this.#core.addEventListener("on-disconnected", this.session._onDisconnected);
         this.#core.addEventListener("on-inactivity-warning", this.session._onInactivityWarning);

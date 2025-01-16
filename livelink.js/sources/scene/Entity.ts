@@ -234,54 +234,6 @@ export class Entity extends EntityBase {
 
     /**
      * @internal
-     * @experimental
-     */
-    _onScriptEventTarget({
-        event_name,
-        data_object,
-        emitter_rtid,
-    }: {
-        event_name: string;
-        data_object: ScriptDataObject | null;
-        emitter_rtid: RTID;
-    }): void {
-        this.dispatchEvent(
-            new CustomEvent("on-script-event-target", {
-                detail: {
-                    event_name,
-                    data_object,
-                    emitter_rtid,
-                },
-            }),
-        );
-    }
-
-    /**
-     * @internal
-     * @experimental
-     */
-    _onScriptEventEmitter({
-        event_name,
-        data_object,
-        target_rtids,
-    }: {
-        event_name: string;
-        data_object: ScriptDataObject | null;
-        target_rtids: RTID[];
-    }): void {
-        this.dispatchEvent(
-            new CustomEvent("on-script-event-emitter", {
-                detail: {
-                    event_name,
-                    data_object,
-                    target_rtids,
-                },
-            }),
-        );
-    }
-
-    /**
-     * @internal
      */
     _mergeComponents({
         components,

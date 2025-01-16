@@ -9,7 +9,6 @@ import type {
     EntityResponse,
     ComponentType,
     ComponentsManifest,
-    Events,
     ComponentsRecord,
 } from "@3dverse/livelink.core";
 
@@ -42,11 +41,6 @@ export type EntityCreationOptions = {
      */
     auto_update?: boolean;
 };
-
-/**
- *
- */
-const PHYSICS_EVENT_MAP_ID = "7a8cc05e-8659-4b23-99d1-1352d13e2020" as const;
 
 /**
  * The scene class.
@@ -406,41 +400,6 @@ export class Scene {
     /**
      * @internal
      */
-    _onScriptEventReceived = async (event: Events.ScriptEventTriggeredEvent): Promise<void> => {
-        if (event.emitter_rtid === 0n) {
-            return;
-        }
-
-        const emitter = this._entity_registry.get({ entity_rtid: event.emitter_rtid });
-
-        // Handle physics events
-        if (event.event_name.startsWith(PHYSICS_EVENT_MAP_ID)) {
-            return this.#handlePhysicsScriptEvent({ event, emitter });
-        }
-
-        // Handle custom script events
-        const target_entities = event.target_rtids
-            .map(rtid => this._entity_registry.get({ entity_rtid: rtid }))
-            .filter(e => e !== null) as Array<Entity>;
-
-        target_entities.forEach(target => {
-            target._onScriptEventTarget({
-                event_name: event.event_name,
-                data_object: event.data_object as ScriptDataObject,
-                emitter_rtid: event.emitter_rtid,
-            });
-        });
-
-        emitter?._onScriptEventEmitter({
-            event_name: event.event_name,
-            data_object: event.data_object as ScriptDataObject,
-            target_rtids: event.target_rtids,
-        });
-    };
-
-    /**
-     * @internal
-     */
     async _getChildren({ entity }: { entity: Entity }): Promise<Array<Entity>> {
         const children_components = await this.#core.getChildren({ entity_rtid: entity.rtid });
         return children_components.map(components => new Entity({ scene: this, parent: entity, components }));
@@ -517,61 +476,5 @@ export class Scene {
         value: Partial<ComponentType<_ComponentName>> | undefined;
     }): ComponentType<_ComponentName> {
         return this.#core.sanitizeComponentValue({ component_name, value });
-    }
-
-    /**
-     *
-     */
-    async #handlePhysicsScriptEvent({
-        emitter,
-        event,
-    }: {
-        emitter: Entity | null;
-        event: Events.ScriptEventTriggeredEvent;
-    }): Promise<void> {
-        // if the emitter entity is not found,
-        // it means that the entity does not have any event listeners, therefore nobody
-        // is interested in the event.
-        if (!emitter) {
-            return;
-        }
-
-        const entity = await this.#extractEntityFromEventDataObject({
-            data_object: event.data_object,
-            entity_name: "hEntity",
-        });
-
-        if (!entity) {
-            return;
-        }
-
-        /*
-        switch (event.event_name) {
-            case `${PHYSICS_EVENT_MAP_ID}/enter_trigger`:
-                emitter.onTriggerEntered({ entity });
-                break;
-
-            case `${PHYSICS_EVENT_MAP_ID}/exit_trigger`:
-                emitter.onTriggerExited({ entity });
-                break;
-        }
-        */
-        return;
-    }
-
-    /**
-     *
-     */
-    async #extractEntityFromEventDataObject({
-        data_object,
-        entity_name,
-    }: {
-        data_object: ScriptDataObject;
-        entity_name: string;
-    }): Promise<Entity | null> {
-        const entity_ref = data_object[entity_name];
-        return typeof entity_ref === "object" && "originalEUID" in entity_ref
-            ? this.findEntity({ entity_uuid: entity_ref.originalEUID, linkage: entity_ref.linkage })
-            : null;
     }
 }
