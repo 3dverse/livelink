@@ -4,19 +4,20 @@
 
 ### Livelink
 
+- [ ] Add a way to get the global transfrom of an entity
 - [ ] Rewrite WebXR and move it to Livelink.js
 - [x] Rename RemoteRenderingSurface to something without "Surface"
 - [x] Rethink Input Devices
 - [x] Opinionated Camera controller
-- [ ] Use TypedEventTarget for events
+- [x] Use TypedEventTarget for events
     - Livelink
         - [x] TO_REMOVE\_\_viewports-added
     - Rendering
         - [x] on-entity-picked (Viewport)
         - [x] on-resized (CanvasAutoResizer, RenderingSurface, OffscreenSurface)
     - Entity
-        - [ ] entity-updated
-        - [ ] visibility-changed
+        - [x] entity-updated
+        - [x] visibility-changed
     - Session
         - [x] on-disconnected
         - [x] client-joined
@@ -31,8 +32,8 @@
 
 ### Livelink React UI
 
-- [x] Move LoadingOverlay to from Samples to livelink-react-ui
-- [ ] Move DisconnectModal to from Samples to livelink-react-ui
+- [x] Move LoadingOverlay from Samples to livelink-react-ui
+- [ ] Move DisconnectModal from Samples to livelink-react-ui
 
 ### Samples
 

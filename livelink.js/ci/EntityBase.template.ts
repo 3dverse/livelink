@@ -3,6 +3,8 @@
  * This file has been generated automatically from ftl-schemas
  */
 import type { Components, ComponentName, ComponentType, EntityCore } from "@3dverse/livelink.core";
+import { TypedEventTarget } from "../sources/TypedEventTarget";
+import { EntityEvents } from "../sources/scene/EntityEvents";
 
 /**
  * If specified as a component value, the default values will be applied.
@@ -13,7 +15,7 @@ export type DefaultValue = "default";
 /**
  *
  */
-export abstract class EntityBase extends EventTarget {
+export abstract class EntityBase extends TypedEventTarget<EntityEvents> {
     /**
      * @internal
      */

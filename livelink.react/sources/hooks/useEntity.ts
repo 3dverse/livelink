@@ -9,6 +9,7 @@ import type {
     FindEntityQuery,
     UUID,
     ComponentName,
+    EntityUpdatedEvent,
 } from "@3dverse/livelink";
 
 //------------------------------------------------------------------------------
@@ -62,7 +63,10 @@ type EntityProvider = NewEntity | FindEntityQuery;
  *
  * @category Hooks
  */
-export function useEntity(entityProvider: EntityProvider & { forceUpdateOnEntityUpdate?: boolean }): {
+export function useEntity(
+    entityProvider: EntityProvider,
+    watchedComponents: Array<ComponentName> | "any" = [],
+): {
     isPending: boolean;
     entity: Entity | null;
 } {
@@ -79,7 +83,6 @@ export function useEntity(entityProvider: EntityProvider & { forceUpdateOnEntity
         mandatory_components?: Array<ComponentName>;
         forbidden_components?: Array<ComponentName>;
     };
-    const forceUpdateOnEntityUpdate = entityProvider.forceUpdateOnEntityUpdate ?? false;
 
     useEffect(() => {
         if (!instance) {
@@ -111,12 +114,8 @@ export function useEntity(entityProvider: EntityProvider & { forceUpdateOnEntity
         };
 
         resolveEntity()
-            .then(foundEntity => {
-                setEntity(foundEntity);
-            })
-            .finally(() => {
-                setIsPending(false);
-            });
+            .then(foundEntity => setEntity(foundEntity))
+            .finally(() => setIsPending(false));
 
         return (): void => {
             setEntity(null);
@@ -132,16 +131,27 @@ export function useEntity(entityProvider: EntityProvider & { forceUpdateOnEntity
     ]);
 
     useEffect(() => {
-        if (!entity || !forceUpdateOnEntityUpdate) {
+        const alwaysUpdate = watchedComponents === "any";
+        const neverUpdate = watchedComponents.length === 0;
+
+        if (!entity || neverUpdate) {
             return;
         }
 
-        entity.addEventListener("entity-updated", forceUpdate);
+        const triggerUpdate = alwaysUpdate
+            ? forceUpdate
+            : (event: EntityUpdatedEvent): void => {
+                  if (event.isAnyComponentDirty({ components: watchedComponents })) {
+                      forceUpdate();
+                  }
+              };
+
+        entity.addEventListener("on-entity-updated", triggerUpdate);
 
         return (): void => {
-            entity.removeEventListener("entity-updated", forceUpdate);
+            entity.removeEventListener("on-entity-updated", triggerUpdate);
         };
-    }, [entity, forceUpdateOnEntityUpdate]);
+    }, [entity, watchedComponents]);
 
     return { isPending, entity };
 }

@@ -118,6 +118,7 @@ export abstract class EncodedFrameConsumer {
             // TODO: This should actually set the global transform not the local transform.
             camera_entity._mergeComponents({
                 components: { local_transform: { position: world_position, orientation: world_orientation } },
+                dispatch_event: true,
             });
         }
     }

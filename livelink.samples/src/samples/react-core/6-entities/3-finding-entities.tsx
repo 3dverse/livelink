@@ -58,18 +58,24 @@ function AppLayout() {
             bloomThreshold: 0,
         },
     });
-    const { entity: light1 } = useEntity({
-        euid: "82b75c7f-85f4-490c-9ae2-0f46fe271d79",
-        forceUpdateOnEntityUpdate: true,
-    });
-    const { entity: light2 } = useEntity({
-        euid: "955dee9a-cdfa-4a57-8394-739dda2d1b4d",
-        forceUpdateOnEntityUpdate: true,
-    });
-    const { entity: light3 } = useEntity({
-        euid: "dbd47a00-5e49-428b-9bb5-85bf9c5f5d7b",
-        forceUpdateOnEntityUpdate: true,
-    });
+    const { entity: light1 } = useEntity(
+        {
+            euid: "82b75c7f-85f4-490c-9ae2-0f46fe271d79",
+        },
+        ["point_light"],
+    );
+    const { entity: light2 } = useEntity(
+        {
+            euid: "955dee9a-cdfa-4a57-8394-739dda2d1b4d",
+        },
+        ["point_light"],
+    );
+    const { entity: light3 } = useEntity(
+        {
+            euid: "dbd47a00-5e49-428b-9bb5-85bf9c5f5d7b",
+        },
+        ["point_light"],
+    );
     return (
         <Canvas className="w-full h-full">
             <Viewport cameraEntity={cameraEntity} className="w-full h-full">

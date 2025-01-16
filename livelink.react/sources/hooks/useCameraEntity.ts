@@ -1,5 +1,5 @@
 //------------------------------------------------------------------------------
-import type { Vec3, Quat, RenderGraphDataObject, Entity, UUID } from "@3dverse/livelink";
+import type { Vec3, Quat, RenderGraphDataObject, Entity, UUID, ComponentName } from "@3dverse/livelink";
 import { useEntity } from "./useEntity";
 
 /**
@@ -32,31 +32,35 @@ export function useCameraEntity(
         renderGraphRef: "398ee642-030a-45e7-95df-7147f6c43392",
         renderTargetIndex: -1,
     },
+    watchedComponents: Array<ComponentName> | "any" = [],
 ): {
     isPending: boolean;
     cameraEntity: Entity | null;
 } {
-    const { isPending, entity: cameraEntity } = useEntity({
-        name: props.name ?? "Camera",
-        components: {
-            local_transform: {
-                position: props.position ?? [0, 1, 5],
-                orientation: !props.eulerOrientation ? (props.orientation ?? [0, 0, 0, 1]) : undefined,
-                eulerOrientation: props.eulerOrientation,
+    const { isPending, entity: cameraEntity } = useEntity(
+        {
+            name: props.name ?? "Camera",
+            components: {
+                local_transform: {
+                    position: props.position ?? [0, 1, 5],
+                    orientation: !props.eulerOrientation ? (props.orientation ?? [0, 0, 0, 1]) : undefined,
+                    eulerOrientation: props.eulerOrientation,
+                },
+                camera: {
+                    renderGraphRef: props.renderGraphRef ?? "398ee642-030a-45e7-95df-7147f6c43392",
+                    dataJSON: props.settings ?? { grid: true, skybox: false, gradient: true },
+                    renderTargetIndex: props.renderTargetIndex ?? -1,
+                },
+                perspective_lens: {
+                    fovy: 60,
+                    nearPlane: 0.1,
+                    farPlane: 10000,
+                },
             },
-            camera: {
-                renderGraphRef: props.renderGraphRef ?? "398ee642-030a-45e7-95df-7147f6c43392",
-                dataJSON: props.settings ?? { grid: true, skybox: false, gradient: true },
-                renderTargetIndex: props.renderTargetIndex ?? -1,
-            },
-            perspective_lens: {
-                fovy: 60,
-                nearPlane: 0.1,
-                farPlane: 10000,
-            },
+            options: { auto_broadcast: false, delete_on_client_disconnection: true },
         },
-        options: { auto_broadcast: false, delete_on_client_disconnection: true },
-    });
+        watchedComponents,
+    );
 
     return { isPending, cameraEntity };
 }

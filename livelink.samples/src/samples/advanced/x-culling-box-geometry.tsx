@@ -88,15 +88,18 @@ function CullingBoxGeometryWidget({
 }) {
     const scene = useMemo(() => new THREE.Scene(), []);
 
-    const { entity: boxGeometryEntity } = useEntity({
-        name: "Box Geometry",
-        components: {
-            local_transform: { position: initialPosition },
-            box_geometry: { dimension: initialSize },
-            culling_geometry: {},
+    const { entity: boxGeometryEntity } = useEntity(
+        {
+            name: "Box Geometry",
+            components: {
+                local_transform: { position: initialPosition },
+                box_geometry: { dimension: initialSize },
+                culling_geometry: {},
+            },
+            options: { delete_on_client_disconnection: true },
         },
-        options: { delete_on_client_disconnection: true },
-    });
+        ["local_transform", "box_geometry"],
+    );
 
     return (
         <>
@@ -181,7 +184,7 @@ function BoxGeometryMesh({
         };
 
         boxGeometryEntity.addEventListener(
-            "entity-updated",
+            "on-entity-updated",
             updateObjectsTransform,
         );
         updateObjectsTransform();
@@ -189,7 +192,7 @@ function BoxGeometryMesh({
         return () => {
             scene.remove(globalTransformObject);
             boxGeometryEntity.removeEventListener(
-                "entity-updated",
+                "on-entity-updated",
                 updateObjectsTransform,
             );
         };
@@ -253,12 +256,12 @@ function BoxGeometryHandles({
             );
         };
 
-        boxGeometryEntity.addEventListener("entity-updated", updateHandles);
+        boxGeometryEntity.addEventListener("on-entity-updated", updateHandles);
         updateHandles();
 
         return () => {
             boxGeometryEntity.removeEventListener(
-                "entity-updated",
+                "on-entity-updated",
                 updateHandles,
             );
         };

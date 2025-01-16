@@ -32,15 +32,14 @@ export function DOMEntity({
             return;
         }
 
-        const updatePosition = (): void => {
-            const local_transform = entity.local_transform!;
-            setWorldPosition(local_transform.position);
-        };
+        const updatePosition = (): void => setWorldPosition(entity.local_transform!.position);
 
-        entity.addEventListener("entity-updated", updatePosition);
+        // Initialize the position
         updatePosition();
+
+        entity.addEventListener("on-entity-updated", updatePosition);
         return (): void => {
-            entity.removeEventListener("entity-updated", updatePosition);
+            entity.removeEventListener("on-entity-updated", updatePosition);
         };
     }, [entity]);
 

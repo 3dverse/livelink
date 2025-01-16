@@ -43,11 +43,15 @@ function App() {
 
 //------------------------------------------------------------------------------
 function AppLayout() {
-    const { cameraEntity } = useCameraEntity();
-    const { entity: light } = useEntity({
-        euid: "a9b10115-a52b-459b-9660-e67ea8155fbe",
-        forceUpdateOnEntityUpdate: true,
+    const { cameraEntity } = useCameraEntity({
+        settings: { volumetricLighting: true },
     });
+    const { entity: light } = useEntity(
+        {
+            euid: "a9b10115-a52b-459b-9660-e67ea8155fbe",
+        },
+        ["point_light"],
+    );
 
     return (
         <Canvas className="w-full h-full">

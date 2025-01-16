@@ -16,6 +16,7 @@ import { EntityBase, type DefaultValue } from "../../_prebuild/EntityBase";
 //------------------------------------------------------------------------------
 import { EntityCreationOptions, Scene } from "./Scene";
 import { ComponentHandler, ComponentHandlers, LocalTransformHandler } from "./ComponentHandler";
+import { EntityUpdatedEvent, EntityVisibilityChangedEvent } from "./EntityEvents";
 
 /**
  * An entity in a scene.
@@ -237,7 +238,7 @@ export class Entity extends EntityBase {
      */
     _mergeComponents({
         components,
-        dispatch_event = true,
+        dispatch_event,
     }: {
         components: EntityCore | ComponentsManifest | Partial<ComponentsRecord>;
         dispatch_event?: boolean;
@@ -250,7 +251,14 @@ export class Entity extends EntityBase {
         }
 
         if (dispatch_event) {
-            this.dispatchEvent(new CustomEvent("entity-updated"));
+            this._dispatchEvent(
+                new EntityUpdatedEvent({
+                    change_source: "external",
+                    updated_components: Object.keys(components) as Array<ComponentName>,
+                    deleted_components: [],
+                    new_components: [],
+                }),
+            );
         }
     }
 
@@ -260,7 +268,15 @@ export class Entity extends EntityBase {
     _markComponentAsDirty({ component_name }: { component_name: ComponentName }): void {
         this.#dirty_components.add(component_name);
         this.#scene._entity_registry._addDirtyEntity({ entity: this });
-        this.dispatchEvent(new CustomEvent("entity-updated"));
+        const isNewComponent = this[component_name] === undefined;
+        this._dispatchEvent(
+            new EntityUpdatedEvent({
+                change_source: "local",
+                updated_components: !isNewComponent ? [component_name] : [],
+                deleted_components: [],
+                new_components: isNewComponent ? [component_name] : [],
+            }),
+        );
     }
 
     /**
@@ -269,7 +285,14 @@ export class Entity extends EntityBase {
     _markComponentAsDeleted({ component_name }: { component_name: ComponentName }): void {
         this.#deleted_components.add(component_name);
         this.#scene._entity_registry._addDirtyEntity({ entity: this });
-        this.dispatchEvent(new CustomEvent("entity-updated"));
+        this._dispatchEvent(
+            new EntityUpdatedEvent({
+                change_source: "local",
+                updated_components: [],
+                deleted_components: [component_name],
+                new_components: [],
+            }),
+        );
     }
 
     /**
@@ -285,7 +308,7 @@ export class Entity extends EntityBase {
      */
     _onVisibilityChanged({ is_visible }: { is_visible: boolean }): void {
         this.#is_visible = is_visible;
-        this.dispatchEvent(new CustomEvent("visibility-changed", { detail: { is_visible } }));
+        this._dispatchEvent(new EntityVisibilityChangedEvent({ is_visible }));
     }
 
     /**

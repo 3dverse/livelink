@@ -8,6 +8,7 @@ import type { Components, Mat4, Quat, Vec2, Vec3 } from "@3dverse/livelink.core"
 import { Entity } from "../scene/Entity";
 import { Viewport } from "./Viewport";
 import { FrameCameraTransform } from "./decoders/FrameCameraTransform";
+import { EntityUpdatedEvent } from "../scene/EntityEvents";
 
 /**
  *
@@ -131,14 +132,16 @@ export class CameraProjection {
         this.viewport = viewport;
 
         this.updateProjectionMatrix();
-        camera_entity.addEventListener("entity-updated", this.#onEntityUpdated);
+        camera_entity.addEventListener("on-entity-updated", this.#onEntityUpdated);
     }
 
     /**
      *
      */
-    #onEntityUpdated = (): void => {
-        this.updateProjectionMatrix();
+    #onEntityUpdated = (event: EntityUpdatedEvent): void => {
+        if (event.isAnyComponentDirty({ components: ["perspective_lens", "orthographic_lens"] })) {
+            this.updateProjectionMatrix();
+        }
     };
 
     /**
