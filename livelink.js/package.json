@@ -33,11 +33,11 @@
   "dependencies": {
     "@3dverse/livelink-camera-controls": "^0.3.3",
     "@3dverse/livelink.core": "^1.0.7",
+    "@types/webxr": "^0.5.20",
     "threejs-math": "^0.147.0"
   },
   "devDependencies": {
     "@eslint/js": "^9.17.0",
-    "@types/webxr": "^0.5.20",
     "@typescript-eslint/eslint-plugin": "^8.18.1",
     "@typescript-eslint/parser": "^8.18.1",
     "cross-env": "^7.0.3",
