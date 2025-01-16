@@ -2,7 +2,6 @@
 import type {
     ComponentName,
     RTID,
-    ScriptDataObject,
     UUID,
     ComponentType,
     EntityCore,

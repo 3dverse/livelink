@@ -17,11 +17,11 @@ export const ViewCube = ({
             setCubeOrientation([x, -y, z]);
         };
 
-        cameraEntity.addEventListener("entity-updated", updateCubeOrientation);
+        cameraEntity.addEventListener("on-entity-updated", updateCubeOrientation);
         updateCubeOrientation();
 
         return () => {
-            cameraEntity.removeEventListener("entity-updated", updateCubeOrientation);
+            cameraEntity.removeEventListener("on-entity-updated", updateCubeOrientation);
         };
     }, [cameraEntity]);
 
