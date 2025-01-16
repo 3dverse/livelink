@@ -7,7 +7,7 @@ import { fetchProfile, MotionController } from "@webxr-input-profiles/motion-con
  * Superset of MotionController type to add the fallbackProfileIds of the
  * XRInputSource profile which miss inside the MotionController type.
  */
-export type WebXRMotionController = MotionController & {
+type WebXRMotionController = MotionController & {
     fallbackProfileIds: string[];
     xrInputSource: XRInputSource;
 };
@@ -86,9 +86,9 @@ export class GamepadBoxSet {
 //------------------------------------------------------------------------------
 export class WebXRInputRelay {
     //--------------------------------------------------------------------------
-    static boxTable: Partial<Record<XRHandedness, GamepadBoxSet>> = {};
-    static motionController: Partial<Record<XRHandedness, WebXRMotionController>> = {};
-    static eventTarget = new EventTarget();
+    static #boxTable: Partial<Record<XRHandedness, GamepadBoxSet>> = {};
+    static #motionController: Partial<Record<XRHandedness, WebXRMotionController>> = {};
+    static #eventTarget = new EventTarget();
 
     //--------------------------------------------------------------------------
     static onInputSourcesChange = async (event: XRInputSourcesChangeEvent): Promise<void> => {
@@ -104,7 +104,7 @@ export class WebXRInputRelay {
             }>);
             const controller = new MotionController(inputSource, profile, assetPath!) as WebXRMotionController;
             controller.fallbackProfileIds = profile.fallbackProfileIds;
-            this.motionController[handedness] = controller;
+            this.#motionController[handedness] = controller;
             console.debug(`WebXR motion controller for ${handedness} hand:`, controller);
 
             // TODO: might be nice to load the controller model for tracked-pointer devices here,
@@ -124,14 +124,14 @@ export class WebXRInputRelay {
             console.log(
                 `WebXRInputRelay: new ${handedness} box with ${buttons.length} buttons and ${axes.length} axes.`,
             );
-            this.boxTable[handedness] = new GamepadBoxSet(handedness, buttons.length, axes.length);
+            this.#boxTable[handedness] = new GamepadBoxSet(handedness, buttons.length, axes.length);
         }
         for (const inputSource of event.removed) {
             const { handedness } = inputSource;
-            delete this.motionController[handedness];
-            delete this.boxTable[handedness];
+            delete this.#motionController[handedness];
+            delete this.#boxTable[handedness];
         }
-        this.eventTarget.dispatchEvent(event);
+        this.#eventTarget.dispatchEvent(event);
     };
 
     //--------------------------------------------------------------------------
@@ -149,20 +149,19 @@ export class WebXRInputRelay {
             return;
         }
 
-        const controller = this.motionController[handedness];
+        const controller = this.#motionController[handedness];
         if (controller) {
             controller.updateFromGamepad();
         }
 
-        const { boxTable } = this;
-        let box = boxTable[handedness];
+        let box = this.#boxTable[handedness];
         if (!box) {
             const { buttons, axes } = gamepad;
             console.log(
                 `WebXRInputRelay: new ${handedness} box with ${buttons.length} buttons and ${axes.length} axes.`,
             );
             box = new GamepadBoxSet(handedness, buttons.length, axes.length);
-            boxTable[handedness] = box;
+            this.#boxTable[handedness] = box;
         }
         box.updateState(gamepad);
 

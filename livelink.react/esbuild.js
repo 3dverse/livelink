@@ -1,4 +1,7 @@
+/* eslint-disable */
+
 //------------------------------------------------------------------------------
+const pkg = require("./package.json");
 const esbuild = require("esbuild");
 
 //------------------------------------------------------------------------------
@@ -7,7 +10,8 @@ const commonBuildOptions = {
     outdir: "dist",
     bundle: true,
     platform: "browser",
-    packages: "external",
+    packages: "bundle",
+    external: [...Object.keys(pkg.peerDependencies), "threejs-math"],
     sourcemap: true,
 };
 
