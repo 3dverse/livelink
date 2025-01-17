@@ -202,20 +202,37 @@ export class Scene {
      *
      */
     #resolveEntityResponse = (entity_response: EntityResponse): Entity => {
-        let parent: Entity | null = null;
-
-        if (entity_response.ancestors) {
-            for (const ancestor of entity_response.ancestors) {
-                parent = this.#resolveEntityResponse(ancestor);
-            }
-        }
-
         const entity = this._entity_registry.get({ entity_rtid: entity_response.components.euid.rtid });
         if (entity) {
             return entity;
         }
 
+        const parent: Entity | null = entity_response.ancestors
+            ? this.#resolveEntityAncestors(entity_response.ancestors)
+            : null;
+
         return new Entity({ scene: this, parent, components: entity_response.components });
+    };
+    /**
+     *
+     */
+    #resolveEntityAncestors = (ancestors: EntityResponse[]): Entity | null => {
+        let current_parent: Entity | null = null;
+
+        for (const ancestor of ancestors) {
+            const entity = this._entity_registry.get({ entity_rtid: ancestor.components.euid.rtid });
+            if (entity) {
+                current_parent = entity;
+            } else {
+                current_parent = new Entity({
+                    scene: this,
+                    parent: current_parent,
+                    components: ancestor.components,
+                });
+            }
+        }
+
+        return current_parent;
     };
 
     /**
