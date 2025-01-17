@@ -159,8 +159,8 @@ export class RelativeRect extends Rect {
         if (
             relativePos.left < 0 ||
             relativePos.top < 0 ||
-            relativePos.left + rect.width > parentRect.width ||
-            relativePos.top + rect.height > parentRect.height
+            relativePos.left + rect.width > parentRect.left + parentRect.width ||
+            relativePos.top + rect.height > parentRect.top + parentRect.height
         ) {
             throw new OutOfBoundsError(rect, parentRect);
         }
