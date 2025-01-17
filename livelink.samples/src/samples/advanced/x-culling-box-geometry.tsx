@@ -104,7 +104,7 @@ function CullingBoxGeometryWidget({
 
     return (
         <>
-            <div className="absolute bottom-4 right-4 m-4">
+            <div className="absolute bottom-4 right-4">
                 <button
                     className="button button-primary"
                     onClick={() => setEnableState(!isEnable)}
