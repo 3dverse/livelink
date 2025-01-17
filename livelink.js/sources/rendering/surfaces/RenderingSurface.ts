@@ -164,11 +164,11 @@ export class RenderingSurface extends RenderingSurfaceBase {
      * @param params.frame - The frame to draw.
      * @param params.meta_data - The metadata associated with the frame.
      */
-    drawFrame({ frame, meta_data }: { frame: VideoFrame | OffscreenCanvas; meta_data: FrameMetaData }): void {
+    _drawFrame({ frame, meta_data }: { frame: VideoFrame | OffscreenCanvas; meta_data: FrameMetaData }): void {
         this.#context.drawFrame({ frame, left: this.offset[0], top: this.offset[1], meta_data });
 
         for (const viewport of this.viewports) {
-            const overlayFrame = viewport.drawOverlays();
+            const overlayFrame = viewport._drawOverlays();
             if (!overlayFrame) {
                 continue;
             }
@@ -189,7 +189,7 @@ export class RenderingSurface extends RenderingSurfaceBase {
         this._dispatchEvent(new RenderingSurfaceResizedEvent());
 
         for (const viewport of this.viewports) {
-            viewport.onResize();
+            viewport._onResize();
         }
     };
 }

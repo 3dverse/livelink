@@ -33,8 +33,17 @@ export class React3DElement {
     /**
      *
      */
-    constructor({ element, scale_factor }: { element: ReactElement; scale_factor?: number }) {
+    constructor({
+        element,
+        scale_factor,
+        world_position = vec3.create(),
+    }: {
+        element: ReactElement;
+        scale_factor?: number;
+        world_position?: vec3;
+    }) {
         this.element = element;
+        this.world_position = world_position;
         this.scale_factor = scale_factor;
     }
 

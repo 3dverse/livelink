@@ -49,14 +49,23 @@ export class ReactOverlay implements OverlayInterface {
     /**
      *
      */
-    addElement({ element, scale_factor }: { element: ReactElement; scale_factor?: number }): React3DElement {
+    addElement({
+        element,
+        scale_factor,
+        world_position,
+    }: {
+        element: ReactElement;
+        scale_factor?: number;
+        world_position?: Vec3;
+    }): React3DElement {
         if (this.#elements.has(element)) {
             console.warn(`Element already added to dom overlay`);
             return this.#elements.get(element)!;
         }
 
-        const dom3DElement = new React3DElement({ element, scale_factor });
+        const dom3DElement = new React3DElement({ element, scale_factor, world_position });
         this.#elements.set(element, dom3DElement);
+        this.#viewport.rendering_surface.redrawLastFrame();
         return dom3DElement;
     }
 

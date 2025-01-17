@@ -86,6 +86,7 @@ function CullingBoxGeometryWidget({
     initialSize?: Vec3;
     initialPosition?: Vec3;
 }) {
+    const [isEnable, setEnableState] = useState(true);
     const scene = useMemo(() => new THREE.Scene(), []);
 
     const { entity: boxGeometryEntity } = useEntity(
@@ -103,14 +104,23 @@ function CullingBoxGeometryWidget({
 
     return (
         <>
+            <div className="absolute bottom-4 right-4 m-4">
+                <button
+                    className="button button-primary"
+                    onClick={() => setEnableState(!isEnable)}
+                >
+                    {isEnable ? "Hide" : "Show"} Box Geometry
+                </button>
+            </div>
+
             <ThreeOverlay scene={scene} />
-            {boxGeometryEntity && (
+            {boxGeometryEntity && isEnable && (
                 <BoxGeometryMesh
                     boxGeometryEntity={boxGeometryEntity}
                     scene={scene}
                 />
             )}
-            {boxGeometryEntity && (
+            {boxGeometryEntity && isEnable && (
                 <DOM3DOverlay>
                     <BoxGeometryHandles boxGeometryEntity={boxGeometryEntity} />
                 </DOM3DOverlay>

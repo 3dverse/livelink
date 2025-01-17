@@ -50,5 +50,5 @@ export class VirtualSurface extends RenderingSurfaceBase {
     /**
      * Do nothing.
      */
-    drawFrame(): void {}
+    _drawFrame(): void {}
 }

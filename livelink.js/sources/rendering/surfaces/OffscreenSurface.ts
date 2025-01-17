@@ -97,7 +97,7 @@ export class OffscreenSurface<ContextType extends CanvasContextType, ContextOpti
     /**
      *
      */
-    drawFrame(frame: {
+    _drawFrame(frame: {
         frame: VideoFrame | OffscreenCanvas;
         left: number;
         top: number;

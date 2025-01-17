@@ -410,6 +410,7 @@ export class Viewport extends TypedEventTarget<ViewportEvents> {
             return;
         }
         this.#overlays.push(overlay);
+        this.rendering_surface.redrawLastFrame();
     }
 
     /**
@@ -430,12 +431,13 @@ export class Viewport extends TypedEventTarget<ViewportEvents> {
         }
 
         this.#overlays.splice(index, 1);
+        this.rendering_surface.redrawLastFrame();
     }
 
     /**
-     *
+     * @internal
      */
-    drawOverlays(): OffscreenCanvas | null {
+    _drawOverlays(): OffscreenCanvas | null {
         let blendedFrame: OffscreenCanvas | null = null;
         for (const overlay of this.#overlays) {
             const overlayFrame = overlay.draw({ output_canvas: blendedFrame });
@@ -451,7 +453,7 @@ export class Viewport extends TypedEventTarget<ViewportEvents> {
     /**
      * @internal
      */
-    onResize(): void {
+    _onResize(): void {
         this.camera_projection?.updateProjectionMatrix();
         for (const overlay of this.#overlays) {
             overlay.resize({ width: this.width, height: this.height });

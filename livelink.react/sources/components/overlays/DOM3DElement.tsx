@@ -30,8 +30,7 @@ export function DOM3DElement({
         }
 
         const element = createElement(Fragment, { children });
-        const handle = overlay.addElement({ element, scale_factor: scaleFactor });
-        handle.world_position = worldPosition;
+        const handle = overlay.addElement({ element, scale_factor: scaleFactor, world_position: worldPosition });
         setElementHandle(handle);
 
         return (): void => {

@@ -29,6 +29,11 @@ export abstract class RenderingSurfaceBase extends TypedEventTarget<RenderingSur
     readonly viewports: Array<Viewport> = [];
 
     /**
+     *
+     */
+    #last_draw_data: { frame: VideoFrame | OffscreenCanvas; meta_data: FrameMetaData } | null = null;
+
+    /**
      * Offset of the surface relative to the remote rendering surface.
      */
     offset: Vec2i = [0, 0];
@@ -50,12 +55,36 @@ export abstract class RenderingSurfaceBase extends TypedEventTarget<RenderingSur
 
     /**
      * Draws the portions of the frame associated with the viewports to the backing element.
+     * Keeps a reference to the last frame drawn.
      *
      * @param params
      * @param params.frame - The frame to draw.
      * @param params.meta_data - The metadata associated with the frame.
      */
-    abstract drawFrame({ frame, meta_data }: { frame: VideoFrame | OffscreenCanvas; meta_data: FrameMetaData }): void;
+    drawFrame({ frame, meta_data }: { frame: VideoFrame | OffscreenCanvas; meta_data: FrameMetaData }): void {
+        this.#last_draw_data = { frame, meta_data };
+        this._drawFrame({ frame, meta_data });
+    }
+
+    /**
+     * Redraws the last frame.
+     */
+    redrawLastFrame(): void {
+        if (this.#last_draw_data !== null) {
+            this._drawFrame(this.#last_draw_data);
+        }
+    }
+
+    /**
+     * @internal
+     *
+     * Draws the portions of the frame associated with the viewports to the backing element.
+     *
+     * @param params
+     * @param params.frame - The frame to draw.
+     * @param params.meta_data - The metadata associated with the frame.
+     */
+    abstract _drawFrame({ frame, meta_data }: { frame: VideoFrame | OffscreenCanvas; meta_data: FrameMetaData }): void;
 
     /**
      * Adds a viewport to the current surface.
