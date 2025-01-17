@@ -36,7 +36,7 @@ export const InactivityWarningBadge = ({
         <>
             <Box
                 ref={animatedOverlayRef}
-                pos="fixed"
+                pos="absolute"
                 top={0}
                 left={0}
                 bottom={0}
@@ -72,8 +72,9 @@ export const InactivityWarningBadge = ({
                         <Box
                             as="svg"
                             pos="absolute"
-                            top="-2px"
+                            top="50%"
                             left="-1px"
+                            transform="translateY(-50%)"
                             width="277px"
                             height="67px"
                             viewBox="0 0 277 67"
@@ -103,7 +104,7 @@ export const InactivityWarningBadge = ({
                         <Text size="sm" color="content.primary">
                             Move cursor to keep 3D view.
                         </Text>
-                        <Text size="xs" color="content.secondary" mt="1px">
+                        <Text size="xs" color="content.secondary" letterSpacing=".05em" mt="1px">
                             Closing in{" "}
                             <Box
                                 as="span"
