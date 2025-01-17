@@ -241,7 +241,7 @@ export const RenderGraphSettings = ({
                                                 minW="auto"
                                                 flexShrink={0}
                                                 color="content.tertiary"
-                                                icon={<Icon as={FaArrowRotateLeft} size="xs" />}
+                                                icon={<Icon as={FaArrowRotateLeft} boxSize=".65rem" />}
                                                 isDisabled={isDisabled}
                                                 onClick={() => onResetInput(input.name, defaultValue)}
                                             />
