@@ -128,7 +128,7 @@ export const RenderGraphSettings = ({
                         const isExpandable = subcategory.categories.length > 0 || subcategory.description.length > 0;
 
                         return (
-                            <AccordionItem key={key}>
+                            <AccordionItem key={key} pl={3}>
                                 {({ isExpanded }) => (
                                     <>
                                         <AccordionButton as={!isExpandable ? Box : undefined} pl={0} pr={2} py={1}>
@@ -142,7 +142,7 @@ export const RenderGraphSettings = ({
                                                         visibility={!isExpandable ? "hidden" : undefined}
                                                     />
                                                     <Text
-                                                        size="xs"
+                                                        fontSize="xs"
                                                         fontWeight={500}
                                                         userSelect="none"
                                                         color={
@@ -210,6 +210,7 @@ export const RenderGraphSettings = ({
                                         px={3}
                                         py={1}
                                         fontSize="xs"
+                                        letterSpacing=".02em"
                                         textTransform="capitalize"
                                         noOfLines={1}
                                         cursor="pointer"
@@ -266,7 +267,7 @@ export const RenderGraphSettings = ({
                     <Spinner size="sm" />
                 </Flex>
             ) : (
-                <Flex flexDir="column" pl={3}>
+                <Flex flexDir="column">
                     {renderGraphDescription && renderCategory(renderGraphDescription)}
                     <ResetAllButton onClick={onResetAllInputs} />
                 </Flex>
@@ -325,11 +326,12 @@ const ResetAllButton = ({ onClick }: { onClick: () => void }) => {
         <Button
             variant="ghost"
             size="xs"
-            mt={2}
-            mr={2}
-            color="content.tertiary"
             w="max-content"
             alignSelf="end"
+            my={1}
+            mr={2}
+            color="content.tertiary"
+            fontWeight={400}
             onClick={onClick}
         >
             Reset all

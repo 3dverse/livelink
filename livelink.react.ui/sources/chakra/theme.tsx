@@ -1,6 +1,7 @@
 //--------------------------------------------------------------------------
 import { extendTheme } from "@chakra-ui/react";
 import Checkbox from "./components/Checkbox";
+import Text from "./components/Text";
 
 //------------------------------------------------------------------------------
 // Use that instead of ColorMode and ColorModeWithSystem from @chakra-ui/react
@@ -96,5 +97,6 @@ export const theme = extendTheme({
     },
     components: {
         Checkbox,
+        Text,
     },
 });
