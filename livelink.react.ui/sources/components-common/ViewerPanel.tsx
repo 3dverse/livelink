@@ -8,7 +8,7 @@ export const ViewerPanel = ({ children, ...flexProps }: { children: ReactNode } 
     // UI
     return (
         <Flex
-            bgColor="color-mix(in srgb, var(--color-bg-foreground) 85%, transparent)"
+            bgColor="color-mix(in srgb, var(--3dverse-color-bg-foreground) 85%, transparent)"
             backdropFilter="auto"
             backdropBlur="34px"
             rounded="md"

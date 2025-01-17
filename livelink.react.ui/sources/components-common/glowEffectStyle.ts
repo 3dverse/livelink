@@ -11,7 +11,7 @@ export const glowEffectStyle = {
         aspectRatio: "1 / 1 ",
 
         mixBlendMode: "screen",
-        background: "radial-gradient(var(--color-bg-overground), transparent)",
+        background: "radial-gradient(var(--3dverse-color-bg-overground), transparent)",
         borderRadius: "100%",
         filter: { base: "blur(50px)", xl: "blur(70px)" },
 

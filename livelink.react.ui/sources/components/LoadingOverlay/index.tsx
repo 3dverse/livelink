@@ -14,7 +14,7 @@ export const LoadingOverlay = ({ stage = "Connecting to 3dverse..." }: { stage?:
                     .loader-progress-bar-indeterminate {
                         width: 3.5rem;
                         padding: 7px 8px;
-                        background-color: var(--color-bg-foreground);
+                        background-color: var(--3dverse-color-bg-foreground);
                         border-radius: 2rem;
                     }
 
@@ -24,7 +24,7 @@ export const LoadingOverlay = ({ stage = "Connecting to 3dverse..." }: { stage?:
                         width: 100%;
                         border-radius: 1rem;
                         overflow: hidden;
-                        background-color: var(--color-bg-underground);
+                        background-color: var(--3dverse-color-bg-underground);
 
                         &:before {
                             content: "''";
@@ -33,7 +33,7 @@ export const LoadingOverlay = ({ stage = "Connecting to 3dverse..." }: { stage?:
                             min-width: 50%;
                             will-change: left;
                             border-radius: 1px;
-                            background-color: var(--color-accent);
+                            background-color: var(--3dverse-color-accent);
                             animation: 1s ease 0s infinite loader-progress-bar-indeterminate;
                         }
                         &:after {
@@ -43,7 +43,7 @@ export const LoadingOverlay = ({ stage = "Connecting to 3dverse..." }: { stage?:
                             min-width: 75%;
                             will-change: left;
                             border-radius: 1px;
-                            background-color: var(--color-accent);
+                            background-color: var(--3dverse-color-accent);
                             opacity: 0.4;
                             animation: 1.5s ease 0s infinite loader-progress-bar-indeterminate;
                             animation-delay: 0.25s;
@@ -76,7 +76,7 @@ export const LoadingOverlay = ({ stage = "Connecting to 3dverse..." }: { stage?:
                     boxSize={{ base: 7, lg: 8 }}
                     mb={4}
                     color="accent.500"
-                    filter="drop-shadow(0 18px 2px color-mix(in srgb, var(--color-bg-ground) 50%, transparent))"
+                    filter="drop-shadow(0 18px 2px color-mix(in srgb, var(--3dverse-color-bg-ground) 50%, transparent))"
                 >
                     <Rocket3dverse />
                 </Box>

@@ -9,23 +9,23 @@ const { definePartsStyle, defineMultiStyleConfig } = createMultiStyleConfigHelpe
 const baseStyle = definePartsStyle({
     container: {
         fontSize: ".5rem !important",
-        "--checkbox-border-color": "var(--color-content-tertiary)",
+        "--checkbox-border-color": "var(--3dverse-color-content-tertiary)",
         _hover: {
-            "--checkbox-border-color": "var(--color-content-secondary)",
+            "--checkbox-border-color": "var(--3dverse-color-content-secondary)",
         },
         _focus: {
-            "--checkbox-border-color": "var(--color-accent)",
+            "--checkbox-border-color": "var(--3dverse-color-accent)",
         },
         _active: {
-            "--checkbox-border-color": "var(--color-accent)",
+            "--checkbox-border-color": "var(--3dverse-color-accent)",
         },
         _indeterminate: {
-            "--checkbox-border-color": "var(--color-accent)",
+            "--checkbox-border-color": "var(--3dverse-color-accent)",
         },
     },
     control: {
         borderWidth: "1px",
-        borderColor: "var(--checkbox-border-color)",
+        borderColor: "var(--3dverse-checkbox-border-color)",
         _checked: {
             bg: "accent.500",
             borderColor: "accent.500",

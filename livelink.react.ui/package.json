@@ -26,6 +26,7 @@
   },
   "homepage": "https://github.com/3dverse/livelink#readme",
   "devDependencies": {
+    "@3dverse/design-tokens": "^0.0.3",
     "@3dverse/livelink": "^0.8.0",
     "@types/react": "^18.3.12",
     "@types/react-dom": "^18.3.1",
