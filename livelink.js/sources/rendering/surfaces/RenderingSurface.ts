@@ -128,6 +128,8 @@ export class RenderingSurface extends RenderingSurfaceBase {
      * Releases the resources associated with the surface.
      */
     release(): void {
+        super.release();
+
         this.#auto_resizer.release();
         this.#context.release();
     }

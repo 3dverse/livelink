@@ -116,10 +116,10 @@ export abstract class RenderingSurfaceBase extends TypedEventTarget<RenderingSur
      * Releases the resources associated with the current surface.
      */
     release(): void {
+        this.#last_draw_data = null;
         for (const viewport of this.viewports) {
             viewport.release();
         }
-        this.viewports.length = 0;
     }
 
     /**
