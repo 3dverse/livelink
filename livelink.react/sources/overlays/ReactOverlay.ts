@@ -168,7 +168,11 @@ export class ReactOverlay implements OverlayInterface {
      *
      */
     release(): void {
-        this.#elements.clear();
-        this.#root.unmount();
+        // We need to unmount the root in the next event loop
+        // iteration to avoid unmounting the root while rendering.
+        setTimeout(() => {
+            this.#elements.clear();
+            this.#root.unmount();
+        }, 0);
     }
 }
