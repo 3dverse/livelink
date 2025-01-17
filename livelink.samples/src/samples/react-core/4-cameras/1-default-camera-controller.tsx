@@ -64,7 +64,7 @@ function AppLayout() {
                 </Viewport>
             </Canvas>
             <button
-                className="absolute top-4 left-4 bg-ground p-2 rounded-xl"
+                className="button button-overlay absolute top-4 left-4"
                 onClick={moveCamera}
             >
                 Move Camera

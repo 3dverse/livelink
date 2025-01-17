@@ -7,14 +7,26 @@
 
     /* Variants */
 
-    .button-accent {
-        @apply bg-accent text-primary-dark;
-        box-shadow: 0px 5px 10px hsl(var(--color-accent-hsl), 0.2);
+    .button-overlay {
+        @apply bg-[white] bg-opacity-80 text-primary-dark;
+        backdrop-filter: blur(16px);
+        box-shadow: 0px 5px 8px 2px hsl(0, 0%, 0%, 0.1);
 
         &:hover,
         &:focus,
         &:active {
-            box-shadow: 0px 5px 10px hsl(var(--color-accent-hsl), 0.1);
+            box-shadow: 0px 4px 9px 1px hsl(0, 0%, 0%, 0.08);
+        }
+    }
+
+    .button-accent {
+        @apply bg-accent text-primary-dark;
+        box-shadow: 0px 5px 10px color-mix(in srgb, var(--color-accent) 20%, transparent);
+
+        &:hover,
+        &:focus,
+        &:active {
+            box-shadow: 0px 5px 10px color-mix(in srgb, var(--color-accent) 10%, transparent);
         }
     }
 

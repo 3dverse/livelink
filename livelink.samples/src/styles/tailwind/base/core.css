@@ -11,17 +11,17 @@ body {
     font-family: var(--font-family-secondary);
     -webkit-font-smoothing: antialiased;
     text-rendering: optimizeLegibility;
-    -webkit-tap-highlight-color: hsl(var(--color-content-tertiary-hsl), 0.08);
+    -webkit-tap-highlight-color: color-mix(in srgb, var(--color-content-tertiary) 8%, transparent);
 
-    scrollbar-gutter: stable both-edges;
     scrollbar-color: var(--color-content-tertiary) transparent;
-    scrollbar-width: thin;
+    /* scrollbar-gutter: stable both-edges; */
+    /* scrollbar-width: thin; */
 }
 
 @layer base {
     ::selection {
         color: var(--color-accent);
-        background-color: hsl(var(--color-accent-hsl), 0.1);
+        background-color: color-mix(in srgb, var(--color-accent) 10%, transparent);
     }
 }
 

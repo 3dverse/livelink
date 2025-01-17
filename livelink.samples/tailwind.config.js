@@ -4,35 +4,35 @@ export default {
     content: ["./index.html", "./src/**/*.{js,ts,jsx,tsx}"],
     theme: {
         backgroundColor: {
-            "ground": "hsl(var(--color-bg-ground-hsl), var(--tw-bg-opacity, 1))",
-            "underground": "hsl(var(--color-bg-underground-hsl), var(--tw-bg-opacity, 1))",
-            "overground": "hsl(var(--color-bg-overground-hsl), var(--tw-bg-opacity, 1))",
-            "foreground": "hsl(var(--color-bg-foreground-hsl), var(--tw-bg-opacity, 1))",
+            "ground": "var(--color-bg-ground)",
+            "underground": "var(--color-bg-underground)",
+            "overground": "var(--color-bg-overground)",
+            "foreground": "var(--color-bg-foreground)",
 
-            "accent": "hsl(var(--color-accent-500-hsl), var(--tw-bg-opacity, 1))",
+            "accent": "var(--color-accent-500)",
             "accent-50": "var(--color-accent-50)",
             "accent-100": "var(--color-accent-100)",
             "accent-200": "var(--color-accent-200)",
             "accent-500": "var(--color-accent-500)",
             "accent-800": "var(--color-accent-800)",
 
+            "informative": "var(--color-feedback-informative-500)",
             "informative-50": "var(--color-feedback-informative-50)",
             "informative-100": "var(--color-feedback-informative-100)",
             "informative-500": "var(--color-feedback-informative-500)",
-            "informative": "var(--color-feedback-informative-500)",
             "informative-800": "var(--color-feedback-informative-800)",
 
-            "positive-500": "var(--color-feedback-positive-500)",
             "positive": "var(--color-feedback-positive-500)",
+            "positive-500": "var(--color-feedback-positive-500)",
             "positive-800": "var(--color-feedback-positive-800)",
             "positive-900": "var(--color-feedback-positive-900)",
 
-            "warning-500": "var(--color-feedback-warning-500)",
             "warning": "var(--color-feedback-warning-500)",
+            "warning-500": "var(--color-feedback-warning-500)",
             "warning-800": "var(--color-feedback-warning-800)",
 
-            "negative-500": "var(--color-feedback-negative-500)",
             "negative": "var(--color-feedback-negative-500)",
+            "negative-500": "var(--color-feedback-negative-500)",
             "negative-800": "var(--color-feedback-negative-800)",
 
             inherit: "inherit",
@@ -53,24 +53,24 @@ export default {
             "accent-500": "var(--color-accent-500)",
             "accent-800": "var(--color-accent-800)",
 
+            "informative": "var(--color-feedback-informative-500)",
             "informative-50": "var(--color-feedback-informative-50)",
             "informative-100": "var(--color-feedback-informative-100)",
             "informative-500": "var(--color-feedback-informative-500)",
-            "informative": "var(--color-feedback-informative-500)",
             "informative-800": "var(--color-feedback-informative-800)",
 
-            "positive-500": "var(--color-feedback-positive-500)",
             "positive": "var(--color-feedback-positive-500)",
+            "positive-500": "var(--color-feedback-positive-500)",
             "positive-800": "var(--color-feedback-positive-800)",
             "positive-900": "var(--color-feedback-positive-900)",
 
-            "warning-500": "var(--color-feedback-warning-500)",
             "warning": "var(--color-feedback-warning-500)",
+            "warning-500": "var(--color-feedback-warning-500)",
             "warning-800": "var(--color-feedback-warning-800)",
 
+            "negative": "var(--color-feedback-negative-500)",
             "negative-400": "var(--color-feedback-negative-400)",
             "negative-500": "var(--color-feedback-negative-500)",
-            "negative": "var(--color-feedback-negative-500)",
             "negative-800": "var(--color-feedback-negative-800)",
         },
         borderColor: {
@@ -83,24 +83,28 @@ export default {
             "tertiary": "var(--color-border-tertiary)",
             "quaternary": "var(--color-border-quaternary)",
 
+            "primary-alpha": "var(--color-border-primary-alpha)",
+            "secondary-alpha": "var(--color-border-secondary-alpha)",
+            "tertiary-alpha": "var(--color-border-tertiary-alpha)",
+
+            "informative": "var(--color-feedback-informative-500)",
             "informative-50": "var(--color-feedback-informative-50)",
             "informative-100": "var(--color-feedback-informative-100)",
             "informative-500": "var(--color-feedback-informative-500)",
-            "informative": "var(--color-feedback-informative-500)",
             "informative-800": "var(--color-feedback-informative-800)",
             "informative-900": "var(--color-feedback-informative-900)",
 
-            "positive-500": "var(--color-feedback-positive-500)",
             "positive": "var(--color-feedback-positive-500)",
+            "positive-500": "var(--color-feedback-positive-500)",
             "positive-800": "var(--color-feedback-positive-800)",
             "positive-900": "var(--color-feedback-positive-900)",
 
-            "warning-500": "var(--color-feedback-warning-500)",
             "warning": "var(--color-feedback-warning-500)",
+            "warning-500": "var(--color-feedback-warning-500)",
             "warning-800": "var(--color-feedback-warning-800)",
 
-            "negative-500": "var(--color-feedback-negative-500)",
             "negative": "var(--color-feedback-negative-500)",
+            "negative-500": "var(--color-feedback-negative-500)",
             "negative-800": "var(--color-feedback-negative-800)",
 
             inherit: "inherit",

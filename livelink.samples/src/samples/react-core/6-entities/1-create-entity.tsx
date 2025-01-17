@@ -105,10 +105,11 @@ function EntityCreator() {
     };
 
     return (
-        <div className="absolute top-4 left-4">
-            <button className="button button-primary" onClick={createEntity}>
-                Create Entity
-            </button>
-        </div>
+        <button
+            className="button button-overlay absolute top-4 left-4"
+            onClick={createEntity}
+        >
+            Create Entity
+        </button>
     );
 }

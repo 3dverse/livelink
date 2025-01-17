@@ -139,7 +139,7 @@ function LightComponent({ light }: { light: Entity }) {
                 }
             />
             <button
-                className="button button-primary"
+                className="button button-overlay"
                 onClick={() => {
                     light.point_light = "default";
                 }}
