@@ -2,6 +2,7 @@
  * An event that is fired when a rendering surface is resized.
  *
  * @event
+ * @noInheritDoc
  * @category Rendering
  */
 export class RenderingSurfaceResizedEvent extends Event {

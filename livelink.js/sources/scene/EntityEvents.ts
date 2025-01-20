@@ -5,6 +5,7 @@ import { ComponentName } from "@3dverse/livelink.core";
  * components.
  *
  * @event
+ * @noInheritDoc
  * @category Scene
  */
 export class EntityUpdatedEvent extends Event {
@@ -67,6 +68,7 @@ export class EntityUpdatedEvent extends Event {
  * The event that is fired when the entity visibility changes.
  *
  * @event
+ * @noInheritDoc
  * @category Scene
  */
 export class EntityVisibilityChangedEvent extends Event {

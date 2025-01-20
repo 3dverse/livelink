@@ -7,6 +7,7 @@ import { Entity } from "../scene/Entity";
  * The event that is fired when an entity is hovered.
  *
  * @event
+ * @noInheritDoc
  * @category Rendering
  */
 export class EntityHoveredEvent extends Event {
@@ -48,6 +49,7 @@ export class EntityHoveredEvent extends Event {
  * The event that is fired when an entity is picked.
  *
  * @event
+ * @noInheritDoc
  * @category Rendering
  */
 export class EntityPickedEvent extends Event {

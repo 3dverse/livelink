@@ -5,6 +5,7 @@ import { Viewport } from "../rendering/Viewport";
  * @deprecated
  *
  * @event
+ * @noInheritDoc
  * @category Session
  */
 export class TO_REMOVE__ViewportsAddedEvent extends Event {
@@ -26,6 +27,7 @@ export class TO_REMOVE__ViewportsAddedEvent extends Event {
  * Event emitted when the session is disconnected.
  *
  * @event
+ * @noInheritDoc
  * @category Session
  */
 export class DisconnectedEvent extends Event {
@@ -47,6 +49,7 @@ export class DisconnectedEvent extends Event {
  * Event emitted when the client is about to be disconnected due to inactivity.
  *
  * @event
+ * @noInheritDoc
  * @category Session
  */
 export class InactivityWarningEvent extends Event {
@@ -73,6 +76,7 @@ export class InactivityWarningEvent extends Event {
  * Event emitted when activity is detected after a period of inactivity.
  *
  * @event
+ * @noInheritDoc
  * @category Session
  */
 export class ActivityDetectedEvent extends Event {
@@ -88,6 +92,7 @@ export class ActivityDetectedEvent extends Event {
  * Event emitted when a client joins the session.
  *
  * @event
+ * @noInheritDoc
  * @category Session
  */
 export class ClientJoinedEvent extends Event {
@@ -109,6 +114,7 @@ export class ClientJoinedEvent extends Event {
  * Event emitted when a client leaves the session.
  *
  * @event
+ * @noInheritDoc
  * @category Session
  */
 export class ClientLeftEvent extends Event {
@@ -128,6 +134,7 @@ export class ClientLeftEvent extends Event {
 
 /**
  * @event
+ * @noInheritDoc
  * @category Session
  */
 export type SessionEvents = {
