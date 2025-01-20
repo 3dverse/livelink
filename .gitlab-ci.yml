@@ -82,7 +82,7 @@ variables:
     - cd $PACKAGE_DIR
     - !reference [.node-cache, before_script]
   script:
-    - npm run docs
+    - npm run typedoc:md
     - tar -zcvf docs-md.tgz -C docs-md/ .
     - |
       echo "Publishing $PACKAGE_DIR docs"
@@ -295,6 +295,26 @@ js:livelink.js:docs:
       changes:
         - livelink.js/**/*
         - livelink.js/*
+    - when: never
+
+js:livelink.react:docs:
+  stage: deploy
+  extends:
+    - .docs
+  needs:
+    - job: js:livelink.js:build
+      artifacts: true
+    - job: js:livelink.react:build
+      artifacts: true
+  variables:
+    PACKAGE_DIR: livelink.react
+  rules:
+    # FIXME: The rules aren't correct, it should be performed after the publish job of livelink.react
+    # using the version number determined in the publish job.
+    - if: $CI_COMMIT_REF_NAME == $CI_DEFAULT_BRANCH
+      changes:
+        - livelink.react/**/*
+        - livelink.react/*
     - when: never
 
 js:livelink.js:docs-trigger:
