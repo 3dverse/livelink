@@ -304,8 +304,6 @@ js:livelink.react:docs:
   needs:
     - job: js:livelink.js:build
       artifacts: true
-    - job: js:livelink.react:build
-      artifacts: true
   variables:
     PACKAGE_DIR: livelink.react
   rules:
