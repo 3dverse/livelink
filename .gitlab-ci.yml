@@ -311,6 +311,7 @@ js:livelink.react:docs:
   rules:
     # FIXME: The rules aren't correct, it should be performed after the publish job of livelink.react
     # using the version number determined in the publish job.
+    - if: $CI_COMMIT_TAG
     - if: $CI_COMMIT_REF_NAME == $CI_DEFAULT_BRANCH
       changes:
         - livelink.react/**/*
@@ -322,9 +323,13 @@ js:livelink.js:docs-trigger:
   needs:
     - job: js:livelink.js:docs
       artifacts: false
+    - job: js:livelink.react:docs
+      artifacts: false
   variables:
-    # This variable will be used in the triggered downstream pipeline to download the generated docs artifact.
-    LIVELINK_JS_PACKAGE_URL: ${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/livelink.js/${CI_COMMIT_TAG}/docs-md.tgz
+    # These variables will be used in the triggered downstream pipeline to download the generated docs artifacts.
+    LIVELINK_PACKAGE_NAMES: livelink.js livelink.react
+    LIVELINK_PACKAGE_ROOT: ${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/
+    LIVELINK_PACKAGE_PATH: /${CI_COMMIT_TAG}/docs-md.tgz
     SYNC_LIVELINK_JS: "true"
   rules:
     - if: $CI_COMMIT_TAG
