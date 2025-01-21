@@ -36,18 +36,18 @@ export const CameraController = forwardRef(function CameraController(
     { _preset = "orbital", children }: PropsWithChildren & { _preset?: "orbital" | "fly" },
     ref: Ref<DefaultCameraController | null>,
 ) {
-    const { viewportDomElement, camera } = useContext(ViewportContext);
+    const { viewport, camera } = useContext(ViewportContext);
     const [cameraController, setCameraController] = useState<DefaultCameraController | null>(null);
     useImperativeHandle(ref, () => cameraController, [cameraController]);
 
     useEffect(() => {
-        if (!viewportDomElement || !camera) {
+        if (!viewport || !camera) {
             return;
         }
 
         const controller = new DefaultCameraController({
             camera_entity: camera.camera_entity,
-            dom_element: viewportDomElement,
+            viewport,
         });
         setCameraController(controller);
 
@@ -55,7 +55,7 @@ export const CameraController = forwardRef(function CameraController(
             controller.release();
             setCameraController(null);
         };
-    }, [viewportDomElement, camera]);
+    }, [viewport, camera]);
 
     return <CameraControllerContext.Provider value={{ cameraController }}>{children}</CameraControllerContext.Provider>;
 });

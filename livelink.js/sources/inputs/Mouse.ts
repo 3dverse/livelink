@@ -57,7 +57,7 @@ export class Mouse {
             return;
         }
 
-        const dom_element = viewport._checkDomElement();
+        const dom_element = viewport.dom_element;
         const abort_controller = new AbortController();
 
         dom_element.addEventListener("mousedown", (event: MouseEvent) => this.#onMouseDown({ viewport, event }), {

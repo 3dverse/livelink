@@ -95,6 +95,11 @@ export class Viewport extends TypedEventTarget<ViewportEvents> {
     #hovering_enabled: boolean = false;
 
     /**
+     * Whether the attached camera is controlled by the current client.
+     */
+    is_camera_controlled_by_current_client: boolean = false;
+
+    /**
      * The rendering surface on which the viewport is displayed.
      */
     get rendering_surface(): RenderingSurfaceBase {
@@ -158,6 +163,17 @@ export class Viewport extends TypedEventTarget<ViewportEvents> {
      */
     get relative_rect(): RelativeRect {
         return this.#relative_rect;
+    }
+
+    /**
+     * DOM element attached to the viewport.
+     */
+    get dom_element(): HTMLElement {
+        if (!this.#dom_element) {
+            throw new Error("No DOM element set on viewport");
+        }
+
+        return this.#dom_element;
     }
 
     /**
@@ -252,9 +268,8 @@ export class Viewport extends TypedEventTarget<ViewportEvents> {
             return;
         }
 
-        const dom_element = this._checkDomElement();
+        this.dom_element.addEventListener("click", this.#onClick);
         this.#core.devices.mouse.enableOnViewport({ viewport: this });
-        dom_element.addEventListener("click", this.#onClick);
 
         this.#picking_enabled = true;
     }
@@ -269,9 +284,8 @@ export class Viewport extends TypedEventTarget<ViewportEvents> {
             return;
         }
 
-        const dom_element = this._checkDomElement();
+        this.dom_element.removeEventListener("click", this.#onClick);
         this.#core.devices.mouse.disableFromViewport({ viewport: this });
-        dom_element.removeEventListener("click", this.#onClick);
 
         this.#picking_enabled = false;
     }
@@ -288,9 +302,8 @@ export class Viewport extends TypedEventTarget<ViewportEvents> {
             return;
         }
 
-        const dom_element = this._checkDomElement();
+        this.dom_element.addEventListener("pointermove", this.#onPointerMove);
         this.#core.devices.mouse.enableOnViewport({ viewport: this });
-        dom_element.addEventListener("pointermove", this.#onPointerMove);
 
         this.#hovering_enabled = true;
     }
@@ -307,9 +320,8 @@ export class Viewport extends TypedEventTarget<ViewportEvents> {
             return;
         }
 
-        const dom_element = this._checkDomElement();
+        this.dom_element.removeEventListener("pointermove", this.#onPointerMove);
         this.#core.devices.mouse.disableFromViewport({ viewport: this });
-        dom_element.removeEventListener("pointermove", this.#onPointerMove);
 
         this.#hovering_enabled = false;
     }
@@ -461,17 +473,6 @@ export class Viewport extends TypedEventTarget<ViewportEvents> {
     }
 
     /**
-     * @internal
-     */
-    _checkDomElement(): HTMLElement {
-        if (!this.#dom_element) {
-            throw new Error("No DOM element set on viewport");
-        }
-
-        return this.#dom_element;
-    }
-
-    /**
      * Return the screen position from a mouse event.
      *
      * @param params
@@ -488,7 +489,7 @@ export class Viewport extends TypedEventTarget<ViewportEvents> {
      * @internal
      */
     _getScreenPosition({ position }: { position: Vec2 }): Vec2 {
-        const bounding_rect = this._checkDomElement().getBoundingClientRect();
+        const bounding_rect = this.dom_element.getBoundingClientRect();
 
         const posX = (position[0] - bounding_rect.left) / bounding_rect.width;
         const posY = (position[1] - bounding_rect.top) / bounding_rect.height;

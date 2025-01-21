@@ -19,13 +19,13 @@ export type FrameMetaData = {
 
     /**
      * @internal
-     * Camera transforms of each client viewport in the frame
+     * Camera transforms of each client camera attached to a viewport in the frame
      */
-    current_client_camera_entities: Array<FrameCameraTransform & { viewport: Viewport }>;
+    viewport_layout_camera_entities: Array<FrameCameraTransform & { viewport: Viewport }>;
 
     /**
      * @internal
-     * Camera transforms of each other client viewport in the frame
+     * Camera transforms of each client camera not attached to a viewport in the frame
      */
     other_clients_camera_entities: Array<FrameCameraTransform>;
 };
@@ -47,55 +47,56 @@ export function convertRawFrameMetaDataToFrameMetaData({
     const meta_data: FrameMetaData = {
         renderer_timestamp: raw_frame_meta_data.renderer_timestamp,
         frame_counter: raw_frame_meta_data.frame_counter,
-        current_client_camera_entities: [],
+        viewport_layout_camera_entities: [],
         other_clients_camera_entities: [],
     };
 
-    const other_clients = raw_frame_meta_data.clients.filter(client => client.client_id !== client_id);
+    for (const client_meta_data of raw_frame_meta_data.clients) {
+        const is_current_client = client_meta_data.client_id === client_id;
 
-    const current_client = raw_frame_meta_data.clients.find(client => client.client_id === client_id);
-    for (const viewport_meta_data of current_client?.viewports || []) {
-        const camera_entity = entity_registry.get({ entity_rtid: viewport_meta_data.camera_rtid });
-        if (!camera_entity) {
-            continue;
-        }
-
-        const viewport = viewports.find(v => v.camera_projection?.camera_entity.rtid === camera_entity.rtid);
-        if (!viewport) {
-            continue;
-        }
-
-        const cameraMetadata: FrameCameraTransform & { viewport: Viewport } = {
-            camera_entity,
-            viewport,
-            world_from_view_matrix: viewport_meta_data.ws_from_ls,
-            world_position: getWorldPosition(viewport_meta_data.ws_from_ls),
-            world_orientation: getWorldQuaternion(viewport_meta_data.ws_from_ls),
-        };
-        meta_data.current_client_camera_entities.push(cameraMetadata);
-    }
-
-    for (const client_meta_data of other_clients) {
         for (const viewport_meta_data of client_meta_data.viewports) {
             const camera_entity = entity_registry.get({ entity_rtid: viewport_meta_data.camera_rtid });
             if (!camera_entity) {
                 continue;
             }
 
-            //TODO: This is a temporary solution, we need to find a better way to identify cameras
-            //      that are controlled by the current client.
-            // Skip cameras which also belong to current client
-            if (meta_data.current_client_camera_entities.some(c => c.camera_entity.rtid === camera_entity.rtid)) {
+            const viewport = viewports.find(v => v.camera_projection?.camera_entity.rtid === camera_entity.rtid);
+
+            // Either the metadata concerns a viewport that is displayed on the current frame
+            // whether it is controlled by the current client or not
+            if (is_current_client) {
+                if (viewport) {
+                    meta_data.viewport_layout_camera_entities.push({
+                        camera_entity,
+                        world_from_view_matrix: viewport_meta_data.ws_from_ls,
+                        world_position: getWorldPosition(viewport_meta_data.ws_from_ls),
+                        world_orientation: getWorldQuaternion(viewport_meta_data.ws_from_ls),
+                        viewport,
+                    });
+                }
+
                 continue;
             }
 
-            const cameraMetadata: FrameCameraTransform = {
+            // Otherwise, this metadata describes the frame layout of another client.
+            // In that case, the other client might be watching one of our cameras.
+            // That is the case when viewport is not null.
+            if (viewport) {
+                // If the camera attached to the viewport is controlled by the current client,
+                // we are already aware of its transform, so we can skip it.
+                if (viewport.is_camera_controlled_by_current_client) {
+                    continue;
+                }
+            }
+
+            // If we are down here, it means that either the camera is not attached to a viewport,
+            // or it is attached to a viewport but not controlled by the current client.
+            meta_data.other_clients_camera_entities.push({
                 camera_entity,
                 world_from_view_matrix: viewport_meta_data.ws_from_ls,
                 world_position: getWorldPosition(viewport_meta_data.ws_from_ls),
                 world_orientation: getWorldQuaternion(viewport_meta_data.ws_from_ls),
-            };
-            meta_data.other_clients_camera_entities.push(cameraMetadata);
+            });
         }
     }
 

@@ -103,7 +103,7 @@ export abstract class EncodedFrameConsumer {
     #applyFrameMetaData({ meta_data }: { meta_data: FrameMetaData }): void {
         this.#setNotControlledCamerasGlobalTransform({ meta_data });
 
-        for (const frame_camera_transform of meta_data.current_client_camera_entities) {
+        for (const frame_camera_transform of meta_data.viewport_layout_camera_entities) {
             frame_camera_transform.viewport.camera_projection?.updateFromFrameCameraTransform({
                 frame_camera_transform,
             });

@@ -3,7 +3,8 @@ import { Components } from "@3dverse/livelink.core";
 import CameraControls, { Clock } from "@3dverse/livelink-camera-controls";
 
 //------------------------------------------------------------------------------
-import { Entity } from "../scene/Entity";
+import type { Entity } from "../scene/Entity";
+import type { Viewport } from "./Viewport";
 
 /**
  * A camera controller based on the `camera-controls` library.
@@ -15,6 +16,11 @@ export class CameraController extends CameraControls {
      *
      */
     #camera_entity: Entity;
+
+    /**
+     *
+     */
+    #viewport: Viewport;
 
     /**
      *
@@ -31,16 +37,19 @@ export class CameraController extends CameraControls {
      */
     constructor({
         camera_entity,
-        dom_element,
+        viewport,
         activate = true,
     }: {
         camera_entity: Entity;
-        dom_element: HTMLElement;
+        viewport: Viewport;
         activate?: boolean;
     }) {
-        super(camera_entity.local_transform!, getLens(camera_entity), dom_element);
+        super(camera_entity.local_transform!, getLens(camera_entity), viewport.dom_element);
 
         this.#camera_entity = camera_entity;
+        this.#viewport = viewport;
+
+        this.#viewport.is_camera_controlled_by_current_client = true;
 
         this.#initController();
 
@@ -53,6 +62,7 @@ export class CameraController extends CameraControls {
      *
      */
     release(): void {
+        this.#viewport.is_camera_controlled_by_current_client = false;
         this.deactivate();
         this.dispose();
     }
