@@ -101,163 +101,165 @@ js:build:
     - npm run build:react.ui
     - npm run build:three
     - npm run build:samples
-
-# DEPLOY
-js:livelink.js:publish:
-  stage: deploy
-  extends:
-    - .publish
-  needs:
-    - job: js:livelink.js:build
-      artifacts: true
-  variables:
-    PACKAGE_DIR: livelink.js
-    PACKAGE_PATH_NAME: $LIVELINK_JS_PACKAGE
-  rules:
-    - if: $CI_COMMIT_TAG != null
-
-js:livelink.react:publish:
-  stage: deploy
-  extends:
-    - .publish
-  needs:
-    - job: js:livelink.react:build
-      artifacts: true
-  variables:
-    PACKAGE_NAME: livelink-react
-    PACKAGE_DIR: livelink.react
-    PACKAGE_PATH_NAME: $LIVELINK_REACT_PACKAGE
-  script:
-    - !reference [.update-version, script]
-    - !reference [.publish, script]
-  rules:
-    - if: $CI_COMMIT_REF_NAME == $CI_DEFAULT_BRANCH
-      changes:
-        - livelink.react/**/*
-        - livelink.react/*
-
-js:livelink.three:publish:
-  stage: deploy
-  extends:
-    - .publish
-  needs:
-    - job: js:livelink.three:build
-      artifacts: true
-  variables:
-    PACKAGE_NAME: livelink-three
-    PACKAGE_DIR: livelink.three
-    PACKAGE_PATH_NAME: $LIVELINK_THREE_PACKAGE
-  script:
-    - !reference [.update-version, script]
-    - !reference [.publish, script]
-  rules:
-    - if: $CI_COMMIT_REF_NAME == $CI_DEFAULT_BRANCH
-      changes:
-        - livelink.three/**/*
-        - livelink.three/*
-
-js:livelink.react.ui:publish:
-  stage: deploy
-  extends:
-    - .publish
-  needs:
-    - job: js:livelink.react.ui:build
-      artifacts: true
-  variables:
-    PACKAGE_NAME: livelink-react-ui
-    PACKAGE_DIR: livelink.react.ui
-    PACKAGE_PATH_NAME: $LIVELINK_REACT_UI_PACKAGE
-  script:
-    - !reference [.update-version, script]
-    - !reference [.publish, script]
-  rules:
-    - if: $CI_COMMIT_REF_NAME == $CI_DEFAULT_BRANCH
-      changes:
-        - livelink.react.ui/**/*
-        - livelink.react.ui/*
-
-# DOCS
-pages:
-  stage: deploy
-  extends:
-    - .env-dev
-    - .runner-onprem
-  needs:
-    - job: js:livelink.samples:build
-      artifacts: true
-  artifacts:
-    paths:
-      - public/
-  before_script:
-    - mkdir public
-  script:
-    - tar -zxf ${LIVELINK_SAMPLES_PACKAGE}-*.tgz --strip-components=2 -C public
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
-      when: never
-    - if: $CI_COMMIT_TAG != null
-      when: never
-    - if: $CI_COMMIT_REF_NAME == $CI_DEFAULT_BRANCH
 
-js:livelink.js:docs:
-  stage: deploy
-  extends:
-    - .docs
-  needs:
-    - job: js:livelink.js:build
-      artifacts: true
-  variables:
-    PACKAGE_DIR: livelink.js
-  rules:
-    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
-      when: never
-    - if: $CI_COMMIT_TAG
-    - if: $CI_COMMIT_REF_NAME == $CI_DEFAULT_BRANCH
-      changes:
-        - livelink.js/**/*
-        - livelink.js/*
-    - when: never
+# # DEPLOY
+# js:livelink.js:publish:
+#   stage: deploy
+#   extends:
+#     - .publish
+#   needs:
+#     - job: js:livelink.js:build
+#       artifacts: true
+#   variables:
+#     PACKAGE_DIR: livelink.js
+#     PACKAGE_PATH_NAME: $LIVELINK_JS_PACKAGE
+#   rules:
+#     - if: $CI_COMMIT_TAG != null
 
-js:livelink.react:docs:
-  stage: deploy
-  extends:
-    - .docs
-  needs:
-    - job: js:livelink.js:build
-      artifacts: true
-  variables:
-    PACKAGE_DIR: livelink.react
-  rules:
-    # FIXME: The rules aren't correct, it should be performed after the publish job of livelink.react
-    # using the version number determined in the publish job.
-    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
-      when: never
-    - if: $CI_COMMIT_TAG
-    - if: $CI_COMMIT_REF_NAME == $CI_DEFAULT_BRANCH
-      changes:
-        - livelink.react/**/*
-        - livelink.react/*
-    - when: never
+# js:livelink.react:publish:
+#   stage: deploy
+#   extends:
+#     - .publish
+#   needs:
+#     - job: js:livelink.react:build
+#       artifacts: true
+#   variables:
+#     PACKAGE_NAME: livelink-react
+#     PACKAGE_DIR: livelink.react
+#     PACKAGE_PATH_NAME: $LIVELINK_REACT_PACKAGE
+#   script:
+#     - !reference [.update-version, script]
+#     - !reference [.publish, script]
+#   rules:
+#     - if: $CI_COMMIT_REF_NAME == $CI_DEFAULT_BRANCH
+#       changes:
+#         - livelink.react/**/*
+#         - livelink.react/*
 
-js:livelink.js:docs-trigger:
-  stage: deploy
-  needs:
-    - job: js:livelink.js:docs
-      artifacts: false
-    - job: js:livelink.react:docs
-      artifacts: false
-  variables:
-    # These variables will be used in the triggered downstream pipeline to download the generated docs artifacts.
-    LIVELINK_PACKAGE_NAMES: livelink.js livelink.react
-    LIVELINK_PACKAGE_ROOT: ${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/
-    LIVELINK_PACKAGE_PATH: /${CI_COMMIT_TAG}/docs-md.tgz
-    SYNC_LIVELINK_JS: "true"
-  rules:
-    - if: $CI_COMMIT_TAG
-    - when: never
-  trigger:
-    project: 3dverse/corp/3dverse-docs
-    strategy: depend
+# js:livelink.three:publish:
+#   stage: deploy
+#   extends:
+#     - .publish
+#   needs:
+#     - job: js:livelink.three:build
+#       artifacts: true
+#   variables:
+#     PACKAGE_NAME: livelink-three
+#     PACKAGE_DIR: livelink.three
+#     PACKAGE_PATH_NAME: $LIVELINK_THREE_PACKAGE
+#   script:
+#     - !reference [.update-version, script]
+#     - !reference [.publish, script]
+#   rules:
+#     - if: $CI_COMMIT_REF_NAME == $CI_DEFAULT_BRANCH
+#       changes:
+#         - livelink.three/**/*
+#         - livelink.three/*
+
+# js:livelink.react.ui:publish:
+#   stage: deploy
+#   extends:
+#     - .publish
+#   needs:
+#     - job: js:livelink.react.ui:build
+#       artifacts: true
+#   variables:
+#     PACKAGE_NAME: livelink-react-ui
+#     PACKAGE_DIR: livelink.react.ui
+#     PACKAGE_PATH_NAME: $LIVELINK_REACT_UI_PACKAGE
+#   script:
+#     - !reference [.update-version, script]
+#     - !reference [.publish, script]
+#   rules:
+#     - if: $CI_COMMIT_REF_NAME == $CI_DEFAULT_BRANCH
+#       changes:
+#         - livelink.react.ui/**/*
+#         - livelink.react.ui/*
+
+# # DOCS
+# pages:
+#   stage: deploy
+#   extends:
+#     - .env-dev
+#     - .runner-onprem
+#   needs:
+#     - job: js:livelink.samples:build
+#       artifacts: true
+#   artifacts:
+#     paths:
+#       - public/
+#   before_script:
+#     - mkdir public
+#   script:
+#     - tar -zxf ${LIVELINK_SAMPLES_PACKAGE}-*.tgz --strip-components=2 -C public
+#   rules:
+#     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+#       when: never
+#     - if: $CI_COMMIT_TAG != null
+#       when: never
+#     - if: $CI_COMMIT_REF_NAME == $CI_DEFAULT_BRANCH
+
+# js:livelink.js:docs:
+#   stage: deploy
+#   extends:
+#     - .docs
+#   needs:
+#     - job: js:livelink.js:build
+#       artifacts: true
+#   variables:
+#     PACKAGE_DIR: livelink.js
+#   rules:
+#     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+#       when: never
+#     - if: $CI_COMMIT_TAG
+#     - if: $CI_COMMIT_REF_NAME == $CI_DEFAULT_BRANCH
+#       changes:
+#         - livelink.js/**/*
+#         - livelink.js/*
+#     - when: never
+
+# js:livelink.react:docs:
+#   stage: deploy
+#   extends:
+#     - .docs
+#   needs:
+#     - job: js:livelink.js:build
+#       artifacts: true
+#   variables:
+#     PACKAGE_DIR: livelink.react
+#   rules:
+#     # FIXME: The rules aren't correct, it should be performed after the publish job of livelink.react
+#     # using the version number determined in the publish job.
+#     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+#       when: never
+#     - if: $CI_COMMIT_TAG
+#     - if: $CI_COMMIT_REF_NAME == $CI_DEFAULT_BRANCH
+#       changes:
+#         - livelink.react/**/*
+#         - livelink.react/*
+#     - when: never
+
+# js:livelink.js:docs-trigger:
+#   stage: deploy
+#   needs:
+#     - job: js:livelink.js:docs
+#       artifacts: false
+#     - job: js:livelink.react:docs
+#       artifacts: false
+#   variables:
+#     # These variables will be used in the triggered downstream pipeline to download the generated docs artifacts.
+#     LIVELINK_PACKAGE_NAMES: livelink.js livelink.react
+#     LIVELINK_PACKAGE_ROOT: ${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/
+#     LIVELINK_PACKAGE_PATH: /${CI_COMMIT_TAG}/docs-md.tgz
+#     SYNC_LIVELINK_JS: "true"
+#   rules:
+#     - if: $CI_COMMIT_TAG
+#     - when: never
+#   trigger:
+#     project: 3dverse/corp/3dverse-docs
+#     strategy: depend
 
 # VERSION #############################################################################################################
 version:comment-mr:
@@ -270,10 +272,16 @@ version:comment-mr:
     - !reference [.node-cache, before_script]
     - apk add --no-cache git
   script:
+    - env
     - npx changeset-conventional-commits
+    - |
+      git config --global user.name "${BOT_3DVERSE_USER_NAME}"
+      git config --global user.email "${BOT_3DVERSE_USER_EMAIL}"
+    - |
+      git add .changeset
+      git commit -m "chore: add changesets"
     - npx changesets-gitlab comment
   variables:
-    GITLAB_TOKEN: ${BOT_3DVERSE_GITLAB_API_TOKEN}
     GITLAB_CI_USER_NAME: ${BOT_3DVERSE_USER_NAME}
     GITLAB_CI_USER_EMAIL: ${BOT_3DVERSE_USER_EMAIL}
     INPUT_TITLE: "chore: new release"
