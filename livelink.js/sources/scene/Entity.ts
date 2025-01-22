@@ -7,6 +7,7 @@ import type {
     EntityCore,
     ComponentsManifest,
     ComponentsRecord,
+    Components,
 } from "@3dverse/livelink.core";
 
 //------------------------------------------------------------------------------
@@ -16,6 +17,9 @@ import { EntityBase, type DefaultValue } from "../../_prebuild/EntityBase";
 import { EntityCreationOptions, Scene } from "./Scene";
 import { ComponentHandler, ComponentHandlers, LocalTransformHandler } from "./ComponentHandler";
 import { EntityUpdatedEvent, EntityVisibilityChangedEvent } from "./EntityEvents";
+
+//------------------------------------------------------------------------------
+export type GlobalTransform = Omit<Components.LocalTransform, "globalEulerOrientation">;
 
 /**
  * An entity in a scene.
@@ -156,6 +160,21 @@ export class Entity extends EntityBase {
     }
 
     /**
+     * The global transform of the entity.
+     */
+    get global_transform(): GlobalTransform {
+        return this.local_transform!;
+    }
+
+    /**
+     * The global transform of the entity.
+     */
+    set global_transform(value: Partial<GlobalTransform>) {
+        this._setGlobalTransform({ global_transform: value, change_source: "local" });
+        this._markComponentAsDirty({ component_name: "local_transform" });
+    }
+
+    /**
      *
      */
     set parent(parent: Entity | null) {
@@ -234,14 +253,36 @@ export class Entity extends EntityBase {
 
     /**
      * @internal
+     *
+     * Recalculate the local transform of the entity based on the global transform.
+     * Does not mark the local transform as dirty.
+     */
+    _setGlobalTransform({
+        global_transform,
+        change_source,
+    }: {
+        global_transform: Partial<GlobalTransform>;
+        change_source: "local" | "external";
+    }): void {
+        //TODO: implement local_transform recalculation
+        this._mergeComponents({
+            components: { local_transform: global_transform },
+            dispatch_event: true,
+            change_source,
+        });
+    }
+
+    /**
+     * @internal
      */
     _mergeComponents({
         components,
         dispatch_event,
-    }: {
-        components: EntityCore | ComponentsManifest | Partial<ComponentsRecord>;
-        dispatch_event?: boolean;
-    }): void {
+        change_source,
+    }: { components: EntityCore | ComponentsManifest | Partial<ComponentsRecord> } & (
+        | { dispatch_event: false; change_source?: undefined }
+        | { dispatch_event: true; change_source: "local" | "external" }
+    )): void {
         for (const key in components) {
             const component_name = key as ComponentName;
             if (key !== "euid") {
@@ -252,7 +293,7 @@ export class Entity extends EntityBase {
         if (dispatch_event) {
             this._dispatchEvent(
                 new EntityUpdatedEvent({
-                    change_source: "external",
+                    change_source,
                     updated_components: Object.keys(components) as Array<ComponentName>,
                     deleted_components: [],
                     new_components: [],

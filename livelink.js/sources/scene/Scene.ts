@@ -478,7 +478,11 @@ export class Scene {
         }
 
         for (const entity of entities) {
-            entity._mergeComponents({ components: updated_components, dispatch_event: true });
+            entity._mergeComponents({
+                components: updated_components,
+                dispatch_event: true,
+                change_source: "external",
+            });
         }
     }
 
