@@ -16,6 +16,7 @@
     "build:react": "npm -C livelink.react run build",
     "build:react.ui": "npm -C livelink.react.ui run build",
     "build:three": "npm -C livelink.three run build",
+    "build:samples": "npm -C livelink.samples run build",
     "build": "npm run build:js && npm run build:react && npm run build:react.ui && npm run build:three",
     "clean:js": "npm -C livelink.js run clean",
     "clean:react": "npm -C livelink.react run clean",

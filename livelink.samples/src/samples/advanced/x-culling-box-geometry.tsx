@@ -178,8 +178,7 @@ function BoxGeometryMesh({
         scene.add(globalTransformObject);
 
         const updateObjectsTransform = () => {
-            // TODO: This should actually get the global transform not the local transform.
-            const globalTransform = boxGeometryEntity.local_transform!;
+            const globalTransform = boxGeometryEntity.global_transform;
             globalTransformObject.position.fromArray(globalTransform.position);
             globalTransformObject.quaternion.fromArray(
                 globalTransform.orientation,
@@ -382,8 +381,7 @@ function createBoxGeometryHandle({
         local_from_world: THREE.Matrix4;
         world_position: THREE.Vector3;
     } {
-        // TODO: This should actually get the global transform not the local transform.
-        const globalTransform = boxGeometryEntity.local_transform!;
+        const globalTransform = boxGeometryEntity.global_transform;
 
         const world_position = new THREE.Vector3().fromArray(
             globalTransform.position,
