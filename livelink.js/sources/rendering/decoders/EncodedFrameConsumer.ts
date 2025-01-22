@@ -115,10 +115,9 @@ export abstract class EncodedFrameConsumer {
      */
     #setNotControlledCamerasGlobalTransform({ meta_data }: { meta_data: FrameMetaData }): void {
         for (const { camera_entity, world_position, world_orientation } of meta_data.other_clients_camera_entities) {
-            // TODO: This should actually set the global transform not the local transform.
-            camera_entity._mergeComponents({
-                components: { local_transform: { position: world_position, orientation: world_orientation } },
-                dispatch_event: true,
+            camera_entity._setGlobalTransform({
+                global_transform: { position: world_position, orientation: world_orientation },
+                change_source: "external",
             });
         }
     }
