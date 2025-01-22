@@ -335,3 +335,23 @@ js:livelink.js:docs-trigger:
   trigger:
     project: 3dverse/corp/3dverse-docs
     strategy: depend
+
+# VERSION #############################################################################################################
+version:comment-mr:
+  stage: deploy
+  extends:
+    - .runner-onprem
+  image: node:${NODE_VERSION}-alpine
+  before_script:
+    - !reference [.npm-regcreds, before_script]
+    - !reference [.node-cache, before_script]
+  script:
+    - npx changeset-conventional-commits
+    - npx changesets-gitlab comment
+  variables:
+    GITLAB_TOKEN: ${BOT_3DVERSE_GITLAB_API_TOKEN}
+    GITLAB_CI_USER_NAME: ${BOT_3DVERSE_USER_NAME}
+    GITLAB_CI_USER_EMAIL: ${BOT_3DVERSE_USER_EMAIL}
+    INPUT_TITLE: "chore: new release"
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
