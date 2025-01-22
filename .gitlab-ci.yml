@@ -15,28 +15,6 @@ variables:
   LIVELINK_SAMPLES_PACKAGE: livelink.samples/livelink.samples
 
 # TEMPLATES ###########################################################################################################
-.build:
-  stage: build
-  extends:
-    - .env-dev
-    - .runner-onprem
-  image: node:${NODE_VERSION}
-  artifacts:
-    expire_in: 1 day
-    paths:
-      - $PACKAGE_DIR/$PACKAGE_PATH_NAME-*.tgz
-      - $PACKAGE_DIR/_prebuild/
-      - $PACKAGE_DIR/dist/
-  before_script:
-    - !reference [.npm-regcreds, before_script]
-    - cd $PACKAGE_DIR
-    - !reference [.node-cache, before_script]
-  script:
-    - npm run build
-    - npm pack
-  rules:
-    - when: always
-
 .update-version:
   script:
     - |
@@ -103,87 +81,26 @@ variables:
 
 # JOBS ################################################################################################################
 # BUILD
-js:livelink.js:build:
+js:build:
+  stage: build
   extends:
-    - .build
-  variables:
-    PACKAGE_DIR: livelink.js
-    PACKAGE_PATH_NAME: 3dverse-livelink
-
-js:livelink.react:build:
-  extends:
-    - .build
-  variables:
-    PACKAGE_DIR: livelink.react
-    PACKAGE_PATH_NAME: 3dverse-livelink-react
-  needs:
-    - job: js:livelink.js:build
-      artifacts: true
+    - .env-dev
+    - .runner-onprem
+  image: node:${NODE_VERSION}
+  artifacts:
+    expire_in: 1 day
+    paths:
+      - "**/_prebuild/"
+      - "**/dist/"
   before_script:
-    - tar -zxf ${LIVELINK_JS_PACKAGE}-*.tgz --strip-components=1 -C livelink.js
-    - !reference [.build, before_script]
-  rules:
-    - if: $CI_COMMIT_TAG == null
-
-js:livelink.three:build:
-  extends:
-    - .build
-  variables:
-    PACKAGE_DIR: livelink.three
-    PACKAGE_PATH_NAME: 3dverse-livelink-three
-  needs:
-    - job: js:livelink.js:build
-      artifacts: true
-    - job: js:livelink.react:build
-      artifacts: true
-  before_script:
-    - tar -zxf ${LIVELINK_JS_PACKAGE}-*.tgz --strip-components=1 -C livelink.js
-    - tar -zxf ${LIVELINK_REACT_PACKAGE}-*.tgz --strip-components=1 -C livelink.react
-    - !reference [.build, before_script]
-  rules:
-    - if: $CI_COMMIT_TAG == null
-
-js:livelink.react.ui:build:
-  extends:
-    - .build
-  variables:
-    PACKAGE_DIR: livelink.react.ui
-    PACKAGE_PATH_NAME: 3dverse-livelink-react-ui
-  needs:
-    - job: js:livelink.js:build
-      artifacts: true
-    # - job: js:livelink.react:build
-    #   artifacts: true
-  before_script:
-    - tar -zxf ${LIVELINK_JS_PACKAGE}-*.tgz --strip-components=1 -C livelink.js
-    # - tar -zxf ${LIVELINK_REACT_PACKAGE}-*.tgz --strip-components=1 -C livelink.react
-    - !reference [.build, before_script]
-  rules:
-    - if: $CI_COMMIT_TAG == null
-
-js:livelink.samples:build:
-  extends:
-    - .build
-  variables:
-    PACKAGE_DIR: livelink.samples
-    PACKAGE_PATH_NAME: livelink.samples
-  needs:
-    - job: js:livelink.js:build
-      artifacts: true
-    - job: js:livelink.three:build
-      artifacts: true
-    - job: js:livelink.react:build
-      artifacts: true
-    - job: js:livelink.react.ui:build
-      artifacts: true
-  before_script:
-    - tar -zxf ${LIVELINK_JS_PACKAGE}-*.tgz --strip-components=1 -C livelink.js
-    - tar -zxf ${LIVELINK_THREE_PACKAGE}-*.tgz --strip-components=1 -C livelink.three
-    - tar -zxf ${LIVELINK_REACT_PACKAGE}-*.tgz --strip-components=1 -C livelink.react
-    - tar -zxf ${LIVELINK_REACT_UI_PACKAGE}-*.tgz --strip-components=1 -C livelink.react.ui
-    - !reference [.build, before_script]
-  rules:
-    - if: $CI_COMMIT_TAG == null
+    - !reference [.npm-regcreds, before_script]
+    - !reference [.node-cache, before_script]
+  script:
+    - npm run build:js
+    - npm run build:react
+    - npm run build:react.ui
+    - npm run build:three
+    - npm run build:samples
 
 # DEPLOY
 js:livelink.js:publish:
