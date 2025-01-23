@@ -9,12 +9,14 @@ import { LOCAL_STORAGE_KEYS, useLocalStorage } from "../lib/localStorage.ts";
 
 //------------------------------------------------------------------------------
 const BREAKPOINT_LG = 991;
+const HIDE_3DVERSE_LOGO_QUERY = "hide3dverseLogo";
 
 //------------------------------------------------------------------------------
 export function MainMenu() {
     //--------------------------------------------------------------------------
     const [isCollapsed, setIsCollapsed] = useLocalStorage<boolean>(LOCAL_STORAGE_KEYS.IS_MAIN_MENU_COLLAPSED, false);
     const [isScreenLargerThanLG, setIsScreenLargerThanLG] = useState<boolean>();
+    const [is3dverseLogoVisible, setIs3dverseLogoVisible] = useState<boolean>(true);
 
     //--------------------------------------------------------------------------
     const onCollapse = () => {
@@ -29,6 +31,17 @@ export function MainMenu() {
         handleResize();
         window.addEventListener("resize", handleResize);
         return () => window.removeEventListener("resize", handleResize);
+    }, []);
+
+    // Hide 3dverse logo for Documentation Samples pages:
+    // https://docs.3dverse.com/samples
+    useEffect(() => {
+        const url = new URL(window.location.href);
+        const params = new URLSearchParams(url.search);
+        const hide3dverseLogo = ["true", "1"].includes(params.get(HIDE_3DVERSE_LOGO_QUERY) || "");
+        if (hide3dverseLogo) {
+            setIs3dverseLogoVisible(false);
+        }
     }, []);
 
     //--------------------------------------------------------------------------
@@ -66,11 +79,13 @@ export function MainMenu() {
                             to="/"
                             className="flex items-start gap-3 pl-3 font-primary text-secondary text-md font-medium tracking-wider"
                         >
-                            <img
-                                src="https://3dverse.com/logo/3dverse-wordmark.svg"
-                                className="h-4 mt-[3px]"
-                                alt="3dverse"
-                            />
+                            {is3dverseLogoVisible && (
+                                <img
+                                    src="https://3dverse.com/logo/3dverse-wordmark.svg"
+                                    className="h-4 mt-[3px]"
+                                    alt="3dverse"
+                                />
+                            )}
                             Samples
                         </NavLink>
                         <button className="button button-icon" onClick={onCollapse}>
