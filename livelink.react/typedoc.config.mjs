@@ -16,6 +16,15 @@ const config = {
         includeCategories: true,
         includeGroups: false,
     },
+    tsconfig: "tsconfig.json",
+
+    markdownItOptions: {
+        hidePageHeader: true,
+        hideBreadcrumbs: true,
+        hidePageTitle: true,
+        useCodeBlocks: true,
+        parametersFormat: "table",
+    },
 };
 
 export default config;

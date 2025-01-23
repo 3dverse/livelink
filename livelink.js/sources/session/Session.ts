@@ -52,12 +52,16 @@ export type SessionSelector = ({ sessions }: { sessions: Array<SessionInfo> }) =
  * To create or find a session, you need a valid authentication token that has at least
  * read access to the scene the session will use.
  *
- * See: https://docs.3dverse.com/api/#tag/User-Authentication/operation/generateUserToken
+ * See: https://docs.3dverse.com/api/generate-user-token
  *
  * ### Events
- * - `on-disconnected` - Fired when the session is disconnected.
- * - `client-joined` - Fired when a client joins the session.
- * - `client-left` - Fired when a client leaves the session.
+ * - {@link ClientJoinedEvent} - Fired when a client joins the session.
+ * - {@link ClientLeftEvent} - Fired when a client leaves the session.
+ * - {@link InactivityWarningEvent} - Fired when the client is inactive for a certain amount of time.
+ * - {@link ActivityDetectedEvent} - Fired when the client is active again.
+ * - {@link DisconnectedEvent} - Fired when the session is disconnected.
+ *
+ * See: {@link SessionEvents} for more details.
  *
  * @category Session
  */

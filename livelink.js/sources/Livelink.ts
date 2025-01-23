@@ -54,9 +54,9 @@ import { Gamepad } from "./inputs/Gamepad";
  * - {@link Livelink.startStreaming} to start streaming the remotely rendered frames.
  *
  * ### Input devices
- * Input devices can be activated and deactivated to the Livelink instance using the
- * {@link Livelink.devices} property.
- * The input devices are responsible for sending periodically their state to the server.
+ * Input devices can be accessed from the Livelink instance using the {@link Livelink.devices} property.
+ * They can be activated and deactivated using the appropriate methods.
+ * An active input device will automatically send its state as it changes to the server.
  *
  * ### Starting a new session
  *

@@ -126,22 +126,21 @@ type ConnectionPromisesMap = Map<string, Promise<Livelink.Livelink>>;
  * This component initializes and maintains a connection to the Livelink service
  * and supplies relevant connection state and methods to its children via context.
  *
- * @param props - The properties for configuring the Livelink connection and UI behavior.
+ * @param params
  *
- * @property children - React children components that will have access to the Livelink context.
- * @property sceneId - The unique identifier of the scene to connect to (required for "start" or "join-or-start").
- * @property sessionId - The unique identifier of the session to join (required for "join").
- * @property isTransient - Specifies if the connection is transient (non-persistent).
- * @property token - The authentication token required for the Livelink connection.
- * @property loader - Optional React node displayed while the connection is being established.
- * @property inactivityTimeoutModal - Optional React node displayed when an inactivity timeout occurs.
- * @property disconnectedModal - Optional React node displayed when the connection is lost.
- * @property sessionOpenMode - Specifies the mode for opening the session; defaults to `"join-or-start"`.
+ * @param params.children - React children components that will have access to the Livelink context.
+ * @param params.sceneId - The unique identifier of the scene to connect to (required for "start" or "join-or-start").
+ * @param params.sessionId - The unique identifier of the session to join (required for "join").
+ * @param params.isTransient - Specifies if the connection is transient (non-persistent).
+ * @param params.token - The authentication token required for the Livelink connection.
+ * @param params.LoadingPanel - Optional React node displayed while the connection is being established.
+ * @param params.InactivityWarningPanel - Optional React node displayed when an inactivity timeout occurs.
+ * @param params.ConnectionErrorPanel - Optional React node displayed when the connection is lost.
+ * @param params.sessionOpenMode - Specifies the mode for opening the session; defaults to `"join-or-start"`.
  *
  * @category Context Providers
  */
 export function LivelinkProvider({
-    children,
     sceneId,
     sessionId,
     isTransient,
@@ -150,6 +149,7 @@ export function LivelinkProvider({
     InactivityWarningPanel,
     ConnectionErrorPanel,
     sessionOpenMode = "join-or-start",
+    children,
 }: PropsWithChildren<LivelinkConnectParameters>): JSX.Element {
     const [instance, setInstance] = useState<LivelinkInstance | null>(null);
     const [isConnecting, setIsConnecting] = useState(true);

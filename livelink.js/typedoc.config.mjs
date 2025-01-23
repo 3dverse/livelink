@@ -16,6 +16,20 @@ const config = {
         includeCategories: true,
         includeGroups: true,
     },
+
+    markdownItOptions: {
+        hidePageHeader: true,
+        hideBreadcrumbs: true,
+        hidePageTitle: true,
+        useCodeBlocks: true,
+        parametersFormat: "table",
+        interfacePropertiesFormat: "table",
+        indexFormat: "table",
+        classPropertiesFormat: "table",
+        enumMembersFormat: "table",
+        propertyMembersFormat: "table",
+        typeDeclarationFormat: "table",
+    },
 };
 
 export default config;

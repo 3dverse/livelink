@@ -51,6 +51,8 @@ We import the necessary classes from the Livelink library using the ES6 module s
         RenderingSurface,
         Viewport,
         WebCodecsDecoder,
+        CameraProjection,
+        CameraController,
     } from "https://unpkg.com/@3dverse/livelink/dist/index.mjs";
 </script>
 ```
