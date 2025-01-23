@@ -1,4 +1,3 @@
-//------------------------------------------------------------------------------
 import { useContext, useEffect } from "react";
 import { SamplePlayerContext } from "./SamplePlayer";
 
@@ -10,6 +9,7 @@ export function DisconnectedModal({ error }: { error: string }) {
         setConnectionState?.("connection-lost");
     }, []);
 
+    //--------------------------------------------------------------------------
     return (
         <div
             className={

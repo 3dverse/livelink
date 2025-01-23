@@ -1,4 +1,3 @@
-//------------------------------------------------------------------------------
 import { useEffect, useState } from "react";
 import { NavLink } from "react-router-dom";
 import { SAMPLES } from "../samples/index.ts";
@@ -13,17 +12,14 @@ const HIDE_3DVERSE_LOGO_QUERY = "hide3dverseLogo";
 
 //------------------------------------------------------------------------------
 export function MainMenu() {
-    //--------------------------------------------------------------------------
     const [isCollapsed, setIsCollapsed] = useLocalStorage<boolean>(LOCAL_STORAGE_KEYS.IS_MAIN_MENU_COLLAPSED, false);
     const [isScreenLargerThanLG, setIsScreenLargerThanLG] = useState<boolean>();
     const [is3dverseLogoVisible, setIs3dverseLogoVisible] = useState<boolean>(true);
 
-    //--------------------------------------------------------------------------
     const onCollapse = () => {
         setIsCollapsed(true);
     };
 
-    //--------------------------------------------------------------------------
     useEffect(() => {
         const handleResize = () => {
             setIsScreenLargerThanLG(window.innerWidth > BREAKPOINT_LG);

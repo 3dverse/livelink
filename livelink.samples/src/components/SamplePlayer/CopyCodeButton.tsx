@@ -19,6 +19,8 @@ export const CopyCodeButton = ({ code, className }: { code: string; className?: 
                 console.error("Failed to copy text: ", err);
             });
     };
+
+    //--------------------------------------------------------------------------
     return (
         <div className={`flex items-center gap-2 ${className}`}>
             <p

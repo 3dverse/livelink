@@ -1,5 +1,6 @@
 import { Dispatch, SetStateAction, useCallback, useEffect, useRef, useState } from "react";
 
+//------------------------------------------------------------------------------
 export const LOCAL_STORAGE_KEYS = {
     IS_MAIN_MENU_COLLAPSED: "is-main-menu-collapsed",
     IS_CODE_BLOCK_COLLAPSED: "is-code-block-collapsed",
@@ -7,6 +8,7 @@ export const LOCAL_STORAGE_KEYS = {
 
 type SetValue<T> = Dispatch<SetStateAction<T>>;
 
+//------------------------------------------------------------------------------
 export function parseJSON<T>(value: string | null): T | undefined {
     try {
         return value === "undefined" ? undefined : JSON.parse(value ?? "");
@@ -16,8 +18,9 @@ export function parseJSON<T>(value: string | null): T | undefined {
     }
 }
 
+//------------------------------------------------------------------------------
 export type LocalStorageKey = (typeof LOCAL_STORAGE_KEYS)[keyof typeof LOCAL_STORAGE_KEYS];
-
+//------------------------------------------------------------------------------
 export const useLocalStorage = <T>(key: LocalStorageKey, initialValue: T): [T, SetValue<T>] => {
     const readValue = useCallback((): T => {
         if (typeof window === "undefined") {
