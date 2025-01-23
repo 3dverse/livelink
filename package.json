@@ -1,7 +1,6 @@
 {
   "name": "livelink",
-  "version": "0.0.0-changesets",
-  "main": "livelink.js",
+  "version": "1.0.0",
   "workspaces": [
     "livelink.js",
     "livelink.react",

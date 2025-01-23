@@ -1,6 +1,6 @@
 {
   "name": "@3dverse/livelink-react-ui",
-  "version": "0.0.0-changesets",
+  "version": "0.1.12",
   "description": "",
   "main": "./dist/index.cjs",
   "module": "./dist/index.mjs",
@@ -27,7 +27,7 @@
   "homepage": "https://github.com/3dverse/livelink#readme",
   "devDependencies": {
     "@3dverse/design-tokens": "^0.0.3",
-    "@3dverse/livelink": "0.0.0-changesets",
+    "@3dverse/livelink": "^0.8.0",
     "@types/react": "^18.3.12",
     "@types/react-dom": "^18.3.1",
     "esbuild": "^0.24.0",
