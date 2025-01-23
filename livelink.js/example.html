@@ -1,7 +1,6 @@
 <html>
     <body style="margin: 0; padding: 0">
-        <div class="canvas-container" style="width: 100vw; height: 100vh; background-color: #000">
-            <!-- CANVAS -->
+        <div class="canvas-container" style="width: 100vw; height: 100vh">
             <canvas
                 id="display-canvas"
                 tabindex="1"
@@ -10,7 +9,6 @@
             ></canvas>
         </div>
 
-        <!-- APP ENTRYPOINT -->
         <script type="module">
             import {
                 Livelink,
@@ -43,7 +41,11 @@
             });
 
             // Setup a viewport taking up the entire canvas.
-            const viewport = new Viewport({ core: instance, rendering_surface });
+            const viewport = new Viewport({
+                core: instance,
+                rendering_surface,
+                options: { dom_element: canvas_element },
+            });
             instance.addViewports({ viewports: [viewport] });
 
             // Configure the remote server with the codec.
@@ -59,7 +61,7 @@
             // Create a camera entity.
             const DEFAULT_RENDER_GRAPH_UUID = "398ee642-030a-45e7-95df-7147f6c43392";
             const RENDER_GRAPH_SETTINGS = { grid: true, skybox: true, gradient: false };
-            const camera = await instance.scene.newEntity({
+            const camera_entity = await instance.scene.newEntity({
                 name: "MyCamera",
                 components: {
                     local_transform: { position: [0, 1, 5] },
@@ -70,10 +72,10 @@
             });
 
             // And attach it to the viewport.
-            viewport.camera_projection = new CameraProjection({ camera_entity: camera, viewport });
+            viewport.camera_projection = new CameraProjection({ camera_entity, viewport });
 
             // Setup a camera controller
-            const controller = new CameraController({ camera_entity: camera, dom_element: canvas_element });
+            const controller = new CameraController({ camera_entity, viewport });
 
             // We can now start streaming frames.
             instance.startStreaming();

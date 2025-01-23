@@ -1,16 +1,20 @@
 # Livelink.js
 
-Livelink.js is a typescript library that provides an implementation of the Livelink protocol.
-The Livelink protocol is a the protocol used to communicate with a 3dverse real-time rendering server.
+## About
 
-# Installation
+Livelink.js is a **TypeScript** library that provides an implementation of the Livelink protocol.
+The Livelink protocol is used to communicate with a 3dverse real-time rendering server.
+
+## Installation
 
 ```bash
 npm install @3dverse/livelink
 ```
 
-# Usage
+## Usage
 
-```typescript
-import { Livelink } from "@3dverse/livelink";
-```
+Note that we advise using the React wrapper [livelink.react](../livelink.react) for a more developer friendly experience.
+
+If you're still interested in using the Livelink API directly, here's a quick guide on how to get started: [example](./example.md).
+
+The reference documentation can be found at [https://docs.3dverse.com/livelink.js](https://docs.3dverse.com/livelink.js).

@@ -14,17 +14,18 @@ For using React refer to the Livelink React library.
 ## HTML Page
 
 We start by setting up a barbone HTML page with a canvas element to render the streamed frames.
-For brievity we will omit the boilerplate code for the HTML page. CSS styling is also inlined and kept to a minimum.
+For brievity we will omit the boilerplate code for the HTML page.
+CSS styling is also inlined and kept to a minimum.
 
 ```html
 <html>
     <body style="margin: 0; padding: 0">
-        <div class="canvas-container" style="width: 100vw; height: 100vh; background-color: #000">
+        <div class="canvas-container" style="width: 100vw; height: 100vh;">
             <canvas
                 id="display-canvas"
                 tabindex="1"
                 oncontextmenu="event.preventDefault()"
-                style="width: 100%; height: 100%"
+                style="width: 100%; height: 100%;"
             ></canvas>
         </div>
     </body>
@@ -79,8 +80,7 @@ const instance = await Livelink.start({
 
 This is mandatory to be able to use the Livelink API.
 
-Creating a session triggers the dynamic loading of the Livelink Core module that is the actual backbone of the API
-that implements the communication protocol with the server.
+Creating a session triggers the dynamic loading of the Livelink Core module that is the actual backbone of the API that implements the communication protocol with the server.
 
 > 💡 If you want to use your own scene, you can just replace `scene_id` and `token` with your own values.
 
@@ -93,20 +93,29 @@ The next step is to configure our streaming pipeline.
 
 ### Rendering Surface and Viewport
 
-Then we need to create a rendering surface backed by the canvas element and setup a viewport
+We need to create a rendering surface backed by the canvas element and setup a viewport
 taking up the entire canvas.
 
 ```javascript
-const surface = new RenderingSurface({
-    canvas_element: "display-canvas",
+const canvas_element = document.getElementById("display-canvas");
+
+const rendering_surface = new RenderingSurface({
+    canvas_element,
     context_type: "2d",
 });
 
-const viewport = new Viewport(instance, surface);
+const viewport = new Viewport({
+    core: instance,
+    rendering_surface,
+    options: { dom_element: canvas_element },
+});
+
 instance.addViewports({ viewports: [viewport] });
 ```
 
 In here you can customize the layout of the frame by adding multipe viewports and arranging them as you see fit.
+
+Passing the dom element backing the viewport is necessary for the camera controller to work properly.
 
 You must assign a camera entity to each viewport for it to actually render anything.
 
@@ -122,18 +131,17 @@ await instance.setEncodedFrameConsumer({
 });
 ```
 
-You must have setup the viewports before configuring the remote server, otherwise the resolution of the
-frames won't be set correctly.
+You must have setup the viewports before configuring the remote server, otherwise the resolution of the frames won't be set correctly.
 
 ### Camera
 
-Now we can create a camera entity and attach it to the viewport.
+Now we can create a camera entity bind it to a camera projection and attach it to the viewport.
 
 ```javascript
 // Create a camera entity.
 const DEFAULT_RENDER_GRAPH_UUID = "398ee642-030a-45e7-95df-7147f6c43392";
 const RENDER_GRAPH_SETTINGS = { grid: true, skybox: true, gradient: false };
-const camera = await instance.newEntity({
+const camera_entity = await instance.newEntity({
     name: "MyCamera",
     components: {
         local_transform: { position: [0, 1, 5] }, // Partial values are fine.
@@ -142,13 +150,18 @@ const camera = await instance.newEntity({
     },
     options: { auto_broadcast: false },
 });
-// And attach it to the viewport.
-viewport.camera_entity = camera;
+// Bind it to a camera projection and attach it to the viewport.
+viewport.camera_projection = new CameraProjection({ camera_entity, viewport });
 ```
 
 ### Camera Controller
 
-TODO: setup a camera controller
+Having a camera will result in frames being rendered, but we need a way to control the camera.
+We do that by instantiating a camera controller.
+
+```javascript
+const controller = new CameraController({ camera_entity, viewport });
+```
 
 ### Start Streaming
 
@@ -161,11 +174,12 @@ instance.startStreaming();
 
 ## Complete Code Snippet
 
+Preview [here](https://htmlpreview.github.io/?https://github.com/3dverse/livelink/blob/main/livelink.js/example.html).
+
 ```html
 <html>
     <body style="margin: 0; padding: 0">
-        <div class="canvas-container" style="width: 100vw; height: 100vh; background-color: #000">
-            <!-- CANVAS -->
+        <div class="canvas-container" style="width: 100vw; height: 100vh">
             <canvas
                 id="display-canvas"
                 tabindex="1"
@@ -174,7 +188,6 @@ instance.startStreaming();
             ></canvas>
         </div>
 
-        <!-- APP ENTRYPOINT -->
         <script type="module">
             import {
                 Livelink,
@@ -207,7 +220,11 @@ instance.startStreaming();
             });
 
             // Setup a viewport taking up the entire canvas.
-            const viewport = new Viewport({ core: instance, rendering_surface });
+            const viewport = new Viewport({
+                core: instance,
+                rendering_surface,
+                options: { dom_element: canvas_element },
+            });
             instance.addViewports({ viewports: [viewport] });
 
             // Configure the remote server with the codec.
@@ -223,7 +240,7 @@ instance.startStreaming();
             // Create a camera entity.
             const DEFAULT_RENDER_GRAPH_UUID = "398ee642-030a-45e7-95df-7147f6c43392";
             const RENDER_GRAPH_SETTINGS = { grid: true, skybox: true, gradient: false };
-            const camera = await instance.scene.newEntity({
+            const camera_entity = await instance.scene.newEntity({
                 name: "MyCamera",
                 components: {
                     local_transform: { position: [0, 1, 5] },
@@ -234,10 +251,10 @@ instance.startStreaming();
             });
 
             // And attach it to the viewport.
-            viewport.camera_projection = new CameraProjection({ camera_entity: camera, viewport });
+            viewport.camera_projection = new CameraProjection({ camera_entity, viewport });
 
             // Setup a camera controller
-            const controller = new CameraController({ camera_entity: camera, dom_element: canvas_element });
+            const controller = new CameraController({ camera_entity, viewport });
 
             // We can now start streaming frames.
             instance.startStreaming();

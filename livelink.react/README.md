@@ -32,8 +32,8 @@ function AppLayout() {
     const { cameraEntity } = useCameraEntity();
 
     return (
-        <Canvas>
-            <Viewport cameraEntity={cameraEntity}>
+        <Canvas width="100vw" height="100vh">
+            <Viewport cameraEntity={cameraEntity} style={{ width: "100%", height: "100%" }}>
                 <CameraController />
             </Viewport>
         </Canvas>
@@ -45,25 +45,25 @@ function AppLayout() {
 
 Livelink React provides 3 contexts:
 
--   `LivelinkContext`
-    -   Handles the connection to the Livelink server and gives access to the resulting session.
--   `CanvasContext`
-    -   Creates an HTML `<canvas>` element and its underlying `RenderingSurface` and provides access to them.
--   `ViewportContext`
-    -   Creates a `Livelink.Viewport` and assign a `<div>` element to it and attach the provided camera.
+- `LivelinkContext`
+    - Handles the connection to the Livelink server and gives access to the resulting session.
+- `CanvasContext`
+    - Creates an HTML `<canvas>` element and its underlying `RenderingSurface` and provides access to them.
+- `ViewportContext`
+    - Creates a `Livelink.Viewport` and assign a `<div>` element to it and attach the provided camera.
 
 with their 3 respective components.
 
--   `<Livelink>`
-    -   Instantiates a `LivelinkContext` and
--   `<Canvas>`
--   `<Viewport>`
+- `<Livelink>`
+    - Instantiates a `LivelinkContext`
+- `<Canvas>`
+- `<Viewport>`
 
 It also provides a component
 
--   `<CameraController>`
+- `<CameraController>`
 
 and 2 hooks:
 
--   `useEntity()`
--   `useCameraEntity()`
+- `useEntity()`
+- `useCameraEntity()`
