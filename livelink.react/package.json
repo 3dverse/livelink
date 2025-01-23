@@ -1,6 +1,6 @@
 {
   "name": "@3dverse/livelink-react",
-  "version": "0.2.0",
+  "version": "0.0.0-changesets",
   "description": "",
   "main": "./dist/index.cjs",
   "module": "./dist/index.mjs",
@@ -62,7 +62,7 @@
     "typescript-eslint": "^8.18.2"
   },
   "peerDependencies": {
-    "@3dverse/livelink": "^0.8.14",
+    "@3dverse/livelink": "0.0.0-changesets",
     "react": "^18.2.0",
     "react-dom": "^18.2.0"
   }
