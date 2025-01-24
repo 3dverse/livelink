@@ -136,6 +136,8 @@ pages:
   script:
     - cp -r livelink.samples/dist/* public/
   rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+      when: never
     - if: $CI_COMMIT_REF_NAME == $CI_DEFAULT_BRANCH
       changes:
         - livelink.samples/**/*
@@ -221,7 +223,7 @@ version:comment-mr:
     INPUT_TITLE: "chore: new release"
   rules:
     - when: never # FIXME: Enable when a custom changesets-gitlab package is available.
-    - if: $CI_PIPELINE_SOURCE == "merge_request_event" && $CI_COMMIT_BRANCH == 'release'
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event" && $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
 
 version:release:
   stage: deploy
