@@ -123,7 +123,7 @@ pages:
   before_script:
     - mkdir public
   script:
-    - cp livelink.samples/dist/* public/
+    - cp -r livelink.samples/dist/* public/
   rules:
     - if: $CI_COMMIT_REF_NAME == $CI_DEFAULT_BRANCH
       changes:
