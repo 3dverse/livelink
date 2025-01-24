@@ -109,6 +109,17 @@ js:build:
         - livelink.samples/**/*
         - livelink.samples/*
 
+create-mr:
+  stage: deploy
+  extends:
+    - .env-dev
+    - .runner-onprem
+  image: node:${NODE_VERSION}-alpine
+  script:
+    - npx tsx .ci/create-mr.mts
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+
 pages:
   stage: deploy
   extends:
@@ -210,7 +221,7 @@ version:comment-mr:
     INPUT_TITLE: "chore: new release"
   rules:
     - when: never # FIXME: Enable when a custom changesets-gitlab package is available.
-    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event" && $CI_COMMIT_BRANCH == 'release'
 
 version:release:
   stage: deploy
