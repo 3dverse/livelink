@@ -104,30 +104,33 @@ js:build:
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
     - if: $CI_COMMIT_BRANCH == "release"
+    - if: $CI_COMMIT_REF_NAME == $CI_DEFAULT_BRANCH
+      changes:
+        - livelink.samples/**/*
+        - livelink.samples/*
 
-# # DOCS
-# pages:
-#   stage: deploy
-#   extends:
-#     - .env-dev
-#     - .runner-onprem
-#   needs:
-#     - job: js:livelink.samples:build
-#       artifacts: true
-#   artifacts:
-#     paths:
-#       - public/
-#   before_script:
-#     - mkdir public
-#   script:
-#     - tar -zxf ${LIVELINK_SAMPLES_PACKAGE}-*.tgz --strip-components=2 -C public
-#   rules:
-#     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
-#       when: never
-#     - if: $CI_COMMIT_TAG != null
-#       when: never
-#     - if: $CI_COMMIT_REF_NAME == $CI_DEFAULT_BRANCH
+pages:
+  stage: deploy
+  extends:
+    - .env-dev
+    - .runner-onprem
+  needs:
+    - job: js:build
+      artifacts: true
+  artifacts:
+    paths:
+      - public/
+  before_script:
+    - mkdir public
+  script:
+    - cp livelink.samples/dist/* public/
+  rules:
+    - if: $CI_COMMIT_REF_NAME == $CI_DEFAULT_BRANCH
+      changes:
+        - livelink.samples/**/*
+        - livelink.samples/*
 
+# DOCS
 # js:livelink.js:docs:
 #   stage: deploy
 #   extends:
