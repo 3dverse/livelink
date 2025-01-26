@@ -205,39 +205,40 @@ pages:
 #     strategy: depend
 
 # VERSION #############################################################################################################
-version:comment-mr:
+version:update-mr:
   stage: deploy
   extends:
     - .runner-onprem
-  image: node:${NODE_VERSION}-alpine
-  before_script:
-    - !reference [.npm-regcreds, before_script]
-    - !reference [.node-cache, before_script]
-    - apk add --no-cache git
-  script:
-    - npx changeset-conventional-commits
-    # - npx changesets-gitlab comment
+  image: registry.gitlab.com/3dverse/platform/ci-utils/docker-images/changesets-tools:latest
   variables:
-    GITLAB_CI_USER_NAME: ${BOT_3DVERSE_USER_NAME}
-    GITLAB_CI_USER_EMAIL: ${BOT_3DVERSE_USER_EMAIL}
-    INPUT_TITLE: "chore: new release"
+    GIT_STRATEGY: clone
+  before_script:
+    - |
+      git config --global --add safe.directory $CI_PROJECT_DIR
+      git config --global user.name "${BOT_3DVERSE_USER_NAME}"
+      git config --global user.email "${BOT_3DVERSE_USER_EMAIL}"
+  script:
+    - git fetch origin release:release-origin
+    - git fetch origin main:main-origin
+    - git switch release-origin
+    - git merge --no-ff main-origin
+    - git reset main-origin
+    - changeset-conventional
+    - changesets-tools post-merge-request-details
   rules:
-    - when: never # FIXME: Enable when a custom changesets-gitlab package is available.
-    - if: $CI_PIPELINE_SOURCE == "merge_request_event" && $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+    - if: $CI_MERGE_REQUEST_SOURCE_BRANCH_NAME == $CI_DEFAULT_BRANCH && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == "release"
 
 version:release:
   stage: deploy
   extends:
     - .runner-onprem
-  image: node:${NODE_VERSION}-alpine
+  image: registry.gitlab.com/3dverse/platform/ci-utils/docker-images/changesets-tools
   needs:
     - job: js:build
       artifacts: true
   before_script:
-    - !reference [.npm-regcreds, before_script]
-    - !reference [.node-cache, before_script]
-    - apk add --no-cache git
     - |
+      git config --global --add safe.directory $CI_PROJECT_DIR
       git config --global user.name "${BOT_3DVERSE_USER_NAME}"
       git config --global user.email "${BOT_3DVERSE_USER_EMAIL}"
       git checkout -b $CI_COMMIT_REF_NAME || git checkout $CI_COMMIT_REF_NAME
@@ -246,11 +247,11 @@ version:release:
       npm config set @3dverse:registry="https://registry.npmjs.org" --userconfig=".npmrc"
       npm config set //registry.npmjs.org/:_authToken="${NPMJS_ACCESS_TOKEN}" --userconfig=".npmrc"
   script:
-    - npx changeset-conventional-commits
-    - npx @changesets/cli version
-    - npx @changesets/cli tag
+    - changeset-conventional
+    - changeset version
+    - changeset tag
     - git push origin $CI_COMMIT_REF_NAME --follow-tags || git push --set-upstream origin $CI_COMMIT_REF_NAME --follow-tags
-    - npx @changesets/cli publish
+    - changeset publish
   variables:
     GIT_STRATEGY: clone
   rules:
