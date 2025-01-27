@@ -143,67 +143,6 @@ pages:
         - livelink.samples/**/*
         - livelink.samples/*
 
-# DOCS
-# js:livelink.js:docs:
-#   stage: deploy
-#   extends:
-#     - .docs
-#   needs:
-#     - job: js:livelink.js:build
-#       artifacts: true
-#   variables:
-#     PACKAGE_DIR: livelink.js
-#   rules:
-#     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
-#       when: never
-#     - if: $CI_COMMIT_TAG
-#     - if: $CI_COMMIT_REF_NAME == $CI_DEFAULT_BRANCH
-#       changes:
-#         - livelink.js/**/*
-#         - livelink.js/*
-#     - when: never
-
-# js:livelink.react:docs:
-#   stage: deploy
-#   extends:
-#     - .docs
-#   needs:
-#     - job: js:livelink.js:build
-#       artifacts: true
-#   variables:
-#     PACKAGE_DIR: livelink.react
-#   rules:
-#     # FIXME: The rules aren't correct, it should be performed after the publish job of livelink.react
-#     # using the version number determined in the publish job.
-#     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
-#       when: never
-#     - if: $CI_COMMIT_TAG
-#     - if: $CI_COMMIT_REF_NAME == $CI_DEFAULT_BRANCH
-#       changes:
-#         - livelink.react/**/*
-#         - livelink.react/*
-#     - when: never
-
-# js:livelink.js:docs-trigger:
-#   stage: deploy
-#   needs:
-#     - job: js:livelink.js:docs
-#       artifacts: false
-#     - job: js:livelink.react:docs
-#       artifacts: false
-#   variables:
-#     # These variables will be used in the triggered downstream pipeline to download the generated docs artifacts.
-#     LIVELINK_PACKAGE_NAMES: livelink.js livelink.react
-#     LIVELINK_PACKAGE_ROOT: ${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/
-#     LIVELINK_PACKAGE_PATH: /${CI_COMMIT_TAG}/docs-md.tgz
-#     SYNC_LIVELINK_JS: "true"
-#   rules:
-#     - if: $CI_COMMIT_TAG
-#     - when: never
-#   trigger:
-#     project: 3dverse/corp/3dverse-docs
-#     strategy: depend
-
 # VERSION #############################################################################################################
 version:update-mr:
   stage: deploy
@@ -256,3 +195,53 @@ version:release:
     GIT_STRATEGY: clone
   rules:
     - if: $CI_COMMIT_BRANCH == "release"
+
+# DOCS    #############################################################################################################
+js:livelink.js:docs:
+  stage: deploy
+  extends:
+    - .docs
+  needs:
+    - job: js:build
+      artifacts: true
+  variables:
+    PACKAGE_DIR: livelink.js
+  rules:
+    - if: $CI_COMMIT_BRANCH == "release"
+      changes:
+        - livelink.js/**/*
+        - livelink.js/*
+
+js:livelink.react:docs:
+  stage: deploy
+  extends:
+    - .docs
+  needs:
+    - job: js:build
+      artifacts: true
+  variables:
+    PACKAGE_DIR: livelink.react
+  rules:
+    - if: $CI_COMMIT_BRANCH == "release"
+      changes:
+        - livelink.react/**/*
+        - livelink.react/*
+
+js:livelink.js:docs-trigger:
+  stage: deploy
+  needs:
+    - job: js:livelink.js:docs
+      artifacts: false
+    - job: js:livelink.react:docs
+      artifacts: false
+  variables:
+    # These variables will be used in the triggered downstream pipeline to download the generated docs artifacts.
+    LIVELINK_PACKAGE_NAMES: livelink.js livelink.react
+    LIVELINK_PACKAGE_ROOT: ${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/
+    LIVELINK_PACKAGE_PATH: /${CI_COMMIT_TAG}/docs-md.tgz
+    SYNC_LIVELINK_JS: "true"
+  rules:
+    - if: $CI_COMMIT_BRANCH == "release"
+  trigger:
+    project: 3dverse/corp/3dverse-docs
+    strategy: depend
