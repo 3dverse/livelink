@@ -705,34 +705,32 @@ export class WebXRHelper {
             name: `XR_camera_${xr_view.eye}_${index}`,
             components: {
                 local_transform: {},
-                perspective_lens: {},
+                perspective_lens: this.#computePerspectiveLens(
+                    xr_view.projectionMatrix,
+                    viewport.width,
+                    viewport.height,
+                ),
                 camera: {
                     renderGraphRef: "398ee642-030a-45e7-95df-7147f6c43392",
                     dataJSON,
                 },
+                tags: {
+                    value: [
+                        `viewport_x = ${xr_viewport.x.toString()}`,
+                        `viewport_y = ${xr_viewport.y.toString()}`,
+                        `viewport_width = ${xr_viewport.width.toString()}`,
+                        `viewport_height = ${xr_viewport.height.toString()}`,
+                        `recommanded_scale = ${xr_view.recommendedViewportScale?.toString() || "?"}`,
+                    ],
+                },
             },
             options: { delete_on_client_disconnection: true, auto_broadcast: false },
         });
+
         viewport.camera_projection = new CameraProjection({
             camera_entity: camera,
             viewport,
         });
-
-        camera.perspective_lens = this.#computePerspectiveLens(
-            xr_view.projectionMatrix,
-            viewport.width,
-            viewport.height,
-        );
-
-        camera.tags = {
-            value: [
-                `viewport_x = ${xr_viewport.x.toString()}`,
-                `viewport_y = ${xr_viewport.y.toString()}`,
-                `viewport_width = ${xr_viewport.width.toString()}`,
-                `viewport_height = ${xr_viewport.height.toString()}`,
-                `recommanded_scale = ${xr_view.recommendedViewportScale?.toString() || "?"}`,
-            ],
-        };
 
         return camera;
     }
