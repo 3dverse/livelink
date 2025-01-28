@@ -13,7 +13,7 @@ npm install @3dverse/livelink
 
 ## Usage
 
-Note that we advise using the React wrapper [livelink.react](../livelink.react) for a more developer friendly experience.
+Note that we advise using the React wrapper [livelink.react](https://www.npmjs.com/package/@3dverse/livelink-react) for a more developer friendly experience.
 
 If you're still interested in using the Livelink API directly, here's a quick guide on how to get started: [example](./example.md).
 
