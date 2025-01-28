@@ -171,13 +171,15 @@ version:release:
   stage: deploy
   extends:
     - .runner-onprem
-  image: registry.gitlab.com/3dverse/platform/ci-utils/docker-images/changesets-tools
+  image: node:${NODE_VERSION}-alpine
   needs:
     - job: js:build
       artifacts: true
   before_script:
+    - !reference [.npm-regcreds, before_script]
+    - !reference [.node-cache, before_script]
+    - apk add --no-cache git
     - |
-      git config --global --add safe.directory $CI_PROJECT_DIR
       git config --global user.name "${BOT_3DVERSE_USER_NAME}"
       git config --global user.email "${BOT_3DVERSE_USER_EMAIL}"
       git checkout -b $CI_COMMIT_REF_NAME || git checkout $CI_COMMIT_REF_NAME
@@ -186,11 +188,11 @@ version:release:
       npm config set @3dverse:registry="https://registry.npmjs.org" --userconfig=".npmrc"
       npm config set //registry.npmjs.org/:_authToken="${NPMJS_ACCESS_TOKEN}" --userconfig=".npmrc"
   script:
-    - changeset-conventional
-    - changeset version
-    - changeset tag
+    - npx changeset-conventional-commits
+    - npx @changesets/cli version
+    - npx @changesets/cli tag
     - git push origin $CI_COMMIT_REF_NAME --follow-tags || git push --set-upstream origin $CI_COMMIT_REF_NAME --follow-tags
-    - changeset publish
+    - npx @changesets/cli publish
   variables:
     GIT_STRATEGY: clone
   rules:
@@ -238,7 +240,7 @@ js:livelink.js:docs-trigger:
     # These variables will be used in the triggered downstream pipeline to download the generated docs artifacts.
     LIVELINK_PACKAGE_NAMES: livelink.js livelink.react
     LIVELINK_PACKAGE_ROOT: ${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/
-    LIVELINK_PACKAGE_PATH: /${CI_COMMIT_TAG}/docs-md.tgz
+    LIVELINK_PACKAGE_PATH: /latest/docs-md.tgz
     SYNC_LIVELINK_JS: "true"
   rules:
     - if: $CI_COMMIT_BRANCH == "release"
