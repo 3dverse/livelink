@@ -313,6 +313,13 @@ export class Livelink {
     }
 
     /**
+     * The latency of the connection in milliseconds.
+     */
+    get latency(): number {
+        return this.#core.latency;
+    }
+
+    /**
      * The viewports used to render the scene for the current client.
      */
     get viewports(): Array<Viewport> {
