@@ -200,7 +200,7 @@ version:publish:
       artifacts: true
   artifacts:
     paths:
-      - "**/.package.json"
+      - "*/package.json"
   before_script:
     - !reference [.npm-regcreds, before_script]
     - !reference [.node-cache, before_script]
