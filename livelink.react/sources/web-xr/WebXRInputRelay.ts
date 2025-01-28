@@ -97,6 +97,11 @@ export class WebXRInputRelay {
 
         for (const inputSource of event.added) {
             const { handedness } = inputSource;
+            // n.b: in "WebXR API Emulator - Samsung Galaxy S8+ (AR)", mouse right click (aka touch screen) raises an
+            // error here, because `XRInputSource.profiles` as single empty string element, and we do not provide a
+            // `defaultProfile` to `fetchProfile` function. May be this exists on real touch able devices too, and there
+            // would be a valid reason to use a `defaultProfile` in this case.
+
             // @ts-expect-error fetchProfile type definition is wrong, it returns a Promise
             const { profile, assetPath } = await (fetchProfile(inputSource, DEFAULT_PROFILES_PATH) as Promise<{
                 profile: { fallbackProfileIds: string[] };
@@ -144,7 +149,7 @@ export class WebXRInputRelay {
 
     //--------------------------------------------------------------------------
     static #processGamepad(source: XRInputSource, frame: XRFrame, refSpace: XRReferenceSpace): void {
-        const { gamepad, handedness } = source;
+        const { gamepad, handedness, gripSpace } = source;
         if (!gamepad) {
             return;
         }
@@ -166,7 +171,12 @@ export class WebXRInputRelay {
         box.updateState(gamepad);
 
         // Update the pose of the boxes to sync with the controller.
-        const pose = frame.getPose(source.gripSpace!, refSpace);
+        if (!gripSpace) {
+            // on mobile, gamepad exists but gripSpace is undefined so there's
+            // no point to update the box pose matrix.
+            return;
+        }
+        const pose = frame.getPose(gripSpace, refSpace);
         if (pose) {
             box.matrix.fromArray(pose.transform.matrix as unknown as number[]);
         }

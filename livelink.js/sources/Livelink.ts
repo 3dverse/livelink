@@ -262,7 +262,7 @@ export class Livelink {
     /**
      * The rendering surface as seen by the renderer.
      */
-    #remote_rendering_surface = new RemoteFrameProxy(this);
+    #remote_frame_proxy = new RemoteFrameProxy(this);
 
     /**
      * User provided frame consumer designed to receive the encoded frames sent by the renderer.
@@ -301,7 +301,7 @@ export class Livelink {
      * implementations.
      */
     get default_decoded_frame_consumer(): DecodedFrameConsumer {
-        return this.#remote_rendering_surface;
+        return this.#remote_frame_proxy;
     }
 
     /**
@@ -316,7 +316,7 @@ export class Livelink {
      * The viewports used to render the scene for the current client.
      */
     get viewports(): Array<Viewport> {
-        return this.#remote_rendering_surface.viewports;
+        return this.#remote_frame_proxy.viewports;
     }
 
     /**
@@ -356,7 +356,7 @@ export class Livelink {
 
         await this.session.close();
 
-        this.#remote_rendering_surface.release();
+        this.#remote_frame_proxy.release();
 
         await this.#core.disconnect();
     }
@@ -368,7 +368,7 @@ export class Livelink {
      * @param params.viewports The viewports to add.
      */
     addViewports({ viewports }: { viewports: Array<Viewport> }): void {
-        this.#remote_rendering_surface.addViewports({ viewports });
+        this.#remote_frame_proxy.addViewports({ viewports });
         this.session._dispatchEvent(new TO_REMOVE__ViewportsAddedEvent({ viewports }));
     }
 
@@ -379,7 +379,7 @@ export class Livelink {
      * @param params.viewport The viewport to remove.
      */
     removeViewport({ viewport }: { viewport: Viewport }): void {
-        this.#remote_rendering_surface.removeViewport({ viewport });
+        this.#remote_frame_proxy.removeViewport({ viewport });
     }
 
     /**
@@ -399,12 +399,12 @@ export class Livelink {
         codec?: Enums.CodecType;
     }): Promise<Commands.ClientConfigResponse> {
         const client_config: Commands.ClientConfig = {
-            remote_canvas_size: this.#remote_rendering_surface._computeRemoteCanvasSize({ codec }),
+            remote_canvas_size: this.#remote_frame_proxy._computeRemoteCanvasSize({ codec }),
             encoder_config: { codec, profile: "main", frame_rate: 60, lossy: true },
             supported_devices: { keyboard: true, mouse: true, gamepad: true, hololens: false, touchscreen: false },
         };
 
-        console.debug("Initial surface size", this.#remote_rendering_surface.dimensions);
+        console.debug("Initial surface size", this.#remote_frame_proxy.dimensions);
         const res = await this.#core.configureClient({ client_config });
 
         this.#codec = res.codec;
@@ -432,7 +432,7 @@ export class Livelink {
 
         this.#encoded_frame_consumer = await encoded_frame_consumer.configure({
             codec: this.#codec,
-            frame_dimensions: this.#remote_rendering_surface.dimensions,
+            frame_dimensions: this.#remote_frame_proxy.dimensions,
         });
     }
 
@@ -444,7 +444,7 @@ export class Livelink {
             throw new Error("The Livelink instance is not configured yet");
         }
 
-        this.#remote_rendering_surface.init();
+        this.#remote_frame_proxy.init();
         this.#core.resume();
         this.#startUpdateLoop({});
     }
@@ -573,8 +573,27 @@ export class Livelink {
         }
 
         this.#TO_REMOVE__refreshViewportTimeout = setTimeout(() => {
-            this.#remote_rendering_surface.init();
+            this.#remote_frame_proxy.init();
         }, 0);
+    }
+
+    /**
+     * @internal
+     */
+    _projectViewportPositionOnRemoteFrame({ viewport, position }: { viewport: Viewport; position: Vec2i }): Vec2i {
+        const frame_width = this.#remote_frame_proxy.width;
+        const frame_height = this.#remote_frame_proxy.height;
+
+        const relative_position_on_viewport = viewport._getScreenPosition({ position });
+        const viewport_offset_on_frame = [
+            viewport.rendering_surface.offset[0] + viewport.offset[0],
+            viewport.rendering_surface.offset[1] + viewport.offset[1],
+        ];
+
+        return [
+            (viewport_offset_on_frame[0] + relative_position_on_viewport[0] * viewport.width) / frame_width,
+            (viewport_offset_on_frame[1] + relative_position_on_viewport[1] * viewport.height) / frame_height,
+        ];
     }
 
     /**

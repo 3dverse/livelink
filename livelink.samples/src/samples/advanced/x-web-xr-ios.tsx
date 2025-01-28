@@ -17,7 +17,7 @@ import { LoadingOverlay } from "@3dverse/livelink-react-ui";
 import { DisconnectedModal } from "../../components/SamplePlayer";
 
 //------------------------------------------------------------------------------
-const scene_id = "8f3c24c1-720e-4d2c-b0e7-f623e4feb7be";
+const scene_id = "11e2da67-4740-4546-951b-1d50df1dc55d";
 const token = import.meta.env.VITE_PROD_PUBLIC_TOKEN;
 const variant_launch_sdk_key = import.meta.env
     .VITE_WEBXR_VARIANT_LAUNCH_SDK_KEY;
