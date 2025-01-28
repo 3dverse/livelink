@@ -167,7 +167,28 @@ version:update-mr:
   rules:
     - if: $CI_MERGE_REQUEST_SOURCE_BRANCH_NAME == $CI_DEFAULT_BRANCH && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == "release"
 
-version:release:
+version:generate-changesets:
+  stage: deploy
+  extends:
+    - .runner-onprem
+  image: registry.gitlab.com/3dverse/platform/ci-utils/docker-images/changesets-tools:latest
+  variables:
+    GIT_STRATEGY: clone
+  artifacts:
+    paths:
+      - .changeset/*.md
+  before_script:
+    - |
+      git config --global --add safe.directory $CI_PROJECT_DIR
+      git config --global user.name "${BOT_3DVERSE_USER_NAME}"
+      git config --global user.email "${BOT_3DVERSE_USER_EMAIL}"
+      git checkout -b $CI_COMMIT_REF_NAME || git checkout $CI_COMMIT_REF_NAME
+  script:
+    - changeset-conventional
+  rules:
+    - if: $CI_COMMIT_BRANCH == "release"
+
+version:publish:
   stage: deploy
   extends:
     - .runner-onprem
@@ -175,6 +196,11 @@ version:release:
   needs:
     - job: js:build
       artifacts: true
+    - job: version:generate-changesets
+      artifacts: true
+  artifacts:
+    paths:
+      - "**/.package.json"
   before_script:
     - !reference [.npm-regcreds, before_script]
     - !reference [.node-cache, before_script]
@@ -188,7 +214,6 @@ version:release:
       npm config set @3dverse:registry="https://registry.npmjs.org" --userconfig=".npmrc"
       npm config set //registry.npmjs.org/:_authToken="${NPMJS_ACCESS_TOKEN}" --userconfig=".npmrc"
   script:
-    - npx changeset-conventional-commits
     - npx @changesets/cli version
     - npx @changesets/cli tag
     - git push origin $CI_COMMIT_REF_NAME --follow-tags || git push --set-upstream origin $CI_COMMIT_REF_NAME --follow-tags
@@ -206,13 +231,12 @@ js:livelink.js:docs:
   needs:
     - job: js:build
       artifacts: true
+    - job: version:publish
+      artifacts: true
   variables:
     PACKAGE_DIR: livelink.js
   rules:
     - if: $CI_COMMIT_BRANCH == "release"
-      changes:
-        - livelink.js/**/*
-        - livelink.js/*
 
 js:livelink.react:docs:
   stage: deploy
@@ -221,13 +245,12 @@ js:livelink.react:docs:
   needs:
     - job: js:build
       artifacts: true
+    - job: version:publish
+      artifacts: true
   variables:
     PACKAGE_DIR: livelink.react
   rules:
     - if: $CI_COMMIT_BRANCH == "release"
-      changes:
-        - livelink.react/**/*
-        - livelink.react/*
 
 js:livelink.js:docs-trigger:
   stage: deploy
