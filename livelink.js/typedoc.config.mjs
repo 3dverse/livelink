@@ -1,4 +1,6 @@
 /** @type {Partial<import('typedoc').TypeDocOptions>} */
+import { OptionDefaults } from "typedoc";
+
 const config = {
     entryPoints: ["sources/index.ts"],
     entryPointStrategy: "resolve",
@@ -16,6 +18,9 @@ const config = {
         includeCategories: true,
         includeGroups: true,
     },
+
+    modifierTags: [...OptionDefaults.modifierTags, "@noInheritDoc"],
+    excludeTags: [...OptionDefaults.excludeTags, "@noInheritDoc"],
 
     markdownItOptions: {
         hidePageHeader: true,
