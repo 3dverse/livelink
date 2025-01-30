@@ -48,6 +48,12 @@ export class RemoteFrameProxy implements DecodedFrameConsumer {
     #size_multiple: Vec2u16 = [32, 32];
 
     /**
+     * Flag indicating that the remote surface needs to be resized.
+     * This needs to be stored, as we not might be able to resize the surface immediately.
+     */
+    #needs_resize: boolean = true;
+
+    /**
      * Surface dimensions in pixels rounded up to the next multiple of 8.
      */
     get dimensions(): Vec2u16 {
@@ -212,12 +218,13 @@ export class RemoteFrameProxy implements DecodedFrameConsumer {
      *
      */
     #onFrameLayoutModified = (): void => {
-        const need_to_resize = this.#computeSurfaceSize();
+        this.#computeSurfaceSize();
 
         if (this.#core.isConfigured() && this.#isValid()) {
-            if (need_to_resize) {
-                console.debug("Surface resized", this.#dimensions);
+            if (this.#needs_resize) {
+                console.debug("🖼️ Remote surface resized", this.#dimensions);
                 this.#core._resize({ size: this.#dimensions });
+                this.#needs_resize = false;
             }
             console.debug("Viewports reconfigured", this.#config);
             this.#core._setViewports({ viewport_configs: this.#config });
@@ -234,7 +241,7 @@ export class RemoteFrameProxy implements DecodedFrameConsumer {
     /**
      *
      */
-    #computeSurfaceSize(): boolean {
+    #computeSurfaceSize(): void {
         const { offset, width, height } = this.#computeBoundingRect();
         this.#computeViewportsOffsets(offset);
 
@@ -243,11 +250,8 @@ export class RemoteFrameProxy implements DecodedFrameConsumer {
             this.#next_multiple(height, this.#size_multiple[1]),
         ];
 
-        const need_to_resize = new_dimensions[0] != this.#dimensions[0] || new_dimensions[1] != this.dimensions[1];
-
+        this.#needs_resize ||= new_dimensions[0] != this.#dimensions[0] || new_dimensions[1] != this.dimensions[1];
         this.#dimensions = new_dimensions;
-
-        return need_to_resize;
     }
 
     /**
