@@ -363,6 +363,14 @@ export class CameraProjection {
      *
      */
     #computeOrthographicProjection({ lens }: { lens: Components.OrthographicLens }): void {
-        mat4.ortho(this.#clip_from_view_matrix, lens.left, lens.right, lens.bottom, lens.top, lens.zNear, lens.zFar);
+        mat4.ortho(
+            this.#clip_from_view_matrix,
+            -this.viewport.aspect_ratio * lens.zoomFactor[0],
+            this.viewport.aspect_ratio * lens.zoomFactor[0],
+            -lens.zoomFactor[1],
+            lens.zoomFactor[1],
+            lens.zNear,
+            lens.zFar,
+        );
     }
 }
