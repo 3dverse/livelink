@@ -1,1 +1,1 @@
-export * from "./ThreeOverlayComponent";
+export * from "./ThreeOverlayProvider";
