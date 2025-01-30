@@ -31,7 +31,7 @@ import Collaborators from "./react-core/5-clients/2-clients-avatars";
 import CreateEntity from "./react-core/6-entities/1-create-entity";
 import EntityPicking from "./react-core/6-entities/2-entity-picking";
 import FindingEntities from "./react-core/6-entities/3-finding-entities";
-import SmartObject from "./react-core/6-entities/x-smart-object";
+import SmartObject from "./react-core/6-entities/4-smart-object";
 
 //------------------------------------------------------------------------------
 import ActivityWatcher from "./react-ui/1-activity-watcher";
@@ -45,6 +45,7 @@ import WebXR from "./advanced/x-web-xr";
 import WebXRiOS from "./advanced/x-web-xr-ios";
 import MPR from "./advanced/x-multiplanar-reconstruction";
 import CullingBoxGeometry from "./advanced/x-culling-box-geometry";
+import ThreeTransformControls from "./advanced/x-three-transform-controls";
 
 //------------------------------------------------------------------------------
 export const SAMPLES: Array<{
@@ -98,6 +99,6 @@ export const SAMPLES: Array<{
     },
     {
         categoryName: "Advanced",
-        list: [LiveSkeletalAnimation, WebXR, WebXRiOS, MPR, CullingBoxGeometry],
+        list: [LiveSkeletalAnimation, WebXR, WebXRiOS, MPR, CullingBoxGeometry, ThreeTransformControls],
     },
 ];
