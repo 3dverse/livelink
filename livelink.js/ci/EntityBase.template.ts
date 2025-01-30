@@ -29,6 +29,13 @@ export abstract class EntityBase extends TypedEventTarget<EntityEvents> {
     #core: EntityCore;
 
     /**
+     * @internal
+     */
+    get _core(): EntityCore {
+        return this.#core;
+    }
+
+    /**
      *
      */
     get euid(): Readonly<Components.Euid> {

@@ -143,7 +143,7 @@ export class EntityRegistry {
         let i = 0;
         for (const entity of this.#dirty_entities) {
             update_command[i++] = {
-                entity_components: entity,
+                entity_components: entity._core,
                 dirty_components: entity._dirty_components,
                 deleted_components: entity._deleted_components,
             };
@@ -169,7 +169,7 @@ export class EntityRegistry {
         let i = 0;
         for (const [entity, component_names] of this.#entities_to_persist) {
             update_command[i++] = {
-                entity_components: entity,
+                entity_components: entity._core,
                 dirty_components: Array.from(component_names),
                 deleted_components: [],
             };

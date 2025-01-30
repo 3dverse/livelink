@@ -44,7 +44,7 @@ export class CameraController extends CameraControls {
         viewport: Viewport;
         activate?: boolean;
     }) {
-        super(camera_entity.local_transform!, getLens(camera_entity), viewport.dom_element);
+        super(camera_entity.local_transform as Components.LocalTransform, getLens(camera_entity), viewport.dom_element);
 
         this.#camera_entity = camera_entity;
         this.#viewport = viewport;
@@ -97,7 +97,7 @@ export class CameraController extends CameraControls {
      */
     #initController(): void {
         this.setOrbitPoint(0, 0, 0);
-        this.setPosition(...this.#camera_entity.local_transform!.position);
+        this.setPosition(...this.#camera_entity.local_transform.position);
         this.addEventListener("update", this.#onCameraUpdate);
     }
 
@@ -105,8 +105,8 @@ export class CameraController extends CameraControls {
      *
      */
     #onCameraUpdate = (): void => {
-        this.position.toArray(this.#camera_entity.local_transform!.position);
-        this.orientation.toArray(this.#camera_entity.local_transform!.orientation);
+        this.position.toArray(this.#camera_entity.local_transform.position);
+        this.orientation.toArray(this.#camera_entity.local_transform.orientation);
     };
 }
 

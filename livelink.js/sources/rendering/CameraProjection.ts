@@ -65,6 +65,11 @@ export class CameraProjection {
     #clip_from_view_matrix = mat4.create();
 
     /**
+     *
+     */
+    #view_from_clip_matrix = mat4.create();
+
+    /**
      * Transformation matrix from world space to clip space, aka the model-view-projection matrix.
      */
     #clip_from_world_matrix = mat4.create();
@@ -79,6 +84,13 @@ export class CameraProjection {
      */
     get clip_from_view_matrix(): Readonly<Mat4> {
         return this.#clip_from_view_matrix as Mat4;
+    }
+
+    /**
+     * Transformation matrix from clip space to view space, aka the inverse of the projection matrix.
+     */
+    get view_from_clip_matrix(): Readonly<Mat4> {
+        return this.#view_from_clip_matrix as Mat4;
     }
 
     /**
@@ -307,6 +319,8 @@ export class CameraProjection {
         } else if (this.camera_entity.orthographic_lens) {
             this.#computeOrthographicProjection({ lens: this.camera_entity.orthographic_lens });
         }
+
+        mat4.invert(this.#view_from_clip_matrix, this.#clip_from_view_matrix);
     }
 
     /**

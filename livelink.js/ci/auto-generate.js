@@ -47,7 +47,9 @@ function generateEntityBase() {
     const exportSymbol = checker.getSymbolAtLocation(sourceFile?.getChildAt(0));
     const exports = checker.getExportsAndPropertiesOfModule(exportSymbol || sourceFile.symbol);
 
-    const componentExports = exports.filter(symbol => symbol.name !== "Euid" && symbol.name !== "ScriptElement");
+    const componentExports = exports.filter(
+        symbol => symbol.name !== "Euid" && symbol.name !== "ScriptElement" && symbol.name !== "LocalTransform",
+    );
 
     const componentAttributes = componentExports.map(symbol => {
         const declaration = symbol.declarations[0];
