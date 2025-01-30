@@ -337,7 +337,14 @@ export class CameraProjection {
         this.#world_from_view_matrix = Array.from(frame_camera_transform.world_from_view_matrix) as Mat4;
 
         const tmp_matrix = this.#clip_from_world_matrix;
-        const view_from_world_matrix = mat4.invert(tmp_matrix, frame_camera_transform.world_from_view_matrix);
+        let view_from_world_matrix = mat4.invert(tmp_matrix, frame_camera_transform.world_from_view_matrix);
+        if (!view_from_world_matrix) {
+            console.warn(
+                "Failed to invert world_from_view_matrix from frame_camera_transform, using identity matrix instead",
+                frame_camera_transform,
+            );
+            view_from_world_matrix = mat4.identity(tmp_matrix);
+        }
 
         this.#clip_from_world_matrix = mat4.multiply(
             this.#clip_from_world_matrix,

@@ -44,7 +44,12 @@ export class CameraController extends CameraControls {
         viewport: Viewport;
         activate?: boolean;
     }) {
-        super(camera_entity.local_transform as Components.LocalTransform, getLens(camera_entity), viewport.dom_element);
+        super(
+            camera_entity.local_transform as Components.LocalTransform,
+            getLens(camera_entity),
+            viewport.aspect_ratio,
+            viewport.dom_element,
+        );
 
         this.#camera_entity = camera_entity;
         this.#viewport = viewport;
@@ -56,13 +61,23 @@ export class CameraController extends CameraControls {
         if (activate) {
             this.activate();
         }
+
+        this.#viewport.rendering_surface.addEventListener("on-rendering-surface-resized", this.onViewportResize);
     }
+
+    /**
+     *
+     */
+    onViewportResize = (): void => {
+        this.aspectRatio = this.#viewport.aspect_ratio;
+    };
 
     /**
      *
      */
     release(): void {
         this.#viewport.is_camera_controlled_by_current_client = false;
+        this.#viewport.rendering_surface.removeEventListener("on-rendering-surface-resized", this.onViewportResize);
         this.deactivate();
         this.dispose();
     }

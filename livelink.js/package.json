@@ -33,7 +33,7 @@
   },
   "license": "ISC",
   "dependencies": {
-    "@3dverse/livelink-camera-controls": "^0.3.3",
+    "@3dverse/livelink-camera-controls": "^0.4.0",
     "@3dverse/livelink.core": "^1.0.9",
     "@types/webxr": "^0.5.20",
     "threejs-math": "^0.147.0"
