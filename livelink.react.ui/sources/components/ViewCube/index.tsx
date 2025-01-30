@@ -13,7 +13,7 @@ export const ViewCube = ({
 
     useEffect(() => {
         const updateCubeOrientation = () => {
-            const [x, y, z] = cameraEntity.local_transform!.eulerOrientation;
+            const [x, y, z] = cameraEntity.global_transform.eulerOrientation;
             setCubeOrientation([x, -y, z]);
         };
 

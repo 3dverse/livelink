@@ -136,7 +136,7 @@ export const SunPositionPicker = ({
 
         let isMouseDown = false;
 
-        const [initX, initY] = eulerToSunPosition(sun.local_transform!.eulerOrientation);
+        const [initX, initY] = eulerToSunPosition(sun.global_transform.eulerOrientation);
 
         let sunX = initX * RADIUS + centerX;
         let sunY = initY * RADIUS + centerY;
@@ -218,7 +218,7 @@ export const SunPositionPicker = ({
                 1 - sunZ / RADIUS,
             ] as Vec3;
 
-            sun.local_transform!.eulerOrientation = sunPositionToEuler(normalizedPosition);
+            sun.global_transform.eulerOrientation = sunPositionToEuler(normalizedPosition);
         };
 
         const onMouseDown = (event: PointerEvent) => {
