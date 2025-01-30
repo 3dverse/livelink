@@ -169,10 +169,10 @@ export class ThreeOverlay implements OverlayInterface {
         const orthographicCamera = new THREE.OrthographicCamera();
 
         const applyLens = (orthographic_lens: Components.OrthographicLens) => {
-            orthographicCamera.left = orthographic_lens.left;
-            orthographicCamera.right = orthographic_lens.right;
-            orthographicCamera.top = orthographic_lens.top;
-            orthographicCamera.bottom = orthographic_lens.bottom;
+            orthographicCamera.left = -this.#viewport.aspect_ratio * orthographic_lens.zoomFactor[0];
+            orthographicCamera.right = this.#viewport.aspect_ratio * orthographic_lens.zoomFactor[0];
+            orthographicCamera.top = -orthographic_lens.zoomFactor[1];
+            orthographicCamera.bottom = orthographic_lens.zoomFactor[1];
             orthographicCamera.near = orthographic_lens.zNear;
             orthographicCamera.far = orthographic_lens.zFar;
         };
