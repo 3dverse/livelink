@@ -16,7 +16,7 @@ function App() {
     return (
         <div className="flex h-screen">
             <MainMenu />
-            {outlet ? <Outlet /> : <Home />}
+            <div className="flex-1 max-w-[100vw]">{outlet ? <Outlet /> : <Home />}</div>
         </div>
     );
 }
