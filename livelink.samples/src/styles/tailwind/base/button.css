@@ -58,7 +58,7 @@
         &:hover,
         &:focus,
         &:active {
-            @apply text-primary bg-overground;
+            @apply text-accent bg-overground;
         }
     }
 
