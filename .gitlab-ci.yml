@@ -194,7 +194,7 @@ version:publish:
     - npx @changesets/cli publish
     - git checkout -b $CI_DEFAULT_BRANCH || git checkout $CI_DEFAULT_BRANCH
     - git pull origin $CI_DEFAULT_BRANCH
-    - git merge $CI_COMMIT_REF_NAME
+    - git merge --no-ff $CI_COMMIT_REF_NAME
     - git push origin $CI_DEFAULT_BRANCH
   variables:
     GIT_STRATEGY: clone
