@@ -1,5 +1,16 @@
 # @3dverse/livelink
 
+## 0.8.18
+
+### Patch Changes
+
+- refactor(livelink.js): update livelink.core and adapted the orthographic projection matrix to the new orthographic_lens component interface
+- docs: update typedoc config to ignore noInheritDoc warnings
+- feat(livelink.js): add global_transform to entity
+- fix(livelink.js): remote surface was not resized correctly under certain conditions
+- refactor(livelink.js): update livelink-camera-controls
+- feat(livelink.js): exposed latency from livelink core
+
 ## 0.8.17
 
 ### Patch Changes
