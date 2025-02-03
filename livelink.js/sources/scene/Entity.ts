@@ -229,7 +229,14 @@ export class Entity extends EntityTransformHandler {
         components: EntityCore;
         options?: EntityCreationOptions;
     }) {
-        super({ euid: components.euid, parent, local_transform: components.local_transform! });
+        super({
+            euid: components.euid,
+            parent,
+            local_transform: scene._sanitizeComponentValue({
+                component_name: "local_transform",
+                value: components.local_transform,
+            }),
+        });
 
         this.#scene = scene;
         this._mergeComponents({ components, dispatch_event: false });
