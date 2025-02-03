@@ -178,7 +178,21 @@ export abstract class EntityTransformHandler extends EntityBase {
      * Does not mark the local transform as dirty.
      */
     _setLocalTransform({ local_transform }: { local_transform: Partial<Components.LocalTransform> }): void {
-        Object.assign(this.#local_transform, local_transform);
+        if (local_transform.position) {
+            vec3.copy(this.#local_transform.position, local_transform.position);
+        }
+        if (local_transform.orientation) {
+            quat.copy(this.#local_transform.orientation, local_transform.orientation);
+        }
+        if (local_transform.eulerOrientation) {
+            vec3.copy(this.#local_transform.eulerOrientation, local_transform.eulerOrientation);
+        }
+        if (local_transform.scale) {
+            vec3.copy(this.#local_transform.scale, local_transform.scale);
+        }
+        if (local_transform.globalEulerOrientation) {
+            vec3.copy(this.#local_transform.globalEulerOrientation, local_transform.globalEulerOrientation);
+        }
     }
 
     /**
@@ -203,7 +217,7 @@ export abstract class EntityTransformHandler extends EntityBase {
      */
     _setGlobalPosition(value: Vec3): void {
         if (!this.#parent) {
-            this.#local_transform.position = value;
+            vec3.copy(this.#local_transform.position, value);
             return;
         }
 
@@ -233,8 +247,8 @@ export abstract class EntityTransformHandler extends EntityBase {
      */
     _setGlobalOrientation(value: Quat): void {
         if (!this.#parent) {
-            this.#local_transform.orientation = value;
-            this.#local_transform.eulerOrientation = quaternionToEuler(value);
+            quat.copy(this.#local_transform.orientation, value);
+            vec3.copy(this.#local_transform.eulerOrientation, quaternionToEuler(value));
             return;
         }
 
@@ -272,7 +286,7 @@ export abstract class EntityTransformHandler extends EntityBase {
     _setGlobalEulerOrientation(value: Vec3): void {
         const orientation = quaternionFromEuler(value);
         this._setGlobalOrientation(orientation);
-        this.#local_transform.globalEulerOrientation = value;
+        vec3.copy(this.#local_transform.globalEulerOrientation, value);
     }
 
     /**
@@ -297,7 +311,7 @@ export abstract class EntityTransformHandler extends EntityBase {
      */
     _setGlobalScale(value: Vec3): void {
         if (!this.#parent) {
-            this.#local_transform.scale = value;
+            vec3.copy(this.#local_transform.scale, value);
             return;
         }
 

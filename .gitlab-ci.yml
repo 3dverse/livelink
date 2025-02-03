@@ -8,11 +8,6 @@ include:
 
 variables:
   NODE_VERSION: "22"
-  LIVELINK_JS_PACKAGE: livelink.js/3dverse-livelink
-  LIVELINK_THREE_PACKAGE: livelink.three/3dverse-livelink-three
-  LIVELINK_REACT_PACKAGE: livelink.react/3dverse-livelink-react
-  LIVELINK_REACT_UI_PACKAGE: livelink.react.ui/3dverse-livelink-react-ui
-  LIVELINK_SAMPLES_PACKAGE: livelink.samples/livelink.samples
 
 # TEMPLATES ###########################################################################################################
 .update-version:
@@ -90,8 +85,8 @@ js:build:
   artifacts:
     expire_in: 1 day
     paths:
-      - "**/_prebuild/"
-      - "**/dist/"
+      - "*/_prebuild/"
+      - "*/dist/"
   before_script:
     - !reference [.npm-regcreds, before_script]
     - !reference [.node-cache, before_script]
@@ -173,6 +168,7 @@ version:publish:
     - job: version:generate-changesets
       artifacts: true
   artifacts:
+    expire_in: 1 day
     paths:
       - "*/package.json"
   before_script:
@@ -188,13 +184,23 @@ version:publish:
       npm config set @3dverse:registry="https://registry.npmjs.org" --userconfig=".npmrc"
       npm config set //registry.npmjs.org/:_authToken="${NPMJS_ACCESS_TOKEN}" --userconfig=".npmrc"
   script:
+    # Update package versions using changesets, and create a new commit
     - npx @changesets/cli version
+    # Update package-lock.json
+    - npm i --package-lock-only
+    # Amend the commit to include the package-lock.json changes
+    - git add package-lock.json
+    - git commit --amend --no-edit
+    # Tag the commit with the new version
     - npx @changesets/cli tag
+    # Push the commit and tag
     - git push origin $CI_COMMIT_REF_NAME --follow-tags || git push --set-upstream origin $CI_COMMIT_REF_NAME --follow-tags
+    # Publish the packages
     - npx @changesets/cli publish
+    # Merge the release branch into the default branch
     - git checkout -b $CI_DEFAULT_BRANCH || git checkout $CI_DEFAULT_BRANCH
     - git pull origin $CI_DEFAULT_BRANCH
-    - git merge $CI_COMMIT_REF_NAME
+    - git merge --no-ff $CI_COMMIT_REF_NAME
     - git push origin $CI_DEFAULT_BRANCH
   variables:
     GIT_STRATEGY: clone

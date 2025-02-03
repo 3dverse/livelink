@@ -34,7 +34,7 @@ import { LoadingOverlay } from "@3dverse/livelink-react-ui";
 import { DisconnectedModal } from "../../components/SamplePlayer";
 
 //------------------------------------------------------------------------------
-const scene_id = "8f3c24c1-720e-4d2c-b0e7-f623e4feb7be";
+const scene_id = "5c19522d-a045-4554-a6d3-78bd87e44b86";
 const token = import.meta.env.VITE_PROD_PUBLIC_TOKEN;
 
 //------------------------------------------------------------------------------
