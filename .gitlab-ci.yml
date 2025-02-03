@@ -143,10 +143,6 @@ version:update-mr:
   extends:
     - .runner-onprem
   image: registry.gitlab.com/3dverse/platform/ci-utils/docker-images/changesets-tools:latest
-  variables:
-    GIT_STRATEGY: clone
-  before_script:
-    - git config --global --add safe.directory $CI_PROJECT_DIR
   script:
     - changesets-tools generate-changesets
     - changesets-tools post-merge-request-details
@@ -158,17 +154,9 @@ version:generate-changesets:
   extends:
     - .runner-onprem
   image: registry.gitlab.com/3dverse/platform/ci-utils/docker-images/changesets-tools:latest
-  variables:
-    GIT_STRATEGY: clone
   artifacts:
     paths:
       - .changeset/*.md
-  before_script:
-    - |
-      git config --global --add safe.directory $CI_PROJECT_DIR
-      git config --global user.name "${BOT_3DVERSE_USER_NAME}"
-      git config --global user.email "${BOT_3DVERSE_USER_EMAIL}"
-      git checkout -b $CI_COMMIT_REF_NAME || git checkout $CI_COMMIT_REF_NAME
   script:
     - changesets-tools generate-changesets
   rules:
