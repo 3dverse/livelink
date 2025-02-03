@@ -23,7 +23,7 @@ import { DisconnectedModal } from "../../components/SamplePlayer";
 import { Entity } from "@3dverse/livelink";
 
 //------------------------------------------------------------------------------
-const scene_id = "a5dbe3a0-2056-48e7-a53e-3725cb770084";
+const scene_id = "b49a55db-41ec-48ba-bddc-4f86a7f48602";
 const token = import.meta.env.VITE_PROD_PUBLIC_TOKEN;
 
 //------------------------------------------------------------------------------
