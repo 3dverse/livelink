@@ -6,3 +6,5 @@ docs
 docs-md
 .vscode
 *.tgz
+
+*storybook.log

@@ -6,8 +6,6 @@ import { Provider } from "../../chakra/Provider";
 import { InactivityWarningBadge } from "./InactivityWarningBadge";
 
 //------------------------------------------------------------------------------
-
-//------------------------------------------------------------------------------
 export const InactivityWarning = ({
     warningDuration,
     onActivityDetected,

@@ -8,13 +8,13 @@ import { LOCAL_STORAGE_KEYS, useLocalStorage } from "../lib/localStorage.ts";
 
 //------------------------------------------------------------------------------
 const BREAKPOINT_LG = 991;
-const HIDE_3DVERSE_LOGO_QUERY = "hide3dverseLogo";
+const EMBEDDED_PAGE_QUERY = "embedded";
 
 //------------------------------------------------------------------------------
 export function MainMenu() {
     const [isCollapsed, setIsCollapsed] = useLocalStorage<boolean>(LOCAL_STORAGE_KEYS.IS_MAIN_MENU_COLLAPSED, false);
     const [isScreenLargerThanLG, setIsScreenLargerThanLG] = useState<boolean>();
-    const [is3dverseLogoVisible, setIs3dverseLogoVisible] = useState<boolean>(true);
+    const [isPageEmbedded, setIsPageEmbedded] = useState<boolean>(false);
 
     const onCollapse = () => {
         setIsCollapsed(true);
@@ -34,9 +34,10 @@ export function MainMenu() {
     useEffect(() => {
         const url = new URL(window.location.href);
         const params = new URLSearchParams(url.search);
-        const hide3dverseLogo = ["true", "1"].includes(params.get(HIDE_3DVERSE_LOGO_QUERY) || "");
-        if (hide3dverseLogo) {
-            setIs3dverseLogoVisible(false);
+        const _isPageEmbedded = ["true", "1"].includes(params.get(EMBEDDED_PAGE_QUERY) || "");
+
+        if (_isPageEmbedded) {
+            setIsPageEmbedded(true);
         }
     }, []);
 
@@ -46,7 +47,7 @@ export function MainMenu() {
             {/* Toggle button */}
             {isCollapsed && (
                 <button
-                    className="button button-outline button-icon absolute top-3 left-3 bg-underground text-primary animate-appear-right z-10"
+                    className="button button-outline button-icon absolute top-4 left-4 bg-underground text-primary animate-appear-right z-10"
                     onClick={() => setIsCollapsed(!isCollapsed)}
                 >
                     <BarsIcon className="w-5 h-5" />
@@ -56,26 +57,27 @@ export function MainMenu() {
             {/* Overlay */}
             <div
                 className={`
-                        z-20 lg:hidden absolute top-0 left-0 w-screen h-full bg-underground transition-opacity opacity-0 cursor-pointer
-                        ${isCollapsed ? "pointer-events-none" : "opacity-70"}
-                    `}
+                    z-20 lg:hidden absolute top-0 left-0 w-screen h-full bg-underground transition-opacity opacity-0 cursor-pointer
+                    ${isCollapsed ? "pointer-events-none" : "opacity-70"}
+                `}
                 onClick={onCollapse}
             />
 
             {/* Menu */}
+
             <nav
-                className={`absolute lg:relative top-0 transition-transform h-screen ${isCollapsed ? "!absolute -translate-x-full" : ""}`}
+                className={`absolute xl:relative top-0 transition-all h-screen overflow-x-hidden ${isCollapsed ? "w-0 xl:w-3" : "w-80"}`}
             >
                 <div
-                    className="relative w-80 h-full flex flex-col bg-ground shadow-2xl lg:shadow-none z-20"
+                    className="absolute w-80 h-full flex flex-col bg-ground shadow-2xl lg:shadow-none z-20"
                     onClick={isScreenLargerThanLG ? undefined : onCollapse}
                 >
-                    <header className="flex justify-between mt-6 mb-4 pl-5 pr-1">
+                    <header className={`flex justify-between mt-6 mb-4 pr-1 ${isPageEmbedded ? "pl-3" : "pl-5"}`}>
                         <NavLink
                             to="/"
-                            className="flex items-start gap-3 pl-3 font-primary text-secondary text-md font-medium tracking-wider"
+                            className="flex items-start gap-3 pl-3 font-primary text-secondary text-[1.1rem] tracking-wider"
                         >
-                            {is3dverseLogoVisible && (
+                            {!isPageEmbedded && (
                                 <img
                                     src="https://3dverse.com/logo/3dverse-wordmark.svg"
                                     className="h-4 mt-[3px]"
@@ -89,7 +91,12 @@ export function MainMenu() {
                         </button>
                     </header>
 
-                    <ul className="flex flex-col gap-6 h-full px-5 pb-2 text-secondary overflow-y-auto">
+                    <ul
+                        className={`
+                            flex flex-col gap-6 h-full pb-16 text-secondary overflow-y-auto
+                            ${isPageEmbedded ? "px-3" : "px-5"}
+                        `}
+                    >
                         {SAMPLES.map((category, i) => (
                             <li key={i}>
                                 <p className="mb-1 pl-3 text-2xs uppercase text-tertiary tracking-wider opacity-80">

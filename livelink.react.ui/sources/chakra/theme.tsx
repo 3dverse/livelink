@@ -1,6 +1,6 @@
 //--------------------------------------------------------------------------
 import { extendTheme } from "@chakra-ui/react";
-import { chakraThemeInternal, designTokensCSSInternal } from "@3dverse/design-tokens";
+import { chakraTheme, designTokensCSS } from "@3dverse/design-tokens";
 
 //--------------------------------------------------------------------------
 import Checkbox from "./components/Checkbox";
@@ -20,7 +20,7 @@ export const theme = extendTheme({
     initialColorMode: "dark",
     useSystemColorMode: false,
 
-    ...chakraThemeInternal,
+    ...chakraTheme,
 
     styles: {
         global: () => ({
@@ -31,7 +31,7 @@ export const theme = extendTheme({
                 fontFamily: "var(--3dverse-font-family-secondary)",
                 scrollbarColor: "var(--3dverse-color-border-primary) transparent",
             },
-            ":root": designTokensCSSInternal,
+            ":root": designTokensCSS,
         }),
     },
     components: {

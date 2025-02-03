@@ -105,9 +105,6 @@ js:build:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
     - if: $CI_COMMIT_BRANCH == "release"
     - if: $CI_COMMIT_REF_NAME == $CI_DEFAULT_BRANCH
-      changes:
-        - livelink.samples/**/*
-        - livelink.samples/*
 
 create-mr:
   stage: deploy
@@ -139,9 +136,6 @@ pages:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
       when: never
     - if: $CI_COMMIT_REF_NAME == $CI_DEFAULT_BRANCH
-      changes:
-        - livelink.samples/**/*
-        - livelink.samples/*
 
 # VERSION #############################################################################################################
 version:update-mr:
@@ -149,20 +143,8 @@ version:update-mr:
   extends:
     - .runner-onprem
   image: registry.gitlab.com/3dverse/platform/ci-utils/docker-images/changesets-tools:latest
-  variables:
-    GIT_STRATEGY: clone
-  before_script:
-    - |
-      git config --global --add safe.directory $CI_PROJECT_DIR
-      git config --global user.name "${BOT_3DVERSE_USER_NAME}"
-      git config --global user.email "${BOT_3DVERSE_USER_EMAIL}"
   script:
-    - git fetch origin release:release-origin
-    - git fetch origin main:main-origin
-    - git switch release-origin
-    - git merge --no-ff main-origin
-    - git reset main-origin
-    - changeset-conventional
+    - changesets-tools generate-changesets
     - changesets-tools post-merge-request-details
   rules:
     - if: $CI_MERGE_REQUEST_SOURCE_BRANCH_NAME == $CI_DEFAULT_BRANCH && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == "release"
@@ -172,19 +154,11 @@ version:generate-changesets:
   extends:
     - .runner-onprem
   image: registry.gitlab.com/3dverse/platform/ci-utils/docker-images/changesets-tools:latest
-  variables:
-    GIT_STRATEGY: clone
   artifacts:
     paths:
       - .changeset/*.md
-  before_script:
-    - |
-      git config --global --add safe.directory $CI_PROJECT_DIR
-      git config --global user.name "${BOT_3DVERSE_USER_NAME}"
-      git config --global user.email "${BOT_3DVERSE_USER_EMAIL}"
-      git checkout -b $CI_COMMIT_REF_NAME || git checkout $CI_COMMIT_REF_NAME
   script:
-    - changeset-conventional
+    - changesets-tools generate-changesets
   rules:
     - if: $CI_COMMIT_BRANCH == "release"
 
@@ -200,7 +174,7 @@ version:publish:
       artifacts: true
   artifacts:
     paths:
-      - "**/.package.json"
+      - "*/package.json"
   before_script:
     - !reference [.npm-regcreds, before_script]
     - !reference [.node-cache, before_script]
@@ -218,6 +192,10 @@ version:publish:
     - npx @changesets/cli tag
     - git push origin $CI_COMMIT_REF_NAME --follow-tags || git push --set-upstream origin $CI_COMMIT_REF_NAME --follow-tags
     - npx @changesets/cli publish
+    - git checkout -b $CI_DEFAULT_BRANCH || git checkout $CI_DEFAULT_BRANCH
+    - git pull origin $CI_DEFAULT_BRANCH
+    - git merge $CI_COMMIT_REF_NAME
+    - git push origin $CI_DEFAULT_BRANCH
   variables:
     GIT_STRATEGY: clone
   rules:

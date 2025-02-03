@@ -65,6 +65,11 @@ export class CameraProjection {
     #clip_from_view_matrix = mat4.create();
 
     /**
+     *
+     */
+    #view_from_clip_matrix = mat4.create();
+
+    /**
      * Transformation matrix from world space to clip space, aka the model-view-projection matrix.
      */
     #clip_from_world_matrix = mat4.create();
@@ -79,6 +84,13 @@ export class CameraProjection {
      */
     get clip_from_view_matrix(): Readonly<Mat4> {
         return this.#clip_from_view_matrix as Mat4;
+    }
+
+    /**
+     * Transformation matrix from clip space to view space, aka the inverse of the projection matrix.
+     */
+    get view_from_clip_matrix(): Readonly<Mat4> {
+        return this.#view_from_clip_matrix as Mat4;
     }
 
     /**
@@ -307,6 +319,8 @@ export class CameraProjection {
         } else if (this.camera_entity.orthographic_lens) {
             this.#computeOrthographicProjection({ lens: this.camera_entity.orthographic_lens });
         }
+
+        mat4.invert(this.#view_from_clip_matrix, this.#clip_from_view_matrix);
     }
 
     /**
@@ -323,7 +337,14 @@ export class CameraProjection {
         this.#world_from_view_matrix = Array.from(frame_camera_transform.world_from_view_matrix) as Mat4;
 
         const tmp_matrix = this.#clip_from_world_matrix;
-        const view_from_world_matrix = mat4.invert(tmp_matrix, frame_camera_transform.world_from_view_matrix);
+        let view_from_world_matrix = mat4.invert(tmp_matrix, frame_camera_transform.world_from_view_matrix);
+        if (!view_from_world_matrix) {
+            console.warn(
+                "Failed to invert world_from_view_matrix from frame_camera_transform, using identity matrix instead",
+                frame_camera_transform,
+            );
+            view_from_world_matrix = mat4.identity(tmp_matrix);
+        }
 
         this.#clip_from_world_matrix = mat4.multiply(
             this.#clip_from_world_matrix,
@@ -349,6 +370,14 @@ export class CameraProjection {
      *
      */
     #computeOrthographicProjection({ lens }: { lens: Components.OrthographicLens }): void {
-        mat4.ortho(this.#clip_from_view_matrix, lens.left, lens.right, lens.bottom, lens.top, lens.zNear, lens.zFar);
+        mat4.ortho(
+            this.#clip_from_view_matrix,
+            -this.viewport.aspect_ratio * lens.zoomFactor[0],
+            this.viewport.aspect_ratio * lens.zoomFactor[0],
+            -lens.zoomFactor[1],
+            lens.zoomFactor[1],
+            lens.zNear,
+            lens.zFar,
+        );
     }
 }

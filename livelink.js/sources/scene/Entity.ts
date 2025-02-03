@@ -7,19 +7,17 @@ import type {
     EntityCore,
     ComponentsManifest,
     ComponentsRecord,
-    Components,
+    Mat4,
 } from "@3dverse/livelink.core";
 
 //------------------------------------------------------------------------------
-import { EntityBase, type DefaultValue } from "../../_prebuild/EntityBase";
+import { type DefaultValue } from "../../_prebuild/EntityBase";
 
 //------------------------------------------------------------------------------
 import { EntityCreationOptions, Scene } from "./Scene";
-import { ComponentHandler, ComponentHandlers, LocalTransformHandler } from "./ComponentHandler";
+import { EntityTransformHandler, Transform } from "./EntityTransformHandler";
+import { ComponentHandler } from "./ComponentHandler";
 import { EntityUpdatedEvent, EntityVisibilityChangedEvent } from "./EntityEvents";
-
-//------------------------------------------------------------------------------
-export type GlobalTransform = Omit<Components.LocalTransform, "globalEulerOrientation">;
 
 /**
  * An entity in a scene.
@@ -42,7 +40,7 @@ export type GlobalTransform = Omit<Components.LocalTransform, "globalEulerOrient
  *
  * @category Scene
  */
-export class Entity extends EntityBase {
+export class Entity extends EntityTransformHandler {
     /**
      *
      */
@@ -67,11 +65,6 @@ export class Entity extends EntityBase {
      * @deprecated
      */
     #auto_broadcast: boolean = true;
-
-    /**
-     *
-     */
-    #parent: Entity | null = null;
 
     /**
      *
@@ -156,29 +149,56 @@ export class Entity extends EntityBase {
      * The parent entity of this entity or null if it has no parent.
      */
     get parent(): Entity | null {
-        return this.#parent;
+        return super.parent as Entity | null;
     }
 
     /**
-     * The global transform of the entity.
-     */
-    get global_transform(): GlobalTransform {
-        return this.local_transform!;
-    }
-
-    /**
-     * The global transform of the entity.
-     */
-    set global_transform(value: Partial<GlobalTransform>) {
-        this._setGlobalTransform({ global_transform: value, change_source: "local" });
-        this._markComponentAsDirty({ component_name: "local_transform" });
-    }
-
-    /**
-     *
+     * Re-parent the entity by setting a parent entity.
      */
     set parent(parent: Entity | null) {
-        throw new Error("Not implemented");
+        super.parent = parent;
+    }
+
+    /**
+     * Local transform of the entity.
+     */
+    get local_transform(): Transform {
+        return super.local_transform;
+    }
+
+    /**
+     * Set the local transform of the entity.
+     */
+    set local_transform(local_transform: Partial<Transform>) {
+        super.local_transform = local_transform;
+    }
+
+    /**
+     * Global transform of the entity.
+     */
+    get global_transform(): Transform {
+        return super.global_transform;
+    }
+
+    /**
+     * Set the global transform of the entity.
+     */
+    set global_transform(global_transform: Partial<Transform>) {
+        super.global_transform = global_transform;
+    }
+
+    /**
+     * The local space to world space matrix of the entity.
+     */
+    get ls_to_ws(): Mat4 {
+        return super.ls_to_ws;
+    }
+
+    /**
+     * The world space to local space matrix of the entity.
+     */
+    get ws_to_ls(): Mat4 {
+        return super.ws_to_ls;
     }
 
     /**
@@ -209,10 +229,9 @@ export class Entity extends EntityBase {
         components: EntityCore;
         options?: EntityCreationOptions;
     }) {
-        super({ euid: components.euid });
+        super({ euid: components.euid, parent, local_transform: components.local_transform! });
 
         this.#scene = scene;
-        this.#parent = parent;
         this._mergeComponents({ components, dispatch_event: false });
         this.#scene._entity_registry.add({ entity: this });
 
@@ -250,28 +269,6 @@ export class Entity extends EntityBase {
             ),
         );
     }
-
-    /**
-     * @internal
-     *
-     * Recalculate the local transform of the entity based on the global transform.
-     * Does not mark the local transform as dirty.
-     */
-    _setGlobalTransform({
-        global_transform,
-        change_source,
-    }: {
-        global_transform: Partial<GlobalTransform>;
-        change_source: "local" | "external";
-    }): void {
-        //TODO: implement local_transform recalculation
-        this._mergeComponents({
-            components: { local_transform: global_transform },
-            dispatch_event: true,
-            change_source,
-        });
-    }
-
     /**
      * @internal
      */
@@ -284,9 +281,17 @@ export class Entity extends EntityBase {
         | { dispatch_event: true; change_source: "local" | "external" }
     )): void {
         for (const key in components) {
-            const component_name = key as ComponentName;
-            if (key !== "euid") {
-                this.#unsafeSetComponentValue({ component_name, value: components[component_name] });
+            const component_name = key as ComponentName | "euid";
+
+            switch (component_name) {
+                case "euid":
+                    break;
+                case "local_transform":
+                    this._setLocalTransform({ local_transform: components[component_name]! });
+                    break;
+                default:
+                    this.#unsafeSetComponentValue({ component_name, value: components[component_name] });
+                    break;
             }
         }
 
@@ -394,6 +399,17 @@ export class Entity extends EntityBase {
     }
 
     /**
+     *
+     */
+    #unsafeGetComponentValue<_ComponentName extends ComponentName>({
+        component_name,
+    }: {
+        component_name: _ComponentName;
+    }): ComponentType<_ComponentName> {
+        return Reflect.get(this, `#${component_name}`) as ComponentType<_ComponentName>;
+    }
+
+    /**
      * Set the values of a component without marking it as dirty.
      */
     #unsafeSetComponentValue<_ComponentName extends ComponentName>({
@@ -403,7 +419,7 @@ export class Entity extends EntityBase {
         component_name: _ComponentName;
         value: Partial<ComponentType<_ComponentName>> | undefined;
     }): void {
-        const existing_component = Reflect.get(this, `#${component_name}`);
+        const existing_component = this.#unsafeGetComponentValue({ component_name });
         if (existing_component) {
             Object.assign(existing_component, value);
             return;
@@ -424,22 +440,10 @@ export class Entity extends EntityBase {
         component_name: _ComponentName;
         value: Partial<ComponentType<_ComponentName>> | undefined;
     }): ComponentType<_ComponentName> {
-        const Handler =
-            Entity.serializableComponentsProxies[component_name] ?? Entity.serializableComponentsProxies["default"];
-
-        // FIXME: this will not compute euler orientations
         const sanitized_value = this.#scene._sanitizeComponentValue({ component_name, value });
         // Keep an accessible reference to the proxied component value
         Reflect.set(this, `#${component_name}`, sanitized_value);
 
-        return new Proxy(sanitized_value, new Handler(this, component_name)) as ComponentType<_ComponentName>;
+        return new Proxy(sanitized_value, new ComponentHandler(this, component_name)) as ComponentType<_ComponentName>;
     }
-
-    /**
-     * @internal
-     */
-    static serializableComponentsProxies = {
-        ["local_transform"]: LocalTransformHandler,
-        ["default"]: ComponentHandler,
-    } as ComponentHandlers;
 }

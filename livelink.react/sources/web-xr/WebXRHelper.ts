@@ -73,8 +73,8 @@ export class WebXRHelper {
 
     //--------------------------------------------------------------------------
     // WebXR API references
-    session: XRSession | null = null;
-    mode: XRSessionMode = "inline";
+    #session: XRSession | null = null;
+    #mode: XRSessionMode = "inline";
     #reference_space: XRReferenceSpace | null = null;
     #xr_viewports: XRViewport[] = [];
     #animationFrameRequestId: number = 0;
@@ -102,6 +102,21 @@ export class WebXRHelper {
     }
 
     //--------------------------------------------------------------------------
+    get session(): XRSession | null {
+        return this.#session;
+    }
+
+    //--------------------------------------------------------------------------
+    get mode(): XRSessionMode {
+        return this.#mode;
+    }
+
+    //--------------------------------------------------------------------------
+    get reference_space(): XRReferenceSpace | null {
+        return this.#reference_space;
+    }
+
+    //--------------------------------------------------------------------------
     constructor(resolution_scale: number = 1.0) {
         this.#surface = new OffscreenSurface({
             width: window.innerWidth, // Not sure
@@ -119,13 +134,13 @@ export class WebXRHelper {
      * Release the XRSession and the rendering OffscreenSurface.
      */
     public async release(): Promise<void> {
-        if (this.session) {
+        if (this.#session) {
             if (this.#animationFrameRequestId) {
-                this.session.cancelAnimationFrame(this.#animationFrameRequestId);
+                this.#session.cancelAnimationFrame(this.#animationFrameRequestId);
             }
 
-            this.session.removeEventListener("inputsourceschange", WebXRInputRelay.onInputSourcesChange);
-            await this.session.end().catch(error => console.warn("Could not end XR session:", error));
+            this.#session.removeEventListener("inputsourceschange", WebXRInputRelay.onInputSourcesChange);
+            await this.#session.end().catch(error => console.warn("Could not end XR session:", error));
         }
 
         if (this.#core) {
@@ -164,13 +179,13 @@ export class WebXRHelper {
      * @param options
      */
     public async initialize(mode: XRSessionMode, options: XRSessionInit = {}): Promise<void> {
-        this.mode = mode;
+        this.#mode = mode;
 
         if (!WebXRHelper.isSessionSupported(mode)) {
             throw new Error(`WebXR "${mode}" not supported`);
         }
 
-        if (this.session) {
+        if (this.#session) {
             console.warn("Releasing previous XR session");
             await this.release();
         }
@@ -184,13 +199,13 @@ export class WebXRHelper {
                 : options;
 
             try {
-                this.session = await navigator.xr!.requestSession(mode, sessionOptions);
+                this.#session = await navigator.xr!.requestSession(mode, sessionOptions);
                 await this.updateRenderState();
                 await this.setReferenceSpaceType(spaceType);
                 // As input sources are connected if they are tracked-pointer devices
                 // look up which meshes should be associated with their profile and
                 // load as the controller model for that hand.
-                this.session.addEventListener("inputsourceschange", WebXRInputRelay.onInputSourcesChange);
+                this.#session.addEventListener("inputsourceschange", WebXRInputRelay.onInputSourcesChange);
                 return;
             } catch (error) {
                 console.warn(
@@ -198,12 +213,12 @@ export class WebXRHelper {
                     { spaceType, requiredFeatures: sessionOptions.requiredFeatures },
                     error,
                 );
-                this.session?.end();
+                this.#session?.end();
                 lastError = error;
             }
         }
 
-        if (!this.session) {
+        if (!this.#session) {
             throw lastError;
         }
     }
@@ -228,7 +243,7 @@ export class WebXRHelper {
 
         // AR session needs the FTL background to be pure black for the XRContext shader to simulate the background
         // transparency while the feature to send the background mask frame from FTL to the client is not implemented.
-        const isAR = this.mode === "immersive-ar";
+        const isAR = this.#mode === "immersive-ar";
         this.fakeAlpha = isAR;
         const dataJSON = isAR
             ? {
@@ -262,7 +277,7 @@ export class WebXRHelper {
             const xr_views = frame.getViewerPose(this.#reference_space!)?.views;
             if (!xr_views) {
                 if (--remaining_attempts > 0) {
-                    this.session!.requestAnimationFrame(onFirstXRFrame);
+                    this.#session!.requestAnimationFrame(onFirstXRFrame);
                 } else {
                     reject(new Error("Failed to get XR views."));
                 }
@@ -271,7 +286,7 @@ export class WebXRHelper {
             resolve(xr_views);
         };
 
-        this.#animationFrameRequestId = this.session!.requestAnimationFrame(onFirstXRFrame);
+        this.#animationFrameRequestId = this.#session!.requestAnimationFrame(onFirstXRFrame);
         return promise;
     }
 
@@ -302,7 +317,7 @@ export class WebXRHelper {
      * Start the XRFrame animation loop.
      */
     public start(): void {
-        this.session!.requestAnimationFrame(this.#onXRFrame);
+        this.#session!.requestAnimationFrame(this.#onXRFrame);
     }
 
     //--------------------------------------------------------------------------
@@ -312,7 +327,7 @@ export class WebXRHelper {
      * @returns {Promise<XRReferenceSpace>} Resolves with the reference to the new reference space.
      */
     public async setReferenceSpaceType(type: XRReferenceSpaceType = "local"): Promise<XRReferenceSpace> {
-        this.#reference_space = await this.session!.requestReferenceSpace(type).catch(async error => {
+        this.#reference_space = await this.#session!.requestReferenceSpace(type).catch(async error => {
             console.error(`Failed to request XR reference space of type ${type}:`, error);
             throw error;
         });
@@ -327,7 +342,7 @@ export class WebXRHelper {
      * @returns Resolves when the render state is updated.
      */
     public async updateRenderState(layer_init: XRWebGLLayerInit = {}): Promise<void> {
-        const session = this.session!;
+        const session = this.#session!;
         const baseLayer = new XRWebGLLayer(session, this.#context.native, layer_init);
         await session.updateRenderState({ baseLayer });
         this.#context.frame_buffer = baseLayer.framebuffer;
@@ -465,12 +480,12 @@ export class WebXRHelper {
             const camera1 = cameras[0];
             const camera2 = cameras[1];
             const eye1_transform = {
-                position: camera1.local_transform!.position,
-                orientation: camera1.local_transform!.orientation,
+                position: camera1.local_transform.position,
+                orientation: camera1.local_transform.orientation,
             };
             const eye2_transform = {
-                position: camera2.local_transform!.position,
-                orientation: camera2.local_transform!.orientation,
+                position: camera2.local_transform.position,
+                orientation: camera2.local_transform.orientation,
             };
             const { eye1, eye2 } = this.#transformEyes({
                 eye1: eye1_transform,
@@ -491,8 +506,8 @@ export class WebXRHelper {
         if (cameras.length === 1) {
             const camera = cameras[0];
             const eye_transform = {
-                position: camera.local_transform!.position,
-                orientation: camera.local_transform!.orientation,
+                position: camera.local_transform.position,
+                orientation: camera.local_transform.orientation,
             };
             camera.local_transform = this.#transformSingleEye({
                 eye: eye_transform,
@@ -560,7 +575,7 @@ export class WebXRHelper {
      * @param frame
      */
     #onXRFrame = (_: DOMHighResTimeStamp, frame: XRFrame): void => {
-        const session = this.session!;
+        const session = this.#session!;
 
         // Check for and respond to any gamepad state changes.
         session.inputSources.forEach(source =>
@@ -634,7 +649,7 @@ export class WebXRHelper {
      * @param xr_views
      */
     #computeLivelinkViewportRects(xr_views: readonly XRView[]): void {
-        const gl_layer = this.session!.renderState.baseLayer!;
+        const gl_layer = this.#session!.renderState.baseLayer!;
         const xr_eyes = xr_views.map(view => ({
             view,
             viewport: gl_layer.getViewport(view)!,

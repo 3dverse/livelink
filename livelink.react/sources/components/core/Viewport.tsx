@@ -16,13 +16,7 @@ import * as Livelink from "@3dverse/livelink";
 //------------------------------------------------------------------------------
 import { LivelinkContext } from "./Livelink";
 import { CanvasContext } from "./Canvas";
-
-//------------------------------------------------------------------------------
-type UnionKeys<T> = T extends T ? keyof T : never;
-type StrictUnionHelper<T, TAll> = T extends unknown
-    ? T & Partial<Record<Exclude<UnionKeys<TAll>, keyof T>, never>>
-    : never;
-type StrictUnion<T> = StrictUnionHelper<T, T>;
+import { StrictUnion } from "../../utils";
 
 /**
  * Context that provides a viewport.

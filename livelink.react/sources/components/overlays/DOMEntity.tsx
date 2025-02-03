@@ -27,12 +27,7 @@ export function DOMEntity({
             return;
         }
 
-        if (!entity.local_transform) {
-            console.error("Entity does not have a local transform component.");
-            return;
-        }
-
-        const updatePosition = (): void => setWorldPosition(entity.local_transform!.position);
+        const updatePosition = (): void => setWorldPosition(entity.global_transform.position);
 
         // Initialize the position
         updatePosition();

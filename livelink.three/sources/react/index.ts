@@ -1,1 +1,2 @@
-export * from "./ThreeOverlayComponent";
+export * from "./ThreeOverlayProvider";
+export * from "./TransformControls";

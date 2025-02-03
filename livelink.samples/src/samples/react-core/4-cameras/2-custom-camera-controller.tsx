@@ -62,7 +62,7 @@ function CustomController({ cameraEntity }: { cameraEntity: Entity | null }) {
         }
 
         const interval = setInterval(() => {
-            cameraEntity.local_transform!.position[1] =
+            cameraEntity.local_transform.position[1] =
                 Math.cos(Date.now() * 0.001) * 5;
         }, 1000 / 60);
 
