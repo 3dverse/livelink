@@ -1,5 +1,11 @@
 # @3dverse/livelink
 
+## 0.8.19
+
+### Patch Changes
+
+- fix(livelink.js): apply default values to local_transform component
+
 ## 0.8.18
 
 ### Patch Changes
