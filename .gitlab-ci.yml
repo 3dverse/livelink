@@ -199,7 +199,6 @@ version:publish:
     - npx @changesets/cli publish
     # Merge the release branch into the default branch
     - git checkout -b $CI_DEFAULT_BRANCH || git checkout $CI_DEFAULT_BRANCH
-    - git pull origin $CI_DEFAULT_BRANCH
     - git merge --no-ff $CI_COMMIT_REF_NAME
     - git push origin $CI_DEFAULT_BRANCH
   variables:
