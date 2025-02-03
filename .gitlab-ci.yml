@@ -85,8 +85,8 @@ js:build:
   artifacts:
     expire_in: 1 day
     paths:
-      - "**/_prebuild/"
-      - "**/dist/"
+      - "*/_prebuild/"
+      - "*/dist/"
   before_script:
     - !reference [.npm-regcreds, before_script]
     - !reference [.node-cache, before_script]
