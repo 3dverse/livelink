@@ -4,7 +4,7 @@ import ErrorPage from "./ErrorPage.tsx";
 import "@fontsource-variable/manrope";
 import "@fontsource-variable/inter";
 import "./styles/index.css";
-import { RouterProvider, createHashRouter } from "react-router-dom";
+import { RouterProvider, createHashRouter } from "react-router";
 import { SAMPLES } from "./samples/index.ts";
 import { SamplePlayer } from "./components/SamplePlayer/SamplePlayer.tsx";
 import { resolveSamplePath } from "./components/SamplePlayer/index.tsx";

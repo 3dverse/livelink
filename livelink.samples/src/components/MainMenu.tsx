@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { NavLink } from "react-router-dom";
+import { NavLink } from "react-router";
 import { SAMPLES } from "../samples/index.ts";
 import { resolveSamplePath } from "./SamplePlayer/index.tsx";
 import { BarsIcon } from "./icons/BarsIcon.tsx";

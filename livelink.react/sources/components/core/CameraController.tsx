@@ -22,9 +22,9 @@ import { ViewportContext } from "./Viewport";
  * @category Context Providers
  */
 export const CameraControllerContext = createContext<{
-    cameraController: DefaultCameraController | null;
+    cameraController: DefaultCameraController | undefined;
 }>({
-    cameraController: null,
+    cameraController: undefined,
 });
 
 /**
@@ -34,10 +34,10 @@ export const CameraControllerContext = createContext<{
  */
 export const CameraController = forwardRef(function CameraController(
     { _preset = "orbital", children }: PropsWithChildren & { _preset?: "orbital" | "fly" },
-    ref: Ref<DefaultCameraController | null>,
+    ref: Ref<DefaultCameraController | undefined>,
 ) {
     const { viewport, camera } = useContext(ViewportContext);
-    const [cameraController, setCameraController] = useState<DefaultCameraController | null>(null);
+    const [cameraController, setCameraController] = useState<DefaultCameraController | undefined>(undefined);
     useImperativeHandle(ref, () => cameraController, [cameraController]);
 
     useEffect(() => {
@@ -53,7 +53,7 @@ export const CameraController = forwardRef(function CameraController(
 
         return (): void => {
             controller.release();
-            setCameraController(null);
+            setCameraController(undefined);
         };
     }, [viewport, camera]);
 

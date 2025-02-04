@@ -3,6 +3,7 @@ import React, {
     createContext,
     CSSProperties,
     HTMLProps,
+    JSX,
     PropsWithChildren,
     useContext,
     useEffect,

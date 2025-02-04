@@ -1,5 +1,5 @@
 //------------------------------------------------------------------------------
-import React, { createContext, PropsWithChildren, useCallback, useEffect, useRef, useState } from "react";
+import React, { createContext, JSX, PropsWithChildren, useCallback, useEffect, useRef, useState } from "react";
 
 //------------------------------------------------------------------------------
 import * as Livelink from "@3dverse/livelink";
