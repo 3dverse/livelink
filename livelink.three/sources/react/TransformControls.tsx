@@ -21,13 +21,13 @@ export function TransformControlsComponent(
         cameraController: CameraController | null;
         setDragging?: (isDragging: boolean) => void;
     },
-    ref: Ref<TransformController | null>,
+    ref: Ref<TransformController | undefined>,
 ) {
     const { overlay } = useContext(ThreeOverlayContext);
     const { viewport } = useContext(ViewportContext);
 
     const anchorObject = useMemo(() => new THREE.Object3D(), []);
-    const [controls, setControls] = useState<TransformController | null>(null);
+    const [controls, setControls] = useState<TransformController | undefined>(undefined);
 
     useImperativeHandle(ref, () => controls, [controls]);
 
