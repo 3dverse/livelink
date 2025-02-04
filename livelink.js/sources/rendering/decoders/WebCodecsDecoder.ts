@@ -127,7 +127,7 @@ export class WebCodecsDecoder extends EncodedFrameConsumer {
      * A stack to store the meta data of the received frames.
      * Metadata are popped as soon as their corresponding frame is decoded.
      */
-    #meta_data_stack: Array<FrameMetaData> = [];
+    #meta_data_map: Map<number, FrameMetaData> = new Map();
 
     /**
      * A reference to the last decoded frame.
@@ -206,14 +206,14 @@ export class WebCodecsDecoder extends EncodedFrameConsumer {
      */
     consumeEncodedFrame({ encoded_frame, meta_data }: { encoded_frame: DataView; meta_data: FrameMetaData }): void {
         const chunk = new EncodedVideoChunk({
-            timestamp: 0,
+            timestamp: meta_data.frame_counter,
             type: this.#first_frame ? "key" : "delta",
             data: new Uint8Array(encoded_frame.buffer, encoded_frame.byteOffset, encoded_frame.byteLength),
         });
 
         this.#first_frame = false;
+        this.#meta_data_map.set(meta_data.frame_counter, meta_data);
         this.#decoder!.decode(chunk);
-        this.#meta_data_stack.push(meta_data);
     }
 
     /**
@@ -224,7 +224,12 @@ export class WebCodecsDecoder extends EncodedFrameConsumer {
             this.#last_frame.close();
         }
 
-        const meta_data = this.#meta_data_stack.shift()!;
+        const meta_data = this.#meta_data_map.get(decoded_frame.timestamp);
+        if (!meta_data) {
+            console.error("No meta data for frame", decoded_frame.timestamp);
+            return;
+        }
+
         super._onFrameDecoded({ decoded_frame, meta_data });
         this.#last_frame = decoded_frame;
     };
