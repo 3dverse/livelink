@@ -1,5 +1,12 @@
 # @3dverse/livelink
 
+## 0.8.20
+
+### Patch Changes
+
+- fix(livelink.js): fix frame metadata with webcodecs decoder
+- fix(livelink.js): does not dispatch a resize event if the resolution scale has not changed
+
 ## 0.8.19
 
 ### Patch Changes
