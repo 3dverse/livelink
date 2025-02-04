@@ -133,7 +133,9 @@ export class OffscreenSurface<ContextType extends CanvasContextType, ContextOpti
      *
      */
     set resolution_scale(scale: number) {
-        this.#resolution_scale = scale;
-        this._dispatchEvent(new RenderingSurfaceResizedEvent());
+        if (this.#resolution_scale !== scale) {
+            this.#resolution_scale = scale;
+            this._dispatchEvent(new RenderingSurfaceResizedEvent());
+        }
     }
 }
