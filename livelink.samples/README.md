@@ -1,6 +1,6 @@
-# Publish a sample to production
+# Console project organization
 
-Ensure the sample uses assets from the [livelink.samples console project](https://console.3dverse.com/3dverse-templates/livelink-samples/default/folders/013073f9-e687-4355-90e5-3b26c18979ab). Organize your assets respecting the following folder structure:
+Please respect the following folder structure into the [livelink.samples project](https://console.3dverse.com/3dverse-templates/livelink-samples/default/folders/013073f9-e687-4355-90e5-3b26c18979ab):
 
 ```
 ├── Assets
@@ -16,14 +16,3 @@ Ensure the sample uses assets from the [livelink.samples console project](https:
     └── samples
         └── [one scene per sample or a folder with all the scenes and assets specific to the sample]
 ```
-
-Set the `prod` property of the sample to `true` inside [the sample list](./src/samples/index.tsx).
-
-Then test your sample is running properly:
-
-- Set `VITE_TEST_PROD_ENV=true` in your `./.env.local` file.
-- Run `npm run dev`.
-- Test your sample.
-- If everything's ok, then commit & push.
-
-The prod samples use the public token declared inside `.env` to be used with `import.meta.env.VITE_PROD_PUBLIC_TOKEN`.

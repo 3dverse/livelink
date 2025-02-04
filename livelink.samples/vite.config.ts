@@ -6,6 +6,12 @@ import fs from "node:fs";
 export default defineConfig({
     server: {
         host: "0.0.0.0",
+        https: fs.existsSync("ssl")
+            ? {
+                  cert: "./ssl/cert.crt",
+                  key: "./ssl/key.pem",
+              }
+            : undefined,
     },
     plugins: [fileContentPlugin(), react(), markdownLoaderPlugin()],
 });

@@ -4,6 +4,7 @@ _prebuild
 dist
 docs
 docs-md
+ssl
 .vscode
 *.tgz
 
