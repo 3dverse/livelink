@@ -49,7 +49,6 @@
     "@types/webxr": "^0.5.20",
     "@typescript-eslint/eslint-plugin": "^8.18.1",
     "@typescript-eslint/parser": "^8.18.1",
-    "@webxr-input-profiles/motion-controllers": "^1.0.0",
     "esbuild": "^0.24.0",
     "eslint": "^9.17.0",
     "globals": "^15.14.0",

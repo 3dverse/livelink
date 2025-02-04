@@ -14,9 +14,6 @@ import {
 import { Quaternion, Vector3 } from "threejs-math";
 
 //------------------------------------------------------------------------------
-import { WebXRInputRelay } from "./WebXRInputRelay";
-
-//------------------------------------------------------------------------------
 type XRViewports = Array<{
     xr_view: XRView;
     xr_viewport: XRViewport;
@@ -139,7 +136,6 @@ export class WebXRHelper {
                 this.#session.cancelAnimationFrame(this.#animationFrameRequestId);
             }
 
-            this.#session.removeEventListener("inputsourceschange", WebXRInputRelay.onInputSourcesChange);
             await this.#session.end().catch(error => console.warn("Could not end XR session:", error));
         }
 
@@ -202,10 +198,6 @@ export class WebXRHelper {
                 this.#session = await navigator.xr!.requestSession(mode, sessionOptions);
                 await this.updateRenderState();
                 await this.setReferenceSpaceType(spaceType);
-                // As input sources are connected if they are tracked-pointer devices
-                // look up which meshes should be associated with their profile and
-                // load as the controller model for that hand.
-                this.#session.addEventListener("inputsourceschange", WebXRInputRelay.onInputSourcesChange);
                 return;
             } catch (error) {
                 console.warn(
@@ -576,12 +568,6 @@ export class WebXRHelper {
      */
     #onXRFrame = (_: DOMHighResTimeStamp, frame: XRFrame): void => {
         const session = this.#session!;
-
-        // Check for and respond to any gamepad state changes.
-        session.inputSources.forEach(source =>
-            WebXRInputRelay.processInputSource(source, frame, this.#reference_space!),
-        );
-
         const gl_layer = session.renderState.baseLayer!;
         const xr_views = frame.getViewerPose(this.#reference_space!)?.views?.map(view => ({
             view,
