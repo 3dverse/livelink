@@ -1,5 +1,13 @@
 # @3dverse/livelink-react
 
+## 0.2.34
+
+### Patch Changes
+
+- feat(livelink.react): now compatible with react 19
+- Updated dependencies
+    - @3dverse/livelink@0.8.21
+
 ## 0.2.33
 
 ### Patch Changes
