@@ -1,5 +1,11 @@
 # @3dverse/livelink
 
+## 0.8.21
+
+### Patch Changes
+
+- chore(livelink.js): bump livelink-camera-controls
+
 ## 0.8.20
 
 ### Patch Changes
