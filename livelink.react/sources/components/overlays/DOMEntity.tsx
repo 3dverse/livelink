@@ -1,5 +1,5 @@
 //------------------------------------------------------------------------------
-import React, { PropsWithChildren, useEffect, useState } from "react";
+import React, { JSX, PropsWithChildren, useEffect, useState } from "react";
 
 //------------------------------------------------------------------------------
 import type { Entity, Vec3 } from "@3dverse/livelink";

@@ -1,5 +1,14 @@
 //------------------------------------------------------------------------------
-import React, { createContext, HTMLProps, PropsWithChildren, useContext, useEffect, useRef, useState } from "react";
+import React, {
+    createContext,
+    HTMLProps,
+    JSX,
+    PropsWithChildren,
+    useContext,
+    useEffect,
+    useRef,
+    useState,
+} from "react";
 
 //------------------------------------------------------------------------------
 import { ViewportContext } from "../core/Viewport";

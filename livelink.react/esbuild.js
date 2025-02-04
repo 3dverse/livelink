@@ -40,7 +40,6 @@ const prodBuildOptions = {
 //------------------------------------------------------------------------------
 (async () => {
     if (process.argv.includes("dev")) {
-        console.log("Watching for changes...", { ...commonBuildOptions, ...buildOptions[0], ...devBuildOptions });
         const ctx = await esbuild.context({ ...commonBuildOptions, ...buildOptions[0], ...devBuildOptions });
         await ctx.watch();
         return;

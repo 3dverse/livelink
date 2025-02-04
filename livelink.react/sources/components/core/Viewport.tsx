@@ -2,6 +2,7 @@
 import React, {
     createContext,
     HTMLProps,
+    JSX,
     PropsWithChildren,
     useCallback,
     useContext,
