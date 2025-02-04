@@ -1,5 +1,5 @@
 //------------------------------------------------------------------------------
-import { Outlet, useOutlet } from "react-router-dom";
+import { Outlet, useOutlet } from "react-router";
 import { Home } from "./components/Home";
 import { MainMenu } from "./components/MainMenu";
 
