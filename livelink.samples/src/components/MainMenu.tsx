@@ -1,10 +1,12 @@
 import { useEffect, useState } from "react";
 import { NavLink } from "react-router";
-import { SAMPLES } from "../samples/index.ts";
-import { resolveSamplePath } from "./SamplePlayer/index.tsx";
-import { BarsIcon } from "./icons/BarsIcon.tsx";
-import { CollapseIcon } from "./icons/CollapseIcon.tsx";
-import { LOCAL_STORAGE_KEYS, useLocalStorage } from "../lib/localStorage.ts";
+
+import samples from "../samples";
+
+import { LOCAL_STORAGE_KEYS, useLocalStorage } from "../lib/localStorage";
+import { resolveSamplePath } from "./SamplePlayer/index";
+import { BarsIcon } from "./icons/BarsIcon";
+import { CollapseIcon } from "./icons/CollapseIcon";
 
 //------------------------------------------------------------------------------
 const BREAKPOINT_LG = 991;
@@ -97,7 +99,7 @@ export function MainMenu() {
                             ${isPageEmbedded ? "px-3" : "px-5"}
                         `}
                     >
-                        {SAMPLES.map((category, i) => (
+                        {samples.map((category, i) => (
                             <li key={i}>
                                 <p className="mb-1 pl-3 text-2xs uppercase text-tertiary tracking-wider opacity-80">
                                     {category.categoryName}

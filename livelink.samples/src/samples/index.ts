@@ -48,19 +48,25 @@ import CullingBoxGeometry from "./advanced/x-culling-box-geometry";
 import ThreeTransformControls from "./advanced/x-three-transform-controls";
 
 //------------------------------------------------------------------------------
-export const SAMPLES: Array<{
+type SampleCategory = {
     categoryName: string;
-    list: Array<{
-        path: string;
-        title: string;
-        summary?: string;
-        description?: string;
-        useCustomLayout?: boolean;
-        autoConnect?: boolean;
-        element: JSX.Element;
-        code?: string;
-    }>;
-}> = [
+    list: Array<Sample>;
+};
+
+//------------------------------------------------------------------------------
+type Sample = {
+    path: string;
+    title: string;
+    summary?: string;
+    description?: string;
+    useCustomLayout?: boolean;
+    autoConnect?: boolean;
+    element: JSX.Element;
+    code?: string;
+};
+
+//------------------------------------------------------------------------------
+export default [
     {
         categoryName: "Viewports",
         list: [
@@ -101,4 +107,4 @@ export const SAMPLES: Array<{
         categoryName: "Advanced",
         list: [LiveSkeletalAnimation, WebXR, WebXRiOS, MPR, CullingBoxGeometry, ThreeTransformControls],
     },
-];
+] as Array<SampleCategory>;

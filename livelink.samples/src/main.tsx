@@ -1,13 +1,16 @@
 import ReactDOM from "react-dom/client";
-import App from "./App.tsx";
-import ErrorPage from "./ErrorPage.tsx";
+import { RouterProvider, createHashRouter } from "react-router";
+
 import "@fontsource-variable/manrope";
 import "@fontsource-variable/inter";
 import "./styles/index.css";
-import { RouterProvider, createHashRouter } from "react-router";
-import { SAMPLES } from "./samples/index.ts";
-import { SamplePlayer } from "./components/SamplePlayer/SamplePlayer.tsx";
-import { resolveSamplePath } from "./components/SamplePlayer/index.tsx";
+
+import App from "./App";
+import ErrorPage from "./ErrorPage";
+import samples from "./samples";
+
+import { SamplePlayer } from "./components/SamplePlayer/SamplePlayer";
+import { resolveSamplePath } from "./components/SamplePlayer";
 
 // This allow to augment the global scope of vite with new properties
 declare global {
@@ -29,22 +32,24 @@ const router = createHashRouter([
         path: "/",
         element: <App />,
         errorElement: <ErrorPage />,
-        children: SAMPLES.flatMap(({ list }) => list).map(sample => ({
-            path: resolveSamplePath(sample.path),
-            element: (
-                <SamplePlayer
-                    key={sample.path}
-                    title={sample.title}
-                    summary={sample.summary}
-                    description={sample.description}
-                    useCustomLayout={sample.useCustomLayout}
-                    autoConnect={sample.autoConnect}
-                    code={sample.code}
-                >
-                    {sample.element}
-                </SamplePlayer>
-            ),
-        })),
+        children: samples
+            .flatMap(({ list }) => list)
+            .map(sample => ({
+                path: resolveSamplePath(sample.path),
+                element: (
+                    <SamplePlayer
+                        key={sample.path}
+                        title={sample.title}
+                        summary={sample.summary}
+                        description={sample.description}
+                        useCustomLayout={sample.useCustomLayout}
+                        autoConnect={sample.autoConnect}
+                        code={sample.code}
+                    >
+                        {sample.element}
+                    </SamplePlayer>
+                ),
+            })),
     },
 ]);
 
