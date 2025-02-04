@@ -1,5 +1,16 @@
 # @3dverse/livelink-react
 
+## 0.2.33
+
+### Patch Changes
+
+- chore(livelink.react): get rid of WebXRInputRelay and its @webxr-input-profiles/motion-controllers dependency as it's only used by the mobile viewer app and not ready for any generic webxr app
+- feat(livelink.react): add resolutionScale and onSessionEnd property to WebXR component
+- fix(livelink.react): allow to reconfigure the viewport of a XR session
+- Updated dependencies
+- Updated dependencies
+    - @3dverse/livelink@0.8.20
+
 ## 0.2.32
 
 ### Patch Changes
