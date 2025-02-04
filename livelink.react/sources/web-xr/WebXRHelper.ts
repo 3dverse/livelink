@@ -132,10 +132,7 @@ export class WebXRHelper {
      */
     public async release(): Promise<void> {
         if (this.#session) {
-            if (this.#animationFrameRequestId) {
-                this.#session.cancelAnimationFrame(this.#animationFrameRequestId);
-            }
-
+            this.stop();
             await this.#session.end().catch(error => console.warn("Could not end XR session:", error));
         }
 
@@ -221,14 +218,14 @@ export class WebXRHelper {
      * @param livelink
      * @param enableScale
      */
-    public async configureViewports(livelink: Livelink, enableScale: boolean = false): Promise<Viewport[]> {
-        this.#core = livelink;
-        if (!this.#core) {
-            throw new Error("Failed to configure XR session, no LiveLink instance was provided.");
+    public async configureViewports(livelink: Livelink, enableScale: boolean = false): Promise<void> {
+        if (this.#core) {
+            this.releaseLivelinkViewports();
         }
 
+        this.#core = livelink;
         const xr_views = await this.#getXRViews();
-        this.#computeLivelinkViewportRects(xr_views);
+        this.#configureLivelinkViewports(xr_views);
         if (enableScale) {
             this.#configureScaleFactor(xr_views);
         }
@@ -244,15 +241,11 @@ export class WebXRHelper {
               }
             : undefined;
 
-        const viewports: Viewport[] = [];
-        let index = 0;
-        for (const { xr_view, xr_viewport, livelink_viewport } of this.#viewports) {
-            await this.#setupViewport({ index, xr_view, xr_viewport, viewport: livelink_viewport, dataJSON });
-            viewports.push(livelink_viewport);
-            index++;
+        this.#core.addViewports({ viewports: this.#viewports.map(({ livelink_viewport }) => livelink_viewport) });
+        for (const index in this.#viewports) {
+            const { xr_view, xr_viewport, livelink_viewport } = this.#viewports[index];
+            await this.#createViewportCamera({ index, xr_view, xr_viewport, viewport: livelink_viewport, dataJSON });
         }
-        this.#core.addViewports({ viewports });
-        return viewports;
     }
 
     //--------------------------------------------------------------------------
@@ -310,6 +303,15 @@ export class WebXRHelper {
      */
     public start(): void {
         this.#session!.requestAnimationFrame(this.#onXRFrame);
+    }
+
+    /**
+     * Stop the XRFrame animation loop.
+     */
+    stop(): void {
+        if (this.#animationFrameRequestId && this.#session) {
+            this.#session.cancelAnimationFrame(this.#animationFrameRequestId);
+        }
     }
 
     //--------------------------------------------------------------------------
@@ -631,10 +633,10 @@ export class WebXRHelper {
 
     //--------------------------------------------------------------------------
     /**
-     * Compute the livelink viewports rects.
+     * Configure the livelink viewports based on the XR views.
      * @param xr_views
      */
-    #computeLivelinkViewportRects(xr_views: readonly XRView[]): void {
+    #configureLivelinkViewports(xr_views: readonly XRView[]): void {
         const gl_layer = this.#session!.renderState.baseLayer!;
         const xr_eyes = xr_views.map(view => ({
             view,
@@ -649,8 +651,6 @@ export class WebXRHelper {
         const are_xr_viewport_normalized = xr_eyes.every(({ viewport: v }) => {
             return v.x <= 1 && v.y <= 1 && v.width <= 1 && v.height <= 1;
         });
-
-        this.#viewports.length = 0;
 
         for (const xr_eye of xr_eyes) {
             const xrViewport = xr_eye.viewport;
@@ -686,23 +686,34 @@ export class WebXRHelper {
 
     //--------------------------------------------------------------------------
     /**
+     *
+     */
+    releaseLivelinkViewports(): void {
+        for (const viewport of this.#viewports) {
+            this.#surface.removeViewport({ viewport: viewport.livelink_viewport });
+        }
+        this.#viewports.length = 0;
+    }
+
+    //--------------------------------------------------------------------------
+    /**
      * Create the livelink camera with its lens & set the viewport camera projection.
      * @return Resolves with the created WebXRCamera instances
      */
-    async #setupViewport({
+    async #createViewportCamera({
         index,
         xr_view,
         xr_viewport,
         viewport,
         dataJSON,
     }: {
-        index: number;
+        index: number | string;
         xr_view: XRView;
         xr_viewport: XRViewport;
         viewport: Viewport;
         dataJSON?: RenderGraphDataObject;
-    }): Promise<Entity> {
-        const camera = await this.#core!.scene.newEntity({
+    }): Promise<void> {
+        const camera_entity = await this.#core!.scene.newEntity({
             name: `XR_camera_${xr_view.eye}_${index}`,
             components: {
                 local_transform: {},
@@ -728,12 +739,8 @@ export class WebXRHelper {
             options: { delete_on_client_disconnection: true, auto_broadcast: false },
         });
 
-        viewport.camera_projection = new CameraProjection({
-            camera_entity: camera,
-            viewport,
-        });
-
-        return camera;
+        viewport.camera_projection = new CameraProjection({ camera_entity, viewport });
+        console.debug(`Created camera entity for ${xr_view.eye} eye:`, viewport);
     }
 
     //--------------------------------------------------------------------------

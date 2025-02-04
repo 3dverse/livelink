@@ -97,6 +97,9 @@ export function WebXR({
         console.debug("---- Setting XR viewports");
 
         webXRHelper.configureViewports(instance).then(() => webXRHelper.start());
+        return (): void => {
+            webXRHelper.stop();
+        };
     }, [webXRHelper, instance]);
 
     //--------------------------------------------------------------------------
