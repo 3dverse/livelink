@@ -1,5 +1,11 @@
 # @3dverse/livelink
 
+## 0.8.22
+
+### Patch Changes
+
+- perf(livelink.js): recalculate global_transform only if necessary
+
 ## 0.8.21
 
 ### Patch Changes
