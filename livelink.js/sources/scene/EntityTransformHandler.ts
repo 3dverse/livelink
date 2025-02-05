@@ -50,7 +50,7 @@ export abstract class EntityTransformHandler extends EntityBase {
     /**
      *
      */
-    #global_transform: Transform;
+    #global_transform: GlobalTransformHandler;
 
     /**
      *
@@ -60,12 +60,30 @@ export abstract class EntityTransformHandler extends EntityBase {
     /**
      *
      */
-    #local_transform_proxy: Transform;
+    #local_transform_proxy: LocalTransformHandler;
 
     /**
      *
      */
     #parent: EntityTransformHandler | null = null;
+
+    /**
+     * Whether the global transform needs to be recalculated.
+     */
+    #is_global_transform_dirty = true;
+
+    /**
+     * A counter that increments every time the global or local transform of the entity is altered.
+     * Used by our child entities to determine if their parent entity has been altered since the last update.
+     * See #last_parent_update_id below.
+     */
+    #last_update_id = 0;
+
+    /**
+     * A copy of the last parent entity update id.
+     * Used to determine if our parent entity has been altered since the last update.
+     */
+    #last_parent_update_id = 0;
 
     /**
      *
@@ -87,6 +105,46 @@ export abstract class EntityTransformHandler extends EntityBase {
         this.#global_transform = new GlobalTransformHandler(this);
 
         this._unsafeSetComponentValue({ component_name: "local_transform", value: this.#local_transform });
+    }
+
+    /**
+     * @internal
+     */
+    get _last_update_id(): number {
+        return this.#last_update_id;
+    }
+
+    /**
+     * @internal
+     *
+     * Check if the entity global transform, or any of its ancestors global transform,
+     * has been modified since the last calculation.
+     */
+    get _is_dirty(): boolean {
+        if (this.#parent) {
+            if (this.#parent._last_update_id !== this.#last_parent_update_id) {
+                return true;
+            }
+
+            if (this.#parent._is_dirty) {
+                return true;
+            }
+        }
+
+        return this.#is_global_transform_dirty;
+    }
+
+    /**
+     * @internal
+     *
+     * Called when the entity has been updated from the proxy object.
+     * Saves the last parent update id, and increments the update id
+     * as our global transform has been modified.
+     */
+    set _is_dirty(value: false) {
+        this.#is_global_transform_dirty = value;
+        this.#last_update_id++;
+        this.#last_parent_update_id = this.#parent?._last_update_id ?? 0;
     }
 
     /**
@@ -136,7 +194,7 @@ export abstract class EntityTransformHandler extends EntityBase {
      * @internal
      *
      * Recalculate the local transform of the entity based on the global transform.
-     * Does not mark the local transform as dirty.
+     * Does not mark the local transform component as dirty.
      */
     _setGlobalTransform({
         global_transform,
@@ -161,6 +219,8 @@ export abstract class EntityTransformHandler extends EntityBase {
             this._setGlobalScale(global_transform.scale);
         }
 
+        this.#global_transform._unsafeSetGlobalTransform(global_transform);
+
         this._dispatchEvent(
             new EntityUpdatedEvent({
                 change_source,
@@ -174,8 +234,34 @@ export abstract class EntityTransformHandler extends EntityBase {
     /**
      * @internal
      *
+     * Mark the global transform as needing recalculation.
+     *
+     * Called when the local transform of the entity has been modified from the proxied object.
+     */
+    _markGlobalTransformAsDirty(): void {
+        this.#is_global_transform_dirty = true;
+        this._markLocalTransformAsDirty();
+    }
+
+    /**
+     * @internal
+     *
+     * Mark the local transform as dirty
+     *
+     * Called when the global transform of the entity has been modified, or when the local transform has been modified.
+     */
+    _markLocalTransformAsDirty(): void {
+        this.#last_update_id++;
+        this._markComponentAsDirty({ component_name: "local_transform" });
+    }
+
+    /**
+     * @internal
+     *
      * Set the local transform of the entity.
      * Does not mark the local transform as dirty.
+     *
+     * Called when the entity is updated from an external source.
      */
     _setLocalTransform({ local_transform }: { local_transform: Partial<Components.LocalTransform> }): void {
         if (local_transform.position) {
@@ -193,6 +279,8 @@ export abstract class EntityTransformHandler extends EntityBase {
         if (local_transform.globalEulerOrientation) {
             vec3.copy(this.#local_transform.globalEulerOrientation, local_transform.globalEulerOrientation);
         }
+
+        this.#is_global_transform_dirty = true;
     }
 
     /**
@@ -203,7 +291,7 @@ export abstract class EntityTransformHandler extends EntityBase {
     _getGlobalPosition(out: Vec3): Vec3 {
         const local_position = this.#local_transform.position;
         if (!this.#parent) {
-            return local_position;
+            return vec3.copy(out, local_position) as Vec3;
         }
 
         return vec3.transformMat4(out, local_position, this.#parent.ls_to_ws) as Vec3;
@@ -232,7 +320,7 @@ export abstract class EntityTransformHandler extends EntityBase {
      */
     _getGlobalOrientation(out: Quat): Quat {
         if (!this.#parent) {
-            return this.#local_transform.orientation;
+            return quat.copy(out, this.#local_transform.orientation) as Quat;
         }
 
         return quat.multiply(out, this.#parent.global_transform.orientation, this.#local_transform.orientation) as Quat;
@@ -263,17 +351,17 @@ export abstract class EntityTransformHandler extends EntityBase {
      *
      * Get the global euler orientation of the entity.
      */
-    _getGlobalEulerOrientation(): Vec3 {
-        const global_orientation = this.global_transform.orientation;
-
+    _computeGlobalEulerOrientation(out: Vec3, global_orientation: Quat): Vec3 {
         const orientationFromEuler = quaternionFromEuler(this.#local_transform.globalEulerOrientation);
         const isQuaternionEqual = orientationFromEuler.every(
             (value, index) => Math.max(value - global_orientation[index]) < 0.000001,
         );
 
-        return isQuaternionEqual
+        const quat = isQuaternionEqual
             ? this.#local_transform.globalEulerOrientation
             : quaternionToEuler(global_orientation as Quat);
+
+        return vec3.copy(out, quat) as Vec3;
     }
 
     /**
@@ -297,7 +385,7 @@ export abstract class EntityTransformHandler extends EntityBase {
     _getGlobalScale(out: Vec3): Vec3 {
         const local_scale = this.#local_transform.scale;
         if (!this.#parent) {
-            return local_scale;
+            return vec3.copy(out, local_scale) as Vec3;
         }
 
         return vec3.multiply(out, this.#parent.global_transform.scale, local_scale) as Vec3;
@@ -360,7 +448,7 @@ class LocalTransformHandler implements Transform {
             get: (target, prop): unknown => Reflect.get(target, prop),
             set: (target, prop, value): boolean => {
                 const returnValue = Reflect.set(target, prop, value);
-                entity._markComponentAsDirty({ component_name: "local_transform" });
+                entity._markGlobalTransformAsDirty();
                 return returnValue;
             },
         });
@@ -373,7 +461,7 @@ class LocalTransformHandler implements Transform {
             set: (target, prop, value): boolean => {
                 const returnValue = Reflect.set(target, prop, value);
                 local_transform.eulerOrientation = quaternionToEuler(local_transform.orientation);
-                entity._markComponentAsDirty({ component_name: "local_transform" });
+                entity._markGlobalTransformAsDirty();
                 return returnValue;
             },
         });
@@ -383,7 +471,7 @@ class LocalTransformHandler implements Transform {
             set: (target, prop, value): boolean => {
                 const returnValue = Reflect.set(target, prop, value);
                 local_transform.orientation = quaternionFromEuler(local_transform.eulerOrientation);
-                entity._markComponentAsDirty({ component_name: "local_transform" });
+                entity._markGlobalTransformAsDirty();
                 return returnValue;
             },
         });
@@ -450,6 +538,8 @@ class LocalTransformHandler implements Transform {
  *
  */
 class GlobalTransformHandler implements Transform {
+    #entity: EntityTransformHandler;
+
     #position_proxy: Vec3;
     #orientation_proxy: Quat;
     #eulerOrientation_proxy: Vec3;
@@ -464,57 +554,100 @@ class GlobalTransformHandler implements Transform {
      *
      */
     constructor(_entity: EntityTransformHandler) {
+        this.#entity = _entity;
+
         this.#position_proxy = new Proxy(this.#position, {
             get: (_target, prop): unknown => {
-                const position = _entity._getGlobalPosition(this.#position);
-                return position[prop as keyof Vec3];
+                this.#recalculateIfNeeded();
+                return Reflect.get(this.#position, prop);
             },
             set: (_target, prop, value): boolean => {
                 Reflect.set(this.#position, prop, value);
                 _entity._setGlobalPosition(this.#position);
-                _entity._markComponentAsDirty({ component_name: "local_transform" });
+                _entity._markLocalTransformAsDirty();
                 return true;
             },
         });
 
         this.#orientation_proxy = new Proxy(this.#orientation, {
             get: (_target, prop): unknown => {
-                const orientation = _entity._getGlobalOrientation(this.#orientation);
-                return orientation[prop as keyof Quat];
+                this.#recalculateIfNeeded();
+
+                return Reflect.get(this.#orientation, prop);
             },
             set: (_target, prop, value): boolean => {
                 Reflect.set(this.#orientation, prop, value);
                 _entity._setGlobalOrientation(this.#orientation);
-                _entity._markComponentAsDirty({ component_name: "local_transform" });
+                _entity._markLocalTransformAsDirty();
                 return true;
             },
         });
 
         this.#eulerOrientation_proxy = new Proxy(this.#eulerOrientation, {
             get: (_target, prop): unknown => {
-                const euler_orientation = _entity._getGlobalEulerOrientation();
-                return euler_orientation[prop as keyof Vec3];
+                this.#recalculateIfNeeded();
+                return Reflect.get(this.#eulerOrientation, prop);
             },
             set: (_target, prop, value): boolean => {
                 Reflect.set(this.#eulerOrientation, prop, value);
                 _entity._setGlobalEulerOrientation(this.#eulerOrientation);
-                _entity._markComponentAsDirty({ component_name: "local_transform" });
+                _entity._markLocalTransformAsDirty();
                 return true;
             },
         });
 
         this.#scale_proxy = new Proxy(this.#scale, {
             get: (_target, prop): unknown => {
-                const scale = _entity._getGlobalScale(this.#scale);
-                return scale[prop as unknown as keyof Vec3];
+                this.#recalculateIfNeeded();
+                return Reflect.get(this.#scale, prop);
             },
             set: (_target, prop, value): boolean => {
                 Reflect.set(this.#scale, prop, value);
                 _entity._setGlobalScale(this.#scale);
-                _entity._markComponentAsDirty({ component_name: "local_transform" });
+                _entity._markLocalTransformAsDirty();
                 return true;
             },
         });
+    }
+
+    /**
+     * @internal
+     *
+     * Set the global transform of the entity, clearing the dirty state.
+     */
+    _unsafeSetGlobalTransform(value: Partial<Transform>): void {
+        if (value.position) {
+            vec3.copy(this.#position, value.position);
+        }
+
+        if (value.orientation) {
+            quat.copy(this.#orientation, value.orientation);
+        }
+
+        if (value.eulerOrientation) {
+            vec3.copy(this.#eulerOrientation, value.eulerOrientation);
+        }
+
+        if (value.scale) {
+            vec3.copy(this.#scale, value.scale);
+        }
+
+        this.#entity._is_dirty = false;
+    }
+
+    /**
+     * If the entity is dirty, recalculate the global transform, then clear the dirty state.
+     */
+    #recalculateIfNeeded(): void {
+        if (this.#entity._is_dirty) {
+            this.#entity._getGlobalPosition(this.#position);
+            this.#entity._getGlobalOrientation(this.#orientation);
+            this.#entity._getGlobalScale(this.#scale);
+            this.#entity._computeGlobalEulerOrientation(this.#eulerOrientation, this.#orientation);
+
+            //console.debug(`🤓 Recalculating ${this.#entity.debug_name?.value} global transform`);
+            this.#entity._is_dirty = false;
+        }
     }
 
     /**
