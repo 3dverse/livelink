@@ -41,7 +41,7 @@ function App() {
             ConnectionErrorPanel={DisconnectedModal}
         >
             {xrMode ? (
-                <WebXR mode={xrMode}>
+                <WebXR mode={xrMode} onSessionEnd={() => setXRMode(null)}>
                     <div className="fixed top-4 left-4">
                         <button
                             className="button button-primary"
