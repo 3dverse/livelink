@@ -41,6 +41,34 @@ export type Transform = {
     eulerOrientation: Vec3;
 };
 
+/**
+ * Axis-Aligned Bounding Box data
+ *
+ * @category Engine Schemas
+ */
+export type Aabb = {
+    /**
+     * Minimum X,Y,Z distances
+     * @defaultValue -1,-1,-1
+     */
+    min: Vec3;
+    /**
+     * Maximum X,Y,Z distances
+     * @defaultValue 1,1,1
+     */
+    max: Vec3;
+    /**
+     * Center of the bounding box
+     * @defaultValue 0,0,0
+     */
+    center: Vec3;
+    /**
+     * longest edge length of the bounding box
+     * @defaultValue 2
+     */
+    longest_edge_length: number;
+};
+
 assert<TypeSatisfies<Transform, Omit<Components.LocalTransform, "globalEulerOrientation">>>();
 
 /**
@@ -174,6 +202,61 @@ export abstract class EntityTransformHandler extends EntityBase {
      */
     set local_transform(value: Partial<Transform>) {
         Object.assign(this.#local_transform_proxy, value);
+    }
+
+    /**
+     * The global bounding box (aabb) of the entity.
+     */
+    get global_aabb(): Aabb {
+        let longest_edge_length = -Number.MAX_VALUE;
+        const local_aabb = this.local_aabb || { min: [-1, -1, -1] as Vec3, max: [1, 1, 1] as Vec3 };
+        const { min: aabb_min, max: aabb_max } = local_aabb;
+
+        const vertices = [
+            vec3.fromValues(aabb_min[0], aabb_min[1], aabb_min[2]),
+            vec3.fromValues(aabb_max[0], aabb_min[1], aabb_min[2]),
+            vec3.fromValues(aabb_min[0], aabb_max[1], aabb_min[2]),
+            vec3.fromValues(aabb_min[0], aabb_min[1], aabb_max[2]),
+            vec3.fromValues(aabb_max[0], aabb_max[1], aabb_max[2]),
+            vec3.fromValues(aabb_min[0], aabb_max[1], aabb_max[2]),
+            vec3.fromValues(aabb_max[0], aabb_min[1], aabb_max[2]),
+            vec3.fromValues(aabb_max[0], aabb_max[1], aabb_min[2]),
+        ];
+
+        vertices.forEach(vertex => vec3.transformMat4(vertex, vertex, this.ls_to_ws as mat4));
+
+        const min = vec3.fromValues(Number.MAX_VALUE, Number.MAX_VALUE, Number.MAX_VALUE);
+        const max = vec3.fromValues(-Number.MAX_VALUE, -Number.MAX_VALUE, -Number.MAX_VALUE);
+        const center = vec3.create();
+        vertices.forEach(vertex => {
+            vec3.min(min, min, vertex);
+            vec3.max(max, max, vertex);
+            vec3.add(center, center, vertex);
+        });
+        vec3.scale(center, center, 1 / 8);
+
+        const axes = [
+            { vertex: vertices[0], test_vertices: [vertices[1], vertices[2], vertices[3]] },
+            { vertex: vertices[6], test_vertices: [vertices[1], vertices[3], vertices[4]] },
+            { vertex: vertices[5], test_vertices: [vertices[2], vertices[3], vertices[4]] },
+            { vertex: vertices[7], test_vertices: [vertices[1], vertices[2], vertices[4]] },
+        ];
+
+        axes.forEach(({ vertex, test_vertices }) => {
+            test_vertices.forEach(test_vertex => {
+                const distance = vec3.distance(vertex, test_vertex);
+                if (distance > longest_edge_length) {
+                    longest_edge_length = distance;
+                }
+            });
+        });
+
+        return {
+            min: Array.from(min) as Vec3,
+            max: Array.from(max) as Vec3,
+            center: Array.from(center) as Vec3,
+            longest_edge_length,
+        };
     }
 
     /**
