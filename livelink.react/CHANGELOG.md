@@ -1,5 +1,17 @@
 # @3dverse/livelink-react
 
+## 0.2.35
+
+### Patch Changes
+
+- feat(livelink.js): add custom options to CameraController exploited by CameraControllerPresets.pointer_locked_orbital
+- Updated dependencies
+- Updated dependencies
+- Updated dependencies
+- Updated dependencies
+- Updated dependencies
+    - @3dverse/livelink@0.8.23
+
 ## 0.2.34
 
 ### Patch Changes

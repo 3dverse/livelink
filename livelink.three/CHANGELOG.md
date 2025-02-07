@@ -1,5 +1,18 @@
 # @3dverse/livelink-three
 
+## 0.2.6
+
+### Patch Changes
+
+- refactor(livelink.three): dynamically import three transform controls, to resolve import of common js version
+- Updated dependencies
+- Updated dependencies
+- Updated dependencies
+- Updated dependencies
+- Updated dependencies
+    - @3dverse/livelink@0.8.23
+    - @3dverse/livelink-react@0.2.35
+
 ## 0.2.5
 
 ### Patch Changes
