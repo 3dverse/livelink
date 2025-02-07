@@ -41,6 +41,7 @@ const config = {
         hideValues: false,
         leftAlignHeaders: false,
     },
+    sourceLinkTemplate: "https://github.com/3dverse/livelink/tree/release/{path}#L{line}",
 };
 
 export default config;
