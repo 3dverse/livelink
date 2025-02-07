@@ -15,6 +15,8 @@ export * from "./scene/EntityEvents";
 export * from "./rendering/Viewport";
 export * from "./rendering/ViewportEvents";
 export * from "./rendering/CameraController";
+export * from "./rendering/CameraControllerPreset";
+export * as CameraControllerPresets from "./rendering/CameraControllerPresets";
 export * from "./rendering/CameraProjection";
 
 export * from "./rendering/decoders/FrameMetaData";

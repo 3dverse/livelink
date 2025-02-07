@@ -190,14 +190,14 @@ export class Entity extends EntityTransformHandler {
     /**
      * The local space to world space matrix of the entity.
      */
-    get ls_to_ws(): Mat4 {
+    get ls_to_ws(): Readonly<Mat4> {
         return super.ls_to_ws;
     }
 
     /**
      * The world space to local space matrix of the entity.
      */
-    get ws_to_ls(): Mat4 {
+    get ws_to_ls(): Readonly<Mat4> {
         return super.ws_to_ls;
     }
 

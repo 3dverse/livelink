@@ -40,6 +40,8 @@ export class Keyboard {
      *
      */
     #onKeyDown = (event: KeyboardEvent): void => {
+        event.preventDefault();
+
         const keyData = this.#getKeyData(event);
         this.#instance._sendInput({
             input_state: {
@@ -53,6 +55,8 @@ export class Keyboard {
      *
      */
     #onKeyUp = (event: KeyboardEvent): void => {
+        event.preventDefault();
+
         const keyData = this.#getKeyData(event);
         this.#instance._sendInput({
             input_state: {

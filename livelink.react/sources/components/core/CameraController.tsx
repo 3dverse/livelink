@@ -11,7 +11,11 @@ import React, {
 } from "react";
 
 //------------------------------------------------------------------------------
-import { CameraController as DefaultCameraController } from "@3dverse/livelink";
+import {
+    CameraController as DefaultCameraController,
+    CameraControllerPresets,
+    CameraControllerPreset,
+} from "@3dverse/livelink";
 
 //------------------------------------------------------------------------------
 import { ViewportContext } from "./Viewport";
@@ -33,7 +37,7 @@ export const CameraControllerContext = createContext<{
  * @category Components
  */
 export const CameraController = forwardRef(function CameraController(
-    { _preset = "orbital", children }: PropsWithChildren & { _preset?: "orbital" | "fly" },
+    { preset = CameraControllerPresets.orbital, children }: PropsWithChildren & { preset?: CameraControllerPreset },
     ref: Ref<DefaultCameraController | undefined>,
 ) {
     const { viewport, camera } = useContext(ViewportContext);
@@ -48,14 +52,16 @@ export const CameraController = forwardRef(function CameraController(
         const controller = new DefaultCameraController({
             camera_entity: camera.camera_entity,
             viewport,
+            preset,
         });
+
         setCameraController(controller);
 
         return (): void => {
             controller.release();
             setCameraController(undefined);
         };
-    }, [viewport, camera]);
+    }, [viewport, camera, preset]);
 
     return <CameraControllerContext.Provider value={{ cameraController }}>{children}</CameraControllerContext.Provider>;
 });

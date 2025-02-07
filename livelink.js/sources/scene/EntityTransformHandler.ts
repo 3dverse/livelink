@@ -41,6 +41,34 @@ export type Transform = {
     eulerOrientation: Vec3;
 };
 
+/**
+ * Axis-Aligned Bounding Box data
+ *
+ * @category Engine Schemas
+ */
+export type Aabb = {
+    /**
+     * Minimum X,Y,Z distances
+     * @defaultValue -1,-1,-1
+     */
+    min: Vec3;
+    /**
+     * Maximum X,Y,Z distances
+     * @defaultValue 1,1,1
+     */
+    max: Vec3;
+    /**
+     * Center of the bounding box
+     * @defaultValue 0,0,0
+     */
+    center: Vec3;
+    /**
+     * longest edge length of the bounding box
+     * @defaultValue 2
+     */
+    longest_edge_length: number;
+};
+
 assert<TypeSatisfies<Transform, Omit<Components.LocalTransform, "globalEulerOrientation">>>();
 
 /**
@@ -50,7 +78,12 @@ export abstract class EntityTransformHandler extends EntityBase {
     /**
      *
      */
-    #global_transform: GlobalTransformHandler;
+    #global_transform: Transform;
+
+    /**
+     *
+     */
+    #global_transform_proxy: GlobalTransformHandler;
 
     /**
      *
@@ -61,6 +94,16 @@ export abstract class EntityTransformHandler extends EntityBase {
      *
      */
     #local_transform_proxy: LocalTransformHandler;
+
+    /**
+     * The local space to world space matrix of the entity.
+     */
+    #ls_to_ws: Mat4 = mat4.create() as Mat4;
+
+    /**
+     * The world space to local space matrix of the entity.
+     */
+    #ws_to_ls: Mat4 = mat4.create() as Mat4;
 
     /**
      *
@@ -101,8 +144,15 @@ export abstract class EntityTransformHandler extends EntityBase {
 
         this.#parent = parent;
         this.#local_transform = local_transform;
+        this.#global_transform = {
+            position: [0, 0, 0],
+            orientation: [0, 0, 0, 1],
+            scale: [1, 1, 1],
+            eulerOrientation: [0, 0, 0],
+        };
+
         this.#local_transform_proxy = new LocalTransformHandler(this, this.#local_transform);
-        this.#global_transform = new GlobalTransformHandler(this);
+        this.#global_transform_proxy = new GlobalTransformHandler(this, this.#global_transform);
 
         this._unsafeSetComponentValue({ component_name: "local_transform", value: this.#local_transform });
     }
@@ -115,43 +165,10 @@ export abstract class EntityTransformHandler extends EntityBase {
     }
 
     /**
-     * @internal
-     *
-     * Check if the entity global transform, or any of its ancestors global transform,
-     * has been modified since the last calculation.
-     */
-    get _is_dirty(): boolean {
-        if (this.#parent) {
-            if (this.#parent._last_update_id !== this.#last_parent_update_id) {
-                return true;
-            }
-
-            if (this.#parent._is_dirty) {
-                return true;
-            }
-        }
-
-        return this.#is_global_transform_dirty;
-    }
-
-    /**
-     * @internal
-     *
-     * Called when the entity has been updated from the proxy object.
-     * Saves the last parent update id, and increments the update id
-     * as our global transform has been modified.
-     */
-    set _is_dirty(value: false) {
-        this.#is_global_transform_dirty = value;
-        this.#last_update_id++;
-        this.#last_parent_update_id = this.#parent?._last_update_id ?? 0;
-    }
-
-    /**
      * The global transform of the entity.
      */
     get global_transform(): Transform {
-        return this.#global_transform;
+        return this.#global_transform_proxy;
     }
 
     /**
@@ -177,6 +194,61 @@ export abstract class EntityTransformHandler extends EntityBase {
     }
 
     /**
+     * The global bounding box (aabb) of the entity.
+     */
+    get global_aabb(): Aabb {
+        let longest_edge_length = -Number.MAX_VALUE;
+        const local_aabb = this.local_aabb || { min: [-1, -1, -1] as Vec3, max: [1, 1, 1] as Vec3 };
+        const { min: aabb_min, max: aabb_max } = local_aabb;
+
+        const vertices = [
+            vec3.fromValues(aabb_min[0], aabb_min[1], aabb_min[2]),
+            vec3.fromValues(aabb_max[0], aabb_min[1], aabb_min[2]),
+            vec3.fromValues(aabb_min[0], aabb_max[1], aabb_min[2]),
+            vec3.fromValues(aabb_min[0], aabb_min[1], aabb_max[2]),
+            vec3.fromValues(aabb_max[0], aabb_max[1], aabb_max[2]),
+            vec3.fromValues(aabb_min[0], aabb_max[1], aabb_max[2]),
+            vec3.fromValues(aabb_max[0], aabb_min[1], aabb_max[2]),
+            vec3.fromValues(aabb_max[0], aabb_max[1], aabb_min[2]),
+        ];
+
+        vertices.forEach(vertex => vec3.transformMat4(vertex, vertex, this.ls_to_ws as mat4));
+
+        const min = vec3.fromValues(Number.MAX_VALUE, Number.MAX_VALUE, Number.MAX_VALUE);
+        const max = vec3.fromValues(-Number.MAX_VALUE, -Number.MAX_VALUE, -Number.MAX_VALUE);
+        const center = vec3.create();
+        vertices.forEach(vertex => {
+            vec3.min(min, min, vertex);
+            vec3.max(max, max, vertex);
+            vec3.add(center, center, vertex);
+        });
+        vec3.scale(center, center, 1 / 8);
+
+        const axes = [
+            { vertex: vertices[0], test_vertices: [vertices[1], vertices[2], vertices[3]] },
+            { vertex: vertices[6], test_vertices: [vertices[1], vertices[3], vertices[4]] },
+            { vertex: vertices[5], test_vertices: [vertices[2], vertices[3], vertices[4]] },
+            { vertex: vertices[7], test_vertices: [vertices[1], vertices[2], vertices[4]] },
+        ];
+
+        axes.forEach(({ vertex, test_vertices }) => {
+            test_vertices.forEach(test_vertex => {
+                const distance = vec3.distance(vertex, test_vertex);
+                if (distance > longest_edge_length) {
+                    longest_edge_length = distance;
+                }
+            });
+        });
+
+        return {
+            min: Array.from(min) as Vec3,
+            max: Array.from(max) as Vec3,
+            center: Array.from(center) as Vec3,
+            longest_edge_length,
+        };
+    }
+
+    /**
      * The parent entity of this entity or null if it has no parent.
      */
     get parent(): EntityTransformHandler | null {
@@ -188,6 +260,35 @@ export abstract class EntityTransformHandler extends EntityBase {
      */
     set parent(_parent: EntityTransformHandler | null) {
         throw new Error("Not implemented");
+    }
+
+    /**
+     * Check if the entity global transform, or any of its ancestors global transform,
+     * has been modified since the last calculation.
+     */
+    get #is_dirty(): boolean {
+        if (this.#parent) {
+            if (this.#parent._last_update_id !== this.#last_parent_update_id) {
+                return true;
+            }
+
+            if (this.#parent.#is_dirty) {
+                return true;
+            }
+        }
+
+        return this.#is_global_transform_dirty;
+    }
+
+    /**
+     * Called when the entity has been updated from the proxy object.
+     * Saves the last parent update id, and increments the update id
+     * as our global transform has been modified.
+     */
+    set #is_dirty(value: false) {
+        this.#is_global_transform_dirty = value;
+        this.#last_update_id++;
+        this.#last_parent_update_id = this.#parent?._last_update_id ?? 0;
     }
 
     /**
@@ -205,21 +306,25 @@ export abstract class EntityTransformHandler extends EntityBase {
     }): void {
         if (global_transform.position) {
             this._setGlobalPosition(global_transform.position);
+            vec3.copy(this.#global_transform.position, global_transform.position);
         }
 
         if (global_transform.orientation) {
             this._setGlobalOrientation(global_transform.orientation);
+            quat.copy(this.#global_transform.orientation, global_transform.orientation);
         }
 
         if (global_transform.eulerOrientation) {
             this._setGlobalEulerOrientation(global_transform.eulerOrientation);
+            vec3.copy(this.#global_transform.eulerOrientation, global_transform.eulerOrientation);
         }
 
         if (global_transform.scale) {
             this._setGlobalScale(global_transform.scale);
+            vec3.copy(this.#global_transform.scale, global_transform.scale);
         }
 
-        this.#global_transform._unsafeSetGlobalTransform(global_transform);
+        this._computeTransformMatrices();
 
         this._dispatchEvent(
             new EntityUpdatedEvent({
@@ -258,6 +363,41 @@ export abstract class EntityTransformHandler extends EntityBase {
     /**
      * @internal
      *
+     * If the entity is dirty, recalculate the global transform, then clear the dirty state.
+     */
+    _recalculateGlobalTransformIfNeeded = (): void => {
+        if (this.#is_dirty) {
+            this.#computeGlobalPosition();
+            this.#computeGlobalOrientation();
+            this.#computeGlobalScale();
+            this.#computeGlobalEulerOrientation();
+
+            this._computeTransformMatrices();
+
+            //console.debug(`🤓 Recalculating ${this.debug_name?.value} global transform`);
+            this.#is_dirty = false;
+        }
+    };
+
+    /**
+     * @internal
+     *
+     * Compute the local space to world space and world space to local space matrices of the entity.
+     */
+    _computeTransformMatrices(): void {
+        mat4.fromRotationTranslationScale(
+            this.#ls_to_ws,
+            this.#global_transform.orientation,
+            this.#global_transform.position,
+            this.#global_transform.scale,
+        );
+
+        mat4.invert(this.#ws_to_ls, this.#ls_to_ws);
+    }
+
+    /**
+     * @internal
+     *
      * Set the local transform of the entity.
      * Does not mark the local transform as dirty.
      *
@@ -284,17 +424,15 @@ export abstract class EntityTransformHandler extends EntityBase {
     }
 
     /**
-     * @internal
-     *
-     * Get the global position of the entity.
+     * Compute the global position of the entity.
      */
-    _getGlobalPosition(out: Vec3): Vec3 {
+    #computeGlobalPosition(): Vec3 {
         const local_position = this.#local_transform.position;
         if (!this.#parent) {
-            return vec3.copy(out, local_position) as Vec3;
+            return vec3.copy(this.#global_transform.position, local_position) as Vec3;
         }
 
-        return vec3.transformMat4(out, local_position, this.#parent.ls_to_ws) as Vec3;
+        return vec3.transformMat4(this.#global_transform.position, local_position, this.#parent.ls_to_ws) as Vec3;
     }
 
     /**
@@ -313,17 +451,19 @@ export abstract class EntityTransformHandler extends EntityBase {
     }
 
     /**
-     * @internal
-     *
      * Get the global orientation of the entity.
      * Does not mark the local transform as dirty.
      */
-    _getGlobalOrientation(out: Quat): Quat {
+    #computeGlobalOrientation(): Quat {
         if (!this.#parent) {
-            return quat.copy(out, this.#local_transform.orientation) as Quat;
+            return quat.copy(this.#global_transform.orientation, this.#local_transform.orientation) as Quat;
         }
 
-        return quat.multiply(out, this.#parent.global_transform.orientation, this.#local_transform.orientation) as Quat;
+        return quat.multiply(
+            this.#global_transform.orientation,
+            this.#parent.global_transform.orientation,
+            this.#local_transform.orientation,
+        ) as Quat;
     }
 
     /**
@@ -347,26 +487,22 @@ export abstract class EntityTransformHandler extends EntityBase {
     }
 
     /**
-     * @internal
-     *
      * Get the global euler orientation of the entity.
      */
-    _computeGlobalEulerOrientation(out: Vec3, global_orientation: Quat): Vec3 {
+    #computeGlobalEulerOrientation(): Vec3 {
         const orientationFromEuler = quaternionFromEuler(this.#local_transform.globalEulerOrientation);
         const isQuaternionEqual = orientationFromEuler.every(
-            (value, index) => Math.max(value - global_orientation[index]) < 0.000001,
+            (value, index) => Math.max(value - this.#global_transform.orientation[index]) < 0.000001,
         );
 
         const quat = isQuaternionEqual
             ? this.#local_transform.globalEulerOrientation
-            : quaternionToEuler(global_orientation as Quat);
+            : quaternionToEuler(this.#global_transform.orientation as Quat);
 
-        return vec3.copy(out, quat) as Vec3;
+        return vec3.copy(this.#global_transform.eulerOrientation, quat) as Vec3;
     }
 
     /**
-     * @internal
-     *
      * Set the global euler orientation of the entity.
      * Also update the quat orientation.
      * Does not mark the local transform as dirty.
@@ -382,13 +518,13 @@ export abstract class EntityTransformHandler extends EntityBase {
      *
      * Get the global scale of the entity.
      */
-    _getGlobalScale(out: Vec3): Vec3 {
+    #computeGlobalScale(): Vec3 {
         const local_scale = this.#local_transform.scale;
         if (!this.#parent) {
-            return vec3.copy(out, local_scale) as Vec3;
+            return vec3.copy(this.#global_transform.scale, local_scale) as Vec3;
         }
 
-        return vec3.multiply(out, this.#parent.global_transform.scale, local_scale) as Vec3;
+        return vec3.multiply(this.#global_transform.scale, this.#parent.global_transform.scale, local_scale) as Vec3;
     }
 
     /**
@@ -409,20 +545,17 @@ export abstract class EntityTransformHandler extends EntityBase {
     /**
      * The local space to world space matrix of the entity.
      */
-    get ls_to_ws(): Mat4 {
-        const t = this.#global_transform;
-        const ls_to_ws = mat4.create();
-
-        return mat4.fromRotationTranslationScale(ls_to_ws, t.orientation, t.position, t.scale) as Mat4;
+    get ls_to_ws(): Readonly<Mat4> {
+        this._recalculateGlobalTransformIfNeeded();
+        return this.#ls_to_ws;
     }
 
     /**
      * The world space to local space matrix of the entity.
      */
-    get ws_to_ls(): Mat4 {
-        const ls_to_ws = this.ls_to_ws;
-        const ws_to_ls = mat4.create();
-        return mat4.invert(ws_to_ls, ls_to_ws) as Mat4;
+    get ws_to_ls(): Readonly<Mat4> {
+        this._recalculateGlobalTransformIfNeeded();
+        return this.#ws_to_ls;
     }
 
     /**
@@ -538,171 +671,125 @@ class LocalTransformHandler implements Transform {
  *
  */
 class GlobalTransformHandler implements Transform {
-    #entity: EntityTransformHandler;
-
-    #position_proxy: Vec3;
-    #orientation_proxy: Quat;
-    #eulerOrientation_proxy: Vec3;
-    #scale_proxy: Vec3;
-
-    #position: Vec3 = [0, 0, 0];
-    #orientation: Quat = [0, 0, 0, 1];
-    #eulerOrientation: Vec3 = [0, 0, 0];
-    #scale: Vec3 = [0, 0, 0];
+    #position: Vec3;
+    #orientation: Quat;
+    #eulerOrientation: Vec3;
+    #scale: Vec3;
 
     /**
      *
      */
-    constructor(_entity: EntityTransformHandler) {
-        this.#entity = _entity;
-
-        this.#position_proxy = new Proxy(this.#position, {
-            get: (_target, prop): unknown => {
-                this.#recalculateIfNeeded();
-                return Reflect.get(this.#position, prop);
+    constructor(_entity: EntityTransformHandler, global_transform: Transform) {
+        this.#position = new Proxy(global_transform.position, {
+            get: (target, prop): unknown => {
+                _entity._recalculateGlobalTransformIfNeeded();
+                return Reflect.get(target, prop);
             },
-            set: (_target, prop, value): boolean => {
-                Reflect.set(this.#position, prop, value);
-                _entity._setGlobalPosition(this.#position);
+            set: (target, prop, value): boolean => {
+                Reflect.set(target, prop, value);
+                _entity._setGlobalPosition(target);
+                _entity._computeTransformMatrices();
                 _entity._markLocalTransformAsDirty();
                 return true;
             },
         });
 
-        this.#orientation_proxy = new Proxy(this.#orientation, {
-            get: (_target, prop): unknown => {
-                this.#recalculateIfNeeded();
-
-                return Reflect.get(this.#orientation, prop);
+        this.#orientation = new Proxy(global_transform.orientation, {
+            get: (target, prop): unknown => {
+                _entity._recalculateGlobalTransformIfNeeded();
+                return Reflect.get(target, prop);
             },
-            set: (_target, prop, value): boolean => {
-                Reflect.set(this.#orientation, prop, value);
-                _entity._setGlobalOrientation(this.#orientation);
+            set: (target, prop, value): boolean => {
+                Reflect.set(target, prop, value);
+                _entity._setGlobalOrientation(target);
+                _entity._computeTransformMatrices();
                 _entity._markLocalTransformAsDirty();
                 return true;
             },
         });
 
-        this.#eulerOrientation_proxy = new Proxy(this.#eulerOrientation, {
-            get: (_target, prop): unknown => {
-                this.#recalculateIfNeeded();
-                return Reflect.get(this.#eulerOrientation, prop);
+        this.#eulerOrientation = new Proxy(global_transform.eulerOrientation, {
+            get: (target, prop): unknown => {
+                _entity._recalculateGlobalTransformIfNeeded();
+                return Reflect.get(target, prop);
             },
-            set: (_target, prop, value): boolean => {
-                Reflect.set(this.#eulerOrientation, prop, value);
-                _entity._setGlobalEulerOrientation(this.#eulerOrientation);
+            set: (target, prop, value): boolean => {
+                Reflect.set(target, prop, value);
+                _entity._setGlobalEulerOrientation(target);
+                _entity._computeTransformMatrices();
                 _entity._markLocalTransformAsDirty();
                 return true;
             },
         });
 
-        this.#scale_proxy = new Proxy(this.#scale, {
-            get: (_target, prop): unknown => {
-                this.#recalculateIfNeeded();
-                return Reflect.get(this.#scale, prop);
+        this.#scale = new Proxy(global_transform.scale, {
+            get: (target, prop): unknown => {
+                _entity._recalculateGlobalTransformIfNeeded();
+                return Reflect.get(target, prop);
             },
-            set: (_target, prop, value): boolean => {
-                Reflect.set(this.#scale, prop, value);
-                _entity._setGlobalScale(this.#scale);
+            set: (target, prop, value): boolean => {
+                Reflect.set(target, prop, value);
+                _entity._setGlobalScale(target);
+                _entity._computeTransformMatrices();
                 _entity._markLocalTransformAsDirty();
                 return true;
             },
         });
-    }
-
-    /**
-     * @internal
-     *
-     * Set the global transform of the entity, clearing the dirty state.
-     */
-    _unsafeSetGlobalTransform(value: Partial<Transform>): void {
-        if (value.position) {
-            vec3.copy(this.#position, value.position);
-        }
-
-        if (value.orientation) {
-            quat.copy(this.#orientation, value.orientation);
-        }
-
-        if (value.eulerOrientation) {
-            vec3.copy(this.#eulerOrientation, value.eulerOrientation);
-        }
-
-        if (value.scale) {
-            vec3.copy(this.#scale, value.scale);
-        }
-
-        this.#entity._is_dirty = false;
-    }
-
-    /**
-     * If the entity is dirty, recalculate the global transform, then clear the dirty state.
-     */
-    #recalculateIfNeeded(): void {
-        if (this.#entity._is_dirty) {
-            this.#entity._getGlobalPosition(this.#position);
-            this.#entity._getGlobalOrientation(this.#orientation);
-            this.#entity._getGlobalScale(this.#scale);
-            this.#entity._computeGlobalEulerOrientation(this.#eulerOrientation, this.#orientation);
-
-            //console.debug(`🤓 Recalculating ${this.#entity.debug_name?.value} global transform`);
-            this.#entity._is_dirty = false;
-        }
     }
 
     /**
      *
      */
     get position(): Vec3 {
-        return this.#position_proxy;
+        return this.#position;
     }
 
     /**
      *
      */
     get orientation(): Quat {
-        return this.#orientation_proxy;
+        return this.#orientation;
     }
 
     /**
      *
      */
     get eulerOrientation(): Vec3 {
-        return this.#eulerOrientation_proxy;
+        return this.#eulerOrientation;
     }
 
     /**
      *
      */
     get scale(): Vec3 {
-        return this.#scale_proxy;
+        return this.#scale;
     }
 
     /**
      *
      */
     set position(value: Vec3) {
-        Object.assign(this.#position_proxy, value);
+        Object.assign(this.#position, value);
     }
 
     /**
      *
      */
     set orientation(value: Quat) {
-        Object.assign(this.#orientation_proxy, value);
+        Object.assign(this.#orientation, value);
     }
 
     /**
      *
      */
     set eulerOrientation(value: Vec3) {
-        Object.assign(this.#eulerOrientation_proxy, value);
+        Object.assign(this.#eulerOrientation, value);
     }
 
     /**
      *
      */
     set scale(value: Vec3) {
-        Object.assign(this.#scale_proxy, value);
+        Object.assign(this.#scale, value);
     }
 }

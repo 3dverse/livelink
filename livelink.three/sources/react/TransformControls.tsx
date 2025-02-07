@@ -1,14 +1,14 @@
 import { forwardRef, type Ref, useContext, useEffect, useImperativeHandle, useMemo, useState } from "react";
+import * as THREE from "three";
 import { ViewportContext } from "@3dverse/livelink-react";
 
-import * as THREE from "three";
-import { TransformControls, type TransformControlsEventMap } from "three/addons/controls/TransformControls.js";
+import type { CameraController, Entity, EntityUpdatedEvent } from "@3dverse/livelink";
+import type {
+    TransformControls as TransformController,
+    TransformControlsEventMap,
+} from "../types/ThreeTransformControls";
 
-import { CameraController, Entity, EntityUpdatedEvent } from "@3dverse/livelink";
 import { ThreeOverlayContext } from "./ThreeOverlayProvider";
-
-//------------------------------------------------------------------------------
-export type TransformController = TransformControls;
 
 //------------------------------------------------------------------------------
 export function TransformControlsComponent(
@@ -25,6 +25,7 @@ export function TransformControlsComponent(
 ) {
     const { overlay } = useContext(ThreeOverlayContext);
     const { viewport } = useContext(ViewportContext);
+    const transformControlsModule = useTransformControlsModule();
 
     const anchorObject = useMemo(() => new THREE.Object3D(), []);
     const [controls, setControls] = useState<TransformController | undefined>(undefined);
@@ -33,11 +34,11 @@ export function TransformControlsComponent(
 
     //--------------------------------------------------------------------------
     useEffect(() => {
-        if (!viewport || !overlay || !cameraController) {
+        if (!viewport || !overlay || !cameraController || !transformControlsModule) {
             return;
         }
 
-        const controls = new TransformControls(overlay.camera, viewport.dom_element);
+        const controls = new transformControlsModule.TransformControls(overlay.camera, viewport.dom_element);
 
         const redrawHandler = function () {
             viewport.rendering_surface.redrawLastFrame();
@@ -53,7 +54,7 @@ export function TransformControlsComponent(
             overlay.scene.remove(controls.getHelper());
             controls.dispose();
         };
-    }, [viewport, overlay, cameraController]);
+    }, [viewport, overlay, cameraController, transformControlsModule]);
 
     //--------------------------------------------------------------------------
     useEffect(() => {
@@ -137,5 +138,29 @@ export function TransformControlsComponent(
     return null;
 }
 
+//------------------------------------------------------------------------------
+type TransformControlsModule = {
+    TransformControls: new (camera: THREE.Camera, domElement: HTMLElement) => TransformController;
+};
+
+//------------------------------------------------------------------------------
+/**
+ * Since the Three.js TransformControls module is only exported as an es module,
+ * we need to use dynamic imports to load it.
+ */
+const useTransformControlsModule = () => {
+    const [transformControlsModule, setTransformControlsModule] = useState<TransformControlsModule | undefined>(
+        undefined,
+    );
+
+    useEffect(() => {
+        import("three/addons/controls/TransformControls.js").then(setTransformControlsModule);
+    }, []);
+
+    return transformControlsModule;
+};
+
+//------------------------------------------------------------------------------
 const TransformControlsComponentWithRef = forwardRef(TransformControlsComponent);
 export { TransformControlsComponentWithRef as TransformControls };
+export type { TransformController };
