@@ -33,6 +33,18 @@ const config = {
     enumMembersFormat: "table",
     propertyMembersFormat: "table",
     typeDeclarationFormat: "table",
+    expandObjects: true,
+    expandParameters: true,
+    typeDeclarationVisibility: "verbose",
+    tableColumnSettings: {
+        hideDefaults: false,
+        hideInherited: false,
+        hideModifiers: false,
+        hideOverrides: false,
+        hideSources: true,
+        hideValues: false,
+        leftAlignHeaders: false,
+    },
 };
 
 export default config;
