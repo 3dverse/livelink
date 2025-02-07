@@ -37,7 +37,7 @@ function App() {
             LoadingPanel={LoadingOverlay}
             ConnectionErrorPanel={DisconnectedModal}
             isTransient={true}
-            sessionOpenMode="start"
+            autoJoinExisting={false}
         >
             <AppLayout />
         </Livelink>

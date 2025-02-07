@@ -87,7 +87,6 @@ function SessionJoiner({ sessionId }: { sessionId: UUID | null }) {
         <SamplePlayer autoConnect={true} title="Join Session">
             <Livelink
                 sessionId={sessionId}
-                sessionOpenMode="join"
                 token={token}
                 LoadingPanel={LoadingOverlay}
                 ConnectionErrorPanel={DisconnectedModal}
