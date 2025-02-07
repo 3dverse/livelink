@@ -1,5 +1,15 @@
 # @3dverse/livelink
 
+## 0.8.23
+
+### Patch Changes
+
+- feat(livelink.js): enabling keyboard inputs now prevent default key behavior
+- feat(livelink.js): add Entity.global_aabb getter
+- chore(livelink.js): bump livelink-core (added label, measure & spline components)
+- refactor(livelink.js): keep entity transformation matrices in cache
+- feat(livelink.js): add custom options to CameraController exploited by CameraControllerPresets.pointer_locked_orbital
+
 ## 0.8.22
 
 ### Patch Changes
