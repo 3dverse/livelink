@@ -2,7 +2,7 @@
 import { useContext } from "react";
 
 //------------------------------------------------------------------------------
-import type { Entity, Vec3 } from "@3dverse/livelink";
+import type { Vec3 } from "@3dverse/livelink";
 import {
     Livelink,
     Canvas,
@@ -56,11 +56,9 @@ function AppLayout() {
         <Canvas className="w-full h-full">
             <Viewport cameraEntity={cameraEntity} className="w-full h-full">
                 <CameraController>
-                    {cameraEntity && (
-                        <div className="absolute bottom-4 right-4 m-4">
-                            <StyledViewCube cameraEntity={cameraEntity} />
-                        </div>
-                    )}
+                    <div className="absolute bottom-4 right-4 m-4">
+                        <StyledViewCube />
+                    </div>
                 </CameraController>
             </Viewport>
         </Canvas>
@@ -68,7 +66,7 @@ function AppLayout() {
 }
 
 //------------------------------------------------------------------------------
-function StyledViewCube({ cameraEntity }: { cameraEntity: Entity }) {
+function StyledViewCube() {
     const { cameraController } = useContext(CameraControllerContext);
 
     if (!cameraController) {
@@ -87,12 +85,9 @@ function StyledViewCube({ cameraEntity }: { cameraEntity: Entity }) {
         lineHeight: `${cubeSize}px`,
     };
     const radius = 5;
+
     return (
-        <ViewCube
-            cameraEntity={cameraEntity}
-            size={cubeSize}
-            perspective="600px"
-        >
+        <ViewCube size={cubeSize} perspective="600px">
             <div
                 className={cubeFace}
                 style={{
