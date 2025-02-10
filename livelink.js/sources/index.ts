@@ -42,5 +42,4 @@ export * from "./inputs/Mouse";
 export * from "./inputs/Gamepad";
 export * from "./inputs/Keyboard";
 
-export * from "./maths";
 export type { Transform } from "./scene/EntityTransformHandler";
