@@ -1,5 +1,6 @@
 //------------------------------------------------------------------------------
 const esbuild = require("esbuild");
+const pkg = require("./package.json");
 
 //------------------------------------------------------------------------------
 const commonBuildOptions = {
@@ -10,6 +11,9 @@ const commonBuildOptions = {
     platform: "browser",
     packages: "external",
     sourcemap: true,
+    define: {
+        LIVELINK_THREE_VERSION: `"${pkg.version}"`,
+    },
 };
 
 //------------------------------------------------------------------------------

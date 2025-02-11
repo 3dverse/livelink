@@ -43,3 +43,26 @@ export * from "./inputs/Gamepad";
 export * from "./inputs/Keyboard";
 
 export type { Transform } from "./scene/EntityTransformHandler";
+
+//------------------------------------------------------------------------------
+/**
+ * Version of the Livelink library, injected by the build system.
+ * @internal
+ */
+declare const LIVELINK_VERSION: string;
+
+//------------------------------------------------------------------------------
+declare global {
+    interface Window {
+        __LIVELINK__: string;
+    }
+}
+
+//------------------------------------------------------------------------------
+if (typeof window !== "undefined") {
+    if (window.__LIVELINK__) {
+        console.warn("⚠️ WARNING ⚠️ Multiple instances of Livelink being imported.");
+    } else {
+        window.__LIVELINK__ = LIVELINK_VERSION;
+    }
+}

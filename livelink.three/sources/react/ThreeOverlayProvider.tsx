@@ -4,7 +4,7 @@ import { createContext, PropsWithChildren, useContext, useEffect, useState } fro
 import { ViewportContext } from "@3dverse/livelink-react";
 import type * as THREE from "three";
 
-import { ThreeOverlay } from "../ThreeOverlay";
+import { ThreeOverlay } from "../";
 
 //------------------------------------------------------------------------------
 export const ThreeOverlayContext = createContext<{
