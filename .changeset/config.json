@@ -1,5 +1,8 @@
 {
   "$schema": "https://cdn.3dverse.com/assets/changeset-config-schema.json",
+  "___experimentalUnsafeOptions_WILL_CHANGE_IN_PATCH": {
+    "updateInternalDependents": "always"
+  },
   "changelog": "@changesets/cli/changelog",
   "commit": true,
   "fixed": [],
