@@ -51,12 +51,16 @@ variables:
 
 # JOBS ################################################################################################################
 # BUILD
-js:build:
+js:build:libs:
   stage: build
   extends:
     - .env-dev
     - .runner-onprem
   image: node:${NODE_VERSION}
+  needs:
+    - job: version:update-version
+      artifacts: true
+      optional: true
   artifacts:
     expire_in: 1 day
     paths:
@@ -65,43 +69,38 @@ js:build:
   before_script:
     - !reference [.npm-regcreds, before_script]
     - !reference [.node-cache, before_script]
+  variables:
+    NPM_INSTALL_ARGS: "--workspace=livelink.js --workspace=livelink.react --workspace=livelink.react.ui --workspace=livelink.three"
   script:
     - npm run build:js
     - npm run build:react
     - npm run build:react.ui
     - npm run build:three
-    - npm run build:samples
   rules:
     - if: *default-branch-rule
     - if: *merge-request-on-release-rule
     - if: *release-rule
 
-create-mr:
-  stage: deploy
+js:build:samples:
+  stage: build
   extends:
     - .env-dev
     - .runner-onprem
-  image: node:${NODE_VERSION}-alpine
-  script:
-    - npx tsx .ci/create-mr.mts
-  rules:
-    - if: *default-branch-rule
-
-pages:
-  stage: deploy
-  extends:
-    - .env-dev
-    - .runner-onprem
+  image: node:${NODE_VERSION}
   needs:
-    - job: js:build
+    - job: js:build:libs
       artifacts: true
   artifacts:
+    expire_in: 1 day
     paths:
-      - public/
+      - "*/dist/"
   before_script:
-    - mkdir public
+    - !reference [.npm-regcreds, before_script]
+    - !reference [.node-cache, before_script]
+  variables:
+    NPM_INSTALL_ARGS: "--workspace=livelink.samples"
   script:
-    - cp -r livelink.samples/dist/* public/
+    - npm run build:samples
   rules:
     - if: *default-branch-rule
 
@@ -117,16 +116,20 @@ version:update-mr:
   rules:
     - if: *merge-request-on-release-rule
 
-version:generate-changesets:
-  stage: deploy
+version:update-version:
+  stage: pre-build
   extends:
     - .runner-onprem
   image: registry.gitlab.com/3dverse/platform/ci-utils/docker-images/changesets-tools:latest
   artifacts:
     paths:
-      - .changeset/*.md
+      - "*/package.json"
+      - "*/CHANGELOG.md"
+      - "./package-lock.json"
   script:
     - changesets-tools generate-changesets
+    - npx @changesets/cli version
+    - npm i --package-lock-only
   rules:
     - if: *release-rule
 
@@ -136,9 +139,9 @@ version:publish:
     - .runner-onprem
   image: node:${NODE_VERSION}-alpine
   needs:
-    - job: js:build
+    - job: js:build:libs
       artifacts: true
-    - job: version:generate-changesets
+    - job: version:update-version
       artifacts: true
   artifacts:
     expire_in: 1 day
@@ -157,17 +160,14 @@ version:publish:
       npm config set @3dverse:registry="https://registry.npmjs.org" --userconfig=".npmrc"
       npm config set //registry.npmjs.org/:_authToken="${NPMJS_ACCESS_TOKEN}" --userconfig=".npmrc"
   script:
-    # Update package versions using changesets, and create a new commit
-    - npx @changesets/cli version
-    # Update package-lock.json
-    - npm i --package-lock-only
-    # Amend the commit to include the package-lock.json changes
-    - git add package-lock.json
-    - git commit --amend --no-edit
+    # Commit the changes
+    - |
+      git add .
+      git commit -m "RELEASING: Releasing package(s)"
     # Tag the commit with the new version
     - npx @changesets/cli tag
     # Push the commit and tag
-    - git push origin $CI_COMMIT_REF_NAME --follow-tags || git push --set-upstream origin $CI_COMMIT_REF_NAME --follow-tags
+    - git push origin $CI_COMMIT_REF_NAME --follow-tags -o ci.skip || git push --set-upstream origin $CI_COMMIT_REF_NAME --follow-tags -o ci.skip
     # Publish the packages
     - npx @changesets/cli publish
     # Merge the release branch into the default branch
@@ -180,13 +180,44 @@ version:publish:
   rules:
     - if: *release-rule
 
+# UTILS   #############################################################################################################
+create-mr:
+  stage: deploy
+  extends:
+    - .env-dev
+    - .runner-onprem
+  image: node:${NODE_VERSION}-alpine
+  script:
+    - npx tsx .ci/create-mr.mts
+  rules:
+    - if: *default-branch-rule
+
+# PAGES    #############################################################################################################
+pages:
+  stage: deploy
+  extends:
+    - .env-dev
+    - .runner-onprem
+  needs:
+    - job: js:build:samples
+      artifacts: true
+  artifacts:
+    paths:
+      - public/
+  before_script:
+    - mkdir public
+  script:
+    - cp -r livelink.samples/dist/* public/
+  rules:
+    - if: *default-branch-rule
+
 # DOCS    #############################################################################################################
 js:livelink.js:docs:
   stage: deploy
   extends:
     - .docs
   needs:
-    - job: js:build
+    - job: js:build:libs
       artifacts: true
     - job: version:publish
       artifacts: true
@@ -202,7 +233,7 @@ js:livelink.react:docs:
   extends:
     - .docs
   needs:
-    - job: js:build
+    - job: js:build:libs
       artifacts: true
     - job: version:publish
       artifacts: true

@@ -4,7 +4,7 @@
     "updateInternalDependents": "always"
   },
   "changelog": "@changesets/cli/changelog",
-  "commit": true,
+  "commit": false,
   "fixed": [],
   "linked": [],
   "access": "public",
