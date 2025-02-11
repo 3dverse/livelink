@@ -11,18 +11,28 @@ export * from "./components/LoadingOverlay";
  */
 declare const LIVELINK_REACT_UI_VERSION: string;
 
+/**
+ * Name of the package, injected by the build system.
+ * @internal
+ */
+declare const PACKAGE_NAME: string;
+
 //------------------------------------------------------------------------------
 declare global {
     interface Window {
-        __LIVELINK_REACT_UI__: string;
+        __LIVELINK__: Record<string, string>;
     }
 }
 
 //------------------------------------------------------------------------------
 if (typeof window !== "undefined") {
-    if (window.__LIVELINK_REACT_UI__) {
+    if (!window.__LIVELINK__) {
+        window.__LIVELINK__ = {};
+    }
+
+    if (Object.prototype.hasOwnProperty.call(window.__LIVELINK__, PACKAGE_NAME)) {
         console.warn("⚠️ WARNING ⚠️ Multiple instances of Livelink React UI being imported.");
     } else {
-        window.__LIVELINK_REACT_UI__ = LIVELINK_REACT_UI_VERSION;
+        window.__LIVELINK__[PACKAGE_NAME] = LIVELINK_REACT_UI_VERSION;
     }
 }

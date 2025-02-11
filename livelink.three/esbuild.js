@@ -12,6 +12,7 @@ const commonBuildOptions = {
     packages: "external",
     sourcemap: true,
     define: {
+        PACKAGE_NAME: `"${pkg.name}"`,
         LIVELINK_THREE_VERSION: `"${pkg.version}"`,
     },
 };

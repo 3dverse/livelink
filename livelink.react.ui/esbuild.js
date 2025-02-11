@@ -14,6 +14,7 @@ const commonBuildOptions = {
     external: [...Object.keys(pkg.peerDependencies)],
     sourcemap: true,
     define: {
+        PACKAGE_NAME: `"${pkg.name}"`,
         LIVELINK_REACT_UI_VERSION: `"${pkg.version}"`,
     },
 };

@@ -14,6 +14,7 @@ const commonBuildOptions = {
     external: [...Object.keys(pkg.peerDependencies), "threejs-math"],
     sourcemap: true,
     define: {
+        PACKAGE_NAME: `"${pkg.name}"`,
         LIVELINK_REACT_VERSION: `"${pkg.version}"`,
     },
 };
