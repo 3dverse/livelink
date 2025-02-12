@@ -137,7 +137,7 @@ version:publish:
   stage: deploy
   extends:
     - .runner-onprem
-  image: node:${NODE_VERSION}-alpine
+  image: registry.gitlab.com/3dverse/platform/ci-utils/docker-images/changesets-tools:latest
   needs:
     - job: js:build:libs
       artifacts: true
@@ -170,6 +170,8 @@ version:publish:
     - git push origin $CI_COMMIT_REF_NAME --follow-tags -o ci.skip || git push --set-upstream origin $CI_COMMIT_REF_NAME --follow-tags -o ci.skip
     # Publish the packages
     - npx @changesets/cli publish
+    # Create a release on GitHub
+    - changesets-tools create-github-release --remote-url="${GITHUB_REMOTE_URL}" --api-token="${GITHUB_API_TOKEN}"
     # Merge the release branch into the default branch
     - git fetch origin main
     - git checkout -b $CI_DEFAULT_BRANCH origin/$CI_DEFAULT_BRANCH
