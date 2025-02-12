@@ -2,6 +2,7 @@
 
 //------------------------------------------------------------------------------
 const esbuild = require("esbuild");
+const pkg = require("./package.json");
 
 //------------------------------------------------------------------------------
 const commonBuildOptions = {
@@ -13,6 +14,8 @@ const commonBuildOptions = {
     mainFields: ["browser", "module", "main"],
     sourcemap: true,
     define: {
+        PACKAGE_NAME: `"${pkg.name}"`,
+        LIVELINK_VERSION: `"${pkg.version}"`,
         API_HOSTNAME: `"api.3dverse.com"`,
         EDITOR_URL: `"wss://api.3dverse.com/editor-backend"`,
     },

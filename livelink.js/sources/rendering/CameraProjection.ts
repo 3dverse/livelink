@@ -9,6 +9,7 @@ import { Entity } from "../scene/Entity";
 import { Viewport } from "./Viewport";
 import { FrameCameraTransform } from "./decoders/FrameCameraTransform";
 import { EntityUpdatedEvent } from "../scene/EntityEvents";
+import { quaternionToEuler } from "../maths";
 
 /**
  *
@@ -126,6 +127,13 @@ export class CameraProjection {
      */
     get world_orientation(): Readonly<Quat> {
         return this.#world_orientation;
+    }
+
+    /**
+     * World space orientation expressed as euler of the camera as used to render the currently processed frame.
+     */
+    get world_euler_orientation(): Readonly<Vec3> {
+        return quaternionToEuler(this.#world_orientation);
     }
 
     /**

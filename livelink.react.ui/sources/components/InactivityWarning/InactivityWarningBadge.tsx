@@ -63,11 +63,10 @@ export const InactivityWarningBadge = ({
                             top="-1px"
                             left="50%"
                             transform="translate(-50%, -50%)"
-                            w="2px"
+                            w="1px"
                             h={2}
                             bgColor="accent.500"
                             rounded="full"
-                            filter="blur(1px)"
                         />
                         <Box
                             as="svg"
@@ -93,18 +92,17 @@ export const InactivityWarningBadge = ({
                                 as="path"
                                 d="M138.5 1H33.5C15.5507 1 1 15.5507 1 33.5V33.5C1 51.4493 15.5507 66 33.5 66H243.5C261.449 66 276 51.4493 276 33.5V33.5C276 15.5507 261.449 1 243.5 1H139"
                                 stroke="accent.500"
-                                strokeWidth={2}
+                                strokeWidth={1}
                                 style={{
                                     strokeDasharray: 624,
                                     strokeDashoffset: 624,
                                 }}
-                                filter="blur(1px)"
                             />
                         </Box>
                         <Text size="sm" color="content.primary">
                             Move cursor to keep 3D view.
                         </Text>
-                        <Text size="xs" color="content.secondary" letterSpacing=".05em" mt="1px">
+                        <Text size="xs" color="content.secondary" letterSpacing=".04em" mt="1px">
                             Closing in{" "}
                             <Box
                                 as="span"

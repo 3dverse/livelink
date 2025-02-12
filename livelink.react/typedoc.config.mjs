@@ -18,13 +18,30 @@ const config = {
     },
     tsconfig: "tsconfig.json",
 
-    markdownItOptions: {
-        hidePageHeader: true,
-        hideBreadcrumbs: true,
-        hidePageTitle: true,
-        useCodeBlocks: true,
-        parametersFormat: "table",
+    hidePageHeader: true,
+    hideBreadcrumbs: true,
+    hidePageTitle: true,
+    useCodeBlocks: true,
+    parametersFormat: "table",
+    interfacePropertiesFormat: "table",
+    indexFormat: "table",
+    classPropertiesFormat: "table",
+    enumMembersFormat: "table",
+    propertyMembersFormat: "table",
+    typeDeclarationFormat: "table",
+    expandObjects: true,
+    expandParameters: true,
+    typeDeclarationVisibility: "verbose",
+    tableColumnSettings: {
+        hideDefaults: false,
+        hideInherited: false,
+        hideModifiers: false,
+        hideOverrides: false,
+        hideSources: true,
+        hideValues: false,
+        leftAlignHeaders: false,
     },
+    sourceLinkTemplate: "https://github.com/3dverse/livelink/tree/release/{path}#L{line}",
 };
 
 export default config;

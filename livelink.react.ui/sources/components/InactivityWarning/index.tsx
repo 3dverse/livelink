@@ -37,7 +37,7 @@ export const InactivityWarning = ({
         }
 
         const timer = setInterval(() => {
-            setTimeLeft(prev => prev - 1);
+            setTimeLeft(prev => (prev > 0 ? prev - 1 : 0));
         }, 1000);
         return () => clearInterval(timer);
     }, [warningDuration]);

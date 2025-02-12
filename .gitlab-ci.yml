@@ -9,41 +9,16 @@ include:
 variables:
   NODE_VERSION: "22"
 
+# RULES     ###########################################################################################################
+.manual-doc-publish-rule: &manual-doc-publish-rule $CI_DEFAULT_BRANCH == $CI_DEFAULT_BRANCH && $GENERATE_DOCS == "true"
+
+.release-rule: &release-rule $CI_COMMIT_BRANCH == "release"
+
+.default-branch-rule: &default-branch-rule $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+
+.merge-request-on-release-rule: &merge-request-on-release-rule $CI_MERGE_REQUEST_SOURCE_BRANCH_NAME == $CI_DEFAULT_BRANCH && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == "release"
+
 # TEMPLATES ###########################################################################################################
-.update-version:
-  script:
-    - |
-      set -e
-      latest_published_version=$(npm show @3dverse/$PACKAGE_NAME version)
-      npm install semver --no-save
-
-      semver_script="const semver = require('semver'); \
-      const latest = '$latest_published_version'; \
-      const current = require('./package.json').version; \
-      if(semver.gte(latest, current)) { \
-        console.log(semver.inc(latest, 'patch')); \
-      }"
-
-      new_package_version=$(node -e "$semver_script")
-      if [ "$new_package_version" != "" ]; then
-        npm version $new_package_version --no-git-tag-version
-      fi
-
-.publish:
-  stage: deploy
-  extends:
-    - .runner-onprem
-  image: node:${NODE_VERSION}
-  before_script:
-    - !reference [.npm-regcreds, before_script]
-    - npm config set @3dverse:registry="https://registry.npmjs.org" --userconfig=".npmrc"
-    - npm config set //registry.npmjs.org/:_authToken="${NPMJS_ACCESS_TOKEN}" --userconfig=".npmrc"
-    - tar -zxf ${PACKAGE_PATH_NAME}-*.tgz --strip-components=1 -C $PACKAGE_DIR
-    - cd $PACKAGE_DIR
-    - npm pkg delete private
-  script:
-    - npm publish --access public
-
 .docs:
   stage: deploy
   extends:
@@ -76,12 +51,16 @@ variables:
 
 # JOBS ################################################################################################################
 # BUILD
-js:build:
+js:build:libs:
   stage: build
   extends:
     - .env-dev
     - .runner-onprem
   image: node:${NODE_VERSION}
+  needs:
+    - job: version:update-version
+      artifacts: true
+      optional: true
   artifacts:
     expire_in: 1 day
     paths:
@@ -90,47 +69,40 @@ js:build:
   before_script:
     - !reference [.npm-regcreds, before_script]
     - !reference [.node-cache, before_script]
+  variables:
+    NPM_INSTALL_ARGS: "--workspace=livelink.js --workspace=livelink.react --workspace=livelink.react.ui --workspace=livelink.three"
   script:
     - npm run build:js
     - npm run build:react
     - npm run build:react.ui
     - npm run build:three
-    - npm run build:samples
   rules:
-    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
-    - if: $CI_COMMIT_BRANCH == "release"
-    - if: $CI_COMMIT_REF_NAME == $CI_DEFAULT_BRANCH
+    - if: *default-branch-rule
+    - if: *merge-request-on-release-rule
+    - if: *release-rule
 
-create-mr:
-  stage: deploy
+js:build:samples:
+  stage: build
   extends:
     - .env-dev
     - .runner-onprem
-  image: node:${NODE_VERSION}-alpine
-  script:
-    - npx tsx .ci/create-mr.mts
-  rules:
-    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
-
-pages:
-  stage: deploy
-  extends:
-    - .env-dev
-    - .runner-onprem
+  image: node:${NODE_VERSION}
   needs:
-    - job: js:build
+    - job: js:build:libs
       artifacts: true
   artifacts:
+    expire_in: 1 day
     paths:
-      - public/
+      - "*/dist/"
   before_script:
-    - mkdir public
+    - !reference [.npm-regcreds, before_script]
+    - !reference [.node-cache, before_script]
+  variables:
+    NPM_INSTALL_ARGS: "--workspace=livelink.samples"
   script:
-    - cp -r livelink.samples/dist/* public/
+    - npm run build:samples
   rules:
-    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
-      when: never
-    - if: $CI_COMMIT_REF_NAME == $CI_DEFAULT_BRANCH
+    - if: *default-branch-rule
 
 # VERSION #############################################################################################################
 version:update-mr:
@@ -142,30 +114,34 @@ version:update-mr:
     - changesets-tools generate-changesets
     - changesets-tools post-merge-request-details
   rules:
-    - if: $CI_MERGE_REQUEST_SOURCE_BRANCH_NAME == $CI_DEFAULT_BRANCH && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == "release"
+    - if: *merge-request-on-release-rule
 
-version:generate-changesets:
-  stage: deploy
+version:update-version:
+  stage: pre-build
   extends:
     - .runner-onprem
   image: registry.gitlab.com/3dverse/platform/ci-utils/docker-images/changesets-tools:latest
   artifacts:
     paths:
-      - .changeset/*.md
+      - "*/package.json"
+      - "*/CHANGELOG.md"
+      - "./package-lock.json"
   script:
     - changesets-tools generate-changesets
+    - npx @changesets/cli version
+    - npm i --package-lock-only
   rules:
-    - if: $CI_COMMIT_BRANCH == "release"
+    - if: *release-rule
 
 version:publish:
   stage: deploy
   extends:
     - .runner-onprem
-  image: node:${NODE_VERSION}-alpine
+  image: registry.gitlab.com/3dverse/platform/ci-utils/docker-images/changesets-tools:latest
   needs:
-    - job: js:build
+    - job: js:build:libs
       artifacts: true
-    - job: version:generate-changesets
+    - job: version:update-version
       artifacts: true
   artifacts:
     expire_in: 1 day
@@ -184,19 +160,18 @@ version:publish:
       npm config set @3dverse:registry="https://registry.npmjs.org" --userconfig=".npmrc"
       npm config set //registry.npmjs.org/:_authToken="${NPMJS_ACCESS_TOKEN}" --userconfig=".npmrc"
   script:
-    # Update package versions using changesets, and create a new commit
-    - npx @changesets/cli version
-    # Update package-lock.json
-    - npm i --package-lock-only
-    # Amend the commit to include the package-lock.json changes
-    - git add package-lock.json
-    - git commit --amend --no-edit
+    # Commit the changes
+    - |
+      git add .
+      git commit -m "RELEASING: Releasing package(s)"
     # Tag the commit with the new version
     - npx @changesets/cli tag
     # Push the commit and tag
-    - git push origin $CI_COMMIT_REF_NAME --follow-tags || git push --set-upstream origin $CI_COMMIT_REF_NAME --follow-tags
+    - git push origin $CI_COMMIT_REF_NAME --follow-tags -o ci.skip || git push --set-upstream origin $CI_COMMIT_REF_NAME --follow-tags -o ci.skip
     # Publish the packages
     - npx @changesets/cli publish
+    # Create a release on GitHub
+    - changesets-tools create-github-release --remote-url="${GITHUB_REMOTE_URL}" --api-token="${GITHUB_API_TOKEN}"
     # Merge the release branch into the default branch
     - git fetch origin main
     - git checkout -b $CI_DEFAULT_BRANCH origin/$CI_DEFAULT_BRANCH
@@ -205,7 +180,38 @@ version:publish:
   variables:
     GIT_STRATEGY: clone
   rules:
-    - if: $CI_COMMIT_BRANCH == "release"
+    - if: *release-rule
+
+# UTILS   #############################################################################################################
+create-mr:
+  stage: deploy
+  extends:
+    - .env-dev
+    - .runner-onprem
+  image: node:${NODE_VERSION}-alpine
+  script:
+    - npx tsx .ci/create-mr.mts
+  rules:
+    - if: *default-branch-rule
+
+# PAGES    #############################################################################################################
+pages:
+  stage: deploy
+  extends:
+    - .env-dev
+    - .runner-onprem
+  needs:
+    - job: js:build:samples
+      artifacts: true
+  artifacts:
+    paths:
+      - public/
+  before_script:
+    - mkdir public
+  script:
+    - cp -r livelink.samples/dist/* public/
+  rules:
+    - if: *default-branch-rule
 
 # DOCS    #############################################################################################################
 js:livelink.js:docs:
@@ -213,28 +219,32 @@ js:livelink.js:docs:
   extends:
     - .docs
   needs:
-    - job: js:build
+    - job: js:build:libs
       artifacts: true
     - job: version:publish
       artifacts: true
+      optional: true
   variables:
     PACKAGE_DIR: livelink.js
   rules:
-    - if: $CI_COMMIT_BRANCH == "release"
+    - if: *release-rule
+    - if: *manual-doc-publish-rule
 
 js:livelink.react:docs:
   stage: deploy
   extends:
     - .docs
   needs:
-    - job: js:build
+    - job: js:build:libs
       artifacts: true
     - job: version:publish
       artifacts: true
+      optional: true
   variables:
     PACKAGE_DIR: livelink.react
   rules:
-    - if: $CI_COMMIT_BRANCH == "release"
+    - if: *release-rule
+    - if: *manual-doc-publish-rule
 
 js:livelink.js:docs-trigger:
   stage: deploy
@@ -243,6 +253,8 @@ js:livelink.js:docs-trigger:
       artifacts: false
     - job: js:livelink.react:docs
       artifacts: false
+      optional: true
+
   variables:
     # These variables will be used in the triggered downstream pipeline to download the generated docs artifacts.
     LIVELINK_PACKAGE_NAMES: livelink.js livelink.react
@@ -250,7 +262,8 @@ js:livelink.js:docs-trigger:
     LIVELINK_PACKAGE_PATH: /latest/docs-md.tgz
     SYNC_LIVELINK_JS: "true"
   rules:
-    - if: $CI_COMMIT_BRANCH == "release"
+    - if: *release-rule
+    - if: *manual-doc-publish-rule
   trigger:
     project: 3dverse/corp/3dverse-docs
     strategy: depend

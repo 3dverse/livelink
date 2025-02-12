@@ -1,8 +1,8 @@
 /* eslint-disable */
 
 //------------------------------------------------------------------------------
-const pkg = require("./package.json");
 const esbuild = require("esbuild");
+const pkg = require("./package.json");
 
 //------------------------------------------------------------------------------
 const commonBuildOptions = {
@@ -13,6 +13,10 @@ const commonBuildOptions = {
     packages: "bundle",
     external: [...Object.keys(pkg.peerDependencies)],
     sourcemap: true,
+    define: {
+        PACKAGE_NAME: `"${pkg.name}"`,
+        LIVELINK_REACT_UI_VERSION: `"${pkg.version}"`,
+    },
 };
 
 //------------------------------------------------------------------------------

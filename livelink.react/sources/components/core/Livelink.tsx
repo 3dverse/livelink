@@ -4,6 +4,7 @@ import React, { createContext, JSX, PropsWithChildren, useCallback, useEffect, u
 //------------------------------------------------------------------------------
 import * as Livelink from "@3dverse/livelink";
 import { Livelink as LivelinkInstance, type UUID } from "@3dverse/livelink";
+import { StrictUnion } from "../../utils";
 
 /**
  * Context for managing the Livelink connection state.
@@ -35,19 +36,13 @@ export const LivelinkContext = createContext<{
 /**
  * Represents the mode for joining an existing session.
  *
- * - `sessionOpenMode`: Must be `"join"`.
- * - `sessionId`: A valid UUID identifying the session to join.
- * - `sceneId`: Must be `undefined`.
- * - `isTransient`: Must be `undefined`.
- *
  * @inline
  */
-type SessionJoinMode = {
-    sessionOpenMode: "join";
+export type SessionJoinMode = {
+    /**
+     * The UUID of the session to join.
+     */
     sessionId: UUID;
-
-    sceneId?: undefined;
-    isTransient?: undefined;
 };
 
 /**
@@ -60,12 +55,22 @@ type SessionJoinMode = {
  *
  * @inline
  */
-type SessionJoinOrStart = {
-    sessionOpenMode?: "start" | "join-or-start";
+export type SessionJoinOrStart = {
+    /**
+     * The UUID of the scene to connect to or start a session on.
+     */
     sceneId: UUID;
-    isTransient?: boolean;
 
-    sessionId?: undefined;
+    /**
+     * Whether to automatically join any existing session.
+     */
+    autoJoinExisting?: boolean;
+
+    /**
+     * If a new session is started, specifies whether it is transient (non-persistent).
+     * If a session is joined, this property is ignored.
+     */
+    isTransient?: boolean;
 };
 
 /**
@@ -77,7 +82,7 @@ type SessionJoinOrStart = {
  *
  * @inline
  */
-type SessionOpenMode = SessionJoinMode | SessionJoinOrStart;
+export type SessionOpenMode = StrictUnion<SessionJoinMode | SessionJoinOrStart>;
 
 /**
  * Parameters for establishing a Livelink connection.
@@ -85,9 +90,9 @@ type SessionOpenMode = SessionJoinMode | SessionJoinOrStart;
  * Extends `SessionOpenMode` to define the session behavior and includes additional
  * options for handling connection lifecycle events, UI components, and settings.
  *
- * @inline
+ * @category Context Providers
  */
-type LivelinkConnectParameters = {
+export type LivelinkConnectParameters = {
     /**
      * Authentication token required to establish the connection.
      */
@@ -136,7 +141,7 @@ type ConnectionPromisesMap = Map<string, Promise<Livelink.Livelink>>;
  * @param params.LoadingPanel - Optional React node displayed while the connection is being established.
  * @param params.InactivityWarningPanel - Optional React node displayed when an inactivity timeout occurs.
  * @param params.ConnectionErrorPanel - Optional React node displayed when the connection is lost.
- * @param params.sessionOpenMode - Specifies the mode for opening the session; defaults to `"join-or-start"`.
+ * @param params.autoJoinExisting - Specifies the mode for opening the session; defaults to `"join-or-start"`.
  *
  * @category Context Providers
  */
@@ -148,7 +153,7 @@ export function LivelinkProvider({
     LoadingPanel,
     InactivityWarningPanel,
     ConnectionErrorPanel,
-    sessionOpenMode = "join-or-start",
+    autoJoinExisting = true,
     children,
 }: PropsWithChildren<LivelinkConnectParameters>): JSX.Element {
     const [instance, setInstance] = useState<LivelinkInstance | null>(null);
@@ -162,25 +167,27 @@ export function LivelinkProvider({
 
     useEffect(() => {
         const connect = async ({
-            sessionOpenMode,
+            autoJoinExisting,
             sceneId,
             sessionId,
         }: SessionOpenMode): Promise<Livelink.Livelink> => {
-            switch (sessionOpenMode) {
-                case "start":
-                    return LivelinkInstance.start({ scene_id: sceneId, token, is_transient: isTransient });
-                case "join": {
-                    const session = await Livelink.Session.findById({ session_id: sessionId, token });
-                    if (!session) {
-                        throw new Error(`Session '${sessionId}' not found on scene '${sceneId}'`);
-                    }
-                    return LivelinkInstance.join({ session });
+            if (sessionId) {
+                const session = await Livelink.Session.findById({ session_id: sessionId, token });
+                if (!session) {
+                    throw new Error(`Session '${sessionId}' not found on scene '${sceneId}'`);
                 }
-                case "join-or-start":
-                    return LivelinkInstance.join_or_start({ scene_id: sceneId, token, is_transient: isTransient });
-                default:
-                    throw new Error("What are we doing here?!");
+                return LivelinkInstance.join({ session });
             }
+
+            if (sceneId) {
+                if (autoJoinExisting) {
+                    return LivelinkInstance.join_or_start({ scene_id: sceneId, token, is_transient: isTransient });
+                } else {
+                    return LivelinkInstance.start({ scene_id: sceneId, token, is_transient: isTransient });
+                }
+            }
+
+            throw new Error("What are we doing here?!");
         };
 
         /**
@@ -212,7 +219,7 @@ export function LivelinkProvider({
             setInactivityWarning(null);
         };
 
-        getOrCreateConnectionPromise({ sessionOpenMode, sceneId, sessionId, token } as LivelinkConnectParameters)
+        getOrCreateConnectionPromise({ autoJoinExisting, sceneId, sessionId, token } as LivelinkConnectParameters)
             .then(instance => {
                 // if the component is unmounted, stop right here, and do not proceed with the connection
                 if (abort_controller.signal.aborted) {
@@ -248,7 +255,7 @@ export function LivelinkProvider({
             setIsConnectionLost(false);
             setInactivityWarning(null);
         };
-    }, [token, sessionOpenMode, sceneId, sessionId, isTransient]);
+    }, [token, autoJoinExisting, sceneId, sessionId, isTransient]);
 
     useEffect(() => {
         if (!instance) {
