@@ -6,6 +6,8 @@ docs
 docs-md
 ssl
 .vscode
+.npm
+.npmrc
 *.tgz
 
 *storybook.log
