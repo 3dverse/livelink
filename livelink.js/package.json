@@ -27,8 +27,8 @@
     "predocs": "run-p clean:docs",
     "docs": "run-p typedoc typedoc:md",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "typedoc": "typedoc",
-    "typedoc:md": "typedoc --plugin typedoc-plugin-no-inherit --plugin typedoc-plugin-markdown --out docs-md",
+    "typedoc": "typedoc --options typedoc.config.mjs",
+    "typedoc:md": "typedoc --options typedoc-md.config.mjs --plugin typedoc-plugin-no-inherit --plugin typedoc-plugin-markdown --out docs-md",
     "posttypedoc:md": "prettier --config ../.prettierrc --write ./docs-md"
   },
   "license": "ISC",
