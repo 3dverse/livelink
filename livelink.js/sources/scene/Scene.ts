@@ -10,6 +10,7 @@ import type {
     ComponentType,
     ComponentsManifest,
     ComponentsRecord,
+    Events,
 } from "@3dverse/livelink.core";
 
 //------------------------------------------------------------------------------
@@ -425,7 +426,7 @@ export class Scene {
     /**
      * @internal
      */
-    async _assignClientToScripts({
+    _assignClientToScripts({
         client_uuid,
         entity_rtid,
         script_uuid,
@@ -433,8 +434,8 @@ export class Scene {
         client_uuid: UUID;
         entity_rtid: RTID;
         script_uuid: UUID;
-    }): Promise<void> {
-        return this.#core.assignClientToScript({ client_uuid, script_uuid, entity_rtid });
+    }): void {
+        this.#core.assignClientToScript({ client_uuid, script_uuid, entity_rtid });
     }
 
     /**
@@ -447,13 +448,7 @@ export class Scene {
     /**
      * @internal
      */
-    async _onEntityVisibilityChanged({
-        entity_rtid,
-        is_visible,
-    }: {
-        entity_rtid: RTID;
-        is_visible: boolean;
-    }): Promise<void> {
+    _onEntityVisibilityChanged = ({ entity_rtid, is_visible }: Events.EntityVisibilityChangedEvent): void => {
         const entity = this._entity_registry.get({ entity_rtid });
         if (entity) {
             entity._onVisibilityChanged({ is_visible });
@@ -485,6 +480,18 @@ export class Scene {
             });
         }
     }
+
+    /**
+     * @internal
+     */
+    _onScriptEventReceived = ({
+        emitter_rtid,
+        event_name,
+        target_rtids,
+        data_object,
+    }: Events.ScriptEventTriggeredEvent): void => {
+        console.log("Script event received", emitter_rtid, event_name, target_rtids, data_object);
+    };
 
     /**
      * @internal
