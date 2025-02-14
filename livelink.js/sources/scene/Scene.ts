@@ -10,12 +10,14 @@ import type {
     ComponentType,
     ComponentsManifest,
     ComponentsRecord,
+    Events,
 } from "@3dverse/livelink.core";
 
 //------------------------------------------------------------------------------
 import { Entity } from "./Entity";
 import { compute_rpn } from "./Filters";
 import { EntityRegistry } from "./EntityRegistry";
+import { ScriptEventReceived } from "./ScriptEvents";
 
 /**
  * Options for creating a new entity.
@@ -425,7 +427,7 @@ export class Scene {
     /**
      * @internal
      */
-    async _assignClientToScripts({
+    _assignClientToScripts({
         client_uuid,
         entity_rtid,
         script_uuid,
@@ -433,8 +435,8 @@ export class Scene {
         client_uuid: UUID;
         entity_rtid: RTID;
         script_uuid: UUID;
-    }): Promise<void> {
-        return this.#core.assignClientToScript({ client_uuid, script_uuid, entity_rtid });
+    }): void {
+        this.#core.assignClientToScript({ client_uuid, script_uuid, entity_rtid });
     }
 
     /**
@@ -447,18 +449,12 @@ export class Scene {
     /**
      * @internal
      */
-    async _onEntityVisibilityChanged({
-        entity_rtid,
-        is_visible,
-    }: {
-        entity_rtid: RTID;
-        is_visible: boolean;
-    }): Promise<void> {
+    _onEntityVisibilityChanged = ({ entity_rtid, is_visible }: Events.EntityVisibilityChangedEvent): void => {
         const entity = this._entity_registry.get({ entity_rtid });
         if (entity) {
             entity._onVisibilityChanged({ is_visible });
         }
-    }
+    };
 
     /**
      * @internal
@@ -485,6 +481,30 @@ export class Scene {
             });
         }
     }
+
+    /**
+     * @internal
+     */
+    _onScriptEventReceived = ({
+        emitter_rtid,
+        event_name,
+        target_rtids,
+        data_object,
+    }: Events.ScriptEventTriggeredEvent): void => {
+        const emitter_entity = this._entity_registry.get({ entity_rtid: emitter_rtid });
+        if (emitter_entity) {
+            emitter_entity._onScriptEventEmitted({ scene: this, event_name, target_rtids, data_object });
+        }
+
+        const script_event_received_event = new ScriptEventReceived({ event_name, emitter_entity, data_object });
+
+        for (const entity_rtid of target_rtids) {
+            const target_entity = this._entity_registry.get({ entity_rtid });
+            if (target_entity) {
+                target_entity._onScriptEventReceived({ script_event_received_event });
+            }
+        }
+    };
 
     /**
      * @internal

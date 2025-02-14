@@ -46,6 +46,7 @@ import WebXRiOS from "./advanced/x-web-xr-ios";
 import MPR from "./advanced/x-multiplanar-reconstruction";
 import CullingBoxGeometry from "./advanced/x-culling-box-geometry";
 import ThreeTransformControls from "./advanced/x-three-transform-controls";
+import ScriptEvents from "./advanced/x-script-events";
 
 //------------------------------------------------------------------------------
 type SampleCategory = {
@@ -105,6 +106,6 @@ export default [
     },
     {
         categoryName: "Advanced",
-        list: [LiveSkeletalAnimation, WebXR, WebXRiOS, MPR, CullingBoxGeometry, ThreeTransformControls],
+        list: [LiveSkeletalAnimation, WebXR, WebXRiOS, MPR, CullingBoxGeometry, ThreeTransformControls, ScriptEvents],
     },
 ] as Array<SampleCategory>;

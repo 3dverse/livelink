@@ -347,7 +347,7 @@ export class Livelink {
      * Note that the session is not closed, it can be reconnected later.
      */
     async disconnect(): Promise<void> {
-        this.#core.removeEventListener("on-frame-received", this.#onFrameReceived);
+        this.#uninstallEventListeners();
 
         if (this.#update_interval !== 0) {
             clearInterval(this.#update_interval);
@@ -611,26 +611,35 @@ export class Livelink {
         await this.session.registerClient();
 
         await this.#core.connect({ session: this.session, editor_url: Livelink._editor_url });
+        this.#installEventListeners();
 
-        this.#core.addEventListener("on-entities-updated", ({ updated_entities }: Events.EntitiesUpdatedEvent) => {
-            for (const { entity_euid, updated_components } of updated_entities) {
-                this.scene._updateEntityFromEvent({ entity_euid, updated_components });
-            }
-        });
+        return this;
+    }
 
-        this.#core.addEventListener(
-            "on-entity-visibility-changed",
-            ({ entity_rtid, is_visible }: Events.EntityVisibilityChangedEvent) => {
-                this.scene._onEntityVisibilityChanged({ entity_rtid, is_visible });
-            },
-        );
-
-        this.#core.addEventListener("on-frame-received", this.#onFrameReceived);
+    /**
+     * Install event listeners on the core object.
+     */
+    #installEventListeners(): void {
         this.#core.addEventListener("on-disconnected", this.session._onDisconnected);
         this.#core.addEventListener("on-inactivity-warning", this.session._onInactivityWarning);
         this.#core.addEventListener("on-activity-detected", this.session._onActivityDetected);
+        this.#core.addEventListener("on-frame-received", this.#onFrameReceived);
+        this.#core.addEventListener("on-entities-updated", this.#onEntitiesUpdated);
+        this.#core.addEventListener("on-entity-visibility-changed", this.scene._onEntityVisibilityChanged);
+        this.#core.addEventListener("on-script-event-received", this.scene._onScriptEventReceived);
+    }
 
-        return this;
+    /**
+     *
+     */
+    #uninstallEventListeners(): void {
+        this.#core.removeEventListener("on-disconnected", this.session._onDisconnected);
+        this.#core.removeEventListener("on-inactivity-warning", this.session._onInactivityWarning);
+        this.#core.removeEventListener("on-activity-detected", this.session._onActivityDetected);
+        this.#core.removeEventListener("on-frame-received", this.#onFrameReceived);
+        this.#core.removeEventListener("on-entities-updated", this.#onEntitiesUpdated);
+        this.#core.removeEventListener("on-entity-visibility-changed", this.scene._onEntityVisibilityChanged);
+        this.#core.removeEventListener("on-script-event-received", this.scene._onScriptEventReceived);
     }
 
     /**
@@ -646,6 +655,15 @@ export class Livelink {
         });
 
         this.#encoded_frame_consumer!.consumeEncodedFrame({ encoded_frame: frame_data.encoded_frame, meta_data });
+    };
+
+    /**
+     *
+     */
+    #onEntitiesUpdated = ({ updated_entities }: Events.EntitiesUpdatedEvent): void => {
+        for (const { entity_euid, updated_components } of updated_entities) {
+            this.scene._updateEntityFromEvent({ entity_euid, updated_components });
+        }
     };
 
     /**

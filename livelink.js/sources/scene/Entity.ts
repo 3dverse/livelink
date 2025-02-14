@@ -8,6 +8,7 @@ import type {
     ComponentsManifest,
     ComponentsRecord,
     Mat4,
+    ScriptDataObject,
 } from "@3dverse/livelink.core";
 
 //------------------------------------------------------------------------------
@@ -18,6 +19,8 @@ import { EntityCreationOptions, Scene } from "./Scene";
 import { EntityTransformHandler, Transform } from "./EntityTransformHandler";
 import { ComponentHandler } from "./ComponentHandler";
 import { EntityUpdatedEvent, EntityVisibilityChangedEvent } from "./EntityEvents";
+import { ScriptEventEmitted, ScriptEventReceived, ScriptEvents } from "./ScriptEvents";
+import { TypedEventTarget } from "../TypedEventTarget";
 
 /**
  * An entity in a scene.
@@ -55,6 +58,16 @@ export class Entity extends EntityTransformHandler {
      *
      */
     readonly #deleted_components = new Set<ComponentName>();
+
+    /**
+     *
+     */
+    readonly #script_event_received_event_target = new TypedEventTarget<ScriptEvents<ScriptEventReceived>>();
+
+    /**
+     *
+     */
+    readonly #script_event_emitted_event_target = new TypedEventTarget<ScriptEvents<ScriptEventEmitted>>();
 
     /**
      * @deprecated
@@ -263,6 +276,65 @@ export class Entity extends EntityTransformHandler {
     }
 
     /**
+     * Add an event listener for a script event.
+     * Script events are triggered by the server when a script attached to an entity emits an event.
+     *
+     * @param params
+     * @param params.event_map_id - The ID of the event map.
+     * @param params.event_name - The name of the event.
+     * @param params.onReceived - The callback to be called when the current entity is targetted by the script event.
+     * @param params.onEmitted - The callback to be called when the current entity emits the script event.
+     */
+    addScriptEventListener({
+        event_map_id,
+        event_name,
+        onReceived,
+        onEmitted,
+    }: {
+        event_map_id: UUID;
+        event_name: string;
+        onReceived?: (evt: ScriptEventReceived) => void;
+        onEmitted?: (evt: ScriptEventEmitted) => void;
+    }): void {
+        if (onReceived) {
+            this.#script_event_received_event_target.addEventListener(event_map_id + "/" + event_name, onReceived);
+        }
+
+        if (onEmitted) {
+            this.#script_event_emitted_event_target.addEventListener(event_map_id + "/" + event_name, onEmitted);
+        }
+    }
+
+    /**
+     * Remove an event listener for a script event.
+     *
+     * @param params
+     * @param params.event_map_id - The ID of the event map.
+     * @param params.event_name - The name of the event.
+     * @param params.onReceived - A previously registered callback.
+     * @param params.onEmitted - A previously registered callback.
+     */
+    removeScriptEventListener({
+        event_map_id,
+        event_name,
+        onReceived,
+        onEmitted,
+    }: {
+        event_map_id: UUID;
+        event_name: string;
+        onReceived?: (evt: ScriptEventReceived) => void;
+        onEmitted?: (evt: ScriptEventEmitted) => void;
+    }): void {
+        if (onReceived) {
+            this.#script_event_received_event_target.removeEventListener(event_map_id + "/" + event_name, onReceived);
+        }
+
+        if (onEmitted) {
+            this.#script_event_emitted_event_target.removeEventListener(event_map_id + "/" + event_name, onEmitted);
+        }
+    }
+
+    /**
      * @experimental
      */
     async assignClientToScripts({ client_uuid }: { client_uuid: UUID }): Promise<void> {
@@ -276,6 +348,7 @@ export class Entity extends EntityTransformHandler {
             ),
         );
     }
+
     /**
      * @internal
      */
@@ -361,6 +434,36 @@ export class Entity extends EntityTransformHandler {
     _onVisibilityChanged({ is_visible }: { is_visible: boolean }): void {
         this.#is_visible = is_visible;
         this._dispatchEvent(new EntityVisibilityChangedEvent({ is_visible }));
+    }
+
+    /**
+     * @internal
+     */
+    _onScriptEventEmitted({
+        scene,
+        event_name,
+        target_rtids,
+        data_object,
+    }: {
+        scene: Scene;
+        event_name: string;
+        target_rtids: Array<RTID>;
+        data_object: ScriptDataObject;
+    }): void {
+        this.#script_event_emitted_event_target._dispatchEvent(
+            new ScriptEventEmitted({ scene, event_name, emitter_entity: this, target_rtids, data_object }),
+        );
+    }
+
+    /**
+     * @internal
+     */
+    _onScriptEventReceived({
+        script_event_received_event,
+    }: {
+        script_event_received_event: ScriptEventReceived;
+    }): void {
+        this.#script_event_received_event_target._dispatchEvent(script_event_received_event);
     }
 
     /**
