@@ -1,5 +1,14 @@
 # @3dverse/livelink
 
+## 0.8.25
+
+### Patch Changes
+
+-   feat(livelink.js): add fly camera controller, with keyboard controls & camera init options on target position and distance (fly mode needs epsilon target). Review camera presets doc and use fly mode on script events sample.
+-   feat(livelink.js): add an event system to enable listening to server side script events
+-   refactor(livelink.js): cleaned up livelink listeners lifecycle
+-   fix(livelink.js): apply initial orientation of the camera to the camera controller
+
 ## 0.8.24
 
 ### Patch Changes
