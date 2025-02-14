@@ -11,6 +11,7 @@ export * from "./session/SessionEvents";
 export * from "./scene/Scene";
 export * from "./scene/Entity";
 export * from "./scene/EntityEvents";
+export * from "./scene/ScriptEvents";
 
 export * from "./rendering/Viewport";
 export * from "./rendering/ViewportEvents";

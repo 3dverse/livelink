@@ -17,6 +17,7 @@ import type {
 import { Entity } from "./Entity";
 import { compute_rpn } from "./Filters";
 import { EntityRegistry } from "./EntityRegistry";
+import { ScriptEventReceived } from "./ScriptEvents";
 
 /**
  * Options for creating a new entity.
@@ -453,7 +454,7 @@ export class Scene {
         if (entity) {
             entity._onVisibilityChanged({ is_visible });
         }
-    }
+    };
 
     /**
      * @internal
@@ -490,7 +491,19 @@ export class Scene {
         target_rtids,
         data_object,
     }: Events.ScriptEventTriggeredEvent): void => {
-        console.log("Script event received", emitter_rtid, event_name, target_rtids, data_object);
+        const emitter_entity = this._entity_registry.get({ entity_rtid: emitter_rtid });
+        if (emitter_entity) {
+            emitter_entity._onScriptEventEmitted({ scene: this, event_name, target_rtids, data_object });
+        }
+
+        const script_event_received_event = new ScriptEventReceived({ event_name, emitter_entity, data_object });
+
+        for (const entity_rtid of target_rtids) {
+            const target_entity = this._entity_registry.get({ entity_rtid });
+            if (target_entity) {
+                target_entity._onScriptEventReceived({ script_event_received_event });
+            }
+        }
     };
 
     /**
