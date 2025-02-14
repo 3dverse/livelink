@@ -26,7 +26,6 @@ variables:
     - .runner-onprem
   image: node:${NODE_VERSION}
   before_script:
-    - !reference [.npm-regcreds, before_script]
     - cd $PACKAGE_DIR
     - !reference [.node-cache, before_script]
   script:
@@ -67,7 +66,6 @@ js:build:libs:
       - "*/_prebuild/"
       - "*/dist/"
   before_script:
-    - !reference [.npm-regcreds, before_script]
     - !reference [.node-cache, before_script]
   variables:
     NPM_INSTALL_ARGS: "--workspace=livelink.js --workspace=livelink.react --workspace=livelink.react.ui --workspace=livelink.three"
@@ -95,7 +93,6 @@ js:build:samples:
     paths:
       - "*/dist/"
   before_script:
-    - !reference [.npm-regcreds, before_script]
     - !reference [.node-cache, before_script]
   variables:
     NPM_INSTALL_ARGS: "--workspace=livelink.samples"
@@ -148,9 +145,6 @@ version:publish:
     paths:
       - "*/package.json"
   before_script:
-    - !reference [.npm-regcreds, before_script]
-    - !reference [.node-cache, before_script]
-    - apk add --no-cache git
     - |
       git config --global user.name "${BOT_3DVERSE_USER_NAME}"
       git config --global user.email "${BOT_3DVERSE_USER_EMAIL}"
