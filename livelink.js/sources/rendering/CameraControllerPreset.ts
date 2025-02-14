@@ -1,5 +1,6 @@
 //------------------------------------------------------------------------------
 import { MouseButtons, Touches } from "@3dverse/livelink-camera-controls";
+import { Vec3 } from "@3dverse/livelink.core";
 
 /**
  * Aim of the pointer lock:
@@ -10,6 +11,28 @@ import { MouseButtons, Touches } from "@3dverse/livelink-camera-controls";
  * @category Rendering
  */
 export type LockMousePointerAim = "off" | "always" | "on-drag";
+
+/**
+ * Set of options to be used at `CameraController` creation
+ * @category Rendering
+ */
+export type CameraControllerInitOptions = {
+    /** Set the default target */
+    target?: Vec3;
+    /**
+     * Set the default target at a distance in the direction of the camera from its current position. Beware that
+     * Beware truck speed is relative to target distance.
+     */
+    forward_target_distance?: number;
+    keyboard_fly_controls?: {
+        /** Use the keyboard fly controls */
+        enabled: boolean;
+        /**
+         * Alter keyboard fly controls truck speed. Beware truck speed is relative to target distance.
+         */
+        speed_multiplier?: number;
+    };
+};
 
 /**
  * A preset of the properties of the `CameraController` class. You can refer to
@@ -59,4 +82,6 @@ export type CameraControllerPreset = {
         /** Threshold in pixels of the pointer movement before to lock it when `lock_pointer.aim = "on-drag"` */
         on_drag_threshold_in_pixels?: number;
     };
+    /** [custom] Set of options to be used only at controller creation */
+    init_options?: CameraControllerInitOptions;
 };

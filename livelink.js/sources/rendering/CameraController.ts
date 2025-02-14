@@ -1,13 +1,13 @@
 //------------------------------------------------------------------------------
 import { Components, Vec2, Vec3 } from "@3dverse/livelink.core";
-import CameraControls, { Clock, ACTION } from "@3dverse/livelink-camera-controls";
+import CameraControls, { Clock, ACTION, KeyboardFlyControls } from "@3dverse/livelink-camera-controls";
 
 //------------------------------------------------------------------------------
 import type { Entity } from "../scene/Entity";
 import type { Viewport } from "./Viewport";
-import { CameraControllerPreset, LockMousePointerAim } from "./CameraControllerPreset";
+import { CameraControllerInitOptions, CameraControllerPreset, LockMousePointerAim } from "./CameraControllerPreset";
 import * as CameraControllerPresets from "./CameraControllerPresets";
-import { Quaternion, Vector3 } from "threejs-math";
+import { Vector3 } from "threejs-math";
 
 /**
  *
@@ -111,6 +111,16 @@ export class CameraController extends CameraControls {
     };
 
     /**
+     * Set of options used by `CameraController.initController`
+     */
+    init_options: Readonly<CameraControllerInitOptions> = {};
+
+    /**
+     *
+     */
+    keyboard_fly_controls: KeyboardFlyControls | null = null;
+
+    /**
      *
      */
     get #isPointerLockActive(): boolean {
@@ -170,6 +180,7 @@ export class CameraController extends CameraControls {
         this.#viewport.rendering_surface.removeEventListener("on-rendering-surface-resized", this.onViewportResize);
         this.deactivate();
         this.dispose();
+        this.keyboard_fly_controls?.dispose();
     }
 
     /**
@@ -187,6 +198,8 @@ export class CameraController extends CameraControls {
         this._domElement?.addEventListener("pointerdown", this.#onPointerDown);
         this._domElement?.addEventListener("pointerup", this.#onPointerUp);
         this._domElement?.addEventListener("mousedown", this.#onMouseDownLock);
+
+        this.keyboard_fly_controls?.enable();
     }
 
     /**
@@ -198,6 +211,8 @@ export class CameraController extends CameraControls {
         this._domElement?.removeEventListener("mousedown", this.#onMouseDownLock);
         this._domElement?.removeEventListener("mouseup", this.#onMouseUpLock);
         this._domElement?.removeEventListener("mousemove", this.#onMouseMoveLock);
+
+        this.keyboard_fly_controls?.disable();
 
         if (this.#update_interval === 0) {
             return;
@@ -246,11 +261,28 @@ export class CameraController extends CameraControls {
      *
      */
     #initController(): void {
-        const target = new Vector3(0, 0, -1);
-        const orientation = new Quaternion(...this.#camera_entity.local_transform.orientation);
-        target.applyQuaternion(orientation);
-        target.add(new Vector3(...this.#camera_entity.local_transform.position));
-        this.setLookAt(...this.#camera_entity.local_transform.position, target.x, target.y, target.z, false);
+        const { target } = this.init_options;
+        if (target) {
+            this.setLookAt(...this.#camera_entity.local_transform.position, ...target);
+        }
+
+        const { forward_target_distance } = this.init_options;
+        if (forward_target_distance !== undefined) {
+            const forward = this.direction.multiplyScalar(forward_target_distance);
+            const target = this.getPosition(new Vector3()).add(forward);
+            this.setTarget(...(target.toArray() as Vec3));
+        }
+
+        const { keyboard_fly_controls } = this.init_options;
+        if (keyboard_fly_controls?.enabled) {
+            const { speed_multiplier } = keyboard_fly_controls;
+            this.keyboard_fly_controls = new KeyboardFlyControls(this, this.#clock);
+            if (speed_multiplier !== undefined) {
+                this.keyboard_fly_controls.speedMultiplier = speed_multiplier;
+            }
+        }
+
+        this.saveState();
         this.addEventListener("update", this.#onCameraUpdate);
     }
 
