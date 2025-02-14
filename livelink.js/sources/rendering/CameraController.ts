@@ -7,7 +7,7 @@ import type { Entity } from "../scene/Entity";
 import type { Viewport } from "./Viewport";
 import { CameraControllerInitOptions, CameraControllerPreset, LockMousePointerAim } from "./CameraControllerPreset";
 import * as CameraControllerPresets from "./CameraControllerPresets";
-import { Vector3 } from "threejs-math";
+import { Quaternion, Vector3 } from "threejs-math";
 
 /**
  *
@@ -268,7 +268,9 @@ export class CameraController extends CameraControls {
 
         const { forward_target_distance } = this.init_options;
         if (forward_target_distance !== undefined) {
-            const forward = this.direction.multiplyScalar(forward_target_distance);
+            const quaternion = new Quaternion(...this.#camera_entity.local_transform.orientation);
+            const forward = new Vector3(0, 0, -1).applyQuaternion(quaternion);
+            forward.multiplyScalar(forward_target_distance);
             const target = this.getPosition(new Vector3()).add(forward);
             this.setTarget(...(target.toArray() as Vec3));
         }
