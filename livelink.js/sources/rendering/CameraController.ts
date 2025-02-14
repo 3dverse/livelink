@@ -7,6 +7,7 @@ import type { Entity } from "../scene/Entity";
 import type { Viewport } from "./Viewport";
 import { CameraControllerPreset, LockMousePointerAim } from "./CameraControllerPreset";
 import * as CameraControllerPresets from "./CameraControllerPresets";
+import { Quaternion, Vector3 } from "threejs-math";
 
 /**
  *
@@ -245,7 +246,11 @@ export class CameraController extends CameraControls {
      *
      */
     #initController(): void {
-        this.setPosition(...this.#camera_entity.local_transform.position);
+        const target = new Vector3(0, 0, -1);
+        const orientation = new Quaternion(...this.#camera_entity.local_transform.orientation);
+        target.applyQuaternion(orientation);
+        target.add(new Vector3(...this.#camera_entity.local_transform.position));
+        this.setLookAt(...this.#camera_entity.local_transform.position, target.x, target.y, target.z, false);
         this.addEventListener("update", this.#onCameraUpdate);
     }
 
