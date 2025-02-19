@@ -19,8 +19,8 @@ export function DOMEntity({
 }: PropsWithChildren<{
     entity: Entity | null;
     scaleFactor?: number;
-}>): JSX.Element {
-    const [worldPosition, setWorldPosition] = useState<Vec3>([0, 0, 0]);
+}>): JSX.Element | null {
+    const [worldPosition, setWorldPosition] = useState<Vec3>(entity ? entity.global_transform.position : [0, 0, 0]);
 
     useEffect(() => {
         if (!entity) {
@@ -37,6 +37,10 @@ export function DOMEntity({
             entity.removeEventListener("on-entity-updated", updatePosition);
         };
     }, [entity]);
+
+    if (!entity) {
+        return null;
+    }
 
     return (
         <DOM3DElement worldPosition={worldPosition} scaleFactor={scaleFactor}>
