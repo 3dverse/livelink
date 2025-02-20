@@ -1,12 +1,11 @@
 //------------------------------------------------------------------------------
-import React, { type ReactElement } from "react";
-import { createRoot, type Root } from "react-dom/client";
+import React from "react";
 
 //------------------------------------------------------------------------------
 import type { Vec3, OverlayInterface, Viewport } from "@3dverse/livelink";
 
 //------------------------------------------------------------------------------
-import { React3DElement } from "./React3DElement";
+import { React3DElement, React3DElementProps, createReact3DElementFactory } from "./React3DElement";
 
 /**
  *
@@ -16,21 +15,25 @@ const INFINITE_FAR_VALUE = 100000;
 /**
  *
  */
+export type Projection = {
+    screen_position: Vec3;
+    scale: number;
+    is_visible: boolean;
+};
+
+/**
+ *
+ */
 export class ReactOverlay implements OverlayInterface {
     /**
      *
      */
-    readonly #container: HTMLDivElement;
+    readonly container: HTMLDivElement;
 
     /**
      *
      */
-    readonly #root: Root;
-
-    /**
-     *
-     */
-    readonly #elements: Map<ReactElement, React3DElement> = new Map();
+    readonly #elements: Set<React3DElement> = new Set();
 
     /**
      *
@@ -40,50 +43,51 @@ export class ReactOverlay implements OverlayInterface {
     /**
      *
      */
+    readonly #factory: (props: React3DElementProps) => React.ReactElement;
+
+    /**
+     *
+     */
     constructor({ container, viewport }: { container: HTMLDivElement; viewport: Viewport }) {
-        this.#container = container;
-        this.#root = createRoot(this.#container);
+        this.container = container;
         this.#viewport = viewport;
+        this.#factory = createReact3DElementFactory(this);
     }
 
     /**
      *
      */
-    addElement({
-        element,
-        scale_factor,
-        world_position,
-    }: {
-        element: ReactElement;
-        scale_factor?: number;
-        world_position?: Vec3;
-    }): React3DElement {
-        if (this.#elements.has(element)) {
-            console.warn(`Element already added to dom overlay`);
-            return this.#elements.get(element)!;
-        }
+    get DOM3DElement(): (props: React3DElementProps) => React.ReactElement {
+        return this.#factory;
+    }
 
-        const dom3DElement = new React3DElement({ element, scale_factor, world_position });
-        this.#elements.set(element, dom3DElement);
+    /**
+     * @internal
+     */
+    _registerElement(react_element: React3DElement): void {
+        this.#elements.add(react_element);
         this.#viewport.rendering_surface.redrawLastFrame();
-        return dom3DElement;
     }
 
     /**
-     *
+     * @internal
      */
-    removeElement({ element }: { element: ReactElement }): void {
-        if (!this.#elements.delete(element)) {
-            console.warn(`Element not found in dom overlay`);
+    _unregisterElement(react_element: React3DElement): void {
+        if (!this.#elements.delete(react_element)) {
+            console.warn(`Element ref not found in dom overlay`);
         }
+    }
+
+    _updateElement(): void {
+        this.#viewport.rendering_surface.redrawLastFrame();
     }
 
     /**
      *
      */
     resize({ width, height }: { width: number; height: number }): void {
-        this.#container.style.width = width + "px";
-        this.#container.style.height = height + "px";
+        this.container.style.width = width + "px";
+        this.container.style.height = height + "px";
     }
 
     /**
@@ -94,39 +98,34 @@ export class ReactOverlay implements OverlayInterface {
             return null;
         }
 
-        this.#root.render(this.renderElements());
+        this.updateElements();
         return null;
     }
 
     /**
      *
      */
-    renderElements(): React.JSX.Element[] {
-        const visibleElements: React3DElement[] = [];
+    updateElements(): void {
+        const elements: Array<{
+            projection: Projection;
+            react_element: React3DElement;
+        }> = [];
 
         for (const react_element of this.#elements.values()) {
-            const { scale, is_visible } = this.#projectElementOnScreen({ react_element });
-
-            react_element.scale = scale;
-
-            if (is_visible) {
-                visibleElements.push(react_element);
-            }
+            const projection = this.#projectElementOnScreen({ react_element });
+            elements.push({ projection, react_element });
         }
 
-        visibleElements.sort((a, b) => b.screen_position[2] - a.screen_position[2]);
-
-        return visibleElements.map((element, z_index) => element._render({ z_index }));
+        elements.sort((a, b) => b.projection.screen_position[2] - a.projection.screen_position[2]);
+        elements.forEach(({ projection, react_element }, z_index) => {
+            react_element.setProjection({ ...projection, z_index });
+        });
     }
 
     /**
      *
      */
-    #projectElementOnScreen({ react_element }: { react_element: React3DElement }): {
-        screen_position: Vec3;
-        scale: number;
-        is_visible: boolean;
-    } {
+    #projectElementOnScreen({ react_element }: { react_element: React3DElement }): Projection {
         const screen_position = this.#viewport.projectWorldToScreen({
             world_position: react_element.world_position as Vec3,
             out_screen_position: react_element.screen_position as Vec3,
@@ -172,7 +171,6 @@ export class ReactOverlay implements OverlayInterface {
         // iteration to avoid unmounting the root while rendering.
         setTimeout(() => {
             this.#elements.clear();
-            this.#root.unmount();
         }, 0);
     }
 }
