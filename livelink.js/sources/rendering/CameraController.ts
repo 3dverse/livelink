@@ -292,8 +292,8 @@ export class CameraController extends CameraControls {
      *
      */
     #onCameraUpdate = (): void => {
-        this.position.toArray(this.#camera_entity.local_transform.position);
-        this.orientation.toArray(this.#camera_entity.local_transform.orientation);
+        this.position.toArray(this.#camera_entity.global_transform.position);
+        this.orientation.toArray(this.#camera_entity.global_transform.orientation);
     };
 
     /**
