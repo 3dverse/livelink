@@ -224,7 +224,7 @@ const Avatar3D = ({ client }: { client: Client }) => {
         client
             .getCameraEntities()
             .then(cameraEntities => setClientCameraEntity(cameraEntities[0]));
-    });
+    }, [client]);
 
     if (!clientCameraEntity) {
         return null;
