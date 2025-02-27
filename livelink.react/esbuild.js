@@ -44,8 +44,17 @@ const prodBuildOptions = {
 //------------------------------------------------------------------------------
 (async () => {
     if (process.argv.includes("dev")) {
-        const ctx = await esbuild.context({ ...commonBuildOptions, ...buildOptions[0], ...devBuildOptions });
-        await ctx.watch();
+        for (const buildOption of buildOptions) {
+            const options = {
+                ...commonBuildOptions,
+                ...buildOption,
+                ...devBuildOptions,
+            };
+
+            const ctx = await esbuild.context(options);
+            await ctx.watch();
+        }
+
         return;
     }
 

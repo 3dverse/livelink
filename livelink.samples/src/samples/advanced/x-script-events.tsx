@@ -1,4 +1,8 @@
 //------------------------------------------------------------------------------
+import { useCallback, useContext, useEffect, useState } from "react";
+
+//------------------------------------------------------------------------------
+import { ScriptEventReceived, UUID } from "@3dverse/livelink";
 import {
     Livelink,
     Canvas,
@@ -14,12 +18,6 @@ import { LoadingOverlay } from "@3dverse/livelink-react-ui";
 
 //------------------------------------------------------------------------------
 import { DisconnectedModal } from "../../components/SamplePlayer";
-import { useCallback, useContext, useEffect, useState } from "react";
-import {
-    CameraControllerPresets,
-    ScriptEventReceived,
-    UUID,
-} from "@3dverse/livelink";
 
 //------------------------------------------------------------------------------
 const scene_id = "916fe9f3-0d7c-4044-b659-7d9fa883b586";
@@ -192,7 +190,7 @@ function AppLayout() {
     return (
         <Canvas className="w-full h-full">
             <Viewport cameraEntity={cameraEntity} className="w-full h-full">
-                <CameraController preset={CameraControllerPresets.fly} />
+                <CameraController />
                 <DOM3DOverlay>
                     {text && (
                         <DOMEntity entity={textEntity} scaleFactor={0.0025}>
