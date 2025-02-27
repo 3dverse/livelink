@@ -1,5 +1,17 @@
 # @3dverse/livelink-react
 
+## 0.2.37
+
+### Patch Changes
+
+-   refactor(livelink.react): reimplement React overlay with portal, allowing DOM3DElement children to access context provided by the parent tree
+-   fix: correctly initialize DOMEntity initial position
+-   Updated dependencies
+-   Updated dependencies
+-   Updated dependencies
+-   Updated dependencies
+    -   @3dverse/livelink@0.8.26
+
 ## 0.2.36
 
 ### Patch Changes

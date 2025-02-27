@@ -1,5 +1,14 @@
 # @3dverse/livelink
 
+## 0.8.26
+
+### Patch Changes
+
+-   chore(livelink.js): bump livelive-camera-controls
+-   refactor(livelink.js): use global_transform in camera update
+-   fix(livelink.js): wrong forward vector used by forward_target_distance option of CameraControllerPresets.fly
+-   feat(livelink.js): expose aabb type
+
 ## 0.8.25
 
 ### Patch Changes
