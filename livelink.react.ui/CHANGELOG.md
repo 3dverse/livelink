@@ -1,5 +1,11 @@
 # @3dverse/livelink-react-ui
 
+## 0.2.1
+
+### Patch Changes
+
+-   fix(livelink.react.ui): fix peer dependencies to match livelink-react
+
 ## 0.2.0
 
 ### Minor Changes
