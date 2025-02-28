@@ -1,5 +1,11 @@
 # @3dverse/livelink-react
 
+## 0.2.38
+
+### Patch Changes
+
+-   fix(livelink.react): add @types/webxr as a peer dependency
+
 ## 0.2.37
 
 ### Patch Changes
