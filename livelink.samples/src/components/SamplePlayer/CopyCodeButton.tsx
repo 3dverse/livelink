@@ -16,8 +16,31 @@ export const CopyCodeButton = ({ code, className }: { code: string; className?: 
                 }, 1500);
             })
             .catch(err => {
-                console.error("Failed to copy text: ", err);
+                console.debug("Failed to copy text: ", err);
+                __onCopy();
             });
+    };
+
+    /**
+     * Old fashioned way to copy text to clipboard, in case the navigator.clipboard API is not available
+     */
+    const __onCopy = () => {
+        const textArea = document.createElement("textarea");
+        textArea.value = code;
+        document.body.appendChild(textArea);
+        textArea.select();
+        try {
+            document.execCommand("copy");
+            setCopied(true);
+
+            setTimeout(() => {
+                setCopied(false);
+            }, 1500);
+        } catch (err) {
+            console.error("Failed to copy text: ", err);
+        } finally {
+            document.body.removeChild(textArea);
+        }
     };
 
     //--------------------------------------------------------------------------

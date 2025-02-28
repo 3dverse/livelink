@@ -64,12 +64,16 @@ function fileContentPlugin() {
 }
 
 function patchCodeSample(sourceCode: string, token: string): string {
-    // Remove the 'export default' statement and its associated exported code
     const viteImportToken = "import.meta.env.VITE_PROD_PUBLIC_TOKEN";
-    return sourceCode
-        .replace(
-            /(\s\/\/\-+)?\sexport\s+default\s+{[^]*?};\n|(\s\/\/\-+)?\simport\s+{[^}]*}\s+from\s+["'][^"']*SamplePlayer["'];\n/g,
-            "",
-        )
-        .replace(viteImportToken, `"${token}"`);
+    return (
+        sourceCode
+            // Remove the 'export default' statement as it only needed to config a sample page
+            .replace(/(\s\/\/\-+)?\sexport\s+default\s+{[^]*?};\n/g, "")
+            // Remove the 'import' statements using 'SamplePlayer' as it's a private component
+            .replace(/(\s\/\/\-+)?\simport\s+{[^}]*}\s+from\s+["'][^"']*SamplePlayer["'];\n/g, "")
+            // Remove the ConnectionErrorPanel prop from sample code since it's a private component
+            .replace(/\s+ConnectionErrorPanel={DisconnectedModal}/g, "")
+            // Replace the token with the actual token
+            .replace(viteImportToken, `"${token}"`)
+    );
 }
