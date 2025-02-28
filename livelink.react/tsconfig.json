@@ -10,8 +10,7 @@
     "declaration": true,
     "declarationMap": true,
     "emitDeclarationOnly": true,
-    "skipLibCheck": true,
-    "types": ["@types/webxr"]
+    "skipLibCheck": true
   },
 
   "exclude": ["./dist/**/*"]
