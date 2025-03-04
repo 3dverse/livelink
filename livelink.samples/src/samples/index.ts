@@ -16,6 +16,7 @@ import JoinSession from "./react-core/2-sessions/3-join-session";
 import DOM3DOverlayViewport from "./react-core/3-overlays/1-dom-3d-overlay";
 import ThreeOverlayViewport from "./react-core/3-overlays/2-threejs-overlay";
 import MultiOverlayViewport from "./react-core/3-overlays/3-multi-overlay";
+import DOM3DElementAnchors from "./react-core/3-overlays/4-dom-element-anchors";
 
 //------------------------------------------------------------------------------
 import DefaultCameraController from "./react-core/4-cameras/1-default-camera-controller";
@@ -86,7 +87,7 @@ export default [
     },
     {
         categoryName: "Overlays",
-        list: [DOM3DOverlayViewport, ThreeOverlayViewport, MultiOverlayViewport],
+        list: [DOM3DOverlayViewport, ThreeOverlayViewport, MultiOverlayViewport, DOM3DElementAnchors],
     },
     {
         categoryName: "Cameras",

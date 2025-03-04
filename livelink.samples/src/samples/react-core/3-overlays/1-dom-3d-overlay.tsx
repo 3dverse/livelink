@@ -7,7 +7,6 @@ import {
     DOM3DElement,
     CameraController,
     useCameraEntity,
-    Anchor,
 } from "@3dverse/livelink-react";
 import { LoadingOverlay } from "@3dverse/livelink-react-ui";
 import type { Vec3 } from "@3dverse/livelink";
@@ -64,44 +63,11 @@ function AppLayout() {
         return () => clearInterval(interval);
     }, []);
 
-    const cornerAnchors = [
-        "left-top",
-        "left-bottom",
-        "right-top",
-        "right-bottom",
-    ] satisfies Array<Anchor>;
-
-    const centerAnchors = [
-        "center-top",
-        "center-bottom",
-        "left-center",
-        "right-center",
-    ] satisfies Array<Anchor>;
-
     return (
         <Canvas className="w-full h-full">
             <Viewport cameraEntity={cameraEntity} className="w-full h-full">
                 <CameraController />
                 <DOM3DOverlay>
-                    {cornerAnchors.map(anchor => (
-                        <DOM3DElement worldPosition={[1, 0, 3]} anchor={anchor}>
-                            <p className="bg-ground p-1 rounded-lg">
-                                ⚓ {anchor}
-                            </p>
-                        </DOM3DElement>
-                    ))}
-
-                    {centerAnchors.map(anchor => (
-                        <DOM3DElement
-                            worldPosition={[-1, 0, 3]}
-                            anchor={anchor}
-                        >
-                            <p className="bg-ground p-1 rounded-lg">
-                                ⚓ {anchor}
-                            </p>
-                        </DOM3DElement>
-                    ))}
-
                     <DOM3DElement worldPosition={[2, 0, 0]}>
                         <p className="bg-ground p-4 rounded-lg">
                             I'm a DOM 3D Element. <br />
