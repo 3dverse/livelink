@@ -6,6 +6,7 @@ import type { Entity, Vec3 } from "@3dverse/livelink";
 
 //------------------------------------------------------------------------------
 import { DOM3DElement } from "./DOM3DElement";
+import { Anchor } from "../../overlays/React3DElement";
 
 /**
  * A component that renders a DOM element at the position of an entity.
@@ -15,9 +16,11 @@ import { DOM3DElement } from "./DOM3DElement";
 export function DOMEntity({
     entity,
     scaleFactor,
+    anchor,
     children,
 }: PropsWithChildren<{
     entity: Entity | null;
+    anchor?: Anchor;
     scaleFactor?: number;
 }>): JSX.Element | null {
     const [worldPosition, setWorldPosition] = useState<Vec3>(entity ? entity.global_transform.position : [0, 0, 0]);
@@ -43,7 +46,7 @@ export function DOMEntity({
     }
 
     return (
-        <DOM3DElement worldPosition={worldPosition} scaleFactor={scaleFactor}>
+        <DOM3DElement worldPosition={worldPosition} anchor={anchor} scaleFactor={scaleFactor}>
             {children}
         </DOM3DElement>
     );
