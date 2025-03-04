@@ -1,5 +1,11 @@
 # @3dverse/livelink-react
 
+## 0.2.39
+
+### Patch Changes
+
+-   feat(livelink.react): add anchor property to dom 3d elements
+
 ## 0.2.38
 
 ### Patch Changes
