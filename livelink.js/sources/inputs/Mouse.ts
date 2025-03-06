@@ -42,7 +42,9 @@ export class Mouse {
      */
     constructor(instance: Livelink) {
         this.#instance = instance;
-        document.addEventListener("pointerlockchange", this.#onPointerLockChange);
+        if (typeof document !== "undefined") {
+            document.addEventListener("pointerlockchange", this.#onPointerLockChange);
+        }
     }
 
     /**
