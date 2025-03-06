@@ -1,5 +1,11 @@
 # @3dverse/livelink
 
+## 0.8.27
+
+### Patch Changes
+
+-   fix(livelink.js): fix node.js compatiblity
+
 ## 0.8.26
 
 ### Patch Changes
