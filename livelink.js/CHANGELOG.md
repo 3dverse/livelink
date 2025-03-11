@@ -1,5 +1,11 @@
 # @3dverse/livelink
 
+## 0.8.28
+
+### Patch Changes
+
+-   fix(livelink.js): fix headless client configuration
+
 ## 0.8.27
 
 ### Patch Changes
