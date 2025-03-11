@@ -513,7 +513,7 @@ export class Livelink {
      */
     async configureHeadlessClient(): Promise<Commands.ClientConfigResponse> {
         const client_config: Commands.ClientConfig = {
-            remote_canvas_size: [8, 8],
+            remote_canvas_size: [256, 256],
             encoder_config: {
                 codec: "h264",
                 profile: "main",
