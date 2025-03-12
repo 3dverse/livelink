@@ -58,7 +58,8 @@ import { Gamepad } from "./inputs/Gamepad";
  * They can be activated and deactivated using the appropriate methods.
  * An active input device will automatically send its state as it changes to the server.
  *
- * ### Starting a new session
+ * ### Session management
+ * Starting a new session
  *
  * ```typescript
  * const instance = await Livelink.start({
@@ -67,7 +68,7 @@ import { Gamepad } from "./inputs/Gamepad";
  * });
  * ```
  *
- * ### Joining an existing session
+ * Joining an existing session
  *
  * ```typescript
  * const session = await Session.find({
@@ -77,7 +78,7 @@ import { Gamepad } from "./inputs/Gamepad";
  * const instance = await Livelink.join({session});
  * ```
  *
- * ### Joining an existing session or starting a new one if none is found
+ * Joining an existing session or starting a new one if none is found
  *
  * ```typescript
  * const instance = await Livelink.join_or_start({
@@ -85,8 +86,6 @@ import { Gamepad } from "./inputs/Gamepad";
  *     token: "authentication-token",
  * });
  * ```
- *
- * @document ../example.md
  *
  * @category Main
  */

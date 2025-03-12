@@ -505,7 +505,7 @@ export class Viewport extends TypedEventTarget<ViewportEvents> {
 
         let data = null;
 
-        const cursorData = this.#core.session.current_client?.cursor_data;
+        const cursorData = this.#core.session.current_client?._cursor_data;
         if (cursorData) {
             const entity = await this.#core.scene._findEntity({ entity_rtid: cursorData.hovered_entity_rtid });
             if (entity) {
@@ -531,7 +531,7 @@ export class Viewport extends TypedEventTarget<ViewportEvents> {
     #onPointerMove = async (): Promise<void> => {
         let data = null;
 
-        const cursorData = this.#core.session.current_client?.cursor_data;
+        const cursorData = this.#core.session.current_client?._cursor_data;
         if (cursorData) {
             const entity = await this.#core.scene._findEntity({ entity_rtid: cursorData.hovered_entity_rtid });
             if (entity) {

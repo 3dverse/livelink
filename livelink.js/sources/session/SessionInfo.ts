@@ -22,51 +22,44 @@ export type SessionInfo = {
      * Transient sessions are temporary and changes are not saved.
      */
     readonly is_transient_session: boolean;
-} & OptionalSessionInfo;
 
-/**
- * @internal
- * @inline
- * More information about a session.
- */
-type OptionalSessionInfo = Partial<{
     /**
      * The name of the scene the session is running in.
      */
-    readonly scene_name: string;
+    readonly scene_name?: string;
 
     /**
      * The unique identifier of the 3dverse console folder the scene is in.
      */
-    readonly folder_id: UUID;
+    readonly folder_id?: UUID;
 
     /**
-     * The maximum number of users that can join the session.
+     * The maximum number of users who can join the session.
      */
-    readonly max_users: number;
+    readonly max_users?: number;
 
     /**
-     * The unique identifier of the user that created the session.
+     * The unique identifier of the user who created the session.
      */
-    readonly created_by: UUID;
+    readonly created_by?: UUID;
 
     /**
      * The date and time the session was created.
      */
-    readonly created_at: Date;
+    readonly created_at?: Date;
 
     /**
      * The country code of the 3dverse server the session is running on.
      */
-    readonly country_code: string;
+    readonly country_code?: string;
 
     /**
      * The continent code of the 3dverse server the session is running on.
      */
-    readonly continent_code: string;
+    readonly continent_code?: string;
 
     /**
      * The information about the clients connected to the session.
      */
-    readonly clients: Array<ClientInfo>;
-}>;
+    readonly clients?: Array<ClientInfo>;
+};
