@@ -20,7 +20,7 @@ const config = {
 
     hidePageHeader: true,
     hideBreadcrumbs: true,
-    hidePageTitle: true,
+    hidePageTitle: false,
     useCodeBlocks: true,
     parametersFormat: "table",
     interfacePropertiesFormat: "table",
