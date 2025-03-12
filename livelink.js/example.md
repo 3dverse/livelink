@@ -176,8 +176,6 @@ instance.startStreaming();
 
 ## Complete Code Snippet
 
-Preview [here](https://htmlpreview.github.io/?https://github.com/3dverse/livelink/blob/main/livelink.js/example.html).
-
 ```html
 <html>
     <body style="margin: 0; padding: 0">
