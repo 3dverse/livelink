@@ -1,5 +1,5 @@
 import { Client } from "./Client";
-import { Viewport } from "../rendering/Viewport";
+import { Viewport } from "../rendering/camera/Viewport";
 
 /**
  * @deprecated

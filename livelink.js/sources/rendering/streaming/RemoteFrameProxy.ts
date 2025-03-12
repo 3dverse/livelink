@@ -3,7 +3,7 @@ import type { Enums, Commands, Vec2i, Vec2u16 } from "@3dverse/livelink.core";
 
 //------------------------------------------------------------------------------
 import { Livelink } from "../../Livelink";
-import { Viewport } from "../Viewport";
+import { Viewport } from "../camera/Viewport";
 import { RenderingSurfaceBase } from "../surfaces/RenderingSurfaceBase";
 import { DecodedFrameConsumer } from "./DecodedFrameConsumer";
 import { FrameMetaData } from "./FrameMetaData";

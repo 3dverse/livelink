@@ -3,7 +3,7 @@
  *
  * @event
  * @noInheritDoc
- * @category Rendering
+ * @category Rendering Surfaces
  */
 export class RenderingSurfaceResizedEvent extends Event {
     /**
@@ -16,7 +16,7 @@ export class RenderingSurfaceResizedEvent extends Event {
 
 /**
  * @event
- * @category Rendering
+ * @category Rendering Surfaces
  */
 export type RenderingSurfaceEvents = {
     "on-rendering-surface-resized": RenderingSurfaceResizedEvent;

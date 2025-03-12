@@ -12,11 +12,11 @@ import type {
 import { DynamicLoader } from "@3dverse/livelink.core";
 
 //------------------------------------------------------------------------------
-import { EncodedFrameConsumer } from "./rendering/decoders/EncodedFrameConsumer";
-import { DecodedFrameConsumer } from "./rendering/decoders/DecodedFrameConsumer";
-import { convertRawFrameMetaDataToFrameMetaData } from "./rendering/decoders/FrameMetaData";
-import { RemoteFrameProxy } from "./rendering/decoders/RemoteFrameProxy";
-import { Viewport } from "./rendering/Viewport";
+import { EncodedFrameConsumer } from "./rendering/streaming/EncodedFrameConsumer";
+import { DecodedFrameConsumer } from "./rendering/streaming/DecodedFrameConsumer";
+import { convertRawFrameMetaDataToFrameMetaData } from "./rendering/streaming/FrameMetaData";
+import { RemoteFrameProxy } from "./rendering/streaming/RemoteFrameProxy";
+import { Viewport } from "./rendering/camera/Viewport";
 
 import { Scene } from "./scene/Scene";
 import { Entity } from "./scene/Entity";
@@ -59,7 +59,7 @@ import { Gamepad } from "./inputs/Gamepad";
  * An active input device will automatically send its state as it changes to the server.
  *
  * ### Session management
- * Starting a new session
+ * Starting a new session:
  *
  * ```typescript
  * const instance = await Livelink.start({
@@ -68,7 +68,7 @@ import { Gamepad } from "./inputs/Gamepad";
  * });
  * ```
  *
- * Joining an existing session
+ * Joining an existing session:
  *
  * ```typescript
  * const session = await Session.find({
@@ -78,7 +78,7 @@ import { Gamepad } from "./inputs/Gamepad";
  * const instance = await Livelink.join({session});
  * ```
  *
- * Joining an existing session or starting a new one if none is found
+ * Joining an existing session or starting a new one if none is found:
  *
  * ```typescript
  * const instance = await Livelink.join_or_start({

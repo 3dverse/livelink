@@ -8,9 +8,9 @@ import BWDecoder from "../../../external/Decoder.js";
 import YUVCanvas from "../../../external/YUVCanvas.js";
 
 //------------------------------------------------------------------------------
-import { FrameMetaData } from "./FrameMetaData";
-import { EncodedFrameConsumer } from "./EncodedFrameConsumer";
-import { DecodedFrameConsumer } from "./DecodedFrameConsumer";
+import { FrameMetaData } from "./FrameMetaData.js";
+import { EncodedFrameConsumer } from "./EncodedFrameConsumer.js";
+import { DecodedFrameConsumer } from "./DecodedFrameConsumer.js";
 
 /**
  * @internal
@@ -109,7 +109,7 @@ export class SoftwareDecoder extends EncodedFrameConsumer {
      *
      * @returns Returns a promise to `this` so that the method can be chained to the constructor.
      */
-    configure({
+    override configure({
         codec,
         frame_dimensions,
     }: {
@@ -134,9 +134,12 @@ export class SoftwareDecoder extends EncodedFrameConsumer {
     }
 
     /**
+     * Resize the decoder with the new frame dimensions.
      *
+     * @param params
+     * @param params.frame_dimensions - The new frame dimensions
      */
-    resize({ frame_dimensions }: { frame_dimensions: Vec2i }): void {
+    override resize({ frame_dimensions }: { frame_dimensions: Vec2i }): void {
         if (this.#offscreen_canvas) {
             this.#offscreen_canvas.width = frame_dimensions[0];
             this.#offscreen_canvas.height = frame_dimensions[1];
@@ -151,7 +154,7 @@ export class SoftwareDecoder extends EncodedFrameConsumer {
     /**
      * Release any resources used by the decoder.
      */
-    release(): void {}
+    override release(): void {}
 
     /**
      * Consume an encoded frame.
@@ -161,7 +164,13 @@ export class SoftwareDecoder extends EncodedFrameConsumer {
      * @param params.encoded_frame - The encoded frame data
      * @param params.meta_data - The frame meta data
      */
-    consumeEncodedFrame({ encoded_frame, meta_data }: { encoded_frame: DataView; meta_data: FrameMetaData }): void {
+    override consumeEncodedFrame({
+        encoded_frame,
+        meta_data,
+    }: {
+        encoded_frame: DataView;
+        meta_data: FrameMetaData;
+    }): void {
         const f = new Uint8Array(encoded_frame.buffer, encoded_frame.byteOffset, encoded_frame.byteLength);
         this.#broadway_sw_decoder.decode(f, meta_data);
     }

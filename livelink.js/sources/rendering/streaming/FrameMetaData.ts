@@ -1,7 +1,7 @@
 import type { Mat4, Quat, Events, UUID, Vec3 } from "@3dverse/livelink.core";
 import { FrameCameraTransform } from "./FrameCameraTransform";
 import { EntityRegistry } from "../../scene/EntityRegistry";
-import { Viewport } from "../Viewport";
+import { Viewport } from "../camera/Viewport";
 
 /**
  * @category Streaming

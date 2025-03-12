@@ -8,13 +8,13 @@ import { Vec3 } from "@3dverse/livelink.core";
  *  - `"always"`: lock pointer as soon as the pointer is down and never unlock it.
  *  - `"on-drag"`: lock pointer as soon as the first pointer is down and unlock it when ell the pointers are up.
  *
- * @category Rendering
+ * @category Camera
  */
 export type LockMousePointerAim = "off" | "always" | "on-drag";
 
 /**
  * Set of options to be used at `CameraController` creation
- * @category Rendering
+ * @category Camera
  */
 export type CameraControllerInitOptions = {
     /** Set the default target */
@@ -39,7 +39,7 @@ export type CameraControllerInitOptions = {
  * https://www.npmjs.com/package/@3dverse/livelink-camera-controls for more information. Properties documented with
  * [custom] prefix are not part of the livelink-camera-controls package.
  *
- * @category Rendering
+ * @category Camera
  */
 export type CameraControllerPreset = {
     // livelink-camera-controls/CameraControls properties

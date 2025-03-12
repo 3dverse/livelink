@@ -10,7 +10,7 @@ import { RenderingSurfaceBase } from "./RenderingSurfaceBase";
  * Its main usecase is for video recording, where the frame rendered by the server is consumed
  * as is and put directly into a video file.
  *
- * @category Rendering
+ * @category Rendering Surfaces
  */
 export class VirtualSurface extends RenderingSurfaceBase {
     /**

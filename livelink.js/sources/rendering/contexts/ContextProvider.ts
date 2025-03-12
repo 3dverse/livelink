@@ -1,7 +1,7 @@
-import { FrameMetaData } from "../decoders/FrameMetaData";
+import { FrameMetaData } from "../streaming/FrameMetaData";
 
 /**
- * @category Rendering
+ * @category Rendering Contexts
  */
 export abstract class ContextProvider {
     /**

@@ -17,8 +17,8 @@ import { FrameMetaData } from "./FrameMetaData";
  *
  * The {@link EncodedFrameConsumer} will call the `consumeDecodedFrame` method as soon as a frame is decoded.
  *
- * The Livelink SDK has an internal default implementation of this interface.
- * It can be retrieved via the {@link Livelink.default_decoded_frame_consumer} property.
+ * An internal default implementation of this interface can be retrieved via the
+ * {@link Livelink.default_decoded_frame_consumer} property.
  *
  * It is recommended to use the default implementation.
  *

@@ -93,7 +93,7 @@ class GamepadDevice {
     #animation_frame: number | null = null;
 
     /**
-     *
+     * @internal
      */
     constructor(instance: Livelink) {
         this.#instance = instance;

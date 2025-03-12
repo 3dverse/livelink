@@ -1,5 +1,5 @@
 /**
- * @category Rendering
+ * @category Rendering Surfaces
  */
 export class Rect {
     /**
@@ -84,7 +84,7 @@ export class Rect {
 
 /**
  * Occurs when an element has an invalid size.
- * @category Rendering
+ * @category Rendering Surfaces
  */
 export class InvalidSizeError extends Error {
     /**
@@ -103,7 +103,7 @@ export class InvalidSizeError extends Error {
 
 /**
  * Occurs when an element is not contained into its parent bounds.
- * @category Rendering
+ * @category Rendering Surfaces
  */
 export class OutOfBoundsError extends Error {
     /**
@@ -127,7 +127,7 @@ export class OutOfBoundsError extends Error {
 }
 
 /**
- * @category Rendering
+ * @category Rendering Surfaces
  */
 export class RelativeRect extends Rect {
     /**

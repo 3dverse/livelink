@@ -10,7 +10,7 @@ export class Keyboard {
     #instance: Livelink;
 
     /**
-     *
+     * @internal
      */
     constructor(instance: Livelink) {
         this.#instance = instance;

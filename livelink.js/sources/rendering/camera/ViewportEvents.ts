@@ -1,5 +1,5 @@
 import { Vec3 } from "@3dverse/livelink.core";
-import { Entity } from "../scene/Entity";
+import { Entity } from "../../scene/Entity";
 
 /**
  * @experimental
@@ -8,7 +8,7 @@ import { Entity } from "../scene/Entity";
  *
  * @event
  * @noInheritDoc
- * @category Rendering
+ * @category Camera
  */
 export class EntityHoveredEvent extends Event {
     /**
@@ -50,7 +50,7 @@ export class EntityHoveredEvent extends Event {
  *
  * @event
  * @noInheritDoc
- * @category Rendering
+ * @category Camera
  */
 export class EntityPickedEvent extends Event {
     /**
@@ -89,7 +89,7 @@ export class EntityPickedEvent extends Event {
 
 /**
  * @event
- * @category Rendering
+ * @category Camera
  */
 export type ViewportEvents = {
     "on-entity-picked": EntityPickedEvent;

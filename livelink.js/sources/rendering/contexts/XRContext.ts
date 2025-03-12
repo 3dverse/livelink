@@ -6,11 +6,11 @@ import { mat4, quat, vec2, vec3 } from "gl-matrix";
 
 //------------------------------------------------------------------------------
 import { ContextProvider } from "./ContextProvider";
-import type { FrameMetaData } from "../decoders/FrameMetaData";
+import type { FrameMetaData } from "../streaming/FrameMetaData";
 
 /**
  * @experimental
- * @category Rendering
+ * @category Rendering Contexts
  */
 export class XRContext extends ContextProvider {
     /**
@@ -228,7 +228,7 @@ export class XRContext extends ContextProvider {
     /**
      *
      */
-    refreshSize(): void {}
+    override refreshSize(): void {}
 
     /**
      *

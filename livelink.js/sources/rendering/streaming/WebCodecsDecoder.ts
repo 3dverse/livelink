@@ -147,7 +147,7 @@ export class WebCodecsDecoder extends EncodedFrameConsumer {
      * Configure the decoder with the codec and frame dimensions.
      * This method replaces the constructor to allow for async initialization.
      */
-    async configure({
+    override async configure({
         codec,
         frame_dimensions,
     }: {
@@ -178,9 +178,12 @@ export class WebCodecsDecoder extends EncodedFrameConsumer {
     }
 
     /**
+     * Resize the decoder with the new frame dimensions.
      *
+     * @param params
+     * @param params.frame_dimensions - The new frame dimensions
      */
-    resize({ frame_dimensions }: { frame_dimensions: Vec2i }): void {
+    override resize({ frame_dimensions }: { frame_dimensions: Vec2i }): void {
         if (this.#decoder && this.#video_decoder_config) {
             this.#video_decoder_config.codedWidth = frame_dimensions[0];
             this.#video_decoder_config.codedHeight = frame_dimensions[1];
@@ -192,7 +195,7 @@ export class WebCodecsDecoder extends EncodedFrameConsumer {
     /**
      * Release any resources used by the decoder.
      */
-    release(): void {
+    override release(): void {
         this.#last_frame?.close();
         this.#decoder?.close();
     }
@@ -204,7 +207,13 @@ export class WebCodecsDecoder extends EncodedFrameConsumer {
      * @param params.encoded_frame - The encoded frame data
      * @param params.meta_data - The frame meta data
      */
-    consumeEncodedFrame({ encoded_frame, meta_data }: { encoded_frame: DataView; meta_data: FrameMetaData }): void {
+    override consumeEncodedFrame({
+        encoded_frame,
+        meta_data,
+    }: {
+        encoded_frame: DataView;
+        meta_data: FrameMetaData;
+    }): void {
         const chunk = new EncodedVideoChunk({
             timestamp: meta_data.frame_counter,
             type: this.#first_frame ? "key" : "delta",

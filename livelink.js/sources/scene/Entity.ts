@@ -161,56 +161,56 @@ export class Entity extends EntityTransformHandler {
     /**
      * The parent entity of this entity or null if it has no parent.
      */
-    get parent(): Entity | null {
+    override get parent(): Entity | null {
         return super.parent as Entity | null;
     }
 
     /**
      * Re-parent the entity by setting a parent entity.
      */
-    set parent(parent: Entity | null) {
+    override set parent(parent: Entity | null) {
         super.parent = parent;
     }
 
     /**
      * Local transform of the entity.
      */
-    get local_transform(): Transform {
+    override get local_transform(): Transform {
         return super.local_transform;
     }
 
     /**
      * Set the local transform of the entity.
      */
-    set local_transform(local_transform: Partial<Transform>) {
+    override set local_transform(local_transform: Partial<Transform>) {
         super.local_transform = local_transform;
     }
 
     /**
      * Global transform of the entity.
      */
-    get global_transform(): Transform {
+    override get global_transform(): Transform {
         return super.global_transform;
     }
 
     /**
      * Set the global transform of the entity.
      */
-    set global_transform(global_transform: Partial<Transform>) {
+    override set global_transform(global_transform: Partial<Transform>) {
         super.global_transform = global_transform;
     }
 
     /**
      * The local space to world space matrix of the entity.
      */
-    get ls_to_ws(): Readonly<Mat4> {
+    override get ls_to_ws(): Readonly<Mat4> {
         return super.ls_to_ws;
     }
 
     /**
      * The world space to local space matrix of the entity.
      */
-    get ws_to_ls(): Readonly<Mat4> {
+    override get ws_to_ls(): Readonly<Mat4> {
         return super.ws_to_ls;
     }
 
