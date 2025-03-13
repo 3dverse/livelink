@@ -22,7 +22,7 @@ import { StrictUnion } from "../../utils";
 /**
  * Context that provides a viewport.
  *
- * @category Context Providers
+ * @category Contexts
  */
 export const ViewportContext = createContext<{
     viewport: Livelink.Viewport | null;
@@ -37,9 +37,9 @@ export const ViewportContext = createContext<{
 });
 
 /**
- * A component that provides a viewport.
+ * A viewport component.
  *
- * @category Context Providers
+ * @category Components
  */
 export function Viewport({
     setHoveredEntity,

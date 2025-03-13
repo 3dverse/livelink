@@ -41,7 +41,9 @@ type CamerasOriginTransform = {
     orientation: Quat;
 };
 
-//------------------------------------------------------------------------------
+/**
+ * @experimental
+ */
 export class WebXRHelper {
     //--------------------------------------------------------------------------
     // TODO: a better approach (cameras with a parent entity) than relying on

@@ -17,14 +17,14 @@ import { ReactOverlay } from "../../overlays/ReactOverlay";
 /**
  * Context that provides an overlay.
  *
- * @category Context Providers
+ * @category Contexts
  */
 export const OverlayContext = createContext<ReactOverlay | null>(null);
 
 /**
  * A component that provides a DOM 3D overlay.
  *
- * @category Context Providers
+ * @category Components
  */
 export function DOM3DOverlay({ children, ...props }: PropsWithChildren<HTMLProps<HTMLDivElement>>): JSX.Element {
     const containerRef = useRef<HTMLDivElement>(null);

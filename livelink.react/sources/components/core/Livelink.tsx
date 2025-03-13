@@ -12,7 +12,7 @@ import { StrictUnion } from "../../utils";
  * Provides information about the current Livelink instance, connection status,
  * and a method to disconnect from the Livelink service.
  *
- * @category Context Providers
+ * @category Contexts
  */
 export const LivelinkContext = createContext<{
     /** The current Livelink instance or `null` if not connected. */
@@ -47,11 +47,6 @@ export type SessionJoinMode = {
 
 /**
  * Represents the mode for either joining or starting a session.
- *
- * - `sessionOpenMode`: Optional, defaults to `"join-or-start"`.
- * - `sceneId`: A valid UUID identifying the scene to use when starting the session.
- * - `sessionId`: Must be `undefined`.
- * - `isTransient`: Specifies whether the opened session is transient (non-persistent).
  *
  * @inline
  */
@@ -90,7 +85,8 @@ export type SessionOpenMode = StrictUnion<SessionJoinMode | SessionJoinOrStart>;
  * Extends `SessionOpenMode` to define the session behavior and includes additional
  * options for handling connection lifecycle events, UI components, and settings.
  *
- * @category Context Providers
+ * @inline
+ * @category Components
  */
 export type LivelinkConnectParameters = {
     /**
@@ -143,7 +139,7 @@ type ConnectionPromisesMap = Map<string, Promise<Livelink.Livelink>>;
  * @param params.ConnectionErrorPanel - Optional React node displayed when the connection is lost.
  * @param params.autoJoinExisting - Specifies the mode for opening the session; defaults to `"join-or-start"`.
  *
- * @category Context Providers
+ * @category Components
  */
 export function LivelinkProvider({
     sceneId,
