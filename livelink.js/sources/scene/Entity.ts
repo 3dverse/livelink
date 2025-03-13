@@ -30,9 +30,8 @@ import { TypedEventTarget } from "../TypedEventTarget";
  * This class embeds a proxy to monitor component access and mark the entity as dirty when
  * a component is added, modified or deleted.
  *
- * All relevant modifications to entities are batched and sent to the server if the `auto_update`
- * property is set to "on" and broadcasted to other clients if the `auto_broadcast` property is
- * set to "on".
+ * All relevant modifications to entities are batched and automatically sent to the server and
+ * broadcasted to other clients if the `auto_broadcast` property is set to "on".
  *
  * On top of providing direct access to the components, this class provides helper methods to
  * retrieve the parent entity and the children entities.
@@ -72,11 +71,6 @@ export class Entity extends EntityTransformHandler {
     /**
      * @deprecated
      */
-    #auto_update: boolean = true;
-
-    /**
-     * @deprecated
-     */
     #auto_broadcast: boolean = true;
 
     /**
@@ -106,22 +100,6 @@ export class Entity extends EntityTransformHandler {
      */
     get name(): string {
         return this.debug_name?.value ?? "<unnamed>";
-    }
-
-    /**
-     * @deprecated
-     * Whether the entity has its components updates sent to the server.
-     */
-    get auto_update(): boolean {
-        return this.#auto_update;
-    }
-
-    /**
-     * @deprecated
-     * Set whether the entity has its components updates sent to the server.
-     */
-    set auto_update(state: boolean) {
-        this.#auto_update = state;
     }
 
     /**
@@ -261,10 +239,6 @@ export class Entity extends EntityTransformHandler {
 
         if (options.auto_broadcast !== undefined) {
             this.auto_broadcast = options.auto_broadcast;
-        }
-
-        if (options.auto_update !== undefined) {
-            this.auto_update = options.auto_update;
         }
     }
 
