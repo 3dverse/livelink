@@ -90,43 +90,6 @@ import { Gamepad } from "./inputs/Gamepad";
  * @category Main
  */
 export class Livelink {
-    //TEMPTEMPTEMPTEMPTEMPTEMPTEMPTEMPTEMPTEMPTEMPTEMPTEMPTEMPTEMPTEMP
-    /**
-     * @deprecated
-     */
-    #TO_REMOVE__readyCallback: (() => void) | null = null;
-
-    /**
-     * @deprecated
-     */
-    #TO_REMOVE__refreshViewportTimeout: number | null = null;
-
-    /**
-     * @deprecated
-     */
-    TO_REMOVE__setReadyCallback(callback: () => void): void {
-        this.#TO_REMOVE__readyCallback = callback;
-    }
-
-    /**
-     * @deprecated
-     */
-    TO_REMOVE__startIfReady(): void {
-        if (!this.isConfigured()) {
-            return;
-        }
-
-        if (this.viewports.some(viewport => !viewport.TO_REMOVE__ready)) {
-            return;
-        }
-
-        if (this.#TO_REMOVE__readyCallback) {
-            this.#TO_REMOVE__readyCallback();
-            this.#TO_REMOVE__readyCallback = null;
-        }
-    }
-    //TEMPTEMPTEMPTEMPTEMPTEMPTEMPTEMPTEMPTEMPTEMPTEMPTEMPTEMPTEMPTEMP
-
     /**
      * @internal
      */
@@ -689,4 +652,41 @@ export class Livelink {
             }
         }, 1000 / broadcastsPerSecond);
     }
+
+    //TEMPTEMPTEMPTEMPTEMPTEMPTEMPTEMPTEMPTEMPTEMPTEMPTEMPTEMPTEMPTEMP
+    /**
+     * @deprecated
+     */
+    #TO_REMOVE__readyCallback: (() => void) | null = null;
+
+    /**
+     * @deprecated
+     */
+    #TO_REMOVE__refreshViewportTimeout: number | null = null;
+
+    /**
+     * @deprecated
+     */
+    TO_REMOVE__setReadyCallback(callback: () => void): void {
+        this.#TO_REMOVE__readyCallback = callback;
+    }
+
+    /**
+     * @deprecated
+     */
+    TO_REMOVE__startIfReady(): void {
+        if (!this.isConfigured()) {
+            return;
+        }
+
+        if (this.viewports.some(viewport => !viewport.TO_REMOVE__ready)) {
+            return;
+        }
+
+        if (this.#TO_REMOVE__readyCallback) {
+            this.#TO_REMOVE__readyCallback();
+            this.#TO_REMOVE__readyCallback = null;
+        }
+    }
+    //TEMPTEMPTEMPTEMPTEMPTEMPTEMPTEMPTEMPTEMPTEMPTEMPTEMPTEMPTEMPTEMP
 }

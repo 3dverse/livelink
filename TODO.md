@@ -19,7 +19,7 @@
 ## Internal ?
 
 - [ ] Livelink.viewports
-- [ ] Client.camera_rtids
-- [ ] Entity.auto_update
+- [x] Client.camera_rtids
+- [x] Entity.auto_update
 - [ ] Entity.auto_broadcast
 - [ ] Entity.findEntities
