@@ -1,5 +1,17 @@
 # @3dverse/livelink
 
+## 0.8.29
+
+### Patch Changes
+
+-   refactor: removed deprecated auto_update option
+-   docs: removed broken link
+-   docs: small refactor to improve the docs
+-   docs: do not hide page title
+-   docs: moved TO_REMOVE functions at the bottom of the file so they appear last in the docs
+-   fix(livelink.js): emit EntityVisibilityChangedEvent when an entity visibility state is toggled
+-   refactor: mainly for docs
+
 ## 0.8.28
 
 ### Patch Changes
