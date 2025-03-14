@@ -134,6 +134,7 @@ export class Entity extends EntityTransformHandler {
     set is_visible(is_visible: boolean) {
         this.#scene._setEntityVisibility({ entity_rtid: this.rtid, is_visible });
         this.#is_visible = is_visible;
+        this._dispatchEvent(new EntityVisibilityChangedEvent({ is_visible }));
     }
 
     /**
