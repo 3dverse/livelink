@@ -3,7 +3,7 @@ import { Components, Vec2, Vec3 } from "@3dverse/livelink.core";
 import CameraControls, { Clock, ACTION, KeyboardFlyControls } from "@3dverse/livelink-camera-controls";
 
 //------------------------------------------------------------------------------
-import type { Entity } from "../scene/Entity";
+import type { Entity } from "../../scene/Entity";
 import type { Viewport } from "./Viewport";
 import { CameraControllerInitOptions, CameraControllerPreset, LockMousePointerAim } from "./CameraControllerPreset";
 import * as CameraControllerPresets from "./CameraControllerPresets";
@@ -28,7 +28,7 @@ enum MouseEventButton {
 /**
  * A camera controller based on the `camera-controls` library.
  *
- * @category Rendering
+ * @category Camera
  */
 export class CameraController extends CameraControls {
     /**

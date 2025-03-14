@@ -2,13 +2,13 @@
 import { Rect } from "./Rect";
 import { Entity } from "../../scene/Entity";
 import { CanvasContextType } from "./RenderingSurface";
-import { FrameMetaData } from "../decoders/FrameMetaData";
+import { FrameMetaData } from "../streaming/FrameMetaData";
 import { ContextProvider } from "../contexts/ContextProvider";
 import { RenderingSurfaceBase } from "./RenderingSurfaceBase";
 import { RenderingSurfaceResizedEvent } from "./RenderingSurfaceEvents";
 
 /**
- * @category Rendering
+ * @category Rendering Surfaces
  */
 export class OffscreenSurface<ContextType extends CanvasContextType, ContextOptions> extends RenderingSurfaceBase {
     /**
@@ -89,7 +89,7 @@ export class OffscreenSurface<ContextType extends CanvasContextType, ContextOpti
     /**
      *
      */
-    release(): void {
+    override release(): void {
         super.release();
         this.#context.release();
     }

@@ -9,7 +9,7 @@ import { WebXRHelper } from "../../web-xr/WebXRHelper";
 /**
  * Context that provides utilities for WebXR.
  *
- * @category Context Providers
+ * @category Contexts
  */
 export const WebXRContext = createContext<{
     webXRHelper: WebXRHelper | null;
@@ -20,11 +20,13 @@ export const WebXRContext = createContext<{
 //------------------------------------------------------------------------------
 /**
  * A component that provides a WebXR session
- * @param param
  *
- * @param param.mode - The mode of the XR session.
- * @param param.resolution_scale - The resolution scale of the XR session.
- * @param param.onSessionEnd - The callback to call when the XR session ends.
+ * @param params
+ * @param params.mode - The mode of the XR session.
+ * @param params.resolution_scale - The resolution scale of the XR session.
+ * @param params.onSessionEnd - The callback to call when the XR session ends.
+ *
+ * @category Components
  */
 export function WebXR({
     children,

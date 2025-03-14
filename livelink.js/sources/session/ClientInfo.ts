@@ -15,10 +15,10 @@ export type ClientInfo = {
     client_id: UUID;
 
     /**
-     * The type of the client.
-     * - "user" for authenticated users
-     * - "guest" for unauthenticated users
-     * - "unknown" for unknown clients
+     * The type of the client.<br/>
+     *   - "user" for authenticated users<br/>
+     *   - "guest" for unauthenticated users<br/>
+     *   - "unknown" for unknown clients
      */
     client_type: "user" | "guest" | "unknown";
 

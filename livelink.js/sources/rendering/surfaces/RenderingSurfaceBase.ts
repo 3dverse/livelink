@@ -3,8 +3,8 @@ import { Vec2i, Commands } from "@3dverse/livelink.core";
 
 //------------------------------------------------------------------------------
 import { Rect } from "./Rect";
-import { Viewport } from "../Viewport";
-import { FrameMetaData } from "../decoders/FrameMetaData";
+import { Viewport } from "../camera/Viewport";
+import { FrameMetaData } from "../streaming/FrameMetaData";
 import { RenderingSurfaceEvents } from "./RenderingSurfaceEvents";
 import { TypedEventTarget } from "../../TypedEventTarget";
 
@@ -20,7 +20,7 @@ import { TypedEventTarget } from "../../TypedEventTarget";
  *
  * It is finally responsible for drawing the portions of the final frame to its backing element.
  *
- * @category Rendering
+ * @category Rendering Surfaces
  */
 export abstract class RenderingSurfaceBase extends TypedEventTarget<RenderingSurfaceEvents> {
     /**

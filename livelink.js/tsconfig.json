@@ -11,7 +11,8 @@
     "emitDeclarationOnly": true,
     "skipLibCheck": true,
     "types": ["@types/webxr"],
-    "stripInternal": true
+    "stripInternal": true,
+    "noImplicitOverride": true
   },
 
   "exclude": ["./dist/**/*", "./tests/*", "./ci/**"]

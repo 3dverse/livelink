@@ -13,18 +13,18 @@ export * from "./scene/Entity";
 export * from "./scene/EntityEvents";
 export * from "./scene/ScriptEvents";
 
-export * from "./rendering/Viewport";
-export * from "./rendering/ViewportEvents";
-export * from "./rendering/CameraController";
-export * from "./rendering/CameraControllerPreset";
-export * as CameraControllerPresets from "./rendering/CameraControllerPresets";
-export * from "./rendering/CameraProjection";
+export * from "./rendering/camera/Viewport";
+export * from "./rendering/camera/ViewportEvents";
+export * from "./rendering/camera/CameraController";
+export * from "./rendering/camera/CameraControllerPreset";
+export * as CameraControllerPresets from "./rendering/camera/CameraControllerPresets";
+export * from "./rendering/camera/CameraProjection";
 
-export * from "./rendering/decoders/FrameMetaData";
-export * from "./rendering/decoders/SoftwareDecoder";
-export * from "./rendering/decoders/WebCodecsDecoder";
-export * from "./rendering/decoders/EncodedFrameConsumer";
-export * from "./rendering/decoders/DecodedFrameConsumer";
+export * from "./rendering/streaming/FrameMetaData";
+export * from "./rendering/streaming/SoftwareDecoder";
+export * from "./rendering/streaming/WebCodecsDecoder";
+export * from "./rendering/streaming/EncodedFrameConsumer";
+export * from "./rendering/streaming/DecodedFrameConsumer";
 
 export * from "./rendering/contexts/XRContext";
 export * from "./rendering/contexts/Context2D";

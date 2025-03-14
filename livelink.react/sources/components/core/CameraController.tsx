@@ -23,7 +23,7 @@ import { ViewportContext } from "./Viewport";
 /**
  * Context that provides a camera controller.
  *
- * @category Context Providers
+ * @category Contexts
  */
 export const CameraControllerContext = createContext<{
     cameraController: DefaultCameraController | undefined;

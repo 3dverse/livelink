@@ -46,7 +46,8 @@ export class Client {
     }
 
     /**
-     * The user that the client is associated with.
+     * The id of the user that the client is associated with.
+     * Note that the same user can have multiple clients in the same session.
      */
     get user_id(): UUID {
         return this.#client_info.user_id;
@@ -60,28 +61,11 @@ export class Client {
     }
 
     /**
-     * The RTIDs of the cameras that the client is viewing.
-     */
-    get camera_rtids(): Array<RTID> {
-        return this.#camera_rtids;
-    }
-
-    /**
+     * @internal
      * The 3d data under the client's mouse pointer.
      */
-    get cursor_data(): CursorData | null {
+    get _cursor_data(): CursorData | null {
         return this.#cursor_data;
-    }
-
-    /**
-     * Returns the camera entities that the client is using.
-     */
-    async getCameraEntities(): Promise<Array<Entity>> {
-        const entities = await Promise.all(
-            this.#camera_rtids.map(rtid => this.#core.scene._findEntity({ entity_rtid: rtid })),
-        );
-
-        return entities.filter(entity => entity != null) as Array<Entity>;
     }
 
     /**
@@ -102,7 +86,18 @@ export class Client {
     }
 
     /**
-     *
+     * Returns the camera entities that the client is using.
+     */
+    async getCameraEntities(): Promise<Array<Entity>> {
+        const entities = await Promise.all(
+            this.#camera_rtids.map(rtid => this.#core.scene._findEntity({ entity_rtid: rtid })),
+        );
+
+        return entities.filter(entity => entity != null) as Array<Entity>;
+    }
+
+    /**
+     * Returns the entity that the client's mouse pointer is currently hovering over.
      */
     async getHoveredEntity(): Promise<Entity | null> {
         if (this.#cursor_data == null) {

@@ -5,11 +5,11 @@ import { glMatrix, mat3, mat4, vec3 } from "gl-matrix";
 import type { Components, Mat4, Quat, Vec2, Vec3 } from "@3dverse/livelink.core";
 
 //------------------------------------------------------------------------------
-import { Entity } from "../scene/Entity";
+import { Entity } from "../../scene/Entity";
 import { Viewport } from "./Viewport";
-import { FrameCameraTransform } from "./decoders/FrameCameraTransform";
-import { EntityUpdatedEvent } from "../scene/EntityEvents";
-import { quaternionToEuler } from "../maths";
+import { FrameCameraTransform } from "../streaming/FrameCameraTransform";
+import { EntityUpdatedEvent } from "../../scene/EntityEvents";
+import { quaternionToEuler } from "../../maths";
 
 /**
  *
@@ -19,7 +19,7 @@ const INFINITE_FAR_VALUE = 100000;
 /**
  * A ray in 3D space.
  *
- * @category Rendering
+ * @category Camera
  */
 export type Ray = { origin: Vec3; direction: Vec3 };
 
@@ -37,7 +37,7 @@ export type Ray = { origin: Vec3; direction: Vec3 };
  * In short, camera controllers should use the camera entity and frame drawers (RenderingSurface, Overlay, ...)
  * should use the CameraProjection.
  *
- * @category Rendering
+ * @category Camera
  */
 export class CameraProjection {
     /**

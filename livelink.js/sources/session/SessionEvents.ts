@@ -1,5 +1,5 @@
 import { Client } from "./Client";
-import { Viewport } from "../rendering/Viewport";
+import { Viewport } from "../rendering/camera/Viewport";
 
 /**
  * @deprecated
@@ -119,7 +119,7 @@ export class ClientJoinedEvent extends Event {
  */
 export class ClientLeftEvent extends Event {
     /**
-     * The client that joined the session.
+     * The client that left the session.
      */
     public readonly client: Client;
 

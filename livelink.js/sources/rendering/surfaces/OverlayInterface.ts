@@ -7,7 +7,7 @@
  * @see
  * For a Three.js overlay implementation, see: https://www.npmjs.com/package/@3dverse/livelink-three
  *
- * @category Rendering
+ * @category Rendering Surfaces
  */
 export interface OverlayInterface {
     /**

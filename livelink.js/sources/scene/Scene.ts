@@ -36,12 +36,6 @@ export type EntityCreationOptions = {
      * Whether to broadcast the entity automatically.
      */
     auto_broadcast?: boolean;
-
-    /**
-     * @deprecated
-     * Whether to update the entity automatically.
-     */
-    auto_update?: boolean;
 };
 
 /**

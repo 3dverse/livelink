@@ -3,14 +3,14 @@
  * Camera controller presets module.
  *
  * @packageDocumentation
- * @category Rendering
+ * @category Camera
  */
 import { ACTION } from "@3dverse/livelink-camera-controls";
 import { CameraControllerPreset } from "./CameraControllerPreset";
 import { Vec3 } from "@3dverse/livelink.core";
 
 /**
- * The default camera controller preset which aims as a simple orbital camera.
+ * The default camera controller preset designed to function as a simple orbital camera.
  *
  * Mouse controls:
  *  + Hold left button: rotate.
@@ -21,7 +21,8 @@ import { Vec3 } from "@3dverse/livelink.core";
  *  + 1 finger: rotate.
  *  + 2 fingers: truck or dolly with pinch gesture.
  *  + 3 fingers: truck.
- * @category Rendering
+ *
+ * @category Camera
  */
 export const orbital: CameraControllerPreset = Object.freeze({
     //--------------------------------------------------------------------------
@@ -34,7 +35,7 @@ export const orbital: CameraControllerPreset = Object.freeze({
 });
 
 /**
- * A camera controller preset aiming as an orbital camera with orbit locked on the pointer with user friendly features.
+ * A camera controller preset designed as an orbital camera locked on the pointer.
  *
  * Features:
  *  + Pick orbit point under the pointer on 3D objects or use previous obit point if none is picked.
@@ -54,7 +55,7 @@ export const orbital: CameraControllerPreset = Object.freeze({
  *  + 2 fingers: truck or dolly with pinch gesture
  *  + 3 fingers: truck
  *
- * @category Rendering
+ * @category Camera
  */
 export const pointer_locked_orbital: CameraControllerPreset = Object.freeze({
     //--------------------------------------------------------------------------
@@ -94,7 +95,7 @@ export const pointer_locked_orbital: CameraControllerPreset = Object.freeze({
 });
 
 /**
- * A camera controller preset aiming as an fly mode camera like the one used in 3dverse editor.
+ * A camera controller preset functioning as a fly-mode camera, like the one in the 3dverse editor.
  *
  * Mouse controls:
  *  + Hold left button: screen pan
@@ -107,7 +108,7 @@ export const pointer_locked_orbital: CameraControllerPreset = Object.freeze({
  *  + 2 fingers: truck or dolly with pinch gesture
  *  + 3 fingers: screen pan
  *
- * @category Rendering
+ * @category Camera
  */
 export const fly: CameraControllerPreset = Object.freeze({
     //--------------------------------------------------------------------------

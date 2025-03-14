@@ -1,12 +1,12 @@
 /** @type {Partial<import('typedoc').TypeDocOptions>} */
-import defaultConfig from './typedoc.config.mjs';
+import defaultConfig from "./typedoc.config.mjs";
 
 const config = {
     ...defaultConfig,
 
     hidePageHeader: true,
     hideBreadcrumbs: true,
-    hidePageTitle: true,
+    hidePageTitle: false,
     useCodeBlocks: true,
     parametersFormat: "table",
     interfacePropertiesFormat: "table",

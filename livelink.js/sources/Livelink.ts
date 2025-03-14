@@ -12,11 +12,11 @@ import type {
 import { DynamicLoader } from "@3dverse/livelink.core";
 
 //------------------------------------------------------------------------------
-import { EncodedFrameConsumer } from "./rendering/decoders/EncodedFrameConsumer";
-import { DecodedFrameConsumer } from "./rendering/decoders/DecodedFrameConsumer";
-import { convertRawFrameMetaDataToFrameMetaData } from "./rendering/decoders/FrameMetaData";
-import { RemoteFrameProxy } from "./rendering/decoders/RemoteFrameProxy";
-import { Viewport } from "./rendering/Viewport";
+import { EncodedFrameConsumer } from "./rendering/streaming/EncodedFrameConsumer";
+import { DecodedFrameConsumer } from "./rendering/streaming/DecodedFrameConsumer";
+import { convertRawFrameMetaDataToFrameMetaData } from "./rendering/streaming/FrameMetaData";
+import { RemoteFrameProxy } from "./rendering/streaming/RemoteFrameProxy";
+import { Viewport } from "./rendering/camera/Viewport";
 
 import { Scene } from "./scene/Scene";
 import { Entity } from "./scene/Entity";
@@ -58,7 +58,8 @@ import { Gamepad } from "./inputs/Gamepad";
  * They can be activated and deactivated using the appropriate methods.
  * An active input device will automatically send its state as it changes to the server.
  *
- * ### Starting a new session
+ * ### Session management
+ * Starting a new session:
  *
  * ```typescript
  * const instance = await Livelink.start({
@@ -67,7 +68,7 @@ import { Gamepad } from "./inputs/Gamepad";
  * });
  * ```
  *
- * ### Joining an existing session
+ * Joining an existing session:
  *
  * ```typescript
  * const session = await Session.find({
@@ -77,7 +78,7 @@ import { Gamepad } from "./inputs/Gamepad";
  * const instance = await Livelink.join({session});
  * ```
  *
- * ### Joining an existing session or starting a new one if none is found
+ * Joining an existing session or starting a new one if none is found:
  *
  * ```typescript
  * const instance = await Livelink.join_or_start({
@@ -86,48 +87,9 @@ import { Gamepad } from "./inputs/Gamepad";
  * });
  * ```
  *
- * @document ../example.md
- *
  * @category Main
  */
 export class Livelink {
-    //TEMPTEMPTEMPTEMPTEMPTEMPTEMPTEMPTEMPTEMPTEMPTEMPTEMPTEMPTEMPTEMP
-    /**
-     * @deprecated
-     */
-    #TO_REMOVE__readyCallback: (() => void) | null = null;
-
-    /**
-     * @deprecated
-     */
-    #TO_REMOVE__refreshViewportTimeout: number | null = null;
-
-    /**
-     * @deprecated
-     */
-    TO_REMOVE__setReadyCallback(callback: () => void): void {
-        this.#TO_REMOVE__readyCallback = callback;
-    }
-
-    /**
-     * @deprecated
-     */
-    TO_REMOVE__startIfReady(): void {
-        if (!this.isConfigured()) {
-            return;
-        }
-
-        if (this.viewports.some(viewport => !viewport.TO_REMOVE__ready)) {
-            return;
-        }
-
-        if (this.#TO_REMOVE__readyCallback) {
-            this.#TO_REMOVE__readyCallback();
-            this.#TO_REMOVE__readyCallback = null;
-        }
-    }
-    //TEMPTEMPTEMPTEMPTEMPTEMPTEMPTEMPTEMPTEMPTEMPTEMPTEMPTEMPTEMPTEMP
-
     /**
      * @internal
      */
@@ -690,4 +652,41 @@ export class Livelink {
             }
         }, 1000 / broadcastsPerSecond);
     }
+
+    //TEMPTEMPTEMPTEMPTEMPTEMPTEMPTEMPTEMPTEMPTEMPTEMPTEMPTEMPTEMPTEMP
+    /**
+     * @deprecated
+     */
+    #TO_REMOVE__readyCallback: (() => void) | null = null;
+
+    /**
+     * @deprecated
+     */
+    #TO_REMOVE__refreshViewportTimeout: number | null = null;
+
+    /**
+     * @deprecated
+     */
+    TO_REMOVE__setReadyCallback(callback: () => void): void {
+        this.#TO_REMOVE__readyCallback = callback;
+    }
+
+    /**
+     * @deprecated
+     */
+    TO_REMOVE__startIfReady(): void {
+        if (!this.isConfigured()) {
+            return;
+        }
+
+        if (this.viewports.some(viewport => !viewport.TO_REMOVE__ready)) {
+            return;
+        }
+
+        if (this.#TO_REMOVE__readyCallback) {
+            this.#TO_REMOVE__readyCallback();
+            this.#TO_REMOVE__readyCallback = null;
+        }
+    }
+    //TEMPTEMPTEMPTEMPTEMPTEMPTEMPTEMPTEMPTEMPTEMPTEMPTEMPTEMPTEMPTEMP
 }

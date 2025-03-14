@@ -69,6 +69,9 @@ export abstract class EncodedFrameConsumer {
 
     /**
      * Resize the consumer with the new frame dimensions.
+     *
+     * @param params
+     * @param params.frame_dimensions - The new frame dimensions
      */
     abstract resize({ frame_dimensions }: { frame_dimensions: Vec2i }): void;
 
@@ -88,6 +91,7 @@ export abstract class EncodedFrameConsumer {
 
     /**
      * Must be called by the implementation as soon as the frame is decoded to update the cameras in the scene.
+     *
      * @param frame - The decoded frame data
      * @param frame.meta_data - The frame meta data
      * @param frame.decoded_frame - The decoded frame data

@@ -30,9 +30,8 @@ import { TypedEventTarget } from "../TypedEventTarget";
  * This class embeds a proxy to monitor component access and mark the entity as dirty when
  * a component is added, modified or deleted.
  *
- * All relevant modifications to entities are batched and sent to the server if the `auto_update`
- * property is set to "on" and broadcasted to other clients if the `auto_broadcast` property is
- * set to "on".
+ * All relevant modifications to entities are batched and automatically sent to the server and
+ * broadcasted to other clients if the `auto_broadcast` property is set to "on".
  *
  * On top of providing direct access to the components, this class provides helper methods to
  * retrieve the parent entity and the children entities.
@@ -72,11 +71,6 @@ export class Entity extends EntityTransformHandler {
     /**
      * @deprecated
      */
-    #auto_update: boolean = true;
-
-    /**
-     * @deprecated
-     */
     #auto_broadcast: boolean = true;
 
     /**
@@ -106,22 +100,6 @@ export class Entity extends EntityTransformHandler {
      */
     get name(): string {
         return this.debug_name?.value ?? "<unnamed>";
-    }
-
-    /**
-     * @deprecated
-     * Whether the entity has its components updates sent to the server.
-     */
-    get auto_update(): boolean {
-        return this.#auto_update;
-    }
-
-    /**
-     * @deprecated
-     * Set whether the entity has its components updates sent to the server.
-     */
-    set auto_update(state: boolean) {
-        this.#auto_update = state;
     }
 
     /**
@@ -156,61 +134,62 @@ export class Entity extends EntityTransformHandler {
     set is_visible(is_visible: boolean) {
         this.#scene._setEntityVisibility({ entity_rtid: this.rtid, is_visible });
         this.#is_visible = is_visible;
+        this._dispatchEvent(new EntityVisibilityChangedEvent({ is_visible }));
     }
 
     /**
      * The parent entity of this entity or null if it has no parent.
      */
-    get parent(): Entity | null {
+    override get parent(): Entity | null {
         return super.parent as Entity | null;
     }
 
     /**
      * Re-parent the entity by setting a parent entity.
      */
-    set parent(parent: Entity | null) {
+    override set parent(parent: Entity | null) {
         super.parent = parent;
     }
 
     /**
      * Local transform of the entity.
      */
-    get local_transform(): Transform {
+    override get local_transform(): Transform {
         return super.local_transform;
     }
 
     /**
      * Set the local transform of the entity.
      */
-    set local_transform(local_transform: Partial<Transform>) {
+    override set local_transform(local_transform: Partial<Transform>) {
         super.local_transform = local_transform;
     }
 
     /**
      * Global transform of the entity.
      */
-    get global_transform(): Transform {
+    override get global_transform(): Transform {
         return super.global_transform;
     }
 
     /**
      * Set the global transform of the entity.
      */
-    set global_transform(global_transform: Partial<Transform>) {
+    override set global_transform(global_transform: Partial<Transform>) {
         super.global_transform = global_transform;
     }
 
     /**
      * The local space to world space matrix of the entity.
      */
-    get ls_to_ws(): Readonly<Mat4> {
+    override get ls_to_ws(): Readonly<Mat4> {
         return super.ls_to_ws;
     }
 
     /**
      * The world space to local space matrix of the entity.
      */
-    get ws_to_ls(): Readonly<Mat4> {
+    override get ws_to_ls(): Readonly<Mat4> {
         return super.ws_to_ls;
     }
 
@@ -261,10 +240,6 @@ export class Entity extends EntityTransformHandler {
 
         if (options.auto_broadcast !== undefined) {
             this.auto_broadcast = options.auto_broadcast;
-        }
-
-        if (options.auto_update !== undefined) {
-            this.auto_update = options.auto_update;
         }
     }
 

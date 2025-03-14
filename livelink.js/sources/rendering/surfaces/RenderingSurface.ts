@@ -6,18 +6,18 @@ import { Rect } from "./Rect";
 
 import type { Vec2, Vec2i } from "@3dverse/livelink.core";
 import type { ContextProvider } from "../contexts/ContextProvider";
-import type { FrameMetaData } from "../decoders/FrameMetaData";
+import type { FrameMetaData } from "../streaming/FrameMetaData";
 import { RenderingSurfaceResizedEvent } from "./RenderingSurfaceEvents";
 
 /**
- * @category Rendering
+ * @category Rendering Contexts
  */
 export type CanvasContextAttributes =
     | CanvasRenderingContext2DSettings
     | (WebGLContextAttributes & { xrCompatible?: boolean });
 
 /**
- * @category Rendering
+ * @category Rendering Contexts
  */
 export type CanvasContextType = "2d" | "webgl" | "webgl2";
 
@@ -28,7 +28,7 @@ export type CanvasContextType = "2d" | "webgl" | "webgl2";
  *
  * The canvas is automatically resized to match the size of the HTML element it is attached to.
  *
- * @category Rendering
+ * @category Rendering Surfaces
  */
 export class RenderingSurface extends RenderingSurfaceBase {
     /**
@@ -127,7 +127,7 @@ export class RenderingSurface extends RenderingSurfaceBase {
     /**
      * Releases the resources associated with the surface.
      */
-    release(): void {
+    override release(): void {
         super.release();
 
         this.#auto_resizer.release();

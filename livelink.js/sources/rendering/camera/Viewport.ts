@@ -5,13 +5,13 @@ import type { Enums, Vec2, Vec3 } from "@3dverse/livelink.core";
 import { vec3 } from "gl-matrix";
 
 //------------------------------------------------------------------------------
-import { Livelink } from "../Livelink";
-import { Entity } from "../scene/Entity";
-import { TypedEventTarget } from "../TypedEventTarget";
+import { Livelink } from "../../Livelink";
+import { Entity } from "../../scene/Entity";
+import { TypedEventTarget } from "../../TypedEventTarget";
 
-import { RelativeRect } from "./surfaces/Rect";
-import { OverlayInterface } from "./surfaces/OverlayInterface";
-import { RenderingSurfaceBase } from "./surfaces/RenderingSurfaceBase";
+import { RelativeRect } from "../surfaces/Rect";
+import { OverlayInterface } from "../surfaces/OverlayInterface";
+import { RenderingSurfaceBase } from "../surfaces/RenderingSurfaceBase";
 
 import { CameraProjection } from "./CameraProjection";
 import { EntityHoveredEvent, EntityPickedEvent, ViewportEvents } from "./ViewportEvents";
@@ -24,7 +24,7 @@ import { EntityHoveredEvent, EntityPickedEvent, ViewportEvents } from "./Viewpor
  *
  * Viewports can overlap each other, in which case the one with the highest z-index is rendered on top.
  *
- * @category Rendering
+ * @category Camera
  */
 export class Viewport extends TypedEventTarget<ViewportEvents> {
     //TEMPTEMPTEMPTEMPTEMPTEMPTEMPTEMPTEMPTEMPTEMPTEMPTEMPTEMPTEMPTEMP
@@ -505,7 +505,7 @@ export class Viewport extends TypedEventTarget<ViewportEvents> {
 
         let data = null;
 
-        const cursorData = this.#core.session.current_client?.cursor_data;
+        const cursorData = this.#core.session.current_client?._cursor_data;
         if (cursorData) {
             const entity = await this.#core.scene._findEntity({ entity_rtid: cursorData.hovered_entity_rtid });
             if (entity) {
@@ -531,7 +531,7 @@ export class Viewport extends TypedEventTarget<ViewportEvents> {
     #onPointerMove = async (): Promise<void> => {
         let data = null;
 
-        const cursorData = this.#core.session.current_client?.cursor_data;
+        const cursorData = this.#core.session.current_client?._cursor_data;
         if (cursorData) {
             const entity = await this.#core.scene._findEntity({ entity_rtid: cursorData.hovered_entity_rtid });
             if (entity) {

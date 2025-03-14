@@ -18,11 +18,12 @@ import { RenderingSurface } from "@3dverse/livelink";
 import { LivelinkContext } from "./Livelink";
 
 /**
- * A context provider that exposes the canvas element and the rendering surface.
+ * Context providing the canvas element and the rendering surface.
+ *
  * @param canvas - The canvas element.
  * @param renderingSurface - The rendering surface.
  *
- * @category Context Providers
+ * @category Contexts
  */
 export const CanvasContext = createContext<{
     canvas: HTMLCanvasElement | null;
@@ -49,15 +50,17 @@ type CanvasContext =
 
 /**
  * A component that provides a canvas element and a rendering surface.
- * @param param0 - The canvas context.
- * @property {ReactNode} children - The children to render.
- * @property {"2d" | "webgl"} contextType - The context type of the canvas.
- * @property {CanvasRenderingContext2DSettings | {WebGLContextAttributes & {boolean}}} contextAttributes - The context attributes of the canvas.
- * @property {number} width - The width of the canvas.
- * @property {number} height - The height of the canvas.
+ *
+ * @param params - The canvas context.
+ * @param params.children - The children to render.
+ * @param params.contextType - The context type of the canvas.
+ * @param params.contextAttributes - The context attributes of the canvas.
+ * @param params.width - The width of the canvas.
+ * @param params.height - The height of the canvas.
+ *
  * @returns The canvas component.
  *
- * @category Context Providers
+ * @category Components
  */
 export function Canvas({
     children,

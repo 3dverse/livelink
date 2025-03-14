@@ -1,6 +1,6 @@
 import { Enums } from "@3dverse/livelink.core";
 import { Livelink } from "../Livelink";
-import { Viewport } from "../rendering/Viewport";
+import { Viewport } from "../rendering/camera/Viewport";
 
 /**
  * @category Inputs
@@ -51,6 +51,9 @@ export class Mouse {
      * Enables mouse input on the given viewport.
      * Increases the reference count of the viewport usage.
      * Each call to this method should be matched with a call to `release`.
+     *
+     * @param params
+     * @param params.viewport The viewport to enable mouse input on.
      */
     enableOnViewport({ viewport }: { viewport: Viewport }): void {
         const viewport_data = this.#viewport_map.get(viewport);
@@ -83,6 +86,9 @@ export class Mouse {
      * Decreases the reference count of the viewport usage.
      * Each call to this method should be matched with a call to `setup`.
      * If the reference count reaches 0, the mouse input is disabled for the viewport.
+     *
+     * @param params
+     * @param params.viewport The viewport to disable mouse input on.
      */
     disableFromViewport({ viewport }: { viewport: Viewport }): void {
         const viewport_data = this.#viewport_map.get(viewport);

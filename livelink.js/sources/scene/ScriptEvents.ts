@@ -9,7 +9,6 @@ import { Scene } from "./Scene";
  * @noInheritDoc
  * @category Scene
  */
-
 export class ScriptEventReceived extends Event {
     /**
      * The entity that emitted the script event.
@@ -110,6 +109,7 @@ export class ScriptEventEmitted extends Event {
 }
 
 /**
+ * @internal
  * @event
  * @category Scene
  */
