@@ -1,5 +1,21 @@
 # @3dverse/livelink-react
 
+## 0.2.40
+
+### Patch Changes
+
+-   feat(livelink.react): DOMEntity now react to the entity visibility state
+-   docs(livelink.react): put contexts variable in their own category, moved components with context providers to the component category
+-   docs: do not hide page title
+-   Updated dependencies
+-   Updated dependencies
+-   Updated dependencies
+-   Updated dependencies
+-   Updated dependencies
+-   Updated dependencies
+-   Updated dependencies
+    -   @3dverse/livelink@0.8.29
+
 ## 0.2.39
 
 ### Patch Changes
