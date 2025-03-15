@@ -1,14 +1,17 @@
 //------------------------------------------------------------------------------
 import React, {
     createContext,
+    forwardRef,
     HTMLProps,
     JSX,
+    Ref,
     PropsWithChildren,
     useCallback,
     useContext,
     useEffect,
     useRef,
     useState,
+    useImperativeHandle,
 } from "react";
 
 //------------------------------------------------------------------------------
@@ -41,31 +44,34 @@ export const ViewportContext = createContext<{
  *
  * @category Components
  */
-export function Viewport({
-    setHoveredEntity,
-    setPickedEntity,
-    renderTargetIndex = -1,
-    children,
-    ...props
-}: PropsWithChildren<
-    StrictUnion<
-        | {
-              cameraEntity: Livelink.Entity | null;
-          }
-        | {
-              client: Livelink.Client;
-              cameraIndex?: number;
-          }
-    > & {
-        setHoveredEntity?: (
-            data: { entity: Livelink.Entity; ws_position: Livelink.Vec3; ws_normal: Livelink.Vec3 } | null,
-        ) => void;
-        setPickedEntity?: (
-            data: { entity: Livelink.Entity; ws_position: Livelink.Vec3; ws_normal: Livelink.Vec3 } | null,
-        ) => void;
-        renderTargetIndex?: number;
-    } & HTMLProps<HTMLDivElement>
->): JSX.Element {
+export const Viewport = forwardRef(function (
+    {
+        setHoveredEntity,
+        setPickedEntity,
+        renderTargetIndex = -1,
+        children,
+        ...props
+    }: PropsWithChildren<
+        StrictUnion<
+            | {
+                  cameraEntity: Livelink.Entity | null;
+              }
+            | {
+                  client: Livelink.Client;
+                  cameraIndex?: number;
+              }
+        > & {
+            setHoveredEntity?: (
+                data: { entity: Livelink.Entity; ws_position: Livelink.Vec3; ws_normal: Livelink.Vec3 } | null,
+            ) => void;
+            setPickedEntity?: (
+                data: { entity: Livelink.Entity; ws_position: Livelink.Vec3; ws_normal: Livelink.Vec3 } | null,
+            ) => void;
+            renderTargetIndex?: number;
+        } & HTMLProps<HTMLDivElement>
+    >,
+    ref: Ref<Livelink.Viewport | undefined>,
+): JSX.Element {
     const { cameraEntity, client, cameraIndex, ...otherProps } = props as {
         cameraEntity?: Livelink.Entity | null;
         cameraIndex?: number;
@@ -82,6 +88,9 @@ export function Viewport({
     const [clientCameraEntity, setClientCameraEntity] = useState<Livelink.Entity | null>(null);
     const [camera, setCamera] = useState<Livelink.CameraProjection | null>(null);
     const viewportDomElement = useRef<HTMLDivElement>(null);
+
+    //--------------------------------------------------------------------------
+    useImperativeHandle(ref, () => viewport ?? undefined, [viewport]);
 
     //--------------------------------------------------------------------------
     const onResize = useCallback(() => {
@@ -251,4 +260,4 @@ export function Viewport({
             </div>
         </ViewportContext.Provider>
     );
-}
+});
