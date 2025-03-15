@@ -1,5 +1,11 @@
 # @3dverse/livelink-react
 
+## 0.2.41
+
+### Patch Changes
+
+-   feat(livelink.react): expose livelink viewport created by the Viewport component through a ref
+
 ## 0.2.40
 
 ### Patch Changes

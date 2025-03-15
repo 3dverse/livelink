@@ -1,5 +1,13 @@
 # @3dverse/livelink-react-ui
 
+## 0.2.2
+
+### Patch Changes
+
+-   feat(livelink.react.ui): add a viewport prop to ViewCube to use it outside the context of a Viewport component
+-   Updated dependencies
+    -   @3dverse/livelink-react@0.2.41
+
 ## 0.2.1
 
 ### Patch Changes
