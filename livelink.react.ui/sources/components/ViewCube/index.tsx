@@ -1,24 +1,27 @@
 //------------------------------------------------------------------------------
 import React, { Children, useContext, useEffect, useState, type PropsWithChildren } from "react";
 import { ViewportContext } from "@3dverse/livelink-react";
-import type { CameraProjection, OverlayInterface, Vec3 } from "@3dverse/livelink";
+import type { OverlayInterface, Vec3, Viewport } from "@3dverse/livelink";
 
 //------------------------------------------------------------------------------
 export const ViewCube = ({
     size = 100,
     perspective = "none",
+    viewport: propsViewport,
     children,
-}: PropsWithChildren<{ size?: number; perspective?: string }>) => {
-    const { viewport, camera } = useContext(ViewportContext);
+}: PropsWithChildren<{ size?: number; perspective?: string; viewport?: Viewport }>) => {
+    const { viewport: contextViewport } = useContext(ViewportContext);
     const [cubeOrientation, setCubeOrientation] = useState<Vec3>([0, 0, 0]);
 
+    const viewport = propsViewport || contextViewport;
+
     useEffect(() => {
-        if (!viewport || !camera) {
+        if (!viewport) {
             return;
         }
 
         const overlay = new ViewCubeOverlay({
-            viewport_camera_projection: camera,
+            viewport,
             setCubeOrientation,
         });
 
@@ -27,7 +30,7 @@ export const ViewCube = ({
         return () => {
             viewport.removeOverlay({ overlay });
         };
-    }, [viewport, camera]);
+    }, [viewport]);
 
     if (Children.count(children) !== 6) {
         throw new Error("CameraCubeWidget must have exactly 6 children");
@@ -93,22 +96,26 @@ export const ViewCube = ({
 
 //------------------------------------------------------------------------------
 class ViewCubeOverlay implements OverlayInterface {
-    #viewport_camera_projection: CameraProjection;
+    #viewport: Viewport;
     #setCubeOrientation: (orientation: Vec3) => void;
 
     constructor({
-        viewport_camera_projection,
+        viewport,
         setCubeOrientation,
     }: {
-        viewport_camera_projection: CameraProjection;
+        viewport: Viewport;
         setCubeOrientation: (orientation: Vec3) => void;
     }) {
-        this.#viewport_camera_projection = viewport_camera_projection;
+        this.#viewport = viewport;
         this.#setCubeOrientation = setCubeOrientation;
     }
 
     draw(): null {
-        const [x, y, z] = this.#viewport_camera_projection.world_euler_orientation;
+        if (!this.#viewport.camera_projection) {
+            return null;
+        }
+
+        const [x, y, z] = this.#viewport.camera_projection.world_euler_orientation;
         this.#setCubeOrientation([x, -y, z]);
         return null;
     }
