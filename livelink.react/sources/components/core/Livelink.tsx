@@ -69,6 +69,18 @@ export type SessionJoinOrStart = {
 };
 
 /**
+ * Represents the mode for joining an existing session as a guest user.
+ *
+ * @inline
+ */
+export type SessionJoinGuest = {
+    /**
+     * The authentication type for the guest client.
+     */
+    clientType: "guest";
+};
+
+/**
  * Represents the union of all possible session open modes.
  *
  * This type includes:
@@ -77,7 +89,7 @@ export type SessionJoinOrStart = {
  *
  * @inline
  */
-export type SessionOpenMode = StrictUnion<SessionJoinMode | SessionJoinOrStart>;
+export type SessionOpenMode = StrictUnion<SessionJoinMode | SessionJoinOrStart | SessionJoinGuest>;
 
 /**
  * Parameters for establishing a Livelink connection.
@@ -150,6 +162,7 @@ export function LivelinkProvider({
     InactivityWarningPanel,
     ConnectionErrorPanel,
     autoJoinExisting = true,
+    clientType,
     children,
 }: PropsWithChildren<LivelinkConnectParameters>): JSX.Element {
     const [instance, setInstance] = useState<LivelinkInstance | null>(null);
@@ -166,6 +179,7 @@ export function LivelinkProvider({
             autoJoinExisting,
             sceneId,
             sessionId,
+            clientType,
         }: SessionOpenMode): Promise<Livelink.Livelink> => {
             if (sessionId) {
                 const session = await Livelink.Session.findById({ session_id: sessionId, token });
@@ -181,6 +195,15 @@ export function LivelinkProvider({
                 } else {
                     return LivelinkInstance.start({ scene_id: sceneId, token, is_transient: isTransient });
                 }
+            }
+
+            if (clientType === "guest") {
+                const session = await Livelink.Session.findByGuestToken({ guest_token: token });
+                if (!session) {
+                    throw new Error(`No session available for guest token '${token}'`);
+                }
+
+                return LivelinkInstance.join({ session });
             }
 
             throw new Error("What are we doing here?!");
@@ -215,7 +238,13 @@ export function LivelinkProvider({
             setInactivityWarning(null);
         };
 
-        getOrCreateConnectionPromise({ autoJoinExisting, sceneId, sessionId, token } as LivelinkConnectParameters)
+        getOrCreateConnectionPromise({
+            autoJoinExisting,
+            sceneId,
+            sessionId,
+            token,
+            clientType,
+        } as LivelinkConnectParameters)
             .then(instance => {
                 // if the component is unmounted, stop right here, and do not proceed with the connection
                 if (abort_controller.signal.aborted) {
@@ -251,7 +280,7 @@ export function LivelinkProvider({
             setIsConnectionLost(false);
             setInactivityWarning(null);
         };
-    }, [token, autoJoinExisting, sceneId, sessionId, isTransient]);
+    }, [token, autoJoinExisting, sceneId, sessionId, isTransient, clientType]);
 
     useEffect(() => {
         if (!instance) {
