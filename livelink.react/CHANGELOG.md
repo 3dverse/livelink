@@ -1,5 +1,14 @@
 # @3dverse/livelink-react
 
+## 0.2.42
+
+### Patch Changes
+
+-   feat(livelink.react): add guest token support
+-   Updated dependencies
+-   Updated dependencies
+    -   @3dverse/livelink@0.8.30
+
 ## 0.2.41
 
 ### Patch Changes
