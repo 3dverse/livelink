@@ -248,9 +248,9 @@ js:livelink.js:docs-trigger:
     - job: js:livelink.react:docs
       artifacts: false
       optional: true
-
   variables:
     # These variables will be used in the triggered downstream pipeline to download the generated docs artifacts.
+    DISABLE_DEFAULT_PIPELINES: "true"
     LIVELINK_PACKAGE_NAMES: livelink.js livelink.react
     LIVELINK_PACKAGE_ROOT: ${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/
     LIVELINK_PACKAGE_PATH: /latest/docs-md.tgz

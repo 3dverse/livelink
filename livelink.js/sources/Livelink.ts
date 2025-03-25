@@ -323,8 +323,6 @@ export class Livelink {
             this.#encoded_frame_consumer.release();
         }
 
-        await this.session.close();
-
         this.#remote_frame_proxy.release();
 
         await this.#core.disconnect();
