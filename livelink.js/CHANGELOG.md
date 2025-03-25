@@ -1,5 +1,12 @@
 # @3dverse/livelink
 
+## 0.8.30
+
+### Patch Changes
+
+-   feat(livelink.js): add guest token support
+-   fix(livelink.js): do not attempt to close the session when calling disconnect
+
 ## 0.8.29
 
 ### Patch Changes
