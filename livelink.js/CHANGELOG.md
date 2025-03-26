@@ -1,5 +1,11 @@
 # @3dverse/livelink
 
+## 0.8.31
+
+### Patch Changes
+
+-   fix(livelink.js): reversed mouse wheel direction with truck and screen pan actions on default camera controller
+
 ## 0.8.30
 
 ### Patch Changes
