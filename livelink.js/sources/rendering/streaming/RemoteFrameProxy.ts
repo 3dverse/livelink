@@ -109,7 +109,6 @@ export class RemoteFrameProxy implements DecodedFrameConsumer {
         for (const surface of this.#surfaces) {
             surface.release();
         }
-        this.#surfaces.length = 0;
     }
 
     /**
