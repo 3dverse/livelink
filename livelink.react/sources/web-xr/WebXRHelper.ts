@@ -10,8 +10,9 @@ import {
     CameraProjection,
     RenderGraphDataObject,
     XRContext,
+    Transform,
 } from "@3dverse/livelink";
-import { Quaternion, Vector3 } from "threejs-math";
+import { Quaternion, Vector3, Matrix4 } from "threejs-math";
 
 //------------------------------------------------------------------------------
 type XRViewports = Array<{
@@ -36,11 +37,6 @@ function createPromiseWithResolvers<T>(): {
 }
 
 //------------------------------------------------------------------------------
-type CamerasOriginTransform = {
-    position: Vec3;
-    orientation: Quat;
-};
-
 /**
  * @experimental
  */
@@ -57,7 +53,7 @@ export class WebXRHelper {
     /**
      * Use it to shift the XRView camera transforms
      */
-    cameras_origin: CamerasOriginTransform | null = null;
+    cameras_origin: Omit<Transform, "eulerOrientation"> | null = null;
 
     //--------------------------------------------------------------------------
     // References to livelink core
@@ -227,6 +223,11 @@ export class WebXRHelper {
 
         this.#core = livelink;
         const xr_views = await this.#getXRViews();
+        if (xr_views.length > 2) {
+            console.error("WebXRHelper doesn't support more than 2 eyes yet");
+            // Though it's not supported we still try to configure all viewports for each views and deal with the 2
+            // first views cameras inside `this.#onXRFrame`.
+        }
         this.#configureLivelinkViewports(xr_views);
         if (enableScale) {
             this.#configureScaleFactor(xr_views);
@@ -347,122 +348,7 @@ export class WebXRHelper {
 
     //--------------------------------------------------------------------------
     /**
-     * Apply a transformation on the single eye of the XR device. Transform is
-     * expressed with a position vector and an orientation quaternion.
-     * @param param0
-     */
-    #transformSingleEye({
-        eye,
-        transform,
-        inverse = false,
-    }: {
-        eye: { position: Vec3; orientation: Quat };
-        transform: { position: Vec3; orientation: Quat };
-        inverse?: boolean;
-    }): { position: Vec3; orientation: Quat } {
-        // TODO: this might probably be more clear and efficient if implemented
-        // with matrix operations.
-        // Transformation to apply
-        const transform_tjs = {
-            position: new Vector3(...transform.position),
-            quaternion: new Quaternion(...transform.orientation),
-        };
-        const eye_tjs = {
-            position: new Vector3(...eye.position),
-            quaternion: new Quaternion(...eye.orientation),
-        };
-        if (inverse) {
-            transform_tjs.quaternion.invert();
-            eye_tjs.position.sub(transform_tjs.position).applyQuaternion(transform_tjs.quaternion);
-        } else {
-            eye_tjs.position.applyQuaternion(transform_tjs.quaternion).add(transform_tjs.position);
-        }
-        eye_tjs.quaternion.premultiply(transform_tjs.quaternion);
-        return {
-            position: eye_tjs.position.toArray() as Vec3,
-            orientation: eye_tjs.quaternion.toArray() as Quat,
-        };
-    }
-
-    //--------------------------------------------------------------------------
-    /**
-     * Apply a transformation on the eyes of an headset. Transform is expressed
-     * with a position vector and an orientation quaternion. Eyes order does
-     * not matter.
-     */
-    #transformEyes({
-        eye1,
-        eye2,
-        transform,
-        inverse = false,
-    }: {
-        eye1: { position: Vec3; orientation: Quat };
-        eye2: { position: Vec3; orientation: Quat };
-        transform: { position: Vec3; orientation: Quat };
-        inverse?: boolean;
-    }): { eye1: { position: Vec3; orientation: Quat }; eye2: { position: Vec3; orientation: Quat } } {
-        // TODO: this might probably be more clear and efficient if implemented
-        // with matrix operations.
-        // Eyes: order does not matter
-        const eye1_tjs = {
-            position: new Vector3(...eye1.position),
-            quaternion: new Quaternion(...eye1.orientation),
-        };
-        const eye2_tjs = {
-            position: new Vector3(...eye2.position),
-            quaternion: new Quaternion(...eye2.orientation),
-        };
-        // Transformation to apply
-        const transform_tjs = {
-            position: new Vector3(...transform.position),
-            quaternion: new Quaternion(...transform.orientation),
-        };
-
-        // Calculate the center eye
-        const center_eye = {
-            position: eye1_tjs.position.clone().add(eye2_tjs.position).multiplyScalar(0.5),
-        };
-        // Apply the transformation on the center eye
-        // (transform_tjs.quaternion not applied because it is done directly on eyes)
-        const transformed_center_eye = {
-            position: center_eye.position.clone().add(transform_tjs.position),
-        };
-        // not used but still worth to know how it's computed
-        // center_eye.quaternion = eye1_tjs.quaternion.clone().slerp(eye2_tjs.quaternion, 0.5);
-        // transformed_center_eye.quaternion = center_eye.quaternion.clone().premultiply(transform_tjs.quaternion);
-
-        if (inverse) {
-            // Inverse of the transform quaternion
-            transform_tjs.quaternion.invert();
-        }
-
-        // Apply the transformation for eye1 and eye2
-        const eyes = [eye1_tjs, eye2_tjs];
-        const [transformed_eye1, transformed_eye2] = eyes.map(eye => {
-            if (inverse) {
-                eye.position.add(center_eye.position).sub(transformed_center_eye.position);
-                eye.position.applyQuaternion(transform_tjs.quaternion);
-            } else {
-                eye.position.applyQuaternion(transform_tjs.quaternion);
-                eye.position.sub(center_eye.position).add(transformed_center_eye.position);
-            }
-
-            eye.quaternion.premultiply(transform_tjs.quaternion);
-            return {
-                position: eye.position.toArray() as Vec3,
-                orientation: eye.quaternion.toArray() as Quat,
-            };
-        });
-
-        return {
-            eye1: transformed_eye1,
-            eye2: transformed_eye2,
-        };
-    }
-
-    //--------------------------------------------------------------------------
-    /**
-     * Apply this.#cameras_origin transformation on the eye(s) to shift the
+     * Apply `this.cameras_origin` transformation on the eye(s) to shift the
      * eye(s) transform in the world.
      * @param cameras
      */
@@ -470,52 +356,29 @@ export class WebXRHelper {
         if (!this.cameras_origin) {
             return;
         }
-        // TODO: we probably shall identify the number of eyese better than
-        // relying only on the number of cameras.
-        if (cameras.length === 2) {
-            const camera1 = cameras[0];
-            const camera2 = cameras[1];
-            const eye1_transform = {
-                position: camera1.local_transform.position,
-                orientation: camera1.local_transform.orientation,
-            };
-            const eye2_transform = {
-                position: camera2.local_transform.position,
-                orientation: camera2.local_transform.orientation,
-            };
-            const { eye1, eye2 } = this.#transformEyes({
-                eye1: eye1_transform,
-                eye2: eye2_transform,
-                transform: this.cameras_origin,
-                inverse: false,
-            });
-            camera1.local_transform = {
-                position: eye1.position,
-                orientation: eye1.orientation,
-            };
-            cameras[1].local_transform = {
-                position: eye2.position,
-                orientation: eye2.orientation,
-            };
-            return;
-        }
-        if (cameras.length === 1) {
-            const camera = cameras[0];
-            const eye_transform = {
-                position: camera.local_transform.position,
-                orientation: camera.local_transform.orientation,
-            };
-            camera.local_transform = this.#transformSingleEye({
-                eye: eye_transform,
-                transform: this.cameras_origin,
-                inverse: false,
-            });
+
+        const origin_position = new Vector3().fromArray(this.cameras_origin.position);
+        const origin_quat = new Quaternion().fromArray(this.cameras_origin.orientation);
+        const origin_scale = new Vector3().fromArray(this.cameras_origin.scale);
+        const reversed_origin_matrix = new Matrix4().compose(origin_position, new Quaternion(), origin_scale).invert();
+
+        const origin_quat_conjugate = origin_quat.conjugate();
+
+        for (const camera of cameras) {
+            const { position, orientation } = camera.global_transform;
+            const transformed_position = new Vector3().fromArray(position);
+            transformed_position.applyMatrix4(reversed_origin_matrix);
+            transformed_position.toArray(position);
+
+            const quaternion = new Quaternion().fromArray(orientation);
+            const transformed_orientation = new Quaternion().multiplyQuaternions(origin_quat_conjugate, quaternion);
+            transformed_orientation.toArray(orientation);
         }
     }
 
     //--------------------------------------------------------------------------
     /**
-     * Unapply this.#cameras_origin transformation on the eye(s) to shift back
+     * Unapply this.cameras_origin transformation on the eye(s) to shift back
      * the eye(s) transform in the world. This is to find back the original
      * transform of the headset eyes to place the billboard. We must apply this
      * inverse transform because we want to use the frame_camera_transform and
@@ -533,34 +396,21 @@ export class WebXRHelper {
         if (!this.cameras_origin) {
             return;
         }
-        // TODO: we probably shall identify the number of eyese better than
-        // relying only on the number of cameras.
-        if (views.length === 2) {
-            const view1 = views[0];
-            const view2 = views[1];
-            const { eye1, eye2 } = this.#transformEyes({
-                eye1: view1.frame_camera_transform,
-                eye2: view2.frame_camera_transform,
-                transform: this.cameras_origin,
-                inverse: true,
-            });
-            view1.frame_camera_transform = {
-                position: eye1.position,
-                orientation: eye1.orientation,
-            };
-            view2.frame_camera_transform = {
-                position: eye2.position,
-                orientation: eye2.orientation,
-            };
-            return;
-        }
-        if (views.length === 1) {
-            const view = views[0];
-            view.frame_camera_transform = this.#transformSingleEye({
-                eye: view.frame_camera_transform,
-                transform: this.cameras_origin,
-                inverse: true,
-            });
+
+        const origin_position = new Vector3().fromArray(this.cameras_origin.position);
+        const origin_quat = new Quaternion().fromArray(this.cameras_origin.orientation);
+        const origin_scale = new Vector3().fromArray(this.cameras_origin.scale);
+        const transform = new Matrix4().compose(origin_position, new Quaternion(), origin_scale);
+
+        for (const view of views) {
+            const { position, orientation } = view.frame_camera_transform;
+            const transformed_position = new Vector3().fromArray(position);
+            transformed_position.applyMatrix4(transform);
+            transformed_position.toArray(position);
+
+            const quaternion = new Quaternion().fromArray(orientation);
+            const transformed_orientation = new Quaternion().multiplyQuaternions(origin_quat, quaternion);
+            transformed_orientation.toArray(orientation);
         }
     }
 
@@ -585,6 +435,7 @@ export class WebXRHelper {
 
         if (this.#xrViewportsHaveChanged(xr_views)) {
             // For now, we end the session if the viewports have changed
+            console.error("XRViewports have changed, ending the XRSession");
             session.end();
         }
 
@@ -592,12 +443,14 @@ export class WebXRHelper {
 
         const views = xr_views.map(({ view, viewport }, index) => {
             const current_viewport = this.#surface.viewports[index];
+            const { world_position, world_orientation } = current_viewport.camera_projection!;
             return {
                 view,
                 viewport,
                 frame_camera_transform: {
-                    position: current_viewport.camera_projection!.world_position as Vec3,
-                    orientation: current_viewport.camera_projection!.world_orientation as Quat,
+                    // Copy the transform array to prevent future mutations of the original arrays
+                    position: Array.from(world_position) as Vec3,
+                    orientation: Array.from(world_orientation) as Quat,
                 },
             };
         });
