@@ -1,5 +1,11 @@
 # @3dverse/livelink-react
 
+## 0.2.43
+
+### Patch Changes
+
+-   feat(livelink.react): webxr, added scale to the origin transformation of the cameras
+
 ## 0.2.42
 
 ### Patch Changes
