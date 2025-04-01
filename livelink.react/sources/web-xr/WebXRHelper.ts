@@ -112,6 +112,11 @@ export class WebXRHelper {
     }
 
     //--------------------------------------------------------------------------
+    get is_stereo_vision(): boolean {
+        return this.#xr_viewports.length === 2;
+    }
+
+    //--------------------------------------------------------------------------
     constructor(resolution_scale: number = 1.0) {
         this.#surface = new OffscreenSurface({
             width: window.innerWidth, // Not sure
@@ -477,11 +482,23 @@ export class WebXRHelper {
 
             camera.local_transform = { position, orientation };
 
-            camera.perspective_lens = this.#computePerspectiveLens(
+            const new_perspective_lens = this.#computePerspectiveLens(
                 view.projectionMatrix,
                 livelink_viewport.width,
                 livelink_viewport.height,
             );
+            const { aspectRatio, fovy, nearPlane, farPlane, offset } = new_perspective_lens;
+            const has_changed =
+                !camera.perspective_lens ||
+                camera.perspective_lens.aspectRatio !== aspectRatio ||
+                camera.perspective_lens.fovy !== fovy ||
+                camera.perspective_lens.nearPlane !== nearPlane ||
+                camera.perspective_lens.farPlane !== farPlane ||
+                camera.perspective_lens.offset !== offset;
+            if (has_changed) {
+                // TODO: verify this change check is really necessary or if livelink handles it
+                camera.perspective_lens = new_perspective_lens;
+            }
         });
         this.#applyCamerasOrigin(cameras);
     }
@@ -620,7 +637,12 @@ export class WebXRHelper {
     } {
         const aspectRatio = viewportWidth / viewportHeight;
         const fovy = Math.atan(1 / projectionMatrix[5]) * (180 / Math.PI) * 2;
-        const nearPlane = projectionMatrix[14] / (projectionMatrix[10] - 1);
+        let nearPlane = projectionMatrix[14] / (projectionMatrix[10] - 1);
+        if (this.is_stereo_vision && this.cameras_origin && this.cameras_origin.scale[0] !== 1) {
+            // if using stereo vision and the cameras origin has a scale then use it
+            nearPlane *= 1 / this.cameras_origin.scale[0];
+        }
+
         const farPlane = projectionMatrix[14] / (projectionMatrix[10] + 1);
         const offset = [projectionMatrix[8], projectionMatrix[9] * -1] as [number, number];
         return { fovy, aspectRatio, nearPlane, farPlane, offset };
