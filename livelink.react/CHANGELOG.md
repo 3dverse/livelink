@@ -1,5 +1,11 @@
 # @3dverse/livelink-react
 
+## 0.2.44
+
+### Patch Changes
+
+-   feat: adapt near plane distance to respect the scale of the cameras_origin which alter the pupillary distance on stereovision headsets
+
 ## 0.2.43
 
 ### Patch Changes
