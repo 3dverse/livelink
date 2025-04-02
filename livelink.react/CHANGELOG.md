@@ -1,5 +1,12 @@
 # @3dverse/livelink-react
 
+## 0.2.45
+
+### Patch Changes
+
+-   fix(livelink.react): useEntity no longer triggers re-render with some specific props
+-   refactor(livelink-react): useEntity property `names` used to find an entity with its name has been renamed to `name`
+
 ## 0.2.44
 
 ### Patch Changes
