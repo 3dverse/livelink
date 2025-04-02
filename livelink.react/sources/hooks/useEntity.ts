@@ -121,14 +121,7 @@ export function useEntity(
             setEntity(null);
             setIsPending(true);
         };
-    }, [
-        instance,
-        findEntityQuery.euid,
-        findEntityQuery.linkage,
-        findEntityQuery.names,
-        findEntityQuery.mandatory_components,
-        findEntityQuery.forbidden_components,
-    ]);
+    }, [instance, JSON.stringify(findEntityQuery)]);
 
     useEffect(() => {
         const alwaysUpdate = watchedComponents === "any";
