@@ -38,11 +38,29 @@ type NewEntity = {
 };
 
 /**
- * A provider of an entity.
- *
  * @inline
  */
-type EntityProvider = NewEntity | FindEntityQuery;
+type FindEntityQueryByNames = {
+    /**
+     * The names of the entities to find.
+     */
+    names: Array<string>;
+};
+
+/**
+ * @inline
+ */
+type FindEntityQueryByName = {
+    /**
+     * The name of the entity to find.
+     */
+    name: string;
+};
+
+/**
+ * A provider of an entity.
+ */
+type EntityProvider = NewEntity | FindEntityQueryByName | Exclude<FindEntityQuery, FindEntityQueryByNames>;
 
 /**
  * A hook that provides an entity and a flag indicating if the entity is pending loading.
@@ -79,7 +97,7 @@ export function useEntity(
     const findEntityQuery = entityProvider as {
         euid?: UUID;
         linkage?: Array<UUID>;
-        names?: Array<string>;
+        name?: string;
         mandatory_components?: Array<ComponentName>;
         forbidden_components?: Array<ComponentName>;
     };
@@ -100,8 +118,8 @@ export function useEntity(
                 });
             } else if ("euid" in findEntityQuery) {
                 return (await instance.scene.findEntities({ entity_uuid: findEntityQuery.euid! }))[0];
-            } else if ("names" in findEntityQuery) {
-                return (await instance.scene.findEntitiesByNames({ entity_names: findEntityQuery.names! }))[0];
+            } else if ("name" in findEntityQuery && findEntityQuery.name) {
+                return (await instance.scene.findEntitiesByNames({ entity_names: [findEntityQuery.name] }))[0];
             } else if ("mandatory_components" in findEntityQuery) {
                 return (
                     await instance.scene.findEntitiesWithComponents({
@@ -121,14 +139,7 @@ export function useEntity(
             setEntity(null);
             setIsPending(true);
         };
-    }, [
-        instance,
-        findEntityQuery.euid,
-        findEntityQuery.linkage,
-        findEntityQuery.names,
-        findEntityQuery.mandatory_components,
-        findEntityQuery.forbidden_components,
-    ]);
+    }, [instance, JSON.stringify(findEntityQuery)]);
 
     useEffect(() => {
         const alwaysUpdate = watchedComponents === "any";
