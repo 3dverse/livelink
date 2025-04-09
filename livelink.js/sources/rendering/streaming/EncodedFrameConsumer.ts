@@ -2,8 +2,43 @@
 import type { Enums, Vec2i } from "@3dverse/livelink.core";
 
 //------------------------------------------------------------------------------
-import { FrameMetaData } from "./FrameMetaData";
-import { DecodedFrameConsumer } from "./DecodedFrameConsumer";
+import type { FrameMetaData } from "./FrameMetaData";
+import type { DecodedFrameConsumer } from "./DecodedFrameConsumer";
+
+/**
+ * @category Streaming
+ */
+export type EncodedFrame = {
+    /**
+     * The encoded frame data.
+     */
+    video_stream: DataView;
+
+    /**
+     * Meta data about the frame.
+     */
+    meta_data: FrameMetaData;
+};
+
+/**
+ * @category Streaming
+ */
+export type DecodedFrame = {
+    /**
+     * The decoded frame data.
+     */
+    pixels: VideoFrame | OffscreenCanvas;
+
+    /**
+     * Frame dimensions in pixels.
+     */
+    dimensions_in_pixels: Vec2i;
+
+    /**
+     * Meta data about the frame.
+     */
+    meta_data: FrameMetaData;
+};
 
 /**
  * A base class for consuming encoded frames.
@@ -83,11 +118,10 @@ export abstract class EncodedFrameConsumer {
     /**
      * Consume an encoded frame. Called as soon as a frame is received.
      *
-     * @param frame
-     * @param frame.encoded_frame - The encoded frame data
-     * @param frame.meta_data - The frame meta data
+     * @param params
+     * @param params.encoded_frame - The encoded frame data
      */
-    abstract consumeEncodedFrame(frame: { encoded_frame: DataView; meta_data: FrameMetaData }): void;
+    abstract consumeEncodedFrame({ encoded_frame }: { encoded_frame: EncodedFrame }): void;
 
     /**
      * Must be called by the implementation as soon as the frame is decoded to update the cameras in the scene.
@@ -96,9 +130,9 @@ export abstract class EncodedFrameConsumer {
      * @param frame.meta_data - The frame meta data
      * @param frame.decoded_frame - The decoded frame data
      */
-    protected _onFrameDecoded(frame: { decoded_frame: VideoFrame | OffscreenCanvas; meta_data: FrameMetaData }): void {
-        this.#applyFrameMetaData(frame);
-        this.#decoded_frame_consumer?.consumeDecodedFrame(frame);
+    protected _onFrameDecoded({ decoded_frame }: { decoded_frame: DecodedFrame }): void {
+        this.#applyFrameMetaData({ meta_data: decoded_frame.meta_data });
+        this.#decoded_frame_consumer?.consumeDecodedFrame({ decoded_frame });
     }
 
     /**

@@ -48,7 +48,9 @@ export class VirtualSurface extends RenderingSurfaceBase {
     }
 
     /**
+     * @internal
+     *
      * Do nothing.
      */
-    _drawFrame(): void {}
+    protected _drawFrame(): void {}
 }

@@ -1,5 +1,5 @@
 //------------------------------------------------------------------------------
-import { FrameMetaData } from "./FrameMetaData";
+import type { DecodedFrame } from "./EncodedFrameConsumer";
 
 /**
  * The interface for consuming decoded frames.
@@ -32,13 +32,6 @@ export interface DecodedFrameConsumer {
      *
      * @param params
      * @param params.decoded_frame - The decoded frame data
-     * @param params.meta_data - The frame meta data
      */
-    consumeDecodedFrame({
-        decoded_frame,
-        meta_data,
-    }: {
-        decoded_frame: VideoFrame | OffscreenCanvas;
-        meta_data: FrameMetaData;
-    }): void;
+    consumeDecodedFrame({ decoded_frame }: { decoded_frame: DecodedFrame }): void;
 }

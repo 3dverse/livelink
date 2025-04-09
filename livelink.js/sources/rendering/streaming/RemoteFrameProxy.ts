@@ -6,7 +6,8 @@ import { Livelink } from "../../Livelink";
 import { Viewport } from "../camera/Viewport";
 import { RenderingSurfaceBase } from "../surfaces/RenderingSurfaceBase";
 import { DecodedFrameConsumer } from "./DecodedFrameConsumer";
-import { FrameMetaData } from "./FrameMetaData";
+import { RelativeRect } from "../surfaces/Rect";
+import { DecodedFrame } from "./EncodedFrameConsumer";
 
 /**
  * A remote frame proxy represents the surface on which the remote renderer will draw.
@@ -36,7 +37,7 @@ export class RemoteFrameProxy implements DecodedFrameConsumer {
     #surfaces: Array<RenderingSurfaceBase> = [];
 
     /**
-     * Surface actual dimensions.
+     * Surface actual dimensions with padding.
      */
     #dimensions: Vec2u16 = [0, 0];
 
@@ -114,15 +115,9 @@ export class RemoteFrameProxy implements DecodedFrameConsumer {
     /**
      *
      */
-    consumeDecodedFrame({
-        decoded_frame,
-        meta_data,
-    }: {
-        decoded_frame: VideoFrame | OffscreenCanvas;
-        meta_data: FrameMetaData;
-    }): void {
+    consumeDecodedFrame({ decoded_frame }: { decoded_frame: DecodedFrame }): void {
         for (const surface of this.#surfaces) {
-            surface.drawFrame({ frame: decoded_frame, meta_data });
+            surface.drawFrame({ decoded_frame });
         }
     }
 
@@ -242,7 +237,6 @@ export class RemoteFrameProxy implements DecodedFrameConsumer {
      */
     #computeSurfaceSize(): void {
         const { offset, width, height } = this.#computeBoundingRect();
-        this.#computeViewportsOffsets(offset);
 
         const new_dimensions: Vec2i = [
             this.#next_multiple(width, this.#size_multiple[0]),
@@ -251,6 +245,8 @@ export class RemoteFrameProxy implements DecodedFrameConsumer {
 
         this.#needs_resize ||= new_dimensions[0] != this.#dimensions[0] || new_dimensions[1] != this.dimensions[1];
         this.#dimensions = new_dimensions;
+
+        this.#computeSurfaceDimensions({ offset, width: this.#dimensions[0], height: this.#dimensions[1] });
     }
 
     /**
@@ -276,11 +272,15 @@ export class RemoteFrameProxy implements DecodedFrameConsumer {
     /**
      *
      */
-    #computeViewportsOffsets(client_rect_offset: Vec2i): void {
+    #computeSurfaceDimensions({ offset, width, height }: { offset: Vec2i; width: number; height: number }): void {
         for (const surface of this.#surfaces) {
             const clientRect = surface.getBoundingRect();
-            surface.offset[0] = clientRect.left - client_rect_offset[0];
-            surface.offset[1] = clientRect.top - client_rect_offset[1];
+            surface.relative_rect = new RelativeRect({
+                left: (clientRect.left - offset[0]) / width,
+                top: (clientRect.top - offset[1]) / height,
+                width: (clientRect.right - clientRect.left) / width,
+                height: (clientRect.bottom - clientRect.top) / height,
+            });
         }
     }
 }

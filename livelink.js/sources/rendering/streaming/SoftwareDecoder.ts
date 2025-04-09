@@ -9,7 +9,7 @@ import YUVCanvas from "../../../external/YUVCanvas.js";
 
 //------------------------------------------------------------------------------
 import { FrameMetaData } from "./FrameMetaData.js";
-import { EncodedFrameConsumer } from "./EncodedFrameConsumer.js";
+import { EncodedFrame, EncodedFrameConsumer } from "./EncodedFrameConsumer.js";
 import { DecodedFrameConsumer } from "./DecodedFrameConsumer.js";
 
 /**
@@ -164,15 +164,13 @@ export class SoftwareDecoder extends EncodedFrameConsumer {
      * @param params.encoded_frame - The encoded frame data
      * @param params.meta_data - The frame meta data
      */
-    override consumeEncodedFrame({
-        encoded_frame,
-        meta_data,
-    }: {
-        encoded_frame: DataView;
-        meta_data: FrameMetaData;
-    }): void {
-        const f = new Uint8Array(encoded_frame.buffer, encoded_frame.byteOffset, encoded_frame.byteLength);
-        this.#broadway_sw_decoder.decode(f, meta_data);
+    override consumeEncodedFrame({ encoded_frame }: { encoded_frame: EncodedFrame }): void {
+        const data = new Uint8Array(
+            encoded_frame.video_stream.buffer,
+            encoded_frame.video_stream.byteOffset,
+            encoded_frame.video_stream.byteLength,
+        );
+        this.#broadway_sw_decoder.decode(data, encoded_frame.meta_data);
     }
 
     /**
@@ -199,6 +197,12 @@ export class SoftwareDecoder extends EncodedFrameConsumer {
         });
 
         const meta_data = infos[0];
-        super._onFrameDecoded({ decoded_frame: this.#offscreen_canvas!, meta_data });
+        super._onFrameDecoded({
+            decoded_frame: {
+                pixels: this.#offscreen_canvas!,
+                dimensions_in_pixels: [width, height],
+                meta_data,
+            },
+        });
     };
 }

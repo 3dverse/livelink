@@ -1,4 +1,10 @@
-import { FrameMetaData } from "../streaming/FrameMetaData";
+import type { RelativeRect } from "../surfaces/Rect";
+import type { DecodedFrame } from "../streaming/EncodedFrameConsumer";
+
+/**
+ * @category Rendering Contexts
+ */
+export type FrameSection = DecodedFrame & { section: RelativeRect };
 
 /**
  * @category Rendering Contexts
@@ -7,16 +13,12 @@ export abstract class ContextProvider {
     /**
      *
      */
-    abstract drawFrame({
-        frame,
-        left,
-        top,
-        meta_data,
+    abstract drawFrameSection({
+        frame_section,
+        viewport,
     }: {
-        frame: VideoFrame | OffscreenCanvas;
-        left: number;
-        top: number;
-        meta_data: FrameMetaData;
+        frame_section: FrameSection;
+        viewport: RelativeRect;
     }): void;
 
     /**

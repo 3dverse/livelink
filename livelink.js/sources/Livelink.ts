@@ -552,9 +552,15 @@ export class Livelink {
         const frame_height = this.#remote_frame_proxy.height;
 
         const relative_position_on_viewport = viewport._getScreenPosition({ position });
+
+        const rendering_surface_offset = [
+            viewport.rendering_surface.relative_rect.left * frame_width,
+            viewport.rendering_surface.relative_rect.top * frame_height,
+        ];
+
         const viewport_offset_on_frame = [
-            viewport.rendering_surface.offset[0] + viewport.offset[0],
-            viewport.rendering_surface.offset[1] + viewport.offset[1],
+            rendering_surface_offset[0] + viewport.offset[0],
+            rendering_surface_offset[1] + viewport.offset[1],
         ];
 
         return [
@@ -605,16 +611,18 @@ export class Livelink {
     /**
      *
      */
-    #onFrameReceived = (frame_data: Events.FrameReceivedEvent): void => {
-        this.session._updateClients({ core: this, client_data: frame_data.meta_data.clients });
+    #onFrameReceived = ({ encoded_frame, meta_data: raw_frame_meta_data }: Events.FrameReceivedEvent): void => {
+        this.session._updateClients({ core: this, client_data: raw_frame_meta_data.clients });
         const meta_data = convertRawFrameMetaDataToFrameMetaData({
-            raw_frame_meta_data: frame_data.meta_data,
+            raw_frame_meta_data,
             client_id: this.session.client_id!,
             entity_registry: this.scene._entity_registry,
             viewports: this.viewports,
         });
 
-        this.#encoded_frame_consumer!.consumeEncodedFrame({ encoded_frame: frame_data.encoded_frame, meta_data });
+        this.#encoded_frame_consumer!.consumeEncodedFrame({
+            encoded_frame: { video_stream: encoded_frame, meta_data },
+        });
     };
 
     /**

@@ -1,4 +1,5 @@
-import { ContextProvider } from "./ContextProvider";
+import { ContextProvider, type FrameSection } from "./ContextProvider";
+import type { RelativeRect } from "../surfaces/Rect";
 
 /**
  * @category Rendering Contexts
@@ -24,17 +25,27 @@ export class Context2D extends ContextProvider {
     /**
      *
      */
-    drawFrame({ frame, left, top }: { frame: VideoFrame | OffscreenCanvas; left: number; top: number }): void {
+    drawFrameSection({ frame_section, viewport }: { frame_section: FrameSection; viewport: RelativeRect }): void {
+        const frame_offset_left = frame_section.section.left * frame_section.dimensions_in_pixels[0];
+        const frame_offset_top = frame_section.section.top * frame_section.dimensions_in_pixels[1];
+        const frame_width = frame_section.section.width * frame_section.dimensions_in_pixels[0];
+        const frame_height = frame_section.section.height * frame_section.dimensions_in_pixels[1];
+
+        const viewport_offset_left = viewport.left * this._canvas.width;
+        const viewport_offset_top = viewport.top * this._canvas.height;
+        const viewport_width = viewport.width * this._canvas.width;
+        const viewport_height = viewport.height * this._canvas.height;
+
         this._context2D.drawImage(
-            frame,
-            left,
-            top,
-            this._canvas.width,
-            this._canvas.height,
-            0,
-            0,
-            this._canvas.width,
-            this._canvas.height,
+            frame_section.pixels,
+            frame_offset_left,
+            frame_offset_top,
+            frame_width,
+            frame_height,
+            viewport_offset_left,
+            viewport_offset_top,
+            viewport_width,
+            viewport_height,
         );
     }
 

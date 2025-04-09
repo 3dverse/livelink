@@ -1,4 +1,4 @@
-import { ContextProvider, FrameMetaData, Quat, Vec3 } from "@3dverse/livelink";
+import { ContextProvider, FrameMetaData, FrameSection, Quat, Vec3 } from "@3dverse/livelink";
 
 type Canvas = HTMLCanvasElement | OffscreenCanvas;
 
@@ -29,7 +29,7 @@ export class PassthroughXRContext extends ContextProvider {
     /**
      *
      */
-    #last_frame: { frame: VideoFrame | OffscreenCanvas; meta_data: FrameMetaData } | null = null;
+    #last_frame_section: FrameSection | null = null;
 
     /**
      *
@@ -84,22 +84,17 @@ export class PassthroughXRContext extends ContextProvider {
     }
 
     /**
-     *
+     * @internal
      */
-    drawFrame(frame: {
-        frame: VideoFrame | OffscreenCanvas;
-        left: number;
-        top: number;
-        meta_data: FrameMetaData;
-    }): void {
-        this.#last_frame = frame;
+    drawFrameSection({ frame_section }: { frame_section: FrameSection }): void {
+        this.#last_frame_section = frame_section;
     }
 
     /**
      *
      */
     get meta_data(): FrameMetaData | null {
-        return this.#last_frame?.meta_data || null;
+        return this.#last_frame_section?.meta_data || null;
     }
 
     /**
@@ -117,7 +112,7 @@ export class PassthroughXRContext extends ContextProvider {
             };
         }>;
     }): void {
-        if (!this.#last_frame) {
+        if (!this.#last_frame_section) {
             return;
         }
 
@@ -133,21 +128,23 @@ export class PassthroughXRContext extends ContextProvider {
         const ls = gl.getUniformLocation(this.#shader_program!, "size");
         const lo = gl.getUniformLocation(this.#shader_program!, "offset");
 
-        const viewportWidth = 1 / xr_views.length;
-        const viewportHeight = 1;
+        const viewportWidth = this.#last_frame_section.section.width / xr_views.length;
+        const viewportHeight = this.#last_frame_section.section.height;
         const combinedViewportWidth = xr_views.reduce((acc, { viewport }) => acc + viewport.width, 0);
 
         gl.uniform2fv(ls, [viewportWidth, viewportHeight]);
 
         for (const { viewport } of xr_views) {
-            const frame_offset = viewport.x / combinedViewportWidth;
+            const viewport_offset = viewport.x / combinedViewportWidth;
+            const frame_offset =
+                this.#last_frame_section.section.left + viewport_offset * this.#last_frame_section.section.width;
 
             gl.activeTexture(gl.TEXTURE0);
             gl.bindTexture(gl.TEXTURE_2D, this.#texture_ref);
-            gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, this.#last_frame.frame);
+            gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, this.#last_frame_section.pixels);
 
             gl.viewport(viewport.x, viewport.y, viewport.width, viewport.height);
-            gl.uniform2fv(lo, [frame_offset, 0]);
+            gl.uniform2fv(lo, [frame_offset, this.#last_frame_section.section.top]);
             gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
         }
     }
