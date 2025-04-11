@@ -26,7 +26,8 @@ const variant_launch_sdk_url = `https://launchar.app/sdk/v1?key=${variant_launch
 //------------------------------------------------------------------------------
 export default {
     path: import.meta.VITE_FILE_NAME,
-    code: import.meta.VITE_FILE_CONTENT,
+    // This breaks Variant Launch Clip App on iOS (immersive-ar experience does not display)
+    // code: import.meta.VITE_FILE_CONTENT,
     title: "WebXR on iOS (AR only)",
     summary: "WebXR AR immersive experience on iOS using launch.variant3d.com",
     element: <App />,
