@@ -2,7 +2,7 @@ export * from "./ThreeOverlay";
 
 //------------------------------------------------------------------------------
 /**
- * Version of the Livelink React UI library, injected by the build system.
+ * Version of the Livelink Three library, injected by the build system.
  * @internal
  */
 declare const LIVELINK_THREE_VERSION: string;
