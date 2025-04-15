@@ -6,11 +6,10 @@ import {
     Livelink,
     Canvas,
     Viewport,
-    WebXRHelper,
-    WebXR,
     CameraController,
     useCameraEntity,
 } from "@3dverse/livelink-react";
+import { WebXRHelper, WebXR } from "@3dverse/livelink-webxr";
 import { LoadingOverlay } from "@3dverse/livelink-react-ui";
 
 //------------------------------------------------------------------------------

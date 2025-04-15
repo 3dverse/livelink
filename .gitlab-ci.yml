@@ -68,12 +68,13 @@ js:build:libs:
   before_script:
     - !reference [.node-cache, before_script]
   variables:
-    NPM_INSTALL_ARGS: "--workspace=livelink.js --workspace=livelink.react --workspace=livelink.react.ui --workspace=livelink.three"
+    NPM_INSTALL_ARGS: "--workspace=livelink.js --workspace=livelink.react --workspace=livelink.react.ui --workspace=livelink.three --workspace=livelink.webxr"
   script:
     - npm run build:js
     - npm run build:react
     - npm run build:react.ui
     - npm run build:three
+    - npm run build:webxr
   rules:
     - if: *default-branch-rule
     - if: *merge-request-on-release-rule

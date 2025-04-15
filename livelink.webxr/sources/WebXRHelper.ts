@@ -9,9 +9,9 @@ import {
     Entity,
     CameraProjection,
     RenderGraphDataObject,
-    XRContext,
     Transform,
 } from "@3dverse/livelink";
+import { XRContext } from "./XRContext";
 import { Quaternion, Vector3, Matrix4 } from "threejs-math";
 
 //------------------------------------------------------------------------------

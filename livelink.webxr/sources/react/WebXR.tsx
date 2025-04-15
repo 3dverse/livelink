@@ -2,8 +2,8 @@
 import React, { JSX, type PropsWithChildren, createContext, useContext, useEffect, useRef, useState } from "react";
 
 //------------------------------------------------------------------------------
-import { LivelinkContext } from "./Livelink";
-import { WebXRHelper } from "../../web-xr/WebXRHelper";
+import { LivelinkContext } from "@3dverse/livelink-react";
+import { WebXRHelper } from "../WebXRHelper";
 
 //------------------------------------------------------------------------------
 /**

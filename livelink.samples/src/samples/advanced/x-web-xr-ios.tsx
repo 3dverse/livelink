@@ -6,11 +6,10 @@ import {
     Livelink,
     Canvas,
     Viewport,
-    WebXRHelper,
-    WebXR,
     CameraController,
     useCameraEntity,
 } from "@3dverse/livelink-react";
+import { WebXRHelper, WebXR } from "@3dverse/livelink-webxr";
 import { LoadingOverlay } from "@3dverse/livelink-react-ui";
 
 //------------------------------------------------------------------------------
@@ -46,7 +45,14 @@ function App() {
         >
             {xrMode ? (
                 <WebXR mode={xrMode} onSessionEnd={() => setXRMode(null)}>
-                    <div className="fixed top-4 left-4">
+                    <div
+                        style={{
+                            zIndex: 11000,
+                            position: "absolute",
+                            top: "8rem",
+                            left: "8rem",
+                        }}
+                    >
                         <button
                             className="button button-primary"
                             onClick={() => setXRMode(null)}
