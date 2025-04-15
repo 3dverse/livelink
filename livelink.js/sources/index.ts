@@ -26,7 +26,6 @@ export * from "./rendering/streaming/WebCodecsDecoder";
 export * from "./rendering/streaming/EncodedFrameConsumer";
 export * from "./rendering/streaming/DecodedFrameConsumer";
 
-export * from "./rendering/contexts/XRContext";
 export * from "./rendering/contexts/Context2D";
 export * from "./rendering/contexts/ContextWebGL";
 export * from "./rendering/contexts/ContextProvider";

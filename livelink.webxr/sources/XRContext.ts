@@ -5,8 +5,7 @@ import type { Quat, Vec3 } from "@3dverse/livelink.core";
 import { mat4, quat, vec2, vec3 } from "gl-matrix";
 
 //------------------------------------------------------------------------------
-import { ContextProvider, FrameSection } from "./ContextProvider";
-import type { FrameMetaData } from "../streaming/FrameMetaData";
+import { ContextProvider, FrameMetaData, FrameSection } from "@3dverse/livelink";
 
 /**
  * @experimental

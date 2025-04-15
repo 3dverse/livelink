@@ -249,12 +249,12 @@ export class Livelink {
     /**
      * Interval between updates sent to the renderer.
      */
-    #update_interval = 0;
+    #update_interval: NodeJS.Timeout | number = 0;
 
     /**
      * Interval between broadcasts sent to the editor.
      */
-    #broadcast_interval = 0;
+    #broadcast_interval: NodeJS.Timeout | number = 0;
 
     /**
      * The default internal implementation of the {@link DecodedFrameConsumer} interface.
@@ -668,7 +668,7 @@ export class Livelink {
     /**
      * @deprecated
      */
-    #TO_REMOVE__refreshViewportTimeout: number | null = null;
+    #TO_REMOVE__refreshViewportTimeout: NodeJS.Timeout | number | null = null;
 
     /**
      * @deprecated

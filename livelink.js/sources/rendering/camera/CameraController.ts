@@ -49,7 +49,7 @@ export class CameraController extends CameraControls {
     /**
      *
      */
-    #update_interval: number = 0;
+    #update_interval: NodeJS.Timeout | number = 0;
 
     /**
      * Invert the movement direction of the dolly action on middle button only
