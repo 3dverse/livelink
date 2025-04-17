@@ -62,7 +62,7 @@ export class WebXRHelper {
     //--------------------------------------------------------------------------
     #surface: OffscreenSurface<"webgl", { xrCompatible: boolean }>;
     #fov_factor: number = 1.15;
-    #camera_fovy: number = 60;
+    #overridden_fovy: number | null = null;
     #viewports: XRViewports = [];
     #context: XRContext;
 
@@ -293,14 +293,14 @@ export class WebXRHelper {
         const fovY = xr_views[0].projectionMatrix[5];
         const original_fov = 2 * Math.atan(1 / fovY);
 
-        const new_fov = original_fov * this.#fov_factor;
-        this.#surface.resolution_scale = (Math.tan(new_fov / 2) / Math.tan(original_fov / 2)) * 2;
+        const new_fov = 2 * Math.atan(Math.tan(original_fov / 2) * this.#fov_factor);
+        this.#surface.resolution_scale = this.#fov_factor;
         this.#context.scale_factor = this.#surface.resolution_scale;
 
-        this.#camera_fovy = new_fov * (180 / Math.PI);
+        this.#overridden_fovy = new_fov * (180 / Math.PI);
 
         console.debug(
-            `%cFOV: ${original_fov * (180 / Math.PI)} -> ${this.#camera_fovy}, scale factor: ${this.#context.scale_factor}`,
+            `%cFOV: ${original_fov * (180 / Math.PI)} -> ${this.#overridden_fovy}, scale factor: ${this.#context.scale_factor}`,
             "color: orange; font-weight: bold; font-size: 1.5em",
         );
     }
@@ -636,7 +636,7 @@ export class WebXRHelper {
         offset: [number, number];
     } {
         const aspectRatio = viewportWidth / viewportHeight;
-        const fovy = Math.atan(1 / projectionMatrix[5]) * (180 / Math.PI) * 2;
+        const fovy = this.#overridden_fovy ?? Math.atan(1 / projectionMatrix[5]) * (180 / Math.PI) * 2;
         let nearPlane = projectionMatrix[14] / (projectionMatrix[10] - 1);
         if (this.is_stereo_vision && this.cameras_origin && this.cameras_origin.scale[0] !== 1) {
             // if using stereo vision and the cameras origin has a scale then use it
