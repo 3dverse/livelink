@@ -49,7 +49,7 @@ export class CameraController extends CameraControls {
     /**
      *
      */
-    #update_interval: NodeJS.Timeout | number = 0;
+    #update_interval: ReturnType<typeof setInterval> | null = null;
 
     /**
      * Invert the movement direction of the dolly action on middle button only
@@ -187,7 +187,7 @@ export class CameraController extends CameraControls {
      *
      */
     activate(): void {
-        if (this.#update_interval !== 0) {
+        if (this.#update_interval) {
             return;
         }
 
@@ -214,12 +214,12 @@ export class CameraController extends CameraControls {
 
         this.keyboard_fly_controls?.disable();
 
-        if (this.#update_interval === 0) {
+        if (!this.#update_interval) {
             return;
         }
 
         clearInterval(this.#update_interval);
-        this.#update_interval = 0;
+        this.#update_interval = null;
     }
 
     /**
