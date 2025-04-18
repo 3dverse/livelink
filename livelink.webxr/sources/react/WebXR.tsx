@@ -110,7 +110,9 @@ export function WebXR({
 
         console.debug("---- Setting XR viewports");
 
-        webXRHelper.configureViewports(instance).then(() => webXRHelper.start());
+        // change scale factor to reduce plane latency
+        const enableScale = true;
+        webXRHelper.configureViewports(instance, enableScale).then(() => webXRHelper.start());
         return (): void => {
             webXRHelper.stop();
         };
