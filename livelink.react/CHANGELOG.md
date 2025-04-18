@@ -1,5 +1,15 @@
 # @3dverse/livelink-react
 
+## 0.2.46
+
+### Patch Changes
+
+-   fix: automatically stretch image when the streaming resolution is lower than requested
+-   refactor(livelink.react): moved WebXR components from livelink-react to new livelink-webxr package
+-   Updated dependencies
+-   Updated dependencies
+    -   @3dverse/livelink@0.8.33
+
 ## 0.2.45
 
 ### Patch Changes
