@@ -1,12 +1,12 @@
 //------------------------------------------------------------------------------
-import { Vec2i, Commands } from "@3dverse/livelink.core";
+import type { Commands, Vec2 } from "@3dverse/livelink.core";
 
 //------------------------------------------------------------------------------
-import { Rect } from "./Rect";
+import { Rect, RelativeRect } from "./Rect";
 import { Viewport } from "../camera/Viewport";
-import { FrameMetaData } from "../streaming/FrameMetaData";
 import { RenderingSurfaceEvents } from "./RenderingSurfaceEvents";
 import { TypedEventTarget } from "../../TypedEventTarget";
+import { DecodedFrame } from "../streaming/EncodedFrameConsumer";
 
 /**
  * Abstract class for rendering surfaces.
@@ -31,12 +31,19 @@ export abstract class RenderingSurfaceBase extends TypedEventTarget<RenderingSur
     /**
      *
      */
-    #last_draw_data: { frame: VideoFrame | OffscreenCanvas; meta_data: FrameMetaData } | null = null;
+    #last_draw_data: DecodedFrame | null = null;
 
     /**
-     * Offset of the surface relative to the remote rendering surface.
+     * Normalized dimensions and offset of the surface relative to the remote rendering surface.
      */
-    offset: Vec2i = [0, 0];
+    relative_rect: RelativeRect = new RelativeRect({ left: 0, top: 0, width: 1, height: 1 });
+
+    /**
+     * Dimensions of the surface.
+     */
+    get dimensions(): Vec2 {
+        return [this.width, this.height];
+    }
 
     /**
      * Width of the surface.
@@ -52,39 +59,6 @@ export abstract class RenderingSurfaceBase extends TypedEventTarget<RenderingSur
      * Returns the bounding rectangle of the surface.
      */
     abstract getBoundingRect(): Rect;
-
-    /**
-     * Draws the portions of the frame associated with the viewports to the backing element.
-     * Keeps a reference to the last frame drawn.
-     *
-     * @param params
-     * @param params.frame - The frame to draw.
-     * @param params.meta_data - The metadata associated with the frame.
-     */
-    drawFrame({ frame, meta_data }: { frame: VideoFrame | OffscreenCanvas; meta_data: FrameMetaData }): void {
-        this.#last_draw_data = { frame, meta_data };
-        this._drawFrame({ frame, meta_data });
-    }
-
-    /**
-     * Redraws the last frame.
-     */
-    redrawLastFrame(): void {
-        if (this.#last_draw_data !== null) {
-            this._drawFrame(this.#last_draw_data);
-        }
-    }
-
-    /**
-     * @internal
-     *
-     * Draws the portions of the frame associated with the viewports to the backing element.
-     *
-     * @param params
-     * @param params.frame - The frame to draw.
-     * @param params.meta_data - The metadata associated with the frame.
-     */
-    abstract _drawFrame({ frame, meta_data }: { frame: VideoFrame | OffscreenCanvas; meta_data: FrameMetaData }): void;
 
     /**
      * Adds a viewport to the current surface.
@@ -130,6 +104,27 @@ export abstract class RenderingSurfaceBase extends TypedEventTarget<RenderingSur
     }
 
     /**
+     * Draws the portions of the frame associated with the viewports to the backing element.
+     * Keeps a reference to the last frame drawn.
+     *
+     * @param params
+     * @param params.decoded_frame - The frame to draw.
+     */
+    drawFrame({ decoded_frame }: { decoded_frame: DecodedFrame }): void {
+        this.#last_draw_data = decoded_frame;
+        this._drawFrame({ decoded_frame });
+    }
+
+    /**
+     * Redraws the last frame.
+     */
+    redrawLastFrame(): void {
+        if (this.#last_draw_data !== null) {
+            this._drawFrame({ decoded_frame: this.#last_draw_data });
+        }
+    }
+
+    /**
      * @internal
      * Returns the viewport configurations for the current surface.
      */
@@ -144,14 +139,26 @@ export abstract class RenderingSurfaceBase extends TypedEventTarget<RenderingSur
             throw new Error("Invalid config");
         }
 
+        const offset_in_remote_surface = [this.relative_rect.left * width, this.relative_rect.top * height];
+
         return this.viewports.map(viewport => ({
             camera_rtid: viewport.camera_projection!.camera_entity.rtid,
-            left: (this.offset[0] + viewport.relative_rect.left * this.width) / width,
-            top: (this.offset[1] + viewport.relative_rect.top * this.height) / height,
+            left: (offset_in_remote_surface[0] + viewport.relative_rect.left * this.width) / width,
+            top: (offset_in_remote_surface[1] + viewport.relative_rect.top * this.height) / height,
             width: viewport.width / width,
             height: viewport.height / height,
             render_target_index: viewport.render_target_index,
             z_index: viewport.z_index,
         }));
     }
+
+    /**
+     * @internal
+     *
+     * Draws the portions of the frame associated with the viewports to the backing element.
+     *
+     * @param params
+     * @param params.decoded_frame - The frame to draw.
+     */
+    protected abstract _drawFrame({ decoded_frame }: { decoded_frame: DecodedFrame }): void;
 }

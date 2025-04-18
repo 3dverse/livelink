@@ -2,12 +2,12 @@ import { Context2D } from "../contexts/Context2D";
 import { ContextWebGL } from "../contexts/ContextWebGL";
 import { CanvasAutoResizer } from "./CanvasAutoResizer";
 import { RenderingSurfaceBase } from "./RenderingSurfaceBase";
-import { Rect } from "./Rect";
+import { Rect, RelativeRect } from "./Rect";
 
-import type { Vec2, Vec2i } from "@3dverse/livelink.core";
+import type { Vec2i } from "@3dverse/livelink.core";
 import type { ContextProvider } from "../contexts/ContextProvider";
-import type { FrameMetaData } from "../streaming/FrameMetaData";
 import { RenderingSurfaceResizedEvent } from "./RenderingSurfaceEvents";
+import { DecodedFrame } from "../streaming/EncodedFrameConsumer";
 
 /**
  * @category Rendering Contexts
@@ -58,13 +58,6 @@ export class RenderingSurface extends RenderingSurfaceBase {
      */
     get height(): number {
         return this.#canvas.clientHeight;
-    }
-
-    /**
-     * Dimensions of the surface.
-     */
-    get dimensions(): Vec2 {
-        return [this.width, this.height];
     }
 
     /**
@@ -166,19 +159,31 @@ export class RenderingSurface extends RenderingSurfaceBase {
      * @param params.frame - The frame to draw.
      * @param params.meta_data - The metadata associated with the frame.
      */
-    _drawFrame({ frame, meta_data }: { frame: VideoFrame | OffscreenCanvas; meta_data: FrameMetaData }): void {
-        this.#context.drawFrame({ frame, left: this.offset[0], top: this.offset[1], meta_data });
+    _drawFrame({ decoded_frame }: { decoded_frame: DecodedFrame }): void {
+        this.#context.drawFrameSection({
+            frame_section: {
+                pixels: decoded_frame.pixels,
+                dimensions_in_pixels: decoded_frame.dimensions_in_pixels,
+                meta_data: decoded_frame.meta_data,
+                section: this.relative_rect,
+            },
+            viewport: RelativeRect.default,
+        });
 
         for (const viewport of this.viewports) {
             const overlayFrame = viewport._drawOverlays();
             if (!overlayFrame) {
                 continue;
             }
-            this.#context.drawFrame({
-                frame: overlayFrame,
-                left: viewport.offset[0],
-                top: viewport.offset[1],
-                meta_data,
+
+            this.#context.drawFrameSection({
+                frame_section: {
+                    pixels: overlayFrame,
+                    dimensions_in_pixels: [overlayFrame.width, overlayFrame.height],
+                    meta_data: decoded_frame.meta_data,
+                    section: RelativeRect.default,
+                },
+                viewport: viewport.relative_rect,
             });
         }
     }

@@ -5,8 +5,7 @@ import type { Quat, Vec3 } from "@3dverse/livelink.core";
 import { mat4, quat, vec2, vec3 } from "gl-matrix";
 
 //------------------------------------------------------------------------------
-import { ContextProvider } from "./ContextProvider";
-import type { FrameMetaData } from "../streaming/FrameMetaData";
+import { ContextProvider, FrameMetaData, FrameSection } from "@3dverse/livelink";
 
 /**
  * @experimental
@@ -36,7 +35,7 @@ export class XRContext extends ContextProvider {
     /**
      *
      */
-    #last_frame: { frame: VideoFrame | OffscreenCanvas; meta_data: FrameMetaData } | null = null;
+    #last_frame_section: FrameSection | null = null;
 
     /**
      *
@@ -112,20 +111,15 @@ export class XRContext extends ContextProvider {
     /**
      *
      */
-    drawFrame(frame: {
-        frame: VideoFrame | OffscreenCanvas;
-        left: number;
-        top: number;
-        meta_data: FrameMetaData;
-    }): void {
-        this.#last_frame = frame;
+    drawFrameSection({ frame_section }: { frame_section: FrameSection }): void {
+        this.#last_frame_section = frame_section;
     }
 
     /**
      *
      */
     get meta_data(): FrameMetaData | null {
-        return this.#last_frame?.meta_data || null;
+        return this.#last_frame_section?.meta_data || null;
     }
 
     /**
@@ -143,7 +137,7 @@ export class XRContext extends ContextProvider {
             };
         }>;
     }): void {
-        if (!this.#last_frame) {
+        if (!this.#last_frame_section) {
             return;
         }
 
@@ -167,7 +161,7 @@ export class XRContext extends ContextProvider {
 
         gl.activeTexture(gl.TEXTURE0);
         gl.bindTexture(gl.TEXTURE_2D, this.#texture_ref);
-        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, this.#last_frame.frame);
+        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, this.#last_frame_section.pixels);
 
         const fovY = Math.atan(1 / xr_views[0].view.projectionMatrix[5]) * 2;
 
@@ -175,8 +169,8 @@ export class XRContext extends ContextProvider {
         const scaleY = this.scale_factor * this.screen_distance * Math.tan(fovY * 0.5);
         const scaleX = scaleY * aspectRatio;
 
-        const viewportWidth = 1 / xr_views.length;
-        const viewportHeight = 1;
+        const viewportWidth = this.#last_frame_section.section.width / xr_views.length;
+        const viewportHeight = this.#last_frame_section.section.height;
 
         gl.uniform2fv(sizeLocation, [viewportWidth, viewportHeight]);
 
@@ -219,8 +213,10 @@ export class XRContext extends ContextProvider {
             gl.uniformMatrix4fv(billboardMatrixLocation, false, billboardMatrix);
             gl.uniform1i(fakeAlphaEnabledLocation, this.fake_alpha_enabled ? 1 : 0);
 
-            const frame_offset = viewport.x / combinedViewportWidth;
-            gl.uniform2fv(offsetLocation, [frame_offset, 0]);
+            const viewport_offset = viewport.x / combinedViewportWidth;
+            const frame_offset =
+                this.#last_frame_section.section.left + viewport_offset * this.#last_frame_section.section.width;
+            gl.uniform2fv(offsetLocation, [frame_offset, this.#last_frame_section.section.top]);
             gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
         }
     }

@@ -1,11 +1,12 @@
-export * from "./ThreeOverlay";
+export * from "./WebXRHelper";
+export * from "./react";
 
 //------------------------------------------------------------------------------
 /**
- * Version of the Livelink Three library, injected by the build system.
+ * Version of the Livelink WebXR library, injected by the build system.
  * @internal
  */
-declare const LIVELINK_THREE_VERSION: string;
+declare const LIVELINK_WEBXR_VERSION: string;
 
 /**
  * Name of the package, injected by the build system.
@@ -26,8 +27,8 @@ if (typeof window !== "undefined") {
     }
 
     if (Object.prototype.hasOwnProperty.call(window.__LIVELINK__, PACKAGE_NAME)) {
-        console.warn("⚠️ WARNING ⚠️ Multiple instances of Livelink Three being imported.");
+        console.warn("⚠️ WARNING ⚠️ Multiple instances of Livelink WebXR being imported.");
     } else {
-        window.__LIVELINK__[PACKAGE_NAME] = LIVELINK_THREE_VERSION;
+        window.__LIVELINK__[PACKAGE_NAME] = LIVELINK_WEBXR_VERSION;
     }
 }

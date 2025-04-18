@@ -6,7 +6,8 @@
     "livelink.react",
     "livelink.react.ui",
     "livelink.samples",
-    "livelink.three"
+    "livelink.three",
+    "livelink.webxr"
   ],
   "scripts": {
     "=============== Build =================": "",
@@ -15,12 +16,14 @@
     "build:react": "npm -C livelink.react run build",
     "build:react.ui": "npm -C livelink.react.ui run build",
     "build:three": "npm -C livelink.three run build",
+    "build:webxr": "npm -C livelink.webxr run build",
     "build:samples": "npm -C livelink.samples run build",
-    "build": "npm run build:js && npm run build:react && npm run build:react.ui && npm run build:three",
+    "build": "npm run build:js && npm run build:react && npm run build:react.ui && npm run build:three && npm run build:webxr",
     "clean:js": "npm -C livelink.js run clean",
     "clean:react": "npm -C livelink.react run clean",
     "clean:react.ui": "npm -C livelink.react.ui run clean",
     "clean:three": "npm -C livelink.three run clean",
+    "clean:webxr": "npm -C livelink.webxr run clean",
     "clean": "npm-run-all --parallel clean:*",
     "=============== Dev =================": "",
     "predev": "npm run build",
@@ -29,6 +32,7 @@
     "dev:react.ui": "npm -C livelink.react.ui run dev",
     "dev:samples": "npm -C livelink.samples run dev",
     "dev:three": "npm -C livelink.three run dev",
+    "dev:webxr": "npm -C livelink.webxr run dev",
     "dev": "npm-run-all --parallel dev:*",
     "dev-core": "npm link @3dverse/livelink.core && npm run dev",
     "dev-docs": "npm -C livelink.js run docs",

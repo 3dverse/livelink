@@ -131,6 +131,13 @@ export class OutOfBoundsError extends Error {
  */
 export class RelativeRect extends Rect {
     /**
+     * Default relative rect that covers the whole area.
+     */
+    static readonly default: RelativeRect = Object.freeze(
+        new RelativeRect({ left: 0, top: 0, width: 1, height: 1 }),
+    ) as RelativeRect;
+
+    /**
      * Creates a relative rect from the given DOM elements.
      * It calculates the relative position and size of the element inside the parent element.
      *

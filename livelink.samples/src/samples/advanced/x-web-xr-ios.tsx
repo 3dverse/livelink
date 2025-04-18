@@ -6,11 +6,10 @@ import {
     Livelink,
     Canvas,
     Viewport,
-    WebXRHelper,
-    WebXR,
     CameraController,
     useCameraEntity,
 } from "@3dverse/livelink-react";
+import { WebXRHelper, WebXR } from "@3dverse/livelink-webxr";
 import { LoadingOverlay } from "@3dverse/livelink-react-ui";
 
 //------------------------------------------------------------------------------
@@ -26,7 +25,8 @@ const variant_launch_sdk_url = `https://launchar.app/sdk/v1?key=${variant_launch
 //------------------------------------------------------------------------------
 export default {
     path: import.meta.VITE_FILE_NAME,
-    code: import.meta.VITE_FILE_CONTENT,
+    // This breaks Variant Launch Clip App on iOS (immersive-ar experience does not display)
+    // code: import.meta.VITE_FILE_CONTENT,
     title: "WebXR on iOS (AR only)",
     summary: "WebXR AR immersive experience on iOS using launch.variant3d.com",
     element: <App />,
@@ -45,7 +45,14 @@ function App() {
         >
             {xrMode ? (
                 <WebXR mode={xrMode} onSessionEnd={() => setXRMode(null)}>
-                    <div className="fixed top-4 left-4">
+                    <div
+                        style={{
+                            zIndex: 11000,
+                            position: "absolute",
+                            top: "8rem",
+                            left: "8rem",
+                        }}
+                    >
                         <button
                             className="button button-primary"
                             onClick={() => setXRMode(null)}

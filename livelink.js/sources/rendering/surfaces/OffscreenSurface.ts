@@ -1,11 +1,11 @@
 //------------------------------------------------------------------------------
-import { Rect } from "./Rect";
+import { Rect, RelativeRect } from "./Rect";
 import { Entity } from "../../scene/Entity";
 import { CanvasContextType } from "./RenderingSurface";
-import { FrameMetaData } from "../streaming/FrameMetaData";
 import { ContextProvider } from "../contexts/ContextProvider";
 import { RenderingSurfaceBase } from "./RenderingSurfaceBase";
 import { RenderingSurfaceResizedEvent } from "./RenderingSurfaceEvents";
+import { DecodedFrame } from "../streaming/EncodedFrameConsumer";
 
 /**
  * @category Rendering Surfaces
@@ -95,15 +95,18 @@ export class OffscreenSurface<ContextType extends CanvasContextType, ContextOpti
     }
 
     /**
-     *
+     * @internal
      */
-    _drawFrame(frame: {
-        frame: VideoFrame | OffscreenCanvas;
-        left: number;
-        top: number;
-        meta_data: FrameMetaData;
-    }): void {
-        this.#context.drawFrame(frame);
+    protected _drawFrame({ decoded_frame }: { decoded_frame: DecodedFrame }): void {
+        this.#context.drawFrameSection({
+            frame_section: {
+                pixels: decoded_frame.pixels,
+                section: this.relative_rect,
+                dimensions_in_pixels: decoded_frame.dimensions_in_pixels,
+                meta_data: decoded_frame.meta_data,
+            },
+            viewport: RelativeRect.default,
+        });
     }
 
     /**

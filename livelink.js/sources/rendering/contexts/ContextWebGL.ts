@@ -1,4 +1,4 @@
-import { ContextProvider } from "./ContextProvider";
+import { ContextProvider, type FrameSection } from "./ContextProvider";
 
 /**
  * @category Rendering Surfaces
@@ -74,7 +74,7 @@ export class ContextWebGL extends ContextProvider {
     /**
      *
      */
-    drawFrame({ frame, left, top }: { frame: VideoFrame | OffscreenCanvas; left: number; top: number }): void {
+    drawFrameSection({ frame_section }: { frame_section: FrameSection }): void {
         const gl = this._context;
 
         if (this._frame_buffer !== null) {
@@ -84,17 +84,14 @@ export class ContextWebGL extends ContextProvider {
         gl.clearColor(1, 0, 0, 1);
         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
-        const frameWidth = (frame as OffscreenCanvas).width || (frame as VideoFrame).displayWidth;
-        const frameHeight = (frame as OffscreenCanvas).height || (frame as VideoFrame).displayHeight;
-
         const ls = gl.getUniformLocation(this._shader_program!, "size");
         const lo = gl.getUniformLocation(this._shader_program!, "offset");
-        gl.uniform2fv(ls, [this._canvas.width / frameWidth, this._canvas.height / frameHeight]);
-        gl.uniform2fv(lo, [left / frameWidth, top / frameHeight]);
+        gl.uniform2fv(ls, [frame_section.section.width, frame_section.section.height]);
+        gl.uniform2fv(lo, [frame_section.section.left, frame_section.section.top]);
 
         gl.activeTexture(gl.TEXTURE0);
         gl.bindTexture(gl.TEXTURE_2D, this._texture_ref);
-        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, frame);
+        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, frame_section.pixels);
         gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
     }
 

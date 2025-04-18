@@ -1,18 +1,18 @@
 {
   "compilerOptions": {
+    "jsx": "react",
     "outDir": "dist",
     "target": "ES2022",
     "esModuleInterop": true,
     "moduleResolution": "node",
+    "types": ["@types/webxr"],
     "strict": true,
     "sourceMap": true,
     "declaration": true,
     "declarationMap": true,
     "emitDeclarationOnly": true,
-    "skipLibCheck": true,
-    "stripInternal": true,
-    "noImplicitOverride": true
+    "skipLibCheck": true
   },
 
-  "exclude": ["./dist/**/*", "./tests/*", "./ci/**"]
+  "exclude": ["./dist/**/*"]
 }

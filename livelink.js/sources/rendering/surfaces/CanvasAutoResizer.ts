@@ -19,7 +19,7 @@ export class CanvasAutoResizer {
     /**
      * Debounce timeout to avoid spamming the resize command.
      */
-    #resize_debounce_timeout: number = 0;
+    #resize_debounce_timeout: NodeJS.Timeout | number = 0;
 
     /**
      * Debounce timeout duration.

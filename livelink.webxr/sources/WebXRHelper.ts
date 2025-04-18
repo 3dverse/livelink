@@ -9,9 +9,9 @@ import {
     Entity,
     CameraProjection,
     RenderGraphDataObject,
-    XRContext,
     Transform,
 } from "@3dverse/livelink";
+import { XRContext } from "./XRContext";
 import { Quaternion, Vector3, Matrix4 } from "threejs-math";
 
 //------------------------------------------------------------------------------
@@ -61,8 +61,8 @@ export class WebXRHelper {
 
     //--------------------------------------------------------------------------
     #surface: OffscreenSurface<"webgl", { xrCompatible: boolean }>;
-    #fov_factor: number = 1.15;
-    #camera_fovy: number = 60;
+    #fov_factor: number = 1.5;
+    #overridden_fovy: number | null = null;
     #viewports: XRViewports = [];
     #context: XRContext;
 
@@ -70,6 +70,7 @@ export class WebXRHelper {
     // WebXR API references
     #session: XRSession | null = null;
     #mode: XRSessionMode = "inline";
+    #forceSingleView: boolean = false;
     #reference_space: XRReferenceSpace | null = null;
     #xr_viewports: XRViewport[] = [];
     #animationFrameRequestId: number = 0;
@@ -174,8 +175,15 @@ export class WebXRHelper {
      * @param mode
      * @param options
      */
-    public async initialize(mode: XRSessionMode, options: XRSessionInit = {}): Promise<void> {
+    public async initialize(
+        mode: XRSessionMode,
+        {
+            xrSessionInit = {},
+            forceSingleView = false,
+        }: { xrSessionInit?: XRSessionInit; forceSingleView?: boolean; forceScaleFactor?: number },
+    ): Promise<void> {
         this.#mode = mode;
+        this.#forceSingleView = forceSingleView;
 
         if (!WebXRHelper.isSessionSupported(mode)) {
             throw new Error(`WebXR "${mode}" not supported`);
@@ -191,8 +199,8 @@ export class WebXRHelper {
 
         for (const spaceType of spaceTypes) {
             const sessionOptions: XRSessionInit = spaceType
-                ? { ...options, requiredFeatures: [...(options.requiredFeatures || []), spaceType] }
-                : options;
+                ? { ...xrSessionInit, requiredFeatures: [...(xrSessionInit.requiredFeatures || []), spaceType] }
+                : xrSessionInit;
 
             try {
                 this.#session = await navigator.xr!.requestSession(mode, sessionOptions);
@@ -276,7 +284,13 @@ export class WebXRHelper {
                 }
                 return;
             }
-            resolve(xr_views);
+
+            if (this.#forceSingleView && xr_views.length > 1) {
+                console.log("WebXRHelper: forcing single view");
+                resolve(xr_views.slice(0, 1));
+            } else {
+                resolve(xr_views);
+            }
         };
 
         this.#animationFrameRequestId = this.#session!.requestAnimationFrame(onFirstXRFrame);
@@ -290,17 +304,19 @@ export class WebXRHelper {
      * @param xr_views
      */
     #configureScaleFactor(xr_views: Readonly<Array<XRView>>): void {
+        // Commented out because chahnge resolution_scale here crashes on iphone inside
+        // `RemoteFrameProxy.#onFrameLayoutModified`
+        // this.#surface.resolution_scale = this.#fov_factor;
+        // this.#context.scale_factor = this.#surface.resolution_scale;
+        this.#context.scale_factor = this.#fov_factor;
+
         const fovY = xr_views[0].projectionMatrix[5];
         const original_fov = 2 * Math.atan(1 / fovY);
-
-        const new_fov = original_fov * this.#fov_factor;
-        this.#surface.resolution_scale = (Math.tan(new_fov / 2) / Math.tan(original_fov / 2)) * 2;
-        this.#context.scale_factor = this.#surface.resolution_scale;
-
-        this.#camera_fovy = new_fov * (180 / Math.PI);
+        const new_fov = 2 * Math.atan(Math.tan(original_fov / 2) * this.#fov_factor);
+        this.#overridden_fovy = new_fov * (180 / Math.PI);
 
         console.debug(
-            `%cFOV: ${original_fov * (180 / Math.PI)} -> ${this.#camera_fovy}, scale factor: ${this.#context.scale_factor}`,
+            `%cFOV: ${original_fov * (180 / Math.PI)} -> ${this.#overridden_fovy}, scale factor: ${this.#context.scale_factor}, resolution scale: ${this.#surface.resolution_scale}`,
             "color: orange; font-weight: bold; font-size: 1.5em",
         );
     }
@@ -428,7 +444,7 @@ export class WebXRHelper {
     #onXRFrame = (_: DOMHighResTimeStamp, frame: XRFrame): void => {
         const session = this.#session!;
         const gl_layer = session.renderState.baseLayer!;
-        const xr_views = frame.getViewerPose(this.#reference_space!)?.views?.map(view => ({
+        let xr_views = frame.getViewerPose(this.#reference_space!)?.views?.map(view => ({
             view,
             viewport: gl_layer.getViewport(view)!,
         }));
@@ -437,6 +453,8 @@ export class WebXRHelper {
             session.requestAnimationFrame(this.#onXRFrame);
             return;
         }
+
+        xr_views = this.#forceSingleView ? xr_views.slice(0, 1) : xr_views;
 
         if (this.#xrViewportsHaveChanged(xr_views)) {
             // For now, we end the session if the viewports have changed
@@ -636,7 +654,7 @@ export class WebXRHelper {
         offset: [number, number];
     } {
         const aspectRatio = viewportWidth / viewportHeight;
-        const fovy = Math.atan(1 / projectionMatrix[5]) * (180 / Math.PI) * 2;
+        const fovy = this.#overridden_fovy ?? Math.atan(1 / projectionMatrix[5]) * (180 / Math.PI) * 2;
         let nearPlane = projectionMatrix[14] / (projectionMatrix[10] - 1);
         if (this.is_stereo_vision && this.cameras_origin && this.cameras_origin.scale[0] !== 1) {
             // if using stereo vision and the cameras origin has a scale then use it

@@ -3,7 +3,7 @@ import type { Enums, Vec2i } from "@3dverse/livelink.core";
 
 //------------------------------------------------------------------------------
 import { FrameMetaData } from "./FrameMetaData";
-import { EncodedFrameConsumer } from "./EncodedFrameConsumer";
+import { EncodedFrame, EncodedFrameConsumer } from "./EncodedFrameConsumer";
 import { DecodedFrameConsumer } from "./DecodedFrameConsumer";
 
 /**
@@ -207,21 +207,19 @@ export class WebCodecsDecoder extends EncodedFrameConsumer {
      * @param params.encoded_frame - The encoded frame data
      * @param params.meta_data - The frame meta data
      */
-    override consumeEncodedFrame({
-        encoded_frame,
-        meta_data,
-    }: {
-        encoded_frame: DataView;
-        meta_data: FrameMetaData;
-    }): void {
+    override consumeEncodedFrame({ encoded_frame }: { encoded_frame: EncodedFrame }): void {
         const chunk = new EncodedVideoChunk({
-            timestamp: meta_data.frame_counter,
+            timestamp: encoded_frame.meta_data.frame_counter,
             type: this.#first_frame ? "key" : "delta",
-            data: new Uint8Array(encoded_frame.buffer, encoded_frame.byteOffset, encoded_frame.byteLength),
+            data: new Uint8Array(
+                encoded_frame.video_stream.buffer,
+                encoded_frame.video_stream.byteOffset,
+                encoded_frame.video_stream.byteLength,
+            ),
         });
 
         this.#first_frame = false;
-        this.#meta_data_map.set(meta_data.frame_counter, meta_data);
+        this.#meta_data_map.set(encoded_frame.meta_data.frame_counter, encoded_frame.meta_data);
         this.#decoder!.decode(chunk);
     }
 
@@ -239,7 +237,13 @@ export class WebCodecsDecoder extends EncodedFrameConsumer {
             return;
         }
 
-        super._onFrameDecoded({ decoded_frame, meta_data });
+        super._onFrameDecoded({
+            decoded_frame: {
+                pixels: decoded_frame,
+                dimensions_in_pixels: [decoded_frame.displayWidth, decoded_frame.displayHeight],
+                meta_data,
+            },
+        });
         this.#last_frame = decoded_frame;
     };
 }
