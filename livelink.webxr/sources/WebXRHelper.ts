@@ -61,7 +61,7 @@ export class WebXRHelper {
 
     //--------------------------------------------------------------------------
     #surface: OffscreenSurface<"webgl", { xrCompatible: boolean }>;
-    #fov_factor: number = 1.15;
+    #fov_factor: number = 1.5;
     #overridden_fovy: number | null = null;
     #viewports: XRViewports = [];
     #context: XRContext;
@@ -290,17 +290,19 @@ export class WebXRHelper {
      * @param xr_views
      */
     #configureScaleFactor(xr_views: Readonly<Array<XRView>>): void {
+        // Commented out because chahnge resolution_scale here crashes on iphone inside
+        // `RemoteFrameProxy.#onFrameLayoutModified`
+        // this.#surface.resolution_scale = this.#fov_factor;
+        // this.#context.scale_factor = this.#surface.resolution_scale;
+        this.#context.scale_factor = this.#fov_factor;
+
         const fovY = xr_views[0].projectionMatrix[5];
         const original_fov = 2 * Math.atan(1 / fovY);
-
         const new_fov = 2 * Math.atan(Math.tan(original_fov / 2) * this.#fov_factor);
-        this.#surface.resolution_scale = this.#fov_factor;
-        this.#context.scale_factor = this.#surface.resolution_scale;
-
         this.#overridden_fovy = new_fov * (180 / Math.PI);
 
         console.debug(
-            `%cFOV: ${original_fov * (180 / Math.PI)} -> ${this.#overridden_fovy}, scale factor: ${this.#context.scale_factor}`,
+            `%cFOV: ${original_fov * (180 / Math.PI)} -> ${this.#overridden_fovy}, scale factor: ${this.#context.scale_factor}, resolution scale: ${this.#surface.resolution_scale}`,
             "color: orange; font-weight: bold; font-size: 1.5em",
         );
     }
