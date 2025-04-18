@@ -1,5 +1,11 @@
 # @3dverse/livelink
 
+## 0.8.34
+
+### Patch Changes
+
+-   fix(livelink.js): fixed types
+
 ## 0.8.33
 
 ### Patch Changes
