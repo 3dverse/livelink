@@ -177,10 +177,7 @@ export class WebXRHelper {
      */
     public async initialize(
         mode: XRSessionMode,
-        {
-            xrSessionInit = {},
-            forceSingleView = false,
-        }: { xrSessionInit?: XRSessionInit; forceSingleView?: boolean; forceScaleFactor?: number },
+        { xrSessionInit = {}, forceSingleView = false }: { xrSessionInit?: XRSessionInit; forceSingleView?: boolean },
     ): Promise<void> {
         this.#mode = mode;
         this.#forceSingleView = forceSingleView;
@@ -304,7 +301,7 @@ export class WebXRHelper {
      * @param xr_views
      */
     #configureScaleFactor(xr_views: Readonly<Array<XRView>>): void {
-        // Commented out because chahnge resolution_scale here crashes on iphone inside
+        // Commented out because change resolution_scale here crashes on iphone inside
         // `RemoteFrameProxy.#onFrameLayoutModified`
         // this.#surface.resolution_scale = this.#fov_factor;
         // this.#context.scale_factor = this.#surface.resolution_scale;

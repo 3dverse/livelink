@@ -35,6 +35,7 @@ export function WebXR({
     requiredFeatures = [],
     optionalFeatures = [],
     domOverlayRoot,
+    forceSingleView,
     onSessionEnd,
 }: PropsWithChildren<{
     mode: XRSessionMode;
@@ -42,6 +43,7 @@ export function WebXR({
     requiredFeatures?: string[];
     optionalFeatures?: string[];
     domOverlayRoot?: Element;
+    forceSingleView?: boolean;
     onSessionEnd?: () => void;
 }>): JSX.Element {
     //--------------------------------------------------------------------------
@@ -66,6 +68,7 @@ export function WebXR({
                     optionalFeatures: ["dom-overlay", ...optionalFeatures],
                     domOverlay: { root: domOverlayRoot || containerRef.current },
                 },
+                forceSingleView,
             })
             .then(() => {
                 setWebXRHelper(webXRHelper);
