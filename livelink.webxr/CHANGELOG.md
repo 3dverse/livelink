@@ -1,5 +1,14 @@
 # @3dverse/livelink-webxr
 
+## 0.1.2
+
+### Patch Changes
+
+-   fix(livelink.webxr): fixed ios webxr by forcing single view in variant launch clip app
+-   feat(livelink.webxr): activate scale correction to reduce the billboard plane latency
+-   Updated dependencies
+    -   @3dverse/livelink@0.8.35
+
 ## 0.1.1
 
 ### Patch Changes
