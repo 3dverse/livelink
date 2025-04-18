@@ -1,5 +1,11 @@
 # @3dverse/livelink
 
+## 0.8.35
+
+### Patch Changes
+
+-   chore(livelink.js): update livelink-core version
+
 ## 0.8.34
 
 ### Patch Changes
