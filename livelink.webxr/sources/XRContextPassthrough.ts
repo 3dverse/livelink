@@ -5,7 +5,7 @@ type Canvas = HTMLCanvasElement | OffscreenCanvas;
 /**
  *
  */
-export class PassthroughXRContext extends ContextProvider {
+export class XRContextPassthrough extends ContextProvider {
     /**
      *
      */

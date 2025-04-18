@@ -32,10 +32,16 @@ export function WebXR({
     children,
     mode,
     resolutionScale = 1,
+    requiredFeatures = [],
+    optionalFeatures = [],
+    domOverlayRoot,
     onSessionEnd,
 }: PropsWithChildren<{
     mode: XRSessionMode;
     resolutionScale?: number;
+    requiredFeatures?: string[];
+    optionalFeatures?: string[];
+    domOverlayRoot?: Element;
     onSessionEnd?: () => void;
 }>): JSX.Element {
     //--------------------------------------------------------------------------
@@ -55,8 +61,11 @@ export function WebXR({
 
         webXRHelper
             .initialize(mode, {
-                optionalFeatures: ["dom-overlay"],
-                domOverlay: { root: containerRef.current },
+                xrSessionInit: {
+                    requiredFeatures,
+                    optionalFeatures: ["dom-overlay", ...optionalFeatures],
+                    domOverlay: { root: domOverlayRoot || containerRef.current },
+                },
             })
             .then(() => {
                 setWebXRHelper(webXRHelper);

@@ -70,6 +70,7 @@ export class WebXRHelper {
     // WebXR API references
     #session: XRSession | null = null;
     #mode: XRSessionMode = "inline";
+    #forceSingleView: boolean = false;
     #reference_space: XRReferenceSpace | null = null;
     #xr_viewports: XRViewport[] = [];
     #animationFrameRequestId: number = 0;
@@ -174,8 +175,15 @@ export class WebXRHelper {
      * @param mode
      * @param options
      */
-    public async initialize(mode: XRSessionMode, options: XRSessionInit = {}): Promise<void> {
+    public async initialize(
+        mode: XRSessionMode,
+        {
+            xrSessionInit = {},
+            forceSingleView = false,
+        }: { xrSessionInit?: XRSessionInit; forceSingleView?: boolean; forceScaleFactor?: number },
+    ): Promise<void> {
         this.#mode = mode;
+        this.#forceSingleView = forceSingleView;
 
         if (!WebXRHelper.isSessionSupported(mode)) {
             throw new Error(`WebXR "${mode}" not supported`);
@@ -191,8 +199,8 @@ export class WebXRHelper {
 
         for (const spaceType of spaceTypes) {
             const sessionOptions: XRSessionInit = spaceType
-                ? { ...options, requiredFeatures: [...(options.requiredFeatures || []), spaceType] }
-                : options;
+                ? { ...xrSessionInit, requiredFeatures: [...(xrSessionInit.requiredFeatures || []), spaceType] }
+                : xrSessionInit;
 
             try {
                 this.#session = await navigator.xr!.requestSession(mode, sessionOptions);
@@ -276,7 +284,13 @@ export class WebXRHelper {
                 }
                 return;
             }
-            resolve(xr_views);
+
+            if (this.#forceSingleView && xr_views.length > 1) {
+                console.log("WebXRHelper: forcing single view");
+                resolve(xr_views.slice(0, 1));
+            } else {
+                resolve(xr_views);
+            }
         };
 
         this.#animationFrameRequestId = this.#session!.requestAnimationFrame(onFirstXRFrame);
@@ -430,7 +444,7 @@ export class WebXRHelper {
     #onXRFrame = (_: DOMHighResTimeStamp, frame: XRFrame): void => {
         const session = this.#session!;
         const gl_layer = session.renderState.baseLayer!;
-        const xr_views = frame.getViewerPose(this.#reference_space!)?.views?.map(view => ({
+        let xr_views = frame.getViewerPose(this.#reference_space!)?.views?.map(view => ({
             view,
             viewport: gl_layer.getViewport(view)!,
         }));
@@ -439,6 +453,8 @@ export class WebXRHelper {
             session.requestAnimationFrame(this.#onXRFrame);
             return;
         }
+
+        xr_views = this.#forceSingleView ? xr_views.slice(0, 1) : xr_views;
 
         if (this.#xrViewportsHaveChanged(xr_views)) {
             // For now, we end the session if the viewports have changed
