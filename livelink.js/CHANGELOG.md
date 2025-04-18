@@ -1,5 +1,12 @@
 # @3dverse/livelink
 
+## 0.8.33
+
+### Patch Changes
+
+-   refactor(livelink.js): moved WebXR drawing context from livelink to new livelink-webxr package
+-   fix: automatically stretch image when the streaming resolution is lower than requested
+
 ## 0.8.32
 
 ### Patch Changes
