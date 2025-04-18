@@ -96,11 +96,6 @@ export class Livelink {
     static _api_url = `https://${API_HOSTNAME}/app/v1`;
 
     /**
-     * @internal
-     */
-    static _editor_url = EDITOR_URL;
-
-    /**
      * Start a new session on the specified scene.
      *
      * @param params
@@ -576,7 +571,7 @@ export class Livelink {
         // Retrieve a session key
         await this.session.registerClient();
 
-        await this.#core.connect({ session: this.session, editor_url: Livelink._editor_url });
+        await this.#core.connect({ session: this.session });
         this.#installEventListeners();
 
         return this;

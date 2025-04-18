@@ -17,7 +17,6 @@ const commonBuildOptions = {
         PACKAGE_NAME: `"${pkg.name}"`,
         LIVELINK_VERSION: `"${pkg.version}"`,
         API_HOSTNAME: `"api.3dverse.com"`,
-        EDITOR_URL: `"wss://api.3dverse.com/editor-backend"`,
     },
 };
 

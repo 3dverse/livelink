@@ -44,7 +44,14 @@ function App() {
             ConnectionErrorPanel={DisconnectedModal}
         >
             {xrMode ? (
-                <WebXR mode={xrMode} onSessionEnd={() => setXRMode(null)}>
+                <WebXR
+                    mode={xrMode}
+                    onSessionEnd={() => setXRMode(null)}
+                    forceSingleView={true}
+                    // TODO: dom-overlay is supposed to be working in Variant Launch Clip App as in
+                    // 3dverse-mobile-viewer, need to figure out why it does not work here.
+                    // domOverlayRoot={}
+                >
                     <div
                         style={{
                             zIndex: 11000,
@@ -129,8 +136,8 @@ function XRButton({
             // Load Variant Launch URL to reload the sample inside Variant
             // Launch iOS Clip App.
             const { VLaunch } = window as unknown as any;
-            const url = window.location.href;
-            window.location.href = VLaunch.getLaunchUrl(url);
+            const url = new URL(window.location.href);
+            window.location.href = VLaunch.getLaunchUrl(url.toString());
             return;
         }
         WebXRHelper.isSessionSupported(mode).then(async supported => {
