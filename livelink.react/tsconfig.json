@@ -10,7 +10,8 @@
     "declaration": true,
     "declarationMap": true,
     "emitDeclarationOnly": true,
-    "skipLibCheck": true
+    "skipLibCheck": true,
+    "types": ["@types/wicg-file-system-access"]
   },
 
   "exclude": ["./dist/**/*"]
