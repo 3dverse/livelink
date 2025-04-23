@@ -378,7 +378,7 @@ export class WebXRHelper {
         const origin_position = new Vector3().fromArray(this.cameras_origin.position);
         const origin_quat = new Quaternion().fromArray(this.cameras_origin.orientation);
         const origin_scale = new Vector3().fromArray(this.cameras_origin.scale);
-        const reversed_origin_matrix = new Matrix4().compose(origin_position, new Quaternion(), origin_scale).invert();
+        const reversed_origin_matrix = new Matrix4().compose(origin_position, origin_quat, origin_scale).invert();
 
         const origin_quat_conjugate = origin_quat.conjugate();
 
@@ -418,7 +418,7 @@ export class WebXRHelper {
         const origin_position = new Vector3().fromArray(this.cameras_origin.position);
         const origin_quat = new Quaternion().fromArray(this.cameras_origin.orientation);
         const origin_scale = new Vector3().fromArray(this.cameras_origin.scale);
-        const transform = new Matrix4().compose(origin_position, new Quaternion(), origin_scale);
+        const transform = new Matrix4().compose(origin_position, origin_quat, origin_scale);
 
         for (const view of views) {
             const { position, orientation } = view.frame_camera_transform;
