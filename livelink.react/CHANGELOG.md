@@ -1,5 +1,11 @@
 # @3dverse/livelink-react
 
+## 0.2.47
+
+### Patch Changes
+
+-   feat(livelink-react): add recorder component
+
 ## 0.2.46
 
 ### Patch Changes

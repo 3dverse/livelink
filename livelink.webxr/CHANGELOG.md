@@ -1,5 +1,13 @@
 # @3dverse/livelink-webxr
 
+## 0.1.3
+
+### Patch Changes
+
+-   fix(livelink-webxr): apply the orientation of the cameras origin to the transformed position of the camera
+-   Updated dependencies
+    -   @3dverse/livelink-react@0.2.47
+
 ## 0.1.2
 
 ### Patch Changes
