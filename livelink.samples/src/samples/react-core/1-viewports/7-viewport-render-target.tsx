@@ -57,10 +57,10 @@ function AppLayout() {
 //------------------------------------------------------------------------------
 function DebugViewports({ cameraEntity }: { cameraEntity: Entity | null }) {
     const RENDER_TARGETS = [
-        { index: 15, name: "View Space Normals" },
-        { index: 24, name: "World Space Normals" },
-        { index: 14, name: "View Space Positions" },
-        { index: 17, name: "World Space Positions" },
+        { index: 0, name: "View Space Positions" },
+        { index: 1, name: "View Space Normals" },
+        { index: 3, name: "World Space Positions" },
+        { index: 4, name: "World Space Normals" },
     ] as const;
 
     return (
