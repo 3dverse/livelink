@@ -40,6 +40,7 @@ const router = createHashRouter([
                     <SamplePlayer
                         key={sample.path}
                         title={sample.title}
+                        path={resolveSamplePath(sample.path)}
                         summary={sample.summary}
                         description={sample.description}
                         useCustomLayout={sample.useCustomLayout}
