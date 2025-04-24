@@ -1,5 +1,5 @@
 import ReactDOM from "react-dom/client";
-import { RouterProvider, createHashRouter } from "react-router";
+import { Navigate, RouteObject, RouterProvider, createHashRouter } from "react-router";
 
 import "@fontsource-variable/manrope";
 import "@fontsource-variable/inter";
@@ -27,31 +27,37 @@ declare global {
     }
 }
 
-const router = createHashRouter([
-    {
-        path: "/",
-        element: <App />,
-        errorElement: <ErrorPage />,
-        children: samples
-            .flatMap(({ list }) => list)
-            .map(sample => ({
-                path: resolveSamplePath(sample.path),
-                element: (
-                    <SamplePlayer
-                        key={sample.path}
-                        title={sample.title}
-                        path={resolveSamplePath(sample.path)}
-                        summary={sample.summary}
-                        description={sample.description}
-                        useCustomLayout={sample.useCustomLayout}
-                        autoConnect={sample.autoConnect}
-                        code={sample.code}
-                    >
-                        {sample.element}
-                    </SamplePlayer>
-                ),
-            })),
-    },
-]);
+const sampleList = samples.flatMap(({ list }) => list);
+const route: RouteObject = {
+    path: "/",
+    element: <App />,
+    errorElement: <ErrorPage />,
+    children: sampleList.map(sample => ({
+        path: resolveSamplePath(sample.path),
+        element: (
+            <SamplePlayer
+                key={sample.path}
+                title={sample.title}
+                path={resolveSamplePath(sample.path)}
+                summary={sample.summary}
+                description={sample.description}
+                useCustomLayout={sample.useCustomLayout}
+                autoConnect={sample.autoConnect}
+                code={sample.code}
+            >
+                {sample.element}
+            </SamplePlayer>
+        ),
+    })),
+};
+
+if (route.children) {
+    route.children.unshift({
+        index: true,
+        element: <Navigate to={route.children[0].path!} replace />,
+    });
+}
+
+const router = createHashRouter([route]);
 
 ReactDOM.createRoot(document.getElementById("root")!).render(<RouterProvider router={router} />);
