@@ -9,6 +9,5 @@ ssl
 .npm
 .npmrc
 *.tgz
-.env
 
 *storybook.log
