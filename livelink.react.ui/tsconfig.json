@@ -11,7 +11,8 @@
     "declarationMap": true,
     "emitDeclarationOnly": true,
     "skipLibCheck": true,
-    "types": []
+    "types": ["vite/client"],
+    "module": "es2022"
   },
 
   "exclude": ["./dist/**/*"]
