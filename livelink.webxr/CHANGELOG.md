@@ -1,5 +1,11 @@
 # @3dverse/livelink-webxr
 
+## 0.1.4
+
+### Patch Changes
+
+-   fix(livelink.webxr): partial fix of the cameras origin transform
+
 ## 0.1.3
 
 ### Patch Changes
