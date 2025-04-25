@@ -17,6 +17,7 @@ const commonBuildOptions = {
         PACKAGE_NAME: `"${pkg.name}"`,
         LIVELINK_REACT_UI_VERSION: `"${pkg.version}"`,
     },
+    target: "es2022",
 };
 
 //------------------------------------------------------------------------------

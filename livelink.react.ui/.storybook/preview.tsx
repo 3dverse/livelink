@@ -1,6 +1,8 @@
 //------------------------------------------------------------------------------
+import React from "react";
 import type { Preview } from "@storybook/react";
 import { themes } from "@storybook/theming";
+import { Livelink } from "@3dverse/livelink-react";
 
 //------------------------------------------------------------------------------
 import "@3dverse/design-tokens/css/design-tokens-internal.css";
@@ -28,6 +30,17 @@ const preview: Preview = {
             },
         },
     },
+    decorators: [
+        (Story: React.ComponentType) => {
+            const token = import.meta.env.STORYBOOK_3DVERSE_PUBLIC_TOKEN;
+            const scene_id = "bfadafe7-7d75-4e8d-ba55-3b65c4b1d994";
+            return (
+                <Livelink token={token} sceneId={scene_id}>
+                    <Story />
+                </Livelink>
+            );
+        },
+    ],
 };
 
 export default preview;

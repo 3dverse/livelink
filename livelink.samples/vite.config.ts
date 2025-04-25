@@ -4,6 +4,7 @@ import fs from "node:fs";
 
 // https://vitejs.dev/config/
 export default defineConfig({
+    base: "",
     server: {
         host: "0.0.0.0",
         https: fs.existsSync("ssl")

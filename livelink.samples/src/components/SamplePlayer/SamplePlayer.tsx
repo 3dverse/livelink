@@ -17,6 +17,7 @@ export const SamplePlayerContext = createContext<{
 //------------------------------------------------------------------------------
 export function SamplePlayer({
     title,
+    path,
     summary,
     description,
     code,
@@ -25,6 +26,7 @@ export function SamplePlayer({
     children,
 }: PropsWithChildren<{
     title?: string;
+    path?: string;
     summary?: string;
     description?: string;
     code?: string;
@@ -38,6 +40,20 @@ export function SamplePlayer({
             setConnectionState("connected");
         }
     }, [connectionState]);
+
+    useEffect(() => {
+        if (!window.parent || !path) {
+            return;
+        }
+
+        window.parent.postMessage(
+            JSON.stringify({
+                type: "sample-path-changed",
+                data: path,
+            }),
+            "*",
+        );
+    }, [path]);
 
     const mountChildren = connectionState === "connected" || connectionState === "connection-lost";
     const mountActionBar = connectionState === "connected";

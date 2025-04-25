@@ -24,5 +24,18 @@ const config: StorybookConfig = {
         name: getAbsolutePath("@storybook/react-vite"),
         options: {},
     },
+    typescript: {
+        check: true,
+        reactDocgen: "react-docgen-typescript",
+    },
+    viteFinal: async config => {
+        return {
+            ...config,
+            optimizeDeps: {
+                ...config.optimizeDeps,
+                include: ["@3dverse/livelink-react"],
+            },
+        };
+    },
 };
 export default config;

@@ -10,13 +10,11 @@ import { CollapseIcon } from "./icons/CollapseIcon";
 
 //------------------------------------------------------------------------------
 const BREAKPOINT_LG = 991;
-const EMBEDDED_PAGE_QUERY = "embedded";
 
 //------------------------------------------------------------------------------
-export function MainMenu() {
+export function MainMenu({ isPageEmbedded }: { isPageEmbedded?: boolean }) {
     const [isCollapsed, setIsCollapsed] = useLocalStorage<boolean>(LOCAL_STORAGE_KEYS.IS_MAIN_MENU_COLLAPSED, false);
     const [isScreenLargerThanLG, setIsScreenLargerThanLG] = useState<boolean>();
-    const [isPageEmbedded, setIsPageEmbedded] = useState<boolean>(false);
 
     const onCollapse = () => {
         setIsCollapsed(true);
@@ -29,18 +27,6 @@ export function MainMenu() {
         handleResize();
         window.addEventListener("resize", handleResize);
         return () => window.removeEventListener("resize", handleResize);
-    }, []);
-
-    // Hide 3dverse logo for Documentation Samples pages:
-    // https://docs.3dverse.com/samples
-    useEffect(() => {
-        const url = new URL(window.location.href);
-        const params = new URLSearchParams(url.search);
-        const _isPageEmbedded = ["true", "1"].includes(params.get(EMBEDDED_PAGE_QUERY) || "");
-
-        if (_isPageEmbedded) {
-            setIsPageEmbedded(true);
-        }
     }, []);
 
     //--------------------------------------------------------------------------
