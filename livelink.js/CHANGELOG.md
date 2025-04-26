@@ -1,5 +1,11 @@
 # @3dverse/livelink
 
+## 0.8.36
+
+### Patch Changes
+
+-   feat: experimental implementation of audio streaming and playback
+
 ## 0.8.35
 
 ### Patch Changes
