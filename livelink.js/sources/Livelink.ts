@@ -28,6 +28,7 @@ import { TO_REMOVE__ViewportsAddedEvent } from "./session/SessionEvents";
 import { Mouse } from "./inputs/Mouse";
 import { Keyboard } from "./inputs/Keyboard";
 import { Gamepad } from "./inputs/Gamepad";
+import { AudioPlayer } from "./audio/AudioPlayer";
 
 /**
  * This class represents the Livelink connection between the client and the 3dverse server holding
@@ -227,6 +228,11 @@ export class Livelink {
     #encoded_frame_consumer: EncodedFrameConsumer | null = null;
 
     /**
+     * The audio player used to play the audio stream received from the server.
+     */
+    #audio_player: AudioPlayer = new AudioPlayer();
+
+    /**
      * Mouse input device.
      */
     #mouse: Mouse;
@@ -319,6 +325,7 @@ export class Livelink {
         }
 
         this.#remote_frame_proxy.release();
+        this.#audio_player.release();
 
         await this.#core.disconnect();
     }
@@ -585,6 +592,7 @@ export class Livelink {
         this.#core.addEventListener("on-inactivity-warning", this.session._onInactivityWarning);
         this.#core.addEventListener("on-activity-detected", this.session._onActivityDetected);
         this.#core.addEventListener("on-frame-received", this.#onFrameReceived);
+        this.#core.addEventListener("on-audio-received", this.#onAudioReceived);
         this.#core.addEventListener("on-entities-updated", this.#onEntitiesUpdated);
         this.#core.addEventListener("on-entity-visibility-changed", this.scene._onEntityVisibilityChanged);
         this.#core.addEventListener("on-script-event-received", this.scene._onScriptEventReceived);
@@ -598,6 +606,7 @@ export class Livelink {
         this.#core.removeEventListener("on-inactivity-warning", this.session._onInactivityWarning);
         this.#core.removeEventListener("on-activity-detected", this.session._onActivityDetected);
         this.#core.removeEventListener("on-frame-received", this.#onFrameReceived);
+        this.#core.removeEventListener("on-audio-received", this.#onAudioReceived);
         this.#core.removeEventListener("on-entities-updated", this.#onEntitiesUpdated);
         this.#core.removeEventListener("on-entity-visibility-changed", this.scene._onEntityVisibilityChanged);
         this.#core.removeEventListener("on-script-event-received", this.scene._onScriptEventReceived);
@@ -618,6 +627,13 @@ export class Livelink {
         this.#encoded_frame_consumer!.consumeEncodedFrame({
             encoded_frame: { video_stream: encoded_frame, meta_data },
         });
+    };
+
+    /**
+     *
+     */
+    #onAudioReceived = ({ packet }: Events.AudioReceivedEvent): void => {
+        this.#audio_player.playAudioPacket({ packet });
     };
 
     /**
