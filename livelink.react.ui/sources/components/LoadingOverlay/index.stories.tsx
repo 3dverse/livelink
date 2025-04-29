@@ -10,7 +10,7 @@ const meta = {
     component: LoadingOverlay,
     decorators: [
         Story => (
-            <Box pos="relative" h="100vh">
+            <Box minH="30rem">
                 <Story />
             </Box>
         ),
