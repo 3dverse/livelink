@@ -1,5 +1,11 @@
 # @3dverse/livelink
 
+## 0.8.37
+
+### Patch Changes
+
+-   fix(livelink.js): delete metadata when it has been used
+
 ## 0.8.36
 
 ### Patch Changes

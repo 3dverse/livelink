@@ -1,5 +1,13 @@
 # @3dverse/livelink-react-ui
 
+## 0.2.4
+
+### Patch Changes
+
+-   fix(livelink.react.ui): document cube view in storybook
+-   Updated dependencies
+    -   @3dverse/livelink@0.8.37
+
 ## 0.2.3
 
 ### Patch Changes
