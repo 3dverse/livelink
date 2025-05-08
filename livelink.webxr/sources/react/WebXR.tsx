@@ -1,5 +1,14 @@
 //------------------------------------------------------------------------------
-import React, { JSX, type PropsWithChildren, createContext, useContext, useEffect, useRef, useState } from "react";
+import React, {
+    JSX,
+    type PropsWithChildren,
+    createContext,
+    useContext,
+    useEffect,
+    useMemo,
+    useRef,
+    useState,
+} from "react";
 
 //------------------------------------------------------------------------------
 import { LivelinkContext } from "@3dverse/livelink-react";
@@ -34,7 +43,6 @@ export function WebXR({
     resolutionScale = 1,
     requiredFeatures = [],
     optionalFeatures = [],
-    domOverlayRoot,
     forceSingleView,
     onSessionEnd,
 }: PropsWithChildren<{
@@ -42,7 +50,6 @@ export function WebXR({
     resolutionScale?: number;
     requiredFeatures?: string[];
     optionalFeatures?: string[];
-    domOverlayRoot?: Element;
     forceSingleView?: boolean;
     onSessionEnd?: () => void;
 }>): JSX.Element {
@@ -51,34 +58,9 @@ export function WebXR({
 
     //--------------------------------------------------------------------------
     const containerRef = useRef<HTMLDivElement>(null);
-    const [webXRHelper, setWebXRHelper] = useState<WebXRHelper | null>(null);
-
-    //--------------------------------------------------------------------------
-    useEffect(() => {
-        if (!containerRef.current) {
-            return;
-        }
-
-        const webXRHelper = new WebXRHelper(resolutionScale);
-
-        webXRHelper
-            .initialize(mode, {
-                xrSessionInit: {
-                    requiredFeatures,
-                    optionalFeatures: ["dom-overlay", ...optionalFeatures],
-                    domOverlay: { root: domOverlayRoot || containerRef.current },
-                },
-                forceSingleView,
-            })
-            .then(() => {
-                setWebXRHelper(webXRHelper);
-            });
-
-        return (): void => {
-            webXRHelper.release();
-            setWebXRHelper(null);
-        };
-    }, [mode]);
+    const webXRHelper = useMemo(() => new WebXRHelper(resolutionScale), []);
+    const [xrSession, setXrSession] = useState<XRSession | null>(null);
+    const initializationPromiseRef = useRef<Promise<void> | null>(null);
 
     //--------------------------------------------------------------------------
     useEffect(() => {
@@ -91,32 +73,57 @@ export function WebXR({
 
     //--------------------------------------------------------------------------
     useEffect(() => {
-        if (!webXRHelper || !onSessionEnd) {
+        if (!containerRef.current || !instance) {
             return;
         }
 
-        webXRHelper.session!.addEventListener("end", onSessionEnd);
+        // Initialize the WebXR session is kept in a ref to avoid
+        // re-initializing it on every render, especially when on strict mode.
+        if (!initializationPromiseRef.current) {
+            console.debug("---- Initializing WebXR");
+
+            initializationPromiseRef.current = webXRHelper
+                .initialize(mode, {
+                    xrSessionInit: {
+                        requiredFeatures,
+                        optionalFeatures: ["dom-overlay", ...optionalFeatures],
+                        domOverlay: { root: containerRef.current },
+                    },
+                    forceSingleView,
+                })
+                .then(session => {
+                    setXrSession(session);
+                    console.debug("---- Setting XR viewports");
+                    const enableOverscan = true;
+                    return webXRHelper.configureViewports(instance, enableOverscan);
+                })
+                .then(() => {
+                    console.debug("---- WebXR initialized");
+                    webXRHelper.start();
+                    initializationPromiseRef.current = null;
+                });
+        }
 
         return (): void => {
-            webXRHelper.session!.removeEventListener("end", onSessionEnd);
+            // This function might be called before the initialization promise
+            // is resolved in strict mode. But this is not a problem since the
+            // webXRHelper cannot release anything before the initialization is done.
+            webXRHelper.release();
         };
-    }, [webXRHelper, onSessionEnd]);
+    }, [webXRHelper, instance]);
 
     //--------------------------------------------------------------------------
     useEffect(() => {
-        if (!webXRHelper || !instance) {
+        if (!xrSession || !onSessionEnd) {
             return;
         }
 
-        console.debug("---- Setting XR viewports");
+        xrSession.addEventListener("end", onSessionEnd);
 
-        // change scale factor to reduce plane latency
-        const enableScale = true;
-        webXRHelper.configureViewports(instance, enableScale).then(() => webXRHelper.start());
         return (): void => {
-            webXRHelper.stop();
+            xrSession.removeEventListener("end", onSessionEnd);
         };
-    }, [webXRHelper, instance]);
+    }, [xrSession, onSessionEnd]);
 
     //--------------------------------------------------------------------------
     return (

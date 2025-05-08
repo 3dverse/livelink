@@ -146,7 +146,7 @@ export class WebXRHelper {
             }
         }
 
-        this.#surface?.release();
+        this.#surface.release();
     }
 
     //--------------------------------------------------------------------------
@@ -178,7 +178,7 @@ export class WebXRHelper {
     public async initialize(
         mode: XRSessionMode,
         { xrSessionInit = {}, forceSingleView = false }: { xrSessionInit?: XRSessionInit; forceSingleView?: boolean },
-    ): Promise<void> {
+    ): Promise<XRSession> {
         this.#mode = mode;
         this.#forceSingleView = forceSingleView;
 
@@ -203,7 +203,7 @@ export class WebXRHelper {
                 this.#session = await navigator.xr!.requestSession(mode, sessionOptions);
                 await this.updateRenderState();
                 await this.setReferenceSpaceType(spaceType);
-                return;
+                break;
             } catch (error) {
                 console.warn(
                     "Failed to request XR session",
@@ -218,15 +218,17 @@ export class WebXRHelper {
         if (!this.#session) {
             throw lastError;
         }
+
+        return this.#session;
     }
 
     //--------------------------------------------------------------------------
     /**
      * Configure the size and scale of the livelink viewports based on the XR views.
      * @param livelink
-     * @param enableScale
+     * @param enableOverscan
      */
-    public async configureViewports(livelink: Livelink, enableScale: boolean = false): Promise<void> {
+    public async configureViewports(livelink: Livelink, enableOverscan: boolean = false): Promise<void> {
         if (this.#core) {
             this.releaseLivelinkViewports();
         }
@@ -239,8 +241,8 @@ export class WebXRHelper {
             // first views cameras inside `this.#onXRFrame`.
         }
         this.#configureLivelinkViewports(xr_views);
-        if (enableScale) {
-            this.#configureScaleFactor(xr_views);
+        if (enableOverscan) {
+            this.#configureOverscan(xr_views);
         }
 
         // AR session needs the FTL background to be pure black for the XRContext shader to simulate the background
@@ -300,7 +302,7 @@ export class WebXRHelper {
      * the camera fovy.
      * @param xr_views
      */
-    #configureScaleFactor(xr_views: Readonly<Array<XRView>>): void {
+    #configureOverscan(xr_views: Readonly<Array<XRView>>): void {
         // Commented out because change resolution_scale here crashes on iphone inside
         // `RemoteFrameProxy.#onFrameLayoutModified`
         // this.#surface.resolution_scale = this.#fov_factor;
@@ -361,7 +363,7 @@ export class WebXRHelper {
         const baseLayer = new XRWebGLLayer(session, this.#context.native, layer_init);
         await session.updateRenderState({ baseLayer });
         this.#context.frame_buffer = baseLayer.framebuffer;
-        this.#surface!.resize(baseLayer.framebufferWidth, baseLayer.framebufferHeight);
+        this.#surface.resize(baseLayer.framebufferWidth, baseLayer.framebufferHeight);
     }
 
     //--------------------------------------------------------------------------
@@ -378,21 +380,13 @@ export class WebXRHelper {
         const origin_position = new Vector3().fromArray(this.cameras_origin.position);
         const origin_quat = new Quaternion().fromArray(this.cameras_origin.orientation);
         const origin_scale = new Vector3().fromArray(this.cameras_origin.scale);
-        // TODO: Something still does not work here. Set the `origin_quat` int the `reversed_origin_matrix` does not
-        // work. So the `origin_quat_conjugate` is applied to the position before the `reversed_origin_matrix`.
-        // From mobile viewer this works to load the default camera trasnform of the scene into `cameras_origin`.
-        // But if the user moves (e.g `camera.global_transform` changes), then modifying the
-        // `cameras_origin.orientation` makes the cameras to rotate around `cameras_origin.position` instead of
-        // rotating around itself or the center of both cameras for stereo XR.
-
-        const reversed_origin_matrix = new Matrix4().compose(origin_position, new Quaternion(), origin_scale).invert();
+        const reversed_origin_matrix = new Matrix4().compose(origin_position, origin_quat, origin_scale).invert();
 
         const origin_quat_conjugate = origin_quat.conjugate();
 
         for (const camera of cameras) {
             const { position, orientation } = camera.global_transform;
             const transformed_position = new Vector3().fromArray(position);
-            transformed_position.applyQuaternion(origin_quat_conjugate);
             transformed_position.applyMatrix4(reversed_origin_matrix);
             transformed_position.toArray(position);
 
@@ -426,12 +420,11 @@ export class WebXRHelper {
         const origin_position = new Vector3().fromArray(this.cameras_origin.position);
         const origin_quat = new Quaternion().fromArray(this.cameras_origin.orientation);
         const origin_scale = new Vector3().fromArray(this.cameras_origin.scale);
-        const transform = new Matrix4().compose(origin_position, new Quaternion(), origin_scale);
+        const transform = new Matrix4().compose(origin_position, origin_quat, origin_scale);
 
         for (const view of views) {
             const { position, orientation } = view.frame_camera_transform;
             const transformed_position = new Vector3().fromArray(position);
-            transformed_position.applyQuaternion(origin_quat);
             transformed_position.applyMatrix4(transform);
             transformed_position.toArray(position);
 
@@ -496,7 +489,7 @@ export class WebXRHelper {
      * @param xr_views
      */
     #updateLiveLinkCameras(xr_views: Array<{ view: XRView }>): void {
-        const cameras = this.#surface!.cameras;
+        const cameras = this.#surface.cameras;
         cameras.forEach((camera, index) => {
             const { view } = xr_views[index];
             const { position: pos, orientation: quat } = view.transform;
@@ -568,7 +561,7 @@ export class WebXRHelper {
             console.debug(`Viewport for ${xr_eye.view.eye} eye:`, rect);
             const viewport = new Viewport({
                 core: this.#core!,
-                rendering_surface: this.#surface!,
+                rendering_surface: this.#surface,
                 options: { rect },
             });
 

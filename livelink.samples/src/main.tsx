@@ -1,3 +1,4 @@
+import { StrictMode } from "react";
 import ReactDOM from "react-dom/client";
 import { Navigate, RouteObject, RouterProvider, createHashRouter } from "react-router";
 
@@ -60,4 +61,8 @@ if (route.children) {
 
 const router = createHashRouter([route]);
 
-ReactDOM.createRoot(document.getElementById("root")!).render(<RouterProvider router={router} />);
+ReactDOM.createRoot(document.getElementById("root")!).render(
+    <StrictMode>
+        <RouterProvider router={router} />
+    </StrictMode>,
+);

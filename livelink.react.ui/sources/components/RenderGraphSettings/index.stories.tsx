@@ -33,7 +33,7 @@ export const _Component: Story = {
             const { cameraEntity } = useCameraEntity();
             return (
                 <Canvas style={{ width: "100vw", height: "100vh" }}>
-                    <Viewport cameraEntity={cameraEntity} style={{ width: "100vw", height: "100vh" }}>
+                    <Viewport cameraEntity={cameraEntity} style={{ width: "100%", height: "100%" }}>
                         {/* TODO: replace by component Story */}
                         <RenderGraphSettings {...args} cameraEntity={cameraEntity} />
                     </Viewport>

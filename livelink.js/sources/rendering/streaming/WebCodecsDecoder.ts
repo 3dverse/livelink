@@ -244,6 +244,7 @@ export class WebCodecsDecoder extends EncodedFrameConsumer {
                 meta_data,
             },
         });
+        this.#meta_data_map.delete(decoded_frame.timestamp);
         this.#last_frame = decoded_frame;
     };
 }
