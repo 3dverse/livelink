@@ -1,5 +1,14 @@
 # @3dverse/livelink-webxr
 
+## 0.1.5
+
+### Patch Changes
+
+-   fix(livelink.webxr): fix webxr component on react strict mode
+-   fix(livelink.webxr): Revert partial fix of the cameras origin transform
+-   Updated dependencies
+    -   @3dverse/livelink@0.8.37
+
 ## 0.1.4
 
 ### Patch Changes
