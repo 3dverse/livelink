@@ -22,8 +22,10 @@ import { WebXRHelper } from "../WebXRHelper";
  */
 export const WebXRContext = createContext<{
     webXRHelper: WebXRHelper | null;
+    xrSession: XRSession | null;
 }>({
     webXRHelper: null,
+    xrSession: null,
 });
 
 //------------------------------------------------------------------------------
@@ -34,6 +36,10 @@ export const WebXRContext = createContext<{
  * @param params.mode - The mode of the XR session.
  * @param params.resolution_scale - The resolution scale of the XR session.
  * @param params.onSessionEnd - The callback to call when the XR session ends.
+ * @param params.forceSingleView - Whether to force single view mode.
+ * @param params.requiredFeatures - The required features for the XR session.
+ * @param params.optionalFeatures - The optional features for the XR session.
+ * @param params.domOverlayRoot - Specifies a custom DOM overlay root element.
  *
  * @category Components
  */
@@ -44,6 +50,7 @@ export function WebXR({
     requiredFeatures = [],
     optionalFeatures = [],
     forceSingleView,
+    domOverlayRoot,
     onSessionEnd,
 }: PropsWithChildren<{
     mode: XRSessionMode;
@@ -51,6 +58,7 @@ export function WebXR({
     requiredFeatures?: string[];
     optionalFeatures?: string[];
     forceSingleView?: boolean;
+    domOverlayRoot?: Element;
     onSessionEnd?: () => void;
 }>): JSX.Element {
     //--------------------------------------------------------------------------
@@ -58,9 +66,12 @@ export function WebXR({
 
     //--------------------------------------------------------------------------
     const containerRef = useRef<HTMLDivElement>(null);
-    const webXRHelper = useMemo(() => new WebXRHelper(resolutionScale), []);
-    const [xrSession, setXrSession] = useState<XRSession | null>(null);
+    const webXRHelper = useMemo(
+        () => new WebXRHelper(resolutionScale),
+        [mode, requiredFeatures.join("-"), optionalFeatures.join("-"), forceSingleView, domOverlayRoot],
+    );
     const initializationPromiseRef = useRef<Promise<void> | null>(null);
+    const [xrSession, setXrSession] = useState<XRSession | null>(null);
 
     //--------------------------------------------------------------------------
     useEffect(() => {
@@ -73,7 +84,21 @@ export function WebXR({
 
     //--------------------------------------------------------------------------
     useEffect(() => {
-        if (!containerRef.current || !instance) {
+        if (!xrSession || !onSessionEnd) {
+            return;
+        }
+
+        xrSession.addEventListener("end", onSessionEnd);
+
+        return (): void => {
+            xrSession.removeEventListener("end", onSessionEnd);
+        };
+    }, [xrSession, onSessionEnd]);
+
+    //--------------------------------------------------------------------------
+    useEffect(() => {
+        const rootDomOverlay = domOverlayRoot || containerRef.current;
+        if (!rootDomOverlay || !instance) {
             return;
         }
 
@@ -87,7 +112,7 @@ export function WebXR({
                     xrSessionInit: {
                         requiredFeatures,
                         optionalFeatures: ["dom-overlay", ...optionalFeatures],
-                        domOverlay: { root: containerRef.current },
+                        domOverlay: { root: rootDomOverlay },
                     },
                     forceSingleView,
                 })
@@ -108,33 +133,21 @@ export function WebXR({
             // This function might be called before the initialization promise
             // is resolved in strict mode. But this is not a problem since the
             // webXRHelper cannot release anything before the initialization is done.
+            console.debug("---- Releasing WebXR");
             webXRHelper.release();
         };
     }, [webXRHelper, instance]);
 
     //--------------------------------------------------------------------------
-    useEffect(() => {
-        if (!xrSession || !onSessionEnd) {
-            return;
-        }
-
-        xrSession.addEventListener("end", onSessionEnd);
-
-        return (): void => {
-            xrSession.removeEventListener("end", onSessionEnd);
-        };
-    }, [xrSession, onSessionEnd]);
-
-    //--------------------------------------------------------------------------
     return (
-        <WebXRContext.Provider
-            value={{
-                webXRHelper,
-            }}
-        >
-            <div data-role="webxr-dom-overlay" ref={containerRef}>
-                {children}
-            </div>
+        <WebXRContext.Provider value={{ webXRHelper, xrSession }}>
+            {!domOverlayRoot ? (
+                <div data-role="webxr-dom-overlay" ref={containerRef}>
+                    {children}
+                </div>
+            ) : (
+                <>{children}</>
+            )}
         </WebXRContext.Provider>
     );
 }

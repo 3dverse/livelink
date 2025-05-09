@@ -31,7 +31,6 @@ export default {
 //------------------------------------------------------------------------------
 function App() {
     const [xrMode, setXRMode] = useState<XRSessionMode | null>(null);
-
     return (
         <Livelink
             sceneId={scene_id}
@@ -41,13 +40,27 @@ function App() {
         >
             {xrMode ? (
                 <WebXR mode={xrMode} onSessionEnd={() => setXRMode(null)}>
-                    <div className="fixed top-4 left-4">
+                    <div className="fixed top-4 left-4 flex items-center justify-center gap-4">
                         <button
                             className="button button-primary"
                             onClick={() => setXRMode(null)}
                         >
                             Exit XR
                         </button>
+                        {xrMode !== "immersive-ar" && (
+                            <XRButton
+                                mode="immersive-ar"
+                                text="Switch to"
+                                setXRMode={setXRMode}
+                            />
+                        )}
+                        {xrMode !== "immersive-vr" && (
+                            <XRButton
+                                mode="immersive-vr"
+                                text="Switch to"
+                                setXRMode={setXRMode}
+                            />
+                        )}
                     </div>
                 </WebXR>
             ) : (
@@ -55,8 +68,8 @@ function App() {
                     <AppLayout />
 
                     <div className="absolute top-4 flex items-center justify-center gap-4 w-full">
-                        <XRButton mode="immersive-ar" enterXR={setXRMode} />
-                        <XRButton mode="immersive-vr" enterXR={setXRMode} />
+                        <XRButton mode="immersive-ar" setXRMode={setXRMode} />
+                        <XRButton mode="immersive-vr" setXRMode={setXRMode} />
                     </div>
                 </>
             )}
@@ -80,10 +93,12 @@ function AppLayout() {
 //------------------------------------------------------------------------------
 function XRButton({
     mode,
-    enterXR,
+    setXRMode,
+    text = "Enter",
 }: {
     mode: XRSessionMode;
-    enterXR: (mode: XRSessionMode) => void;
+    text?: string;
+    setXRMode: (mode: XRSessionMode) => void;
 }) {
     const [isSessionSupported, setIsSessionSupported] = useState(false);
     const [message, setMessage] = useState("");
@@ -110,12 +125,12 @@ function XRButton({
                 "button button-primary" +
                 (!isSessionSupported ? " opacity-50" : "")
             }
-            onClick={() => enterXR(mode)}
+            onClick={() => setXRMode(mode)}
             disabled={!isSessionSupported}
             style={isSessionSupported ? {} : { cursor: "not-allowed" }}
             title={message}
         >
-            Enter {xrModeTitle}
+            {text} {xrModeTitle}
         </button>
     );
 }
