@@ -299,9 +299,9 @@ export class XRContext extends ContextProvider {
                     highp float maxIntensity = max(max(gl_FragColor.r, gl_FragColor.g), gl_FragColor.b);
 
                     // basic threshold
-                    if(maxIntensity < 0.1) {
-                        gl_FragColor.a = maxIntensity;
-                    }
+                    // if(maxIntensity < 0.1) {
+                    //     gl_FragColor.a = maxIntensity;
+                    // }
 
                     // sigmoid
                     // if(maxIntensity < 0.1) {
@@ -317,6 +317,8 @@ export class XRContext extends ContextProvider {
                         float k = 80.0;
                         float x0 = 0.01;
                         gl_FragColor.a = max(0.0, tanh(k * (maxIntensity - x0)));
+                    } else {
+                        gl_FragColor.a = 0.5;
                     }
                 }
             }`;
