@@ -1,5 +1,11 @@
 # @3dverse/livelink
 
+## 0.8.38
+
+### Patch Changes
+
+-   fix(livelink.js): upgrade livelink-camera-controls to fix dolly to cursor feature since aspectRatio is not handled by the lens components anymore
+
 ## 0.8.37
 
 ### Patch Changes

@@ -1,5 +1,13 @@
 # @3dverse/livelink-webxr
 
+## 0.1.6
+
+### Patch Changes
+
+-   refactor(livelink.webxr): correctly listen to webxr props changes
+-   Updated dependencies
+    -   @3dverse/livelink@0.8.38
+
 ## 0.1.5
 
 ### Patch Changes
