@@ -10,7 +10,7 @@ const meta = {
     title: "Components/Sun Position Picker",
     component: SunPositionPicker,
     parameters: {
-        layout: "centered",
+        layout: "fullscreen",
     },
     tags: ["autodocs"],
     argTypes: {

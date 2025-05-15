@@ -1,16 +1,18 @@
 //------------------------------------------------------------------------------
 import React from "react";
 import type { Meta, StoryObj } from "@storybook/react";
-import { RenderGraphSettings } from ".";
 import { Canvas, useCameraEntity, Viewport } from "@3dverse/livelink-react";
 import { Entity } from "@3dverse/livelink";
+
+//------------------------------------------------------------------------------
+import { RenderGraphSettings } from ".";
 
 //------------------------------------------------------------------------------
 const meta = {
     title: "Components/Render Graph Settings",
     component: RenderGraphSettings,
     parameters: {
-        layout: "centered",
+        layout: "fullscreen",
     },
     tags: ["autodocs"],
     args: {
@@ -32,10 +34,28 @@ export const _Component: Story = {
         (Story: React.ComponentType<{ cameraEntity: Entity | null }>, { args }) => {
             const { cameraEntity } = useCameraEntity();
             return (
-                <Canvas style={{ width: "100vw", height: "100vh" }}>
+                <Canvas style={{ width: "100%", height: "100vh" }}>
                     <Viewport cameraEntity={cameraEntity} style={{ width: "100%", height: "100%" }}>
                         {/* TODO: replace by component Story */}
-                        <RenderGraphSettings {...args} cameraEntity={cameraEntity} />
+                        <div
+                            style={{
+                                display: "grid",
+                                placeItems: "center",
+                                height: "100%",
+                            }}
+                        >
+                            <div
+                                style={{
+                                    width: "400px",
+                                    backgroundColor: "var(--3dverse-color-bg-ground)",
+                                    zIndex: 1000,
+                                    maxHeight: "100vh",
+                                    overflowY: "auto",
+                                }}
+                            >
+                                <RenderGraphSettings {...args} cameraEntity={cameraEntity} />
+                            </div>
+                        </div>
                     </Viewport>
                 </Canvas>
             );

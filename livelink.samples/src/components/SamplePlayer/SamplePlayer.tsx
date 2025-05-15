@@ -1,5 +1,8 @@
 import { createContext, PropsWithChildren, useEffect, useState } from "react";
 import Markdown from "react-markdown";
+import { LivelinkReactUIProvider } from "@3dverse/livelink-react-ui";
+
+//------------------------------------------------------------------------------
 import { ActionBar } from "./ActionBar";
 import { CodeBlock } from "./CodeBlock";
 
@@ -83,21 +86,25 @@ export function SamplePlayer({
         <SamplePlayerContext.Provider value={{ connectionState, setConnectionState }}>
             <div className="relative flex flex-col xl:flex-row gap-3 w-full h-full p-3 xl:pl-0">
                 <div className="grow relative flex gap-3 h-full bg-overground rounded-xl overflow-clip">
-                    {useCustomLayout ? (
-                        children
-                    ) : (
-                        <>
-                            {mountChildren && children}
-                            {mountPlayButton && (
-                                <div className="grow flex flex-col items-center justify-center">
-                                    {connectButton}
-                                    <h1 className="mt-6 text-center font-medium">{title}</h1>
-                                    <h2 className="mt-px text-xs text-center font-normal text-tertiary">{summary}</h2>
-                                </div>
-                            )}
-                            {mountActionBar && <ActionBar disconnect={() => setConnectionState("disconnected")} />}
-                        </>
-                    )}
+                    <LivelinkReactUIProvider>
+                        {useCustomLayout ? (
+                            children
+                        ) : (
+                            <>
+                                {mountChildren && children}
+                                {mountPlayButton && (
+                                    <div className="grow flex flex-col items-center justify-center">
+                                        {connectButton}
+                                        <h1 className="mt-6 text-center font-medium">{title}</h1>
+                                        <h2 className="mt-px text-xs text-center font-normal text-tertiary">
+                                            {summary}
+                                        </h2>
+                                    </div>
+                                )}
+                                {mountActionBar && <ActionBar disconnect={() => setConnectionState("disconnected")} />}
+                            </>
+                        )}
+                    </LivelinkReactUIProvider>
                 </div>
 
                 {code && <CodeBlock code={code} title={title} />}

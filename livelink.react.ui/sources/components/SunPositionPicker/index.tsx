@@ -1,12 +1,12 @@
 //------------------------------------------------------------------------------
 import React, { forwardRef, useEffect, useRef, useState } from "react";
-import { Box, Checkbox, Flex, Icon } from "@chakra-ui/react";
+
 import { FaRegSun } from "react-icons/fa6";
 import type { Components, Entity, Vec2, Vec3 } from "@3dverse/livelink";
 
 //------------------------------------------------------------------------------
-import { Provider } from "../../chakra/Provider";
-import { pulseAnimation } from "../../chakra/animation/pulseAnimation";
+import { Checkbox } from "../../components-common/Checkbox/index";
+import styles from "./style.module.css";
 
 //------------------------------------------------------------------------------
 const RADIUS = 40;
@@ -282,22 +282,18 @@ export const SunPositionPicker = ({
     //--------------------------------------------------------------------------
     // UI
     return (
-        <Provider>
-            <Flex flexDir="column" alignItems="center">
-                <div style={containerStyle}>
-                    <Box opacity={sun ? 1 : 0}>
-                        <MovingLightHint ref={movingLightHintRef} />
-                        <CircleShadow />
-                        <canvas width={CANVAS_SIZE_PX} height={CANVAS_SIZE_PX} ref={bgCanvasRef} style={canvasStyle} />
-                        <canvas width={CANVAS_SIZE_PX} height={CANVAS_SIZE_PX} ref={sunCanvasRef} style={canvasStyle} />
-                    </Box>
-                    {!sun && <Skeleton />}
+        <div className={`${styles.container} livelink-react-ui-component`}>
+            <div style={containerStyle}>
+                <div style={{ opacity: sun ? 1 : 0 }}>
+                    <MovingLightHint ref={movingLightHintRef} />
+                    <CircleShadow />
+                    <canvas width={CANVAS_SIZE_PX} height={CANVAS_SIZE_PX} ref={bgCanvasRef} style={canvasStyle} />
+                    <canvas width={CANVAS_SIZE_PX} height={CANVAS_SIZE_PX} ref={sunCanvasRef} style={canvasStyle} />
                 </div>
-                {hasShadowToggle && (
-                    <ShadowCheckbox isDisabled={!sun} isChecked={hasShadows} onChange={onToggleShadows} />
-                )}
-            </Flex>
-        </Provider>
+                {!sun && <Skeleton />}
+            </div>
+            {hasShadowToggle && <ShadowCheckbox isDisabled={false} isChecked={hasShadows} onChange={onToggleShadows} />}
+        </div>
     );
 };
 
@@ -312,18 +308,7 @@ const ShadowCheckbox = ({
     onChange: () => void;
 }) => {
     return (
-        <Checkbox
-            size="xs"
-            color="content.secondary"
-            letterSpacing="0.02em"
-            opacity={0.75}
-            _checked={{ opacity: 1 }}
-            transition="opacity"
-            transitionDuration=".22s"
-            isDisabled={isDisabled}
-            isChecked={isChecked}
-            onChange={onChange}
-        >
+        <Checkbox size="xs" isDisabled={isDisabled} isChecked={isChecked} onChange={onChange}>
             Shadows
         </Checkbox>
     );
@@ -331,74 +316,25 @@ const ShadowCheckbox = ({
 
 //------------------------------------------------------------------------------
 const CircleShadow = () => {
-    return (
-        <Box
-            pos="absolute"
-            top="50%"
-            left="50%"
-            transform="translate(-50%,-50%)"
-            width={`${RADIUS * 2 + 1}px`}
-            aspectRatio="1 / 1"
-            boxShadow="inset 0px 0px 10px #665ee160"
-            rounded="100%"
-            pointerEvents="none"
-            role="presentation"
-            zIndex={-1}
-        />
-    );
+    return <div className={styles.circleShadow} role="presentation" />;
 };
 
 //------------------------------------------------------------------------------
 const MovingLightHint = forwardRef<HTMLDivElement, {}>((_, ref) => {
-    return (
-        <Box
-            ref={ref}
-            pos="absolute"
-            top="50%"
-            left="50%"
-            transform="translate(-50%,-50%)"
-            width={`${RADIUS * 2 + 1}px`}
-            aspectRatio="1 / 1"
-            border="2px"
-            borderColor="accent.500"
-            rounded="100%"
-            filter="blur(1px)"
-            style={{
-                maskImage: "radial-gradient(circle, black 20%, transparent 50%)",
-                maskRepeat: "no-repeat",
-                maskPosition: "-100px -100px",
-                maskComposite: "intersect",
-                WebkitMaskComposite: "destination-in",
-                maskSize: "100%",
-            }}
-            pointerEvents="none"
-            role="presentation"
-        />
-    );
+    return <div ref={ref} className={styles.movingLightHint} role="presentation" />;
 });
 
 //--------------------------------------------------------------------------
 const Skeleton = () => {
     return (
-        <Flex
-            alignItems="center"
-            justifyContent="center"
-            w={`${RADIUS * 2}px`}
-            aspectRatio="1 / 1"
-            m="11px"
-            bgColor="bg.foreground"
-            rounded="full"
-            animation={pulseAnimation}
+        <div
+            className={styles.skeleton}
+            style={{
+                width: `${RADIUS * 2}px`,
+            }}
         >
-            <Icon
-                as={FaRegSun}
-                boxSize={8}
-                color="content.tertiary"
-                opacity={0.25}
-                stroke="bg.foreground"
-                strokeWidth="24px"
-            />
-        </Flex>
+            <FaRegSun className={styles.icon} />
+        </div>
     );
 };
 

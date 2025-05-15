@@ -1,29 +1,21 @@
 //------------------------------------------------------------------------------
 import React, { CSSProperties, useEffect, useState } from "react";
-import {
-    Accordion,
-    AccordionButton,
-    AccordionItem,
-    AccordionPanel,
-    Box,
-    Button,
-    Checkbox,
-    Flex,
-    FormControl,
-    FormLabel,
-    Icon,
-    IconButton,
-    Spinner,
-    Text,
-    Tooltip,
-} from "@chakra-ui/react";
 import { Entity, RenderGraphDataObject } from "@3dverse/livelink";
 import { getAssetDescription, setUserToken } from "@3dverse/api";
 import { FaArrowRotateLeft, FaFolder, FaFolderOpen } from "react-icons/fa6";
 
 //------------------------------------------------------------------------------
-import { Provider } from "../../chakra/Provider";
-import { FormControlWidget } from "../FormControlWidget";
+import { Icon } from "../../components-common/Icon";
+import { Button } from "../../components-common/Button";
+import { IconButton } from "../../components-common/IconButton";
+import { Tooltip } from "../../components-common/Tooltip";
+import { Spinner } from "../../components-common/Spinner";
+import { Checkbox } from "../../components-common/Checkbox";
+import { FormControlWidget } from "../../components-common/FormControlWidget";
+import { AccordionItem, AccordionButton, AccordionPanel } from "../../components-common/Accordion";
+
+//------------------------------------------------------------------------------
+import styles from "./style.module.css";
 
 //------------------------------------------------------------------------------
 type Category = { name?: string; description: Input[]; categories: Category[]; mainAttribute?: Input };
@@ -47,14 +39,14 @@ export const RenderGraphSettings = ({
     userToken: string;
     cameraEntity: Entity | null;
 }) => {
-    //------------------------------------------------------------------------------
+    //--------------------------------------------------------------------------
     const [originalDataJSON, setOriginalDataJSON] = useState<RenderGraphDataObject | undefined>(
         cameraEntity?.camera?.dataJSON,
     );
     const [dataJSON, setDataJSON] = useState(cameraEntity?.camera?.dataJSON);
     const [renderGraphDescription, setRenderGraphDescription] = useState<Category | null>(null);
 
-    //------------------------------------------------------------------------------
+    //--------------------------------------------------------------------------
     useEffect(() => {
         const getRenderGraphDesciption = async () => {
             if (!cameraEntity?.camera) {
@@ -87,7 +79,7 @@ export const RenderGraphSettings = ({
         getRenderGraphDesciption();
     }, [userToken, cameraEntity]);
 
-    //------------------------------------------------------------------------------
+    //--------------------------------------------------------------------------
     const onChange = (attributeName: string, attributeValue: RenderGraphDataObject[string]) => {
         if (!cameraEntity?.camera?.dataJSON) {
             return null;
@@ -97,12 +89,12 @@ export const RenderGraphSettings = ({
         setDataJSON({ ...cameraEntity.camera.dataJSON });
     };
 
-    //------------------------------------------------------------------------------
+    //--------------------------------------------------------------------------
     const onResetInput = (attributeName: string, defaultValue: RenderGraphDataObject[string]) => {
         onChange(attributeName, defaultValue);
     };
 
-    //------------------------------------------------------------------------------
+    //--------------------------------------------------------------------------
     const onResetAllInputs = () => {
         if (!cameraEntity?.camera?.dataJSON) {
             return;
@@ -115,11 +107,16 @@ export const RenderGraphSettings = ({
     //--------------------------------------------------------------------------
     const renderCategory = (category: Category, lineageIndex = 0, rootKey = "") => {
         return (
-            <Box
-                marginLeft="calc(var(--lineage-index) * 0.5rem)"
-                style={{ "--lineage-index": lineageIndex } as CSSProperties}
+            <AccordionPanel
+                className={styles.accordionPanel}
+                style={
+                    {
+                        "--lineage-index": lineageIndex,
+                        marginLeft: "calc(var(--lineage-index) * 1rem)",
+                    } as CSSProperties
+                }
             >
-                <Accordion allowMultiple size="sm">
+                <div className={styles.accordion}>
                     {category.categories.map((subcategory, index: number) => {
                         const key = rootKey + "/" + subcategory.name + index;
                         const mainAttribute = subcategory.mainAttribute;
@@ -128,55 +125,54 @@ export const RenderGraphSettings = ({
                         const isExpandable = subcategory.categories.length > 0 || subcategory.description.length > 0;
 
                         return (
-                            <AccordionItem key={key} pl={3}>
-                                {({ isExpanded }) => (
-                                    <>
-                                        <AccordionButton as={!isExpandable ? Box : undefined} pl={0} pr={2} py={1}>
-                                            <Flex flexGrow={1}>
-                                                <Flex alignItems="center" flexGrow={1} gap={3}>
-                                                    <Icon
-                                                        as={isExpanded ? FaFolderOpen : FaFolder}
-                                                        boxSize=".65rem"
-                                                        color="content.tertiary"
-                                                        opacity={0.75}
-                                                        visibility={!isExpandable ? "hidden" : undefined}
-                                                    />
-                                                    <Text
-                                                        fontSize="xs"
-                                                        fontWeight={500}
-                                                        userSelect="none"
-                                                        color={
-                                                            mainAttributeValue
-                                                                ? "content.secondary"
-                                                                : "content.tertiary"
-                                                        }
-                                                    >
-                                                        {subcategory.name}
-                                                    </Text>
-                                                </Flex>
-                                                {mainAttribute && (
-                                                    <Checkbox
-                                                        id={key + "-" + mainAttribute.name}
-                                                        name={mainAttribute.name}
-                                                        title={mainAttribute.description}
-                                                        size="sm"
-                                                        isChecked={mainAttributeValue}
-                                                        onChange={event =>
-                                                            onChange(mainAttribute.name, event.target.checked)
-                                                        }
-                                                    />
-                                                )}
-                                            </Flex>
-                                        </AccordionButton>
-                                        <AccordionPanel p={0}>
-                                            {renderCategory(subcategory, lineageIndex + 1, key)}
-                                        </AccordionPanel>
-                                    </>
-                                )}
+                            <AccordionItem key={key} isExpandable={isExpandable} className={styles.accordionItem}>
+                                <AccordionButton isExpandable={isExpandable} className={styles.accordionButton}>
+                                    <div className={styles.subCategory}>
+                                        <div className={styles.subCategoryHeader}>
+                                            <Icon
+                                                // as={isExpanded ? FaFolderOpen : FaFolder}
+                                                as={FaFolder}
+                                                size="xs"
+                                                style={{
+                                                    color: "var(--3dverse-color-content-tertiary)",
+                                                    opacity: mainAttribute && !mainAttributeValue ? 0.25 : 0.5,
+                                                    visibility: !isExpandable ? "hidden" : undefined,
+                                                }}
+                                            />
+                                            <p
+                                                className={styles.subCategoryName}
+                                                style={
+                                                    mainAttribute
+                                                        ? {
+                                                              color: mainAttributeValue
+                                                                  ? ""
+                                                                  : "var(--3dverse-color-content-quaternary)",
+                                                          }
+                                                        : {}
+                                                }
+                                            >
+                                                {subcategory.name}
+                                            </p>
+                                        </div>
+                                        {mainAttribute && (
+                                            <Checkbox
+                                                id={key + "-" + mainAttribute.name}
+                                                size="xs"
+                                                name={mainAttribute.name}
+                                                title={mainAttribute.description}
+                                                isChecked={mainAttributeValue}
+                                                onChange={event => onChange(mainAttribute.name, event.target.checked)}
+                                            />
+                                        )}
+                                    </div>
+                                </AccordionButton>
+                                <div style={mainAttribute && !mainAttributeValue ? { opacity: 0.5 } : {}}>
+                                    {renderCategory(subcategory, lineageIndex + 1, key)}
+                                </div>
                             </AccordionItem>
                         );
                     })}
-                </Accordion>
+                </div>
 
                 {category.description.length > 0 && (
                     <>
@@ -185,98 +181,61 @@ export const RenderGraphSettings = ({
                             const defaultValue = input.default;
                             const isDisabled = value === undefined || value === defaultValue;
                             return (
-                                <FormControl
-                                    key={index}
-                                    as={Flex}
-                                    flexDir="row"
-                                    alignItems="center"
-                                    gap={3}
-                                    pr="3px"
-                                    size="sm"
-                                    cursor="pointer"
-                                    transition="background-color"
-                                    transitionDuration=".22s"
-                                    _hover={{
-                                        bgColor: "bg.foreground",
-                                    }}
-                                    _focus={{
-                                        bgColor: "bg.foreground",
-                                    }}
-                                >
-                                    <FormLabel
-                                        title={input.description}
-                                        flexGrow={1}
-                                        m={0}
-                                        px={3}
-                                        py={1}
-                                        fontSize="xs"
-                                        letterSpacing=".02em"
-                                        textTransform="capitalize"
-                                        noOfLines={1}
-                                        cursor="pointer"
-                                        userSelect="none"
-                                    >
+                                <div key={index} className={styles.formControl}>
+                                    <label title={input.description} htmlFor={input.name} className={styles.formLabel}>
                                         {input.name}
-                                    </FormLabel>
-                                    <Flex alignItems="center" gap={2} flexShrink={0}>
+                                    </label>
+                                    <div className={styles.formControlWrapper}>
                                         <FormControlWidget
                                             type={input.type}
+                                            id={input.name}
+                                            size="xs"
                                             value={value}
                                             defaultValue={input.default}
                                             onChange={(_, value) =>
                                                 onChange(input.name, value as RenderGraphDataObject[string])
                                             }
                                         />
-                                        <Tooltip
-                                            label="Reset"
-                                            size="xs"
-                                            placement="top"
-                                            gutter={2}
-                                            isDisabled={isDisabled}
-                                        >
+                                        <Tooltip label="Reset" isDisabled={isDisabled}>
                                             <IconButton
-                                                variant="ghost"
                                                 aria-label="Reset input"
+                                                variant="ghost"
                                                 size="xs"
-                                                boxSize={5}
-                                                minW="auto"
-                                                flexShrink={0}
-                                                color="content.tertiary"
-                                                icon={<Icon as={FaArrowRotateLeft} boxSize=".65rem" />}
+                                                className={styles.resetButton}
+                                                icon={<Icon as={FaArrowRotateLeft} size="xs" />}
                                                 isDisabled={isDisabled}
                                                 onClick={() => onResetInput(input.name, defaultValue)}
                                             />
                                         </Tooltip>
-                                    </Flex>
-                                </FormControl>
+                                    </div>
+                                </div>
                             );
                         })}
                     </>
                 )}
-            </Box>
+            </AccordionPanel>
         );
     };
 
     //--------------------------------------------------------------------------
-
     return (
-        <Provider>
+        <div className="livelink-react-ui-component">
             {!cameraEntity ? (
-                <Flex alignItems="center" justifyContent="center" py={8}>
+                <div className={styles.spinnerContainer}>
                     {/* TODO: Replace spinner by skeletons */}
-                    <Spinner size="sm" />
-                </Flex>
+                    <Spinner />
+                </div>
             ) : (
-                <Flex flexDir="column">
+                <div className={styles.innerContainer}>
                     {renderGraphDescription && renderCategory(renderGraphDescription)}
                     <ResetAllButton onClick={onResetAllInputs} />
-                </Flex>
+                </div>
             )}
-        </Provider>
+        </div>
     );
 };
 
-//--------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 const computeCategories = (inputDescriptor: Input[]): Category => {
     //--------------------------------------------------------------------------
     const root = {
@@ -323,17 +282,7 @@ const computeCategories = (inputDescriptor: Input[]): Category => {
 //--------------------------------------------------------------------------
 const ResetAllButton = ({ onClick }: { onClick: () => void }) => {
     return (
-        <Button
-            variant="ghost"
-            size="xs"
-            w="max-content"
-            alignSelf="end"
-            my={1}
-            mr={2}
-            color="content.tertiary"
-            fontWeight={400}
-            onClick={onClick}
-        >
+        <Button variant="ghost" size="xs" className={styles.resetAllButton} onClick={onClick}>
             Reset all
         </Button>
     );

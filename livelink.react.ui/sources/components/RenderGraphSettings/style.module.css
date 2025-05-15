@@ -1,0 +1,117 @@
+
+    .container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .spinnerContainer {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding-block: var(--3dverse-spacing-8);
+    }
+
+    .innerContainer {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .subCategory {
+        display: flex;
+        flex-grow: 1;
+    }
+
+    .subCategoryHeader {
+        display: flex;
+        align-items: center;
+        flex-grow: 1;
+        gap: var(--3dverse-spacing-2);
+    }
+
+    .subCategoryName {
+        font-size: var(--3dverse-font-size-xs);
+        font-weight: 500;
+        user-select: none;
+    }
+
+    .accordion {
+        border-top: 1px solid var(--3dverse-color-border-tertiary-alpha);
+    }
+
+    .accordionItem {
+    }
+
+    .accordionButton {
+        width: 100%;
+        padding-inline: var(--3dverse-spacing-2);
+        padding-block: var(--3dverse-spacing-1);
+
+        color: var(--3dverse-color-content-tertiary);
+    }
+
+    .accordionPanel {
+        padding-bottom: var(--3dverse-spacing-2);
+    }
+
+    .formControl {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        padding-right: 3px;
+
+        font-size: var(--3dverse-font-size-sm);
+
+        border-radius: var(--3dverse-border-radius-sm);
+        transition: background-color 0.22s;
+        cursor: pointer;
+
+        &:hover {
+            background-color: var(--3dverse-color-bg-foreground);
+        }
+        &:focus {
+            background-color: var(--3dverse-color-bg-foreground);
+        }
+    }
+
+    .formLabel {
+        display: -webkit-box;
+        text-align: start;
+
+        flex-grow: 1;
+
+        padding-inline: var(--3dverse-spacing-2);
+        padding-block: var(--3dverse-spacing-1);
+
+        font-size: var(--3dverse-font-size-xs);
+        letter-spacing: .02em;
+        text-transform: capitalize;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: var(--line-clamp);
+        --line-clamp: 1;
+
+        cursor: pointer;
+        user-select: none;
+    }
+
+    .formControlWrapper {
+        display: flex;
+        align-items: center;
+        gap: var(--3dverse-spacing-2);
+        flex-shrink: 0;
+    }
+
+    .resetButton {
+        width: var(--3dverse-spacing-5);
+        min-width: auto;
+        color: var(--3dverse-color-content-tertiary);
+    }
+
+    .resetAllButton {
+        width: max-content;
+        align-self: end;
+        margin-inline: var(--3dverse-spacing-1);
+        margin-right: var(--3dverse-spacing-2);
+    }
