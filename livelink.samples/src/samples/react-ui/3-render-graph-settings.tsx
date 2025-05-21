@@ -72,16 +72,18 @@ function RenderGraphWidget() {
     }
 
     return (
-        <aside className="absolute top-4 left-4 bg-ground rounded-lg">
+        <aside className="absolute top-4 left-4 w-[400px] bg-ground rounded-lg">
             <header className="pl-3 pr-8 py-1">
                 <h1 className="font-primary text-2xs color-scondary tracking-wide">
                     Render graph settings
                 </h1>
             </header>
-            <RenderGraphSettings
-                userToken={instance.session.token}
-                cameraEntity={camera.camera_entity}
-            />
+            <div className="max-h-[calc(100vh-80px)] overflow-y-auto">
+                <RenderGraphSettings
+                    userToken={instance.session.token}
+                    cameraEntity={camera.camera_entity}
+                />
+            </div>
         </aside>
     );
 }

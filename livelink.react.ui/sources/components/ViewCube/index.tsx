@@ -75,7 +75,7 @@ export const ViewCube = ({
                     .cube__face--bottom { transform: rotateX(-90deg) translateZ(${Math.floor(size * 0.5)}px); }
                 `}
             </style>
-            <div className="scene">
+            <div className="scene livelink-react-ui-component">
                 <div
                     className="cube"
                     style={{

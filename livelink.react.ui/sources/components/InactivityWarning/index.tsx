@@ -1,10 +1,9 @@
 //------------------------------------------------------------------------------
 import React, { useEffect, useRef, useState } from "react";
-import { Provider } from "../../chakra/Provider";
 
 //------------------------------------------------------------------------------
 import { InactivityWarningBadge } from "./InactivityWarningBadge";
-
+import styles from "./style.module.css";
 //------------------------------------------------------------------------------
 export const InactivityWarning = ({
     warningDuration,
@@ -44,7 +43,7 @@ export const InactivityWarning = ({
 
     //------------------------------------------------------------------------------
     return (
-        <Provider>
+        <div className={`${styles.container} livelink-react-ui-component`}>
             <InactivityWarningBadge
                 timeLeft={timeLeft}
                 onActivityReset={onActivityDetected}
@@ -71,6 +70,6 @@ export const InactivityWarning = ({
                     }
                 `}
             </style>
-        </Provider>
+        </div>
     );
 };

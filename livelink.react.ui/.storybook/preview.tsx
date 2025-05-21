@@ -5,6 +5,9 @@ import { themes } from "@storybook/theming";
 import { Livelink } from "@3dverse/livelink-react";
 
 //------------------------------------------------------------------------------
+import { LivelinkReactUIProvider } from "../sources/components/Provider";
+
+//------------------------------------------------------------------------------
 import "@3dverse/design-tokens/css/design-tokens-internal.css";
 import "./doc-pages-style.css";
 
@@ -36,7 +39,9 @@ const preview: Preview = {
             const scene_id = "bfadafe7-7d75-4e8d-ba55-3b65c4b1d994";
             return (
                 <Livelink token={token} sceneId={scene_id}>
-                    <Story />
+                    <LivelinkReactUIProvider>
+                        <Story />
+                    </LivelinkReactUIProvider>
                 </Livelink>
             );
         },

@@ -1,0 +1,25 @@
+//------------------------------------------------------------------------------
+import React from "react";
+import clsx from "clsx";
+
+//------------------------------------------------------------------------------
+import styles from "./style.module.css";
+
+//------------------------------------------------------------------------------
+export type Variant = "ghost" | "secondary" | "outline";
+export type Size = "xs" | "sm" | "md";
+
+//------------------------------------------------------------------------------
+interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+    variant?: Variant;
+    size?: Size;
+}
+
+//------------------------------------------------------------------------------
+export const Button: React.FC<ButtonProps> = ({ variant = "ghost", size = "md", className, children, ...props }) => {
+    return (
+        <button className={clsx(styles.button, styles[variant], styles[size], className)} {...props}>
+            {children}
+        </button>
+    );
+};

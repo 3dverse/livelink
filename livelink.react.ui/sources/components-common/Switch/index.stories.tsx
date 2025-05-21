@@ -1,24 +1,19 @@
 //------------------------------------------------------------------------------
 import React from "react";
 import type { Meta, StoryObj } from "@storybook/react";
-import { LoadingOverlay } from ".";
+
+//------------------------------------------------------------------------------
+import { Switch } from ".";
 
 //------------------------------------------------------------------------------
 const meta = {
-    title: "Components/Loading Overlay",
-    component: LoadingOverlay,
-    decorators: [
-        Story => (
-            <div style={{ position: "relative", height: "100vh" }}>
-                <Story />
-            </div>
-        ),
-    ],
+    title: "Components Common/Switch",
+    component: Switch,
     parameters: {
-        layout: "fullscreen",
+        layout: "centered",
     },
     tags: ["autodocs"],
-} satisfies Meta<typeof LoadingOverlay>;
+} satisfies Meta<typeof Switch>;
 
 //------------------------------------------------------------------------------
 export default meta;
@@ -26,5 +21,13 @@ type Story = StoryObj<typeof meta>;
 
 //------------------------------------------------------------------------------
 export const _Component: Story = {
-    args: {},
+    args: {
+        isChecked: false,
+        onChange: () => {},
+    },
+    render: args => (
+        <div className="livelink-react-ui-component">
+            <Switch {...args} />
+        </div>
+    ),
 };

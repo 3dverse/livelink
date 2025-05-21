@@ -1,16 +1,19 @@
 //------------------------------------------------------------------------------
+import React from "react";
 import type { Meta, StoryObj } from "@storybook/react";
-import { FormControlWidget } from ".";
+
+//------------------------------------------------------------------------------
+import { Spinner } from ".";
 
 //------------------------------------------------------------------------------
 const meta = {
-    title: "Components/Form Control Widget",
-    component: FormControlWidget,
+    title: "Components Common/Spinner",
+    component: Spinner,
     parameters: {
         layout: "centered",
     },
     tags: ["autodocs"],
-} satisfies Meta<typeof FormControlWidget>;
+} satisfies Meta<typeof Spinner>;
 
 //------------------------------------------------------------------------------
 export default meta;
@@ -18,10 +21,10 @@ type Story = StoryObj<typeof meta>;
 
 //------------------------------------------------------------------------------
 export const _Component: Story = {
-    args: {
-        value: [1, 1, 1, 1],
-        defaultValue: 1,
-        type: "vec4",
-        onChange: () => {},
-    },
+    args: {},
+    render: args => (
+        <div className="livelink-react-ui-component">
+            <Spinner {...args} />
+        </div>
+    ),
 };

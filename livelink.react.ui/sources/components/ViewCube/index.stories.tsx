@@ -10,7 +10,7 @@ const meta = {
     title: "Components/View Cube",
     component: ViewCube,
     parameters: {
-        layout: "centered",
+        layout: "fullscreen",
     },
     tags: ["autodocs"],
     args: {},
