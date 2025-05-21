@@ -1,5 +1,11 @@
 # @3dverse/livelink-react-ui
 
+## 0.3.0
+
+### Minor Changes
+
+-   refactor(livelink.react.ui)!: switched chakra for css modules
+
 ## 0.2.4
 
 ### Patch Changes
