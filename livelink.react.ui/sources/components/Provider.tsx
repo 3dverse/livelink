@@ -2,7 +2,7 @@ import React from "react";
 
 //------------------------------------------------------------------------------
 // 3dverse prefixed CSS variables
-import "../../../node_modules/@3dverse/design-tokens/css/design-tokens.css";
+import "@3dverse/design-tokens/css/design-tokens.css";
 
 //------------------------------------------------------------------------------
 // Global styles
