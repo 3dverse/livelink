@@ -51,9 +51,11 @@ export class WebXRHelper {
     // static cameras_origin: Entity | null = null;
     //--------------------------------------------------------------------------
     /**
-     * Use it to shift the XRView camera transforms
+     * Use cameras origin to shift the pose of the XRView
      */
     cameras_origin: Omit<Transform, "eulerOrientation"> | null = null;
+    #cameras_origin_apply: (cameras: readonly Entity[]) => void;
+    #cameras_origin_unapply: (frame_camera_transforms: Pick<Transform, "position" | "orientation">[]) => void;
 
     //--------------------------------------------------------------------------
     // References to livelink core
@@ -62,7 +64,8 @@ export class WebXRHelper {
     //--------------------------------------------------------------------------
     #surface: OffscreenSurface<"webgl", { xrCompatible: boolean }>;
     #fov_factor: number = 1.5;
-    #overridden_fovy: number | null = null;
+    #overriden_near_plane?: number;
+    #overridden_fovy?: number;
     #viewports: XRViewports = [];
     #context: XRContext;
 
@@ -98,23 +101,59 @@ export class WebXRHelper {
     }
 
     //--------------------------------------------------------------------------
+    /**
+     * The XRSession
+     */
     get session(): XRSession | null {
         return this.#session;
     }
 
     //--------------------------------------------------------------------------
+    /**
+     * The XRSessionMode
+     */
     get mode(): XRSessionMode {
         return this.#mode;
     }
 
     //--------------------------------------------------------------------------
+    /**
+     * The XRReferenceSpace used to get the pose of the XRView
+     */
     get reference_space(): XRReferenceSpace | null {
         return this.#reference_space;
     }
 
     //--------------------------------------------------------------------------
+    /**
+     * True if exactly 2 XRView instances are available in the XRSession.
+     */
     get is_stereo_vision(): boolean {
         return this.#xr_viewports.length === 2;
+    }
+
+    //--------------------------------------------------------------------------
+    /**
+     * Use to override the near plane provided by the projection matrix of the
+     * xr views. Might be useful in the webxr emulator to see things close to
+     * the eyes.
+     */
+    set overriden_near_plane(value: number | undefined) {
+        this.#overriden_near_plane = value;
+    }
+
+    //--------------------------------------------------------------------------
+    /**
+     * Disable the application of the transform of the cameras origin
+     */
+    set cameras_origin_transform_enabled(value: boolean) {
+        if (value) {
+            this.#applyCamerasOrigin = this.#cameras_origin_apply;
+            this.#unapplyCamerasOrigin = this.#cameras_origin_unapply;
+        } else {
+            this.#applyCamerasOrigin = () => {};
+            this.#unapplyCamerasOrigin = () => {};
+        }
     }
 
     //--------------------------------------------------------------------------
@@ -128,6 +167,8 @@ export class WebXRHelper {
             resolution_scale,
         });
         this.#context = this.#surface.context as XRContext;
+        this.#cameras_origin_apply = this.#applyCamerasOrigin;
+        this.#cameras_origin_unapply = this.#unapplyCamerasOrigin;
     }
 
     //--------------------------------------------------------------------------
@@ -393,7 +434,7 @@ export class WebXRHelper {
      * eye(s) transform in the world.
      * @param cameras
      */
-    #applyCamerasOrigin(cameras: readonly Entity[]): void {
+    #applyCamerasOrigin = (cameras: readonly Entity[]): void => {
         if (!this.cameras_origin) {
             return;
         }
@@ -415,7 +456,7 @@ export class WebXRHelper {
             const transformed_orientation = new Quaternion().multiplyQuaternions(origin_quat_conjugate, quaternion);
             transformed_orientation.toArray(orientation);
         }
-    }
+    };
 
     //--------------------------------------------------------------------------
     /**
@@ -426,14 +467,7 @@ export class WebXRHelper {
      * not the XRView.transform to place the billboard.
      * @param views
      */
-    #unapplyCamerasOrigin(
-        views: {
-            frame_camera_transform: {
-                position: Vec3;
-                orientation: Quat;
-            };
-        }[],
-    ): void {
+    #unapplyCamerasOrigin = (frame_camera_transforms: Pick<Transform, "position" | "orientation">[]): void => {
         if (!this.cameras_origin) {
             return;
         }
@@ -443,8 +477,8 @@ export class WebXRHelper {
         const origin_scale = new Vector3().fromArray(this.cameras_origin.scale);
         const transform = new Matrix4().compose(origin_position, origin_quat, origin_scale);
 
-        for (const view of views) {
-            const { position, orientation } = view.frame_camera_transform;
+        for (const frame_camera_transform of frame_camera_transforms) {
+            const { position, orientation } = frame_camera_transform;
             const transformed_position = new Vector3().fromArray(position);
             transformed_position.applyMatrix4(transform);
             transformed_position.toArray(position);
@@ -453,7 +487,7 @@ export class WebXRHelper {
             const transformed_orientation = new Quaternion().multiplyQuaternions(origin_quat, quaternion);
             transformed_orientation.toArray(orientation);
         }
-    }
+    };
 
     //--------------------------------------------------------------------------
     /**
@@ -464,42 +498,47 @@ export class WebXRHelper {
     #onXRFrame = (_: DOMHighResTimeStamp, frame: XRFrame): void => {
         const session = this.#session!;
         const gl_layer = session.renderState.baseLayer!;
-        let xr_views = frame.getViewerPose(this.#reference_space!)?.views?.map(view => ({
-            view,
-            viewport: gl_layer.getViewport(view)!,
-        }));
+        const readonly_xr_views = frame.getViewerPose(this.#reference_space!)?.views;
 
-        if (!xr_views) {
+        if (!readonly_xr_views) {
             session.requestAnimationFrame(this.#onXRFrame);
             return;
         }
 
-        xr_views = this.#forceSingleView ? xr_views.slice(0, 1) : xr_views;
+        let xr_views: XRView[] = [...readonly_xr_views];
+        let xr_viewports: XRViewport[] = [];
+        xr_views.forEach(xr_view => {
+            // TODO: getViewport might return undefined according to typing
+            xr_viewports.push(gl_layer.getViewport(xr_view)!);
+        });
 
-        if (this.#xrViewportsHaveChanged(xr_views)) {
+        if (this.#forceSingleView) {
+            xr_views = xr_views.splice(0, 1);
+            xr_viewports = xr_viewports.splice(0, 1);
+        }
+
+        if (this.#xrViewportsHaveChanged(xr_viewports)) {
             // For now, we end the session if the viewports have changed
+            // TODO: do we really want to waste time checkuing this...?
             console.error("XRViewports have changed, ending the XRSession");
             session.end();
         }
 
         this.#updateLiveLinkCameras(xr_views);
+        this.#applyCamerasOrigin(this.#surface.cameras);
 
-        const views = xr_views.map(({ view, viewport }, index) => {
-            const current_viewport = this.#surface.viewports[index];
-            const { world_position, world_orientation } = current_viewport.camera_projection!;
+        const frame_camera_transforms: Pick<Transform, "position" | "orientation">[] = xr_viewports.map((_, index) => {
+            const viewport = this.#surface.viewports[index];
+            const { world_position, world_orientation } = viewport.camera_projection!;
             return {
-                view,
-                viewport,
-                frame_camera_transform: {
-                    // Copy the transform array to prevent future mutations of the original arrays
-                    position: Array.from(world_position) as Vec3,
-                    orientation: Array.from(world_orientation) as Quat,
-                },
-            };
+                // Copy the transform array to prevent future mutations of the original arrays
+                position: Array.from(world_position) as Vec3,
+                orientation: Array.from(world_orientation) as Quat,
+            } as Pick<Transform, "position" | "orientation">;
         });
 
-        this.#unapplyCamerasOrigin(views);
-        this.#context.drawXRFrame({ xr_views: views });
+        this.#unapplyCamerasOrigin(frame_camera_transforms);
+        this.#context.drawXRFrame({ xr_views, xr_viewports, frame_camera_transforms });
 
         session.requestAnimationFrame(this.#onXRFrame);
     };
@@ -509,11 +548,10 @@ export class WebXRHelper {
      * Update the cameras of the LiveLink instance.
      * @param xr_views
      */
-    #updateLiveLinkCameras(xr_views: Array<{ view: XRView }>): void {
-        const cameras = this.#surface.cameras;
-        cameras.forEach((camera, index) => {
-            const { view } = xr_views[index];
-            const { position: pos, orientation: quat } = view.transform;
+    #updateLiveLinkCameras(xr_views: XRView[]): void {
+        this.#surface.cameras.forEach((camera, index) => {
+            const xr_view = xr_views[index];
+            const { position: pos, orientation: quat } = xr_view.transform;
             const { livelink_viewport } = this.#viewports[index];
             const position = [pos.x, pos.y, pos.z] as Vec3;
             const orientation = [quat.x, quat.y, quat.z, quat.w] as Quat;
@@ -521,7 +559,7 @@ export class WebXRHelper {
             camera.local_transform = { position, orientation };
 
             const new_perspective_lens = this.#computePerspectiveLens(
-                view.projectionMatrix,
+                xr_view.projectionMatrix,
                 livelink_viewport.width,
                 livelink_viewport.height,
             );
@@ -538,7 +576,6 @@ export class WebXRHelper {
                 camera.perspective_lens = new_perspective_lens;
             }
         });
-        this.#applyCamerasOrigin(cameras);
     }
 
     //--------------------------------------------------------------------------
@@ -683,7 +720,7 @@ export class WebXRHelper {
 
         const farPlane = projectionMatrix[14] / (projectionMatrix[10] + 1);
         const offset = [projectionMatrix[8], projectionMatrix[9] * -1] as [number, number];
-        return { fovy, aspectRatio, nearPlane, farPlane, offset };
+        return { fovy, aspectRatio, nearPlane: this.#overriden_near_plane || nearPlane, farPlane, offset };
     }
 
     //--------------------------------------------------------------------------
@@ -693,20 +730,20 @@ export class WebXRHelper {
      * @param xr_views
      * @returns True if the XR viewports have changed
      */
-    #xrViewportsHaveChanged(xr_views: Array<{ viewport: XRViewport }>): boolean {
+    #xrViewportsHaveChanged(xr_viewports: XRViewport[]): boolean {
         if (this.#xr_viewports.length === 0) {
             return true;
         }
-        return xr_views.some(({ viewport }, index) => {
-            const xr_viewport = this.#xr_viewports[index];
-            if (!xr_viewport) {
+        return xr_viewports.some((xr_viewport, index) => {
+            const previous_xr_viewport = this.#xr_viewports[index];
+            if (!previous_xr_viewport) {
                 return true;
             }
             return (
-                xr_viewport.width !== viewport.width ||
-                xr_viewport.height !== viewport.height ||
-                xr_viewport.x !== viewport.x ||
-                xr_viewport.y !== viewport.y
+                previous_xr_viewport.width !== xr_viewport.width ||
+                previous_xr_viewport.height !== xr_viewport.height ||
+                previous_xr_viewport.x !== xr_viewport.x ||
+                previous_xr_viewport.y !== xr_viewport.y
             );
         });
     }

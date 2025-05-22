@@ -5,7 +5,7 @@ import type { Quat, Vec3 } from "@3dverse/livelink.core";
 import { mat4, quat, vec2, vec3 } from "gl-matrix";
 
 //------------------------------------------------------------------------------
-import { ContextProvider, FrameMetaData, FrameSection } from "@3dverse/livelink";
+import { ContextProvider, FrameMetaData, FrameSection, Transform } from "@3dverse/livelink";
 
 /**
  * @experimental
@@ -132,15 +132,12 @@ export class XRContext extends ContextProvider {
      */
     drawXRFrame({
         xr_views,
+        xr_viewports,
+        frame_camera_transforms,
     }: {
-        xr_views: Array<{
-            view: XRView;
-            viewport: XRViewport;
-            frame_camera_transform: {
-                position: Vec3;
-                orientation: Quat;
-            };
-        }>;
+        xr_views: XRView[];
+        xr_viewports: XRViewport[];
+        frame_camera_transforms: Pick<Transform, "position" | "orientation">[];
     }): void {
         if (!this.#last_frame_section) {
             return;
@@ -169,9 +166,9 @@ export class XRContext extends ContextProvider {
         gl.bindTexture(gl.TEXTURE_2D, this.#texture_ref);
         gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, this.#last_frame_section.pixels);
 
-        const fovY = Math.atan(1 / xr_views[0].view.projectionMatrix[5]) * 2;
+        const fovY = Math.atan(1 / xr_views[0].projectionMatrix[5]) * 2;
 
-        const aspectRatio = xr_views[0].viewport.width / xr_views[0].viewport.height;
+        const aspectRatio = xr_viewports[0].width / xr_viewports[0].height;
         const scaleY = this.scale_factor * this.screen_distance * Math.tan(fovY * 0.5);
         const scaleX = scaleY * aspectRatio;
 
@@ -180,9 +177,12 @@ export class XRContext extends ContextProvider {
 
         gl.uniform2fv(sizeLocation, [viewportWidth, viewportHeight]);
 
-        const combinedViewportWidth = xr_views.reduce((acc, { viewport }) => acc + viewport.width, 0);
+        const combinedViewportWidth = xr_viewports.reduce((acc, { width }) => acc + width, 0);
 
-        for (const { view, viewport, frame_camera_transform } of xr_views) {
+        for (let index = 0; index < xr_views.length; index++) {
+            const xr_view = xr_views[index];
+            const xr_viewport = xr_viewports[index];
+            const frame_camera_transform = frame_camera_transforms[index];
             vec3.set(
                 this.#camera_position,
                 frame_camera_transform.position[0],
@@ -207,15 +207,15 @@ export class XRContext extends ContextProvider {
                 this.screen_distance,
             );
 
-            this.#projection_offset[0] = view.projectionMatrix[8];
-            this.#projection_offset[1] = view.projectionMatrix[9];
+            this.#projection_offset[0] = xr_view.projectionMatrix[8];
+            this.#projection_offset[1] = xr_view.projectionMatrix[9];
 
             const billboardMatrix = this.#computeBillboardMatrix(this.#billboard_position, scaleX, scaleY);
             gl.uniform2fv(viewOffsetLocation, this.#projection_offset);
 
-            gl.viewport(viewport.x, viewport.y, viewport.width, viewport.height);
-            gl.uniformMatrix4fv(viewMatrixLocation, false, view.transform.inverse.matrix);
-            gl.uniformMatrix4fv(projectionMatrixLocation, false, view.projectionMatrix);
+            gl.viewport(xr_viewport.x, xr_viewport.y, xr_viewport.width, xr_viewport.height);
+            gl.uniformMatrix4fv(viewMatrixLocation, false, xr_view.transform.inverse.matrix);
+            gl.uniformMatrix4fv(projectionMatrixLocation, false, xr_view.projectionMatrix);
             gl.uniformMatrix4fv(billboardMatrixLocation, false, billboardMatrix);
             gl.uniform1i(fakeAlphaEnabledLocation, this.fake_alpha_enabled ? 1 : 0);
             gl.uniform1f(fakeAlphaScaleLocation, this.fake_alpha_scale);
