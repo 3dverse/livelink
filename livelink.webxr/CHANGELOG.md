@@ -1,5 +1,12 @@
 # @3dverse/livelink-webxr
 
+## 0.1.7
+
+### Patch Changes
+
+-   feat(livelink.webxr): better alpha blend in XRContext fragment shader for immersive-ar sessions, and optional alpha scale to see through opaque surface while using immersive-ar
+-   feat(livelink.webxr): add WebXRHelper.cameras_origin_transform_enabled option to completely disable cameras origin transform, and review arrays used for XRView XRViewport and FrameCameraTransorm, add overriden_near_plane option for debug inside webxr emulator
+
 ## 0.1.6
 
 ### Patch Changes
