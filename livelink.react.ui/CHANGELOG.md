@@ -1,5 +1,11 @@
 # @3dverse/livelink-react-ui
 
+## 0.3.1
+
+### Patch Changes
+
+-   chore(livelink.react.ui): bump @3dverse/design-tokens
+
 ## 0.3.0
 
 ### Minor Changes
