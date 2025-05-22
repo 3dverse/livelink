@@ -171,6 +171,27 @@ export class WebXRHelper {
 
     //--------------------------------------------------------------------------
     /**
+     * Get fake alpha scale value of the XRContext used to remap fragment
+     * opacity from [0..1] to [0..fakeAlphaScale] if inferior to 1.
+     */
+    get fakeAlphaScale(): number {
+        return this.#context.fake_alpha_scale;
+    }
+
+    //--------------------------------------------------------------------------
+    /**
+     * Set fake alpha scale value of the XRContext used to remap fragment
+     * opacity from [0..1] to [0..fakeAlphaScale] if inferior to 1.
+     */
+    set fakeAlphaScale(value: number) {
+        if (value < 0 || value > 1) {
+            throw new Error("Fake alpha scale must be between 0 and 1");
+        }
+        this.#context.fake_alpha_scale = value;
+    }
+
+    //--------------------------------------------------------------------------
+    /**
      * Initialize the XRSession.
      * @param mode
      * @param options

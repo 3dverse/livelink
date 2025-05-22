@@ -55,6 +55,11 @@ export class XRContext extends ContextProvider {
     /**
      *
      */
+    fake_alpha_scale: number = 1;
+
+    /**
+     *
+     */
     readonly #neutral_direction: vec3 = vec3.fromValues(0, 0, -1);
 
     /**
@@ -158,6 +163,7 @@ export class XRContext extends ContextProvider {
         const projectionMatrixLocation = gl.getUniformLocation(this.#shader_program!, "projectionMatrix");
         const billboardMatrixLocation = gl.getUniformLocation(this.#shader_program!, "billboardMatrix");
         const fakeAlphaEnabledLocation = gl.getUniformLocation(this.#shader_program!, "fakeAlphaEnabled");
+        const fakeAlphaScaleLocation = gl.getUniformLocation(this.#shader_program!, "fakeAlphaScale");
 
         gl.activeTexture(gl.TEXTURE0);
         gl.bindTexture(gl.TEXTURE_2D, this.#texture_ref);
@@ -212,8 +218,9 @@ export class XRContext extends ContextProvider {
             gl.uniformMatrix4fv(projectionMatrixLocation, false, view.projectionMatrix);
             gl.uniformMatrix4fv(billboardMatrixLocation, false, billboardMatrix);
             gl.uniform1i(fakeAlphaEnabledLocation, this.fake_alpha_enabled ? 1 : 0);
+            gl.uniform1f(fakeAlphaScaleLocation, this.fake_alpha_scale);
 
-            const viewport_offset = viewport.x / combinedViewportWidth;
+            const viewport_offset = xr_viewport.x / combinedViewportWidth;
             const frame_offset =
                 this.#last_frame_section.section.left + viewport_offset * this.#last_frame_section.section.width;
             gl.uniform2fv(offsetLocation, [frame_offset, this.#last_frame_section.section.top]);
@@ -287,39 +294,30 @@ export class XRContext extends ContextProvider {
             varying vec2 texCoord;
             uniform sampler2D texture;
             uniform int fakeAlphaEnabled;
+            uniform float fakeAlphaScale;
 
-            float tanh(float x) {
-                float ex = exp(x);
-                float eNegx = exp(-x);
-                return (ex - eNegx) / (ex + eNegx);
+            float luminance(vec3 color) {
+                // sRGB luminance approximation
+                return dot(color, vec3(0.299, 0.587, 0.114));
             }
+
             void main() {
                 gl_FragColor = texture2D(texture, texCoord);
                 if(fakeAlphaEnabled == 1) {
-                    highp float maxIntensity = max(max(gl_FragColor.r, gl_FragColor.g), gl_FragColor.b);
+                    // Use luminance to determine alpha so values close to dark are transparent and smoothly fade
+                    // to prevent noise around object's edges
+                    float luma = luminance(gl_FragColor.rgb);
+                    float alpha = smoothstep(0.02, 0.1, luma);
+                    gl_FragColor.a = alpha;
 
-                    // basic threshold
-                    // if(maxIntensity < 0.1) {
-                    //     gl_FragColor.a = maxIntensity;
-                    // }
-
-                    // sigmoid
-                    // if(maxIntensity < 0.1) {
-                    //     float k = 100.0; // Increased steepness for faster fade near black
-                    //     float x0 = 0.02; // Lower midpoint to handle darker edges with illumination
-                    //     gl_FragColor.a = 1.0 / (1.0 + exp(-k * (maxIntensity - x0)));
-                    // }
-
-                    // Hyperbolic Tangent
-                    if(maxIntensity < 0.1) {
-                        // float k = 100.0;
-                        // float x0 = 0.005;
-                        float k = 80.0;
-                        float x0 = 0.01;
-                        gl_FragColor.a = max(0.0, tanh(k * (maxIntensity - x0)));
-                    } else {
-                        gl_FragColor.a = 0.5;
+                    // remap [0..1] → [0..fakeAlphaScale] to see through opaque objects in AR
+                    if(fakeAlphaScale < 1.0) {
+                        gl_FragColor.a *= fakeAlphaScale;
                     }
+
+                    // Premultiply RGB by alpha to avoid color bleeding on transparent edges
+                    // (required for correct blending in compositing / XR rendering)
+                    gl_FragColor.rgb *= alpha;
                 }
             }`;
         const fragment_shader = gl.createShader(gl.FRAGMENT_SHADER)!;
