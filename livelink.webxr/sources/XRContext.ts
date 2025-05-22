@@ -5,7 +5,7 @@ import type { Quat, Vec3 } from "@3dverse/livelink.core";
 import { mat4, quat, vec2, vec3 } from "gl-matrix";
 
 //------------------------------------------------------------------------------
-import { ContextProvider, FrameMetaData, FrameSection } from "@3dverse/livelink";
+import { ContextProvider, FrameMetaData, FrameSection, Transform } from "@3dverse/livelink";
 
 /**
  * @experimental
@@ -51,6 +51,11 @@ export class XRContext extends ContextProvider {
      *
      */
     fake_alpha_enabled: boolean = false;
+
+    /**
+     *
+     */
+    fake_alpha_scale: number = 1;
 
     /**
      *
@@ -127,15 +132,12 @@ export class XRContext extends ContextProvider {
      */
     drawXRFrame({
         xr_views,
+        xr_viewports,
+        frame_camera_transforms,
     }: {
-        xr_views: Array<{
-            view: XRView;
-            viewport: XRViewport;
-            frame_camera_transform: {
-                position: Vec3;
-                orientation: Quat;
-            };
-        }>;
+        xr_views: XRView[];
+        xr_viewports: XRViewport[];
+        frame_camera_transforms: Pick<Transform, "position" | "orientation">[];
     }): void {
         if (!this.#last_frame_section) {
             return;
@@ -158,14 +160,15 @@ export class XRContext extends ContextProvider {
         const projectionMatrixLocation = gl.getUniformLocation(this.#shader_program!, "projectionMatrix");
         const billboardMatrixLocation = gl.getUniformLocation(this.#shader_program!, "billboardMatrix");
         const fakeAlphaEnabledLocation = gl.getUniformLocation(this.#shader_program!, "fakeAlphaEnabled");
+        const fakeAlphaScaleLocation = gl.getUniformLocation(this.#shader_program!, "fakeAlphaScale");
 
         gl.activeTexture(gl.TEXTURE0);
         gl.bindTexture(gl.TEXTURE_2D, this.#texture_ref);
         gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, this.#last_frame_section.pixels);
 
-        const fovY = Math.atan(1 / xr_views[0].view.projectionMatrix[5]) * 2;
+        const fovY = Math.atan(1 / xr_views[0].projectionMatrix[5]) * 2;
 
-        const aspectRatio = xr_views[0].viewport.width / xr_views[0].viewport.height;
+        const aspectRatio = xr_viewports[0].width / xr_viewports[0].height;
         const scaleY = this.scale_factor * this.screen_distance * Math.tan(fovY * 0.5);
         const scaleX = scaleY * aspectRatio;
 
@@ -174,9 +177,12 @@ export class XRContext extends ContextProvider {
 
         gl.uniform2fv(sizeLocation, [viewportWidth, viewportHeight]);
 
-        const combinedViewportWidth = xr_views.reduce((acc, { viewport }) => acc + viewport.width, 0);
+        const combinedViewportWidth = xr_viewports.reduce((acc, { width }) => acc + width, 0);
 
-        for (const { view, viewport, frame_camera_transform } of xr_views) {
+        for (let index = 0; index < xr_views.length; index++) {
+            const xr_view = xr_views[index];
+            const xr_viewport = xr_viewports[index];
+            const frame_camera_transform = frame_camera_transforms[index];
             vec3.set(
                 this.#camera_position,
                 frame_camera_transform.position[0],
@@ -201,19 +207,20 @@ export class XRContext extends ContextProvider {
                 this.screen_distance,
             );
 
-            this.#projection_offset[0] = view.projectionMatrix[8];
-            this.#projection_offset[1] = view.projectionMatrix[9];
+            this.#projection_offset[0] = xr_view.projectionMatrix[8];
+            this.#projection_offset[1] = xr_view.projectionMatrix[9];
 
             const billboardMatrix = this.#computeBillboardMatrix(this.#billboard_position, scaleX, scaleY);
             gl.uniform2fv(viewOffsetLocation, this.#projection_offset);
 
-            gl.viewport(viewport.x, viewport.y, viewport.width, viewport.height);
-            gl.uniformMatrix4fv(viewMatrixLocation, false, view.transform.inverse.matrix);
-            gl.uniformMatrix4fv(projectionMatrixLocation, false, view.projectionMatrix);
+            gl.viewport(xr_viewport.x, xr_viewport.y, xr_viewport.width, xr_viewport.height);
+            gl.uniformMatrix4fv(viewMatrixLocation, false, xr_view.transform.inverse.matrix);
+            gl.uniformMatrix4fv(projectionMatrixLocation, false, xr_view.projectionMatrix);
             gl.uniformMatrix4fv(billboardMatrixLocation, false, billboardMatrix);
             gl.uniform1i(fakeAlphaEnabledLocation, this.fake_alpha_enabled ? 1 : 0);
+            gl.uniform1f(fakeAlphaScaleLocation, this.fake_alpha_scale);
 
-            const viewport_offset = viewport.x / combinedViewportWidth;
+            const viewport_offset = xr_viewport.x / combinedViewportWidth;
             const frame_offset =
                 this.#last_frame_section.section.left + viewport_offset * this.#last_frame_section.section.width;
             gl.uniform2fv(offsetLocation, [frame_offset, this.#last_frame_section.section.top]);
@@ -287,39 +294,30 @@ export class XRContext extends ContextProvider {
             varying vec2 texCoord;
             uniform sampler2D texture;
             uniform int fakeAlphaEnabled;
+            uniform float fakeAlphaScale;
 
-            float tanh(float x) {
-                float ex = exp(x);
-                float eNegx = exp(-x);
-                return (ex - eNegx) / (ex + eNegx);
+            float luminance(vec3 color) {
+                // sRGB luminance approximation
+                return dot(color, vec3(0.299, 0.587, 0.114));
             }
+
             void main() {
                 gl_FragColor = texture2D(texture, texCoord);
                 if(fakeAlphaEnabled == 1) {
-                    highp float maxIntensity = max(max(gl_FragColor.r, gl_FragColor.g), gl_FragColor.b);
+                    // Use luminance to determine alpha so values close to dark are transparent and smoothly fade
+                    // to prevent noise around object's edges
+                    float luma = luminance(gl_FragColor.rgb);
+                    float alpha = smoothstep(0.02, 0.1, luma);
+                    gl_FragColor.a = alpha;
 
-                    // basic threshold
-                    // if(maxIntensity < 0.1) {
-                    //     gl_FragColor.a = maxIntensity;
-                    // }
-
-                    // sigmoid
-                    // if(maxIntensity < 0.1) {
-                    //     float k = 100.0; // Increased steepness for faster fade near black
-                    //     float x0 = 0.02; // Lower midpoint to handle darker edges with illumination
-                    //     gl_FragColor.a = 1.0 / (1.0 + exp(-k * (maxIntensity - x0)));
-                    // }
-
-                    // Hyperbolic Tangent
-                    if(maxIntensity < 0.1) {
-                        // float k = 100.0;
-                        // float x0 = 0.005;
-                        float k = 80.0;
-                        float x0 = 0.01;
-                        gl_FragColor.a = max(0.0, tanh(k * (maxIntensity - x0)));
-                    } else {
-                        gl_FragColor.a = 0.5;
+                    // remap [0..1] → [0..fakeAlphaScale] to see through opaque objects in AR
+                    if(fakeAlphaScale < 1.0) {
+                        gl_FragColor.a *= fakeAlphaScale;
                     }
+
+                    // Premultiply RGB by alpha to avoid color bleeding on transparent edges
+                    // (required for correct blending in compositing / XR rendering)
+                    gl_FragColor.rgb *= alpha;
                 }
             }`;
         const fragment_shader = gl.createShader(gl.FRAGMENT_SHADER)!;
