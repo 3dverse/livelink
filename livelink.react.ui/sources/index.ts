@@ -7,6 +7,8 @@ export * from "./components/RenderGraphSettings";
 export * from "./components/SunPositionPicker";
 export * from "./components/ViewCube";
 export * from "./components/LoadingOverlay";
+export * from "./components/VirtualGamepad";
+export * from "./components/VirtualJoystick";
 
 //------------------------------------------------------------------------------
 /**

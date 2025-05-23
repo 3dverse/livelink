@@ -13,7 +13,7 @@ import {
     ViewportContext,
     Canvas,
 } from "@3dverse/livelink-react";
-import { LoadingOverlay } from "@3dverse/livelink-react-ui";
+import { LoadingOverlay, VirtualGamepad } from "@3dverse/livelink-react-ui";
 
 //------------------------------------------------------------------------------
 import { DisconnectedModal } from "../../../components/SamplePlayer";
@@ -99,6 +99,7 @@ function AppLayout() {
         <Canvas className="w-full h-full">
             <Viewport cameraEntity={cameraEntity} className="w-full h-full">
                 {startSimulation && <SimulationStarter />}
+                <VirtualGamepad />
             </Viewport>
         </Canvas>
     );
@@ -121,7 +122,7 @@ function SimulationStarter() {
         }
 
         instance.devices.keyboard.enable();
-        instance.devices.gamepad.enable();
+        instance.devices.gamepads_registry.enable();
         instance.devices.mouse.enableOnViewport({ viewport });
 
         instance.startSimulation();
