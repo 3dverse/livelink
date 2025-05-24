@@ -116,7 +116,9 @@ function SimulationStarter() {
 
         console.log("Setting up controller");
 
-        viewportDomElement.requestPointerLock();
+        if (viewportDomElement.requestPointerLock) {
+            viewportDomElement.requestPointerLock();
+        }
 
         instance.devices.keyboard.enable();
         instance.devices.gamepad.enable();
