@@ -1,5 +1,13 @@
 # @3dverse/livelink-react-ui
 
+## 0.3.2
+
+### Patch Changes
+
+-   feat(livelink.react.ui): add virtual gamepad and virtual joystick components
+-   Updated dependencies
+    -   @3dverse/livelink@0.8.39
+
 ## 0.3.1
 
 ### Patch Changes
