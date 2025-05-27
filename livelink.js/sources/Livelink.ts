@@ -27,8 +27,8 @@ import { TO_REMOVE__ViewportsAddedEvent } from "./session/SessionEvents";
 
 import { Mouse } from "./inputs/Mouse";
 import { Keyboard } from "./inputs/Keyboard";
-import { Gamepad } from "./inputs/Gamepad";
 import { AudioPlayer } from "./audio/AudioPlayer";
+import { GamepadsRegistry } from "./inputs/GamepadsRegistry";
 
 /**
  * This class represents the Livelink connection between the client and the 3dverse server holding
@@ -245,7 +245,7 @@ export class Livelink {
     /**
      * Gamepad input device.
      */
-    #gamepad: Gamepad;
+    #gamepads_registry: GamepadsRegistry;
 
     /**
      * Interval between updates sent to the renderer.
@@ -301,7 +301,7 @@ export class Livelink {
         this.scene = new Scene(this.#core);
         this.#mouse = new Mouse(this);
         this.#keyboard = new Keyboard(this);
-        this.#gamepad = new Gamepad(this);
+        this.#gamepads_registry = new GamepadsRegistry({ instance: this });
     }
 
     /**
@@ -462,11 +462,11 @@ export class Livelink {
     /**
      * @experimental
      */
-    get devices(): Readonly<{ mouse: Mouse; keyboard: Keyboard; gamepad: Gamepad }> {
+    get devices(): Readonly<{ mouse: Mouse; keyboard: Keyboard; gamepads_registry: GamepadsRegistry }> {
         return {
             mouse: this.#mouse,
             keyboard: this.#keyboard,
-            gamepad: this.#gamepad,
+            gamepads_registry: this.#gamepads_registry,
         };
     }
 

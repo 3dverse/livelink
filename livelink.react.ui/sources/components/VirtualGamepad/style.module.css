@@ -1,0 +1,51 @@
+.gamepadCrossContainer {
+  position: absolute;
+  bottom: 10%;
+  right: 0;
+  transform: translateX(-50%);
+  width: 120px;
+  height: 120px;
+}
+
+.gamepadButton {
+    --btn-color: 170, 0, 0;
+    background-color: rgba(var(--btn-color), 0.55);
+    position: absolute;
+    border-radius: 25px;
+}
+
+.gamepadButton:hover {
+    background-color: rgba(var(--btn-color), 0.6);
+}
+
+.gamepadButton:active {
+    background-color: rgba(var(--btn-color), 1);
+}
+
+.redButtonColor {
+    --btn-color: 170, 0, 0;
+    top: 50%;
+    right: 0;
+    transform: translateY(-50%);
+}
+
+.blueButtonColor {
+    --btn-color: 0, 0, 170;
+    top: 50%;
+    left: 0;
+    transform: translateY(-50%);
+}
+
+.greenButtonColor {
+    --btn-color: 0, 170, 0;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+.yellowButtonColor {
+    --btn-color: 170, 170, 0;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+}
