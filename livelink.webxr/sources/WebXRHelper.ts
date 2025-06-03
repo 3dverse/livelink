@@ -15,11 +15,7 @@ import { XRContext } from "./XRContext";
 import { Quaternion, Vector3, Matrix4 } from "threejs-math";
 
 //------------------------------------------------------------------------------
-type XRViewports = Array<{
-    xr_view: XRView;
-    xr_viewport: XRViewport;
-    livelink_viewport: Viewport;
-}>;
+type XRViewports = Array<{ xr_view: XRView; xr_viewport: XRViewport; livelink_viewport: Viewport }>;
 
 //------------------------------------------------------------------------------
 function createPromiseWithResolvers<T>(): {
@@ -311,12 +307,7 @@ export class WebXRHelper {
         // transparency while the feature to send the background mask frame from FTL to the client is not implemented.
         const isAR = this.#mode === "immersive-ar";
         this.fakeAlpha = isAR;
-        const dataJSON = isAR
-            ? {
-                  grid: false,
-                  displayBackground: false,
-              }
-            : undefined;
+        const dataJSON = isAR ? { grid: false, displayBackground: false } : undefined;
 
         this.#core.addViewports({ viewports: this.#viewports.map(({ livelink_viewport }) => livelink_viewport) });
         for (const index in this.#viewports) {
@@ -563,10 +554,9 @@ export class WebXRHelper {
                 livelink_viewport.width,
                 livelink_viewport.height,
             );
-            const { aspectRatio, fovy, nearPlane, farPlane, offset } = new_perspective_lens;
+            const { fovy, nearPlane, farPlane, offset } = new_perspective_lens;
             const has_changed =
                 !camera.perspective_lens ||
-                camera.perspective_lens.aspectRatio !== aspectRatio ||
                 camera.perspective_lens.fovy !== fovy ||
                 camera.perspective_lens.nearPlane !== nearPlane ||
                 camera.perspective_lens.farPlane !== farPlane ||
@@ -585,10 +575,7 @@ export class WebXRHelper {
      */
     #configureLivelinkViewports(xr_views: readonly XRView[]): void {
         const gl_layer = this.#session!.renderState.baseLayer!;
-        const xr_eyes = xr_views.map(view => ({
-            view,
-            viewport: gl_layer.getViewport(view)!,
-        }));
+        const xr_eyes = xr_views.map(view => ({ view, viewport: gl_layer.getViewport(view)! }));
         const xr_viewports = xr_eyes.map(xr_eye => xr_eye.viewport);
 
         console.debug("XR views:", xr_views);
@@ -603,12 +590,7 @@ export class WebXRHelper {
             const xrViewport = xr_eye.viewport;
             const rect = new RelativeRect(
                 are_xr_viewport_normalized
-                    ? {
-                          left: xrViewport.x,
-                          top: xrViewport.y,
-                          width: xrViewport.width,
-                          height: xrViewport.height,
-                      }
+                    ? { left: xrViewport.x, top: xrViewport.y, width: xrViewport.width, height: xrViewport.height }
                     : {
                           left: xrViewport.x / gl_layer.framebufferWidth,
                           top: xrViewport.y / gl_layer.framebufferHeight,
@@ -617,17 +599,9 @@ export class WebXRHelper {
                       },
             );
             console.debug(`Viewport for ${xr_eye.view.eye} eye:`, rect);
-            const viewport = new Viewport({
-                core: this.#core!,
-                rendering_surface: this.#surface,
-                options: { rect },
-            });
+            const viewport = new Viewport({ core: this.#core!, rendering_surface: this.#surface, options: { rect } });
 
-            this.#viewports.push({
-                xr_view: xr_eye.view,
-                xr_viewport: xrViewport,
-                livelink_viewport: viewport,
-            });
+            this.#viewports.push({ xr_view: xr_eye.view, xr_viewport: xrViewport, livelink_viewport: viewport });
         }
     }
 
@@ -669,10 +643,7 @@ export class WebXRHelper {
                     viewport.width,
                     viewport.height,
                 ),
-                camera: {
-                    renderGraphRef: "398ee642-030a-45e7-95df-7147f6c43392",
-                    dataJSON,
-                },
+                camera: { renderGraphRef: "398ee642-030a-45e7-95df-7147f6c43392", dataJSON },
                 tags: {
                     value: [
                         `viewport_x = ${xr_viewport.x.toString()}`,
@@ -703,13 +674,7 @@ export class WebXRHelper {
         projectionMatrix: Float32Array,
         viewportWidth: number,
         viewportHeight: number,
-    ): {
-        fovy: number;
-        aspectRatio: number;
-        nearPlane: number;
-        farPlane: number;
-        offset: [number, number];
-    } {
+    ): { fovy: number; aspectRatio: number; nearPlane: number; farPlane: number; offset: [number, number] } {
         const aspectRatio = viewportWidth / viewportHeight;
         const fovy = this.#overridden_fovy ?? Math.atan(1 / projectionMatrix[5]) * (180 / Math.PI) * 2;
         let nearPlane = projectionMatrix[14] / (projectionMatrix[10] - 1);
