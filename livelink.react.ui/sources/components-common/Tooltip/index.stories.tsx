@@ -22,8 +22,9 @@ type Story = StoryObj<typeof meta>;
 //------------------------------------------------------------------------------
 export const _Component: Story = {
     args: {
-        label: "Hello tooltip",
+        content: "Hello tooltip",
         isDisabled: false,
+        usePortal: true,
         children: <div>Hover me</div>,
     },
     render: (args: any) => (

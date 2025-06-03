@@ -44,7 +44,6 @@ export const LightControl = ({ lights: _lights, onChange }: { lights?: LightEnti
                 .then(entities => {
                     const __lights = entities.filter(entity => !entity.point_light?.isSun);
                     setLights(__lights as LightEntity[]);
-                    console.log("lights", __lights[0].point_light);
                 });
         }
     }, [instance, _lights]);

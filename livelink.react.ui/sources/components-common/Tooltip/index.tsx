@@ -1,27 +1,66 @@
-//------------------------------------------------------------------------------
-import React, { ReactNode } from "react";
-
-//------------------------------------------------------------------------------
+import React, { useRef, useState, useLayoutEffect } from "react";
+import ReactDOM from "react-dom";
 import styles from "./index.module.css";
 
 //------------------------------------------------------------------------------
-export interface TooltipProps {
-    label: string;
+type TooltipProps = {
+    content: React.ReactNode;
     isDisabled?: boolean;
-    children: ReactNode;
-}
+    children: React.ReactNode;
+    usePortal?: boolean;
+};
 
 //------------------------------------------------------------------------------
-export const Tooltip: React.FC<TooltipProps> = ({ label, isDisabled, children }) => {
-    if (isDisabled) {
-        return children;
-    }
+export const Tooltip: React.FC<TooltipProps> = ({ content, isDisabled, children, usePortal = false }) => {
+    //--------------------------------------------------------------------------
+    const [isVisible, setIsVisible] = useState(false);
+    const [coords, setCoords] = useState({ left: 0, top: 0 });
+    const ref = useRef<HTMLDivElement>(null);
+
+    //--------------------------------------------------------------------------
+    useLayoutEffect(() => {
+        if (usePortal && ref.current && isVisible) {
+            const rect = ref.current.getBoundingClientRect();
+            setCoords({
+                left: rect.left + rect.width / 2,
+                top: window.scrollY + rect.top,
+            });
+        }
+    }, [isVisible, usePortal]);
+
+    //--------------------------------------------------------------------------
+    const tooltip = (
+        <div
+            className={`${styles.tooltip} ${usePortal ? styles.usePortal : ""} ${isVisible ? styles.visible : ""} `}
+            style={
+                usePortal
+                    ? {
+                          top: coords.top - 8,
+                          left: coords.left,
+                      }
+                    : {}
+            }
+        >
+            {content}
+        </div>
+    );
+
+    //--------------------------------------------------------------------------
+    if (!!!content || isDisabled) return children;
     return (
-        <span className={styles.wrapper}>
-            {children}
-            <span role="tooltip" className={styles.tooltipContent}>
-                {label}
-            </span>
-        </span>
+        <>
+            <div
+                ref={ref}
+                className={styles.wrapper}
+                onMouseEnter={() => setIsVisible(true)}
+                onMouseLeave={() => setIsVisible(false)}
+            >
+                {children}
+                {!usePortal && tooltip}
+            </div>
+            {usePortal &&
+                isVisible &&
+                ReactDOM.createPortal(<div className="livelink-react-ui-component">{tooltip}</div>, document.body)}
+        </>
     );
 };

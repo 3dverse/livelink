@@ -196,7 +196,7 @@ export const RenderGraphSettings = ({
                                                 onChange(input.name, value as RenderGraphDataObject[string])
                                             }
                                         />
-                                        <Tooltip label="Reset" isDisabled={isDisabled}>
+                                        <Tooltip content="Reset" isDisabled={isDisabled} usePortal>
                                             <IconButton
                                                 aria-label="Reset input"
                                                 variant="ghost"
