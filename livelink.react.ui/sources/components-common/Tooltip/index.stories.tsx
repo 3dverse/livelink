@@ -1,19 +1,19 @@
 //------------------------------------------------------------------------------
-import React, { useState } from "react";
+import React from "react";
 import type { Meta, StoryObj } from "@storybook/react";
 
 //------------------------------------------------------------------------------
-import { Switch } from ".";
+import { Tooltip } from "./index";
 
 //------------------------------------------------------------------------------
 const meta = {
-    title: "Components Common/Switch",
-    component: Switch,
+    title: "Components Common/Tooltip",
+    component: Tooltip,
     parameters: {
         layout: "centered",
     },
     tags: ["autodocs"],
-} satisfies Meta<typeof Switch>;
+} satisfies Meta<typeof Tooltip>;
 
 //------------------------------------------------------------------------------
 export default meta;
@@ -22,15 +22,13 @@ type Story = StoryObj<typeof meta>;
 //------------------------------------------------------------------------------
 export const _Component: Story = {
     args: {
-        isChecked: false,
-        onChange: () => {},
+        label: "Hello tooltip",
+        isDisabled: false,
+        children: <div>Hover me</div>,
     },
-    render: args => {
-        const [isChecked, setIsChecked] = useState(args.isChecked);
-        return (
-            <div className="livelink-react-ui-component">
-                <Switch {...args} isChecked={isChecked} onChange={() => setIsChecked(!isChecked)} />
-            </div>
-        );
-    },
+    render: (args: any) => (
+        <div className="livelink-react-ui-component">
+            <Tooltip {...args} />
+        </div>
+    ),
 };

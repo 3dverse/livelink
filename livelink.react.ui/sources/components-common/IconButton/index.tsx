@@ -3,9 +3,9 @@ import React from "react";
 import clsx from "clsx";
 
 //------------------------------------------------------------------------------
-import buttonStyles from "../Button/style.module.css";
+import buttonStyles from "../Button/index.module.css";
 import { Size, Variant } from "../Button";
-import styles from "./style.module.css";
+import styles from "./index.module.css";
 
 //------------------------------------------------------------------------------
 interface IconButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {

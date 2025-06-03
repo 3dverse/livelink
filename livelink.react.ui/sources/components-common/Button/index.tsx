@@ -3,14 +3,14 @@ import React from "react";
 import clsx from "clsx";
 
 //------------------------------------------------------------------------------
-import styles from "./style.module.css";
+import styles from "./index.module.css";
 
 //------------------------------------------------------------------------------
 export type Variant = "ghost" | "secondary" | "outline";
 export type Size = "xs" | "sm" | "md";
 
 //------------------------------------------------------------------------------
-interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
     variant?: Variant;
     size?: Size;
 }

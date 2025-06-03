@@ -4,7 +4,7 @@ import clsx from "clsx";
 
 //------------------------------------------------------------------------------
 import { Size } from "../Input";
-import styles from "./style.module.css";
+import styles from "./index.module.css";
 
 //------------------------------------------------------------------------------
 type SwitchProps = {

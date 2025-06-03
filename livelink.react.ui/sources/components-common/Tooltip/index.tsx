@@ -2,10 +2,10 @@
 import React, { ReactNode } from "react";
 
 //------------------------------------------------------------------------------
-import styles from "./style.module.css";
+import styles from "./index.module.css";
 
 //------------------------------------------------------------------------------
-interface TooltipProps {
+export interface TooltipProps {
     label: string;
     isDisabled?: boolean;
     children: ReactNode;
