@@ -39,7 +39,6 @@
     }
 }
 
-
 .outerBox::before {
     content: "";
     position: absolute;

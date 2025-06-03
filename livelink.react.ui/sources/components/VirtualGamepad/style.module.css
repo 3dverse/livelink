@@ -1,10 +1,10 @@
 .gamepadCrossContainer {
-  position: absolute;
-  bottom: 10%;
-  right: 0;
-  transform: translateX(-50%);
-  width: 120px;
-  height: 120px;
+    position: absolute;
+    bottom: 10%;
+    right: 0;
+    transform: translateX(-50%);
+    width: 120px;
+    height: 120px;
 }
 
 .gamepadButton {
