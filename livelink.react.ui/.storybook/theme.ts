@@ -1,5 +1,5 @@
 //------------------------------------------------------------------------------
-import { create } from "@storybook/theming";
+import { create } from "storybook/theming";
 import "@3dverse/design-tokens/css/design-tokens-internal.css";
 
 //------------------------------------------------------------------------------
