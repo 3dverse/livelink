@@ -16,13 +16,13 @@
     flex-direction: column;
     gap: var(--3dverse-spacing-4);
     flex-grow: 1;
-    width: 19rem;
+    width: 11.5rem;
 
     padding-top: var(--3dverse-spacing-1);
     padding-inline: var(--3dverse-spacing-1);
 
     @media (min-width: 80em) {
-        width: 18rem;
+        width: 9.5rem;
     }
 }
 

@@ -12,7 +12,7 @@ import "./doc-pages-style.css";
 import "@3dverse/design-tokens/css/design-tokens-internal.css";
 
 //------------------------------------------------------------------------------
-const SCENE_ID = "4a5ed051-d3c7-444d-9049-ce752af9748d";
+const scene_id = "4a5ed051-d3c7-444d-9049-ce752af9748d";
 
 //------------------------------------------------------------------------------
 const preview: Preview = {
@@ -46,7 +46,7 @@ const preview: Preview = {
         (Story: React.ComponentType) => {
             const token = import.meta.env.STORYBOOK_3DVERSE_PUBLIC_TOKEN;
             return (
-                <Livelink token={token} sceneId={SCENE_ID}>
+                <Livelink token={token} sceneId={scene_id}>
                     <LivelinkReactUIProvider>
                         <Story />
                     </LivelinkReactUIProvider>

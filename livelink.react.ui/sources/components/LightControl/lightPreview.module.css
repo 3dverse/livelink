@@ -5,11 +5,7 @@
 
     background-color: color-mix(in srgb, var(--3dverse-color-bg-foreground) 50%, transparent);
     border-radius: var(--3dverse-border-radius-md);
-    flex-basis: 40%;
 
-    @media (min-width: 80em) {
-        flex-basis: 70%;
-    }
 }
 
 .outerBox {
@@ -18,6 +14,7 @@
     height: 3rem;
     aspect-ratio: 1;
     margin-block: 1.5rem;
+    margin-inline: 2rem;
 
     display: flex;
     justify-content: center;
