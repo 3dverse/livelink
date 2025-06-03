@@ -3,7 +3,7 @@ import React from "react";
 import type { Meta, StoryObj } from "@storybook/react";
 
 //------------------------------------------------------------------------------
-import { ViewerPanel } from "./index";
+import { ViewerPanel } from ".";
 
 //------------------------------------------------------------------------------
 const meta = {

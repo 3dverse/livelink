@@ -1,19 +1,19 @@
 //------------------------------------------------------------------------------
-import React from "react";
+import React, { useState } from "react";
 import type { Meta, StoryObj } from "@storybook/react";
 
 //------------------------------------------------------------------------------
-import { Button } from ".";
+import { Slider } from ".";
 
 //------------------------------------------------------------------------------
 const meta = {
-    title: "Components Common/Button",
-    component: Button,
+    title: "Components Common/Slider",
+    component: Slider,
     parameters: {
         layout: "centered",
     },
     tags: ["autodocs"],
-} satisfies Meta<typeof Button>;
+} satisfies Meta<typeof Slider>;
 
 //------------------------------------------------------------------------------
 export default meta;
@@ -22,11 +22,15 @@ type Story = StoryObj<typeof meta>;
 //------------------------------------------------------------------------------
 export const _Component: Story = {
     args: {
-        children: "Button",
+        value: 50,
+        onChange: () => {},
     },
-    render: (args: any) => (
-        <div className="livelink-react-ui-component">
-            <Button {...args} />
-        </div>
-    ),
+    render: (args: any) => {
+        const [value, setValue] = useState(args.value);
+        return (
+            <div className="livelink-react-ui-component" style={{ width: "300px" }}>
+                <Slider {...args} value={value} onChange={setValue} />
+            </div>
+        );
+    },
 };

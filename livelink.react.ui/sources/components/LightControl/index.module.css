@@ -1,0 +1,39 @@
+.container {
+    display: flex;
+    gap: var(--3dverse-spacing-3);
+
+    padding-inline: var(--3dverse-spacing-5);
+    padding-block: var(--3dverse-spacing-5);
+
+    @media (min-width: 80em) {
+        padding-inline: var(--3dverse-spacing-3);
+        padding-block: var(--3dverse-spacing-3);
+    }
+}
+
+.innerContainer {
+    display: flex;
+    flex-direction: column;
+    gap: var(--3dverse-spacing-4);
+    flex-grow: 1;
+    width: 19rem;
+
+    padding-top: var(--3dverse-spacing-1);
+    padding-inline: var(--3dverse-spacing-1);
+
+    @media (min-width: 80em) {
+        width: 18rem;
+    }
+}
+
+.card {
+    display: flex;
+    transition-property: opacity;
+    transition-duration: 0.22s;
+
+    &.dimmed {
+        opacity: 0.2;
+        mix-blend-mode: luminosity;
+        pointer-events: none;
+    }
+}

@@ -3,7 +3,7 @@ import React from "react";
 import type { Meta, StoryObj } from "@storybook/react";
 
 //------------------------------------------------------------------------------
-import { Tooltip } from "./index";
+import { Tooltip } from ".";
 
 //------------------------------------------------------------------------------
 const meta = {

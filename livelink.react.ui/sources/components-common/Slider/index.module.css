@@ -1,0 +1,55 @@
+.sliderContainer {
+    width: 100%;
+}
+
+.track {
+    position: relative;
+    width: 100%;
+    height: 1rem;
+
+    background-color: color-mix(in srgb, var(--track-color) 20%, #ffffff30);
+    border-radius: var(--3dverse-border-radius-md);
+
+    cursor: pointer;
+    outline: none;
+}
+
+.filled {
+    height: 100%;
+    background-color: var(--track-color);
+    border-radius: var(--3dverse-border-radius-md);
+
+    pointer-events: none;
+    opacity: var(--track-opacity);
+}
+
+.thumb {
+    position: absolute;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    aspect-ratio: 1 / 1;
+    height: 100%;
+
+    border-radius: 50%;
+    box-shadow:
+        0 0 0 1px var(--3dverse-color-content-primary),
+        0 0 10px 2px var(--3dverse-color-bg-ground);
+
+    transition:
+        background-color 0.2s,
+        transform 0.2s;
+    pointer-events: none;
+}
+
+.value {
+    position: absolute;
+    top: 50%;
+    right: 8px;
+    transform: translate(0, -50%);
+
+    font-size: var(--3dverse-font-size-2xs);
+    color: var(--3dverse-color-content-primary);
+
+    pointer-events: none;
+    font-variant-numeric: tabular-nums;
+}
