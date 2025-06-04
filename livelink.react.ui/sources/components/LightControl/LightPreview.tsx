@@ -23,8 +23,7 @@ export const LightPreview = ({
                 style={
                     {
                         "--color": color,
-                        "--intensity": intensity,
-                        "--intensity-max": intensityMax,
+                        "--intensity-prct": Math.min(Math.max(0, (intensity / intensityMax) * 100), 100),
                     } as React.CSSProperties
                 }
             >

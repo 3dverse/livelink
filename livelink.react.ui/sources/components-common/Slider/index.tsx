@@ -28,7 +28,7 @@ export const Slider = ({
     const [dragging, setDragging] = useState(false);
 
     //--------------------------------------------------------------------------
-    const percentage = ((value - min) / (max - min)) * 100;
+    const percentage = Math.min(Math.max(0, ((value - min) / (max - min)) * 100), 100);
 
     //--------------------------------------------------------------------------
     const updateValueFromPosition = (clientX: number) => {

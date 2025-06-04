@@ -1,12 +1,11 @@
 //------------------------------------------------------------------------------
-import { useContext, useEffect, useState } from "react";
 import {
     Livelink,
     Canvas,
     Viewport,
     useCameraEntity,
     CameraController,
-    LivelinkContext,
+    useEntity,
 } from "@3dverse/livelink-react";
 import { LightControl, LoadingOverlay } from "@3dverse/livelink-react-ui";
 import { Entity } from "@3dverse/livelink";
@@ -44,7 +43,6 @@ function App() {
 
 //------------------------------------------------------------------------------
 function AppLayout() {
-    const { instance } = useContext(LivelinkContext);
     const { cameraEntity } = useCameraEntity({
         settings: {
             ssr: true,
@@ -54,25 +52,13 @@ function AppLayout() {
     });
 
     //--------------------------------------------------------------------------
-    const [light, setLight] = useState<Entity>();
+    // Effects
+    const { entity: light } = useEntity(
+        { euid: "2716ab00-fc8a-4535-ac4f-8560962ba780" },
+        ["point_light"],
+    );
 
     //--------------------------------------------------------------------------
-    // Effects
-    useEffect(() => {
-        instance?.scene
-            .findEntitiesWithComponents({
-                mandatory_components: ["point_light"],
-            })
-            .then(entities => {
-                const _lights = entities.filter(
-                    entity => !entity.point_light?.isSun,
-                );
-                if (_lights.length > 0) {
-                    setLight(_lights[0]);
-                }
-            });
-    }, [instance]);
-
     return (
         <Canvas className="w-full h-full">
             <Viewport cameraEntity={cameraEntity} className="w-full h-full">

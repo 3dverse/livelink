@@ -1,7 +1,6 @@
 //------------------------------------------------------------------------------
 import React from "react";
 import styles from "./colorSelector.module.css";
-import { Vec3 } from "@3dverse/livelink";
 
 //------------------------------------------------------------------------------
 const colors = [
@@ -26,7 +25,7 @@ export const ColorsSelector = ({ value, onChange }: { value: string; onChange: (
             {colors.map((color, index) => (
                 <button
                     key={index}
-                    className={`${styles.colorButton} ${value === color ? styles.active : ""}`}
+                    className={`${styles.colorButton} ${value.toLowerCase() === color.toLowerCase() ? styles.active : ""}`}
                     style={{
                         backgroundColor: color,
                         borderColor: `color-mix(in srgb, ${color} 80%, black)`,

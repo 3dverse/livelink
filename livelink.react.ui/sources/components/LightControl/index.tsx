@@ -1,5 +1,5 @@
 //------------------------------------------------------------------------------
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Entity, Vec3 } from "@3dverse/livelink";
 import clsx from "clsx";
 
@@ -16,15 +16,31 @@ export const LightControl = ({
     light,
     intensityMin = 0,
     intensityMax = 20,
+    intensityStep = 0.1,
 }: {
     light: Entity;
     intensityMin?: number;
     intensityMax?: number;
+    intensityStep?: number;
 }) => {
     //--------------------------------------------------------------------------
     const [color, setColor] = useState<string>(rgbToHex(light.point_light!.color));
     const [intensity, setIntensity] = useState<number>(light.point_light!.intensity);
-    const [isPowered, setIsPowered] = useState<boolean>(light.point_light!.intensity !== 0);
+    const [savedIntensity, setSavedIntensity] = useState<number>(intensity);
+    const [isPowered, setIsPowered] = useState<boolean>(true);
+
+    //--------------------------------------------------------------------------
+    // Effects
+    useEffect(() => {
+        if (!light.point_light) {
+            return;
+        }
+        setColor(rgbToHex(light.point_light!.color));
+        setIntensity(light.point_light!.intensity);
+        if (!isPowered && light.point_light!.intensity > 0) {
+            setIsPowered(true);
+        }
+    }, [light.point_light?.intensity, light.point_light?.color]);
 
     //--------------------------------------------------------------------------
     // Handlers
@@ -40,9 +56,10 @@ export const LightControl = ({
 
     const onPowerChange = (isPowered: boolean) => {
         if (!isPowered) {
+            setSavedIntensity(intensity);
             light.point_light!.intensity = 0;
         } else {
-            light.point_light!.intensity = intensity;
+            light.point_light!.intensity = savedIntensity;
         }
         setIsPowered(isPowered);
     };
@@ -62,10 +79,12 @@ export const LightControl = ({
                 </Card>
                 <Card isPowered={isPowered} style={{ flexGrow: 1 }}>
                     <IntensitySlider
-                        intensity={intensity}
-                        intensityMax={intensityMax}
-                        onChange={onIntensityChange}
                         color={color}
+                        intensity={intensity}
+                        intensityMin={intensityMin}
+                        intensityMax={intensityMax}
+                        intensityStep={intensityStep}
+                        onChange={onIntensityChange}
                     />
                 </Card>
                 <Card style={{ justifyContent: "end", alignItems: "end" }}>

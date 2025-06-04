@@ -5,23 +5,27 @@ import { Slider } from "../../components-common/Slider";
 
 //------------------------------------------------------------------------------
 export const IntensitySlider = ({
-    intensity,
-    intensityMax,
-    onChange,
     color,
+    intensity,
+    intensityMin,
+    intensityMax,
+    intensityStep,
+    onChange,
 }: {
-    intensity: number;
-    intensityMax: number;
-    onChange: (value: number) => void;
     color: string;
+    intensity: number;
+    intensityMin: number;
+    intensityMax: number;
+    intensityStep: number;
+    onChange: (value: number) => void;
 }) => {
     return (
         <div className={styles.intensitySliderContainer}>
             <label className={styles.label}>Brightness</label>
             <Slider
-                min={0}
-                max={20}
-                step={0.1}
+                min={intensityMin}
+                max={intensityMax}
+                step={intensityStep}
                 color={color}
                 value={intensity}
                 onChange={onChange}
