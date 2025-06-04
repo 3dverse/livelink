@@ -35,6 +35,7 @@ export const IntensitySlider = ({
                         "--track-opacity": intensity / intensityMax,
                     } as React.CSSProperties
                 }
+                animateValueChange
             />
         </div>
     );

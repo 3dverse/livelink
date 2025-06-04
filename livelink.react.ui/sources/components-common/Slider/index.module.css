@@ -12,6 +12,18 @@
 
     cursor: ew-resize;
     outline: none;
+
+    /* If the user moves the slider => Don't animate the transition. */
+    /* If another user (from the same session) moves the slider => Animate the transition. */
+    &.animateValueChange:hover {
+        .filled {
+            transition-property: none;
+        }
+        .thumb {
+            transition-property: background-color, transform;
+        }
+    }
+
 }
 
 .filled {
@@ -21,6 +33,10 @@
 
     pointer-events: none;
     opacity: var(--track-opacity);
+
+    transition-property: background-color, opacity, width;
+    transition-duration: 0.2s;
+    transition-timing-function: ease-in-out;
 }
 
 .thumb {
@@ -35,9 +51,10 @@
         0 0 0 1px var(--3dverse-color-content-primary),
         0 0 10px 2px color-mix(in srgb, var(--3dverse-color-bg-ground) 40%, transparent);
 
-    transition:
-        background-color 0.2s,
-        transform 0.2s;
+    transition-property: background-color, transform, left;
+    transition-duration: 0.2s;
+    transition-timing-function: ease-in-out;
+
     pointer-events: none;
 }
 

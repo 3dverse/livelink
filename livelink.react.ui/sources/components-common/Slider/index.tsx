@@ -11,6 +11,7 @@ export interface SliderProps {
     onChange: (v: number) => void;
     color?: string;
     style?: React.CSSProperties;
+    animateValueChange?: boolean; // When external users change the value, the slider is animated.
 }
 
 //------------------------------------------------------------------------------
@@ -22,6 +23,7 @@ export const Slider = ({
     onChange,
     color = "var(--3dverse-color-accent)",
     style,
+    animateValueChange = false,
 }: SliderProps) => {
     //--------------------------------------------------------------------------
     const sliderRef = useRef<HTMLDivElement>(null);
@@ -92,7 +94,7 @@ export const Slider = ({
                 onMouseDown={handleMouseDown}
                 onTouchStart={handleTouchStart}
                 style={{ "--track-color": color, ...style } as React.CSSProperties}
-                className={styles.track}
+                className={`${styles.track} ${animateValueChange ? styles.animateValueChange : ""}`}
             >
                 <div className={styles.filled} style={{ width: `${percentage}%` }} />
                 <div className={styles.thumb} style={{ left: `${percentage}%`, backgroundColor: color }} />
