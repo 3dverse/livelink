@@ -10,7 +10,7 @@
     background-color: color-mix(in srgb, var(--track-color) 20%, #ffffff30);
     border-radius: var(--3dverse-border-radius-md);
 
-    cursor: pointer;
+    cursor: ew-resize;
     outline: none;
 }
 
@@ -27,10 +27,10 @@
     position: absolute;
     top: 50%;
     transform: translate(-50%, -50%);
-    aspect-ratio: 1 / 1;
+    width: 3px;
     height: 100%;
 
-    border-radius: 50%;
+    border-radius: var(--3dverse-border-radius-sm);
     box-shadow:
         0 0 0 1px var(--3dverse-color-content-primary),
         0 0 10px 2px color-mix(in srgb, var(--3dverse-color-bg-ground) 40%, transparent);
