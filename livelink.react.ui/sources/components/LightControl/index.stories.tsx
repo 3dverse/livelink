@@ -1,7 +1,7 @@
 //------------------------------------------------------------------------------
-import React from "react";
+import React, { useContext, useEffect, useState } from "react";
 import type { Meta, StoryObj } from "@storybook/react-vite";
-import { CameraController, Canvas, useCameraEntity, Viewport } from "@3dverse/livelink-react";
+import { CameraController, Canvas, LivelinkContext, useCameraEntity, Viewport } from "@3dverse/livelink-react";
 import type { Entity } from "@3dverse/livelink";
 import { LightControl } from ".";
 
@@ -21,12 +21,29 @@ type Story = StoryObj<typeof meta>;
 
 //------------------------------------------------------------------------------
 export const _Component: Story = {
-    args: {},
+    args: {
+        light: undefined as unknown as Entity,
+    },
     decorators: [
         (Story: React.ComponentType<{ lights: Entity[] }>, { args }) => {
+            const { instance } = useContext(LivelinkContext);
             const { cameraEntity } = useCameraEntity({
-                settings: { atmosphere: true, gradient: false },
+                settings: { ssr: true, volumetricLighting: true, density: 0.1 },
             });
+            const [lights, setLights] = useState<Entity[]>([]);
+
+            //--------------------------------------------------------------------------
+            // Effects
+            useEffect(() => {
+                instance?.scene
+                    .findEntitiesWithComponents({
+                        mandatory_components: ["point_light"],
+                    })
+                    .then(entities => {
+                        const _lights = entities.filter(entity => !entity.point_light?.isSun);
+                        setLights(_lights);
+                    });
+            }, [instance]);
 
             return (
                 <Canvas style={{ width: "100vw", height: "100vh" }}>
@@ -35,14 +52,14 @@ export const _Component: Story = {
                         <div
                             style={{
                                 position: "absolute",
-                                top: "50%",
+                                bottom: "10%",
                                 left: "50%",
-                                transform: "translate(-50%, -50%)",
+                                transform: "translate(-50%, 0)",
                                 backgroundColor: "black",
                             }}
                         >
                             {/* TODO: replace by component Story */}
-                            <LightControl {...args} />
+                            {lights[0] && <LightControl {...args} light={lights[0]} />}
                         </div>
                     </Viewport>
                 </Canvas>

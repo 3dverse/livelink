@@ -28,7 +28,7 @@
 
     transition-property: background-color, opacity;
     transition-duration: 0.22s;
-    opacity: max(0.2, calc(var(--brightness) / var(--brightness-max)));
+    opacity: max(0.2, calc(var(--intensity) / var(--intensity-max)));
 
     &.dimmed {
         mix-blend-mode: luminosity;
@@ -60,6 +60,6 @@
     background-color: var(--color);
 
     filter: blur(10px);
-    transform: translate(-50%, -50%) scale(calc(var(--brightness) / var(--brightness-max)));
-    opacity: calc(var(--brightness) / var(--brightness-max));
+    transform: translate(-50%, -50%) scale(calc(var(--intensity) / var(--intensity-max)));
+    opacity: calc(var(--intensity) / var(--intensity-max));
 }

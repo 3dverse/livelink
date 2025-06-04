@@ -1,12 +1,15 @@
 //------------------------------------------------------------------------------
+import { useContext, useEffect, useState } from "react";
 import {
     Livelink,
     Canvas,
     Viewport,
     useCameraEntity,
     CameraController,
+    LivelinkContext,
 } from "@3dverse/livelink-react";
 import { LightControl, LoadingOverlay } from "@3dverse/livelink-react-ui";
+import { Entity } from "@3dverse/livelink";
 
 //------------------------------------------------------------------------------
 import { DisconnectedModal } from "../../components/SamplePlayer";
@@ -41,22 +44,47 @@ function App() {
 
 //------------------------------------------------------------------------------
 function AppLayout() {
+    const { instance } = useContext(LivelinkContext);
     const { cameraEntity } = useCameraEntity({
-        settings: { atmosphere: true, gradient: false },
+        settings: {
+            ssr: true,
+            volumetricLighting: true,
+            density: 0.5,
+        },
     });
+
+    //--------------------------------------------------------------------------
+    const [light, setLight] = useState<Entity>();
+
+    //--------------------------------------------------------------------------
+    // Effects
+    useEffect(() => {
+        instance?.scene
+            .findEntitiesWithComponents({
+                mandatory_components: ["point_light"],
+            })
+            .then(entities => {
+                const _lights = entities.filter(
+                    entity => !entity.point_light?.isSun,
+                );
+                if (_lights.length > 0) {
+                    setLight(_lights[0]);
+                }
+            });
+    }, [instance]);
 
     return (
         <Canvas className="w-full h-full">
             <Viewport cameraEntity={cameraEntity} className="w-full h-full">
                 <CameraController />
-                <LightControlWidget />
+                {light && <LightControlWidget light={light} />}
             </Viewport>
         </Canvas>
     );
 }
 
 //------------------------------------------------------------------------------
-function LightControlWidget() {
+function LightControlWidget({ light }: { light: Entity }) {
     return (
         <div
             className={`absolute bottom-16 right-16
@@ -64,7 +92,7 @@ function LightControlWidget() {
                 backdrop-blur-xl rounded-lg shadow-[0px_24px_40px_10px_color-mix(in_srgb,black_40%,transparent)]
             `}
         >
-            <LightControl />
+            <LightControl light={light} />
         </div>
     );
 }

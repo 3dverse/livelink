@@ -1,18 +1,20 @@
 //------------------------------------------------------------------------------
 import React from "react";
+import { Vec3 } from "@3dverse/livelink";
 import styles from "./lightPreview.module.css";
+import { rgbToHex } from ".";
 
 //------------------------------------------------------------------------------
 export const LightPreview = ({
     isPowered,
     color,
-    brightness,
-    brightnessMax,
+    intensity,
+    intensityMax,
 }: {
     isPowered: boolean;
     color: string;
-    brightness: number;
-    brightnessMax: number;
+    intensity: number;
+    intensityMax: number;
 }) => {
     return (
         <div className={styles.lightPreviewContainer}>
@@ -21,8 +23,8 @@ export const LightPreview = ({
                 style={
                     {
                         "--color": color,
-                        "--brightness": brightness,
-                        "--brightness-max": brightnessMax,
+                        "--intensity": intensity,
+                        "--intensity-max": intensityMax,
                     } as React.CSSProperties
                 }
             >

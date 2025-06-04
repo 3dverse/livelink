@@ -1,117 +1,75 @@
 //------------------------------------------------------------------------------
-import React, { useContext, useEffect, useState } from "react";
-import { LivelinkContext } from "@3dverse/livelink-react";
+import React, { useState } from "react";
 import { Entity, Vec3 } from "@3dverse/livelink";
 import clsx from "clsx";
 
 //------------------------------------------------------------------------------
 import { LightPreview } from "./LightPreview";
 import { ColorsSelector } from "./ColorsSelector";
-import { BrightnessSlider } from "./BrightnessSlider";
+import { IntensitySlider } from "./IntensitySlider";
 import { SwitchOnOff } from "./SwitchOnOff";
 
 import styles from "./index.module.css";
 
 //------------------------------------------------------------------------------
-const lightDefaultValues = {
-    color: "#FFFFFF",
-    brightness: 0,
-    isPowered: true,
-};
-const brightnessMax = 20;
-
-//------------------------------------------------------------------------------
-type LightEntity = Entity & { point_light: { color: Vec3; intensity: number } };
-
-//------------------------------------------------------------------------------
-export const LightControl = ({ lights: _lights, onChange }: { lights?: LightEntity[]; onChange?: () => void }) => {
+export const LightControl = ({
+    light,
+    intensityMin = 0,
+    intensityMax = 20,
+}: {
+    light: Entity;
+    intensityMin?: number;
+    intensityMax?: number;
+}) => {
     //--------------------------------------------------------------------------
-    const { instance } = useContext(LivelinkContext);
-
-    //--------------------------------------------------------------------------
-    // States
-    const [lights, setLights] = useState<LightEntity[]>(_lights || []);
-    const [lightValues, setLightValues] = useState<typeof lightDefaultValues>(lightDefaultValues);
-
-    //--------------------------------------------------------------------------
-    // Effects
-    useEffect(() => {
-        if (!_lights) {
-            instance?.scene
-                .findEntitiesWithComponents({
-                    mandatory_components: ["point_light"],
-                })
-                .then(entities => {
-                    const __lights = entities.filter(entity => !entity.point_light?.isSun);
-                    setLights(__lights as LightEntity[]);
-                });
-        }
-    }, [instance, _lights]);
-
-    //--------------------------------------------------------------------------
-    // If only one light, set light values
-    useEffect(() => {
-        if (lights.length !== 1) return;
-        setLightValues({
-            color: rgbToHex(lights[0].point_light.color),
-            brightness: lights[0].point_light.intensity,
-            isPowered: true,
-        });
-    }, [lights]);
+    const [color, setColor] = useState<string>(rgbToHex(light.point_light!.color));
+    const [intensity, setIntensity] = useState<number>(light.point_light!.intensity);
+    const [isPowered, setIsPowered] = useState<boolean>(light.point_light!.intensity !== 0);
 
     //--------------------------------------------------------------------------
     // Handlers
     const onColorChange = (color: string) => {
-        setLightValues({ ...lightValues, color });
-        const _color = lightValues.isPowered ? hexToRgb(color) : hexToRgb("#000000");
-        lights.forEach(light => {
-            light.point_light.color = _color;
-        });
-        onChange?.();
+        light.point_light!.color = hexToRgb(color.substring(1));
+        setColor(color);
     };
 
-    const onBrightnessChange = (brightness: number) => {
-        setLightValues({ ...lightValues, brightness });
-        lights.forEach(light => {
-            light.point_light.intensity = lightValues.brightness * 10;
-        });
-        onChange?.();
+    const onIntensityChange = (intensity: number) => {
+        light.point_light!.intensity = intensity;
+        setIntensity(intensity);
     };
 
     const onPowerChange = (isPowered: boolean) => {
-        setLightValues({ ...lightValues, isPowered });
-        const _color = !lightValues.isPowered ? hexToRgb(lightValues.color) : hexToRgb("#000000");
-        lights.forEach(light => {
-            light.point_light.color = _color;
-        });
-        onChange?.();
+        if (!isPowered) {
+            light.point_light!.intensity = 0;
+        } else {
+            light.point_light!.intensity = intensity;
+        }
+        setIsPowered(isPowered);
     };
 
     //--------------------------------------------------------------------------
     // UI
-    if (!lights || lights.length === 0) return null;
+    if (!light.point_light) {
+        // TODO: add a feedback in UI
+        return null;
+    }
     return (
         <div className={`${styles.container} livelink-react-ui-component`}>
-            <LightPreview
-                color={lightValues.color}
-                brightness={lightValues.brightness}
-                brightnessMax={brightnessMax}
-                isPowered={lightValues.isPowered}
-            />
+            <LightPreview color={color} intensity={intensity} intensityMax={intensityMax} isPowered={isPowered} />
             <div className={styles.innerContainer}>
-                <Card isPowered={lightValues.isPowered}>
-                    <ColorsSelector value={lightValues.color} onChange={onColorChange} />
+                <Card isPowered={isPowered}>
+                    <ColorsSelector value={color} onChange={onColorChange} />
                 </Card>
-                <Card isPowered={lightValues.isPowered} style={{ flexGrow: 1 }}>
-                    <BrightnessSlider
-                        brightness={lightValues.brightness}
-                        brightnessMax={brightnessMax}
-                        onChange={onBrightnessChange}
-                        color={lightValues.color}
+                <Card isPowered={isPowered} style={{ flexGrow: 1 }}>
+                    <IntensitySlider
+                        intensity={intensity}
+                        intensityMax={intensityMax}
+                        onChange={onIntensityChange}
+                        color={color}
                     />
                 </Card>
                 <Card style={{ justifyContent: "end", alignItems: "end" }}>
-                    <SwitchOnOff isPowered={lightValues.isPowered} onChange={onPowerChange} />
+                    <SwitchOnOff isPowered={isPowered} onChange={onPowerChange} />
                 </Card>
             </div>
         </div>
@@ -137,7 +95,7 @@ function toHex(c: number) {
 }
 
 //------------------------------------------------------------------------------
-function rgbToHex(c: Vec3) {
+export function rgbToHex(c: Vec3) {
     return "#" + toHex(c[0]) + toHex(c[1]) + toHex(c[2]);
 }
 

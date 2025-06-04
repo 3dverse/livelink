@@ -1,6 +1,7 @@
 //------------------------------------------------------------------------------
 import React from "react";
 import styles from "./colorSelector.module.css";
+import { Vec3 } from "@3dverse/livelink";
 
 //------------------------------------------------------------------------------
 const colors = [
