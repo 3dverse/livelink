@@ -13,23 +13,31 @@
     cursor: ew-resize;
     outline: none;
 
-    /* If the user moves the slider => Don't animate the transition. */
-    /* If another user (from the same session) moves the slider => Animate the transition. */
     &.animateValueChange {
+        .filled {
+            transition-property: background-color, opacity, width;
+        }
+
+        .thumb {
+            transition-property: background-color, transform, left;
+        }
+
+        /* Don't animate the value changes, if the slider moves because of another user (in the same session). */
         &:hover {
-        .filled {
-            transition-property: none;
+            .filled {
+                transition-property: none;
+            }
+            .thumb {
+                transition-property: background-color, transform;
+            }
         }
-        .thumb {
-            transition-property: background-color, transform;
-        }
-    }
-    &:focus {
-        .filled {
-            transition-property: none;
-        }
-        .thumb {
-            transition-property: background-color, transform;
+        &:focus {
+            .filled {
+                transition-property: none;
+            }
+            .thumb {
+                transition-property: background-color, transform;
+            }
         }
     }
 }
@@ -42,7 +50,7 @@
     pointer-events: none;
     opacity: var(--track-opacity);
 
-    transition-property: background-color, opacity, width;
+    transition-property: background-color, opacity;
     transition-duration: 0.2s;
     transition-timing-function: ease-in-out;
 }
@@ -59,7 +67,7 @@
         0 0 0 1px var(--3dverse-color-content-primary),
         0 0 10px 2px color-mix(in srgb, var(--3dverse-color-bg-ground) 40%, transparent);
 
-    transition-property: background-color, transform, left;
+    transition-property: background-color, transform;
     transition-duration: 0.2s;
     transition-timing-function: ease-in-out;
 
@@ -74,7 +82,9 @@
 
     font-size: var(--3dverse-font-size-2xs);
     color: var(--3dverse-color-content-primary);
+    white-space: nowrap;
 
     pointer-events: none;
     font-variant-numeric: tabular-nums;
+    user-select: none;
 }

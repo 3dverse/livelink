@@ -7,11 +7,16 @@ export interface SliderProps {
     min?: number;
     max?: number;
     step?: number;
+    unit?: string;
     value: number;
     onChange: (v: number) => void;
     color?: string;
     style?: React.CSSProperties;
     animateValueChange?: boolean; // When external users change the value, the slider is animated.
+    trackStyle?: React.CSSProperties;
+    filledTrackStyle?: React.CSSProperties;
+    thumbStyle?: React.CSSProperties;
+    valueStyle?: React.CSSProperties;
 }
 
 //------------------------------------------------------------------------------
@@ -19,11 +24,16 @@ export const Slider = ({
     min = 0,
     max = 100,
     step = 1,
+    unit = "",
     value,
     onChange,
     color = "var(--3dverse-color-accent)",
     style,
     animateValueChange = false,
+    trackStyle,
+    filledTrackStyle,
+    thumbStyle,
+    valueStyle,
 }: SliderProps) => {
     //--------------------------------------------------------------------------
     const sliderRef = useRef<HTMLDivElement>(null);
@@ -93,12 +103,17 @@ export const Slider = ({
                 onKeyDown={handleKeyDown}
                 onMouseDown={handleMouseDown}
                 onTouchStart={handleTouchStart}
-                style={{ "--track-color": color, ...style } as React.CSSProperties}
+                style={{ "--track-color": color, ...style, ...trackStyle } as React.CSSProperties}
                 className={`${styles.track} ${animateValueChange ? styles.animateValueChange : ""}`}
             >
-                <div className={styles.filled} style={{ width: `${percentage}%` }} />
-                <div className={styles.thumb} style={{ left: `${percentage}%`, backgroundColor: color }} />
-                <div className={styles.value}>{value.toFixed(1)}</div>
+                <div className={styles.filled} style={{ width: `${percentage}%`, ...filledTrackStyle }} />
+                <div
+                    className={styles.thumb}
+                    style={{ left: `${percentage}%`, backgroundColor: color, ...thumbStyle }}
+                />
+                <div className={styles.value} style={{ ...valueStyle }}>
+                    {value} {unit}
+                </div>
             </div>
         </div>
     );

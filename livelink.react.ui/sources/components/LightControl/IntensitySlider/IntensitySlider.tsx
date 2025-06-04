@@ -1,7 +1,8 @@
 //------------------------------------------------------------------------------
 import React from "react";
 import styles from "./intensitySlider.module.css";
-import { Slider } from "../../components-common/Slider";
+import indexStyles from "../index.module.css";
+import { Slider } from "../../../components-common/Slider";
 
 //------------------------------------------------------------------------------
 export const IntensitySlider = ({
@@ -21,7 +22,7 @@ export const IntensitySlider = ({
 }) => {
     return (
         <div className={styles.intensitySliderContainer}>
-            <label className={styles.label}>Brightness</label>
+            <label className={indexStyles.label}>Brightness</label>
             <Slider
                 min={intensityMin}
                 max={intensityMax}

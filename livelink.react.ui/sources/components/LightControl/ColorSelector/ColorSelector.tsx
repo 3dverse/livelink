@@ -1,31 +1,18 @@
 //------------------------------------------------------------------------------
 import React from "react";
 import styles from "./colorSelector.module.css";
+import { colors } from "./colors";
 
 //------------------------------------------------------------------------------
-const colors = [
-    "#FF6B6B", // Soft Coral Red
-    "#F7B267", // Warm Apricot
-    "#FFD93D", // Golden Honey
-    "#A3DE83", // Fresh Mint
-    "#62BEC1", // Soft Teal
-    "#5E60CE", // Calm Indigo
-    "#A066F7", // Gentle Purple
-    "#F48498", // Blush Pink
-    "#9AD0EC", // Icy Blue
-    "#F9C5D1", // Light Rose
-    "#C4F0C5", // Pale Green
-    // "#E6D0FA", // Lavender Mist
-];
+export const ColorSelector = ({ value, onChange }: { value: string; onChange: (value: string) => void }) => {
+    const isCustomColor = !colors.some(color => color.toLowerCase() === value.toLowerCase());
 
-//------------------------------------------------------------------------------
-export const ColorsSelector = ({ value, onChange }: { value: string; onChange: (value: string) => void }) => {
     return (
-        <div className={styles.colorsSelector}>
+        <div className={styles.colorSelector}>
             {colors.map((color, index) => (
                 <button
                     key={index}
-                    className={`${styles.colorButton} ${value.toLowerCase() === color.toLowerCase() ? styles.active : ""}`}
+                    className={`${styles.colorButton} ${!isCustomColor && value.toLowerCase() === color.toLowerCase() ? styles.active : ""}`}
                     style={{
                         backgroundColor: color,
                         borderColor: `color-mix(in srgb, ${color} 80%, black)`,
@@ -36,9 +23,9 @@ export const ColorsSelector = ({ value, onChange }: { value: string; onChange: (
 
             <label
                 htmlFor="color-picker"
-                className={styles.customColorButton}
+                className={`${styles.customColorButton} ${isCustomColor ? styles.active : ""}`}
                 style={{
-                    backgroundColor: "color-mix(in srgb, var(--3dverse-color-bg-underground) 50%, transparent)",
+                    backgroundColor: value,
                 }}
             >
                 <input

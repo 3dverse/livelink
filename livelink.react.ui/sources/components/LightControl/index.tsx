@@ -4,10 +4,11 @@ import { Entity, Vec3 } from "@3dverse/livelink";
 import clsx from "clsx";
 
 //------------------------------------------------------------------------------
-import { LightPreview } from "./LightPreview";
-import { ColorsSelector } from "./ColorsSelector";
-import { IntensitySlider } from "./IntensitySlider";
-import { SwitchOnOff } from "./SwitchOnOff";
+import { TemperatureSlider, kelvinToHex } from "../../components-common/TemperatureSlider";
+import { LightPreview } from "./LightPreview/LightPreview";
+import { ColorSelector } from "./ColorSelector/ColorSelector";
+import { IntensitySlider } from "./IntensitySlider/IntensitySlider";
+import { SwitchOnOff } from "./SwitchOnOff/SwitchOnOff";
 
 import styles from "./index.module.css";
 
@@ -25,6 +26,7 @@ export const LightControl = ({
 }) => {
     //--------------------------------------------------------------------------
     const [color, setColor] = useState<string>(rgbToHex(light.point_light!.color));
+    const [temperature, setTemperature] = useState<number | null>(null); // kelvin value
     const [intensity, setIntensity] = useState<number>(light.point_light!.intensity);
     const [savedIntensity, setSavedIntensity] = useState<number>(intensity);
     const [isPowered, setIsPowered] = useState<boolean>(true);
@@ -46,6 +48,7 @@ export const LightControl = ({
     // Handlers
     const onColorChange = (color: string) => {
         light.point_light!.color = hexToRgb(color.substring(1));
+        setTemperature(null);
         setColor(color);
     };
 
@@ -64,6 +67,12 @@ export const LightControl = ({
         setIsPowered(isPowered);
     };
 
+    const onTemperatureChange = (temperature: number, color: string) => {
+        setTemperature(temperature);
+        light.point_light!.color = hexToRgb(color.substring(1));
+        setColor(color);
+    };
+
     //--------------------------------------------------------------------------
     // UI
     if (!light.point_light) {
@@ -74,10 +83,19 @@ export const LightControl = ({
         <div className={`${styles.container} livelink-react-ui-component`}>
             <LightPreview color={color} intensity={intensity} intensityMax={intensityMax} isPowered={isPowered} />
             <div className={styles.innerContainer}>
-                <Card isPowered={isPowered}>
-                    <ColorsSelector value={color} onChange={onColorChange} />
-                </Card>
-                <Card isPowered={isPowered} style={{ flexGrow: 1 }}>
+                <Card
+                    isPowered={isPowered}
+                    style={{ flexDirection: "column", gap: "var(--3dverse-spacing-4)", flexGrow: 1 }}
+                >
+                    <ColorSelector value={color} onChange={onColorChange} />
+                    <div>
+                        <label className={styles.label}>Temperature</label>
+                        <TemperatureSlider
+                            value={temperature ?? 0}
+                            hideValue={!temperature}
+                            onChange={onTemperatureChange}
+                        />
+                    </div>
                     <IntensitySlider
                         color={color}
                         intensity={intensity}
