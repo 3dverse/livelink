@@ -33,7 +33,7 @@ function fileContentPlugin() {
     const env = fs.readFileSync(".env", "utf-8");
     const token = env
         .split("\n")
-        .find((line: string) => line.startsWith("VITE_PROD_PUBLIC_TOKEN="))
+        .find((line: string) => line.startsWith("VITE_PROD_PUBLIC_TOKEN="))!
         .split("=")[1];
 
     return {

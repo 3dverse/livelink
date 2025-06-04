@@ -1,4 +1,7 @@
 //------------------------------------------------------------------------------
+import type { ReactElement } from "react";
+
+//------------------------------------------------------------------------------
 import SingleCanvasSingleViewport from "./react-core/1-viewports/1-single-canvas-single-viewport";
 import SingleCanvasDoubleViewports from "./react-core/1-viewports/2-single-canvas-double-viewports";
 import DoubleCanvasSingleViewport from "./react-core/1-viewports/3-double-canvas-single-viewport";
@@ -67,7 +70,7 @@ type Sample = {
     description?: string;
     useCustomLayout?: boolean;
     autoConnect?: boolean;
-    element: JSX.Element;
+    element: ReactElement;
     code?: string;
 };
 

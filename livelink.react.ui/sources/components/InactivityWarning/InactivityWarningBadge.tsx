@@ -14,8 +14,8 @@ export const InactivityWarningBadge = ({
 }: {
     timeLeft: number;
     onActivityReset: () => void;
-    animatedPathRef: RefObject<SVGPathElement>;
-    animatedOverlayRef: RefObject<HTMLDivElement>;
+    animatedPathRef: RefObject<SVGPathElement | null>;
+    animatedOverlayRef: RefObject<HTMLDivElement | null>;
 }) => {
     //------------------------------------------------------------------------------
     useEffect(() => {
@@ -43,9 +43,7 @@ export const InactivityWarningBadge = ({
                             <path
                                 d="M138.5 1H33.5C15.5507 1 1 15.5507 1 33.5V33.5C1 51.4493 15.5507 66 33.5 66H243.5C261.449 66 276 51.4493 276 33.5V33.5C276 15.5507 261.449 1 243.5 1H139"
                                 strokeWidth={1}
-                                style={{
-                                    stroke: "var(--3dverse-color-border-primary-alpha)",
-                                }}
+                                style={{ stroke: "var(--3dverse-color-border-primary-alpha)" }}
                             />
                             <path
                                 ref={animatedPathRef}
