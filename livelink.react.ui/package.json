@@ -55,8 +55,5 @@
   },
   "dependencies": {
     "nipplejs": "^0.10.2"
-  },
-  "overrides": {
-    "storybook": "$storybook"
   }
 }
