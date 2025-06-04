@@ -64,7 +64,7 @@
 @keyframes appear-in {
     from {
         opacity: 0;
-        translate: -50% -.75rem;
+        translate: -50% -0.75rem;
     }
     to {
         opacity: 1;

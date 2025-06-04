@@ -5,7 +5,6 @@
 
     background-color: color-mix(in srgb, var(--3dverse-color-bg-foreground) 50%, transparent);
     border-radius: var(--3dverse-border-radius-md);
-
 }
 
 .outerBox {

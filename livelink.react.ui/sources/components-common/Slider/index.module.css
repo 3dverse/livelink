@@ -15,7 +15,8 @@
 
     /* If the user moves the slider => Don't animate the transition. */
     /* If another user (from the same session) moves the slider => Animate the transition. */
-    &.animateValueChange:hover {
+    &.animateValueChange {
+        &:hover {
         .filled {
             transition-property: none;
         }
@@ -23,7 +24,14 @@
             transition-property: background-color, transform;
         }
     }
-
+    &:focus {
+        .filled {
+            transition-property: none;
+        }
+        .thumb {
+            transition-property: background-color, transform;
+        }
+    }
 }
 
 .filled {
