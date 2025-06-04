@@ -1,8 +1,6 @@
 //------------------------------------------------------------------------------
 import React from "react";
-import { Vec3 } from "@3dverse/livelink";
 import styles from "./lightPreview.module.css";
-import { rgbToHex } from ".";
 
 //------------------------------------------------------------------------------
 export const LightPreview = ({
