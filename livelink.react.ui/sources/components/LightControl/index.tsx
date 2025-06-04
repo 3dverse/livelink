@@ -4,10 +4,10 @@ import { Entity, Vec3 } from "@3dverse/livelink";
 import clsx from "clsx";
 
 //------------------------------------------------------------------------------
-import { TemperatureSlider, kelvinToHex } from "../../components-common/TemperatureSlider";
+import { Slider } from "../../components-common/Slider";
+import { TemperatureSlider } from "../../components-common/TemperatureSlider";
 import { LightPreview } from "./LightPreview/LightPreview";
 import { ColorSelector } from "./ColorSelector/ColorSelector";
-import { IntensitySlider } from "./IntensitySlider/IntensitySlider";
 import { SwitchOnOff } from "./SwitchOnOff/SwitchOnOff";
 
 import styles from "./index.module.css";
@@ -94,16 +94,28 @@ export const LightControl = ({
                             value={temperature ?? 0}
                             hideValue={!temperature}
                             onChange={onTemperatureChange}
+                            animateValueChange
                         />
                     </div>
-                    <IntensitySlider
-                        color={color}
-                        intensity={intensity}
-                        intensityMin={intensityMin}
-                        intensityMax={intensityMax}
-                        intensityStep={intensityStep}
-                        onChange={onIntensityChange}
-                    />
+                    <div>
+                        <label className={styles.label}>Brightness</label>
+                        <Slider
+                            min={intensityMin}
+                            max={intensityMax}
+                            step={intensityStep}
+                            color={color}
+                            value={intensity}
+                            valueDecimals={1}
+                            onChange={onIntensityChange}
+                            style={
+                                {
+                                    "--track-color": color,
+                                    "--track-opacity": intensity / intensityMax,
+                                } as React.CSSProperties
+                            }
+                            animateValueChange
+                        />
+                    </div>
                 </Card>
                 <Card style={{ justifyContent: "end", alignItems: "end" }}>
                     <SwitchOnOff isPowered={isPowered} onChange={onPowerChange} />

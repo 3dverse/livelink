@@ -81,7 +81,7 @@
     transform: translate(0, -50%);
 
     font-size: var(--3dverse-font-size-2xs);
-    color: var(--3dverse-color-content-primary);
+    color: black;
     white-space: nowrap;
 
     pointer-events: none;

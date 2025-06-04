@@ -21,7 +21,7 @@ export const LightPreview = ({
                 style={
                     {
                         "--color": color,
-                        "--intensity-prct": Math.min(Math.max(0, (intensity / intensityMax) * 100), 100),
+                        "--intensity": Math.min(Math.max(0, easeOutExpo(intensity / intensityMax)), 1),
                     } as React.CSSProperties
                 }
             >
@@ -30,3 +30,8 @@ export const LightPreview = ({
         </div>
     );
 };
+
+//------------------------------------------------------------------------------
+function easeOutExpo(x: number): number {
+    return x === 1 ? 1 : 1 - Math.pow(2, -10 * x);
+}

@@ -9,6 +9,7 @@ export interface SliderProps {
     step?: number;
     unit?: string;
     value: number;
+    valueDecimals?: number;
     onChange: (v: number) => void;
     color?: string;
     style?: React.CSSProperties;
@@ -26,6 +27,7 @@ export const Slider = ({
     step = 1,
     unit = "",
     value,
+    valueDecimals = 0,
     onChange,
     color = "var(--3dverse-color-accent)",
     style,
@@ -112,7 +114,7 @@ export const Slider = ({
                     style={{ left: `${percentage}%`, backgroundColor: color, ...thumbStyle }}
                 />
                 <div className={styles.value} style={{ ...valueStyle }}>
-                    {value} {unit}
+                    {value.toFixed(valueDecimals)} {unit}
                 </div>
             </div>
         </div>

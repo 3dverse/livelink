@@ -10,6 +10,7 @@ export interface TemperatureSliderProps {
     value: number;
     hideValue?: boolean;
     onChange: (value: number, color: string) => void;
+    animateValueChange?: boolean;
 }
 
 //------------------------------------------------------------------------------
@@ -20,6 +21,7 @@ export const TemperatureSlider = ({
     value,
     hideValue = false,
     onChange,
+    animateValueChange = false,
 }: TemperatureSliderProps) => {
     //--------------------------------------------------------------------------
     const handleChange = (newValue: number) => {
@@ -52,12 +54,12 @@ export const TemperatureSlider = ({
                 opacity: hideValue ? 0 : 1,
             }}
             valueStyle={{
-                color: "black",
                 opacity: hideValue ? 0 : 1,
             }}
             value={value}
             unit=" K"
             onChange={newValue => handleChange(newValue)}
+            animateValueChange={animateValueChange}
         />
     );
 };

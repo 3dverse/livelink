@@ -3,7 +3,7 @@
     justify-content: center;
     gap: var(--3dverse-spacing-1);
 
-    background-color: color-mix(in srgb, var(--3dverse-color-bg-foreground) 50%, transparent);
+    background-color: color-mix(in srgb, var(--3dverse-color-bg-underground) 20%, transparent);
     border-radius: var(--3dverse-border-radius-md);
 }
 
@@ -27,7 +27,7 @@
 
     transition-property: background-color, opacity;
     transition-duration: 0.22s;
-    opacity: max(0.2, calc(var(--intensity-prct) / 100));
+    opacity: max(0.2, var(--intensity));
 
     &.dimmed {
         mix-blend-mode: luminosity;
@@ -59,6 +59,6 @@
     background-color: var(--color);
 
     filter: blur(10px);
-    transform: translate(-50%, -50%) scale(calc(var(--intensity-prct) / 100));
-    opacity: calc(var(--intensity-prct) / 100);
+    transform: translate(-50%, -50%) scale(var(--intensity));
+    opacity: var(--intensity);
 }

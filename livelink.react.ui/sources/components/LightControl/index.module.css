@@ -2,8 +2,8 @@
     display: flex;
     gap: var(--3dverse-spacing-3);
 
-    padding-inline: var(--3dverse-spacing-5);
-    padding-block: var(--3dverse-spacing-5);
+    padding-inline: var(--3dverse-spacing-4);
+    padding-block: var(--3dverse-spacing-4);
 
     @media (min-width: 80em) {
         padding-inline: var(--3dverse-spacing-3);

@@ -55,7 +55,10 @@ export const _Component: Story = {
                                 bottom: "10%",
                                 left: "50%",
                                 transform: "translate(-50%, 0)",
-                                backgroundColor: "black",
+                                backgroundColor:
+                                    "color-mix(in srgb,var(--3dverse-color-bg-foreground) 85%,transparent)",
+                                backdropFilter: "blur(24px)",
+                                borderRadius: "var(--3dverse-border-radius-lg)",
                             }}
                         >
                             {/* TODO: replace by component Story */}
