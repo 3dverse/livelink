@@ -88,9 +88,6 @@ export const SunPositionPicker = ({
         ctx.beginPath();
         ctx.arc(centerX, centerY, RADIUS, 0, 2 * Math.PI);
         ctx.stroke();
-        ctx.beginPath();
-        ctx.arc(centerX, centerY, CENTER_RADIUS, 0, 2 * Math.PI);
-        ctx.fill();
 
         // draw the x axis
         ctx.strokeStyle = STROKE_COLOR;
@@ -128,9 +125,9 @@ export const SunPositionPicker = ({
         ctx.fillStyle = HANDLE_COLOR;
         ctx.lineWidth = LINE_WIDTH;
         ctx.strokeStyle = HANDLE_COLOR;
-        ctx.shadowBlur = 2;
-        ctx.shadowOffsetX = 5;
-        ctx.shadowOffsetY = 5;
+        ctx.shadowBlur = 10;
+        ctx.shadowOffsetX = 3;
+        ctx.shadowOffsetY = 3;
         const centerX = canvas.width / 2;
         const centerY = canvas.height / 2;
 
@@ -176,6 +173,20 @@ export const SunPositionPicker = ({
 
         const updateCanvas = () => {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            if (hasShadows) {
+                // Draw shadow
+                updateCastShadow();
+            }
+
+            // Draw circle center
+            ctx.fillStyle = STROKE_COLOR;
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, 4, 0, 2 * Math.PI);
+            ctx.fill();
+
+            // Draw sun
+            ctx.fillStyle = HANDLE_COLOR;
             ctx.beginPath();
             ctx.arc(sunX, sunY, SUN_RADIUS, 0, 2 * Math.PI);
             ctx.fill();
@@ -207,6 +218,33 @@ export const SunPositionPicker = ({
                 ctx.lineTo(rayXEnd, rayYEnd);
                 ctx.stroke();
             }
+        };
+
+        const updateCastShadow = () => {
+            const dx = sunX - centerX;
+            const dy = sunY - centerY;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+
+            // Shadow properties
+            const shadowAngle = Math.atan2(dy, dx) + Math.PI;
+            const shadowLength = distance * 0.8;
+            const shadowOpacity = 1 - distance / RADIUS;
+            const shadowBlur = 10 + distance * 0.5;
+            const shadowX = centerX + (Math.cos(shadowAngle) * shadowLength) / 2;
+            const shadowY = centerY + (Math.sin(shadowAngle) * shadowLength) / 2;
+
+            ctx.save();
+            ctx.translate(shadowX, shadowY);
+            ctx.rotate(shadowAngle);
+            ctx.globalAlpha = shadowOpacity;
+            ctx.fillStyle = "rgba(0,0,0,0.4)";
+            ctx.shadowColor = "rgba(0,0,0,0.3)";
+            ctx.shadowBlur = shadowBlur;
+            ctx.beginPath();
+            ctx.ellipse(0, 0, shadowLength, 6, 0, 0, 2 * Math.PI);
+            ctx.fill();
+            ctx.restore();
+            ctx.globalAlpha = 1;
         };
 
         const update = () => {
@@ -277,7 +315,7 @@ export const SunPositionPicker = ({
             canvas.removeEventListener("pointermove", onMouseMove);
             canvas.removeEventListener("pointerleave", onMouseLeave);
         };
-    }, [sun]);
+    }, [sun, hasShadows]);
 
     //--------------------------------------------------------------------------
     // UI
@@ -292,7 +330,9 @@ export const SunPositionPicker = ({
                 </div>
                 {!sun && <Skeleton />}
             </div>
-            {hasShadowToggle && <ShadowCheckbox isDisabled={false} isChecked={hasShadows} onChange={onToggleShadows} />}
+            {sun && hasShadowToggle && (
+                <ShadowCheckbox isDisabled={false} isChecked={hasShadows} onChange={onToggleShadows} />
+            )}
         </div>
     );
 };

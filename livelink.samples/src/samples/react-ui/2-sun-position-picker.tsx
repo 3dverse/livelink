@@ -70,8 +70,8 @@ function SunWidget() {
 
     return (
         <div
-            className={`absolute bottom-16 right-16 pb-2
                 bg-[color-mix(in_srgb,var(--color-bg-foreground)_85%,transparent)]
+            className={`absolute bottom-[10%] right-[10%] pb-2
                 backdrop-blur-xl rounded-md shadow-[0px_24px_40px_10px_color-mix(in_srgb,black_40%,transparent)]
             `}
         >
