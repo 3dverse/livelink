@@ -28,8 +28,7 @@ export const LightControl = ({
     const [color, setColor] = useState<string>(rgbToHex(light.point_light!.color));
     const [temperature, setTemperature] = useState<number | null>(null); // kelvin value
     const [intensity, setIntensity] = useState<number>(light.point_light!.intensity);
-    const [savedIntensity, setSavedIntensity] = useState<number>(intensity);
-    const [isPowered, setIsPowered] = useState<boolean>(true);
+    const [isPowered, setIsPowered] = useState<boolean>(light.is_visible);
 
     //--------------------------------------------------------------------------
     // Effects
@@ -39,10 +38,8 @@ export const LightControl = ({
         }
         setColor(rgbToHex(light.point_light!.color));
         setIntensity(light.point_light!.intensity);
-        if (!isPowered && light.point_light!.intensity > 0) {
-            setIsPowered(true);
-        }
-    }, [light.point_light?.intensity, light.point_light?.color]);
+        setIsPowered(light.is_visible);
+    }, [light.point_light?.intensity, light.point_light?.color, light.is_visible]);
 
     //--------------------------------------------------------------------------
     // Handlers
@@ -58,12 +55,7 @@ export const LightControl = ({
     };
 
     const onPowerChange = (isPowered: boolean) => {
-        if (!isPowered) {
-            setSavedIntensity(intensity);
-            light.point_light!.intensity = 0;
-        } else {
-            light.point_light!.intensity = savedIntensity;
-        }
+        light.is_visible = isPowered;
         setIsPowered(isPowered);
     };
 
