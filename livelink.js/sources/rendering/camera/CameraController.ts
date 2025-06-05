@@ -144,8 +144,7 @@ export class CameraController extends CameraControls {
         super(
             camera_entity.local_transform as Components.LocalTransform,
             getLens(camera_entity),
-            viewport.aspect_ratio,
-            viewport.dom_element,
+            viewport,
         );
 
         this.#camera_entity = camera_entity;
