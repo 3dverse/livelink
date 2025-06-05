@@ -16,7 +16,7 @@ export function CodeBlock({ code, title }: { code: string; title?: string }) {
         <>
             {isCollapsed ? (
                 <button
-                    className="relative w-full xl:w-10 h-10 xl:h-full bg-overground rounded-xl xl:[writing-mode:vertical-rl] text-sm text-tertiary hover:text-secondary transition-colors tracking-wide"
+                    className="relative w-full xl:w-10 h-10 xl:h-full bg-foreground rounded-xl xl:[writing-mode:vertical-rl] text-sm text-tertiary hover:text-secondary transition-colors tracking-wide"
                     onClick={() => setIsCollapsed(false)}
                 >
                     <span className="absolute top-3 right-4 xl:top-5 xl:right-4">
@@ -25,7 +25,7 @@ export function CodeBlock({ code, title }: { code: string; title?: string }) {
                     Code
                 </button>
             ) : (
-                <article className="relative flex flex-col max-h-[50%] xl:max-h-none xl:max-w-[50ch] 2xl:max-w-[60ch] 3xl:max-w-[70ch] 4xl:max-w-[85ch] bg-overground rounded-xl overflow-y-clip">
+                <article className="relative flex flex-col max-h-[50%] xl:max-h-none xl:max-w-[50ch] 2xl:max-w-[60ch] 3xl:max-w-[70ch] 4xl:max-w-[85ch] bg-foreground rounded-xl overflow-y-clip">
                     <header className="flex justify-between gap-3 px-3 py-3 border-b border-quaternary">
                         {title ? <p className="text-xs text-tertiary">{title}</p> : <div />}
                         <div className="flex items-center gap-2">

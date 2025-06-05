@@ -1,6 +1,5 @@
 /* Tailwind and theme */
 @import "tailwindcss/base";
-@import "./theme/3dverse-dark.css";
 @import "tailwindcss/utilities";
 @import "tailwindcss/screens";
 
@@ -13,6 +12,13 @@
 
 /* Component */
 @import "./tailwind/components/canvas.css";
+
+:root {
+    /* Font family */
+
+    --font-family-primary: "Manrope Variable", sans-serif;
+    --font-family-secondary: "Inter Variable", sans-serif;
+}
 
 @keyframes spin {
     to {

@@ -96,7 +96,7 @@ export function MainMenu({ isPageEmbedded }: { isPageEmbedded?: boolean }) {
                                         to={resolveSamplePath(s.path)}
                                         className={({ isActive }) =>
                                             [
-                                                "button button-ghost py-[3px] text-xs justify-start rounded-xl",
+                                                "button button-ghost py-[3px] text-xs justify-start rounded-lg",
                                                 isActive ? "active" : "",
                                             ].join(" ")
                                         }
