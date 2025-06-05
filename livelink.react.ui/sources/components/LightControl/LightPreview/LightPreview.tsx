@@ -15,18 +15,20 @@ export const LightPreview = ({
     intensityMax: number;
 }) => {
     return (
-        <div className={styles.lightPreviewContainer}>
-            <div
-                className={`${styles.outerBox} ${!isPowered ? styles.dimmed : ""}`}
-                style={
-                    {
-                        "--color": color,
-                        "--intensity": Math.min(Math.max(0, easeOutExpo(intensity / intensityMax)), 1),
-                    } as React.CSSProperties
-                }
-            >
+        <div
+            className={`${styles.lightPreviewContainer} ${!isPowered ? styles.dimmed : ""}`}
+            style={
+                {
+                    "--color": color,
+                    "--intensity": Math.min(Math.max(0, easeOutExpo(intensity / intensityMax)), 1),
+                } as React.CSSProperties
+            }
+        >
+            <span className={styles.lightCable} />
+            <div className={styles.outerBox}>
                 {isPowered && <div role="presentation" className={styles.innerGlow} />}
             </div>
+            <span />
         </div>
     );
 };

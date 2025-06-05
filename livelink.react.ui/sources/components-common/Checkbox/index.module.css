@@ -21,7 +21,6 @@
 
     border: 1px solid var(--3dverse-color-border-primary);
     border-radius: 3px;
-    background-color: var(--3dverse-color-bg-overground);
 
     transition: all 0.2s ease;
 }
@@ -41,22 +40,23 @@
 }
 
 /* When checked: animate in */
-.input:checked + .box .icon {
+.input:checked ~ .box .icon {
     transform: scale(1);
 }
 
-.input:checked + .box {
+.input:checked ~ .box {
     border-color: var(--3dverse-color-accent);
     background: color-mix(in srgb, var(--3dverse-color-accent) 80%, transparent);
 }
 
 .labelText {
     font-size: var(--3dverse-font-size-sm);
-    color: var(--3dverse-color-content-secondary);
-    transition: color 0.22s ease;
+    color: var(--3dverse-color-content-tertiary);
+    transition-property: color;
+    transition-duration: 0.22s;
 }
 
-.input:checked + .labelText {
+.input:checked ~ .labelText {
     color: var(--3dverse-color-content-primary);
 }
 
