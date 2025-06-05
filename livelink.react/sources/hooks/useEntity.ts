@@ -164,5 +164,17 @@ export function useEntity(
         };
     }, [entity, watchedComponents]);
 
+    //--------------------------------------------------------------------------
+    useEffect(() => {
+        if(!entity) {
+            return;
+        }
+
+        entity.addEventListener("on-entity-visibility-changed", forceUpdate);
+        return (): void => {
+            entity.removeEventListener("on-entity-visibility-changed", forceUpdate);
+        };
+    }, [entity]);
+
     return { isPending, entity };
 }
