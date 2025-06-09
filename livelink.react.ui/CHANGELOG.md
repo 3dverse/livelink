@@ -1,5 +1,25 @@
 # @3dverse/livelink-react-ui
 
+## 0.3.3
+
+### Patch Changes
+
+-   fix(livelink.react.ui): light control: hide entity when switch off the light
+-   chore: updated all packages and fixed build
+-   chore: update package-lock mess
+-   chore(samples): update to react 19
+-   fix(livelink.react.ui): remove unused import
+-   feat(livelink.react.ui): add light control component
+-   fix(livelink.react.ui): improve light control component api
+-   chore(livelink.react.ui): prettier
+-   fix(livelink.samples): add light control sample
+-   chore(livelink.react.ui): update to storybook 9.0.4
+-   Updated dependencies
+-   Updated dependencies
+-   Updated dependencies
+    -   @3dverse/livelink@0.8.40
+    -   @3dverse/livelink-react@0.2.48
+
 ## 0.3.2
 
 ### Patch Changes

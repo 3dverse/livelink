@@ -1,5 +1,12 @@
 # @3dverse/livelink
 
+## 0.8.40
+
+### Patch Changes
+
+-   chore: updated all packages and fixed build
+-   chore(livelink.js): update livelink-camera-controls
+
 ## 0.8.39
 
 ### Patch Changes
