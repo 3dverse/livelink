@@ -1,15 +1,18 @@
 //------------------------------------------------------------------------------
 import React from "react";
-import type { Preview } from "@storybook/react";
-import { themes } from "@storybook/theming";
+import type { Preview } from "@storybook/react-vite";
+import { themes } from "storybook/theming";
 import { Livelink } from "@3dverse/livelink-react";
 
 //------------------------------------------------------------------------------
 import { LivelinkReactUIProvider } from "../sources/components/Provider";
+import "./doc-pages-style.css";
 
 //------------------------------------------------------------------------------
 import "@3dverse/design-tokens/css/design-tokens-internal.css";
-import "./doc-pages-style.css";
+
+//------------------------------------------------------------------------------
+const scene_id = "4a5ed051-d3c7-444d-9049-ce752af9748d";
 
 //------------------------------------------------------------------------------
 const preview: Preview = {
@@ -26,6 +29,12 @@ const preview: Preview = {
                 { name: "Foreground", value: "var(--color-bg-foreground)" },
             ],
         },
+        options: {
+            storySort: {
+                method: "alphabetical",
+                order: [],
+            },
+        },
         controls: {
             matchers: {
                 color: /(background|color)$/i,
@@ -36,7 +45,6 @@ const preview: Preview = {
     decorators: [
         (Story: React.ComponentType) => {
             const token = import.meta.env.STORYBOOK_3DVERSE_PUBLIC_TOKEN;
-            const scene_id = "bfadafe7-7d75-4e8d-ba55-3b65c4b1d994";
             return (
                 <Livelink token={token} sceneId={scene_id}>
                     <LivelinkReactUIProvider>

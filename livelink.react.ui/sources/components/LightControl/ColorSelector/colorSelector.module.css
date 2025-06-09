@@ -1,0 +1,82 @@
+.colorSelector {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: var(--3dverse-spacing-2);
+}
+
+.colorButton {
+    all: unset;
+    width: 1.75rem;
+    height: 1.75rem;
+
+    border-radius: 9999px;
+    border: 1px solid;
+
+    transition: border-color 0.22s;
+    cursor: pointer;
+
+    @media (min-width: 50em) {
+        width: 1.25rem;
+        height: 1.25rem;
+    }
+
+    &:hover,
+    &:active {
+        border-color: currentColor;
+    }
+}
+
+.active {
+    outline: 2px solid currentColor;
+    outline-offset: 2px;
+}
+
+.customColorButton {
+    position: relative;
+    width: 1.75rem;
+    height: 1.75rem;
+
+    border-radius: 9999px;
+    border: 1px solid #00000030;
+
+    box-sizing: content-box;
+    overflow: hidden;
+    cursor: pointer;
+    transition: border-color 0.22s;
+
+    @media (min-width: 50em) {
+        width: 1.25rem;
+        height: 1.25rem;
+    }
+
+    &:hover,
+    &:focus-within {
+        border-color: #00000050;
+    }
+}
+
+.colorInput {
+    visibility: hidden;
+    position: absolute;
+    width: 300%;
+    height: 300%;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+
+    padding: 0;
+
+    cursor: pointer;
+}
+
+.plus {
+    font-size: var(--3dverse-font-size-sm);
+    position: absolute;
+    top: 48%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+
+    color: black;
+    opacity: 0.6;
+    pointer-events: none;
+}

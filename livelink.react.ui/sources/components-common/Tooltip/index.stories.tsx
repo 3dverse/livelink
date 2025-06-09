@@ -1,0 +1,35 @@
+//------------------------------------------------------------------------------
+import React from "react";
+import type { Meta, StoryObj } from "@storybook/react-vite";
+
+//------------------------------------------------------------------------------
+import { Tooltip } from ".";
+
+//------------------------------------------------------------------------------
+const meta = {
+    title: "Components Common/Tooltip",
+    component: Tooltip,
+    parameters: {
+        layout: "centered",
+    },
+    tags: ["autodocs"],
+} satisfies Meta<typeof Tooltip>;
+
+//------------------------------------------------------------------------------
+export default meta;
+type Story = StoryObj<typeof meta>;
+
+//------------------------------------------------------------------------------
+export const _Component: Story = {
+    args: {
+        content: "Hello tooltip",
+        isDisabled: false,
+        usePortal: true,
+        children: <div>Hover me</div>,
+    },
+    render: (args: any) => (
+        <div className="livelink-react-ui-component">
+            <Tooltip {...args} />
+        </div>
+    ),
+};

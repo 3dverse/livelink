@@ -1,0 +1,40 @@
+.container {
+    display: flex;
+    gap: var(--3dverse-spacing-3);
+
+    padding-inline: var(--3dverse-spacing-4);
+    padding-block: var(--3dverse-spacing-4);
+
+    @media (min-width: 80em) {
+        padding-inline: var(--3dverse-spacing-3);
+        padding-block: var(--3dverse-spacing-3);
+    }
+}
+
+.innerContainer {
+    display: flex;
+    flex-direction: column;
+    gap: var(--3dverse-spacing-4);
+    flex-grow: 1;
+
+    padding-top: var(--3dverse-spacing-1);
+    padding-inline: var(--3dverse-spacing-1);
+}
+
+.card {
+    display: flex;
+    transition-property: opacity;
+    transition-duration: 0.22s;
+
+    &.dimmed {
+        opacity: 0.2;
+        mix-blend-mode: luminosity;
+        pointer-events: none;
+    }
+}
+
+.label {
+    font-size: var(--3dverse-font-size-2xs);
+    color: var(--3dverse-color-content-tertiary);
+    margin-bottom: var(--3dverse-spacing-1);
+}

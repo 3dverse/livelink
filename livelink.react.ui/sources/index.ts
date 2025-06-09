@@ -5,6 +5,7 @@ export * from "./components/Provider";
 export * from "./components/InactivityWarning";
 export * from "./components/RenderGraphSettings";
 export * from "./components/SunPositionPicker";
+export * from "./components/LightControl";
 export * from "./components/ViewCube";
 export * from "./components/LoadingOverlay";
 export * from "./components/VirtualGamepad";

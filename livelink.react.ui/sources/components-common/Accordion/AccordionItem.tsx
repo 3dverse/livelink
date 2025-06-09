@@ -3,7 +3,7 @@ import React from "react";
 import clsx from "clsx";
 
 //------------------------------------------------------------------------------
-import styles from "./style.module.css";
+import styles from "./index.module.css";
 
 //------------------------------------------------------------------------------
 export const AccordionItem: React.FC<{

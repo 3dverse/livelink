@@ -3,9 +3,9 @@ import React, { ChangeEvent } from "react";
 import clsx from "clsx";
 
 //------------------------------------------------------------------------------
-import stylesInput from "../Input/style.module.css";
+import stylesInput from "../Input/index.module.css";
 import { Size } from "../Input";
-import styles from "./style.module.css";
+import styles from "./index.module.css";
 
 //------------------------------------------------------------------------------
 export const InputVector = ({

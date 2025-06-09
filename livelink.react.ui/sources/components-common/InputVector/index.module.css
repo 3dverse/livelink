@@ -1,0 +1,13 @@
+.inputs {
+    display: flex;
+}
+
+.inputVector {
+    flex-basis: 33%;
+
+    max-width: 5rem;
+    margin-left: -1px;
+    text-align: right;
+
+    border-radius: 0;
+}

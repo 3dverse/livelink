@@ -1,9 +1,0 @@
-
-    .wrapper {
-        display: flex;
-
-        background-color: color-mix(in srgb, var(--3dverse-color-bg-foreground) 85%, transparent);
-        backdrop-filter: blur(34px);
-        border-radius: 0.5rem;
-        box-shadow: 0 0 0 1px var(--3dverse-color-border-primary);
-    }

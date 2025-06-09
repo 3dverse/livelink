@@ -1,0 +1,59 @@
+.lightPreviewContainer {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-evenly;
+
+    padding-inline: 2rem;
+
+    background-color: color-mix(in srgb, var(--3dverse-color-bg-underground) 20%, transparent);
+    border-radius: var(--3dverse-border-radius-md);
+
+    transition-property: background-color, opacity;
+    transition-duration: 0.22s;
+    opacity: max(0.2, var(--intensity));
+
+    & > span {
+        flex-grow: 1;
+    }
+
+    &.dimmed {
+        mix-blend-mode: luminosity;
+        opacity: 0.2;
+    }
+}
+
+.lightCable {
+    width: 1px;
+    background: linear-gradient(to bottom, transparent -50%, color-mix(in srgb, var(--color) 80%, black));
+    opacity: 0.4;
+}
+
+.outerBox {
+    position: relative;
+    width: 3rem;
+    height: 3rem;
+    aspect-ratio: 1;
+
+    border: 1px solid color-mix(in srgb, var(--color) 80%, black);
+    border-radius: 9999px;
+    box-shadow:
+        inset 0 0 10px 6px oklch(1 0 0 / 0.2),
+        0 0 5px 0 oklch(1 0 0 / 0.4);
+
+}
+
+.innerGlow {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 3.5rem;
+    height: 3.5rem;
+
+    border-radius: 9999px;
+    background-color: var(--color);
+
+    filter: blur(10px);
+    transform: translate(-50%, -50%) scale(var(--intensity));
+    opacity: var(--intensity);
+}

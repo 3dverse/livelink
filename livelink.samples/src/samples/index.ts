@@ -1,4 +1,7 @@
 //------------------------------------------------------------------------------
+import type { ReactElement } from "react";
+
+//------------------------------------------------------------------------------
 import SingleCanvasSingleViewport from "./react-core/1-viewports/1-single-canvas-single-viewport";
 import SingleCanvasDoubleViewports from "./react-core/1-viewports/2-single-canvas-double-viewports";
 import DoubleCanvasSingleViewport from "./react-core/1-viewports/3-double-canvas-single-viewport";
@@ -40,6 +43,7 @@ import ActivityWatcher from "./react-ui/1-activity-watcher";
 import SunPositionPicker from "./react-ui/2-sun-position-picker";
 import RenderGraphSettings from "./react-ui/3-render-graph-settings";
 import ViewCube from "./react-ui/4-view-cube";
+import LightControl from "./react-ui/5-light-control";
 
 //------------------------------------------------------------------------------
 import LiveSkeletalAnimation from "./advanced/x-live-skeletal-animation";
@@ -66,7 +70,7 @@ type Sample = {
     description?: string;
     useCustomLayout?: boolean;
     autoConnect?: boolean;
-    element: JSX.Element;
+    element: ReactElement;
     code?: string;
 };
 
@@ -106,7 +110,7 @@ export default [
     },
     {
         categoryName: "Widgets",
-        list: [ActivityWatcher, SunPositionPicker, RenderGraphSettings, ViewCube],
+        list: [ActivityWatcher, SunPositionPicker, RenderGraphSettings, ViewCube, LightControl],
     },
     {
         categoryName: "Advanced",

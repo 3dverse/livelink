@@ -20,7 +20,7 @@
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true,
 
-    "types": ["@types/wicg-file-system-access"]
+    "types": ["@types/wicg-file-system-access", "vite/client"]
   },
   "include": ["src"],
   "exclude": ["src/samples/__to_sort__"],

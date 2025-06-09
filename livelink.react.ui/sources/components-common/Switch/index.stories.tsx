@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
-import React from "react";
-import type { Meta, StoryObj } from "@storybook/react";
+import React, { useState } from "react";
+import type { Meta, StoryObj } from "@storybook/react-vite";
 
 //------------------------------------------------------------------------------
 import { Switch } from ".";
@@ -25,9 +25,12 @@ export const _Component: Story = {
         isChecked: false,
         onChange: () => {},
     },
-    render: args => (
-        <div className="livelink-react-ui-component">
-            <Switch {...args} />
-        </div>
-    ),
+    render: args => {
+        const [isChecked, setIsChecked] = useState(args.isChecked);
+        return (
+            <div className="livelink-react-ui-component">
+                <Switch {...args} isChecked={isChecked} onChange={() => setIsChecked(!isChecked)} />
+            </div>
+        );
+    },
 };

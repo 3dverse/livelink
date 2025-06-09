@@ -1,6 +1,6 @@
 @layer base {
     .button {
-        @apply flex items-center justify-center px-3 py-2 text-primary text-md tracking-wide font-normal rounded-md cursor-pointer;
+        @apply flex items-center justify-center px-3 py-2 text-primary text-md tracking-wide font-normal rounded-sm cursor-pointer;
         transition-property: box-shadow, border-color, background-color, opacity;
         transition-duration: 0.25s;
     }
@@ -8,9 +8,18 @@
     /* Variants */
 
     .button-overlay {
-        @apply bg-[white] bg-opacity-80 text-primary-dark;
-        backdrop-filter: blur(16px);
+        @apply bg-[white] bg-opacity-80 text-primary-dark backdrop-blur-xl;
         box-shadow: 0px 5px 8px 2px hsl(0, 0%, 0%, 0.1);
+
+        &:hover,
+        &:focus,
+        &:active {
+            box-shadow: 0px 4px 9px 1px hsl(0, 0%, 0%, 0.08);
+        }
+    }
+
+    .button-outline-overlay {
+        @apply bg-transparent text-[white] border border-[#ffffff30] backdrop-blur-xl;
 
         &:hover,
         &:focus,
@@ -71,6 +80,12 @@
         &:active {
             @apply text-secondary;
         }
+    }
+
+    /* Rounded */
+
+    .button-rounded {
+        @apply rounded-full;
     }
 
     /* Sizes */

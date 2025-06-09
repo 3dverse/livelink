@@ -11,6 +11,11 @@
  */
 export interface OverlayInterface {
     /**
+     * Optional container element for the overlay.
+     */
+    readonly container?: HTMLElement;
+
+    /**
      * Draws the overlay to the output canvas if provided.
      * If no output canvas is provided, the overlay should use its own way to render itself.
      *
