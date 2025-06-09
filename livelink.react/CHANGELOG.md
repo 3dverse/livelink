@@ -1,5 +1,15 @@
 # @3dverse/livelink-react
 
+## 0.2.48
+
+### Patch Changes
+
+-   chore: updated all packages and fixed build
+-   feat(livelink.react): handle entity visibility changed event in useEntity
+-   Updated dependencies
+-   Updated dependencies
+    -   @3dverse/livelink@0.8.40
+
 ## 0.2.47
 
 ### Patch Changes
