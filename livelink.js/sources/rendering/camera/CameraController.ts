@@ -141,11 +141,7 @@ export class CameraController extends CameraControls {
         activate?: boolean;
         preset?: CameraControllerPreset;
     }) {
-        super(
-            camera_entity.local_transform as Components.LocalTransform,
-            getLens(camera_entity),
-            viewport,
-        );
+        super(camera_entity.local_transform as Components.LocalTransform, getLens(camera_entity), viewport);
 
         this.#camera_entity = camera_entity;
         this.#viewport = viewport;
@@ -306,7 +302,7 @@ export class CameraController extends CameraControls {
         }
 
         const { ownerDocument } = this._domElement;
-        this._domElement.requestPointerLock();
+        this._domElement.requestPointerLock?.();
         ownerDocument.addEventListener("pointerlockchange", this.#onPointerLockChange);
         ownerDocument.addEventListener("pointerlockerror", this.#onPointerLockError);
     }
@@ -320,7 +316,7 @@ export class CameraController extends CameraControls {
         }
 
         const { ownerDocument } = this._domElement;
-        ownerDocument.exitPointerLock();
+        ownerDocument.exitPointerLock?.();
         ownerDocument.removeEventListener("pointerlockchange", this.#onPointerLockChange);
         ownerDocument.removeEventListener("pointerlockerror", this.#onPointerLockError);
     }
