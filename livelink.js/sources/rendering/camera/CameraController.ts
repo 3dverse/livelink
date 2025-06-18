@@ -141,11 +141,7 @@ export class CameraController extends CameraControls {
         activate?: boolean;
         preset?: CameraControllerPreset;
     }) {
-        super(
-            camera_entity.local_transform as Components.LocalTransform,
-            getLens(camera_entity),
-            viewport,
-        );
+        super(camera_entity.local_transform as Components.LocalTransform, getLens(camera_entity), viewport);
 
         this.#camera_entity = camera_entity;
         this.#viewport = viewport;
@@ -306,9 +302,13 @@ export class CameraController extends CameraControls {
         }
 
         const { ownerDocument } = this._domElement;
-        this._domElement.requestPointerLock();
-        ownerDocument.addEventListener("pointerlockchange", this.#onPointerLockChange);
-        ownerDocument.addEventListener("pointerlockerror", this.#onPointerLockError);
+        if (!this.#isPointerLockActive) {
+            this._domElement.requestPointerLock?.();
+            ownerDocument.removeEventListener("pointerlockchange", this.#onPointerLockChange);
+            ownerDocument.removeEventListener("pointerlockerror", this.#onPointerLockError);
+            ownerDocument.addEventListener("pointerlockchange", this.#onPointerLockChange);
+            ownerDocument.addEventListener("pointerlockerror", this.#onPointerLockError);
+        }
     }
 
     /**
@@ -320,9 +320,12 @@ export class CameraController extends CameraControls {
         }
 
         const { ownerDocument } = this._domElement;
-        ownerDocument.exitPointerLock();
         ownerDocument.removeEventListener("pointerlockchange", this.#onPointerLockChange);
         ownerDocument.removeEventListener("pointerlockerror", this.#onPointerLockError);
+        this.#lock_pointer.count = 0;
+        if (this.#isPointerLockActive) {
+            ownerDocument.exitPointerLock?.();
+        }
     }
 
     /**
@@ -332,7 +335,6 @@ export class CameraController extends CameraControls {
         if (this.#isPointerLockActive) {
             return;
         }
-
         this.#unlockPointer();
     };
 
@@ -340,13 +342,24 @@ export class CameraController extends CameraControls {
      *
      */
     #onPointerLockError = (): void => {
-        this.#unlockPointer();
+        // Retry a bit later to handle the case where the lock request occurs right after the user pressed escape key to
+        //  unlock the pointer. After that, pointer lock fails with an error:
+        //      "SecurityError: The user has exited the lock before this request was completed."
+        // https://issues.chromium.org/issues/40779661
+        // So retrying a bit later is worth it.
+        setTimeout(() => {
+            this.#lockPointer();
+        }, 500);
     };
 
     /**
      *
      */
     #onMouseDownLock = (event: MouseEvent): void => {
+        if (!this._domElement) {
+            return;
+        }
+
         if (this.lock_pointer.aim !== "always") {
             this.#lock_pointer.count++;
         }
@@ -356,7 +369,10 @@ export class CameraController extends CameraControls {
         }
 
         this.#lock_pointer.down_position = [event.clientX, event.clientY];
-        this._domElement?.addEventListener("mousemove", this.#onMouseMoveLock);
+        this._domElement.addEventListener("mousemove", this.#onMouseMoveLock);
+        if (this.lock_pointer.aim !== "always") {
+            this._domElement.addEventListener("mouseup", this.#onMouseUpLock);
+        }
     };
 
     /**
@@ -367,7 +383,12 @@ export class CameraController extends CameraControls {
             this.#lock_pointer.count--;
         }
 
-        if (this.#lock_pointer.count > 0 || !this.#isPointerLockActive || !this._domElement) {
+        if (this.#lock_pointer.count > 0 || !this._domElement) {
+            return;
+        }
+
+        if (!this.#isPointerLockActive) {
+            this._domElement.removeEventListener("mousemove", this.#onMouseMoveLock);
             return;
         }
 
@@ -401,9 +422,7 @@ export class CameraController extends CameraControls {
 
         // Lock Pointer
         this._domElement.removeEventListener("mousemove", this.#onMouseMoveLock);
-        if (this.lock_pointer.aim !== "always") {
-            this._domElement.addEventListener("mouseup", this.#onMouseUpLock);
-        }
+
         // Must try to unlock in case the user unlocked it manually with ESC key
         this.#unlockPointer();
         this.#lockPointer();

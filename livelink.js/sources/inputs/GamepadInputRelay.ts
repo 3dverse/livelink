@@ -26,6 +26,10 @@ const XInputMaskMap = [
 
 /**
  * The gamepad buttons.
+ *
+ * LeftTrigger and RightTrigger as Buttons are ignored by the engine, use GamepadAxes for triggers instead.
+ *
+ * @category Inputs
  */
 export const GamepadButton = {
     A: 0,
@@ -49,12 +53,14 @@ export const GamepadButton = {
 } as const;
 
 /**
- *
+ * @category Inputs
  */
 export type GamepadButtonType = (typeof GamepadButton)[keyof typeof GamepadButton];
 
 /**
  * The gamepad axes.
+ *
+ * @category Inputs
  */
 export const GamepadAxis = {
     LeftThumbstickX: 0,
@@ -66,12 +72,14 @@ export const GamepadAxis = {
 } as const;
 
 /**
- *
+ * @category Inputs
  */
 export type GamepadAxisType = (typeof GamepadAxis)[keyof typeof GamepadAxis];
 
 /**
  * The gamepad joysticks.
+ *
+ * @category Inputs
  */
 export const GamepadJoystick = {
     Left: [GamepadAxis.LeftThumbstickX, GamepadAxis.LeftThumbstickY],
@@ -79,7 +87,7 @@ export const GamepadJoystick = {
 } as const;
 
 /**
- *
+ * @category Inputs
  */
 export type GamepadJoystickType = (typeof GamepadJoystick)[keyof typeof GamepadJoystick];
 
