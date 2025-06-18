@@ -1,5 +1,13 @@
 # @3dverse/livelink
 
+## 0.8.41
+
+### Patch Changes
+
+-   docs(livelink.js): documentation category for gamepad related types
+-   fix(livelink.js): camera controller issue where simple click locks the pointer on next mouse move, and secure the lock pointer aim when the user uses escape key to unlock.
+-   fix(livelink.js): secure pointer lock API calls from CameraController because safari for iOS fires mouse events on touch actions
+
 ## 0.8.40
 
 ### Patch Changes
