@@ -39,7 +39,6 @@ export const LightColorSelector = ({ className }: { className?: string }) => {
                     onChange={e => onColorChange(e.target.value)}
                     className={styles.colorInput}
                 />
-                <span className={styles.plus}>+</span>
             </label>
         </div>
     );
