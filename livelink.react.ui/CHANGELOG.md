@@ -1,5 +1,13 @@
 # @3dverse/livelink-react-ui
 
+## 0.3.4
+
+### Patch Changes
+
+-   refactor(livelink.react.ui): split light control into multiple components
+-   Updated dependencies
+    -   @3dverse/livelink@0.8.42
+
 ## 0.3.3
 
 ### Patch Changes

@@ -1,5 +1,11 @@
 # @3dverse/livelink
 
+## 0.8.42
+
+### Patch Changes
+
+-   fix(livelink.js): truck only for the camera controller fly preset when using 2 touches because dolly & truck does not aim well in this mode
+
 ## 0.8.41
 
 ### Patch Changes
