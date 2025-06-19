@@ -7,7 +7,16 @@ import {
     CameraController,
     useEntity,
 } from "@3dverse/livelink-react";
-import { LightControl, LoadingOverlay } from "@3dverse/livelink-react-ui";
+import {
+    LightControl,
+    LoadingOverlay,
+    LightPreview,
+    LightColorSelector,
+    LightTemperatureSlider,
+    LightBrightnessSlider,
+    LightSwitchOnOff,
+    useLightControl,
+} from "@3dverse/livelink-react-ui";
 import { Entity } from "@3dverse/livelink";
 
 //------------------------------------------------------------------------------
@@ -78,7 +87,44 @@ function LightControlWidget({ light }: { light: Entity }) {
                 backdrop-blur-xl rounded-lg shadow-[0px_24px_40px_10px_color-mix(in_srgb,black_40%,transparent)]
             `}
         >
-            <LightControl light={light} />
+            <LightControl light={light}>
+                <LightControlInner />
+            </LightControl>
         </div>
     );
 }
+
+//------------------------------------------------------------------------------
+const LightControlInner = () => {
+    const { isPowered } = useLightControl();
+    return (
+        <div className="flex gap-3 p-3 xl:p-4">
+            <LightPreview />
+            <div className="flex flex-col gap-4 flex-grow p-1">
+                <div
+                    className={`
+                        flex flex-col gap-4 flex-grow transition-opacity duration-220
+                        ${isPowered ? "" : "opacity-20 mix-blend-luminosity pointer-events-none"}
+                    `}
+                >
+                    <LightColorSelector />
+                    <div>
+                        <label className="text-2xs text-tertiary mb-1">
+                            Temperature
+                        </label>
+                        <LightTemperatureSlider />
+                    </div>
+                    <div>
+                        <label className="text-2xs text-tertiary mb-1">
+                            Brightness
+                        </label>
+                        <LightBrightnessSlider />
+                    </div>
+                </div>
+                <div className="flex flex-col gap-4 flex-grow justify-end items-end transition-opacity duration-220">
+                    <LightSwitchOnOff />
+                </div>
+            </div>
+        </div>
+    );
+};

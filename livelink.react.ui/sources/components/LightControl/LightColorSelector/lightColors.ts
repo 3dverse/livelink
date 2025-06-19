@@ -1,5 +1,5 @@
 //------------------------------------------------------------------------------
-export const colors = [
+export const lightColors = [
     "#FF6B6B", // Soft Coral Red
     "#F7B267", // Warm Apricot
     "#FFD93D", // Golden Honey
