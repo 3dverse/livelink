@@ -6,6 +6,15 @@ import { Entity, Vec3 } from "@3dverse/livelink";
 import { LightControlContext } from "./LightControlContext";
 
 //------------------------------------------------------------------------------
+export type LightControlProps = {
+    light: Entity;
+    intensityMin?: number;
+    intensityMax?: number;
+    intensityStep?: number;
+    className?: string;
+    children?: React.ReactNode;
+};
+//------------------------------------------------------------------------------
 export const LightControl = ({
     light,
     intensityMin = 0,
@@ -13,14 +22,7 @@ export const LightControl = ({
     intensityStep = 0.1,
     className,
     children,
-}: {
-    light: Entity;
-    intensityMin?: number;
-    intensityMax?: number;
-    intensityStep?: number;
-    className?: string;
-    children?: React.ReactNode;
-}) => {
+}: LightControlProps) => {
     //--------------------------------------------------------------------------
     const [color, setColor] = useState<string>(rgbToHex(light.point_light!.color));
     const [temperature, setTemperature] = useState<number | null>(null); // kelvin value
@@ -85,7 +87,7 @@ export const LightControl = ({
                 onTemperatureChange,
             }}
         >
-            <div className={`livelink-react-ui-component ${className}`}>{children}</div>
+            <div className={`livelink-react-ui-component ${className ?? ""}`}>{children}</div>
         </LightControlContext.Provider>
     );
 };
@@ -97,7 +99,7 @@ function toHex(c: number) {
 }
 
 //------------------------------------------------------------------------------
-export function rgbToHex(c: Vec3) {
+function rgbToHex(c: Vec3) {
     return "#" + toHex(c[0]) + toHex(c[1]) + toHex(c[2]);
 }
 
