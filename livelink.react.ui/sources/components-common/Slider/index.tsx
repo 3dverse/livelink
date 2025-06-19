@@ -107,7 +107,7 @@ export const Slider = ({
             onMouseDown={handleMouseDown}
             onTouchStart={handleTouchStart}
             style={{ "--track-color": color, ...style, ...trackStyle } as React.CSSProperties}
-            className={`${styles.track} ${animateValueChange ? styles.animateValueChange : ""} ${className}`}
+            className={`${styles.track} ${animateValueChange ? styles.animateValueChange : ""} ${className ?? ""}`}
         >
             <div className={styles.filled} style={{ width: `${percentage}%`, ...filledTrackStyle }} />
             <div className={styles.thumb} style={{ left: `${percentage}%`, backgroundColor: color, ...thumbStyle }} />

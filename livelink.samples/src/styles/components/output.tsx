@@ -36,7 +36,9 @@ export const OutputValue = ({
     children: ReactNode;
 }) => {
     return (
-        <span className={`inline-block text-right w-8 text-[white] ${isNumber ? "tabular-nums" : ""} ${className} }`}>
+        <span
+            className={`inline-block text-right w-8 text-[white] ${isNumber ? "tabular-nums" : ""} ${className ?? ""}`}
+        >
             {children}
         </span>
     );

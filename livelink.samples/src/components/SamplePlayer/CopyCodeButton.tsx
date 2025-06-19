@@ -45,7 +45,7 @@ export const CopyCodeButton = ({ code, className }: { code: string; className?: 
 
     //--------------------------------------------------------------------------
     return (
-        <div className={`flex items-center gap-2 ${className}`}>
+        <div className={`flex items-center gap-2 ${className ?? ""}`}>
             <p
                 className={`text-2xs tracking-wide text-positive [--animation-appear-offset:4px] opacity-0 ${hasCopied ? "animate-appear-top" : undefined}`}
             >
