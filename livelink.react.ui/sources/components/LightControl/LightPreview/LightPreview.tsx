@@ -1,19 +1,14 @@
 //------------------------------------------------------------------------------
 import React from "react";
+import { useLightControl } from "../LightControlContext";
 import styles from "./lightPreview.module.css";
 
 //------------------------------------------------------------------------------
-export const LightPreview = ({
-    isPowered,
-    color,
-    intensity,
-    intensityMax,
-}: {
-    isPowered: boolean;
-    color: string;
-    intensity: number;
-    intensityMax: number;
-}) => {
+export const LightPreview = () => {
+    //--------------------------------------------------------------------------
+    const { isPowered, color, intensity, intensityMax } = useLightControl();
+
+    //--------------------------------------------------------------------------
     return (
         <div
             className={`${styles.lightPreviewContainer} ${!isPowered ? styles.dimmed : ""}`}

@@ -3,6 +3,16 @@ import React, { useContext, useEffect, useState } from "react";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { CameraController, Canvas, LivelinkContext, useCameraEntity, Viewport } from "@3dverse/livelink-react";
 import type { Entity } from "@3dverse/livelink";
+import clsx from "clsx";
+
+//------------------------------------------------------------------------------
+import { LightPreview } from "./LightPreview/LightPreview";
+import { LightColorSelector } from "./LightColorSelector/LightColorSelector";
+import { LightTemperatureSlider } from "./LightTemperatureSlider/LightTemperatureSlider";
+import { LightBrightnessSlider } from "./LightBrightnessSlider/LightBrightnessSlider";
+import { LightSwitchOnOff } from "./LightSwitchOnOff/LightSwitchOnOff";
+import { useLightControl } from "./LightControlContext";
+import styles from "./index.module.css";
 import { LightControl } from ".";
 
 //------------------------------------------------------------------------------
@@ -62,7 +72,11 @@ export const _Component: Story = {
                             }}
                         >
                             {/* TODO: replace by component Story */}
-                            {lights[0] && <LightControl {...args} light={lights[0]} />}
+                            {lights[0] && (
+                                <LightControl {...args} light={lights[0]}>
+                                    <LightControlInner />
+                                </LightControl>
+                            )}
                         </div>
                     </Viewport>
                 </Canvas>
@@ -70,3 +84,48 @@ export const _Component: Story = {
         },
     ],
 };
+
+//------------------------------------------------------------------------------
+const LightControlInner = () => {
+    const { isPowered } = useLightControl();
+    return (
+        <div className={`${styles.container} livelink-react-ui-component`}>
+            <LightPreview />
+            <div className={styles.innerContainer}>
+                <Card
+                    isPowered={isPowered}
+                    style={{
+                        flexDirection: "column",
+                        gap: "var(--3dverse-spacing-4)",
+                        flexGrow: 1,
+                    }}
+                >
+                    <LightColorSelector />
+                    <div>
+                        <label className={styles.label}>Temperature</label>
+                        <LightTemperatureSlider />
+                    </div>
+                    <div>
+                        <label className={styles.label}>Brightness</label>
+                        <LightBrightnessSlider />
+                    </div>
+                </Card>
+                <Card style={{ justifyContent: "end", alignItems: "end" }}>
+                    <LightSwitchOnOff />
+                </Card>
+            </div>
+        </div>
+    );
+};
+
+//------------------------------------------------------------------------------
+const Card = ({
+    children,
+    className,
+    isPowered = true,
+    ...props
+}: { isPowered?: boolean; children: React.ReactNode; className?: string } & React.HTMLAttributes<HTMLDivElement>) => (
+    <div className={clsx(styles.card, isPowered ? "" : styles.dimmed, className)} {...props}>
+        {children}
+    </div>
+);

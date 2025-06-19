@@ -121,7 +121,7 @@ export const fly: CameraControllerPreset = Object.freeze({
     },
     touches: {
         one: ACTION.TOUCH_ROTATE,
-        two: ACTION.TOUCH_DOLLY_TRUCK,
+        two: ACTION.TOUCH_TRUCK,
         three: ACTION.TOUCH_SCREEN_PAN,
     },
     /**

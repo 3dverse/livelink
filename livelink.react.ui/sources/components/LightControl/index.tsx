@@ -1,16 +1,9 @@
 //------------------------------------------------------------------------------
 import React, { useEffect, useState } from "react";
 import { Entity, Vec3 } from "@3dverse/livelink";
-import clsx from "clsx";
 
 //------------------------------------------------------------------------------
-import { Slider } from "../../components-common/Slider";
-import { TemperatureSlider } from "../../components-common/TemperatureSlider";
-import { LightPreview } from "./LightPreview/LightPreview";
-import { ColorSelector } from "./ColorSelector/ColorSelector";
-import { SwitchOnOff } from "./SwitchOnOff/SwitchOnOff";
-
-import styles from "./index.module.css";
+import { LightControlContext } from "./LightControlContext";
 
 //------------------------------------------------------------------------------
 export const LightControl = ({
@@ -18,11 +11,15 @@ export const LightControl = ({
     intensityMin = 0,
     intensityMax = 20,
     intensityStep = 0.1,
+    className,
+    children,
 }: {
     light: Entity;
     intensityMin?: number;
     intensityMax?: number;
     intensityStep?: number;
+    className?: string;
+    children?: React.ReactNode;
 }) => {
     //--------------------------------------------------------------------------
     const [color, setColor] = useState<string>(rgbToHex(light.point_light!.color));
@@ -72,62 +69,26 @@ export const LightControl = ({
         return null;
     }
     return (
-        <div className={`${styles.container} livelink-react-ui-component`}>
-            <LightPreview color={color} intensity={intensity} intensityMax={intensityMax} isPowered={isPowered} />
-            <div className={styles.innerContainer}>
-                <Card
-                    isPowered={isPowered}
-                    style={{ flexDirection: "column", gap: "var(--3dverse-spacing-4)", flexGrow: 1 }}
-                >
-                    <ColorSelector value={color} onChange={onColorChange} />
-                    <div>
-                        <label className={styles.label}>Temperature</label>
-                        <TemperatureSlider
-                            value={temperature ?? 0}
-                            hideValue={!temperature}
-                            onChange={onTemperatureChange}
-                            animateValueChange
-                        />
-                    </div>
-                    <div>
-                        <label className={styles.label}>Brightness</label>
-                        <Slider
-                            min={intensityMin}
-                            max={intensityMax}
-                            step={intensityStep}
-                            color={color}
-                            value={intensity}
-                            valueDecimals={1}
-                            onChange={onIntensityChange}
-                            style={
-                                {
-                                    "--track-color": color,
-                                    "--track-opacity": intensity / intensityMax,
-                                } as React.CSSProperties
-                            }
-                            animateValueChange
-                        />
-                    </div>
-                </Card>
-                <Card style={{ justifyContent: "end", alignItems: "end" }}>
-                    <SwitchOnOff isPowered={isPowered} onChange={onPowerChange} />
-                </Card>
-            </div>
-        </div>
+        <LightControlContext.Provider
+            value={{
+                light,
+                color,
+                temperature,
+                intensity,
+                intensityMin,
+                intensityMax,
+                intensityStep,
+                isPowered,
+                onColorChange,
+                onIntensityChange,
+                onPowerChange,
+                onTemperatureChange,
+            }}
+        >
+            <div className={`livelink-react-ui-component ${className}`}>{children}</div>
+        </LightControlContext.Provider>
     );
 };
-
-//------------------------------------------------------------------------------
-const Card = ({
-    children,
-    className,
-    isPowered = true,
-    ...props
-}: { isPowered?: boolean; children: React.ReactNode; className?: string } & React.HTMLAttributes<HTMLDivElement>) => (
-    <div className={clsx(styles.card, isPowered ? "" : styles.dimmed, className)} {...props}>
-        {children}
-    </div>
-);
 
 //------------------------------------------------------------------------------
 function toHex(c: number) {

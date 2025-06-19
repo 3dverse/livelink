@@ -1,17 +1,13 @@
 //------------------------------------------------------------------------------
 import React from "react";
-import styles from "./switchOnOff.module.css";
+import { useLightControl } from "../LightControlContext";
+import styles from "./lightSwitchOnOff.module.css";
 
 //------------------------------------------------------------------------------
-export const SwitchOnOff = ({
-    isPowered,
-    onChange,
-}: {
-    isPowered: boolean;
-    onChange: (isPowered: boolean) => void;
-}) => {
+export const LightSwitchOnOff = ({ className }: { className?: string }) => {
+    const { isPowered, onPowerChange } = useLightControl();
     return (
-        <button className={styles.toggleButton} onClick={() => onChange(!isPowered)}>
+        <button className={`${styles.toggleButton} ${className}`} onClick={() => onPowerChange(!isPowered)}>
             <span className={styles.toggleText} style={{ opacity: isPowered ? 1 : 0.4 }}>
                 ON
             </span>

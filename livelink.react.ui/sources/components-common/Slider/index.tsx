@@ -18,6 +18,7 @@ export interface SliderProps {
     filledTrackStyle?: React.CSSProperties;
     thumbStyle?: React.CSSProperties;
     valueStyle?: React.CSSProperties;
+    className?: string;
 }
 
 //------------------------------------------------------------------------------
@@ -36,6 +37,7 @@ export const Slider = ({
     filledTrackStyle,
     thumbStyle,
     valueStyle,
+    className,
 }: SliderProps) => {
     //--------------------------------------------------------------------------
     const sliderRef = useRef<HTMLDivElement>(null);
@@ -94,28 +96,23 @@ export const Slider = ({
 
     //--------------------------------------------------------------------------
     return (
-        <div className={styles.sliderContainer}>
-            <div
-                ref={sliderRef}
-                role="slider"
-                aria-valuemin={min}
-                aria-valuemax={max}
-                aria-valuenow={value}
-                tabIndex={0}
-                onKeyDown={handleKeyDown}
-                onMouseDown={handleMouseDown}
-                onTouchStart={handleTouchStart}
-                style={{ "--track-color": color, ...style, ...trackStyle } as React.CSSProperties}
-                className={`${styles.track} ${animateValueChange ? styles.animateValueChange : ""}`}
-            >
-                <div className={styles.filled} style={{ width: `${percentage}%`, ...filledTrackStyle }} />
-                <div
-                    className={styles.thumb}
-                    style={{ left: `${percentage}%`, backgroundColor: color, ...thumbStyle }}
-                />
-                <div className={styles.value} style={{ ...valueStyle }}>
-                    {value.toFixed(valueDecimals)} {unit}
-                </div>
+        <div
+            ref={sliderRef}
+            role="slider"
+            aria-valuemin={min}
+            aria-valuemax={max}
+            aria-valuenow={value}
+            tabIndex={0}
+            onKeyDown={handleKeyDown}
+            onMouseDown={handleMouseDown}
+            onTouchStart={handleTouchStart}
+            style={{ "--track-color": color, ...style, ...trackStyle } as React.CSSProperties}
+            className={`${styles.track} ${animateValueChange ? styles.animateValueChange : ""} ${className}`}
+        >
+            <div className={styles.filled} style={{ width: `${percentage}%`, ...filledTrackStyle }} />
+            <div className={styles.thumb} style={{ left: `${percentage}%`, backgroundColor: color, ...thumbStyle }} />
+            <div className={styles.value} style={{ ...valueStyle }}>
+                {value.toFixed(valueDecimals)} {unit}
             </div>
         </div>
     );
