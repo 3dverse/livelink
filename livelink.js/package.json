@@ -31,7 +31,16 @@
     "typedoc:md": "typedoc --options typedoc-md.config.mjs --plugin typedoc-plugin-no-inherit --plugin typedoc-plugin-markdown --out docs-md",
     "posttypedoc:md": "prettier --config ../.prettierrc --write ./docs-md"
   },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/3dverse/livelink.git"
+  },
+  "author": "",
   "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/3dverse/livelink/issues"
+  },
+  "homepage": "https://github.com/3dverse/livelink#readme",
   "dependencies": {
     "@3dverse/livelink-camera-controls": "^0.4.10",
     "@3dverse/livelink.core": "^1.1.3",
