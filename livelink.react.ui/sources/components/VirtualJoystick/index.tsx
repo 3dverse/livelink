@@ -2,14 +2,13 @@
 import { useEffect, useState } from "react";
 
 //------------------------------------------------------------------------------
-import {
+import type {
     JoystickManager,
     EventData,
-    type JoystickOutputData,
+    JoystickOutputData,
     JoystickManagerEventTypes,
     JoystickManagerOptions,
 } from "nipplejs";
-import nipplejs from "nipplejs";
 
 //------------------------------------------------------------------------------
 export type JoystickEvent = JoystickOutputData;
@@ -32,11 +31,14 @@ export const VirtualJoystick = ({
     const [manager, setManager] = useState<JoystickManager | null>(null);
 
     useEffect(() => {
-        const manager = createNippleJSManager(propsOptions);
-        setManager(manager);
+        let manager: JoystickManager | undefined;
+        createNippleJSManager(propsOptions).then(_manager => {
+            manager = _manager;
+            setManager(_manager);
+        });
 
         return () => {
-            manager.destroy();
+            manager?.destroy();
             setManager(null);
         };
     }, [propsOptions]);
@@ -76,7 +78,7 @@ function useJoystickEvent(
 /**
  *
  */
-function createNippleJSManager(options?: VirtualJoystickOptions): JoystickManager {
+async function createNippleJSManager(options?: VirtualJoystickOptions): Promise<JoystickManager> {
     let formattedOptions: JoystickManagerOptions = {};
     if (options) {
         formattedOptions = {
@@ -89,6 +91,8 @@ function createNippleJSManager(options?: VirtualJoystickOptions): JoystickManage
             formattedOptions.dataOnly = options.isHidden;
         }
     }
+    const mod = await import("nipplejs");
+    const nipplejs = mod.default || mod;
     const manager = nipplejs.create(formattedOptions);
     return manager;
 }
