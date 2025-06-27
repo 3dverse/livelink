@@ -1,12 +1,7 @@
-import { PrismLight as SyntaxHighlighter } from "react-syntax-highlighter";
-import { nightOwl as codeTheme } from "react-syntax-highlighter/dist/esm/styles/prism";
-import tsx from "react-syntax-highlighter/dist/esm/languages/prism/tsx";
+import { Highlight, themes } from "prism-react-renderer";
 import { CopyCodeButton } from "./CopyCodeButton";
 import { CollapseIcon } from "../icons/CollapseIcon";
 import { LOCAL_STORAGE_KEYS, useLocalStorage } from "../../lib/localStorage";
-
-//------------------------------------------------------------------------------
-SyntaxHighlighter.registerLanguage("tsx", tsx);
 
 //------------------------------------------------------------------------------
 export function CodeBlock({ code, title }: { code: string; title?: string }) {
@@ -35,14 +30,22 @@ export function CodeBlock({ code, title }: { code: string; title?: string }) {
                             </button>
                         </div>
                     </header>
-                    <SyntaxHighlighter
-                        language="jsx"
-                        style={codeTheme}
-                        className="h-full !m-0 !bg-transparent !text-[.8em] !px-0"
-                        showLineNumbers
-                    >
-                        {code}
-                    </SyntaxHighlighter>
+                    <Highlight theme={themes.nightOwl} code={code} language="tsx">
+                        {({ style, tokens, getLineProps, getTokenProps }) => (
+                            <pre className="h-full text-[.8em] !m-0 !bg-transparent !py-[1em]" style={style}>
+                                {tokens.map((line, i) => (
+                                    <div key={i} {...getLineProps({ line })}>
+                                        <span className="text-right select-none italic pr-[1em] text-[#637777] inline-block min-w-[3.25em]">
+                                            {i + 1}
+                                        </span>
+                                        {line.map((token, key) => (
+                                            <span key={key} {...getTokenProps({ token })} />
+                                        ))}
+                                    </div>
+                                ))}
+                            </pre>
+                        )}
+                    </Highlight>
                 </article>
             )}
         </>

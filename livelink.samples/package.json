@@ -20,11 +20,11 @@
     "@3dverse/livelink-webxr": "file:../livelink.webxr",
     "@fontsource-variable/manrope": "^5.2.6",
     "boring-avatars": "^1.11.2",
+    "prism-react-renderer": "^2.4.1",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
     "react-markdown": "^10.1.0",
     "react-router": "^7.6.2",
-    "react-syntax-highlighter": "^15.6.1",
     "three": "^0.177.0"
   },
   "devDependencies": {
@@ -32,7 +32,6 @@
     "@fontsource-variable/inter": "^5.2.6",
     "@types/react": "^19.1.8",
     "@types/react-dom": "^19.1.6",
-    "@types/react-syntax-highlighter": "^15.5.13",
     "@types/wicg-file-system-access": "^2023.10.6",
     "@typescript-eslint/eslint-plugin": "^8.35.0",
     "@typescript-eslint/parser": "^8.35.0",
