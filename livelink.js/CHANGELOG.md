@@ -1,5 +1,12 @@
 # @3dverse/livelink
 
+## 0.8.43
+
+### Patch Changes
+
+-   chore: update dependencies
+-   docs(livelink.js): add missing urls to repo, bugs, and homepage to package.json
+
 ## 0.8.42
 
 ### Patch Changes

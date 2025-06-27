@@ -1,5 +1,18 @@
 # @3dverse/livelink-react-ui
 
+## 0.3.5
+
+### Patch Changes
+
+-   fix(livelink.react.ui): lazy-load nipplejs to prevent window is not defined error from non browser environment (ssr) import
+-   refactor(livelink.react.ui): light control: grouped props in their own type
+-   fix(livelink.react.ui): prevent undefined classnames
+-   chore: update dependencies
+-   Updated dependencies
+-   Updated dependencies
+    -   @3dverse/livelink@0.8.43
+    -   @3dverse/livelink-react@0.2.49
+
 ## 0.3.4
 
 ### Patch Changes
