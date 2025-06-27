@@ -7,7 +7,7 @@ include:
       - /ci/.bases/node/_index.yaml
 
 variables:
-  NODE_VERSION: "22"
+  NODE_VERSION: "24"
 
 # RULES     ###########################################################################################################
 .manual-doc-publish-rule: &manual-doc-publish-rule $CI_DEFAULT_BRANCH == $CI_DEFAULT_BRANCH && $GENERATE_DOCS == "true"

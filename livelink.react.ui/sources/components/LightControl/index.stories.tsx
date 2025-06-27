@@ -1,7 +1,14 @@
 //------------------------------------------------------------------------------
 import React, { useContext, useEffect, useState } from "react";
 import type { Meta, StoryObj } from "@storybook/react-vite";
-import { CameraController, Canvas, LivelinkContext, useCameraEntity, Viewport } from "@3dverse/livelink-react";
+import {
+    CameraController,
+    Canvas,
+    LivelinkContext,
+    useCameraEntity,
+    useEntity,
+    Viewport,
+} from "@3dverse/livelink-react";
 import type { Entity } from "@3dverse/livelink";
 import clsx from "clsx";
 
@@ -13,7 +20,7 @@ import { LightBrightnessSlider } from "./LightBrightnessSlider/LightBrightnessSl
 import { LightSwitchOnOff } from "./LightSwitchOnOff/LightSwitchOnOff";
 import { useLightControl } from "./LightControlContext";
 import styles from "./index.module.css";
-import { LightControl } from ".";
+import { LightControl, LightControlProps } from ".";
 
 //------------------------------------------------------------------------------
 const meta = {
@@ -71,18 +78,28 @@ export const _Component: Story = {
                                 borderRadius: "var(--3dverse-border-radius-lg)",
                             }}
                         >
-                            {/* TODO: replace by component Story */}
-                            {lights[0] && (
-                                <LightControl {...args} light={lights[0]}>
-                                    <LightControlInner />
-                                </LightControl>
-                            )}
+                            {lights[0] && <LightControlWidget lights={lights} {...args} />}
                         </div>
                     </Viewport>
                 </Canvas>
             );
         },
     ],
+};
+
+//------------------------------------------------------------------------------
+const LightControlWidget = ({ lights, ...args }: { lights: Entity[] } & LightControlProps) => {
+    const { entity: light } = useEntity({ euid: lights[0].euid.value }, ["point_light"]);
+
+    if (!light) {
+        return null;
+    }
+    return (
+        <LightControl {...args} light={light}>
+            {/* TODO: replace by component Story */}
+            <LightControlInner />
+        </LightControl>
+    );
 };
 
 //------------------------------------------------------------------------------

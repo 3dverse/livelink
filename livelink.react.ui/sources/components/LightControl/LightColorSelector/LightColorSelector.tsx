@@ -12,7 +12,7 @@ export const LightColorSelector = ({ className }: { className?: string }) => {
 
     //--------------------------------------------------------------------------
     return (
-        <div className={`${styles.colorSelector} ${className}`}>
+        <div className={`${styles.colorSelector} ${className ?? ""}`}>
             {lightColors.map((lightColor, index) => (
                 <button
                     key={index}
@@ -39,7 +39,6 @@ export const LightColorSelector = ({ className }: { className?: string }) => {
                     onChange={e => onColorChange(e.target.value)}
                     className={styles.colorInput}
                 />
-                <span className={styles.plus}>+</span>
             </label>
         </div>
     );

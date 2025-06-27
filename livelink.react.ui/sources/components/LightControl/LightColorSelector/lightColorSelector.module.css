@@ -33,25 +33,22 @@
 
 .customColorButton {
     position: relative;
-    width: 1.75rem;
-    height: 1.75rem;
+    width: calc(1.75rem + 2px);
+    height: calc(1.75rem + 2px);
 
     border-radius: 9999px;
-    border: 1px solid #00000030;
 
-    box-sizing: content-box;
     overflow: hidden;
     cursor: pointer;
     transition: border-color 0.22s;
 
     @media (min-width: 50em) {
-        width: 1.25rem;
-        height: 1.25rem;
+        width: calc(1.25rem + 2px);
+        height: calc(1.25rem + 2px);
     }
 
-    &:hover,
-    &:focus-within {
-        border-color: #00000050;
+    &:not(.active) {
+        background: conic-gradient( #FFD93D, #5E60CE, #A3DE83, #FFD93D);
     }
 }
 
@@ -67,16 +64,4 @@
     padding: 0;
 
     cursor: pointer;
-}
-
-.plus {
-    font-size: var(--3dverse-font-size-sm);
-    position: absolute;
-    top: 48%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-
-    color: black;
-    opacity: 0.6;
-    pointer-events: none;
 }

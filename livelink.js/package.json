@@ -31,28 +31,37 @@
     "typedoc:md": "typedoc --options typedoc-md.config.mjs --plugin typedoc-plugin-no-inherit --plugin typedoc-plugin-markdown --out docs-md",
     "posttypedoc:md": "prettier --config ../.prettierrc --write ./docs-md"
   },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/3dverse/livelink.git"
+  },
+  "author": "",
   "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/3dverse/livelink/issues"
+  },
+  "homepage": "https://github.com/3dverse/livelink#readme",
   "dependencies": {
     "@3dverse/livelink-camera-controls": "^0.4.10",
-    "@3dverse/livelink.core": "^1.1.3",
+    "@3dverse/livelink.core": "^1.1.4",
     "threejs-math": "^0.147.0"
   },
   "devDependencies": {
-    "@eslint/js": "^9.28.0",
-    "@typescript-eslint/eslint-plugin": "^8.33.1",
-    "@typescript-eslint/parser": "^8.33.1",
+    "@eslint/js": "^9.29.0",
+    "@typescript-eslint/eslint-plugin": "^8.35.0",
+    "@typescript-eslint/parser": "^8.35.0",
     "esbuild": "^0.25.5",
-    "eslint": "^9.28.0",
+    "eslint": "^9.29.0",
     "gl-matrix": "^3.4.3",
     "globals": "^16.2.0",
     "npm-run-all": "^4.1.5",
-    "prettier": "^3.5.3",
+    "prettier": "^3.6.2",
     "rimraf": "^6.0.1",
-    "typedoc": "^0.28.5",
-    "typedoc-plugin-markdown": "^4.6.4",
+    "typedoc": "^0.28.6",
+    "typedoc-plugin-markdown": "^4.7.0",
     "typedoc-plugin-mermaid": "^1.12.0",
     "typedoc-plugin-no-inherit": "^1.6.1",
     "typescript": "^5.8.3",
-    "typescript-eslint": "^8.33.1"
+    "typescript-eslint": "^8.35.0"
   }
 }
