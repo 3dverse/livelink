@@ -135,6 +135,7 @@ export function WebXR({
             // webXRHelper cannot release anything before the initialization is done.
             console.debug("---- Releasing WebXR");
             webXRHelper.release();
+            setXrSession(null);
         };
     }, [webXRHelper, instance]);
 
