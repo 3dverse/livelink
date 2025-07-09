@@ -1,5 +1,17 @@
 # @3dverse/livelink-webxr
 
+## 0.1.9
+
+### Patch Changes
+
+-   chore: removed useless package-lock
+-   fix(livelink.webxr): reset xr session state when it's released
+-   chore: update dependencies
+-   Updated dependencies
+-   Updated dependencies
+    -   @3dverse/livelink@0.8.44
+    -   @3dverse/livelink-react@0.2.50
+
 ## 0.1.8
 
 ### Patch Changes
