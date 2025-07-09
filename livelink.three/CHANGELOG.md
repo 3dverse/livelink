@@ -1,5 +1,16 @@
 # @3dverse/livelink-three
 
+## 0.2.8
+
+### Patch Changes
+
+-   chore: update dependencies
+-   chore: update dependencies
+-   Updated dependencies
+-   Updated dependencies
+    -   @3dverse/livelink@0.8.44
+    -   @3dverse/livelink-react@0.2.50
+
 ## 0.2.7
 
 ### Patch Changes

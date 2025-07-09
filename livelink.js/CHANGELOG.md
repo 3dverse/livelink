@@ -1,5 +1,12 @@
 # @3dverse/livelink
 
+## 0.8.44
+
+### Patch Changes
+
+-   chore: update dependencies
+-   chore: update dependencies
+
 ## 0.8.43
 
 ### Patch Changes
