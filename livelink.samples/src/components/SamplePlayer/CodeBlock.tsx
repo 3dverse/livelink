@@ -32,7 +32,10 @@ export function CodeBlock({ code, title }: { code: string; title?: string }) {
                     </header>
                     <Highlight theme={themes.nightOwl} code={code} language="tsx">
                         {({ style, tokens, getLineProps, getTokenProps }) => (
-                            <pre className="h-full text-[.8em] !m-0 !bg-transparent !py-[1em]" style={style}>
+                            <pre
+                                className="h-full text-[.8em] !m-0 !bg-transparent !py-[1em] overflow-auto"
+                                style={style}
+                            >
                                 {tokens.map((line, i) => (
                                     <div key={i} {...getLineProps({ line })}>
                                         <span className="text-right select-none italic pr-[1em] text-[#637777] inline-block min-w-[3.25em]">

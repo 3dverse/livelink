@@ -24,7 +24,8 @@ export class GamepadsRegistry {
     /**
      *
      */
-    #last_gamepad_index: number;
+    // Unused variable, but kept for future use if needed.
+    //#last_gamepad_index: number;
 
     /**
      * @param params
@@ -33,7 +34,9 @@ export class GamepadsRegistry {
      */
     constructor({ instance }: { instance: Livelink }) {
         this.#instance = instance;
-        this.#last_gamepad_index = navigator.getGamepads().length - 1;
+
+        // Unused variable, but kept for future use if needed.
+        //this.#last_gamepad_index = navigator.getGamepads().length - 1;
     }
 
     /**
@@ -78,7 +81,8 @@ export class GamepadsRegistry {
      * @experimental
      */
     createVirtualGamepad(): GamepadInputRelay {
-        this.#last_gamepad_index++;
+        // Unused variable, but kept for future use if needed.
+        //this.#last_gamepad_index++;
         const virtualGamepad = new GamepadInputRelay({
             instance: this.#instance,
             index: 0, //Once multiple gamepads support is implemented engine-side index can be this.#lastGamepadIndex instead of 0
