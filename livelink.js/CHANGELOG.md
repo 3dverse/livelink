@@ -1,5 +1,11 @@
 # @3dverse/livelink
 
+## 0.8.45
+
+### Patch Changes
+
+-   fix(livelink.js): do not recreate child entities if they're already in the registry
+
 ## 0.8.44
 
 ### Patch Changes
