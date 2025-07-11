@@ -52,15 +52,15 @@ export type EntityCreationOptions = {
  */
 export class Scene {
     /**
-     * The core instance.
-     */
-    #core: LivelinkCore;
-
-    /**
      * @internal
      * Registry of entities discovered until now.
      */
     public readonly _entity_registry = new EntityRegistry();
+
+    /**
+     * The core instance.
+     */
+    #core: LivelinkCore;
 
     /**
      * The pending entity requests.
@@ -186,50 +186,6 @@ export class Scene {
 
         return this.#resolveEntityResponse(entity_reponses[0]);
     }
-
-    /**
-     *
-     */
-    #resolveEntityResponses({ entity_responses }: { entity_responses: Array<EntityResponse> }): Array<Entity> {
-        return entity_responses.map(this.#resolveEntityResponse);
-    }
-
-    /**
-     *
-     */
-    #resolveEntityResponse = (entity_response: EntityResponse): Entity => {
-        const entity = this._entity_registry.get({ entity_rtid: entity_response.components.euid.rtid });
-        if (entity) {
-            return entity;
-        }
-
-        const parent: Entity | null = entity_response.ancestors
-            ? this.#resolveEntityAncestors(entity_response.ancestors)
-            : null;
-
-        return new Entity({ scene: this, parent, components: entity_response.components });
-    };
-    /**
-     *
-     */
-    #resolveEntityAncestors = (ancestors: EntityResponse[]): Entity | null => {
-        let current_parent: Entity | null = null;
-
-        for (const ancestor of ancestors) {
-            const entity = this._entity_registry.get({ entity_rtid: ancestor.components.euid.rtid });
-            if (entity) {
-                current_parent = entity;
-            } else {
-                current_parent = new Entity({
-                    scene: this,
-                    parent: current_parent,
-                    components: ancestor.components,
-                });
-            }
-        }
-
-        return current_parent;
-    };
 
     /**
      * Find entities by their UUID.
@@ -415,7 +371,11 @@ export class Scene {
      */
     async _getChildren({ entity }: { entity: Entity }): Promise<Array<Entity>> {
         const children_components = await this.#core.getChildren({ entity_rtid: entity.rtid });
-        return children_components.map(components => new Entity({ scene: this, parent: entity, components }));
+        return children_components.map(
+            components =>
+                this._entity_registry.get({ entity_rtid: components.euid.rtid }) ??
+                new Entity({ scene: this, parent: entity, components }),
+        );
     }
 
     /**
@@ -512,4 +472,49 @@ export class Scene {
     }): ComponentType<_ComponentName> {
         return this.#core.sanitizeComponentValue({ component_name, value });
     }
+
+    /**
+     *
+     */
+    #resolveEntityResponses({ entity_responses }: { entity_responses: Array<EntityResponse> }): Array<Entity> {
+        return entity_responses.map(this.#resolveEntityResponse);
+    }
+
+    /**
+     *
+     */
+    #resolveEntityResponse = (entity_response: EntityResponse): Entity => {
+        const entity = this._entity_registry.get({ entity_rtid: entity_response.components.euid.rtid });
+        if (entity) {
+            return entity;
+        }
+
+        const parent: Entity | null = entity_response.ancestors
+            ? this.#resolveEntityAncestors(entity_response.ancestors)
+            : null;
+
+        return new Entity({ scene: this, parent, components: entity_response.components });
+    };
+
+    /**
+     *
+     */
+    #resolveEntityAncestors = (ancestors: EntityResponse[]): Entity | null => {
+        let current_parent: Entity | null = null;
+
+        for (const ancestor of ancestors) {
+            const entity = this._entity_registry.get({ entity_rtid: ancestor.components.euid.rtid });
+            if (entity) {
+                current_parent = entity;
+            } else {
+                current_parent = new Entity({
+                    scene: this,
+                    parent: current_parent,
+                    components: ancestor.components,
+                });
+            }
+        }
+
+        return current_parent;
+    };
 }
