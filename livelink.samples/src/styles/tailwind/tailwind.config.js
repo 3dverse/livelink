@@ -1,7 +1,6 @@
 /** @type {import('tailwindcss').Config} */
 
 export default {
-    content: ["./index.html", "./src/**/*.{js,ts,jsx,tsx}"],
     theme: {
         backgroundColor: {
             ground: "var(--color-bg-ground)",
@@ -219,12 +218,5 @@ export default {
             },
             keyframes: {},
         },
-    },
-    variants: {},
-    corePlugins: {
-        outline: false,
-    },
-    experimental: {
-        optimizeUniversalDefaults: true,
     },
 };

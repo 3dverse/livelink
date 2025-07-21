@@ -1,7 +1,7 @@
 /* Tailwind and theme */
-@import "tailwindcss/base";
-@import "tailwindcss/utilities";
-@import "tailwindcss/screens";
+@config "./tailwind/tailwind.config.js";
+@import "tailwindcss";
+
 
 /* Base */
 @import "./tailwind/base/animation-appear.css";
