@@ -99,7 +99,7 @@
     }
 
     .button-xs {
-        @apply text-2xs px-2 py-px;
+        @apply text-2xs px-2 py-px min-h-6;
     }
 
     .button-2xs {
@@ -110,5 +110,9 @@
 
     .button-icon {
         @apply px-2;
+
+        &.button-xs {
+            @apply px-[.375rem];
+        }
     }
 }

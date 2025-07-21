@@ -35,7 +35,7 @@ export function MainMenu({ isPageEmbedded }: { isPageEmbedded?: boolean }) {
             {/* Toggle button */}
             {isCollapsed && (
                 <button
-                    className="button button-outline button-icon absolute top-4 left-4 bg-underground text-primary animate-appear-right z-10"
+                    className="button button-icon absolute top-0 left-0 bg-underground text-primary animate-appear-right z-100"
                     onClick={() => setIsCollapsed(!isCollapsed)}
                 >
                     <BarsIcon className="w-5 h-5" />
@@ -54,7 +54,7 @@ export function MainMenu({ isPageEmbedded }: { isPageEmbedded?: boolean }) {
             {/* Menu */}
 
             <nav
-                className={`absolute xl:relative top-0 transition-all h-screen overflow-x-hidden ${isCollapsed ? "w-0 xl:w-3" : "w-80"}`}
+                className={`absolute xl:relative top-0 transition-all h-dvh overflow-x-hidden ${isCollapsed ? "w-0 xl:w-3" : "w-80"}`}
             >
                 <div
                     className="absolute w-80 h-full flex flex-col bg-ground shadow-2xl lg:shadow-none z-20"
@@ -74,7 +74,7 @@ export function MainMenu({ isPageEmbedded }: { isPageEmbedded?: boolean }) {
                             )}
                             Samples
                         </NavLink>
-                        <button className="button button-icon" onClick={onCollapse}>
+                        <button className="button button-icon button-xs" onClick={onCollapse}>
                             <CollapseIcon className="w-3 h-3" />
                         </button>
                     </header>
