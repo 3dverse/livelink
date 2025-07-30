@@ -1,5 +1,12 @@
 # @3dverse/livelink
 
+## 0.8.46
+
+### Patch Changes
+
+-   fix(livelink.js): assign component attribute values before emitting the update event
+-   feat(livelink.js): introduce change_source for EntityVisibilityChangedEvent
+
 ## 0.8.45
 
 ### Patch Changes
