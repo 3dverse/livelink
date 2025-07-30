@@ -33,8 +33,9 @@ export class ComponentHandler {
      */
     set(component: object, prop: PropertyKey, v: any): boolean {
         //console.trace("SET ATTRIBUTE", prop, v);
+        const success = Reflect.set(component, prop, v);
         this._entity._markComponentAsDirty({ component_name: this._component_name });
-        return Reflect.set(component, prop, v);
+        return success;
     }
 
     /**
@@ -42,7 +43,8 @@ export class ComponentHandler {
      */
     deleteProperty(component: object, prop: PropertyKey): boolean {
         //console.debug("DELETE ATTRIBUTE", prop);
+        const success = Reflect.deleteProperty(component, prop);
         this._entity._markComponentAsDirty({ component_name: this._component_name });
-        return Reflect.deleteProperty(component, prop);
+        return success;
     }
 }

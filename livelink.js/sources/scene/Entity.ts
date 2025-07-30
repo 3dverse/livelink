@@ -461,8 +461,8 @@ export class Entity extends EntityTransformHandler {
         }
 
         if (value === undefined) {
-            this._markComponentAsDeleted({ component_name });
             Reflect.deleteProperty(this, `#${component_name}`);
+            this._markComponentAsDeleted({ component_name });
             return undefined;
         }
 
@@ -472,8 +472,9 @@ export class Entity extends EntityTransformHandler {
         }
 
         if (ref === undefined) {
+            const proxy = this.#createComponentProxy({ component_name, value });
             this._markComponentAsDirty({ component_name });
-            return this.#createComponentProxy({ component_name, value });
+            return proxy;
         }
 
         if (ref !== undefined) {
