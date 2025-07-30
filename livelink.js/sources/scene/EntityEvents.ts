@@ -73,6 +73,13 @@ export class EntityUpdatedEvent extends Event {
  */
 export class EntityVisibilityChangedEvent extends Event {
     /**
+     * The source of the change.
+     * - "external": The visibility change was made by another user from another instance of the app or even another app.
+     * - "internal": The visibility change was made by the current app.
+     */
+    public readonly change_source: "local" | "external";
+
+    /**
      * The new visibility state of the entity.
      */
     public readonly is_visible: boolean;
@@ -80,8 +87,9 @@ export class EntityVisibilityChangedEvent extends Event {
     /**
      * @internal
      */
-    constructor({ is_visible }: { is_visible: boolean }) {
+    constructor({ change_source, is_visible }: { change_source: "local" | "external"; is_visible: boolean }) {
         super("on-entity-visibility-changed");
+        this.change_source = change_source;
         this.is_visible = is_visible;
     }
 }
