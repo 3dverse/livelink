@@ -50,48 +50,48 @@
 
 /* ------------------------------------------------------------------------------ */
 
-@layer base {
-    .animate-appear-top {
-        animation-name: appear-top;
-    }
 
-    .animate-appear-right {
-        animation-name: appear-right;
-    }
-
-    .animate-appear-bottom {
-        animation-name: appear-bottom;
-    }
-
-    .animate-appear-left {
-        animation-name: appear-left;
-    }
-
-    .animate-appear-top,
-    .animate-appear-right,
-    .animate-appear-bottom,
-    .animate-appear-left {
-        animation-duration: var(--animation-duration, 0.25s);
-        animation-timing-function: ease-in-out;
-        animation-fill-mode: forwards;
-    }
-
-    /* ------------------------------------------------------------------------------ */
-
-    .animate-disappear-top {
-        @apply animate-appear-top;
-        animation-direction: reverse;
-    }
-    .animate-disappear-right {
-        @apply animate-appear-right;
-        animation-direction: reverse;
-    }
-    .animate-disappear-bottom {
-        @apply animate-appear-bottom;
-        animation-direction: reverse;
-    }
-    .animate-disappear-left {
-        @apply animate-appear-left;
-        animation-direction: reverse;
-    }
+@utility animate-appear-top {
+    animation-name: appear-top;
 }
+
+@utility animate-appear-right {
+    animation-name: appear-right;
+}
+
+@utility animate-appear-bottom {
+    animation-name: appear-bottom;
+}
+
+@utility animate-appear-left {
+    animation-name: appear-left;
+}
+
+.animate-appear-top,
+.animate-appear-right,
+.animate-appear-bottom,
+.animate-appear-left {
+    animation-duration: var(--animation-duration, 0.25s);
+    animation-timing-function: ease-in-out;
+    animation-fill-mode: forwards;
+}
+
+/* ------------------------------------------------------------------------------ */
+
+@utility animate-disappear-top {
+    @apply animate-appear-top;
+    animation-direction: reverse;
+}
+@utility animate-disappear-right {
+    @apply animate-appear-right;
+    animation-direction: reverse;
+}
+@utility animate-disappear-bottom {
+    @apply animate-appear-bottom;
+    animation-direction: reverse;
+}
+@utility animate-disappear-left {
+    @apply animate-appear-left;
+    animation-direction: reverse;
+}
+

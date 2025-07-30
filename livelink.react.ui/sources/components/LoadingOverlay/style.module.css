@@ -9,7 +9,7 @@
     align-items: center;
     gap: var(--3dverse-spacing-3);
 
-    background-color: var(--3dverse-color-bg-overground);
+    background-color: color-mix(in srgb, var(--3dverse-color-bg-foreground) 50%, transparent);
 }
 
 .glowEffectStyle::before {

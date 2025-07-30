@@ -16,10 +16,8 @@ import { LoadingOverlay } from "@3dverse/livelink-react-ui";
 import { DisconnectedModal } from "../../components/SamplePlayer";
 
 //------------------------------------------------------------------------------
-// const scene_id = "11e2da67-4740-4546-951b-1d50df1dc55d";
-const scene_id = "7dde901b-ab70-445f-a992-ff6ab0423c8c";
-// const token = import.meta.env.VITE_PROD_PUBLIC_TOKEN;
-const token = "public_k_LiW343pvLIfO2X";
+const scene_id = "11e2da67-4740-4546-951b-1d50df1dc55d";
+const token = import.meta.env.VITE_PROD_PUBLIC_TOKEN;
 const variant_launch_sdk_key = import.meta.env
     .VITE_WEBXR_VARIANT_LAUNCH_SDK_KEY;
 const variant_launch_sdk_url = `https://launchar.app/sdk/v1?key=${variant_launch_sdk_key}&redirect=true`;

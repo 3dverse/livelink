@@ -35,8 +35,8 @@ export const LightControl = ({
         if (!light.point_light) {
             return;
         }
-        setColor(rgbToHex(light.point_light!.color));
-        setIntensity(light.point_light!.intensity);
+        setColor(rgbToHex(light.point_light.color));
+        setIntensity(light.point_light.intensity);
         setIsPowered(light.is_visible);
     }, [light.point_light?.intensity, light.point_light?.color, light.is_visible]);
 

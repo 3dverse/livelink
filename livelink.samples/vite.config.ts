@@ -1,5 +1,6 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
+import tailwindcss from "@tailwindcss/vite";
 import fs from "node:fs";
 
 // https://vitejs.dev/config/
@@ -14,7 +15,7 @@ export default defineConfig({
               }
             : undefined,
     },
-    plugins: [fileContentPlugin(), react(), markdownLoaderPlugin()],
+    plugins: [fileContentPlugin(), react(), markdownLoaderPlugin(), tailwindcss()],
 });
 
 function markdownLoaderPlugin() {

@@ -8,7 +8,7 @@
     /* Variants */
 
     .button-overlay {
-        @apply bg-[white] bg-opacity-80 text-primary-dark backdrop-blur-xl;
+        @apply bg-[white]/80 text-primary-dark backdrop-blur-xl;
         box-shadow: 0px 5px 8px 2px hsl(0, 0%, 0%, 0.1);
 
         &:hover,
@@ -99,7 +99,7 @@
     }
 
     .button-xs {
-        @apply text-2xs px-2 py-px;
+        @apply text-2xs px-2 py-px min-h-6;
     }
 
     .button-2xs {
@@ -110,5 +110,9 @@
 
     .button-icon {
         @apply px-2;
+
+        &.button-xs {
+            @apply px-[.375rem];
+        }
     }
 }

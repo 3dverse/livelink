@@ -24,7 +24,7 @@ function App() {
 
     //--------------------------------------------------------------------------
     return (
-        <div className="flex h-screen">
+        <div className="flex h-dvh">
             <MainMenu isPageEmbedded={isPageEmbedded} />
             <div className="flex-1 max-w-[100vw]">{outlet ? <Outlet /> : <Home />}</div>
         </div>

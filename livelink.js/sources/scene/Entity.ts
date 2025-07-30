@@ -134,7 +134,7 @@ export class Entity extends EntityTransformHandler {
     set is_visible(is_visible: boolean) {
         this.#scene._setEntityVisibility({ entity_rtid: this.rtid, is_visible });
         this.#is_visible = is_visible;
-        this._dispatchEvent(new EntityVisibilityChangedEvent({ is_visible }));
+        this._dispatchEvent(new EntityVisibilityChangedEvent({ is_visible, change_source: "local" }));
     }
 
     /**
@@ -408,7 +408,7 @@ export class Entity extends EntityTransformHandler {
      */
     _onVisibilityChanged({ is_visible }: { is_visible: boolean }): void {
         this.#is_visible = is_visible;
-        this._dispatchEvent(new EntityVisibilityChangedEvent({ is_visible }));
+        this._dispatchEvent(new EntityVisibilityChangedEvent({ is_visible, change_source: "external" }));
     }
 
     /**
@@ -461,8 +461,8 @@ export class Entity extends EntityTransformHandler {
         }
 
         if (value === undefined) {
-            this._markComponentAsDeleted({ component_name });
             Reflect.deleteProperty(this, `#${component_name}`);
+            this._markComponentAsDeleted({ component_name });
             return undefined;
         }
 
@@ -472,8 +472,9 @@ export class Entity extends EntityTransformHandler {
         }
 
         if (ref === undefined) {
+            const proxy = this.#createComponentProxy({ component_name, value });
             this._markComponentAsDirty({ component_name });
-            return this.#createComponentProxy({ component_name, value });
+            return proxy;
         }
 
         if (ref !== undefined) {
