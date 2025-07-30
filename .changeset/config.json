@@ -25,7 +25,7 @@
       { "type": "docs", "release": "patch" },
       { "type": "chore", "release": "patch" },
       { "type": "refactor", "release": "patch" },
-      { "type": "style", "release": "skip" },
+      { "type": "style", "release": "patch" },
       { "type": "test", "release": "skip" },
       { "type": "build", "release": "skip" },
       { "type": "ci", "release": "skip" }
