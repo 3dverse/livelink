@@ -1,5 +1,14 @@
 # @3dverse/livelink-react-ui
 
+## 0.3.7
+
+### Patch Changes
+
+-   style(livelink.react.ui): change overlay background color
+-   Updated dependencies
+-   Updated dependencies
+    -   @3dverse/livelink@0.8.46
+
 ## 0.3.6
 
 ### Patch Changes
