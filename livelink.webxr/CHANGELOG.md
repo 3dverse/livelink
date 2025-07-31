@@ -1,5 +1,11 @@
 # @3dverse/livelink-webxr
 
+## 0.1.10
+
+### Patch Changes
+
+-   feat(livelink.webxr): re-enable surface scale for overscan, and expose fov factor and the surface scale activation of the overscan from WebXR react component
+
 ## 0.1.9
 
 ### Patch Changes
