@@ -20,10 +20,7 @@ import { WebXRHelper } from "../WebXRHelper";
  *
  * @category Contexts
  */
-export const WebXRContext = createContext<{
-    webXRHelper: WebXRHelper | null;
-    xrSession: XRSession | null;
-}>({
+export const WebXRContext = createContext<{ webXRHelper: WebXRHelper | null; xrSession: XRSession | null }>({
     webXRHelper: null,
     xrSession: null,
 });
@@ -46,10 +43,12 @@ export const WebXRContext = createContext<{
 export function WebXR({
     children,
     mode,
-    resolutionScale = 1,
+    resolutionScale = 1.0,
     requiredFeatures = [],
     optionalFeatures = [],
     forceSingleView,
+    overscanFovFactor,
+    enableOverscanSurfaceScale,
     domOverlayRoot,
     onSessionEnd,
 }: PropsWithChildren<{
@@ -58,6 +57,8 @@ export function WebXR({
     requiredFeatures?: string[];
     optionalFeatures?: string[];
     forceSingleView?: boolean;
+    overscanFovFactor?: number;
+    enableOverscanSurfaceScale?: boolean;
     domOverlayRoot?: Element;
     onSessionEnd?: () => void;
 }>): JSX.Element {
@@ -119,8 +120,11 @@ export function WebXR({
                 .then(session => {
                     setXrSession(session);
                     console.debug("---- Setting XR viewports");
-                    const enableOverscan = true;
-                    return webXRHelper.configureViewports(instance, enableOverscan);
+                    return webXRHelper.configureViewports({
+                        livelink: instance,
+                        overscan_fov_factor: overscanFovFactor,
+                        enable_overscan_surface_scale: enableOverscanSurfaceScale,
+                    });
                 })
                 .then(() => {
                     console.debug("---- WebXR initialized");

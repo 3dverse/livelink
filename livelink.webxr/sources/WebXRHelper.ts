@@ -59,7 +59,6 @@ export class WebXRHelper {
 
     //--------------------------------------------------------------------------
     #surface: OffscreenSurface<"webgl", { xrCompatible: boolean }>;
-    #fov_factor: number = 1.5;
     #overriden_near_plane?: number;
     #overridden_fovy?: number;
     #viewports: XRViewports = [];
@@ -284,9 +283,18 @@ export class WebXRHelper {
     /**
      * Configure the size and scale of the livelink viewports based on the XR views.
      * @param livelink
-     * @param enableOverscan
+     * @param overscan_fov_factor
+     * @param enable_overscan_surface_scale
      */
-    public async configureViewports(livelink: Livelink, enableOverscan: boolean = false): Promise<void> {
+    public async configureViewports({
+        livelink,
+        overscan_fov_factor,
+        enable_overscan_surface_scale,
+    }: {
+        livelink: Livelink;
+        overscan_fov_factor?: number;
+        enable_overscan_surface_scale?: boolean;
+    }): Promise<void> {
         if (this.#core) {
             this.releaseLivelinkViewports();
         }
@@ -299,9 +307,11 @@ export class WebXRHelper {
             // first views cameras inside `this.#onXRFrame`.
         }
         this.#configureLivelinkViewports(xr_views);
-        if (enableOverscan) {
-            this.#configureOverscan(xr_views);
-        }
+        this.#configureOverscan({
+            xr_views,
+            fov_factor: overscan_fov_factor,
+            enable_surface_scale: enable_overscan_surface_scale,
+        });
 
         // AR session needs the FTL background to be pure black for the XRContext shader to simulate the background
         // transparency while the feature to send the background mask frame from FTL to the client is not implemented.
@@ -354,17 +364,39 @@ export class WebXRHelper {
      * Compute the rendering OffscreenSurface & XRContext resolution scale and
      * the camera fovy.
      * @param xr_views
+     * @param fov_factor
+     * @param enable_surface_scale
      */
-    #configureOverscan(xr_views: Readonly<Array<XRView>>): void {
-        // Commented out because change resolution_scale here crashes on iphone inside
-        // `RemoteFrameProxy.#onFrameLayoutModified`
-        // this.#surface.resolution_scale = this.#fov_factor;
-        // this.#context.scale_factor = this.#surface.resolution_scale;
-        this.#context.scale_factor = this.#fov_factor;
+    #configureOverscan({
+        xr_views,
+        fov_factor = 1.5,
+        enable_surface_scale = true,
+    }: {
+        xr_views: Readonly<Array<XRView>>;
+        fov_factor?: number;
+        enable_surface_scale?: boolean;
+    }): void {
+        if (fov_factor === 1.0) {
+            return;
+        }
+        // `enable_surface_scale` is exposed because there is a bug on iphone with Variant Launch App Clip:
+        //     - react dev tools raises an error inside `Livelink.#onFrameReceived`.
+        //     - debugging shows the error actually throws inside `WebCodecsDecoder.consumeEncodedFrame`, where
+        //       `this.#decoder!.decode(chunk)` throws with "DataError: Key frame is required".
+        // So surface scale needs to be disabled on iphone Variant Launch App Clip. Also on XR headsets, too high
+        // resolution kills the performance.
+        // `fov_factor` is exposed for testing purpose from apps.
+        // TODO: `fov_factor` shall probably be adjusted automatically based on the streaming latency.
+        if (enable_surface_scale) {
+            this.#surface.resolution_scale = fov_factor;
+            this.#context.scale_factor = this.#surface.resolution_scale;
+        } else {
+            this.#context.scale_factor = fov_factor;
+        }
 
         const fovY = xr_views[0].projectionMatrix[5];
         const original_fov = 2 * Math.atan(1 / fovY);
-        const new_fov = 2 * Math.atan(Math.tan(original_fov / 2) * this.#fov_factor);
+        const new_fov = 2 * Math.atan(Math.tan(original_fov / 2) * fov_factor);
         this.#overridden_fovy = new_fov * (180 / Math.PI);
 
         console.debug(
