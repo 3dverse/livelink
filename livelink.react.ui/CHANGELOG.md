@@ -1,5 +1,11 @@
 # @3dverse/livelink-react-ui
 
+## 0.3.8
+
+### Patch Changes
+
+-   fix(livelink.react-ui): virtual joystick async loading was not correctly performed
+
 ## 0.3.7
 
 ### Patch Changes
