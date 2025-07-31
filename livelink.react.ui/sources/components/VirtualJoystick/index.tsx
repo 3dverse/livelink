@@ -31,15 +31,24 @@ export const VirtualJoystick = ({
     const [manager, setManager] = useState<JoystickManager | null>(null);
 
     useEffect(() => {
-        let manager: JoystickManager | undefined;
-        createNippleJSManager(propsOptions).then(_manager => {
-            manager = _manager;
-            setManager(_manager);
+        let isMounted = true;
+        let currentManager: JoystickManager | null = null;
+
+        createNippleJSManager(propsOptions).then(manager => {
+            if (isMounted) {
+                setManager(manager);
+                currentManager = manager;
+            } else {
+                manager.destroy();
+            }
         });
 
         return () => {
-            manager?.destroy();
-            setManager(null);
+            isMounted = false;
+            if (currentManager) {
+                currentManager.destroy();
+                setManager(null);
+            }
         };
     }, [propsOptions]);
 
