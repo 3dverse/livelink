@@ -1,5 +1,12 @@
 # @3dverse/livelink-webxr
 
+## 0.1.11
+
+### Patch Changes
+
+-   fix(livelink.samples): x-web-wr-ios, overscan and resolution scale fails on variant launch app clip, and also fix the dom-overlay
+-   feat(livelink.webxr): enable gl alpha blend function to be able to adjust fakeAlpha
+
 ## 0.1.10
 
 ### Patch Changes
