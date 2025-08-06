@@ -152,6 +152,9 @@ export class XRContext extends ContextProvider {
         gl.clearColor(0, 0, 0, 0);
         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
+        gl.enable(gl.BLEND);
+        gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+
         const sizeLocation = gl.getUniformLocation(this.#shader_program!, "size");
         const offsetLocation = gl.getUniformLocation(this.#shader_program!, "offset");
         const viewMatrixLocation = gl.getUniformLocation(this.#shader_program!, "viewMatrix");
