@@ -1,5 +1,6 @@
 //------------------------------------------------------------------------------
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 
 //------------------------------------------------------------------------------
 import {
@@ -35,7 +36,49 @@ export default {
 //------------------------------------------------------------------------------
 function App() {
     const [xrMode, setXRMode] = useState<XRSessionMode | null>(null);
+    const domOverlayRef = useRef<HTMLElement>(null);
 
+    //--------------------------------------------------------------------------
+    // Important for dom overlay to be displayed by variant launch app clip:
+    // https://launch.variant3d.com/docs/troubleshooting/dom-overlay
+    const renderDomOverlay = () => {
+        // Create xr dom-overlay root if not exists yet
+        const domOverlayId = "xr-dom-overlay-root-variant-launch";
+        let domOverlay = document.getElementById(domOverlayId);
+        if (!domOverlay) {
+            domOverlay = document.createElement("div");
+            domOverlay.id = domOverlayId;
+            document.body.appendChild(domOverlay);
+        }
+
+        // Set ref and clear previous content
+        domOverlayRef.current = domOverlay;
+        domOverlay.innerHTML = "";
+
+        // Create a portal to the actual dom overlay content from the root
+        return createPortal(
+            <div
+                id="xr-dom-overlay-root"
+                style={{
+                    zIndex: 11000,
+                    position: "absolute",
+                    top: "2rem",
+                    left: "50%",
+                    transform: "translateX(-50%)",
+                }}
+            >
+                <button
+                    className="button button-primary"
+                    onClick={() => setXRMode(null)}
+                >
+                    Exit XR
+                </button>
+            </div>,
+            domOverlay,
+        );
+    };
+
+    //--------------------------------------------------------------------------
     return (
         <Livelink
             sceneId={scene_id}
@@ -48,25 +91,14 @@ function App() {
                     mode={xrMode}
                     onSessionEnd={() => setXRMode(null)}
                     forceSingleView={true}
-                    // TODO: dom-overlay is supposed to be working in Variant Launch Clip App as in
-                    // 3dverse-mobile-viewer, need to figure out why it does not work here.
-                    // domOverlayRoot={}
+                    domOverlayRoot={domOverlayRef.current || undefined}
+                    // Overscan with resolution scale throws an error on Variant Launch App Clip
+                    // See `WebXRHelper.#configureOverscan` for more details.
+                    overscanFovFactor={1}
+                    enableOverscanSurfaceScale={false}
+                    enableFakeAlpha={true}
                 >
-                    <div
-                        style={{
-                            zIndex: 11000,
-                            position: "absolute",
-                            top: "8rem",
-                            left: "8rem",
-                        }}
-                    >
-                        <button
-                            className="button button-primary"
-                            onClick={() => setXRMode(null)}
-                        >
-                            Exit XR
-                        </button>
-                    </div>
+                    {renderDomOverlay()}
                 </WebXR>
             ) : (
                 <>
@@ -185,9 +217,12 @@ function XRButton({
                 .then(() => {
                     const { VLaunch } = window as unknown as any;
                     if (!VLaunch) {
-                        throw new Error(
-                            "Failed to load launch.variant3d.com SDK, verify SDK key.",
-                        );
+                        // TODO: something is not clear here, there is a first call to `loadScript` where `VLaunch` is
+                        // not defiend, but it's defined on a further call. This works but may be by chance.
+                        return;
+                        // throw new Error(
+                        //     "Failed to load launch.variant3d.com SDK, verify SDK key.",
+                        // );
                     }
                     window.addEventListener(
                         "vlaunch-initialized",
