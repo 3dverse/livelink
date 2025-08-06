@@ -1,5 +1,13 @@
 # @3dverse/livelink-react
 
+## 0.2.51
+
+### Patch Changes
+
+-   docs(livelink.react): export EntityProvider type
+-   Updated dependencies
+    -   @3dverse/livelink@0.8.47
+
 ## 0.2.50
 
 ### Patch Changes

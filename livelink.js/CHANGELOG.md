@@ -1,5 +1,11 @@
 # @3dverse/livelink
 
+## 0.8.47
+
+### Patch Changes
+
+-   feat(livelink.js): initialize entity visibility state and handle progatation of the visibility state across children
+
 ## 0.8.46
 
 ### Patch Changes
