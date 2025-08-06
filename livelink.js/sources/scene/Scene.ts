@@ -407,6 +407,10 @@ export class Scene {
         const entity = this._entity_registry.get({ entity_rtid });
         if (entity) {
             entity._onVisibilityChanged({ is_visible });
+
+            for (const child_rtid of entity.children_rtid) {
+                this._setEntityVisibility({ entity_rtid: child_rtid, is_visible });
+            }
         }
     };
 
@@ -493,7 +497,13 @@ export class Scene {
             ? this.#resolveEntityAncestors(entity_response.ancestors)
             : null;
 
-        return new Entity({ scene: this, parent, components: entity_response.components });
+        return new Entity({
+            scene: this,
+            parent,
+            components: entity_response.components,
+            is_visible: entity_response.is_visible,
+            children_rtid: entity_response.children_rtid,
+        });
     };
 
     /**
@@ -511,6 +521,8 @@ export class Scene {
                     scene: this,
                     parent: current_parent,
                     components: ancestor.components,
+                    is_visible: ancestor.is_visible,
+                    children_rtid: ancestor.children_rtid,
                 });
             }
         }

@@ -79,6 +79,18 @@ export class Entity extends EntityTransformHandler {
     #is_visible: boolean = true;
 
     /**
+     *
+     */
+    #children_rtid: Array<RTID> = [];
+
+    /**
+     * @internal
+     */
+    get children_rtid(): Array<RTID> {
+        return this.#children_rtid;
+    }
+
+    /**
      * @internal
      */
     get rtid(): RTID {
@@ -215,11 +227,15 @@ export class Entity extends EntityTransformHandler {
         parent = null,
         components,
         options,
+        is_visible = true,
+        children_rtid = [],
     }: {
         scene: Scene;
         parent: Entity | null;
         components: EntityCore;
         options?: EntityCreationOptions;
+        is_visible?: boolean;
+        children_rtid?: Array<RTID>;
     }) {
         super({
             euid: components.euid,
@@ -231,6 +247,8 @@ export class Entity extends EntityTransformHandler {
         });
 
         this.#scene = scene;
+        this.#is_visible = is_visible;
+        this.#children_rtid = children_rtid;
         this._mergeComponents({ components, dispatch_event: false });
         this.#scene._entity_registry.add({ entity: this });
 
