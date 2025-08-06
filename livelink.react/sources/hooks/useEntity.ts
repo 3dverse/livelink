@@ -60,14 +60,14 @@ type FindEntityQueryByName = {
 /**
  * A provider of an entity.
  */
-type EntityProvider = NewEntity | FindEntityQueryByName | Exclude<FindEntityQuery, FindEntityQueryByNames>;
+export type EntityProvider = NewEntity | FindEntityQueryByName | Exclude<FindEntityQuery, FindEntityQueryByNames>;
 
 /**
  * A hook that provides an entity and a flag indicating if the entity is pending loading.
  *
  * @example
  * ```tsx
- * const { isPending, entity } = useEntity({ id: "00000000-0000-0000-0000-000000000000" });
+ * const { isPending, entity } = useEntity({ euid: "00000000-0000-0000-0000-000000000000" });
  * if (isPending) {
  *     return <div>Loading...</div>;
  * }
@@ -166,7 +166,7 @@ export function useEntity(
 
     //--------------------------------------------------------------------------
     useEffect(() => {
-        if(!entity) {
+        if (!entity) {
             return;
         }
 
