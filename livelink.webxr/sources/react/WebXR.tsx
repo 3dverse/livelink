@@ -49,6 +49,7 @@ export function WebXR({
     forceSingleView,
     overscanFovFactor,
     enableOverscanSurfaceScale,
+    enableFakeAlpha,
     domOverlayRoot,
     onSessionEnd,
 }: PropsWithChildren<{
@@ -59,6 +60,7 @@ export function WebXR({
     forceSingleView?: boolean;
     overscanFovFactor?: number;
     enableOverscanSurfaceScale?: boolean;
+    enableFakeAlpha?: boolean;
     domOverlayRoot?: Element;
     onSessionEnd?: () => void;
 }>): JSX.Element {
@@ -124,6 +126,7 @@ export function WebXR({
                         livelink: instance,
                         overscan_fov_factor: overscanFovFactor,
                         enable_overscan_surface_scale: enableOverscanSurfaceScale,
+                        enable_fake_alpha: enableFakeAlpha,
                     });
                 })
                 .then(() => {

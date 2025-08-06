@@ -290,10 +290,12 @@ export class WebXRHelper {
         livelink,
         overscan_fov_factor,
         enable_overscan_surface_scale,
+        enable_fake_alpha,
     }: {
         livelink: Livelink;
         overscan_fov_factor?: number;
         enable_overscan_surface_scale?: boolean;
+        enable_fake_alpha?: boolean;
     }): Promise<void> {
         if (this.#core) {
             this.releaseLivelinkViewports();
@@ -316,7 +318,7 @@ export class WebXRHelper {
         // AR session needs the FTL background to be pure black for the XRContext shader to simulate the background
         // transparency while the feature to send the background mask frame from FTL to the client is not implemented.
         const isAR = this.#mode === "immersive-ar";
-        this.fakeAlpha = isAR;
+        this.fakeAlpha = enable_fake_alpha ?? isAR;
         const dataJSON = isAR ? { grid: false, displayBackground: false } : undefined;
 
         this.#core.addViewports({ viewports: this.#viewports.map(({ livelink_viewport }) => livelink_viewport) });
