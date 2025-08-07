@@ -204,8 +204,7 @@ export class WebCodecsDecoder extends EncodedFrameConsumer {
      * Consume an encoded frame.
      *
      * @param params
-     * @param params.encoded_frame - The encoded frame data
-     * @param params.meta_data - The frame meta data
+     * @param params.encoded_frame - The encoded frame
      */
     override consumeEncodedFrame({ encoded_frame }: { encoded_frame: EncodedFrame }): void {
         const chunk = new EncodedVideoChunk({

@@ -161,8 +161,7 @@ export class SoftwareDecoder extends EncodedFrameConsumer {
      * Called as soon as a frame is received.
      *
      * @param params
-     * @param params.encoded_frame - The encoded frame data
-     * @param params.meta_data - The frame meta data
+     * @param params.encoded_frame - The encoded frame
      */
     override consumeEncodedFrame({ encoded_frame }: { encoded_frame: EncodedFrame }): void {
         const data = new Uint8Array(

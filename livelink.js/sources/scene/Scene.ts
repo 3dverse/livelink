@@ -45,8 +45,8 @@ export type EntityCreationOptions = {
  * It is responsible for creating, finding, and deleting entities.
  *
  * This class is not meant to be instantiated directly.
- * Instead, it is created by the {@link Livelink} instance and can be accessed through the
- * {@link Livelink.scene} property.
+ * Instead, it is created by the {@link Livelink} instance and can be accessed through the `scene`
+ * property.
  *
  * @category Scene
  */
