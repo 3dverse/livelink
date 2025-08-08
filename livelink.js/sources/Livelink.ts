@@ -488,27 +488,8 @@ export class Livelink {
     /**
      * @experimental
      */
-    async configureHeadlessClient(): Promise<Commands.ClientConfigResponse> {
-        const client_config: Commands.ClientConfig = {
-            remote_canvas_size: [256, 256],
-            encoder_config: {
-                codec: "h264",
-                profile: "main",
-                frame_rate: 30,
-                lossy: true,
-            },
-            supported_devices: {
-                keyboard: true,
-                mouse: false,
-                gamepad: false,
-                hololens: false,
-                touchscreen: false,
-            },
-        };
-
-        const res = await this.#core.configureClient({ client_config });
-        this.#codec = res.codec;
-        return res;
+    async startHeadlessClient(): Promise<void> {
+        this.#startUpdateLoop({});
     }
 
     /**
