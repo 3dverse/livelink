@@ -114,6 +114,6 @@ function SessionSniffer({
     useEffect(() => {
         setSessionId(instance?.session.session_id ?? null);
         return () => setSessionId(null);
-    });
+    }, [instance]);
     return null;
 }
