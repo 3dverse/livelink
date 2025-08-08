@@ -126,9 +126,8 @@ export abstract class EncodedFrameConsumer {
     /**
      * Must be called by the implementation as soon as the frame is decoded to update the cameras in the scene.
      *
-     * @param frame - The decoded frame data
-     * @param frame.meta_data - The frame meta data
-     * @param frame.decoded_frame - The decoded frame data
+     * @param params
+     * @param params.decoded_frame - The decoded frame
      */
     protected _onFrameDecoded({ decoded_frame }: { decoded_frame: DecodedFrame }): void {
         this.#applyFrameMetaData({ meta_data: decoded_frame.meta_data });

@@ -153,13 +153,9 @@ export class RenderingSurface extends RenderingSurfaceBase {
     }
 
     /**
-     * Draws a frame to the surface.
-     *
-     * @param params
-     * @param params.frame - The frame to draw.
-     * @param params.meta_data - The metadata associated with the frame.
+     * @internal
      */
-    _drawFrame({ decoded_frame }: { decoded_frame: DecodedFrame }): void {
+    protected _drawFrame({ decoded_frame }: { decoded_frame: DecodedFrame }): void {
         this.#context.drawFrameSection({
             frame_section: {
                 pixels: decoded_frame.pixels,

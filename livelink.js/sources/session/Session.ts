@@ -346,10 +346,11 @@ export class Session extends TypedEventTarget<SessionEvents> implements SessionI
      * @internal
      * Get the session key to be used as an authentication method on the gateway.
      */
-    async registerClient(): Promise<void> {
+    async registerClient({ is_headless }: { is_headless: boolean }): Promise<void> {
         const res = await fetch(`${Livelink._api_url}/sessions/${this.session_id}/clients`, {
             method: "POST",
-            headers: this.#authentication_headers,
+            headers: { ...this.#authentication_headers, "Content-Type": "application/json" },
+            body: JSON.stringify({ is_headless }),
         });
 
         const { session_token, endpoint_info } = (await res.json()) as {

@@ -39,8 +39,9 @@ export * from "./rendering/surfaces/RenderingSurfaceBase";
 export * from "./rendering/surfaces/RenderingSurfaceEvents";
 
 export * from "./inputs/Mouse";
-export * from "./inputs/GamepadInputRelay";
 export * from "./inputs/Keyboard";
+export * from "./inputs/GamepadsRegistry";
+export * from "./inputs/GamepadInputRelay";
 
 export type { Transform, Aabb } from "./scene/EntityTransformHandler";
 

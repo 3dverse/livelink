@@ -56,6 +56,8 @@ import ThreeTransformControls from "./advanced/x-three-transform-controls";
 import ScriptEvents from "./advanced/x-script-events";
 import Recording from "./advanced/x-recording";
 import Audio from "./advanced/x-audio";
+import Material from "./advanced/x-material";
+import HeadlessClient from "./advanced/x-headless-client";
 
 //------------------------------------------------------------------------------
 type SampleCategory = {
@@ -125,6 +127,8 @@ export default [
             ScriptEvents,
             Recording,
             Audio,
+            Material,
+            HeadlessClient,
         ],
     },
 ] as Array<SampleCategory>;

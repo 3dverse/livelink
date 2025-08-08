@@ -1,8 +1,5 @@
 ---
 title: Complete Example
-group: Examples
-category: Examples
-children:
 ---
 
 # Complete Example
@@ -19,16 +16,16 @@ CSS styling is also inlined and kept to a minimum.
 
 ```html
 <html>
-    <body style="margin: 0; padding: 0">
-        <div class="canvas-container" style="width: 100vw; height: 100vh;">
-            <canvas
-                id="display-canvas"
-                tabindex="1"
-                oncontextmenu="event.preventDefault()"
-                style="width: 100%; height: 100%;"
-            ></canvas>
-        </div>
-    </body>
+  <body style="margin: 0; padding: 0">
+    <div class="canvas-container" style="width: 100vw; height: 100vh;">
+      <canvas
+        id="display-canvas"
+        tabindex="1"
+        oncontextmenu="event.preventDefault()"
+        style="width: 100%; height: 100%;"
+      ></canvas>
+    </div>
+  </body>
 </html>
 ```
 
@@ -46,14 +43,14 @@ We import the necessary classes from the Livelink library using the ES6 module s
 
 ```html
 <script type="module">
-    import {
-        Livelink,
-        RenderingSurface,
-        Viewport,
-        WebCodecsDecoder,
-        CameraProjection,
-        CameraController,
-    } from "https://unpkg.com/@3dverse/livelink/dist/index.mjs";
+  import {
+    Livelink,
+    RenderingSurface,
+    Viewport,
+    WebCodecsDecoder,
+    CameraProjection,
+    CameraController,
+  } from "https://unpkg.com/@3dverse/livelink/dist/index.mjs";
 </script>
 ```
 
@@ -64,7 +61,7 @@ First start by making sure that the browser supports WebCodecs.
 ```javascript
 const codec = await WebCodecsDecoder.findSupportedCodec();
 if (!codec) {
-    throw new Error("WebCodecs not supported in this browser.");
+  throw new Error("WebCodecs not supported in this browser.");
 }
 ```
 
@@ -74,9 +71,9 @@ We do this by calling the `Livelink.start` method with the necessary parameters:
 
 ```javascript
 const instance = await Livelink.start({
-    scene_id: "322c6bf7-52eb-4197-ab42-a0924f71d72d",
-    token: "public_UjENe9mA-wgTBYvw",
-    is_transient: true,
+  scene_id: "322c6bf7-52eb-4197-ab42-a0924f71d72d",
+  token: "public_UjENe9mA-wgTBYvw",
+  is_transient: true,
 });
 ```
 
@@ -102,14 +99,14 @@ taking up the entire canvas.
 const canvas_element = document.getElementById("display-canvas");
 
 const rendering_surface = new RenderingSurface({
-    canvas_element,
-    context_type: "2d",
+  canvas_element,
+  context_type: "2d",
 });
 
 const viewport = new Viewport({
-    core: instance,
-    rendering_surface,
-    options: { dom_element: canvas_element },
+  core: instance,
+  rendering_surface,
+  options: { dom_element: canvas_element },
 });
 
 instance.addViewports({ viewports: [viewport] });
@@ -127,9 +124,9 @@ Before doing that we need to configure the remote server with the codec we found
 await instance.configureRemoteServer({ codec });
 
 await instance.setEncodedFrameConsumer({
-    encoded_frame_consumer: new WebCodecsDecoder({
-        decoded_frame_consumer: instance.default_decoded_frame_consumer,
-    }),
+  encoded_frame_consumer: new WebCodecsDecoder({
+    decoded_frame_consumer: instance.default_decoded_frame_consumer,
+  }),
 });
 ```
 
@@ -144,13 +141,13 @@ Now we can create a camera entity bind it to a camera projection and attach it t
 const DEFAULT_RENDER_GRAPH_UUID = "398ee642-030a-45e7-95df-7147f6c43392";
 const RENDER_GRAPH_SETTINGS = { grid: true, skybox: true, gradient: false };
 const camera_entity = await instance.newEntity({
-    name: "MyCamera",
-    components: {
-        local_transform: { position: [0, 1, 5] }, // Partial values are fine.
-        camera: { renderGraphRef: DEFAULT_RENDER_GRAPH_UUID, dataJSON: RENDER_GRAPH_SETTINGS },
-        perspective_lens: {}, // Default values are fine.
-    },
-    options: { auto_broadcast: false },
+  name: "MyCamera",
+  components: {
+    local_transform: { position: [0, 1, 5] }, // Partial values are fine.
+    camera: { renderGraphRef: DEFAULT_RENDER_GRAPH_UUID, dataJSON: RENDER_GRAPH_SETTINGS },
+    perspective_lens: {}, // Default values are fine.
+  },
+  options: { auto_broadcast: false },
 });
 // Bind it to a camera projection and attach it to the viewport.
 viewport.camera_projection = new CameraProjection({ camera_entity, viewport });
@@ -178,87 +175,87 @@ instance.startStreaming();
 
 ```html
 <html>
-    <body style="margin: 0; padding: 0">
-        <div class="canvas-container" style="width: 100vw; height: 100vh">
-            <canvas
-                id="display-canvas"
-                tabindex="1"
-                oncontextmenu="event.preventDefault()"
-                style="width: 100%; height: 100%"
-            ></canvas>
-        </div>
+  <body style="margin: 0; padding: 0">
+    <div class="canvas-container" style="width: 100vw; height: 100vh">
+      <canvas
+        id="display-canvas"
+        tabindex="1"
+        oncontextmenu="event.preventDefault()"
+        style="width: 100%; height: 100%"
+      ></canvas>
+    </div>
 
-        <script type="module">
-            import {
-                Livelink,
-                RenderingSurface,
-                Viewport,
-                WebCodecsDecoder,
-                CameraProjection,
-                CameraController,
-            } from "https://unpkg.com/@3dverse/livelink/dist/index.mjs";
+    <script type="module">
+      import {
+        Livelink,
+        RenderingSurface,
+        Viewport,
+        WebCodecsDecoder,
+        CameraProjection,
+        CameraController,
+      } from "https://unpkg.com/@3dverse/livelink/dist/index.mjs";
 
-            // First, make sure the browser supports WebCodecs.
-            const codec = await WebCodecsDecoder.findSupportedCodec();
-            if (!codec) {
-                throw new Error("WebCodecs not supported in this browser.");
-            }
+      // First, make sure the browser supports WebCodecs.
+      const codec = await WebCodecsDecoder.findSupportedCodec();
+      if (!codec) {
+        throw new Error("WebCodecs not supported in this browser.");
+      }
 
-            // Start a new session.
-            const instance = await Livelink.start({
-                scene_id: "322c6bf7-52eb-4197-ab42-a0924f71d72d",
-                token: "public_UjENe9mA-wgTBYvw",
-                is_transient: true,
-            });
+      // Start a new session.
+      const instance = await Livelink.start({
+        scene_id: "322c6bf7-52eb-4197-ab42-a0924f71d72d",
+        token: "public_UjENe9mA-wgTBYvw",
+        is_transient: true,
+      });
 
-            const canvas_element = document.getElementById("display-canvas");
+      const canvas_element = document.getElementById("display-canvas");
 
-            // Create a rendering surface backed by the canvas element.
-            const rendering_surface = new RenderingSurface({
-                canvas_element: canvas_element,
-                context_type: "2d",
-            });
+      // Create a rendering surface backed by the canvas element.
+      const rendering_surface = new RenderingSurface({
+        canvas_element: canvas_element,
+        context_type: "2d",
+      });
 
-            // Setup a viewport taking up the entire canvas.
-            const viewport = new Viewport({
-                core: instance,
-                rendering_surface,
-                options: { dom_element: canvas_element },
-            });
-            instance.addViewports({ viewports: [viewport] });
+      // Setup a viewport taking up the entire canvas.
+      const viewport = new Viewport({
+        core: instance,
+        rendering_surface,
+        options: { dom_element: canvas_element },
+      });
+      instance.addViewports({ viewports: [viewport] });
 
-            // Configure the remote server with the codec.
-            await instance.configureRemoteServer({ codec });
+      // Configure the remote server with the codec.
+      await instance.configureRemoteServer({ codec });
 
-            // Set the encoded frame consumer to be the WebCodecsDecoder.
-            await instance.setEncodedFrameConsumer({
-                encoded_frame_consumer: new WebCodecsDecoder({
-                    decoded_frame_consumer: instance.default_decoded_frame_consumer,
-                }),
-            });
+      // Set the encoded frame consumer to be the WebCodecsDecoder.
+      await instance.setEncodedFrameConsumer({
+        encoded_frame_consumer: new WebCodecsDecoder({
+          decoded_frame_consumer: instance.default_decoded_frame_consumer,
+        }),
+      });
 
-            // Create a camera entity.
-            const DEFAULT_RENDER_GRAPH_UUID = "398ee642-030a-45e7-95df-7147f6c43392";
-            const RENDER_GRAPH_SETTINGS = { grid: true, skybox: true, gradient: false };
-            const camera_entity = await instance.scene.newEntity({
-                name: "MyCamera",
-                components: {
-                    local_transform: { position: [0, 1, 5] },
-                    camera: { renderGraphRef: DEFAULT_RENDER_GRAPH_UUID, dataJSON: RENDER_GRAPH_SETTINGS },
-                    perspective_lens: {}, // Default values are fine.
-                },
-                options: { auto_broadcast: false },
-            });
+      // Create a camera entity.
+      const DEFAULT_RENDER_GRAPH_UUID = "398ee642-030a-45e7-95df-7147f6c43392";
+      const RENDER_GRAPH_SETTINGS = { grid: true, skybox: true, gradient: false };
+      const camera_entity = await instance.scene.newEntity({
+        name: "MyCamera",
+        components: {
+          local_transform: { position: [0, 1, 5] },
+          camera: { renderGraphRef: DEFAULT_RENDER_GRAPH_UUID, dataJSON: RENDER_GRAPH_SETTINGS },
+          perspective_lens: {}, // Default values are fine.
+        },
+        options: { auto_broadcast: false },
+      });
 
-            // And attach it to the viewport.
-            viewport.camera_projection = new CameraProjection({ camera_entity, viewport });
+      // And attach it to the viewport.
+      viewport.camera_projection = new CameraProjection({ camera_entity, viewport });
 
-            // Setup a camera controller
-            const controller = new CameraController({ camera_entity, viewport });
+      // Setup a camera controller
+      const controller = new CameraController({ camera_entity, viewport });
 
-            // We can now start streaming frames.
-            instance.startStreaming();
-        </script>
-    </body>
+      // We can now start streaming frames.
+      instance.startStreaming();
+    </script>
+  </body>
 </html>
 ```

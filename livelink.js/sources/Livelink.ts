@@ -104,6 +104,7 @@ export class Livelink {
      * @param params.token The public access token or the user token which must have at least read
      * access to the scene
      * @param params.is_transient  Whether the session should be transient or not.
+     * @param params.is_headless Whether the client should be headless or not.
      *
      * @returns A promise to a Livelink instance holding a session with the specified scene
      *
@@ -112,15 +113,17 @@ export class Livelink {
     static async start({
         scene_id,
         token,
-        is_transient,
+        is_transient = false,
+        is_headless = false,
     }: {
         scene_id: UUID;
         token: string;
         is_transient?: boolean;
+        is_headless?: boolean;
     }): Promise<Livelink> {
         console.debug(`Starting new session on scene '${scene_id}'`);
         const session = await Session.create({ scene_id, token, is_transient });
-        return await Livelink.join({ session });
+        return await Livelink.join({ session, is_headless });
     }
 
     /**
@@ -135,6 +138,7 @@ export class Livelink {
      * among the list of available sessions. If no session is found, the function should return
      * null to fallback to starting a new session.
      * @param params.is_transient  Whether the session should be transient or not.
+     * @param params.is_headless Whether the client should be headless or not.
      *
      * @returns A promise to a Livelink instance holding a session with the
      * specified scene
@@ -145,12 +149,14 @@ export class Livelink {
         scene_id,
         token,
         session_selector = ({ sessions }: { sessions: Array<SessionInfo> }): SessionInfo => sessions[0],
-        is_transient,
+        is_transient = false,
+        is_headless = false,
     }: {
         scene_id: UUID;
         token: string;
         session_selector?: SessionSelector;
         is_transient?: boolean;
+        is_headless?: boolean;
     }): Promise<Livelink> {
         console.debug(`Looking for sessions on scene '${scene_id}'`);
         const session = await Session.find({ scene_id, token, session_selector });
@@ -159,12 +165,12 @@ export class Livelink {
             console.debug(
                 `There's no session currently running on scene '${scene_id}' and satisfiying the provided selector criteria`,
             );
-            return await Livelink.start({ scene_id, token, is_transient });
+            return await Livelink.start({ scene_id, token, is_transient, is_headless });
         }
 
         try {
             console.debug("Found session, joining...", session);
-            return await Livelink.join({ session });
+            return await Livelink.join({ session, is_headless });
         } catch {
             console.error(`Failed to join session '${session.session_id}', trying again with another session.`);
 
@@ -176,6 +182,8 @@ export class Livelink {
                     sessions = sessions.filter(s => s.session_id !== session.session_id);
                     return sessions.length === 0 ? null : session_selector({ sessions });
                 },
+                is_transient,
+                is_headless,
             });
         }
     }
@@ -185,16 +193,23 @@ export class Livelink {
      *
      * @param params
      * @param params.session The session to join
+     * @param params.is_headless Whether the client should be headless or not.
      *
      * @returns A promise to a Livelink instance holding the specified session
      *
      * @throws If the session could not be joined
      */
-    static async join({ session }: { session: Session }): Promise<Livelink> {
+    static async join({
+        session,
+        is_headless = false,
+    }: {
+        session: Session;
+        is_headless?: boolean;
+    }): Promise<Livelink> {
         await DynamicLoader.load();
 
         console.debug("Joining session:", session);
-        return new Livelink({ session }).#connect();
+        return new Livelink({ session }).#connect({ is_headless });
     }
 
     /**
@@ -473,27 +488,8 @@ export class Livelink {
     /**
      * @experimental
      */
-    async configureHeadlessClient(): Promise<Commands.ClientConfigResponse> {
-        const client_config: Commands.ClientConfig = {
-            remote_canvas_size: [256, 256],
-            encoder_config: {
-                codec: "h264",
-                profile: "main",
-                frame_rate: 30,
-                lossy: true,
-            },
-            supported_devices: {
-                keyboard: true,
-                mouse: false,
-                gamepad: false,
-                hololens: false,
-                touchscreen: false,
-            },
-        };
-
-        const res = await this.#core.configureClient({ client_config });
-        this.#codec = res.codec;
-        return res;
+    async startHeadlessClient(): Promise<void> {
+        this.#startUpdateLoop({});
     }
 
     /**
@@ -574,9 +570,9 @@ export class Livelink {
     /**
      * Connect to the server and initialize the Livelink instance.
      */
-    async #connect(): Promise<Livelink> {
+    async #connect({ is_headless }: { is_headless: boolean }): Promise<Livelink> {
         // Retrieve a session key
-        await this.session.registerClient();
+        await this.session.registerClient({ is_headless });
 
         await this.#core.connect({ session: this.session });
         this.#installEventListeners();
