@@ -20,7 +20,7 @@ import { DisconnectedModal } from "../../components/SamplePlayer";
 
 //------------------------------------------------------------------------------
 const token = import.meta.env.VITE_PROD_PUBLIC_TOKEN;
-const scene_id = "d19ecb53-6488-48c1-a085-fab7de85b189";
+const scene_id = "a896be32-2450-4dea-b59f-3c41901d7b0c";
 const Space = [2, 2, 2] as const;
 type SessionInfo = {
     session_id: UUID;
@@ -262,7 +262,7 @@ async function createCube(instance: Livelink): Promise<Entity> {
     const entity = await instance.scene.newEntity({
         name: "Cube",
         components: {
-            mesh_ref: { value: "dbafff5b-6a39-423c-9ae9-6b7497bbe8bf" },
+            mesh_ref: { value: "0577814f-4677-420b-89e8-1e5a4dd56914" },
             local_transform: {
                 position: initial_position,
             },

@@ -245,7 +245,7 @@ export class Livelink {
     /**
      * The audio player used to play the audio stream received from the server.
      */
-    #audio_player: AudioPlayer = new AudioPlayer();
+    #audio_player: AudioPlayer | null = null;
 
     /**
      * Mouse input device.
@@ -326,6 +326,7 @@ export class Livelink {
      */
     async disconnect(): Promise<void> {
         this.#uninstallEventListeners();
+        this.#uninstallStreamEventListeners();
 
         if (this.#update_interval) {
             clearInterval(this.#update_interval);
@@ -340,7 +341,7 @@ export class Livelink {
         }
 
         this.#remote_frame_proxy.release();
-        this.#audio_player.release();
+        this.#audio_player?.release();
 
         await this.#core.disconnect();
     }
@@ -428,8 +429,12 @@ export class Livelink {
             throw new Error("The Livelink instance is not configured yet");
         }
 
+        this.#audio_player = new AudioPlayer();
+
+        this.#installStreamEventListeners();
         this.#remote_frame_proxy.init();
         this.#core.resume();
+
         this.#startUpdateLoop({});
     }
 
@@ -587,25 +592,37 @@ export class Livelink {
         this.#core.addEventListener("on-disconnected", this.session._onDisconnected);
         this.#core.addEventListener("on-inactivity-warning", this.session._onInactivityWarning);
         this.#core.addEventListener("on-activity-detected", this.session._onActivityDetected);
-        this.#core.addEventListener("on-frame-received", this.#onFrameReceived);
-        this.#core.addEventListener("on-audio-received", this.#onAudioReceived);
         this.#core.addEventListener("on-entities-updated", this.#onEntitiesUpdated);
         this.#core.addEventListener("on-entity-visibility-changed", this.scene._onEntityVisibilityChanged);
         this.#core.addEventListener("on-script-event-received", this.scene._onScriptEventReceived);
     }
 
     /**
-     *
+     * Uninstall event listeners on the core object.
      */
     #uninstallEventListeners(): void {
         this.#core.removeEventListener("on-disconnected", this.session._onDisconnected);
         this.#core.removeEventListener("on-inactivity-warning", this.session._onInactivityWarning);
         this.#core.removeEventListener("on-activity-detected", this.session._onActivityDetected);
-        this.#core.removeEventListener("on-frame-received", this.#onFrameReceived);
-        this.#core.removeEventListener("on-audio-received", this.#onAudioReceived);
         this.#core.removeEventListener("on-entities-updated", this.#onEntitiesUpdated);
         this.#core.removeEventListener("on-entity-visibility-changed", this.scene._onEntityVisibilityChanged);
         this.#core.removeEventListener("on-script-event-received", this.scene._onScriptEventReceived);
+    }
+
+    /**
+     * Install event listeners for the stream (audio and video)
+     */
+    #installStreamEventListeners(): void {
+        this.#core.addEventListener("on-frame-received", this.#onFrameReceived);
+        this.#core.addEventListener("on-audio-received", this.#onAudioReceived);
+    }
+
+    /**
+     * Uninstall event listeners for the stream (audio and video)
+     */
+    #uninstallStreamEventListeners(): void {
+        this.#core.removeEventListener("on-frame-received", this.#onFrameReceived);
+        this.#core.removeEventListener("on-audio-received", this.#onAudioReceived);
     }
 
     /**
@@ -629,7 +646,7 @@ export class Livelink {
      *
      */
     #onAudioReceived = ({ packet }: Events.AudioReceivedEvent): void => {
-        this.#audio_player.playAudioPacket({ packet });
+        this.#audio_player!.playAudioPacket({ packet });
     };
 
     /**
