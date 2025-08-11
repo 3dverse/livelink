@@ -20,7 +20,7 @@ import { DisconnectedModal } from "../../components/SamplePlayer";
 
 //------------------------------------------------------------------------------
 const token = import.meta.env.VITE_PROD_PUBLIC_TOKEN;
-const scene_id = "a896be32-2450-4dea-b59f-3c41901d7b0c";
+const scene_id = "f71c73a7-dbc3-488f-8fcc-fe11e98150b0";
 const Space = [2, 2, 2] as const;
 type SessionInfo = {
     session_id: UUID;
