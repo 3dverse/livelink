@@ -1,5 +1,11 @@
 # @3dverse/livelink
 
+## 0.8.49
+
+### Patch Changes
+
+- fix(livelink.js): do not initialize audio context for headless client
+
 ## 0.8.48
 
 ### Patch Changes
