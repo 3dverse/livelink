@@ -239,11 +239,6 @@ export class Session extends TypedEventTarget<SessionEvents> implements SessionI
     #clients: Map<UUID, Client> = new Map<UUID, Client>();
 
     /**
-     * A map for clients pending identification
-     */
-    #clients_pending_identification = new Set<UUID>();
-
-    /**
      * The unique identifier of the scene the session is running.
      */
     get scene_id(): UUID {
@@ -442,93 +437,25 @@ export class Session extends TypedEventTarget<SessionEvents> implements SessionI
     /**
      * @internal
      */
-    _updateClients({ core, client_data }: { core: Livelink; client_data: Array<Events.ClientMetaData> }): void {
+    _updateClients({ client_data }: { core: Livelink; client_data: Array<Events.ClientMetaData> }): void {
         for (const client_meta_data of client_data) {
             const client_id = client_meta_data.client_id;
 
-            if (this.#clients_pending_identification.has(client_id)) {
-                continue;
-            }
-
             const client = this.#clients.get(client_id);
             if (client) {
-                this.#handleExistingClient({ client, client_meta_data });
+                client._updateFromClientMetaData({ client_meta_data });
             } else {
-                this.#handleNewClient({ core, client_meta_data });
+                console.warn("Received metadata for unknown client", client_id);
             }
         }
-
-        this.#removeDisconnectedClients({ client_data });
     }
 
     /**
-     *
+     * @internal
      */
-    async #handleNewClient({
-        core,
-        client_meta_data,
-    }: {
-        core: Livelink;
-        client_meta_data: Events.ClientMetaData;
-    }): Promise<void> {
-        // If the client has no viewports, it means that it is not yet fully connected.
-        // Skip it for now, it will be handled when it would be fully connected.
-        if (client_meta_data.viewports.length === 0) {
-            return;
-        }
-
-        const client_id = client_meta_data.client_id;
-        this.#clients_pending_identification.add(client_id);
-        let client_info: ClientInfo | null = null;
-
-        try {
-            client_info = await this.#fetchClientInfo({ client_id: client_meta_data.client_id });
-        } catch (error) {
-            console.error("Could not get info for client", client_id, error);
-            client_info = {
-                client_id,
-                client_type: "unknown",
-                user_id: "",
-                username: "unknown user",
-            };
-        }
-
+    _onClientJoined({ core, client_info }: { core: Livelink; client_info: ClientInfo }): void {
         console.debug("--- Client joined", client_info);
-        const client = new Client({ core, client_info, client_meta_data });
-        this.#onClientJoined({ client });
-        this.#clients_pending_identification.delete(client_id);
-    }
-
-    /**
-     *
-     */
-    #handleExistingClient({
-        client,
-        client_meta_data,
-    }: {
-        client: Client;
-        client_meta_data: Events.ClientMetaData;
-    }): void {
-        client._updateFromClientMetaData({ client_meta_data });
-    }
-
-    /**
-     *
-     */
-    #removeDisconnectedClients({ client_data }: { client_data: Array<Events.ClientMetaData> }): void {
-        const client_ids = client_data.map(d => d.client_id);
-
-        for (const [client_id] of this.#clients) {
-            if (!client_ids.includes(client_id)) {
-                this.#onClientLeft({ client_id });
-            }
-        }
-    }
-
-    /**
-     *
-     */
-    #onClientJoined({ client }: { client: Client }): void {
+        const client = new Client({ core, client_info });
         this.#clients.set(client.id, client);
         if (client.id !== this.client_id) {
             this._dispatchEvent(new ClientJoinedEvent({ client }));
@@ -536,25 +463,13 @@ export class Session extends TypedEventTarget<SessionEvents> implements SessionI
     }
 
     /**
-     *
+     * @internal
      */
-    #onClientLeft({ client_id }: { client_id: UUID }): void {
+    _onClientLeft({ client_id }: { client_id: UUID }): void {
         const client = this.getClient({ client_id });
         if (client) {
             this.#clients.delete(client_id);
             this._dispatchEvent(new ClientLeftEvent({ client }));
         }
-    }
-
-    /**
-     *
-     */
-    async #fetchClientInfo({ client_id }: { client_id: UUID }): Promise<ClientInfo> {
-        const res = await fetch(`${Livelink._api_url}/sessions/${this.session_id}/clients/${client_id}`, {
-            method: "GET",
-            headers: this.#authentication_headers,
-        });
-
-        return (await res.json()) as ClientInfo;
     }
 }

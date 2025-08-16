@@ -39,6 +39,16 @@ export class Client {
     #cursor_data: CursorData | null = null;
 
     /**
+     * A promise that resolves when the client metadata is available.
+     */
+    #metadata_promise: Promise<void> | null = null;
+
+    /**
+     * A function that resolves the metadata promise.
+     */
+    #metadata_promise_resolver: (() => void) | null = null;
+
+    /**
      * The unique identifier of the client.
      */
     get id(): UUID {
@@ -71,24 +81,36 @@ export class Client {
     /**
      * @internal
      */
-    constructor({
-        core,
-        client_info,
-        client_meta_data,
-    }: {
-        core: Livelink;
-        client_info: ClientInfo;
-        client_meta_data: Events.ClientMetaData;
-    }) {
+    constructor({ core, client_info }: { core: Livelink; client_info: ClientInfo }) {
         this.#core = core;
         this.#client_info = client_info;
-        this._updateFromClientMetaData({ client_meta_data });
+
+        if (!this.#client_info.is_headless) {
+            this.#metadata_promise = new Promise<void>(resolve => {
+                this.#metadata_promise_resolver = resolve;
+            });
+
+            this.#metadata_promise.finally(() => {
+                this.#metadata_promise = null;
+                this.#metadata_promise_resolver = null;
+            });
+        }
     }
 
     /**
      * Returns the camera entities that the client is using.
      */
     async getCameraEntities(): Promise<Array<Entity>> {
+        if (this.#client_info.is_headless) {
+            return [];
+        }
+
+        // Since the cameras are not immediately created when a client joined,
+        // this promise will resolve when a client metadata with at least one camera is received.
+        if (this.#metadata_promise) {
+            await this.#metadata_promise;
+        }
+
         const entities = await Promise.all(
             this.#camera_rtids.map(rtid => this.#core.scene._findEntity({ entity_rtid: rtid })),
         );
@@ -121,6 +143,10 @@ export class Client {
             };
         } else {
             this.#cursor_data = null;
+        }
+
+        if (this.#metadata_promise_resolver && this.#camera_rtids.length > 0) {
+            this.#metadata_promise_resolver();
         }
     }
 }

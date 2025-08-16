@@ -595,6 +595,8 @@ export class Livelink {
         this.#core.addEventListener("on-entities-updated", this.#onEntitiesUpdated);
         this.#core.addEventListener("on-entity-visibility-changed", this.scene._onEntityVisibilityChanged);
         this.#core.addEventListener("on-script-event-received", this.scene._onScriptEventReceived);
+        this.#core.addEventListener("on-client-connected", this.#onClientConnectedEvent);
+        this.#core.addEventListener("on-clients-disconnected", this.#onClientsDisconnectedEvent);
     }
 
     /**
@@ -655,6 +657,22 @@ export class Livelink {
     #onEntitiesUpdated = ({ updated_entities }: Events.EntitiesUpdatedEvent): void => {
         for (const { entity_euid, updated_components } of updated_entities) {
             this.scene._updateEntityFromEvent({ entity_euid, updated_components });
+        }
+    };
+
+    /**
+     *
+     */
+    #onClientConnectedEvent = ({ client_info }: Events.ClientConnectedEvent): void => {
+        this.session._onClientJoined({ core: this, client_info });
+    };
+
+    /**
+     *
+     */
+    #onClientsDisconnectedEvent = ({ client_ids }: Events.ClientsDisconnectedEvent): void => {
+        for (const client_id of client_ids) {
+            this.session._onClientLeft({ client_id });
         }
     };
 
