@@ -230,8 +230,8 @@ function HeadlessClient({ sessionInfo }: { sessionInfo: SessionInfo | null }) {
         : "Headless client stopped.";
 
     return (
-        <div className="absolute bottom-2 right-2 flex flex-col items-end gap-2 w-1/4 h-1/4">
-            <div className="bg-[black] text-[#00FF41] font-mono text-xs p-3 rounded-md shadow-lg w-full h-full overflow-y-auto">
+        <div className="absolute bottom-[5vh] w-full flex flex-col items-center gap-3">
+            <div className="px-3 py-2 bg-[black] text-[#addb67] text-xs tabular-nums rounded-sm shadow-lg min-w-xs h-full overflow-y-auto">
                 <p>{status}</p>
                 {instance &&
                     (entity ? (
@@ -246,10 +246,10 @@ function HeadlessClient({ sessionInfo }: { sessionInfo: SessionInfo | null }) {
                     ))}
             </div>
             <button
-                className="button button-primary mt-2"
+                className="button button-primary"
                 onClick={() => setIsStarted(prev => !prev)}
             >
-                {isStarted ? "Stop headless client" : "Start headless client"}
+                {isStarted ? "Stop" : "Start"} headless client
             </button>
         </div>
     );

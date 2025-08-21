@@ -76,7 +76,7 @@ function SessionJoiner({ sessionId }: { sessionId: UUID | null }) {
     if (!sessionId) {
         return (
             <div className="w-full h-full flex-col content-center justify-center">
-                <h1 className="text-center font-medium">
+                <h1 className="text-center text-sm text-secondary">
                     Waiting for the main session to join
                 </h1>
             </div>
@@ -169,7 +169,7 @@ const AvatarList = ({
     setWatchedClient: (client: Client | null) => void;
 }) => {
     return (
-        <div className="absolute right-40 top-4">
+        <div className="absolute left-4 top-4">
             <div className="avatar-group flex gap-1 rtl:space-x-reverse">
                 {clients.map(client => (
                     <button

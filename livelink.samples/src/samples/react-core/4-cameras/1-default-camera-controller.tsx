@@ -76,32 +76,27 @@ function AppLayout() {
                     />
                 </Viewport>
             </Canvas>
-            <div className="absolute top-14 left-1 flex flex-col">
-                <div className="flex flex-row">
-                    <button
-                        className="button button-overlay mr-2"
-                        onClick={moveCamera}
-                    >
-                        Move Camera
-                    </button>
-                    {presetKeys.map((presetKey, index) => {
-                        const preset = CameraControllerPresets[presetKey];
-                        const name = presetKey.replaceAll("_", " ");
-                        const isCurrentPreset =
-                            preset === cameraControllerPreset;
-                        return (
-                            <button
-                                key={index}
-                                className={`button button-overlay mr-2 ${isCurrentPreset ? "bg-accent" : ""}`}
-                                onClick={() =>
-                                    setCameraControllerPreset(preset)
-                                }
-                            >
-                                {name}
-                            </button>
-                        );
-                    })}
-                </div>
+            <div className="absolute bottom-[5vh] left-1/2 -translate-x-1/2 flex flex-row gap-1 w-max">
+                <button
+                    className="button button-overlay mr-4"
+                    onClick={moveCamera}
+                >
+                    Reset position
+                </button>
+                {presetKeys.map((presetKey, index) => {
+                    const preset = CameraControllerPresets[presetKey];
+                    const name = presetKey.replaceAll("_", " ");
+                    const isCurrentPreset = preset === cameraControllerPreset;
+                    return (
+                        <button
+                            key={index}
+                            className={`button button-overlay capitalize ${isCurrentPreset ? "bg-accent" : ""}`}
+                            onClick={() => setCameraControllerPreset(preset)}
+                        >
+                            {name}
+                        </button>
+                    );
+                })}
             </div>
         </>
     );

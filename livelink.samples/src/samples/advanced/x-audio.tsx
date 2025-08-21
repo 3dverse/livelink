@@ -63,14 +63,16 @@ function AudioPlay() {
     }
 
     return (
-        <button
-            className="absolute top-4 left-4 button button-overlay"
-            onClick={() => {
-                instance.stopSimulation();
-                instance.startSimulation();
-            }}
-        >
-            Play Audio
-        </button>
+        <div className="absolute bottom-[5vh] left-1/2 -translate-x-1/2">
+            <button
+                className="button button-overlay"
+                onClick={() => {
+                    instance.stopSimulation();
+                    instance.startSimulation();
+                }}
+            >
+                Play Audio
+            </button>
+        </div>
     );
 }

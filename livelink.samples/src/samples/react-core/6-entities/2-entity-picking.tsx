@@ -120,11 +120,11 @@ function EntityPanel({
 }) {
     return (
         <div>
-            <span className="bg-ground p-2 rounded-xl rounded-r-none">
+            <span className="bg-ground px-3 py-2 rounded-lg rounded-r-none">
                 {label}
             </span>
             <span
-                className={`p-2 rounded-xl rounded-l-none text-primary-dark font-semibold ${entity ? color : "bg-negative-500"}`}
+                className={`px-3 py-2 rounded-lg rounded-l-none text-primary-dark font-semibold ${entity ? color : "bg-negative-500"}`}
             >
                 {entity ? entity.name : "none"}
             </span>

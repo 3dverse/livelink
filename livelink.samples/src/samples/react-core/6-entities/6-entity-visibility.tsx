@@ -96,20 +96,22 @@ function EntityVisibilityStatusPanel({
     grandChildGreenBoxEntity: Entity | null;
 }) {
     return (
-        <div className="absolute flex flex-col gap-4 m-4">
+        <div className="absolute flex flex-col gap-3 m-4">
             <EntityPanel color="#9b59b6" entity={purpleBoxEntity} />
             <EntityPanel color="#f39c12" entity={orangeBoxEntity} />
-            <EntityPanel color="#27ae60" entity={greenBoxEntity} />
-            <EntityPanel
-                color="#27ae60"
-                entity={childGreenBoxEntity}
-                hierarchyLevel={2}
-            />
-            <EntityPanel
-                color="#27ae60"
-                entity={grandChildGreenBoxEntity}
-                hierarchyLevel={3}
-            />
+            <div className="flex flex-col gap-2">
+                <EntityPanel color="#27ae60" entity={greenBoxEntity} />
+                <EntityPanel
+                    color="#27ae60"
+                    entity={childGreenBoxEntity}
+                    hierarchyLevel={2}
+                />
+                <EntityPanel
+                    color="#27ae60"
+                    entity={grandChildGreenBoxEntity}
+                    hierarchyLevel={3}
+                />
+            </div>
         </div>
     );
 }
@@ -144,12 +146,12 @@ function EntityPanel({
             onClick={toggleVisibility}
         >
             <span
-                className={`p-2 rounded-xl rounded-r-none text-primary-dark font-semibold`}
-                style={{ backgroundColor: color, color: "#fff" }}
+                className="px-3 py-1 rounded-lg rounded-r-none text-white font-semibold"
+                style={{ backgroundColor: color }}
             >
                 {entity ? entity.name : "none"}
             </span>
-            <span className="p-2 rounded-xl rounded-l-none bg-ground">
+            <span className="px-3 py-1 rounded-lg rounded-l-none bg-ground">
                 <input
                     type="checkbox"
                     checked={entity.is_visible}

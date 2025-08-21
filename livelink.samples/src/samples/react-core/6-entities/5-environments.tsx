@@ -114,7 +114,7 @@ function EnvironmentSelector() {
     }, [environment, selectedEnvironment]);
 
     return (
-        <div className="absolute bottom-4 flex items-center w-full justify-center">
+        <div className="absolute bottom-[5vh] left-1/2 -translate-x-1/2">
             <select
                 className="select select-primary min-w-[20rem]"
                 value={selectedEnvironment}

@@ -69,9 +69,14 @@ function ThresholdSlider({ material }: { material: MaterialInterface }) {
     const threshold = material.threshold ?? 0;
 
     return (
-        <div className="absolute top-2 left-2 p-2 bg-ground rounded shadow">
-            <label className="flex flex-col gap-2">
-                Threshold: {threshold.toFixed(2)}
+        <div className="absolute bottom-[5vh] left-1/2 -translate-x-1/2 p-3 pt-2 bg-ground rounded-md shadow-md">
+            <label className="flex flex-col gap-1">
+                <p className="flex justify-between items-baseline gap-2">
+                    Threshold
+                    <span className="text-xs text-secondary tabular-nums">
+                        {threshold.toFixed(2)}
+                    </span>
+                </p>
                 <input
                     type="range"
                     min={0}

@@ -35,7 +35,7 @@ export function MainMenu({ isPageEmbedded }: { isPageEmbedded?: boolean }) {
             {/* Toggle button */}
             {isCollapsed && (
                 <button
-                    className="button button-icon absolute top-0 left-0 bg-underground text-primary animate-appear-right z-100"
+                    className="button button-icon absolute top-0 left-0 bg-underground text-primary p-3 animate-appear-right z-100"
                     onClick={() => setIsCollapsed(!isCollapsed)}
                 >
                     <BarsIcon className="w-5 h-5" />
@@ -96,7 +96,7 @@ export function MainMenu({ isPageEmbedded }: { isPageEmbedded?: boolean }) {
                                         to={resolveSamplePath(s.path)}
                                         className={({ isActive }) =>
                                             [
-                                                "button button-ghost py-[3px] text-xs justify-start rounded-lg",
+                                                "button button-ghost px-3 py-[3px] text-xs justify-start rounded-lg",
                                                 isActive ? "active" : "",
                                             ].join(" ")
                                         }

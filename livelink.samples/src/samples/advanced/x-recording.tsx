@@ -47,24 +47,25 @@ function AppLayout() {
 
     return (
         <Canvas className="max-h-screen">
-            <div className="absolute top-4 left-4 flex flex-col gap-2">
-                <button
-                    className="button button-primary"
-                    onClick={() => setEnableRecording(prev => !prev)}
-                >
-                    {enableRecording ? "Stop Recording" : "Start Recording"}
-                </button>
+            <div className="absolute bottom-[5vh] left-1/2 -translate-x-1/2 flex flex-col items-center gap-3">
                 {enableRecording && (
                     <Recorder>
                         {({ recordTime }: { recordTime: number }) => (
-                            <div className="bg-ground p-2 rounded-md shadow-md flex flex-col items-center">
-                                <div className="text-sm">
-                                    {secondToTimeString(recordTime)}
-                                </div>
-                            </div>
+                            <time className="flex flex-col items-center px-6 py-2 text-sm tracking-wider tabular-nums bg-ground rounded-full shadow-md">
+                                {secondToTimeString(recordTime)}
+                            </time>
                         )}
                     </Recorder>
                 )}
+                <button
+                    className="button button-primary gap-3"
+                    onClick={() => setEnableRecording(prev => !prev)}
+                >
+                    <span
+                        className={`bg-[tomato] w-3 h-3 transition-all ${enableRecording ? "" : "rounded-full"}`}
+                    />
+                    {enableRecording ? "Stop" : "Start"} recording
+                </button>
             </div>
             <Viewport cameraEntity={cameraEntity} className="w-full h-full">
                 <CameraController />

@@ -78,7 +78,7 @@ function SceneSelector({
     setSceneId: (sceneId: string) => void;
 }) {
     return (
-        <div className="absolute bottom-4 flex items-center justify-center w-full">
+        <div className="absolute bottom-[5vh] left-1/2 -translate-x-1/2">
             <select
                 className="select select-primary min-w-[20rem]"
                 value={selectedSceneId || ""}

@@ -63,7 +63,7 @@ export function SamplePlayer({
     const mountPlayButton = connectionState === "disconnected";
 
     const connectButton = (
-        <button onClick={() => setConnectionState("connected")} className="w-20 h-20">
+        <button onClick={() => setConnectionState("connected")} className="w-20 h-20 cursor-pointer">
             <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
                 <path
                     className="stroke-solid"
@@ -93,7 +93,7 @@ export function SamplePlayer({
                             <>
                                 {mountChildren && children}
                                 {mountPlayButton && (
-                                    <div className="grow flex flex-col items-center justify-center">
+                                    <div className="grow flex flex-col items-center justify-center select-none">
                                         {connectButton}
                                         <h1 className="mt-6 text-center font-medium">{title}</h1>
                                         <h2 className="mt-px text-xs text-center font-normal text-tertiary">
