@@ -76,7 +76,7 @@ function SessionJoiner({ sessionId }: { sessionId: UUID | null }) {
     if (!sessionId) {
         return (
             <div className="w-full h-full flex-col content-center justify-center">
-                <h1 className="text-center text-sm text-secondary">
+                <h1 className="text-center text-xs text-secondary">
                     Waiting for the main session to join
                 </h1>
             </div>
