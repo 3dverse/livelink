@@ -209,7 +209,12 @@ const PiPViewport = ({ watchedClient }: { watchedClient: Client | null }) => {
 const Avatar = ({ client }: { client: Client }) => {
     return (
         <div title={client.username}>
-            <BoringAvatar name={client.id} size={40} variant="beam" />
+            <BoringAvatar
+                colors={["#0a0310", "#49007e", "#ff005b", "#ff7d10", "#ffb238"]}
+                name={client.id}
+                size={40}
+                variant="beam"
+            />
         </div>
     );
 };

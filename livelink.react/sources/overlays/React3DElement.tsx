@@ -101,7 +101,9 @@ export class React3DElement extends React.Component<
         >,
     ): void {
         if (
-            prevProps.worldPosition.some((v, i) => v !== this.props.worldPosition[i]) ||
+            prevProps.worldPosition[0] !== this.props.worldPosition[0] ||
+            prevProps.worldPosition[1] !== this.props.worldPosition[1] ||
+            prevProps.worldPosition[2] !== this.props.worldPosition[2] ||
             prevProps.anchor !== this.props.anchor ||
             prevProps.scaleFactor !== this.props.scaleFactor
         ) {
