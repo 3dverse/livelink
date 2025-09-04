@@ -22,7 +22,7 @@ import MultiOverlayViewport from "./react-core/3-overlays/3-multi-overlay";
 import DOM3DElementAnchors from "./react-core/3-overlays/4-dom-element-anchors";
 
 //------------------------------------------------------------------------------
-import DefaultCameraController from "./react-core/4-cameras/1-default-camera-controller";
+import DefaultCameraControllers from "./react-core/4-cameras/1-default-camera-controllers";
 import CustomCameraController from "./react-core/4-cameras/2-custom-camera-controller";
 import ThirdPersonController from "./react-core/4-cameras/3-third-person-controller";
 import CameraRenderTarget from "./react-core/4-cameras/4-camera-render-target";
@@ -101,7 +101,7 @@ export default [
     },
     {
         categoryName: "Cameras",
-        list: [DefaultCameraController, CustomCameraController, ThirdPersonController, CameraRenderTarget],
+        list: [DefaultCameraControllers, CustomCameraController, ThirdPersonController, CameraRenderTarget],
     },
     {
         categoryName: "Clients",

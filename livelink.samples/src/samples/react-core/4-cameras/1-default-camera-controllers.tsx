@@ -25,9 +25,9 @@ const token = import.meta.env.VITE_PROD_PUBLIC_TOKEN;
 export default {
     path: import.meta.VITE_FILE_NAME,
     code: import.meta.VITE_FILE_CONTENT,
-    title: "Default Controller",
+    title: "Default Controllers",
     summary:
-        "Shows how to create a default camera controller and get a reference to it.",
+        "Shows how to use the default camera controllers and get a reference to them.",
     element: <App />,
 };
 
