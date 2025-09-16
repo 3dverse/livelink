@@ -433,9 +433,14 @@ export class Livelink {
 
         this.#installStreamEventListeners();
         this.#remote_frame_proxy.init();
-        this.#core.resume();
 
-        this.#startUpdateLoop({});
+        if (typeof document !== "undefined") {
+            this.#onVisibilityChange();
+        } else {
+            this.#core.resume();
+        }
+
+        this.#startUpdateLoop();
     }
 
     /**
@@ -494,7 +499,7 @@ export class Livelink {
      * @experimental
      */
     async startHeadlessClient(): Promise<void> {
-        this.#startUpdateLoop({});
+        this.#startUpdateLoop();
     }
 
     /**
@@ -617,6 +622,10 @@ export class Livelink {
     #installStreamEventListeners(): void {
         this.#core.addEventListener("on-frame-received", this.#onFrameReceived);
         this.#core.addEventListener("on-audio-received", this.#onAudioReceived);
+
+        if (typeof document !== "undefined") {
+            document.addEventListener("visibilitychange", this.#onVisibilityChange);
+        }
     }
 
     /**
@@ -625,6 +634,10 @@ export class Livelink {
     #uninstallStreamEventListeners(): void {
         this.#core.removeEventListener("on-frame-received", this.#onFrameReceived);
         this.#core.removeEventListener("on-audio-received", this.#onAudioReceived);
+
+        if (typeof document !== "undefined") {
+            document.removeEventListener("visibilitychange", this.#onVisibilityChange);
+        }
     }
 
     /**
@@ -685,7 +698,7 @@ export class Livelink {
     }: {
         updatesPerSecond?: number;
         broadcastsPerSecond?: number;
-    }): void {
+    } = {}): void {
         this.#update_interval = setInterval(() => {
             const update_commands = this.scene._entity_registry._getEntitiesToUpdate();
             if (update_commands.length > 0) {
@@ -700,6 +713,17 @@ export class Livelink {
             }
         }, 1000 / broadcastsPerSecond);
     }
+
+    /**
+     *
+     */
+    #onVisibilityChange = (): void => {
+        if (document.hidden) {
+            this.#core.suspend();
+        } else {
+            this.#core.resume();
+        }
+    };
 
     //TEMPTEMPTEMPTEMPTEMPTEMPTEMPTEMPTEMPTEMPTEMPTEMPTEMPTEMPTEMPTEMP
     /**
