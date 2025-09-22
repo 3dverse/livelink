@@ -432,6 +432,13 @@ export class Scene {
         }
 
         for (const entity of entities) {
+            if (updated_components.lineage) {
+                this.#onEntityReparentedByEuid({
+                    entity,
+                    new_parent_euid: updated_components.lineage.parentUUID ?? null,
+                });
+            }
+
             entity._mergeComponents({
                 components: updated_components,
                 dispatch_event: true,
@@ -439,6 +446,38 @@ export class Scene {
             });
         }
     }
+
+    /**
+     *
+     */
+    #onEntityReparentedByEuid = async ({
+        entity,
+        new_parent_euid,
+    }: {
+        entity: Entity;
+        new_parent_euid: UUID | null;
+    }): Promise<void> => {
+        if (!new_parent_euid) {
+            entity._set_parent(null);
+            return;
+        }
+
+        const parent_entities = await this.findEntities({ entity_uuid: new_parent_euid });
+        const entityLineage = entity.lineage;
+        if (!entityLineage) {
+            entity._set_parent(parent_entities[0] ?? null);
+            return;
+        }
+
+        const parentEntity = parent_entities.find(parent => {
+            if (!parent.lineage) {
+                return false;
+            }
+            return parent.lineage.value.every((linkerEUID, i) => linkerEUID === entityLineage.value[i]);
+        });
+
+        entity._set_parent(parentEntity ?? null);
+    };
 
     /**
      * @internal

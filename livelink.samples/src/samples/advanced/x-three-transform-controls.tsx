@@ -59,6 +59,9 @@ function AppLayout() {
     } | null>();
     const [isDragging, setDragging] = useState(false);
     const [selectedEntity, setSelectedEntity] = useState<Entity | null>(null);
+    const [reparentingEntity, setReparentingEntity] = useState<Entity | null>(
+        null,
+    );
 
     //--------------------------------------------------------------------------
     const cameraControllerRef = useRef<DefaultCameraController>(null);
@@ -81,7 +84,7 @@ function AppLayout() {
 
     //--------------------------------------------------------------------------
     useEffect(() => {
-        window.addEventListener("keydown", function (event) {
+        const onKeyDown = (event: KeyboardEvent) => {
             const control = transformControllerRef.current;
             if (!control) {
                 return;
@@ -134,12 +137,28 @@ function AppLayout() {
                     control.showZ = !control.showZ;
                     break;
 
+                case "t":
+                    if (reparentingEntity && selectedEntity) {
+                        console.log(
+                            `Reparenting ${reparentingEntity.name} inside ${selectedEntity.name}`,
+                        );
+                        reparentingEntity.parent = selectedEntity;
+                        setReparentingEntity(null);
+                    } else {
+                        setReparentingEntity(selectedEntity);
+                    }
+                    break;
+
                 case "Escape":
                     setSelectedEntity(null);
                     break;
             }
-        });
-    }, []);
+        };
+        window.addEventListener("keydown", onKeyDown);
+        return () => {
+            window.removeEventListener("keydown", onKeyDown);
+        };
+    }, [selectedEntity, reparentingEntity]);
 
     return (
         <Canvas className="w-full h-full">
@@ -157,8 +176,17 @@ function AppLayout() {
                         <br />
                         "X" toggle X | "Y" toggle Y | "Z" toggle Z
                         <br />
+                        "T" select entity for reparenting
+                        <br />
                         "Esc" clear selection
                     </div>
+
+                    {reparentingEntity && (
+                        <div className="absolute bottom-0 left-0 p-2 bg-ground">
+                            {reparentingEntity.name} selected for reparenting.
+                            Pick an entity and press "T" to reparent.
+                        </div>
+                    )}
                 </div>
                 <CameraController ref={cameraControllerRef} />
                 <ThreeOverlay scene={scene}>

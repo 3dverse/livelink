@@ -160,6 +160,27 @@ export class Entity extends EntityTransformHandler {
      * Re-parent the entity by setting a parent entity.
      */
     override set parent(parent: Entity | null) {
+        if (parent) {
+            let current: Entity | null = parent;
+            while (current) {
+                if (current === this) {
+                    throw new Error("Cannot reparent an entity to itself or one of its children");
+                }
+                current = current.parent;
+            }
+        }
+
+        this._set_parent(parent);
+        this.lineage = {
+            parentUUID: parent ? parent.id : "00000000-0000-0000-0000-000000000000",
+            value: this.lineage?.value ?? [],
+        };
+    }
+
+    /**
+     * @internal
+     */
+    _set_parent(parent: Entity | null): void {
         super.parent = parent;
     }
 
@@ -358,6 +379,7 @@ export class Entity extends EntityTransformHandler {
 
             switch (component_name) {
                 case "euid":
+                case "lineage":
                     break;
                 case "local_transform":
                     this._setLocalTransform({ local_transform: components[component_name]! });
