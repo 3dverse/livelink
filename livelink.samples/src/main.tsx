@@ -13,7 +13,7 @@ import ErrorPage from "./ErrorPage";
 import samples from "./samples";
 
 import { SamplePlayer } from "./components/SamplePlayer/SamplePlayer";
-import { resolveSamplePath } from "./components/SamplePlayer";
+import { resolveGitPath, resolveSamplePath } from "./components/SamplePlayer";
 
 // This allow to augment the global scope of vite with new properties
 declare global {
@@ -41,6 +41,7 @@ const route: RouteObject = {
             <SamplePlayer
                 key={sample.path}
                 title={sample.title}
+                gitPath={resolveGitPath(sample.path)}
                 path={resolveSamplePath(sample.path)}
                 summary={sample.summary}
                 description={sample.description}

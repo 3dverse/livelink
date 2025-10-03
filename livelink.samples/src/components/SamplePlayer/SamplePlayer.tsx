@@ -21,6 +21,7 @@ export const SamplePlayerContext = createContext<{
 export function SamplePlayer({
     title,
     path,
+    gitPath,
     summary,
     description,
     code,
@@ -30,6 +31,7 @@ export function SamplePlayer({
 }: PropsWithChildren<{
     title?: string;
     path?: string;
+    gitPath?: string;
     summary?: string;
     description?: string;
     code?: string;
@@ -107,7 +109,7 @@ export function SamplePlayer({
                     </LivelinkReactUIProvider>
                 </div>
 
-                {code && <CodeBlock code={code} title={title} />}
+                {code && <CodeBlock code={code} title={title} gitPath={gitPath} />}
                 {description && (
                     <article>
                         <Markdown>{description}</Markdown>
