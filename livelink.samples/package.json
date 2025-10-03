@@ -29,7 +29,7 @@
     "three": "^0.179.1"
   },
   "devDependencies": {
-    "@3dverse/design-tokens": "^0.0.8",
+    "@3dverse/design-tokens": "^0.1.7",
     "@fontsource-variable/inter": "^5.2.6",
     "@types/react": "^19.1.11",
     "@types/react-dom": "^19.1.7",

@@ -5,7 +5,7 @@ import { Navigate, RouteObject, RouterProvider, createHashRouter } from "react-r
 import "@fontsource-variable/manrope";
 import "@fontsource-variable/inter";
 
-import "@3dverse/design-tokens/css/design-tokens-internal.css";
+import "@3dverse/design-tokens/css/design-tokens.css";
 import "./styles/index.css";
 
 import App from "./App";

@@ -9,7 +9,7 @@ import { LivelinkReactUIProvider } from "../sources/components/Provider";
 import "./doc-pages-style.css";
 
 //------------------------------------------------------------------------------
-import "@3dverse/design-tokens/css/design-tokens-internal.css";
+import "@3dverse/design-tokens/css/design-tokens.css";
 
 //------------------------------------------------------------------------------
 const scene_id = "4a5ed051-d3c7-444d-9049-ce752af9748d";
