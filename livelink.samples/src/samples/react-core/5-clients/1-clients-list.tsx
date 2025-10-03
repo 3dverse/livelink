@@ -59,6 +59,7 @@ function SessionCreator({
                 token={token}
                 LoadingPanel={LoadingOverlay}
                 ConnectionErrorPanel={DisconnectedModal}
+                autoJoinExisting={false}
             >
                 <SessionSniffer setSessionId={setSessionId} />
                 <AppLayout />
