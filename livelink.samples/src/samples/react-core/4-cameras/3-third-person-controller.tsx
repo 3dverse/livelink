@@ -126,7 +126,7 @@ function SimulationStarter() {
         instance.devices.mouse.enableOnViewport({ viewport });
 
         instance.startSimulation();
-    }, [instance, viewportDomElement]);
+    }, [instance, viewport, viewportDomElement]);
 
     return null;
 }

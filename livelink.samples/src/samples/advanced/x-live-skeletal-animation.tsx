@@ -163,7 +163,7 @@ function SkeletonController() {
         return () => {
             clearInterval(intervalId);
         };
-    }, [animation]);
+    }, [animation, controller, instance]);
 
     return (
         <div className="absolute bottom-[5vh] left-1/2 -translate-x-1/2">

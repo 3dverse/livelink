@@ -144,7 +144,7 @@ function AppLayout() {
                 onReceived: onTriggerExited,
             });
         };
-    }, [trigger]);
+    }, [onTriggerEntered, onTriggerExited, trigger]);
 
     const { cameraEntity } = useCameraEntity({
         position: [-1, 1.8, 1.8],

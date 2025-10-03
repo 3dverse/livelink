@@ -126,13 +126,16 @@ function EntityPanel({
     entity: Entity | null;
     hierarchyLevel?: number;
 }) {
+    const toggleVisibility = useCallback(() => {
+        if (!entity) {
+            return null;
+        }
+        entity.is_visible = !entity.is_visible;
+    }, [entity]);
+
     if (!entity) {
         return null;
     }
-
-    const toggleVisibility = useCallback(() => {
-        entity.is_visible = !entity.is_visible;
-    }, [entity]);
 
     return (
         <div

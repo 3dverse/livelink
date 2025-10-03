@@ -62,7 +62,7 @@ function AppLayout() {
         instance?.scene.highlightEntities({
             entities: pickedEntity ? [pickedEntity.entity] : [],
         });
-    }, [pickedEntity]);
+    }, [instance?.scene, pickedEntity]);
 
     return (
         <>

@@ -98,7 +98,7 @@ function SessionSniffer({
                 : null,
         );
         return () => setSessionInfo(null);
-    }, [instance]);
+    }, [instance, setSessionInfo]);
     return null;
 }
 
@@ -153,7 +153,7 @@ function HeadlessClient({ sessionInfo }: { sessionInfo: SessionInfo | null }) {
             instance?.disconnect();
             setInstance(null);
         };
-    }, [isStarted, initializeLivelinkClient]);
+    }, [isStarted, initializeLivelinkClient, sessionInfo]);
 
     useEffect(() => {
         if (!instance) {

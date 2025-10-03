@@ -136,7 +136,7 @@ function Avatars() {
         if (watchedClient && !clients.includes(watchedClient)) {
             setWatchedClient(null);
         }
-    }, [clients]);
+    }, [clients, watchedClient]);
 
     if (!instance) {
         return null;

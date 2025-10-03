@@ -205,7 +205,7 @@ function BoxGeometryMesh({
                 updateObjectsTransform,
             );
         };
-    }, [boxGeometryEntity, scene, edgeColor]);
+    }, [boxGeometryEntity, scene, edgeColor, boxColor, opacity]);
 
     return null;
 }
