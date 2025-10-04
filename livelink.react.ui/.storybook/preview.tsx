@@ -21,13 +21,12 @@ const preview: Preview = {
             theme: themes.dark,
         },
         backgrounds: {
-            default: "Ground",
-            values: [
-                { name: "Underground", value: "var(--color-bg-underground)", default: true },
-                { name: "Ground", value: "var(--color-bg-ground)" },
-                { name: "Overground", value: "var(--color-bg-overground)" },
-                { name: "Foreground", value: "var(--color-bg-foreground)" },
-            ],
+            options: {
+                underground: { name: "Underground", value: "var(--color-bg-underground)", default: true },
+                ground: { name: "Ground", value: "var(--color-bg-ground)" },
+                overground: { name: "Overground", value: "var(--color-bg-overground)" },
+                foreground: { name: "Foreground", value: "var(--color-bg-foreground)" }
+            }
         },
         options: {
             storySort: {
@@ -42,6 +41,7 @@ const preview: Preview = {
             },
         },
     },
+
     decorators: [
         (Story: React.ComponentType) => {
             const token = import.meta.env.STORYBOOK_3DVERSE_PUBLIC_TOKEN;
@@ -54,6 +54,12 @@ const preview: Preview = {
             );
         },
     ],
+
+    initialGlobals: {
+        backgrounds: {
+            value: "ground"
+        }
+    }
 };
 
 export default preview;
