@@ -1,8 +1,7 @@
-/*
-Since the doc pages are not meant to be styled.
-We just change the background of the page to match the storybook current style and the 3dverse style.
-*/
+.sb-show-main.sb-main-centered #storybook-root {
+    padding: 0;
+}
 
-.sbdocs {
-    background-color: #121217 !important;
+.sb-show-main.sb-main-padded {
+    padding: 0;
 }

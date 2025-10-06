@@ -35,9 +35,13 @@ type Input = {
 export const RenderGraphSettings = ({
     userToken,
     cameraEntity,
+    className,
+    style,
 }: {
     userToken: string;
     cameraEntity: Entity | null;
+    className?: string;
+    style?: CSSProperties;
 }) => {
     //--------------------------------------------------------------------------
     const [originalDataJSON, setOriginalDataJSON] = useState<RenderGraphDataObject | undefined>(
@@ -219,7 +223,7 @@ export const RenderGraphSettings = ({
 
     //--------------------------------------------------------------------------
     return (
-        <div className="livelink-react-ui-component">
+        <div className={`livelink-react-ui-component ${className ?? ""}`} style={style}>
             {!cameraEntity ? (
                 <div className={styles.spinnerContainer}>
                     {/* TODO: Replace spinner by skeletons */}

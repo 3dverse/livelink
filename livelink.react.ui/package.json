@@ -32,6 +32,7 @@
     "@3dverse/livelink": "^0.8.49",
     "@chromatic-com/storybook": "^4.1.1",
     "@storybook/addon-docs": "^9.1.10",
+    "@storybook/addon-themes": "^9.1.10",
     "@storybook/react-vite": "^9.1.10",
     "@types/node": "^24.3.0",
     "clsx": "^2.1.1",

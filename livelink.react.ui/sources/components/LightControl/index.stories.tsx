@@ -13,6 +13,7 @@ import type { Entity } from "@3dverse/livelink";
 import clsx from "clsx";
 
 //------------------------------------------------------------------------------
+import { ViewerPanel } from "../../components-common/ViewerPanel";
 import { LightPreview } from "./LightPreview/LightPreview";
 import { LightColorSelector } from "./LightColorSelector/LightColorSelector";
 import { LightTemperatureSlider } from "./LightTemperatureSlider/LightTemperatureSlider";
@@ -26,8 +27,12 @@ import { LightControl, LightControlProps } from ".";
 const meta = {
     title: "Components/Light Control",
     component: LightControl,
-    parameters: {
-        layout: "fullscreen",
+    subcomponents: {
+        LightPreview,
+        LightColorSelector,
+        LightTemperatureSlider,
+        LightBrightnessSlider,
+        LightSwitchOnOff,
     },
     tags: ["autodocs"],
 } satisfies Meta<typeof LightControl>;
@@ -41,50 +46,44 @@ export const _Component: Story = {
     args: {
         light: undefined as unknown as Entity,
     },
-    decorators: [
-        (Story: React.ComponentType<{ lights: Entity[] }>, { args }) => {
-            const { instance } = useContext(LivelinkContext);
-            const { cameraEntity } = useCameraEntity({
-                settings: { ssr: true, volumetricLighting: true, density: 0.1 },
-            });
-            const [lights, setLights] = useState<Entity[]>([]);
+    render: (args: any) => {
+        const { instance } = useContext(LivelinkContext);
+        const { cameraEntity } = useCameraEntity({
+            settings: { ssr: true, volumetricLighting: true, density: 0.1 },
+        });
+        const [lights, setLights] = useState<Entity[]>([]);
 
-            //--------------------------------------------------------------------------
-            // Effects
-            useEffect(() => {
-                instance?.scene
-                    .findEntitiesWithComponents({
-                        mandatory_components: ["point_light"],
-                    })
-                    .then(entities => {
-                        const _lights = entities.filter(entity => !entity.point_light?.isSun);
-                        setLights(_lights);
-                    });
-            }, [instance]);
+        //--------------------------------------------------------------------------
+        // Effects
+        useEffect(() => {
+            instance?.scene
+                .findEntitiesWithComponents({
+                    mandatory_components: ["point_light"],
+                })
+                .then(entities => {
+                    const _lights = entities.filter(entity => !entity.point_light?.isSun);
+                    setLights(_lights);
+                });
+        }, [instance]);
 
-            return (
-                <Canvas style={{ width: "100vw", height: "100vh" }}>
-                    <Viewport cameraEntity={cameraEntity} style={{ width: "100%", height: "100%" }}>
-                        <CameraController />
-                        <div
-                            style={{
-                                position: "absolute",
-                                bottom: "10%",
-                                left: "50%",
-                                transform: "translate(-50%, 0)",
-                                backgroundColor:
-                                    "color-mix(in srgb,var(--3dverse-color-bg-foreground) 85%,transparent)",
-                                backdropFilter: "blur(24px)",
-                                borderRadius: "var(--3dverse-border-radius-lg)",
-                            }}
-                        >
-                            {lights[0] && <LightControlWidget lights={lights} {...args} />}
-                        </div>
-                    </Viewport>
-                </Canvas>
-            );
-        },
-    ],
+        return (
+            <Canvas style={{ width: "100vw", height: "100vh" }}>
+                <Viewport cameraEntity={cameraEntity} style={{ width: "100%", height: "100%" }}>
+                    <CameraController />
+                    <ViewerPanel
+                        style={{
+                            position: "absolute",
+                            bottom: "10%",
+                            left: "50%",
+                            transform: "translate(-50%, 0)",
+                        }}
+                    >
+                        {lights[0] && <LightControlWidget lights={lights} {...args} />}
+                    </ViewerPanel>
+                </Viewport>
+            </Canvas>
+        );
+    },
 };
 
 //------------------------------------------------------------------------------

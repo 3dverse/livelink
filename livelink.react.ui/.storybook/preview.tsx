@@ -2,6 +2,8 @@
 import React from "react";
 import type { Preview } from "@storybook/react-vite";
 import { themes } from "storybook/theming";
+import { withThemeByDataAttribute } from "@storybook/addon-themes";
+import { Renderer } from "storybook/internal/types";
 import { Livelink } from "@3dverse/livelink-react";
 
 //------------------------------------------------------------------------------
@@ -19,14 +21,15 @@ const preview: Preview = {
     parameters: {
         docs: {
             theme: themes.dark,
+            codePanel: true,
         },
         backgrounds: {
             options: {
                 underground: { name: "Underground", value: "var(--color-bg-underground)", default: true },
                 ground: { name: "Ground", value: "var(--color-bg-ground)" },
                 overground: { name: "Overground", value: "var(--color-bg-overground)" },
-                foreground: { name: "Foreground", value: "var(--color-bg-foreground)" }
-            }
+                foreground: { name: "Foreground", value: "var(--color-bg-foreground)" },
+            },
         },
         options: {
             storySort: {
@@ -35,6 +38,7 @@ const preview: Preview = {
             },
         },
         controls: {
+            expanded: true,
             matchers: {
                 color: /(background|color)$/i,
                 date: /Date$/i,
@@ -43,6 +47,14 @@ const preview: Preview = {
     },
 
     decorators: [
+        withThemeByDataAttribute<Renderer>({
+            themes: {
+                light: "light",
+                dark: "dark",
+            },
+            defaultTheme: "dark",
+            attributeName: "data-theme",
+        }),
         (Story: React.ComponentType) => {
             const token = import.meta.env.STORYBOOK_3DVERSE_PUBLIC_TOKEN;
             return (
@@ -57,9 +69,9 @@ const preview: Preview = {
 
     initialGlobals: {
         backgrounds: {
-            value: "ground"
-        }
-    }
+            value: "ground",
+        },
+    },
 };
 
 export default preview;
