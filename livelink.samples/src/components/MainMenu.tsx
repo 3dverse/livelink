@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { NavLink } from "react-router";
 
+import { Logo3dverse } from "@3dverse/design-tokens";
+
 import samples from "../samples";
 
 import { LOCAL_STORAGE_KEYS, useLocalStorage } from "../lib/localStorage";
@@ -54,7 +56,7 @@ export function MainMenu({ isPageEmbedded }: { isPageEmbedded?: boolean }) {
             {/* Menu */}
 
             <nav
-                className={`absolute xl:relative top-0 transition-all h-dvh overflow-x-hidden ${isCollapsed ? "w-0 xl:w-3" : "w-80"}`}
+                className={`absolute xl:relative top-0 transition-all h-dvh overflow-x-hidden z-100 ${isCollapsed ? "w-0 xl:w-3" : "w-80"}`}
             >
                 <div
                     className="absolute w-80 h-full flex flex-col bg-ground shadow-2xl lg:shadow-none z-20"
@@ -65,13 +67,7 @@ export function MainMenu({ isPageEmbedded }: { isPageEmbedded?: boolean }) {
                             to="/"
                             className="flex items-start gap-3 pl-3 font-primary text-secondary text-[1.1rem] tracking-wider"
                         >
-                            {!isPageEmbedded && (
-                                <img
-                                    src="https://3dverse.com/logo/3dverse-wordmark.svg"
-                                    className="h-4 mt-[3px]"
-                                    alt="3dverse"
-                                />
-                            )}
+                            {!isPageEmbedded && <Logo3dverse className="h-4 mt-[3px]" />}
                             Samples
                         </NavLink>
                         <button className="button button-icon button-xs" onClick={onCollapse}>
