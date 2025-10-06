@@ -30,6 +30,7 @@ type Story = StoryObj<typeof meta>;
 
 //------------------------------------------------------------------------------
 export const _Component: Story = {
+    args: {},
     decorators: [
         (Story: React.ComponentType<{ cameraEntity: Entity | null }>, { args }) => {
             const { cameraEntity } = useCameraEntity();

@@ -2,6 +2,7 @@
 export * from "./components/Provider";
 
 //------------------------------------------------------------------------------
+export * from "./components/CameraSpeedSlider";
 export * from "./components/InactivityWarning";
 export * from "./components/RenderGraphSettings";
 export * from "./components/SunPositionPicker";

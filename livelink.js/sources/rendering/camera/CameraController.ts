@@ -123,6 +123,11 @@ export class CameraController extends CameraControls {
     /**
      *
      */
+    public readonly preset: CameraControllerPreset;
+
+    /**
+     *
+     */
     get #isPointerLockActive(): boolean {
         return this._domElement?.ownerDocument.pointerLockElement === this._domElement;
     }
@@ -149,6 +154,7 @@ export class CameraController extends CameraControls {
         this.#viewport.is_camera_controlled_by_current_client = true;
 
         // apply presets by deep merging properties
+        this.preset = preset;
         this.#deepMerge(this, preset);
 
         this.#initController();
