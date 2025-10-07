@@ -273,6 +273,16 @@ export class Livelink {
     #broadcast_interval: ReturnType<typeof setInterval> | null = null;
 
     /**
+     * The renderer timestamp in miliseconds of the latest received frame.
+     */
+    #frame_timestamp_in_ms: number = 0;
+
+    /**
+     * The delta time in miliseconds between the two latest received frames based on renderer timestamp.
+     */
+    #frame_dt_in_ms: number = 0;
+
+    /**
      * The default internal implementation of the {@link DecodedFrameConsumer} interface.
      *
      * If no custom decoded frame consumer is needed, this can be passed to instanciate {@link EncodedFrameConsumer}
@@ -295,6 +305,20 @@ export class Livelink {
      */
     get latency(): number {
         return this.#core.latency;
+    }
+
+    /**
+     * The renderer timestamp in miliseconds of the latest received frame.
+     */
+    get frame_timestamp(): number {
+        return this.#frame_dt_in_ms;
+    }
+
+    /**
+     * The delta time in miliseconds between the two latest received frames based on renderer timestamp.
+     */
+    get frame_dt(): number {
+        return this.#frame_dt_in_ms;
     }
 
     /**
@@ -652,10 +676,20 @@ export class Livelink {
             viewports: this.viewports,
         });
 
+        this.#updateFrameDeltaTime(raw_frame_meta_data.renderer_timestamp);
+
         this.#encoded_frame_consumer!.consumeEncodedFrame({
             encoded_frame: { video_stream: encoded_frame, meta_data },
         });
     };
+
+    /**
+     *
+     */
+    #updateFrameDeltaTime(renderer_timestamp: number): void {
+        this.#frame_dt_in_ms = renderer_timestamp - this.#frame_timestamp_in_ms;
+        this.#frame_timestamp_in_ms = renderer_timestamp;
+    }
 
     /**
      *

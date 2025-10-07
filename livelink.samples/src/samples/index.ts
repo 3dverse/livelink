@@ -46,6 +46,7 @@ import RenderGraphSettings from "./react-ui/3-render-graph-settings";
 import ViewCube from "./react-ui/4-view-cube";
 import LightControl from "./react-ui/5-light-control";
 import CameraSpeedSlider from "./react-ui/6-camera-speed-slider";
+import PerformancePanel from "./react-ui/7-performance-panel";
 
 //------------------------------------------------------------------------------
 import LiveSkeletalAnimation from "./advanced/x-live-skeletal-animation";
@@ -114,7 +115,15 @@ export default [
     },
     {
         categoryName: "Widgets",
-        list: [ActivityWatcher, SunPositionPicker, RenderGraphSettings, ViewCube, LightControl, CameraSpeedSlider],
+        list: [
+            ActivityWatcher,
+            SunPositionPicker,
+            RenderGraphSettings,
+            ViewCube,
+            LightControl,
+            CameraSpeedSlider,
+            PerformancePanel,
+        ],
     },
     {
         categoryName: "Advanced",
