@@ -13,7 +13,7 @@ const __dirname = dirname(__filename);
 /** @type {import('eslint').Linter.Config[]} */
 export default [
     {
-        ignores: ["dist", "vite.config.ts"],
+        ignores: ["dist", "vite.config.ts", "eslint.config.mjs", "**/tailwind.config.js"],
     },
     {
         languageOptions: {
