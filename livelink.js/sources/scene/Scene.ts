@@ -420,9 +420,11 @@ export class Scene {
     _updateEntityFromEvent({
         entity_euid,
         updated_components,
+        deleted_components,
     }: {
         entity_euid: UUID;
         updated_components: Partial<ComponentsRecord>;
+        deleted_components?: Array<ComponentName>;
     }): void {
         const entities = this._entity_registry.find({ entity_euid });
 
@@ -439,8 +441,9 @@ export class Scene {
                 });
             }
 
-            entity._mergeComponents({
+            entity._applyComponentsUpdate({
                 components: updated_components,
+                deleted_components,
                 dispatch_event: true,
                 change_source: "external",
             });

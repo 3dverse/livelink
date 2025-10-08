@@ -83,7 +83,7 @@ export abstract class EntityBase extends TypedEventTarget<EntityEvents> {
         value,
     }: {
         component_name: _ComponentName;
-        value: ComponentType<_ComponentName>;
+        value: ComponentType<_ComponentName> | undefined;
     }): void {
         //@ts-expect-error: sssh go back to sleep
         this.#core[component_name] = value;

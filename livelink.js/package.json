@@ -43,7 +43,7 @@
   "homepage": "https://github.com/3dverse/livelink#readme",
   "dependencies": {
     "@3dverse/livelink-camera-controls": "^0.4.10",
-    "@3dverse/livelink.core": "^1.1.9",
+    "@3dverse/livelink.core": "^1.1.10",
     "threejs-math": "^0.147.0"
   },
   "devDependencies": {

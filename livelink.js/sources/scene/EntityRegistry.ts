@@ -38,7 +38,13 @@ export class EntityRegistry {
     /**
      * List of dirty entities that need to be broadcasted to the editor sorted by component type.
      */
-    #entities_to_persist = new Map<Entity, Set<ComponentName>>();
+    #entities_to_persist = new Map<
+        Entity,
+        {
+            unsaved_components: Set<ComponentName>;
+            deleted_components: Set<ComponentName>;
+        }
+    >();
 
     /**
      * Adds a new entity in the registry. The entity must be valid, i.e. have valid RTID and EUID and must not have the
@@ -167,11 +173,11 @@ export class EntityRegistry {
         const update_command = new Array<UpdateEntityCommand>(this.#entities_to_persist.size);
 
         let i = 0;
-        for (const [entity, component_names] of this.#entities_to_persist) {
+        for (const [entity, { unsaved_components, deleted_components }] of this.#entities_to_persist) {
             update_command[i++] = {
                 entity_components: entity._core,
-                dirty_components: Array.from(component_names),
-                deleted_components: [],
+                dirty_components: Array.from(unsaved_components),
+                deleted_components: Array.from(deleted_components),
             };
         }
 
@@ -186,10 +192,16 @@ export class EntityRegistry {
     #updateBroadcastList({ entity }: { entity: Entity }): void {
         const broadcast_data = this.#entities_to_persist.get(entity);
         if (!broadcast_data) {
-            this.#entities_to_persist.set(entity, new Set([...entity._dirty_components]));
+            this.#entities_to_persist.set(entity, {
+                unsaved_components: new Set(entity._dirty_components),
+                deleted_components: new Set(entity._deleted_components),
+            });
         } else {
             for (const component_name of entity._dirty_components) {
-                broadcast_data.add(component_name);
+                broadcast_data.unsaved_components.add(component_name);
+            }
+            for (const component_name of entity._deleted_components) {
+                broadcast_data.deleted_components.add(component_name);
             }
         }
     }

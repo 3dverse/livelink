@@ -702,8 +702,8 @@ export class Livelink {
      *
      */
     #onEntitiesUpdated = ({ updated_entities }: Events.EntitiesUpdatedEvent): void => {
-        for (const { entity_euid, updated_components } of updated_entities) {
-            this.scene._updateEntityFromEvent({ entity_euid, updated_components });
+        for (const { entity_euid, updated_components, deleted_components } of updated_entities) {
+            this.scene._updateEntityFromEvent({ entity_euid, updated_components, deleted_components });
         }
     };
 
