@@ -2,7 +2,7 @@
 import React, { forwardRef, useEffect, useRef, useState } from "react";
 
 import { FaRegSun } from "react-icons/fa6";
-import type { Components, Entity, Vec2, Vec3 } from "@3dverse/livelink";
+import type { Components, Entity, EntityUpdatedEvent, Vec2, Vec3 } from "@3dverse/livelink";
 
 //------------------------------------------------------------------------------
 import { Checkbox } from "../../components-common/Checkbox/index";
@@ -138,6 +138,19 @@ export const SunPositionPicker = ({
         let sunX = initX * RADIUS + centerX;
         let sunY = initY * RADIUS + centerY;
         let sunZ = 0;
+
+        const onSunEntityUpdated = (event: EntityUpdatedEvent) => {
+            if (event.isAnyComponentDirty({ components: ["local_transform"] })) {
+                const [x, y] = eulerToSunPosition(sun.global_transform.eulerOrientation);
+                sunX = x * RADIUS + centerX;
+                sunY = y * RADIUS + centerY;
+                updateCanvas();
+            }
+
+            if (event.isAnyComponentDirty({ components: ["shadow_caster"] })) {
+                setHasShadows(Boolean(sun.shadow_caster));
+            }
+        };
 
         const updateSunPosition = ({ x, y }: { x: number; y: number }) => {
             const distance = Math.sqrt(Math.pow(x - centerX, 2) + Math.pow(y - centerY, 2));
@@ -309,7 +322,11 @@ export const SunPositionPicker = ({
         requestAnimationFrame(updateCanvas);
 
         canvas.addEventListener("pointerdown", onMouseDown);
+
+        sun.addEventListener("on-entity-updated", onSunEntityUpdated);
+
         return () => {
+            sun.removeEventListener("on-entity-updated", onSunEntityUpdated);
             canvas.removeEventListener("pointerdown", onMouseDown);
             canvas.removeEventListener("pointerup", onMouseUp);
             canvas.removeEventListener("pointermove", onMouseMove);

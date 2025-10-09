@@ -259,7 +259,8 @@ export abstract class EntityTransformHandler extends EntityBase {
      *
      */
     set parent(_parent: EntityTransformHandler | null) {
-        throw new Error("Not implemented");
+        this.#parent = _parent;
+        this.#is_global_transform_dirty = true;
     }
 
     /**

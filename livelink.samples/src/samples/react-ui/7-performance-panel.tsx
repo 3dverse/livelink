@@ -3,26 +3,24 @@ import {
     Livelink,
     Canvas,
     Viewport,
-    CameraController,
     useCameraEntity,
-    LivelinkContext,
+    CameraController,
 } from "@3dverse/livelink-react";
-import { LoadingOverlay } from "@3dverse/livelink-react-ui";
+import { PerformancePanel, LoadingOverlay } from "@3dverse/livelink-react-ui";
 
 //------------------------------------------------------------------------------
 import { DisconnectedModal } from "../../components/SamplePlayer";
-import { useContext } from "react";
 
 //------------------------------------------------------------------------------
-const scene_id = "a896be32-2450-4dea-b59f-3c41901d7b0c";
+const scene_id = "4a5ed051-d3c7-444d-9049-ce752af9748d";
 const token = import.meta.env.VITE_PROD_PUBLIC_TOKEN;
 
 //------------------------------------------------------------------------------
 export default {
     path: import.meta.VITE_FILE_NAME,
     code: import.meta.VITE_FILE_CONTENT,
-    title: "Audio Playback",
-    summary: "Play audio in the scene.",
+    title: "Performance Panel",
+    summary: "A widget that lets you monitor the latency and FPS",
     element: <App />,
 };
 
@@ -30,8 +28,9 @@ export default {
 function App() {
     return (
         <Livelink
-            sceneId={scene_id}
             token={token}
+            sceneId={scene_id}
+            isTransient={true}
             LoadingPanel={LoadingOverlay}
             ConnectionErrorPanel={DisconnectedModal}
         >
@@ -42,37 +41,28 @@ function App() {
 
 //------------------------------------------------------------------------------
 function AppLayout() {
-    const { cameraEntity } = useCameraEntity();
+    const { cameraEntity } = useCameraEntity({
+        settings: {
+            ssr: true,
+            volumetricLighting: true,
+            density: 0.5,
+        },
+    });
 
+    //--------------------------------------------------------------------------
     return (
-        <Canvas className="max-h-screen">
-            <AudioPlay />
+        <Canvas className="w-full h-full">
             <Viewport cameraEntity={cameraEntity} className="w-full h-full">
                 <CameraController />
+                <div
+                    className={`absolute bottom-[5vh] left-1/2 -translate-x-1/2 w-fit
+                            bg-[color-mix(in_srgb,var(--color-bg-foreground)_85%,transparent)]
+                            backdrop-blur-xl rounded-lg shadow-[0px_24px_40px_10px_color-mix(in_srgb,black_40%,transparent)]
+                        `}
+                >
+                    <PerformancePanel />
+                </div>
             </Viewport>
         </Canvas>
-    );
-}
-
-//------------------------------------------------------------------------------
-function AudioPlay() {
-    const { instance } = useContext(LivelinkContext);
-
-    if (!instance) {
-        return null;
-    }
-
-    return (
-        <div className="absolute bottom-[5vh] left-1/2 -translate-x-1/2">
-            <button
-                className="button button-overlay"
-                onClick={() => {
-                    instance.stopSimulation();
-                    instance.startSimulation();
-                }}
-            >
-                Play Audio
-            </button>
-        </div>
     );
 }

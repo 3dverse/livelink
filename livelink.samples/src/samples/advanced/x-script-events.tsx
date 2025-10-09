@@ -144,7 +144,7 @@ function AppLayout() {
                 onReceived: onTriggerExited,
             });
         };
-    }, [trigger]);
+    }, [onTriggerEntered, onTriggerExited, trigger]);
 
     const { cameraEntity } = useCameraEntity({
         position: [-1, 1.8, 1.8],
@@ -208,12 +208,14 @@ function AppLayout() {
                 </DOM3DOverlay>
             </Viewport>
             {currentState === 0 && (
-                <button
-                    className="absolute top-4 left-4 button button-overlay"
-                    onClick={() => goToNextState(currentState)}
-                >
-                    Action
-                </button>
+                <div className="absolute bottom-[5vh] left-1/2 -translate-x-1/2">
+                    <button
+                        className="button button-overlay"
+                        onClick={() => goToNextState(currentState)}
+                    >
+                        Action
+                    </button>
+                </div>
             )}
         </Canvas>
     );

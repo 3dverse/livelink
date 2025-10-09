@@ -23,6 +23,11 @@ export type ClientInfo = {
     client_type: "user" | "guest" | "unknown";
 
     /**
+     * Indicates if the client is headless (no streaming).
+     */
+    is_headless: boolean;
+
+    /**
      * The unique identifier of the user on the 3dverse platform.
      * The same user can have multiple clients in a session.
      * In this case, the user_id is the same for all clients spawned by the same user.

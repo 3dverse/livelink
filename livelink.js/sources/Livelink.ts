@@ -273,6 +273,16 @@ export class Livelink {
     #broadcast_interval: ReturnType<typeof setInterval> | null = null;
 
     /**
+     * The renderer timestamp in miliseconds of the latest received frame.
+     */
+    #frame_timestamp_in_ms: number = 0;
+
+    /**
+     * The delta time in miliseconds between the two latest received frames based on renderer timestamp.
+     */
+    #frame_dt_in_ms: number = 0;
+
+    /**
      * The default internal implementation of the {@link DecodedFrameConsumer} interface.
      *
      * If no custom decoded frame consumer is needed, this can be passed to instanciate {@link EncodedFrameConsumer}
@@ -295,6 +305,20 @@ export class Livelink {
      */
     get latency(): number {
         return this.#core.latency;
+    }
+
+    /**
+     * The renderer timestamp in miliseconds of the latest received frame.
+     */
+    get frame_timestamp(): number {
+        return this.#frame_dt_in_ms;
+    }
+
+    /**
+     * The delta time in miliseconds between the two latest received frames based on renderer timestamp.
+     */
+    get frame_dt(): number {
+        return this.#frame_dt_in_ms;
     }
 
     /**
@@ -433,9 +457,14 @@ export class Livelink {
 
         this.#installStreamEventListeners();
         this.#remote_frame_proxy.init();
-        this.#core.resume();
 
-        this.#startUpdateLoop({});
+        if (typeof document !== "undefined") {
+            this.#onVisibilityChange();
+        } else {
+            this.#core.resume();
+        }
+
+        this.#startUpdateLoop();
     }
 
     /**
@@ -494,7 +523,7 @@ export class Livelink {
      * @experimental
      */
     async startHeadlessClient(): Promise<void> {
-        this.#startUpdateLoop({});
+        this.#startUpdateLoop();
     }
 
     /**
@@ -595,6 +624,8 @@ export class Livelink {
         this.#core.addEventListener("on-entities-updated", this.#onEntitiesUpdated);
         this.#core.addEventListener("on-entity-visibility-changed", this.scene._onEntityVisibilityChanged);
         this.#core.addEventListener("on-script-event-received", this.scene._onScriptEventReceived);
+        this.#core.addEventListener("on-client-connected", this.#onClientConnectedEvent);
+        this.#core.addEventListener("on-clients-disconnected", this.#onClientsDisconnectedEvent);
     }
 
     /**
@@ -615,6 +646,10 @@ export class Livelink {
     #installStreamEventListeners(): void {
         this.#core.addEventListener("on-frame-received", this.#onFrameReceived);
         this.#core.addEventListener("on-audio-received", this.#onAudioReceived);
+
+        if (typeof document !== "undefined") {
+            document.addEventListener("visibilitychange", this.#onVisibilityChange);
+        }
     }
 
     /**
@@ -623,6 +658,10 @@ export class Livelink {
     #uninstallStreamEventListeners(): void {
         this.#core.removeEventListener("on-frame-received", this.#onFrameReceived);
         this.#core.removeEventListener("on-audio-received", this.#onAudioReceived);
+
+        if (typeof document !== "undefined") {
+            document.removeEventListener("visibilitychange", this.#onVisibilityChange);
+        }
     }
 
     /**
@@ -637,10 +676,20 @@ export class Livelink {
             viewports: this.viewports,
         });
 
+        this.#updateFrameDeltaTime(raw_frame_meta_data.renderer_timestamp);
+
         this.#encoded_frame_consumer!.consumeEncodedFrame({
             encoded_frame: { video_stream: encoded_frame, meta_data },
         });
     };
+
+    /**
+     *
+     */
+    #updateFrameDeltaTime(renderer_timestamp: number): void {
+        this.#frame_dt_in_ms = renderer_timestamp - this.#frame_timestamp_in_ms;
+        this.#frame_timestamp_in_ms = renderer_timestamp;
+    }
 
     /**
      *
@@ -653,8 +702,24 @@ export class Livelink {
      *
      */
     #onEntitiesUpdated = ({ updated_entities }: Events.EntitiesUpdatedEvent): void => {
-        for (const { entity_euid, updated_components } of updated_entities) {
-            this.scene._updateEntityFromEvent({ entity_euid, updated_components });
+        for (const { entity_euid, updated_components, deleted_components } of updated_entities) {
+            this.scene._updateEntityFromEvent({ entity_euid, updated_components, deleted_components });
+        }
+    };
+
+    /**
+     *
+     */
+    #onClientConnectedEvent = ({ client_info }: Events.ClientConnectedEvent): void => {
+        this.session._onClientJoined({ core: this, client_info });
+    };
+
+    /**
+     *
+     */
+    #onClientsDisconnectedEvent = ({ client_ids }: Events.ClientsDisconnectedEvent): void => {
+        for (const client_id of client_ids) {
+            this.session._onClientLeft({ client_id });
         }
     };
 
@@ -667,7 +732,7 @@ export class Livelink {
     }: {
         updatesPerSecond?: number;
         broadcastsPerSecond?: number;
-    }): void {
+    } = {}): void {
         this.#update_interval = setInterval(() => {
             const update_commands = this.scene._entity_registry._getEntitiesToUpdate();
             if (update_commands.length > 0) {
@@ -682,6 +747,17 @@ export class Livelink {
             }
         }, 1000 / broadcastsPerSecond);
     }
+
+    /**
+     *
+     */
+    #onVisibilityChange = (): void => {
+        if (document.hidden) {
+            this.#core.suspend();
+        } else {
+            this.#core.resume();
+        }
+    };
 
     //TEMPTEMPTEMPTEMPTEMPTEMPTEMPTEMPTEMPTEMPTEMPTEMPTEMPTEMPTEMPTEMP
     /**

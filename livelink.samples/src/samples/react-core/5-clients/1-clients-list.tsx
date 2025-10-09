@@ -59,6 +59,7 @@ function SessionCreator({
                 token={token}
                 LoadingPanel={LoadingOverlay}
                 ConnectionErrorPanel={DisconnectedModal}
+                autoJoinExisting={false}
             >
                 <SessionSniffer setSessionId={setSessionId} />
                 <AppLayout />
@@ -72,7 +73,7 @@ function SessionJoiner({ sessionId }: { sessionId: UUID | null }) {
     if (!sessionId) {
         return (
             <div className="w-full h-full flex-col content-center justify-center">
-                <h1 className="text-center font-medium">
+                <h1 className="text-center text-xs text-secondary">
                     Waiting for the main session to join
                 </h1>
             </div>
@@ -133,13 +134,13 @@ function ClientList() {
     return (
         <ul className="absolute right-2 bottom-2 flex flex-col-reverse gap-px">
             <li className={`${badgeClassName} bg-informative-800`}>
-                {`Current Client = ${instance?.session.client_id}`}
+                Current Client = {instance?.session.client_id}
             </li>
             {clients.map((client, i) => {
                 return (
                     <li
                         key={client.id}
-                        className={`${badgeClassName} bg-foreground`}
+                        className={`${badgeClassName} bg-foreground backdrop-blur-lg`}
                     >
                         {`Client[${i}] = ${prettifyUsername(client.username)}`}
                     </li>

@@ -59,6 +59,7 @@ function SessionCreator({
                 token={token}
                 LoadingPanel={LoadingOverlay}
                 ConnectionErrorPanel={DisconnectedModal}
+                autoJoinExisting={false}
             >
                 <SessionSniffer setSessionId={setSessionId} />
                 <AppLayout />
@@ -114,6 +115,6 @@ function SessionSniffer({
     useEffect(() => {
         setSessionId(instance?.session.session_id ?? null);
         return () => setSessionId(null);
-    }, [instance]);
+    }, [instance, setSessionId]);
     return null;
 }

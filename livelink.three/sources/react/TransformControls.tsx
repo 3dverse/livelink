@@ -102,7 +102,10 @@ export function TransformControlsComponent(
         controls.addEventListener("dragging-changed", draggingChangedHandler);
 
         const entityUpdateHandler = function (event: EntityUpdatedEvent) {
-            if (event.updated_components.includes("local_transform") && !isDragging) {
+            if (
+                event.updated_components.includes("local_transform") ||
+                (event.updated_components.includes("lineage") && !isDragging)
+            ) {
                 applyEntityTransform();
             }
         };

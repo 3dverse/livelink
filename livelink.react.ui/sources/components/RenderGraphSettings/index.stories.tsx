@@ -5,6 +5,7 @@ import { Canvas, useCameraEntity, Viewport } from "@3dverse/livelink-react";
 import { Entity } from "@3dverse/livelink";
 
 //------------------------------------------------------------------------------
+import { ViewerPanel } from "../../components-common/ViewerPanel";
 import { RenderGraphSettings } from ".";
 
 //------------------------------------------------------------------------------
@@ -14,7 +15,7 @@ const meta = {
     parameters: {
         layout: "fullscreen",
     },
-    tags: ["autodocs"],
+
     args: {
         userToken: import.meta.env.STORYBOOK_3DVERSE_PUBLIC_TOKEN,
         cameraEntity: null,
@@ -30,6 +31,7 @@ type Story = StoryObj<typeof meta>;
 
 //------------------------------------------------------------------------------
 export const _Component: Story = {
+    args: {},
     decorators: [
         (Story: React.ComponentType<{ cameraEntity: Entity | null }>, { args }) => {
             const { cameraEntity } = useCameraEntity();
@@ -44,17 +46,16 @@ export const _Component: Story = {
                                 height: "100%",
                             }}
                         >
-                            <div
+                            <ViewerPanel
                                 style={{
                                     width: "400px",
-                                    backgroundColor: "var(--3dverse-color-bg-ground)",
                                     zIndex: 1000,
                                     maxHeight: "100vh",
                                     overflowY: "auto",
                                 }}
                             >
-                                <RenderGraphSettings {...args} cameraEntity={cameraEntity} />
-                            </div>
+                                <RenderGraphSettings {...args} cameraEntity={cameraEntity} style={{ width: "100%" }} />
+                            </ViewerPanel>
                         </div>
                     </Viewport>
                 </Canvas>

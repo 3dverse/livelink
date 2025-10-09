@@ -56,8 +56,8 @@ function App() {
                     LoadingPanel={LoadingOverlay}
                     ConnectionErrorPanel={DisconnectedModal}
                 >
-                    <SkeletonController />
                     <AppLayout />
+                    <SkeletonController />
                 </Livelink>
             </SamplePlayer>
         </>
@@ -163,10 +163,10 @@ function SkeletonController() {
         return () => {
             clearInterval(intervalId);
         };
-    }, [animation]);
+    }, [animation, controller, instance]);
 
     return (
-        <div className="absolute bottom-4 flex items-center w-full justify-center z-10">
+        <div className="absolute bottom-[5vh] left-1/2 -translate-x-1/2">
             <select
                 className="select select-primary"
                 name="animations"

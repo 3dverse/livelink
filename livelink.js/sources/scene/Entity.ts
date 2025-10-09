@@ -160,6 +160,27 @@ export class Entity extends EntityTransformHandler {
      * Re-parent the entity by setting a parent entity.
      */
     override set parent(parent: Entity | null) {
+        if (parent) {
+            let current: Entity | null = parent;
+            while (current) {
+                if (current === this) {
+                    throw new Error("Cannot reparent an entity to itself or one of its children");
+                }
+                current = current.parent;
+            }
+        }
+
+        this._set_parent(parent);
+        this.lineage = {
+            parentUUID: parent ? parent.id : "00000000-0000-0000-0000-000000000000",
+            value: this.lineage?.value ?? [],
+        };
+    }
+
+    /**
+     * @internal
+     */
+    _set_parent(parent: Entity | null): void {
         super.parent = parent;
     }
 
@@ -249,7 +270,7 @@ export class Entity extends EntityTransformHandler {
         this.#scene = scene;
         this.#is_visible = is_visible;
         this.#children_rtid = children_rtid;
-        this._mergeComponents({ components, dispatch_event: false });
+        this._applyComponentsUpdate({ components, dispatch_event: false });
         this.#scene._entity_registry.add({ entity: this });
 
         if (!options) {
@@ -345,11 +366,15 @@ export class Entity extends EntityTransformHandler {
     /**
      * @internal
      */
-    _mergeComponents({
+    _applyComponentsUpdate({
         components,
+        deleted_components = [],
         dispatch_event,
         change_source,
-    }: { components: EntityCore | ComponentsManifest | Partial<ComponentsRecord> } & (
+    }: {
+        components: EntityCore | ComponentsManifest | Partial<ComponentsRecord>;
+        deleted_components?: Array<ComponentName>;
+    } & (
         | { dispatch_event: false; change_source?: undefined }
         | { dispatch_event: true; change_source: "local" | "external" }
     )): void {
@@ -358,6 +383,7 @@ export class Entity extends EntityTransformHandler {
 
             switch (component_name) {
                 case "euid":
+                case "lineage":
                     break;
                 case "local_transform":
                     this._setLocalTransform({ local_transform: components[component_name]! });
@@ -368,12 +394,16 @@ export class Entity extends EntityTransformHandler {
             }
         }
 
+        for (const component_name of deleted_components) {
+            this.#unsafeDeleteComponent({ component_name });
+        }
+
         if (dispatch_event) {
             this._dispatchEvent(
                 new EntityUpdatedEvent({
                     change_source,
                     updated_components: Object.keys(components) as Array<ComponentName>,
-                    deleted_components: [],
+                    deleted_components,
                     new_components: [],
                 }),
             );
@@ -479,7 +509,7 @@ export class Entity extends EntityTransformHandler {
         }
 
         if (value === undefined) {
-            Reflect.deleteProperty(this, `#${component_name}`);
+            this.#unsafeDeleteComponent({ component_name });
             this._markComponentAsDeleted({ component_name });
             return undefined;
         }
@@ -549,5 +579,17 @@ export class Entity extends EntityTransformHandler {
         Reflect.set(this, `#${component_name}`, sanitized_value);
 
         return new Proxy(sanitized_value, new ComponentHandler(this, component_name)) as ComponentType<_ComponentName>;
+    }
+
+    /**
+     *
+     */
+    #unsafeDeleteComponent<_ComponentName extends ComponentName>({
+        component_name,
+    }: {
+        component_name: _ComponentName;
+    }): void {
+        Reflect.deleteProperty(this, `#${component_name}`);
+        this._unsafeSetComponentValue({ component_name, value: undefined });
     }
 }

@@ -22,7 +22,7 @@
 
     "types": ["@types/wicg-file-system-access", "vite/client"]
   },
-  "include": ["src"],
+  "include": ["src", "eslint.config.mjs"],
   "exclude": ["src/samples/__to_sort__"],
   "references": [{ "path": "./tsconfig.node.json" }]
 }

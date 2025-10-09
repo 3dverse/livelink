@@ -25,9 +25,9 @@ const token = import.meta.env.VITE_PROD_PUBLIC_TOKEN;
 export default {
     path: import.meta.VITE_FILE_NAME,
     code: import.meta.VITE_FILE_CONTENT,
-    title: "Default Controller",
+    title: "Default Controllers",
     summary:
-        "Shows how to create a default camera controller and get a reference to it.",
+        "Shows how to use the default camera controllers and get a reference to them.",
     element: <App />,
 };
 
@@ -76,32 +76,27 @@ function AppLayout() {
                     />
                 </Viewport>
             </Canvas>
-            <div className="absolute top-14 left-1 flex flex-col">
-                <div className="flex flex-row">
-                    <button
-                        className="button button-overlay mr-2"
-                        onClick={moveCamera}
-                    >
-                        Move Camera
-                    </button>
-                    {presetKeys.map((presetKey, index) => {
-                        const preset = CameraControllerPresets[presetKey];
-                        const name = presetKey.replaceAll("_", " ");
-                        const isCurrentPreset =
-                            preset === cameraControllerPreset;
-                        return (
-                            <button
-                                key={index}
-                                className={`button button-overlay mr-2 ${isCurrentPreset ? "bg-accent" : ""}`}
-                                onClick={() =>
-                                    setCameraControllerPreset(preset)
-                                }
-                            >
-                                {name}
-                            </button>
-                        );
-                    })}
-                </div>
+            <div className="absolute bottom-[5vh] left-1/2 -translate-x-1/2 flex flex-row gap-1 w-max">
+                <button
+                    className="button button-overlay mr-4"
+                    onClick={moveCamera}
+                >
+                    Reset position
+                </button>
+                {presetKeys.map((presetKey, index) => {
+                    const preset = CameraControllerPresets[presetKey];
+                    const name = presetKey.replaceAll("_", " ");
+                    const isCurrentPreset = preset === cameraControllerPreset;
+                    return (
+                        <button
+                            key={index}
+                            className={`button button-overlay capitalize ${isCurrentPreset ? "bg-accent" : ""}`}
+                            onClick={() => setCameraControllerPreset(preset)}
+                        >
+                            {name}
+                        </button>
+                    );
+                })}
             </div>
         </>
     );

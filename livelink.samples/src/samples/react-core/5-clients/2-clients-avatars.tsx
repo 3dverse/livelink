@@ -63,6 +63,7 @@ function SessionCreator({
                 token={token}
                 LoadingPanel={LoadingOverlay}
                 ConnectionErrorPanel={DisconnectedModal}
+                autoJoinExisting={false}
             >
                 <SessionSniffer setSessionId={setSessionId} />
                 <AppLayout />
@@ -76,7 +77,7 @@ function SessionJoiner({ sessionId }: { sessionId: UUID | null }) {
     if (!sessionId) {
         return (
             <div className="w-full h-full flex-col content-center justify-center">
-                <h1 className="text-center font-medium">
+                <h1 className="text-center text-xs text-secondary">
                     Waiting for the main session to join
                 </h1>
             </div>
@@ -135,7 +136,7 @@ function Avatars() {
         if (watchedClient && !clients.includes(watchedClient)) {
             setWatchedClient(null);
         }
-    }, [clients]);
+    }, [clients, watchedClient]);
 
     if (!instance) {
         return null;
@@ -169,7 +170,7 @@ const AvatarList = ({
     setWatchedClient: (client: Client | null) => void;
 }) => {
     return (
-        <div className="absolute right-40 top-4">
+        <div className="absolute left-4 top-4">
             <div className="avatar-group flex gap-1 rtl:space-x-reverse">
                 {clients.map(client => (
                     <button
@@ -209,7 +210,12 @@ const PiPViewport = ({ watchedClient }: { watchedClient: Client | null }) => {
 const Avatar = ({ client }: { client: Client }) => {
     return (
         <div title={client.username}>
-            <BoringAvatar name={client.id} size={40} variant="beam" />
+            <BoringAvatar
+                colors={["#0a0310", "#49007e", "#ff005b", "#ff7d10", "#ffb238"]}
+                name={client.id}
+                size={40}
+                variant="beam"
+            />
         </div>
     );
 };

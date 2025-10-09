@@ -7,7 +7,7 @@ export function DisconnectedModal({ error }: { error: string }) {
 
     useEffect(() => {
         setConnectionState?.("connection-lost");
-    }, []);
+    }, [setConnectionState]);
 
     //--------------------------------------------------------------------------
     return (

@@ -17,4 +17,4 @@ Note that we advise using the React wrapper [livelink.react](https://www.npmjs.c
 
 If you're still interested in using the Livelink API directly, here's a quick guide on how to get started: [example](https://github.com/3dverse/livelink/blob/release/livelink.js/example.md).
 
-The reference documentation can be found at [https://docs.3dverse.com/livelink.js](https://docs.3dverse.com/livelink.js).
+The reference documentation can be found at [https://docs.3dverse.com/references/livelink.js](https://docs.3dverse.com/references/livelink.js).

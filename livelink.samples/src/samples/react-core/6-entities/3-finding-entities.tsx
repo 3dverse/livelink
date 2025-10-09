@@ -28,7 +28,7 @@ export default {
 };
 
 //------------------------------------------------------------------------------
-function App() {
+export function App() {
     return (
         <Livelink
             sceneId={scene_id}

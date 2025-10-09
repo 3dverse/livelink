@@ -1,12 +1,12 @@
 //------------------------------------------------------------------------------
 import { create } from "storybook/theming";
-import "@3dverse/design-tokens/css/design-tokens-internal.css";
+import "@3dverse/design-tokens/css/design-tokens.css";
 
 //------------------------------------------------------------------------------
 export default create({
     base: "dark",
     brandTitle: "3dverse Livelink React UI",
-    brandUrl: "https://docs.3dverse.com/livelink.react",
+    brandUrl: "https://docs.3dverse.com/references/livelink.react",
     // brandImage: "https://3dverse.com/logo/3dverse-rocket.svg",
     brandTarget: "_blank",
 

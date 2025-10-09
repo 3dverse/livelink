@@ -420,9 +420,11 @@ export class Scene {
     _updateEntityFromEvent({
         entity_euid,
         updated_components,
+        deleted_components,
     }: {
         entity_euid: UUID;
         updated_components: Partial<ComponentsRecord>;
+        deleted_components?: Array<ComponentName>;
     }): void {
         const entities = this._entity_registry.find({ entity_euid });
 
@@ -432,13 +434,53 @@ export class Scene {
         }
 
         for (const entity of entities) {
-            entity._mergeComponents({
+            if (updated_components.lineage) {
+                this.#onEntityReparentedByEuid({
+                    entity,
+                    new_parent_euid: updated_components.lineage.parentUUID ?? null,
+                });
+            }
+
+            entity._applyComponentsUpdate({
                 components: updated_components,
+                deleted_components,
                 dispatch_event: true,
                 change_source: "external",
             });
         }
     }
+
+    /**
+     *
+     */
+    #onEntityReparentedByEuid = async ({
+        entity,
+        new_parent_euid,
+    }: {
+        entity: Entity;
+        new_parent_euid: UUID | null;
+    }): Promise<void> => {
+        if (!new_parent_euid) {
+            entity._set_parent(null);
+            return;
+        }
+
+        const parent_entities = await this.findEntities({ entity_uuid: new_parent_euid });
+        const entityLineage = entity.lineage;
+        if (!entityLineage) {
+            entity._set_parent(parent_entities[0] ?? null);
+            return;
+        }
+
+        const parentEntity = parent_entities.find(parent => {
+            if (!parent.lineage) {
+                return false;
+            }
+            return parent.lineage.value.every((linkerEUID, i) => linkerEUID === entityLineage.value[i]);
+        });
+
+        entity._set_parent(parentEntity ?? null);
+    };
 
     /**
      * @internal

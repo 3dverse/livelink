@@ -1,5 +1,5 @@
 //------------------------------------------------------------------------------
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 
 //------------------------------------------------------------------------------
@@ -104,7 +104,7 @@ function App() {
                 <>
                     <AppLayout />
 
-                    <div className="absolute top-4 flex items-center justify-center gap-4 w-full">
+                    <div className="absolute bottom-[5vh] left-1/2 -translate-x-1/2">
                         <XRButton mode="immersive-ar" enterXR={setXRMode} />
                     </div>
                 </>
@@ -160,27 +160,33 @@ function XRButton({
 
     //--------------------------------------------------------------------------
     // Variant launch sdk initialization event listener.
-    function onVlaunchInitialized(event: Event) {
-        const customEvent = event as CustomEvent;
-        console.debug("vlaunch-initialized:", customEvent);
+    const onVlaunchInitialized = useCallback(
+        (event: Event) => {
+            const customEvent = event as CustomEvent;
+            console.debug("vlaunch-initialized:", customEvent);
 
-        if (customEvent.detail?.launchRequired) {
-            // Load Variant Launch URL to reload the sample inside Variant
-            // Launch iOS Clip App.
-            const { VLaunch } = window as unknown as any;
-            const url = new URL(window.location.href);
-            window.location.href = VLaunch.getLaunchUrl(url.toString());
-            return;
-        }
-        WebXRHelper.isSessionSupported(mode).then(async supported => {
-            setMessage(
-                supported
-                    ? `Enter ${modeTitle}`
-                    : `${modeTitle} is not supported.`,
-            );
-            setIsSessionSupported(supported);
-        });
-    }
+            if (customEvent.detail?.launchRequired) {
+                // Load Variant Launch URL to reload the sample inside Variant
+                // Launch iOS Clip App.
+                // @ts-excpect-error
+                const { VLaunch } = window as unknown as {
+                    VLaunch: { getLaunchUrl: (url: string) => string };
+                };
+                const url = new URL(window.location.href);
+                window.location.href = VLaunch.getLaunchUrl(url.toString());
+                return;
+            }
+            WebXRHelper.isSessionSupported(mode).then(async supported => {
+                setMessage(
+                    supported
+                        ? `Enter ${modeTitle}`
+                        : `${modeTitle} is not supported.`,
+                );
+                setIsSessionSupported(supported);
+            });
+        },
+        [mode, modeTitle],
+    );
 
     //--------------------------------------------------------------------------
     useEffect(() => {
@@ -197,7 +203,7 @@ function XRButton({
                 return;
             }
 
-            const { VLaunch } = window as unknown as any;
+            const { VLaunch } = window as unknown as { VLaunch: object };
             if (VLaunch) {
                 // Variant Launch SDK is already loaded and WebXR not supported.
                 setMessage(`${modeTitle} is not supported.`);
@@ -215,7 +221,9 @@ function XRButton({
             // Load Variant Launch SDK
             loadScript(variant_launch_sdk_url)
                 .then(() => {
-                    const { VLaunch } = window as unknown as any;
+                    const { VLaunch } = window as unknown as {
+                        VLaunch: object;
+                    };
                     if (!VLaunch) {
                         // TODO: something is not clear here, there is a first call to `loadScript` where `VLaunch` is
                         // not defiend, but it's defined on a further call. This works but may be by chance.
@@ -242,7 +250,7 @@ function XRButton({
                 onVlaunchInitialized,
             );
         };
-    }, [mode]);
+    }, [mode, modeTitle, onVlaunchInitialized]);
 
     return (
         <button

@@ -22,7 +22,7 @@ import MultiOverlayViewport from "./react-core/3-overlays/3-multi-overlay";
 import DOM3DElementAnchors from "./react-core/3-overlays/4-dom-element-anchors";
 
 //------------------------------------------------------------------------------
-import DefaultCameraController from "./react-core/4-cameras/1-default-camera-controller";
+import DefaultCameraControllers from "./react-core/4-cameras/1-default-camera-controllers";
 import CustomCameraController from "./react-core/4-cameras/2-custom-camera-controller";
 import ThirdPersonController from "./react-core/4-cameras/3-third-person-controller";
 import CameraRenderTarget from "./react-core/4-cameras/4-camera-render-target";
@@ -45,6 +45,8 @@ import SunPositionPicker from "./react-ui/2-sun-position-picker";
 import RenderGraphSettings from "./react-ui/3-render-graph-settings";
 import ViewCube from "./react-ui/4-view-cube";
 import LightControl from "./react-ui/5-light-control";
+import CameraSpeedSlider from "./react-ui/6-camera-speed-slider";
+import PerformancePanel from "./react-ui/7-performance-panel";
 
 //------------------------------------------------------------------------------
 import LiveSkeletalAnimation from "./advanced/x-live-skeletal-animation";
@@ -101,7 +103,7 @@ export default [
     },
     {
         categoryName: "Cameras",
-        list: [DefaultCameraController, CustomCameraController, ThirdPersonController, CameraRenderTarget],
+        list: [DefaultCameraControllers, CustomCameraController, ThirdPersonController, CameraRenderTarget],
     },
     {
         categoryName: "Clients",
@@ -113,7 +115,15 @@ export default [
     },
     {
         categoryName: "Widgets",
-        list: [ActivityWatcher, SunPositionPicker, RenderGraphSettings, ViewCube, LightControl],
+        list: [
+            ActivityWatcher,
+            SunPositionPicker,
+            RenderGraphSettings,
+            ViewCube,
+            LightControl,
+            CameraSpeedSlider,
+            PerformancePanel,
+        ],
     },
     {
         categoryName: "Advanced",

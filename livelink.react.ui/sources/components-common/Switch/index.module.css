@@ -16,7 +16,7 @@
     --switch-padding: 2px;
     width: var(--switch-width);
     height: var(--switch-height);
-    background-color: var(--3dverse-color-border-tertiary);
+    background-color: var(--3dverse-color-border-secondary);
     border-radius: 9999px;
     position: relative;
     transition: background-color 0.25s;
@@ -28,7 +28,7 @@
     left: var(--switch-padding);
     width: calc(var(--switch-height) - var(--switch-padding) * 2);
     height: calc(var(--switch-height) - var(--switch-padding) * 2);
-    background-color: var(--3dverse-color-content-primary);
+    background-color: var(--3dverse-color-content-tertiary);
     border-radius: 50%;
     transition:
         transform 0.25s,
