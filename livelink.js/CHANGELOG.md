@@ -1,5 +1,19 @@
 # @3dverse/livelink
 
+## 0.8.50
+
+### Patch Changes
+
+- feat(livelink.js): expose last frame delta time to compute fps
+- feat: implement detach-components command & event
+- chore: updated dependencies
+- refactor: implement new client api, allowing headless clients to see other client
+- feat(livelink.js): implement viewer suspend and resume using page visibility API
+- fix: correct docs urls
+- chore: update dependencies
+- feat: add camera speed slider and sample
+- feat: entity reparent
+
 ## 0.8.49
 
 ### Patch Changes

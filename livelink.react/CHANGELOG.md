@@ -1,5 +1,22 @@
 # @3dverse/livelink-react
 
+## 0.2.53
+
+### Patch Changes
+
+- chore: updated dependencies
+- chore: update dependencies
+- Updated dependencies
+- Updated dependencies
+- Updated dependencies
+- Updated dependencies
+- Updated dependencies
+- Updated dependencies
+- Updated dependencies
+- Updated dependencies
+- Updated dependencies
+  - @3dverse/livelink@0.8.50
+
 ## 0.2.52
 
 ### Patch Changes

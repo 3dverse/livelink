@@ -1,5 +1,33 @@
 # @3dverse/livelink-react-ui
 
+## 0.3.10
+
+### Patch Changes
+
+- feat(livelink.js): expose last frame delta time to compute fps
+- chore(livelink.samples): update @3dverse/api
+- chore: updated dependencies
+- chore(livelink.react.ui): upgrade to storybook 9.1.10
+- feat(livelink.react.ui): SunPositionPicker widget, sync orientation & shadow caster toggling across clients
+- style(livelink.react.ui): increase switch color contrast
+- style(livelink.samples): fix sidebar logo
+- chore(livelink.react.ui): bump @3dverse/design-tokens
+- fix: correct docs urls
+- fix(livelink.react.ui): improve storybook documentation with controls and code panels
+- chore: update dependencies
+- feat: add camera speed slider and sample
+- Updated dependencies
+- Updated dependencies
+- Updated dependencies
+- Updated dependencies
+- Updated dependencies
+- Updated dependencies
+- Updated dependencies
+- Updated dependencies
+- Updated dependencies
+  - @3dverse/livelink@0.8.50
+  - @3dverse/livelink-react@0.2.53
+
 ## 0.3.9
 
 ### Patch Changes
