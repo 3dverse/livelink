@@ -18,6 +18,7 @@ import { Entity } from "./Entity";
 import { compute_rpn } from "./Filters";
 import { EntityRegistry } from "./EntityRegistry";
 import { ScriptEventReceived } from "./ScriptEvents";
+import type { Livelink } from "../Livelink";
 
 /**
  * Options for creating a new entity.
@@ -58,6 +59,11 @@ export class Scene {
     public readonly _entity_registry = new EntityRegistry();
 
     /**
+     * The livelink instance.
+     */
+    #instance: Livelink;
+
+    /**
      * The core instance.
      */
     #core: LivelinkCore;
@@ -71,7 +77,8 @@ export class Scene {
     /**
      * @internal
      */
-    constructor(core: LivelinkCore) {
+    constructor(instance: Livelink, core: LivelinkCore) {
+        this.#instance = instance;
         this.#core = core;
     }
 
@@ -449,6 +456,13 @@ export class Scene {
             });
         }
     }
+
+    /**
+     * @internal
+     */
+    _onEntityReparented = (): void => {
+        this.#instance._updateEntities();
+    };
 
     /**
      *

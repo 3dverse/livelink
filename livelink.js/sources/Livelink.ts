@@ -337,7 +337,7 @@ export class Livelink {
     private constructor({ session }: { session: Session }) {
         this.session = session;
         this.#core = new DynamicLoader.Core();
-        this.scene = new Scene(this.#core);
+        this.scene = new Scene(this, this.#core);
         this.#mouse = new Mouse(this);
         this.#keyboard = new Keyboard(this);
         this.#gamepads_registry = new GamepadsRegistry({ instance: this });
@@ -733,20 +733,29 @@ export class Livelink {
         updatesPerSecond?: number;
         broadcastsPerSecond?: number;
     } = {}): void {
-        this.#update_interval = setInterval(() => {
-            const update_commands = this.scene._entity_registry._getEntitiesToUpdate();
-            if (update_commands.length > 0) {
-                this.#core.updateEntities({ update_commands, persist: false });
-            }
-        }, 1000 / updatesPerSecond);
-
-        this.#broadcast_interval = setInterval(() => {
-            const update_commands = this.scene._entity_registry._getEntitiesToPersist();
-            if (update_commands.length > 0) {
-                this.#core.updateEntities({ update_commands, persist: true });
-            }
-        }, 1000 / broadcastsPerSecond);
+        this.#update_interval = setInterval(this._updateEntities, 1000 / updatesPerSecond);
+        this.#broadcast_interval = setInterval(this._broadcastEntities, 1000 / broadcastsPerSecond);
     }
+
+    /**
+     * @internal
+     */
+    _updateEntities = (): void => {
+        const update_commands = this.scene._entity_registry._getEntitiesToUpdate();
+        if (update_commands.length > 0) {
+            this.#core.updateEntities({ update_commands, persist: false });
+        }
+    };
+
+    /**
+     * @internal
+     */
+    _broadcastEntities = (): void => {
+        const update_commands = this.scene._entity_registry._getEntitiesToPersist();
+        if (update_commands.length > 0) {
+            this.#core.updateEntities({ update_commands, persist: true });
+        }
+    };
 
     /**
      *

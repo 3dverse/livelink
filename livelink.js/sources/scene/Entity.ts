@@ -175,6 +175,7 @@ export class Entity extends EntityTransformHandler {
             parentUUID: parent ? parent.id : "00000000-0000-0000-0000-000000000000",
             value: this.lineage?.value ?? [],
         };
+        this.#scene._onEntityReparented();
     }
 
     /**
