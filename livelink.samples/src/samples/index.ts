@@ -26,6 +26,7 @@ import DefaultCameraControllers from "./react-core/4-cameras/1-default-camera-co
 import CustomCameraController from "./react-core/4-cameras/2-custom-camera-controller";
 import ThirdPersonController from "./react-core/4-cameras/3-third-person-controller";
 import CameraRenderTarget from "./react-core/4-cameras/4-camera-render-target";
+import CameraTravel from "./react-core/4-cameras/5-camera-travel";
 
 //------------------------------------------------------------------------------
 import Clients from "./react-core/5-clients/1-clients-list";
@@ -103,7 +104,13 @@ export default [
     },
     {
         categoryName: "Cameras",
-        list: [DefaultCameraControllers, CustomCameraController, ThirdPersonController, CameraRenderTarget],
+        list: [
+            DefaultCameraControllers,
+            CustomCameraController,
+            ThirdPersonController,
+            CameraRenderTarget,
+            CameraTravel,
+        ],
     },
     {
         categoryName: "Clients",
