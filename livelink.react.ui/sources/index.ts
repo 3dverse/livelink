@@ -2,11 +2,8 @@
 export * from "./components/Provider";
 
 //------------------------------------------------------------------------------
-export * from "./components/PerformancePanel";
 export * from "./components/CameraSpeedSlider";
 export * from "./components/InactivityWarning";
-export * from "./components/RenderGraphSettings";
-export * from "./components/SunPositionPicker";
 export * from "./components/LightControl";
 export * from "./components/LightControl/LightPreview/LightPreview";
 export * from "./components/LightControl/LightColorSelector/LightColorSelector";
@@ -14,10 +11,16 @@ export * from "./components/LightControl/LightTemperatureSlider/LightTemperature
 export * from "./components/LightControl/LightBrightnessSlider/LightBrightnessSlider";
 export * from "./components/LightControl/LightSwitchOnOff/LightSwitchOnOff";
 export * from "./components/LightControl/LightControlContext";
-export * from "./components/ViewCube";
 export * from "./components/LoadingOverlay";
+export * from "./components/PerformancePanel";
+export * from "./components/RenderGraphSettings";
+export * from "./components/SunPositionPicker";
+export * from "./components/ViewCube";
 export * from "./components/VirtualGamepad";
 export * from "./components/VirtualJoystick";
+
+//------------------------------------------------------------------------------
+export * from "./components-common/ViewerPanel";
 
 //------------------------------------------------------------------------------
 /**
