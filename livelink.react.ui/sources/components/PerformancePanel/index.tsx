@@ -1,9 +1,13 @@
-//-----------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 import React, { useContext, useEffect, useState } from "react";
 import { LivelinkContext } from "@3dverse/livelink-react";
 
-//-----------------------------------------------------------------------------
-export const PerformancePanel = () => {
+//------------------------------------------------------------------------------
+import { Skeleton } from "../../components-common/Skeleton";
+import styles from "./style.module.css";
+
+//------------------------------------------------------------------------------
+export const PerformancePanel = ({ className, style }: { className?: string; style?: React.CSSProperties }) => {
     //--------------------------------------------------------------------------
     const { instance } = useContext(LivelinkContext);
     const [, setRedrawTrigger] = useState(true);
@@ -25,7 +29,19 @@ export const PerformancePanel = () => {
 
     //--------------------------------------------------------------------------
     if (!instance) {
-        return null;
+        return (
+            <div
+                className={`${styles.container} ${className ?? ""} livelink-react-ui-component`}
+                style={{ width: "100%", ...style }}
+            >
+                {[1, 2, 3].map(index => (
+                    <p key={index} className={styles.indicator}>
+                        <Skeleton style={{ width: "60%" }} />
+                        <Skeleton style={{ width: "20%" }} />
+                    </p>
+                ))}
+            </div>
+        );
     }
 
     //--------------------------------------------------------------------------
@@ -35,29 +51,25 @@ export const PerformancePanel = () => {
     frame_dt = Math.min(1000, frame_dt);
     const fps = frame_dt ? (1000 / frame_dt).toFixed(0) : 0;
 
+    const indicators = [
+        { label: "Latency", value: latency.toFixed(0) },
+        { label: "Frame dt", value: frame_dt },
+        { label: "FPS", value: fps },
+    ];
+
     //--------------------------------------------------------------------------
     return (
         <div
-            role="perf-metrics"
-            className="
-                flex flex-col items-start gap-1 p-3 w-36
-                bg-[color-mix(in_srgb,var(--color-bg-foreground)_85%,transparent)] backdrop-blur-xl rounded-lg 
-                shadow-[0px_24px_40px_10px_color-mix(in_srgb,black_40%,transparent)] 
-                text-xs
-            "
+            role="status"
+            className={`${styles.container} ${className ?? ""} livelink-react-ui-component`}
+            style={style}
         >
-            <div className="flex justify-between w-full">
-                <span>Latency</span>
-                <span>{latency.toFixed(0)} ms</span>
-            </div>
-            <div className="flex justify-between w-full">
-                <span>Frame dt</span>
-                <span>{frame_dt} ms</span>
-            </div>
-            <div className="flex justify-between w-full">
-                <span>FPS</span>
-                <span>{fps}</span>
-            </div>
+            {indicators.map(({ label, value }) => (
+                <p key={label} className={styles.indicator}>
+                    <span>{label}</span>
+                    <span className={styles.value}>{value}</span>
+                </p>
+            ))}
         </div>
     );
 };

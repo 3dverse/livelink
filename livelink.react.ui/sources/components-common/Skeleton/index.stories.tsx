@@ -1,19 +1,25 @@
 //------------------------------------------------------------------------------
 import React from "react";
-import type { Meta, StoryObj } from "@storybook/react-vite";
+import type { ArgTypes, Meta, StoryObj } from "@storybook/react-vite";
 
 //------------------------------------------------------------------------------
-import { ViewerPanel } from "../../components-common/ViewerPanel";
-import { PerformancePanel } from ".";
+import { Skeleton } from ".";
 
 //------------------------------------------------------------------------------
 const meta = {
-    title: "Components/Performance Panel",
-    component: PerformancePanel,
+    title: "Components Common/Skeleton",
+    component: Skeleton,
     parameters: {
-        layout: "fullscreen",
+        layout: "centered",
     },
-} satisfies Meta<typeof PerformancePanel>;
+    argTypes: {
+        note: {
+            name: "Note",
+            description: "Skeleton height is defined by the font-size.",
+            control: { type: null },
+        },
+    } as ArgTypes<typeof Skeleton>,
+} satisfies Meta<typeof Skeleton>;
 
 //------------------------------------------------------------------------------
 export default meta;
@@ -24,18 +30,14 @@ export const _Component: Story = {
     args: {},
     render: (args: any) => {
         return (
-            <ViewerPanel
+            <div
                 style={{
-                    position: "absolute",
-                    bottom: "10%",
-                    left: "50%",
-                    transform: "translate(-50%, 0)",
-                    padding: ".5rem 1rem",
-                    width: "8rem",
+                    width: "10rem",
+                    fontSize: "1.25rem",
                 }}
             >
-                <PerformancePanel {...args} />
-            </ViewerPanel>
+                <Skeleton {...args} />
+            </div>
         );
     },
 };

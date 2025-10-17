@@ -1,0 +1,25 @@
+.container {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    width: 100%;
+
+    font-size: var(--3dverse-font-size-xs);
+}
+
+.indicator {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--3dverse-spacing-1);
+    width: 100%;
+}
+
+.value {
+    min-width: 5ch;
+
+    text-align: right;
+    color: var(--3dverse-color-content-tertiary);
+    letter-spacing: 0.05em;
+    font-variant-numeric: tabular-nums;
+}

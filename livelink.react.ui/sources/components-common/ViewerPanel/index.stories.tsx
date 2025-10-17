@@ -23,9 +23,5 @@ export const _Component: Story = {
     args: {
         children: <p>Panel optimised for 3D viewer overlay</p>,
     },
-    render: (args: any) => (
-        <div className="livelink-react-ui-component">
-            <ViewerPanel {...args} />
-        </div>
-    ),
+    render: (args: any) => <ViewerPanel {...args} />,
 };
