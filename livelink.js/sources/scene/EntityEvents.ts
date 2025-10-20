@@ -1,4 +1,6 @@
-import { ComponentName } from "@3dverse/livelink.core";
+import type { ComponentName } from "@3dverse/livelink.core";
+import { EditionEvent } from "../EditionEvent";
+import { Client } from "../session/Client";
 
 /**
  * The event that is fired when an entity is updated, either by adding, modifying or removing
@@ -8,8 +10,12 @@ import { ComponentName } from "@3dverse/livelink.core";
  * @noInheritDoc
  * @category Scene
  */
-export class EntityUpdatedEvent extends Event {
+export class EntityUpdatedEvent extends EditionEvent {
     /**
+     * @deprecated
+     *
+     * Use {@link EditionEvent.isLocal} and {@link EditionEvent.isExternal} instead.
+     *
      * The source of the change.
      * - "external": The change was made by another user from another instance of the app or even another app.
      * - "internal": The change was made by the current app.
@@ -46,18 +52,18 @@ export class EntityUpdatedEvent extends Event {
      * @internal
      */
     constructor({
-        change_source,
+        emitter,
         new_components,
         updated_components,
         deleted_components,
     }: {
-        change_source: "local" | "external";
+        emitter: Client | null;
         new_components: Array<ComponentName>;
         updated_components: Array<ComponentName>;
         deleted_components: Array<ComponentName>;
     }) {
-        super("on-entity-updated");
-        this.change_source = change_source;
+        super("on-entity-updated", emitter);
+        this.change_source = emitter ? "external" : "local";
         this.new_components = new_components;
         this.updated_components = updated_components;
         this.deleted_components = deleted_components;

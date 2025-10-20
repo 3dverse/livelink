@@ -383,9 +383,9 @@ export class Session extends TypedEventTarget<SessionEvents> implements SessionI
      *
      * @returns The client or null if the client is not found.
      */
-    getClient({ client_id }: { client_id: UUID }): Client | null {
+    getClient = ({ client_id }: { client_id: UUID }): Client | null => {
         return this.#clients.get(client_id) ?? null;
-    }
+    };
 
     /**
      * Evict a client from the session.
@@ -455,7 +455,7 @@ export class Session extends TypedEventTarget<SessionEvents> implements SessionI
      */
     _onClientJoined({ core, client_info }: { core: Livelink; client_info: ClientInfo }): void {
         console.debug("--- Client joined", client_info);
-        const client = new Client({ core, client_info });
+        const client = new Client({ core, client_info, session_id: this.session_id });
         this.#clients.set(client.id, client);
         if (client.id !== this.client_id) {
             this._dispatchEvent(new ClientJoinedEvent({ client }));

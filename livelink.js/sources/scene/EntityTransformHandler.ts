@@ -8,6 +8,7 @@ import { EntityBase } from "../../_prebuild/EntityBase";
 //------------------------------------------------------------------------------
 import { EntityUpdatedEvent } from "./EntityEvents";
 import { quaternionFromEuler, quaternionToEuler } from "../maths";
+import { Client } from "../session/Client";
 
 function assert<_T extends never>(): void {}
 type TypeSatisfies<A, B> = Exclude<B, A>;
@@ -175,7 +176,7 @@ export abstract class EntityTransformHandler extends EntityBase {
      * The global transform of the entity.
      */
     set global_transform(value: Partial<Transform>) {
-        this._setGlobalTransform({ global_transform: value, change_source: "local" });
+        this._setGlobalTransform({ global_transform: value, emitter: null });
         this._markComponentAsDirty({ component_name: "local_transform" });
     }
 
@@ -300,10 +301,10 @@ export abstract class EntityTransformHandler extends EntityBase {
      */
     _setGlobalTransform({
         global_transform,
-        change_source,
+        emitter,
     }: {
         global_transform: Partial<Transform>;
-        change_source: "local" | "external";
+        emitter: Client | null;
     }): void {
         if (global_transform.position) {
             this._setGlobalPosition(global_transform.position);
@@ -329,7 +330,7 @@ export abstract class EntityTransformHandler extends EntityBase {
 
         this._dispatchEvent(
             new EntityUpdatedEvent({
-                change_source,
+                emitter,
                 updated_components: ["local_transform"],
                 deleted_components: [],
                 new_components: [],

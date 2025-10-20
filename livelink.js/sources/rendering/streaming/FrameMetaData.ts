@@ -1,7 +1,8 @@
 import type { Mat4, Quat, Events, UUID, Vec3 } from "@3dverse/livelink.core";
-import { FrameCameraTransform } from "./FrameCameraTransform";
-import { EntityRegistry } from "../../scene/EntityRegistry";
-import { Viewport } from "../camera/Viewport";
+import type { FrameCameraTransform } from "./FrameCameraTransform";
+import type { EntityRegistry } from "../../scene/EntityRegistry";
+import type { Viewport } from "../camera/Viewport";
+import type { Client } from "../../session/Client";
 
 /**
  * @category Streaming
@@ -27,7 +28,7 @@ export type FrameMetaData = {
      * @internal
      * Camera transforms of each client camera not attached to a viewport in the frame
      */
-    other_clients_camera_entities: Array<FrameCameraTransform>;
+    other_clients_camera_entities: Array<FrameCameraTransform & { client: Client | null }>;
 };
 
 /**
@@ -38,11 +39,13 @@ export function convertRawFrameMetaDataToFrameMetaData({
     client_id,
     entity_registry,
     viewports,
+    resolve_client,
 }: {
     raw_frame_meta_data: Events.RawFrameMetaData;
     client_id: UUID;
     entity_registry: EntityRegistry;
     viewports: Array<Viewport>;
+    resolve_client: ({ client_id }: { client_id: UUID }) => Client | null;
 }): FrameMetaData {
     const meta_data: FrameMetaData = {
         renderer_timestamp: raw_frame_meta_data.renderer_timestamp,
@@ -96,6 +99,7 @@ export function convertRawFrameMetaDataToFrameMetaData({
                 world_from_view_matrix: viewport_meta_data.ws_from_ls,
                 world_position: getWorldPosition(viewport_meta_data.ws_from_ls),
                 world_orientation: getWorldQuaternion(viewport_meta_data.ws_from_ls),
+                client: resolve_client(client_meta_data),
             });
         }
     }

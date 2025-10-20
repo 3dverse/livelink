@@ -621,7 +621,9 @@ export class Livelink {
         this.#core.addEventListener("on-disconnected", this.session._onDisconnected);
         this.#core.addEventListener("on-inactivity-warning", this.session._onInactivityWarning);
         this.#core.addEventListener("on-activity-detected", this.session._onActivityDetected);
+        this.#core.addEventListener("on-entities-created", this.scene._onEntitiesCreated);
         this.#core.addEventListener("on-entities-updated", this.#onEntitiesUpdated);
+        this.#core.addEventListener("on-entities-deleted", this.scene._onEntitiesDeleted);
         this.#core.addEventListener("on-entity-visibility-changed", this.scene._onEntityVisibilityChanged);
         this.#core.addEventListener("on-script-event-received", this.scene._onScriptEventReceived);
         this.#core.addEventListener("on-client-connected", this.#onClientConnectedEvent);
@@ -635,7 +637,9 @@ export class Livelink {
         this.#core.removeEventListener("on-disconnected", this.session._onDisconnected);
         this.#core.removeEventListener("on-inactivity-warning", this.session._onInactivityWarning);
         this.#core.removeEventListener("on-activity-detected", this.session._onActivityDetected);
+        this.#core.removeEventListener("on-entities-created", this.scene._onEntitiesCreated);
         this.#core.removeEventListener("on-entities-updated", this.#onEntitiesUpdated);
+        this.#core.removeEventListener("on-entities-deleted", this.scene._onEntitiesDeleted);
         this.#core.removeEventListener("on-entity-visibility-changed", this.scene._onEntityVisibilityChanged);
         this.#core.removeEventListener("on-script-event-received", this.scene._onScriptEventReceived);
         this.#core.removeEventListener("on-client-connected", this.#onClientConnectedEvent);
@@ -676,6 +680,7 @@ export class Livelink {
             client_id: this.session.client_id!,
             entity_registry: this.scene._entity_registry,
             viewports: this.viewports,
+            resolve_client: this.session.getClient,
         });
 
         this.#updateFrameDeltaTime(raw_frame_meta_data.renderer_timestamp);
@@ -703,9 +708,9 @@ export class Livelink {
     /**
      *
      */
-    #onEntitiesUpdated = ({ updated_entities }: Events.EntitiesUpdatedEvent): void => {
+    #onEntitiesUpdated = ({ updated_entities, emitter }: Events.EntitiesUpdatedEvent): void => {
         for (const { entity_euid, updated_components, deleted_components } of updated_entities) {
-            this.scene._updateEntityFromEvent({ entity_euid, updated_components, deleted_components });
+            this.scene._updateEntityFromEvent({ entity_euid, updated_components, deleted_components, emitter });
         }
     };
 

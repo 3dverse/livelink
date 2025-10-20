@@ -29,6 +29,11 @@ export class Client {
     readonly #client_info: ClientInfo;
 
     /**
+     * The unique identifier of the session the client is associated with.
+     */
+    readonly session_id: UUID;
+
+    /**
      * The RTIDs of the cameras that the client is viewing.
      */
     #camera_rtids: Array<RTID> = [];
@@ -71,6 +76,13 @@ export class Client {
     }
 
     /**
+     * Indicates if the client is external to the current session.
+     */
+    get is_external(): boolean {
+        return this.#core.session.session_id !== this.session_id;
+    }
+
+    /**
      * @internal
      * The 3d data under the client's mouse pointer.
      */
@@ -81,11 +93,12 @@ export class Client {
     /**
      * @internal
      */
-    constructor({ core, client_info }: { core: Livelink; client_info: ClientInfo }) {
+    constructor({ core, client_info, session_id }: { core: Livelink; client_info: ClientInfo; session_id: UUID }) {
         this.#core = core;
         this.#client_info = client_info;
+        this.session_id = session_id;
 
-        if (!this.#client_info.is_headless) {
+        if (!this.#client_info.is_headless && !this.is_external) {
             this.#metadata_promise = new Promise<void>(resolve => {
                 this.#metadata_promise_resolver = resolve;
             });
@@ -101,7 +114,7 @@ export class Client {
      * Returns the camera entities that the client is using.
      */
     async getCameraEntities(): Promise<Array<Entity>> {
-        if (this.#client_info.is_headless) {
+        if (this.#client_info.is_headless || this.is_external) {
             return [];
         }
 

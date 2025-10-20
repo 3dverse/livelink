@@ -1,6 +1,7 @@
 export type * from "@3dverse/livelink.core";
 
 export * from "./Livelink";
+export * from "./EditionEvent";
 
 export * from "./session/Client";
 export * from "./session/Session";
@@ -10,6 +11,7 @@ export * from "./session/SessionEvents";
 
 export * from "./scene/Scene";
 export * from "./scene/Entity";
+export * from "./scene/SceneEvents";
 export * from "./scene/EntityEvents";
 export * from "./scene/ScriptEvents";
 

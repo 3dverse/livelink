@@ -14,11 +14,14 @@ import type {
 } from "@3dverse/livelink.core";
 
 //------------------------------------------------------------------------------
+import type { Livelink } from "../Livelink";
 import { Entity } from "./Entity";
 import { compute_rpn } from "./Filters";
 import { EntityRegistry } from "./EntityRegistry";
 import { ScriptEventReceived } from "./ScriptEvents";
-import type { Livelink } from "../Livelink";
+import { EntitiesCreatedEvent, EntitiesDeletedEvent, type SceneEvents } from "./SceneEvents";
+import { TypedEventTarget } from "../TypedEventTarget";
+import { Client } from "../session/Client";
 
 /**
  * Options for creating a new entity.
@@ -51,7 +54,7 @@ export type EntityCreationOptions = {
  *
  * @category Scene
  */
-export class Scene {
+export class Scene extends TypedEventTarget<SceneEvents> {
     /**
      * @internal
      * Registry of entities discovered until now.
@@ -78,6 +81,7 @@ export class Scene {
      * @internal
      */
     constructor(instance: Livelink, core: LivelinkCore) {
+        super();
         this.#instance = instance;
         this.#core = core;
     }
@@ -123,7 +127,9 @@ export class Scene {
             delete_on_client_disconnection: options?.delete_on_client_disconnection ?? false,
             is_transient: true,
         });
-        return new Entity({ scene: this, parent, components: entity_cores[0], options });
+        const entity = new Entity({ scene: this, parent, components: entity_cores[0], options });
+        this._dispatchEvent(new EntitiesCreatedEvent({ entities: [entity], emitter: null }));
+        return entity;
     }
 
     /**
@@ -151,7 +157,9 @@ export class Scene {
         });
 
         //TODO: compute each entity's parent
-        return entity_cores.map(components => new Entity({ scene: this, parent: null, components, options }));
+        const entities = entity_cores.map(components => new Entity({ scene: this, parent: null, components, options }));
+        this._dispatchEvent(new EntitiesCreatedEvent({ entities, emitter: null }));
+        return entities;
     }
 
     /**
@@ -424,14 +432,62 @@ export class Scene {
     /**
      * @internal
      */
+    _onEntitiesCreated = async ({ created_entities, emitter }: Events.EntitiesCreatedEvent): Promise<void> => {
+        const entities: Array<Entity> = [];
+
+        for (const [parent_rtid, children] of created_entities.entries()) {
+            const parent: Entity | null =
+                parent_rtid !== 0n ? await this._findEntity({ entity_rtid: parent_rtid }) : null;
+
+            for (const entity of children) {
+                entities.push(new Entity({ scene: this, parent, components: entity }));
+            }
+        }
+
+        this._dispatchEvent(new EntitiesCreatedEvent({ entities, emitter: this._resolveEmitter(emitter) }));
+    };
+
+    /**
+     * @internal
+     */
+    _onEntitiesDeleted = ({
+        deleted_entity_euids,
+        deleted_entity_rtids,
+        emitter,
+    }: Events.EntitiesDeletedEvent): void => {
+        const entity_ids = Array<RTID>();
+        for (const entity_euid of deleted_entity_euids) {
+            const entities = this._entity_registry.find({ entity_euid });
+            for (const entity of entities) {
+                this._entity_registry.remove({ entity });
+                entity_ids.push(entity.rtid);
+            }
+        }
+
+        for (const entity_rtid of deleted_entity_rtids) {
+            const entity = this._entity_registry.get({ entity_rtid });
+            if (entity) {
+                this._entity_registry.remove({ entity });
+                entity_ids.push(entity.rtid);
+            }
+        }
+
+        this._dispatchEvent(new EntitiesDeletedEvent({ entity_ids, emitter: this._resolveEmitter(emitter) }));
+    };
+
+    /**
+     * @internal
+     */
     _updateEntityFromEvent({
         entity_euid,
         updated_components,
         deleted_components,
+        emitter,
     }: {
         entity_euid: UUID;
         updated_components: Partial<ComponentsRecord>;
         deleted_components?: Array<ComponentName>;
+        emitter: Events.Emitter | null;
     }): void {
         const entities = this._entity_registry.find({ entity_euid });
 
@@ -452,7 +508,7 @@ export class Scene {
                 components: updated_components,
                 deleted_components,
                 dispatch_event: true,
-                change_source: "external",
+                emitter,
             });
         }
     }
@@ -585,4 +641,23 @@ export class Scene {
 
         return current_parent;
     };
+
+    /**
+     * @internal
+     */
+    _resolveEmitter(emitter: Events.Emitter | null): Client | null {
+        if (emitter === null) {
+            return null;
+        }
+
+        if (emitter.session_id !== this.#instance.session.session_id) {
+            return new Client({
+                core: this.#instance,
+                client_info: emitter,
+                session_id: emitter.session_id,
+            });
+        }
+
+        return this.#instance.session.getClient(emitter);
+    }
 }
