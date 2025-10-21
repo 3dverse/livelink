@@ -1,7 +1,6 @@
 //------------------------------------------------------------------------------
 import {
     Livelink,
-    LivelinkContext,
     Canvas,
     Viewport,
     CameraController,
@@ -9,6 +8,7 @@ import {
     DOM3DOverlay,
     DOMEntity,
     useCameraEntity,
+    useEntities,
 } from "@3dverse/livelink-react";
 import type {
     Entity,
@@ -19,7 +19,7 @@ import type {
 import { LoadingOverlay } from "@3dverse/livelink-react-ui";
 
 //------------------------------------------------------------------------------
-import { useContext, useEffect, useMemo, useRef, useState } from "react";
+import { useMemo, useRef } from "react";
 import { DisconnectedModal } from "../../../components/SamplePlayer";
 
 //------------------------------------------------------------------------------
@@ -52,9 +52,11 @@ function App() {
 
 //------------------------------------------------------------------------------
 function AppLayout() {
-    const { instance } = useContext(LivelinkContext);
     const { cameraEntity } = useCameraEntity({ position: [50, 100, -50] });
-    const [labels, setLabels] = useState<Entity[]>([]);
+    const { entities } = useEntities({ mandatory_components: ["label"] }, [
+        "label",
+    ]);
+
     const cameraControllerRef = useRef<DefaultCameraController>(null);
     const cameraPreset = useMemo<CameraControllerPreset>(
         () => ({ init_options: { target: [50, 0, 35] } }),
@@ -86,19 +88,6 @@ function AppLayout() {
         // Move the camera to the position and look at the target
         cameraController.setLookAt(...position, ...target, true);
     };
-
-    useEffect(() => {
-        if (!instance) {
-            return;
-        }
-        instance.scene
-            .findEntitiesWithComponents({ mandatory_components: ["label"] })
-            .then(entities => {
-                console.debug("---- Found labels", entities);
-                setLabels(entities);
-            });
-    }, [instance]);
-
     return (
         <>
             <Canvas className="w-full h-full">
@@ -109,18 +98,18 @@ function AppLayout() {
                     />
 
                     <DOM3DOverlay>
-                        {labels.map(label => (
+                        {entities.map(entity => (
                             <DOMEntity
-                                key={label.name}
-                                entity={label}
+                                key={entity.id}
+                                entity={entity}
                                 anchor="center"
                             >
                                 <div
                                     className="bg-underground border p-2 rounded-lg select-none cursor-pointer hover:scale-105 transition-transform "
-                                    onClick={() => moveCamera(label)}
+                                    onClick={() => moveCamera(entity)}
                                     title="Click to move camera here"
                                 >
-                                    {label.name}
+                                    {entity.label?.title || "Unnamed Label"}
                                 </div>
                             </DOMEntity>
                         ))}

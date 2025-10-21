@@ -10,6 +10,7 @@ import type {
     UUID,
     ComponentName,
     EntityUpdatedEvent,
+    EntitiesDeletedEvent,
 } from "@3dverse/livelink";
 
 //------------------------------------------------------------------------------
@@ -102,6 +103,7 @@ export function useEntity(
         forbidden_components?: Array<ComponentName>;
     };
 
+    //--------------------------------------------------------------------------
     useEffect(() => {
         if (!instance) {
             return;
@@ -141,6 +143,7 @@ export function useEntity(
         };
     }, [instance, JSON.stringify(findEntityQuery)]);
 
+    //--------------------------------------------------------------------------
     useEffect(() => {
         const alwaysUpdate = watchedComponents === "any";
         const neverUpdate = watchedComponents.length === 0;
@@ -163,6 +166,25 @@ export function useEntity(
             entity.removeEventListener("on-entity-updated", triggerUpdate);
         };
     }, [entity, watchedComponents]);
+
+    //--------------------------------------------------------------------------
+    useEffect(() => {
+        if (!entity || !instance) {
+            return;
+        }
+
+        const onEntitiesDeleted = (event: EntitiesDeletedEvent): void => {
+            if (event.includes(entity)) {
+                setEntity(null);
+            }
+        };
+
+        instance.scene.addEventListener("on-entities-deleted", onEntitiesDeleted);
+
+        return (): void => {
+            instance.scene.removeEventListener("on-entities-deleted", onEntitiesDeleted);
+        };
+    }, [instance, entity]);
 
     //--------------------------------------------------------------------------
     useEffect(() => {
