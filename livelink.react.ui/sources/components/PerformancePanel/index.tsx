@@ -52,8 +52,8 @@ export const PerformancePanel = ({ className, style }: { className?: string; sty
     const fps = frame_dt ? (1000 / frame_dt).toFixed(0) : 0;
 
     const indicators = [
-        { label: "Latency", value: latency.toFixed(0) },
-        { label: "Frame dt", value: frame_dt },
+        { label: "Latency", value: latency.toFixed(0), unit: "ms" },
+        { label: "Frame dt", value: frame_dt, unit: "ms" },
         { label: "FPS", value: fps },
     ];
 
@@ -64,10 +64,13 @@ export const PerformancePanel = ({ className, style }: { className?: string; sty
             className={`${styles.container} ${className ?? ""} livelink-react-ui-component`}
             style={style}
         >
-            {indicators.map(({ label, value }) => (
+            {indicators.map(({ label, value, unit }) => (
                 <p key={label} className={styles.indicator}>
-                    <span>{label}</span>
-                    <span className={styles.value}>{value}</span>
+                    <span className={styles.label}>{label}</span>
+                    <span className={styles.value}>
+                        {value}
+                        {unit && <span className={styles.unit}>{unit}</span>}
+                    </span>
                 </p>
             ))}
         </div>
