@@ -90,7 +90,7 @@ function AppLayout() {
     };
     return (
         <>
-            <Canvas className="w-full h-full">
+            <Canvas className="w-full h-full" data-theme="light">
                 <Viewport cameraEntity={cameraEntity} className="w-full h-full">
                     <CameraController
                         ref={cameraControllerRef}
@@ -105,7 +105,7 @@ function AppLayout() {
                                 anchor="center"
                             >
                                 <div
-                                    className="bg-underground border p-2 rounded-lg select-none cursor-pointer hover:scale-105 transition-transform "
+                                    className="px-3 py-1 text-xs text-primary-dark font-medium bg-white/60 border border-white/40 backdrop-blur-3xl rounded-full select-none cursor-pointer hover:scale-105 transition-transform"
                                     onClick={() => moveCamera(entity)}
                                     title="Click to move camera here"
                                 >
