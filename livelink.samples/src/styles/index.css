@@ -12,6 +12,7 @@
 
 /* Component */
 @import "./tailwind/components/canvas.css";
+@import "./tailwind/components/scrollable-area.css";
 
 :root {
     /* Font family */
@@ -56,6 +57,7 @@
         opacity: 1;
         stroke-dashoffset: 300;
     }
+
     .icon {
         transform: scale(0.9);
     }
