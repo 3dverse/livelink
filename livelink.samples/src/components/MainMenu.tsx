@@ -83,7 +83,7 @@ export function MainMenu({ isPageEmbedded }: { isPageEmbedded?: boolean }) {
                             to="/"
                             className="flex items-start gap-3 pl-3 font-primary text-secondary text-[1.1rem] tracking-wider"
                         >
-                            {!isPageEmbedded && <Logo3dverse className="h-4 mt-[3px]" />}
+                            {!isPageEmbedded && <Logo3dverse className="h-4 mt-[5px]" />}
                             Samples
                         </NavLink>
                         <button className="button button-icon button-xs" onClick={onCollapse}>
