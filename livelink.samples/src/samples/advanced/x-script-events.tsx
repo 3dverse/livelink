@@ -194,7 +194,7 @@ function AppLayout() {
                 <DOM3DOverlay>
                     {text && (
                         <DOMEntity entity={textEntity} scaleFactor={0.0025}>
-                            <div className="relative rounded-lg bg-informative-100 text-primary-dark p-2 translate-x-10 max-w-md opacity-80">
+                            <div className="relative rounded-lg bg-informative-100 text-primary-dark p-2 translate-x-10 max-w-md">
                                 <p>{text}</p>
                                 <button
                                     className="button button-overlay mt-4 absolute right-4"

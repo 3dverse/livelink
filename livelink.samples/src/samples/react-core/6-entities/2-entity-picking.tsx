@@ -96,12 +96,12 @@ function EntityStatusPanel({
         <div className="absolute flex flex-col gap-4 m-4">
             <EntityPanel
                 label="Hovered entity"
-                color="bg-informative-500"
+                color="bg-informative"
                 entity={hoveredEntity}
             />
             <EntityPanel
                 label="Picked entity"
-                color="bg-positive-500"
+                color="bg-positive"
                 entity={pickedEntity}
             />
         </div>
@@ -124,7 +124,7 @@ function EntityPanel({
                 {label}
             </span>
             <span
-                className={`px-3 py-2 rounded-lg rounded-l-none text-primary-dark font-semibold ${entity ? color : "bg-negative-500"}`}
+                className={`px-3 py-2 rounded-lg rounded-l-none text-primary-dark font-semibold ${entity ? color : "bg-negative"}`}
             >
                 {entity ? entity.name : "none"}
             </span>

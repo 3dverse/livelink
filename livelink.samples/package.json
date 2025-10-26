@@ -28,7 +28,7 @@
     "three": "^0.180.0"
   },
   "devDependencies": {
-    "@3dverse/design-tokens": "^0.1.12",
+    "@3dverse/design-tokens": "^0.1.14",
     "@eslint/js": "^9.37.0",
     "@fontsource-variable/inter": "^5.2.8",
     "@tailwindcss/vite": "^4.1.16",
