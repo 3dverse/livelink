@@ -28,7 +28,7 @@
   },
   "homepage": "https://github.com/3dverse/livelink#readme",
   "devDependencies": {
-    "@3dverse/design-tokens": "^0.1.10",
+    "@3dverse/design-tokens": "^0.1.14",
     "@3dverse/livelink": "^0.8.49",
     "@chromatic-com/storybook": "^4.1.1",
     "@storybook/addon-docs": "^9.1.15",

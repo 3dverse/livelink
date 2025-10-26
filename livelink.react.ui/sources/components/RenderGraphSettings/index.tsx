@@ -132,31 +132,23 @@ export const RenderGraphSettings = ({
                             <AccordionItem key={key} isExpandable={isExpandable} className={styles.accordionItem}>
                                 <AccordionButton isExpandable={isExpandable} className={styles.accordionButton}>
                                     <div className={styles.subCategory}>
-                                        <div className={styles.subCategoryHeader}>
+                                        <div
+                                            className={styles.subCategoryHeader}
+                                            style={{
+                                                opacity: mainAttribute && !mainAttributeValue ? 0.75 : undefined,
+                                            }}
+                                        >
                                             <Icon
                                                 // as={isExpanded ? FaFolderOpen : FaFolder}
                                                 as={FaFolder}
                                                 size="xs"
                                                 style={{
                                                     color: "var(--3dverse-color-content-tertiary)",
-                                                    opacity: mainAttribute && !mainAttributeValue ? 0.25 : 0.5,
+                                                    opacity: mainAttribute && !mainAttributeValue ? 0.75 : undefined,
                                                     visibility: !isExpandable ? "hidden" : undefined,
                                                 }}
                                             />
-                                            <p
-                                                className={styles.subCategoryName}
-                                                style={
-                                                    mainAttribute
-                                                        ? {
-                                                              color: mainAttributeValue
-                                                                  ? ""
-                                                                  : "var(--3dverse-color-content-quaternary)",
-                                                          }
-                                                        : {}
-                                                }
-                                            >
-                                                {subcategory.name}
-                                            </p>
+                                            <p className={styles.subCategoryName}>{subcategory.name}</p>
                                         </div>
                                         {mainAttribute && (
                                             <Checkbox
