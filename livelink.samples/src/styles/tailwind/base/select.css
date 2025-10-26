@@ -1,6 +1,6 @@
 @layer base {
     .select {
-        @apply flex items-center justify-center px-4 py-2 pr-16 text-primary text-md tracking-wide font-normal rounded-lg cursor-pointer;
+        @apply flex items-center justify-center px-4 py-2 pr-16 text-primary text-base tracking-wide font-normal rounded-lg cursor-pointer;
         transition-property: box-shadow, background-color, opacity;
         transition-duration: 0.25s;
 

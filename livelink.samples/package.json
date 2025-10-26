@@ -19,7 +19,6 @@
     "@3dverse/livelink-three": "file:../livelink.three",
     "@3dverse/livelink-webxr": "file:../livelink.webxr",
     "@fontsource-variable/manrope": "^5.2.8",
-    "@tailwindcss/vite": "^4.1.14",
     "boring-avatars": "^2.0.4",
     "prism-react-renderer": "^2.4.1",
     "react": "^19.2.0",
@@ -29,9 +28,10 @@
     "three": "^0.180.0"
   },
   "devDependencies": {
-    "@3dverse/design-tokens": "^0.1.10",
+    "@3dverse/design-tokens": "^0.1.12",
     "@eslint/js": "^9.37.0",
     "@fontsource-variable/inter": "^5.2.8",
+    "@tailwindcss/vite": "^4.1.16",
     "@types/react": "^19.2.2",
     "@types/react-dom": "^19.2.1",
     "@types/wicg-file-system-access": "^2023.10.7",
@@ -43,7 +43,7 @@
     "eslint-plugin-react-hooks": "^6.1.1",
     "eslint-plugin-react-refresh": "^0.4.23",
     "globals": "^16.4.0",
-    "tailwindcss": "^4.1.14",
+    "tailwindcss": "^4.1.16",
     "typescript": "^5.9.3",
     "vite": "^7.1.9"
   }

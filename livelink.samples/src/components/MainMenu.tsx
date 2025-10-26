@@ -36,12 +36,12 @@ export function MainMenu({ isPageEmbedded }: { isPageEmbedded?: boolean }) {
     // Auto-scroll to active NavLink
     useEffect(() => {
         if (scrollContainerRef.current) {
-            const activeNavLink = scrollContainerRef.current.querySelector('.active');
+            const activeNavLink = scrollContainerRef.current.querySelector(".active");
             if (activeNavLink) {
                 activeNavLink.scrollIntoView({
-                    behavior: 'smooth',
-                    block: 'center',
-                    inline: 'nearest'
+                    behavior: "smooth",
+                    block: "center",
+                    inline: "nearest",
                 });
             }
         }
@@ -104,7 +104,7 @@ export function MainMenu({ isPageEmbedded }: { isPageEmbedded?: boolean }) {
                                             to={resolveSamplePath(s.path)}
                                             className={({ isActive }) =>
                                                 [
-                                                    "button button-ghost px-3 py-[3px] text-xs justify-start rounded-lg",
+                                                    "button button-ghost px-3 py-[3px] text-xs leading-normal justify-start rounded-lg",
                                                     isActive ? "active" : "",
                                                 ].join(" ")
                                             }
