@@ -66,7 +66,7 @@ function EntityCreator() {
     }
 
     const MATERIAL_REFS = [
-        "5bd5d2c565d3-4cdb-adb1-c85ae1502840", // Light
+        "5bd5d2c5-65d3-4cdb-adb1-c85ae1502840", // Light
         "afbcef75-7c52-4a90-b6e6-d19dcc04c3ad", // Green
         "9b848934-e592-41a9-895f-11ab01892b1d", // Wood
         "c9650d73-0f0b-4064-843f-ff0bb8d506e7", // Dark
