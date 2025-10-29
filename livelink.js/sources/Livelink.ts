@@ -625,6 +625,7 @@ export class Livelink {
         this.#core.addEventListener("on-entities-updated", this.#onEntitiesUpdated);
         this.#core.addEventListener("on-entities-deleted", this.scene._onEntitiesDeleted);
         this.#core.addEventListener("on-entity-visibility-changed", this.scene._onEntityVisibilityChanged);
+        this.#core.addEventListener("on-scene-settings-updated", this.scene._onSceneSettingsUpdated);
         this.#core.addEventListener("on-script-event-received", this.scene._onScriptEventReceived);
         this.#core.addEventListener("on-client-connected", this.#onClientConnectedEvent);
         this.#core.addEventListener("on-clients-disconnected", this.#onClientsDisconnectedEvent);
@@ -641,6 +642,7 @@ export class Livelink {
         this.#core.removeEventListener("on-entities-updated", this.#onEntitiesUpdated);
         this.#core.removeEventListener("on-entities-deleted", this.scene._onEntitiesDeleted);
         this.#core.removeEventListener("on-entity-visibility-changed", this.scene._onEntityVisibilityChanged);
+        this.#core.removeEventListener("on-scene-settings-updated", this.scene._onSceneSettingsUpdated);
         this.#core.removeEventListener("on-script-event-received", this.scene._onScriptEventReceived);
         this.#core.removeEventListener("on-client-connected", this.#onClientConnectedEvent);
         this.#core.removeEventListener("on-clients-disconnected", this.#onClientsDisconnectedEvent);

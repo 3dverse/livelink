@@ -11,6 +11,7 @@ import type {
     ComponentsManifest,
     ComponentsRecord,
     Events,
+    SceneSettingsRecord,
 } from "@3dverse/livelink.core";
 
 //------------------------------------------------------------------------------
@@ -19,7 +20,7 @@ import { Entity } from "./Entity";
 import { compute_rpn } from "./Filters";
 import { EntityRegistry } from "./EntityRegistry";
 import { ScriptEventReceived } from "./ScriptEvents";
-import { EntitiesCreatedEvent, EntitiesDeletedEvent, type SceneEvents } from "./SceneEvents";
+import { EntitiesCreatedEvent, EntitiesDeletedEvent, SceneSettingsUpdatedEvent, type SceneEvents } from "./SceneEvents";
 import { TypedEventTarget } from "../TypedEventTarget";
 import { Client } from "../session/Client";
 
@@ -78,12 +79,31 @@ export class Scene extends TypedEventTarget<SceneEvents> {
     #pending_entity_requests = new Map<RTID, Promise<Array<EntityResponse>>>();
 
     /**
+     * The settings for the scene.
+     */
+    #settings: SceneSettingsRecord | null = null;
+
+    /**
+     * Promise that resolves when the settings are loaded.
+     */
+    #settings_promise: Promise<void>;
+
+    /**
+     *
+     */
+    #settings_promise_resolver: (() => void) | null = null;
+
+    /**
      * @internal
      */
     constructor(instance: Livelink, core: LivelinkCore) {
         super();
         this.#instance = instance;
         this.#core = core;
+
+        this.#settings_promise = new Promise<void>(resolve => {
+            this.#settings_promise_resolver = resolve;
+        });
     }
 
     /**
@@ -660,4 +680,38 @@ export class Scene extends TypedEventTarget<SceneEvents> {
 
         return this.#instance.session.getClient(emitter);
     }
+
+    /**
+     * Get the current scene settings.
+     *
+     * @returns The current scene settings.
+     */
+    async getSettings(): Promise<SceneSettingsRecord> {
+        await this.#settings_promise;
+        return this.#settings!;
+    }
+
+    /**
+     * @internal
+     */
+    _onSceneSettingsUpdated = ({ updated_settings }: Events.SceneSettingsUpdatedEvent): void => {
+        if (!this.#settings) {
+            this.#settings = updated_settings as SceneSettingsRecord;
+
+            if (!this.#settings_promise_resolver) {
+                throw new Error("Settings promise resolver is null when settings are first set.");
+            }
+
+            this.#settings_promise_resolver();
+            this.#settings_promise_resolver = null;
+
+            return;
+        }
+
+        for (const [key, value] of Object.entries(updated_settings)) {
+            Object.assign(this.#settings[key as keyof SceneSettingsRecord], value);
+        }
+
+        this._dispatchEvent(new SceneSettingsUpdatedEvent({ updated_settings, emitter: null }));
+    };
 }

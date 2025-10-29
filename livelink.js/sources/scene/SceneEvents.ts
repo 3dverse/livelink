@@ -1,7 +1,7 @@
 import { EditionEvent } from "../EditionEvent";
 import type { Client } from "../session/Client";
 import type { Entity } from "./Entity";
-import type { RTID } from "@3dverse/livelink.core";
+import type { RTID, SceneSettingsManifest } from "@3dverse/livelink.core";
 
 /**
  * Event that is fired when one or more entities are created.
@@ -55,10 +55,34 @@ export class EntitiesDeletedEvent extends EditionEvent {
 }
 
 /**
+ * Event that is fired when the scene settings are updated.
+ *
+ * @event
+ * @noInheritDoc
+ * @category Scene
+ */
+export class SceneSettingsUpdatedEvent extends EditionEvent {
+    /**
+     * The updated scene settings that has been applied.
+     * Contains only the settings that were changed.
+     */
+    public readonly updated_settings: SceneSettingsManifest;
+
+    /**
+     * @internal
+     */
+    constructor({ updated_settings, emitter }: { updated_settings: SceneSettingsManifest; emitter: Client | null }) {
+        super("on-scene-settings-updated", emitter);
+        this.updated_settings = updated_settings;
+    }
+}
+
+/**
  * @event
  * @category Scene
  */
 export type SceneEvents = {
     "on-entities-created": EntitiesCreatedEvent;
     "on-entities-deleted": EntitiesDeletedEvent;
+    "on-scene-settings-updated": SceneSettingsUpdatedEvent;
 };
