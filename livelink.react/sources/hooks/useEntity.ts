@@ -2,15 +2,15 @@
 import { useContext, useEffect, useReducer, useState } from "react";
 
 //------------------------------------------------------------------------------
-import type {
+import {
     Entity,
-    EntityCreationOptions,
-    ComponentsManifest,
-    FindEntityQuery,
-    UUID,
-    ComponentName,
-    EntityUpdatedEvent,
-    EntitiesDeletedEvent,
+    type EntityCreationOptions,
+    type ComponentsManifest,
+    type FindEntityQuery,
+    type UUID,
+    type ComponentName,
+    type EntityUpdatedEvent,
+    type EntitiesDeletedEvent,
 } from "@3dverse/livelink";
 
 //------------------------------------------------------------------------------
@@ -61,7 +61,11 @@ type FindEntityQueryByName = {
 /**
  * A provider of an entity.
  */
-export type EntityProvider = NewEntity | FindEntityQueryByName | Exclude<FindEntityQuery, FindEntityQueryByNames>;
+export type EntityProvider =
+    | NewEntity
+    | FindEntityQueryByName
+    | Exclude<FindEntityQuery, FindEntityQueryByNames>
+    | Entity;
 
 /**
  * A hook that provides an entity and a flag indicating if the entity is pending loading.
@@ -132,6 +136,12 @@ export function useEntity(
             }
             return null;
         };
+
+        if (findEntityQuery instanceof Entity) {
+            setEntity(findEntityQuery);
+            setIsPending(false);
+            return;
+        }
 
         resolveEntity()
             .then(foundEntity => setEntity(foundEntity))
