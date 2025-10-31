@@ -7,7 +7,7 @@
     "dist"
   ],
   "scripts": {
-    "dev": "vite",
+    "dev": "vite --host",
     "build": "tsc && vite build",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "preview": "vite preview"
@@ -19,32 +19,32 @@
     "@3dverse/livelink-three": "file:../livelink.three",
     "@3dverse/livelink-webxr": "file:../livelink.webxr",
     "@fontsource-variable/manrope": "^5.2.8",
-    "@tailwindcss/vite": "^4.1.14",
     "boring-avatars": "^2.0.4",
     "prism-react-renderer": "^2.4.1",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "react-markdown": "^10.1.0",
-    "react-router": "^7.9.3",
-    "three": "^0.180.0"
+    "react-router": "^7.9.5",
+    "three": "^0.181.0"
   },
   "devDependencies": {
-    "@3dverse/design-tokens": "^0.1.10",
-    "@eslint/js": "^9.37.0",
+    "@3dverse/design-tokens": "^0.1.15",
+    "@eslint/js": "^9.38.0",
     "@fontsource-variable/inter": "^5.2.8",
+    "@tailwindcss/vite": "^4.1.16",
     "@types/react": "^19.2.2",
-    "@types/react-dom": "^19.2.1",
+    "@types/react-dom": "^19.2.2",
     "@types/wicg-file-system-access": "^2023.10.7",
-    "@typescript-eslint/eslint-plugin": "^8.46.0",
-    "@typescript-eslint/parser": "^8.46.0",
-    "@vitejs/plugin-react": "^5.0.4",
+    "@typescript-eslint/eslint-plugin": "^8.46.2",
+    "@typescript-eslint/parser": "^8.46.2",
+    "@vitejs/plugin-react": "^5.1.0",
     "autoprefixer": "^10.4.21",
-    "eslint": "^9.37.0",
-    "eslint-plugin-react-hooks": "^6.1.1",
-    "eslint-plugin-react-refresh": "^0.4.23",
+    "eslint": "^9.38.0",
+    "eslint-plugin-react-hooks": "^7.0.1",
+    "eslint-plugin-react-refresh": "^0.4.24",
     "globals": "^16.4.0",
-    "tailwindcss": "^4.1.14",
+    "tailwindcss": "^4.1.16",
     "typescript": "^5.9.3",
-    "vite": "^7.1.9"
+    "vite": "^7.1.12"
   }
 }

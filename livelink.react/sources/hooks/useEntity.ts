@@ -2,14 +2,15 @@
 import { useContext, useEffect, useReducer, useState } from "react";
 
 //------------------------------------------------------------------------------
-import type {
+import {
     Entity,
-    EntityCreationOptions,
-    ComponentsManifest,
-    FindEntityQuery,
-    UUID,
-    ComponentName,
-    EntityUpdatedEvent,
+    type EntityCreationOptions,
+    type ComponentsManifest,
+    type FindEntityQuery,
+    type UUID,
+    type ComponentName,
+    type EntityUpdatedEvent,
+    type EntitiesDeletedEvent,
 } from "@3dverse/livelink";
 
 //------------------------------------------------------------------------------
@@ -60,7 +61,11 @@ type FindEntityQueryByName = {
 /**
  * A provider of an entity.
  */
-export type EntityProvider = NewEntity | FindEntityQueryByName | Exclude<FindEntityQuery, FindEntityQueryByNames>;
+export type EntityProvider =
+    | NewEntity
+    | FindEntityQueryByName
+    | Exclude<FindEntityQuery, FindEntityQueryByNames>
+    | Entity;
 
 /**
  * A hook that provides an entity and a flag indicating if the entity is pending loading.
@@ -102,6 +107,7 @@ export function useEntity(
         forbidden_components?: Array<ComponentName>;
     };
 
+    //--------------------------------------------------------------------------
     useEffect(() => {
         if (!instance) {
             return;
@@ -131,6 +137,12 @@ export function useEntity(
             return null;
         };
 
+        if (findEntityQuery instanceof Entity) {
+            setEntity(findEntityQuery);
+            setIsPending(false);
+            return;
+        }
+
         resolveEntity()
             .then(foundEntity => setEntity(foundEntity))
             .finally(() => setIsPending(false));
@@ -141,6 +153,7 @@ export function useEntity(
         };
     }, [instance, JSON.stringify(findEntityQuery)]);
 
+    //--------------------------------------------------------------------------
     useEffect(() => {
         const alwaysUpdate = watchedComponents === "any";
         const neverUpdate = watchedComponents.length === 0;
@@ -163,6 +176,25 @@ export function useEntity(
             entity.removeEventListener("on-entity-updated", triggerUpdate);
         };
     }, [entity, watchedComponents]);
+
+    //--------------------------------------------------------------------------
+    useEffect(() => {
+        if (!entity || !instance) {
+            return;
+        }
+
+        const onEntitiesDeleted = (event: EntitiesDeletedEvent): void => {
+            if (event.includes(entity)) {
+                setEntity(null);
+            }
+        };
+
+        instance.scene.addEventListener("on-entities-deleted", onEntitiesDeleted);
+
+        return (): void => {
+            instance.scene.removeEventListener("on-entities-deleted", onEntitiesDeleted);
+        };
+    }, [instance, entity]);
 
     //--------------------------------------------------------------------------
     useEffect(() => {

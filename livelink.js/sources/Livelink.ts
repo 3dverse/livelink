@@ -337,7 +337,7 @@ export class Livelink {
     private constructor({ session }: { session: Session }) {
         this.session = session;
         this.#core = new DynamicLoader.Core();
-        this.scene = new Scene(this.#core);
+        this.scene = new Scene(this, this.#core);
         this.#mouse = new Mouse(this);
         this.#keyboard = new Keyboard(this);
         this.#gamepads_registry = new GamepadsRegistry({ instance: this });
@@ -621,8 +621,11 @@ export class Livelink {
         this.#core.addEventListener("on-disconnected", this.session._onDisconnected);
         this.#core.addEventListener("on-inactivity-warning", this.session._onInactivityWarning);
         this.#core.addEventListener("on-activity-detected", this.session._onActivityDetected);
+        this.#core.addEventListener("on-entities-created", this.scene._onEntitiesCreated);
         this.#core.addEventListener("on-entities-updated", this.#onEntitiesUpdated);
+        this.#core.addEventListener("on-entities-deleted", this.scene._onEntitiesDeleted);
         this.#core.addEventListener("on-entity-visibility-changed", this.scene._onEntityVisibilityChanged);
+        this.#core.addEventListener("on-scene-settings-updated", this.scene._onSceneSettingsUpdated);
         this.#core.addEventListener("on-script-event-received", this.scene._onScriptEventReceived);
         this.#core.addEventListener("on-client-connected", this.#onClientConnectedEvent);
         this.#core.addEventListener("on-clients-disconnected", this.#onClientsDisconnectedEvent);
@@ -635,9 +638,14 @@ export class Livelink {
         this.#core.removeEventListener("on-disconnected", this.session._onDisconnected);
         this.#core.removeEventListener("on-inactivity-warning", this.session._onInactivityWarning);
         this.#core.removeEventListener("on-activity-detected", this.session._onActivityDetected);
+        this.#core.removeEventListener("on-entities-created", this.scene._onEntitiesCreated);
         this.#core.removeEventListener("on-entities-updated", this.#onEntitiesUpdated);
+        this.#core.removeEventListener("on-entities-deleted", this.scene._onEntitiesDeleted);
         this.#core.removeEventListener("on-entity-visibility-changed", this.scene._onEntityVisibilityChanged);
+        this.#core.removeEventListener("on-scene-settings-updated", this.scene._onSceneSettingsUpdated);
         this.#core.removeEventListener("on-script-event-received", this.scene._onScriptEventReceived);
+        this.#core.removeEventListener("on-client-connected", this.#onClientConnectedEvent);
+        this.#core.removeEventListener("on-clients-disconnected", this.#onClientsDisconnectedEvent);
     }
 
     /**
@@ -674,6 +682,7 @@ export class Livelink {
             client_id: this.session.client_id!,
             entity_registry: this.scene._entity_registry,
             viewports: this.viewports,
+            resolve_client: this.session.getClient,
         });
 
         this.#updateFrameDeltaTime(raw_frame_meta_data.renderer_timestamp);
@@ -701,9 +710,9 @@ export class Livelink {
     /**
      *
      */
-    #onEntitiesUpdated = ({ updated_entities }: Events.EntitiesUpdatedEvent): void => {
+    #onEntitiesUpdated = ({ updated_entities, emitter }: Events.EntitiesUpdatedEvent): void => {
         for (const { entity_euid, updated_components, deleted_components } of updated_entities) {
-            this.scene._updateEntityFromEvent({ entity_euid, updated_components, deleted_components });
+            this.scene._updateEntityFromEvent({ entity_euid, updated_components, deleted_components, emitter });
         }
     };
 
@@ -733,20 +742,29 @@ export class Livelink {
         updatesPerSecond?: number;
         broadcastsPerSecond?: number;
     } = {}): void {
-        this.#update_interval = setInterval(() => {
-            const update_commands = this.scene._entity_registry._getEntitiesToUpdate();
-            if (update_commands.length > 0) {
-                this.#core.updateEntities({ update_commands, persist: false });
-            }
-        }, 1000 / updatesPerSecond);
-
-        this.#broadcast_interval = setInterval(() => {
-            const update_commands = this.scene._entity_registry._getEntitiesToPersist();
-            if (update_commands.length > 0) {
-                this.#core.updateEntities({ update_commands, persist: true });
-            }
-        }, 1000 / broadcastsPerSecond);
+        this.#update_interval = setInterval(this._updateEntities, 1000 / updatesPerSecond);
+        this.#broadcast_interval = setInterval(this._broadcastEntities, 1000 / broadcastsPerSecond);
     }
+
+    /**
+     * @internal
+     */
+    _updateEntities = (): void => {
+        const update_commands = this.scene._entity_registry._getEntitiesToUpdate();
+        if (update_commands.length > 0) {
+            this.#core.updateEntities({ update_commands, persist: false });
+        }
+    };
+
+    /**
+     * @internal
+     */
+    _broadcastEntities = (): void => {
+        const update_commands = this.scene._entity_registry._getEntitiesToPersist();
+        if (update_commands.length > 0) {
+            this.#core.updateEntities({ update_commands, persist: true });
+        }
+    };
 
     /**
      *

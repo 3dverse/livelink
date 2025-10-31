@@ -17,7 +17,7 @@ export const AccordionItem: React.FC<{
 
     //--------------------------------------------------------------------------
     return (
-        <As className={clsx(styles.item, className)} style={style}>
+        <As className={clsx(styles.item, className, "livelink-react-ui-component")} style={style}>
             {children}
         </As>
     );

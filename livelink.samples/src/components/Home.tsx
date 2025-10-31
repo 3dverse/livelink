@@ -7,7 +7,7 @@ export function Home() {
                     <img src="https://3dverse.com/logo/3dverse-wordmark.svg" className="h-6 mt-px" alt="3dverse" />
                     <h1>Samples</h1>
                 </div>
-                <p className="mt-3 text-md text-tertiary">Explore 3dverse features with these samples.</p>
+                <p className="mt-3 text-base text-tertiary">Explore 3dverse features with these samples.</p>
             </div>
         </div>
     );

@@ -29,11 +29,9 @@ export const _Component: Story = {
         children: <div>Accordion</div>,
     },
     render: ({ isExpandable, ...args }) => (
-        <div className="livelink-react-ui-component">
-            <AccordionItem {...args} isExpandable={isExpandable}>
-                <AccordionButton isExpandable={isExpandable}>Button</AccordionButton>
-                <AccordionPanel>Panel</AccordionPanel>
-            </AccordionItem>
-        </div>
+        <AccordionItem {...args} isExpandable={isExpandable}>
+            <AccordionButton isExpandable={isExpandable}>Accordion button</AccordionButton>
+            <AccordionPanel>Example of an accordion panel</AccordionPanel>
+        </AccordionItem>
     ),
 };

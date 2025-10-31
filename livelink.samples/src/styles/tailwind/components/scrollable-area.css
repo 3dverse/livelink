@@ -1,0 +1,68 @@
+/* Work only with vertical scroll. */
+/* If needed, create a new container for horizontal scroll. */
+
+.scrollable-area {
+    position: relative;
+    overflow-y: auto;
+    scroll-timeline: --scroll-timeline y;
+    animation: detect-scroll;
+    animation-timeline: --scroll-timeline;
+    animation-fill-mode: none;
+}
+
+.scrollable-up,
+.scrollable-down {
+    position: sticky;
+    display: list-item;
+    left: 0;
+    right: 0;
+    width: 100%;
+    height: 24px;
+    z-index: 10;
+    pointer-events: none;
+
+    animation-name: reveal;
+    animation-timeline: --scroll-timeline;
+    animation-fill-mode: both;
+
+    --visibility-if-can-scroll: var(--can-scroll) visible;
+    --visibility-if-cant-scroll: hidden;
+    visibility: var(--visibility-if-can-scroll, var(--visibility-if-cant-scroll));
+
+    &::marker {
+        color: transparent;
+    }
+}
+
+.scrollable-up {
+    top: 0;
+    margin-top: -24px;
+    background: linear-gradient(color-mix(in srgb, var(--color-bg-ground) 50%, transparent), transparent);
+    animation-range: 0px 40px;
+}
+
+.scrollable-down {
+    bottom: 0;
+    margin-top: -24px;
+    background: linear-gradient(transparent, color-mix(in srgb, var(--color-bg-ground) 50%, transparent));
+    animation-direction: reverse;
+    animation-range: calc(100% - 40px) calc(100% - 20px);
+}
+
+@keyframes detect-scroll {
+
+    from,
+    to {
+        --can-scroll: ;
+    }
+}
+
+@keyframes reveal {
+    0% {
+        opacity: 0;
+    }
+
+    100% {
+        opacity: 1;
+    }
+}

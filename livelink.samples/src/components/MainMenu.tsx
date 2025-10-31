@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { NavLink } from "react-router";
 
 import { Logo3dverse } from "@3dverse/design-tokens";
@@ -9,6 +9,7 @@ import { LOCAL_STORAGE_KEYS, useLocalStorage } from "../lib/localStorage";
 import { resolveSamplePath } from "./SamplePlayer/index";
 import { BarsIcon } from "./icons/BarsIcon";
 import { CollapseIcon } from "./icons/CollapseIcon";
+import { ScrollableArea } from "./common/ScrollableArea";
 
 //------------------------------------------------------------------------------
 const BREAKPOINT_LG = 991;
@@ -17,6 +18,7 @@ const BREAKPOINT_LG = 991;
 export function MainMenu({ isPageEmbedded }: { isPageEmbedded?: boolean }) {
     const [isCollapsed, setIsCollapsed] = useLocalStorage<boolean>(LOCAL_STORAGE_KEYS.IS_MAIN_MENU_COLLAPSED, false);
     const [isScreenLargerThanLG, setIsScreenLargerThanLG] = useState<boolean>();
+    const scrollContainerRef = useRef<HTMLDivElement>(null!);
 
     const onCollapse = () => {
         setIsCollapsed(true);
@@ -29,6 +31,20 @@ export function MainMenu({ isPageEmbedded }: { isPageEmbedded?: boolean }) {
         handleResize();
         window.addEventListener("resize", handleResize);
         return () => window.removeEventListener("resize", handleResize);
+    }, []);
+
+    // Auto-scroll to active NavLink
+    useEffect(() => {
+        if (scrollContainerRef.current) {
+            const activeNavLink = scrollContainerRef.current.querySelector(".active");
+            if (activeNavLink) {
+                activeNavLink.scrollIntoView({
+                    behavior: "smooth",
+                    block: "center",
+                    inline: "nearest",
+                });
+            }
+        }
     }, []);
 
     //--------------------------------------------------------------------------
@@ -67,7 +83,7 @@ export function MainMenu({ isPageEmbedded }: { isPageEmbedded?: boolean }) {
                             to="/"
                             className="flex items-start gap-3 pl-3 font-primary text-secondary text-[1.1rem] tracking-wider"
                         >
-                            {!isPageEmbedded && <Logo3dverse className="h-4 mt-[3px]" />}
+                            {!isPageEmbedded && <Logo3dverse className="h-4 mt-[5px]" />}
                             Samples
                         </NavLink>
                         <button className="button button-icon button-xs" onClick={onCollapse}>
@@ -75,34 +91,31 @@ export function MainMenu({ isPageEmbedded }: { isPageEmbedded?: boolean }) {
                         </button>
                     </header>
 
-                    <ul
-                        className={`
-                            flex flex-col gap-6 h-full pb-16 text-secondary overflow-y-auto
-                            ${isPageEmbedded ? "px-3" : "px-5"}
-                        `}
-                    >
-                        {samples.map((category, i) => (
-                            <li key={i}>
-                                <p className="mb-1 pl-3 text-2xs uppercase text-tertiary tracking-wider opacity-80">
-                                    {category.categoryName}
-                                </p>
-                                {category.list.map((s, y) => (
-                                    <NavLink
-                                        key={y}
-                                        to={resolveSamplePath(s.path)}
-                                        className={({ isActive }) =>
-                                            [
-                                                "button button-ghost px-3 py-[3px] text-xs justify-start rounded-lg",
-                                                isActive ? "active" : "",
-                                            ].join(" ")
-                                        }
-                                    >
-                                        {s.title}
-                                    </NavLink>
-                                ))}
-                            </li>
-                        ))}
-                    </ul>
+                    <ScrollableArea ref={scrollContainerRef} className="overflow-y-auto">
+                        <ul className={`flex flex-col gap-6  pb-16 text-secondary ${isPageEmbedded ? "px-3" : "px-5"}`}>
+                            {samples.map((category, i) => (
+                                <li key={i}>
+                                    <p className="mb-1 pl-3 text-2xs uppercase text-tertiary tracking-wider opacity-80">
+                                        {category.categoryName}
+                                    </p>
+                                    {category.list.map((s, y) => (
+                                        <NavLink
+                                            key={y}
+                                            to={resolveSamplePath(s.path)}
+                                            className={({ isActive }) =>
+                                                [
+                                                    "button button-ghost px-3 py-[3px] text-xs leading-normal justify-start rounded-lg",
+                                                    isActive ? "active" : "",
+                                                ].join(" ")
+                                            }
+                                        >
+                                            {s.title}
+                                        </NavLink>
+                                    ))}
+                                </li>
+                            ))}
+                        </ul>
+                    </ScrollableArea>
                 </div>
             </nav>
         </>

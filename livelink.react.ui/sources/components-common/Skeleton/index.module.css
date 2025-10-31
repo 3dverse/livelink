@@ -1,0 +1,20 @@
+.skeleton {
+    display: inline-block;
+    width: 100%;
+    height: calc(1lh - 0.5rlh);
+    margin-block: 0.25rlh;
+
+    background-color: var(--3dverse-color-content-tertiary);
+    border-radius: var(--3dverse-border-radius-xs);
+    animation: pulseAnimation 1.5s infinite;
+}
+
+@keyframes pulseAnimation {
+    0%,
+    100% {
+        opacity: 0.25;
+    }
+    50% {
+        opacity: 0.15;
+    }
+}

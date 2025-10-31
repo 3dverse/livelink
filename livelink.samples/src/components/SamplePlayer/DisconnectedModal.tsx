@@ -20,7 +20,7 @@ export function DisconnectedModal({ error }: { error: string }) {
                 <p className="text-center">
                     You have been disconnected from the server.
                     <span className="block mt-1">
-                        Reason: <span className="px-2 py-[2px] bg-warning-500 rounded-full capitalize">{error}</span>
+                        Reason: <span className="px-2 py-[2px] text-informative rounded-full capitalize">{error}</span>
                     </span>
                 </p>
                 {setConnectionState && (

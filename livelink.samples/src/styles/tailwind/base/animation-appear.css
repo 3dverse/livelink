@@ -2,10 +2,10 @@
 
 @keyframes appear-top {
     0% {
-        translate: var(--tw-translate-x, 0px)
-            calc(calc(var(--tw-translate-y, 0) * 1px) + var(--animation-appear-offset, 16px));
+        translate: var(--tw-translate-x, 0px) calc(calc(var(--tw-translate-y, 0) * 1px) + var(--animation-appear-offset, 16px));
         opacity: 0;
     }
+
     100% {
         translate: var(--tw-translate-x, 0px) var(--tw-translate-y, 0px);
         opacity: 1;
@@ -14,10 +14,10 @@
 
 @keyframes appear-right {
     0% {
-        translate: calc(calc(var(--tw-translate-x, 0) * 1px) - var(--animation-appear-offset, 16px))
-            var(--tw-translate-y, 0px);
+        translate: calc(calc(var(--tw-translate-x, 0) * 1px) - var(--animation-appear-offset, 16px)) var(--tw-translate-y, 0px);
         opacity: 0;
     }
+
     100% {
         translate: var(--tw-translate-x, 0px) var(--tw-translate-y, 0px);
         opacity: 1;
@@ -26,10 +26,10 @@
 
 @keyframes appear-bottom {
     0% {
-        translate: var(--tw-translate-x, 0px)
-            calc(calc(var(--tw-translate-y, 0) * 1px) - var(--animation-appear-offset, 16px));
+        translate: var(--tw-translate-x, 0px) calc(calc(var(--tw-translate-y, 0) * 1px) - var(--animation-appear-offset, 16px));
         opacity: 0;
     }
+
     100% {
         translate: var(--tw-translate-x, 0px) calc(var(--tw-translate-y, 0px));
         opacity: 1;
@@ -38,10 +38,10 @@
 
 @keyframes appear-left {
     0% {
-        translate: calc(calc(var(--tw-translate-x, 0) * 1px) + var(--animation-appear-offset, 16px))
-            var(--tw-translate-y, 0px);
+        translate: calc(calc(var(--tw-translate-x, 0) * 1px) + var(--animation-appear-offset, 16px)) var(--tw-translate-y, 0px);
         opacity: 0;
     }
+
     100% {
         translate: var(--tw-translate-x, 0px) var(--tw-translate-y, 0px);
         opacity: 1;
@@ -67,31 +67,59 @@
     animation-name: appear-left;
 }
 
-.animate-appear-top,
-.animate-appear-right,
-.animate-appear-bottom,
-.animate-appear-left {
-    animation-duration: var(--animation-duration, 0.25s);
-    animation-timing-function: ease-in-out;
-    animation-fill-mode: forwards;
-}
-
-/* ------------------------------------------------------------------------------ */
-
 @utility animate-disappear-top {
     @apply animate-appear-top;
     animation-direction: reverse;
 }
+
 @utility animate-disappear-right {
     @apply animate-appear-right;
     animation-direction: reverse;
 }
+
 @utility animate-disappear-bottom {
     @apply animate-appear-bottom;
     animation-direction: reverse;
 }
+
 @utility animate-disappear-left {
     @apply animate-appear-left;
     animation-direction: reverse;
 }
 
+/* ------------------------------------------------------------------------------ */
+@keyframes appear-blur-in {
+    0% {
+        filter: blur(5px);
+        scale: 0.8;
+        opacity: 0;
+    }
+
+    100% {
+        filter: blur(0px);
+        scale: 1;
+        opacity: 1;
+    }
+}
+
+@utility animate-blur-in {
+    animation-name: appear-blur-in;
+}
+
+@utility animate-blur-out {
+    animation-name: appear-blur-in;
+    animation-direction: reverse;
+}
+
+/* ------------------------------------------------------------------------------ */
+
+.animate-appear-top,
+.animate-appear-right,
+.animate-appear-bottom,
+.animate-appear-left,
+.animate-blur-in,
+.animate-blur-out {
+    animation-duration: var(--animation-duration, 0.25s);
+    animation-timing-function: ease-in-out;
+    animation-fill-mode: forwards;
+}

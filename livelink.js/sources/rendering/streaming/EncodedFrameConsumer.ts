@@ -151,10 +151,15 @@ export abstract class EncodedFrameConsumer {
      * Set the global transform of the cameras that are not controlled by the current client.
      */
     #setNotControlledCamerasGlobalTransform({ meta_data }: { meta_data: FrameMetaData }): void {
-        for (const { camera_entity, world_position, world_orientation } of meta_data.other_clients_camera_entities) {
+        for (const {
+            camera_entity,
+            world_position,
+            world_orientation,
+            client,
+        } of meta_data.other_clients_camera_entities) {
             camera_entity._setGlobalTransform({
                 global_transform: { position: world_position, orientation: world_orientation },
-                change_source: "external",
+                emitter: client,
             });
         }
     }

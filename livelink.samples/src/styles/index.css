@@ -1,7 +1,14 @@
-/* Tailwind and theme */
-@config "./tailwind/tailwind.config.js";
-@import "tailwindcss";
+/* Tailwind */
+@layer theme, base, components, utilities;
+@import "tailwindcss/theme.css" layer(theme);
+@import "tailwindcss/preflight.css" layer(base);
+@import "tailwindcss/utilities.css";
 
+/* Themes */
+@import "@3dverse/design-tokens/css/design-tokens.css";
+@import "@3dverse/design-tokens/css/value-type-colors.css";
+@import "@3dverse/design-tokens/tailwind/theme.css";
+@import "./tailwind/theme.css";
 
 /* Base */
 @import "./tailwind/base/animation-appear.css";
@@ -12,6 +19,7 @@
 
 /* Component */
 @import "./tailwind/components/canvas.css";
+@import "./tailwind/components/scrollable-area.css";
 
 :root {
     /* Font family */
@@ -56,6 +64,7 @@
         opacity: 1;
         stroke-dashoffset: 300;
     }
+
     .icon {
         transform: scale(0.9);
     }

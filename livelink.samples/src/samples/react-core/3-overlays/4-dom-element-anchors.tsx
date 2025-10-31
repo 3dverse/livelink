@@ -94,11 +94,13 @@ function AppLayout() {
                     ))}
 
                     <DOM3DElement worldPosition={[0, 0, 0]} anchor={anchor}>
-                        <p className="bg-ground p-1 rounded-lg">⚓ {anchor}</p>
+                        <p className="bg-ground px-2 py-1 rounded-lg">
+                            ⚓ {anchor}
+                        </p>
                         <fieldset className="bg-underground p-4 rounded-lg">
                             {anchors.map(a => (
-                                <div
-                                    className="flex items-center gap-2"
+                                <label
+                                    className="flex items-center gap-2 cursor-pointer"
                                     key={a}
                                 >
                                     <input
@@ -109,8 +111,8 @@ function AppLayout() {
                                         checked={a === anchor}
                                         onChange={() => setAnchor(a as Anchor)}
                                     />
-                                    <label>{a}</label>
-                                </div>
+                                    <p>{a}</p>
+                                </label>
                             ))}
                         </fieldset>
                     </DOM3DElement>

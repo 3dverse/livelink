@@ -17,7 +17,10 @@ export const ViewerPanel = ({
     className?: string;
 }) => {
     return (
-        <div className={`${styles.wrapper} ${className ?? ""} ${styles[variant]}`} style={style}>
+        <div
+            className={`${styles.wrapper} ${className ?? ""} ${styles[variant] ?? ""} livelink-react-ui-component`}
+            style={style}
+        >
             {children}
         </div>
     );

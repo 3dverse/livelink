@@ -1,4 +1,5 @@
 export * from "./hooks/useEntity";
+export * from "./hooks/useEntities";
 export * from "./hooks/useClients";
 export * from "./hooks/useCameraEntity";
 

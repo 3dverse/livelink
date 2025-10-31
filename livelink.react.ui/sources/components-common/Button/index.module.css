@@ -16,9 +16,15 @@
 
 /* Variants */
 .ghost {
-    color: var(--3dverse-color-content-primary);
+    color: var(--3dverse-color-content-tertiary);
     background-color: transparent;
     border-color: transparent;
+
+    &:hover,
+    &:focus,
+    &:active {
+        color: var(--3dverse-color-content-primary);
+    }
 }
 
 .secondary {

@@ -17,10 +17,11 @@ export type ClientInfo = {
     /**
      * The type of the client.<br/>
      *   - "user" for authenticated users<br/>
+     *   - "api" for client using the rest API<br/>
      *   - "guest" for unauthenticated users<br/>
      *   - "unknown" for unknown clients
      */
-    client_type: "user" | "guest" | "unknown";
+    client_type: "user" | "guest" | "api" | "unknown";
 
     /**
      * Indicates if the client is headless (no streaming).

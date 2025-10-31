@@ -9,6 +9,7 @@ import type {
     ComponentsRecord,
     Mat4,
     ScriptDataObject,
+    Events,
 } from "@3dverse/livelink.core";
 
 //------------------------------------------------------------------------------
@@ -175,6 +176,7 @@ export class Entity extends EntityTransformHandler {
             parentUUID: parent ? parent.id : "00000000-0000-0000-0000-000000000000",
             value: this.lineage?.value ?? [],
         };
+        this.#scene._onEntityReparented();
     }
 
     /**
@@ -370,13 +372,13 @@ export class Entity extends EntityTransformHandler {
         components,
         deleted_components = [],
         dispatch_event,
-        change_source,
+        emitter,
     }: {
         components: EntityCore | ComponentsManifest | Partial<ComponentsRecord>;
         deleted_components?: Array<ComponentName>;
     } & (
-        | { dispatch_event: false; change_source?: undefined }
-        | { dispatch_event: true; change_source: "local" | "external" }
+        | { dispatch_event: false; emitter?: undefined }
+        | { dispatch_event: true; emitter: Events.Emitter | null }
     )): void {
         for (const key in components) {
             const component_name = key as ComponentName | "euid";
@@ -401,7 +403,7 @@ export class Entity extends EntityTransformHandler {
         if (dispatch_event) {
             this._dispatchEvent(
                 new EntityUpdatedEvent({
-                    change_source,
+                    emitter: this.#scene._resolveEmitter(emitter),
                     updated_components: Object.keys(components) as Array<ComponentName>,
                     deleted_components,
                     new_components: [],
@@ -419,7 +421,7 @@ export class Entity extends EntityTransformHandler {
         const isNewComponent = this[component_name] === undefined;
         this._dispatchEvent(
             new EntityUpdatedEvent({
-                change_source: "local",
+                emitter: null,
                 updated_components: !isNewComponent ? [component_name] : [],
                 deleted_components: [],
                 new_components: isNewComponent ? [component_name] : [],
@@ -435,7 +437,7 @@ export class Entity extends EntityTransformHandler {
         this.#scene._entity_registry._addDirtyEntity({ entity: this });
         this._dispatchEvent(
             new EntityUpdatedEvent({
-                change_source: "local",
+                emitter: null,
                 updated_components: [],
                 deleted_components: [component_name],
                 new_components: [],
