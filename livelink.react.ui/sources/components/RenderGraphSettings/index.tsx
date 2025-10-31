@@ -2,7 +2,7 @@
 import React, { CSSProperties, useEffect, useState } from "react";
 import { Entity, RenderGraphDataObject } from "@3dverse/livelink";
 import { getAssetDescription, setUserToken } from "@3dverse/api";
-import { FaArrowRotateLeft, FaFolder, FaFolderOpen } from "react-icons/fa6";
+import { FaArrowRotateLeft, FaFolder } from "react-icons/fa6";
 
 //------------------------------------------------------------------------------
 import { Icon } from "../../components-common/Icon";

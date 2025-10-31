@@ -47,21 +47,21 @@
     "threejs-math": "^0.147.0"
   },
   "devDependencies": {
-    "@eslint/js": "^9.37.0",
-    "@typescript-eslint/eslint-plugin": "^8.46.0",
-    "@typescript-eslint/parser": "^8.46.0",
-    "esbuild": "^0.25.10",
-    "eslint": "^9.37.0",
+    "@eslint/js": "^9.38.0",
+    "@typescript-eslint/eslint-plugin": "^8.46.2",
+    "@typescript-eslint/parser": "^8.46.2",
+    "esbuild": "^0.25.11",
+    "eslint": "^9.38.0",
     "gl-matrix": "^3.4.4",
     "globals": "^16.4.0",
     "npm-run-all": "^4.1.5",
     "prettier": "^3.6.2",
-    "rimraf": "^6.0.1",
-    "typedoc": "^0.28.13",
+    "rimraf": "^6.1.0",
+    "typedoc": "^0.28.14",
     "typedoc-plugin-markdown": "^4.9.0",
     "typedoc-plugin-mermaid": "^1.12.0",
     "typedoc-plugin-no-inherit": "^1.6.1",
     "typescript": "^5.9.3",
-    "typescript-eslint": "^8.46.0"
+    "typescript-eslint": "^8.46.2"
   }
 }
