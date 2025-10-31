@@ -1,5 +1,15 @@
 # @3dverse/livelink
 
+## 0.8.51
+
+### Patch Changes
+
+- feat: add entity creation and deletion events
+- chore: update dependencies
+- fix(livelink.js): unregister from client events during disconnection
+- feat(livelink.js): add getSettings in Scene
+- fix: trigger reparent command as soon a parent is setted
+
 ## 0.8.50
 
 ### Patch Changes

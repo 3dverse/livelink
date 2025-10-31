@@ -1,5 +1,27 @@
 # @3dverse/livelink-react-ui
 
+## 0.3.11
+
+### Patch Changes
+
+- style(livelink.react.ui): upgrade @3dverse/design-tokens
+- style(livelink.react.ui): add units to performance panel values
+- style(livelink.react.ui): style performance panel
+- chore: update dependencies
+- chore(livelink.react.ui): bump storybook
+- fix(livelink.react.ui): export ViewerPanel component
+- Updated dependencies
+- Updated dependencies
+- Updated dependencies
+- Updated dependencies
+- Updated dependencies
+- Updated dependencies
+- Updated dependencies
+- Updated dependencies
+- Updated dependencies
+  - @3dverse/livelink-react@0.2.54
+  - @3dverse/livelink@0.8.51
+
 ## 0.3.10
 
 ### Patch Changes
