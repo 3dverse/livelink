@@ -1,5 +1,21 @@
 # @3dverse/livelink-react
 
+## 0.2.54
+
+### Patch Changes
+
+- feat(livelink.react): useEntity now accept instances of Entity
+- feat(livelink.react): add useEntities
+- chore: update dependencies
+- feat(livelink.react): add useSceneSettings
+- feat(livelink.react): useCameraEntity now use scene default setting for the camera
+- Updated dependencies
+- Updated dependencies
+- Updated dependencies
+- Updated dependencies
+- Updated dependencies
+  - @3dverse/livelink@0.8.51
+
 ## 0.2.53
 
 ### Patch Changes
