@@ -1,5 +1,11 @@
 # @3dverse/livelink-react
 
+## 0.2.55
+
+### Patch Changes
+
+- feat(livelink.react): export scene settings
+
 ## 0.2.54
 
 ### Patch Changes
