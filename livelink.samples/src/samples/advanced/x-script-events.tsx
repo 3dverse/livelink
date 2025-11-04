@@ -146,15 +146,7 @@ function AppLayout() {
         };
     }, [onTriggerEntered, onTriggerExited, trigger]);
 
-    const { cameraEntity } = useCameraEntity({
-        position: [-1, 1.8, 1.8],
-        eulerOrientation: [-14, -62, 0],
-        settings: {
-            grid: false,
-            skybox: true,
-            gradient: false,
-        },
-    });
+    const { cameraEntity } = useCameraEntity();
 
     const goToNextState = useCallback(
         (state: number) => {
