@@ -68,6 +68,18 @@ export class EntityUpdatedEvent extends EditionEvent {
         this.updated_components = updated_components;
         this.deleted_components = deleted_components;
     }
+
+    /**
+     * Checks if the event includes any of the specified components, whether they were added, updated or removed.
+     */
+    includes(...components: ComponentName[]): boolean {
+        return components.some(
+            component =>
+                this.new_components.includes(component) ||
+                this.updated_components.includes(component) ||
+                this.deleted_components.includes(component),
+        );
+    }
 }
 
 /**
