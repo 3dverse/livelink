@@ -1,4 +1,7 @@
+import * as bowser from "bowser";
+
 import { Context2D } from "../contexts/Context2D";
+import { ContextIOS } from "../contexts/ContextIOS";
 import { ContextWebGL } from "../contexts/ContextWebGL";
 import { CanvasAutoResizer } from "./CanvasAutoResizer";
 import { RenderingSurfaceBase } from "./RenderingSurfaceBase";
@@ -100,10 +103,13 @@ export class RenderingSurface extends RenderingSurfaceBase {
             throw new Error(`HTML element ${canvas_element} is a '${canvas.nodeName}', it MUST be CANVAS`);
         }
 
+        const browser = bowser.getParser(navigator.userAgent);
+        const isIOS = browser.getOSName(true) === "ios";
+
         this.#canvas = canvas as HTMLCanvasElement;
         switch (context_type) {
             case "2d":
-                this.#context = new Context2D(this.#canvas);
+                this.#context = isIOS ? new ContextIOS(this.#canvas) : new Context2D(this.#canvas);
                 break;
             case "webgl":
             case "webgl2":

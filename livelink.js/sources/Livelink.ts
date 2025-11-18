@@ -542,7 +542,9 @@ export class Livelink {
      * @internal
      */
     async _resize({ size }: { size: Vec2i }): Promise<void> {
+        console.debug("🙏 Requesting remote resize", size);
         const { size: remote_size } = await this.#core.resize({ size });
+        console.debug("📐 Remote resize done", remote_size);
         this.#encoded_frame_consumer?.resize({ frame_dimensions: remote_size });
     }
 

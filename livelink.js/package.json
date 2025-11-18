@@ -44,6 +44,7 @@
   "dependencies": {
     "@3dverse/livelink-camera-controls": "^0.4.10",
     "@3dverse/livelink.core": "^1.1.13",
+    "bowser": "^2.12.1",
     "threejs-math": "^0.147.0"
   },
   "devDependencies": {
