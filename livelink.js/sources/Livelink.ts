@@ -627,6 +627,7 @@ export class Livelink {
     #installEventListeners(): void {
         this.#core.addEventListener("on-disconnected", this.session._onDisconnected);
         this.#core.addEventListener("on-inactivity-warning", this.session._onInactivityWarning);
+        this.#core.addEventListener("on-scene-info-loaded", this.scene._onSceneInfoLoaded);
         this.#core.addEventListener("on-activity-detected", this.session._onActivityDetected);
         this.#core.addEventListener("on-entities-created", this.scene._onEntitiesCreated);
         this.#core.addEventListener("on-entities-updated", this.#onEntitiesUpdated);
@@ -644,6 +645,7 @@ export class Livelink {
     #uninstallEventListeners(): void {
         this.#core.removeEventListener("on-disconnected", this.session._onDisconnected);
         this.#core.removeEventListener("on-inactivity-warning", this.session._onInactivityWarning);
+        this.#core.removeEventListener("on-scene-info-loaded", this.scene._onSceneInfoLoaded);
         this.#core.removeEventListener("on-activity-detected", this.session._onActivityDetected);
         this.#core.removeEventListener("on-entities-created", this.scene._onEntitiesCreated);
         this.#core.removeEventListener("on-entities-updated", this.#onEntitiesUpdated);
