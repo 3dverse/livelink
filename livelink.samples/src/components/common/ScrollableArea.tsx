@@ -7,7 +7,11 @@ export const ScrollableArea = ({
     children,
     className,
     ...divProps
-}: { ref: React.RefObject<HTMLDivElement>; children: ReactNode; className?: string } & React.HTMLAttributes<HTMLDivElement>) => {
+}: {
+    ref: React.RefObject<HTMLDivElement>;
+    children: ReactNode;
+    className?: string;
+} & React.HTMLAttributes<HTMLDivElement>) => {
     return (
         <div ref={ref} className={`scrollable-area ${className ?? ""}`} {...divProps}>
             <div className="scrollable-up" />

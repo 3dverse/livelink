@@ -48,7 +48,7 @@
     }
 
     &:not(.active) {
-        background: conic-gradient( #FFD93D, #5E60CE, #A3DE83, #FFD93D);
+        background: conic-gradient(#ffd93d, #5e60ce, #a3de83, #ffd93d);
     }
 }
 

@@ -1,6 +1,7 @@
 import { createContext, useContext } from "react";
 import { Entity } from "@3dverse/livelink";
 
+//------------------------------------------------------------------------------
 type LightControlContextType = {
     light: Entity;
     color: string;
@@ -16,8 +17,10 @@ type LightControlContextType = {
     onPowerChange: (isPowered: boolean) => void;
 };
 
+//------------------------------------------------------------------------------
 export const LightControlContext = createContext<LightControlContextType | null>(null);
 
+//------------------------------------------------------------------------------
 export const useLightControl = () => {
     const ctx = useContext(LightControlContext);
     if (!ctx) throw new Error("useLightControl must be used within <LightControl>");
