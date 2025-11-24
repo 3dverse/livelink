@@ -48,13 +48,13 @@ import ViewCube from "./react-ui/4-view-cube";
 import LightControl from "./react-ui/5-light-control";
 import CameraSpeedSlider from "./react-ui/6-camera-speed-slider";
 import PerformancePanel from "./react-ui/7-performance-panel";
+import CullingBoxGeometry from "./react-ui/8-culling-box-geometry";
 
 //------------------------------------------------------------------------------
 import LiveSkeletalAnimation from "./advanced/x-live-skeletal-animation";
 import WebXR from "./advanced/x-web-xr";
 import WebXRiOS from "./advanced/x-web-xr-ios";
 import MPR from "./advanced/x-multiplanar-reconstruction";
-import CullingBoxGeometry from "./advanced/x-culling-box-geometry";
 import ThreeTransformControls from "./advanced/x-three-transform-controls";
 import ScriptEvents from "./advanced/x-script-events";
 import Recording from "./advanced/x-recording";
@@ -130,6 +130,7 @@ export default [
             LightControl,
             CameraSpeedSlider,
             PerformancePanel,
+            CullingBoxGeometry,
         ],
     },
     {
@@ -139,7 +140,6 @@ export default [
             WebXR,
             WebXRiOS,
             MPR,
-            CullingBoxGeometry,
             ThreeTransformControls,
             ScriptEvents,
             Recording,
