@@ -1,5 +1,15 @@
 # @3dverse/livelink-three
 
+## 0.2.12
+
+### Patch Changes
+
+- fix(livelink.three): fixed orientation and scale gizmos on TransformControls
+- Updated dependencies
+- Updated dependencies
+- Updated dependencies
+  - @3dverse/livelink@0.8.52
+
 ## 0.2.11
 
 ### Patch Changes

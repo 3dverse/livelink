@@ -1,5 +1,13 @@
 # @3dverse/livelink
 
+## 0.8.52
+
+### Patch Changes
+
+- feat(livelink.js): add includes method in EntityUpdatedEvent
+- chore(livelink.js): update livelink.core
+- fix(livelink.js): adjust frame size and fix video decoding on iOS devices
+
 ## 0.8.51
 
 ### Patch Changes

@@ -1,5 +1,17 @@
 # @3dverse/livelink-react-ui
 
+## 0.3.12
+
+### Patch Changes
+
+- feat(livelink.react.ui): new culling box component
+- Updated dependencies
+- Updated dependencies
+- Updated dependencies
+- Updated dependencies
+  - @3dverse/livelink@0.8.52
+  - @3dverse/livelink-three@0.2.12
+
 ## 0.3.11
 
 ### Patch Changes
