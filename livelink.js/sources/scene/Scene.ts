@@ -20,10 +20,11 @@ import { Entity } from "./Entity";
 import { compute_rpn } from "./Filters";
 import { EntityRegistry } from "./EntityRegistry";
 import { ScriptEventReceived } from "./ScriptEvents";
-import { EntitiesCreatedEvent, EntitiesDeletedEvent, SceneSettingsUpdatedEvent, type SceneEvents } from "./SceneEvents";
+import { EntitiesCreatedEvent, EntitiesDeletedEvent, type SceneEvents } from "./SceneEvents";
 import { TypedEventTarget } from "../TypedEventTarget";
 import { Client } from "../session/Client";
-import { Deferred } from "./DeferredValue";
+import { PromiseWithResolver } from "./PromiseWithResolver";
+import { SceneSettings } from "./SceneSettings";
 
 /**
  * Options for creating a new entity.
@@ -73,6 +74,12 @@ export class Scene extends TypedEventTarget<SceneEvents> {
     public readonly _entity_registry = new EntityRegistry();
 
     /**
+     * @internal
+     * The scene settings.
+     */
+    public readonly _settings: SceneSettings = new SceneSettings(this);
+
+    /**
      * The livelink instance.
      */
     #instance: Livelink;
@@ -89,19 +96,9 @@ export class Scene extends TypedEventTarget<SceneEvents> {
     #pending_entity_requests = new Map<RTID, Promise<Array<EntityResponse>>>();
 
     /**
-     * The settings for the scene.
-     */
-    #settings: SceneSettingsRecord | null = null;
-
-    /**
-     * Promise that resolves when the settings are loaded.
-     */
-    #settings_promise: Deferred<void> = new Deferred<void>();
-
-    /**
      * Promise that resolves when the scene graph has finished loading.
      */
-    #scene_info_promise: Deferred<SceneInfo> = new Deferred<SceneInfo>();
+    #scene_info_promise = new PromiseWithResolver<SceneInfo>();
 
     /**
      * @internal
@@ -689,30 +686,15 @@ export class Scene extends TypedEventTarget<SceneEvents> {
 
     /**
      * Get the current scene settings.
+     * These values can be updated in real-time by other clients.
+     * Altering these values locally will update the scene settings on the server
+     * and broadcast the changes to other connected clients.
      *
      * @returns The current scene settings.
      */
-    async getSettings(): Promise<SceneSettingsRecord> {
-        await this.#settings_promise.value;
-        return this.#settings!;
+    async getSettings(): Promise<Readonly<SceneSettingsRecord>> {
+        return this._settings.values;
     }
-
-    /**
-     * @internal
-     */
-    _onSceneSettingsUpdated = ({ updated_settings }: Events.SceneSettingsUpdatedEvent): void => {
-        if (!this.#settings) {
-            this.#settings = updated_settings as SceneSettingsRecord;
-            this.#settings_promise.resolve();
-            return;
-        }
-
-        for (const [key, value] of Object.entries(updated_settings)) {
-            Object.assign(this.#settings[key as keyof SceneSettingsRecord], value);
-        }
-
-        this._dispatchEvent(new SceneSettingsUpdatedEvent({ updated_settings, emitter: null }));
-    };
 
     /**
      * Get scene information such as the entity count, triangle count,
@@ -721,7 +703,7 @@ export class Scene extends TypedEventTarget<SceneEvents> {
      * @returns The scene info.
      */
     async getInfo(): Promise<SceneInfo> {
-        return this.#scene_info_promise.value;
+        return this.#scene_info_promise.promise;
     }
 
     /**
