@@ -9,5 +9,5 @@ export function resolveSamplePath(path: string): string {
 
 //------------------------------------------------------------------------------
 export function resolveGitPath(path: string): string {
-    return 'https://github.com/3dverse/livelink/tree/release/' + path.substring(path.lastIndexOf("livelink.samples/"));
+    return "https://github.com/3dverse/livelink/tree/release/" + path.substring(path.lastIndexOf("livelink.samples/"));
 }

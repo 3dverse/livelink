@@ -1,0 +1,8 @@
+.handle {
+    background-color: var(--3dverse-color-content-primary);
+    border: 1px solid var(--3dverse-color-border-primary);
+    width: 1rem;
+    height: 1rem;
+    border-radius: 100%;
+    cursor: grab;
+}

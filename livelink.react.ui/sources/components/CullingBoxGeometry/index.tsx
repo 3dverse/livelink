@@ -1,92 +1,48 @@
 //------------------------------------------------------------------------------
-import {
-    PointerEventHandler,
-    useContext,
-    useEffect,
-    useMemo,
-    useState,
-} from "react";
+import React, { createContext, PointerEventHandler, useContext, useEffect, useMemo, useState } from "react";
 import * as THREE from "three";
 
 //------------------------------------------------------------------------------
-import type {
-    Entity,
-    Vec3,
-    Vec2,
-    CameraProjection,
-    Viewport as LiveliveViewport,
-} from "@3dverse/livelink";
-import {
-    Livelink,
-    Canvas,
-    Viewport,
-    CameraController,
-    useCameraEntity,
-    useEntity,
-    DOM3DElement,
-    DOM3DOverlay,
-    ViewportContext,
-} from "@3dverse/livelink-react";
+import type { Entity, Vec3, Vec2, CameraProjection, Viewport as LiveliveViewport } from "@3dverse/livelink";
+import { useEntity, DOM3DElement, DOM3DOverlay, ViewportContext } from "@3dverse/livelink-react";
 import { ThreeOverlay } from "@3dverse/livelink-three/react";
-import { LoadingOverlay } from "@3dverse/livelink-react-ui";
 
 //------------------------------------------------------------------------------
-import { DisconnectedModal } from "../../components/SamplePlayer";
+import styles from "./style.module.css";
 
 //------------------------------------------------------------------------------
-const scene_id = "5c19522d-a045-4554-a6d3-78bd87e44b86";
-const token = import.meta.env.VITE_PROD_PUBLIC_TOKEN;
+type CullingBoxGeometryContextType = {
+    isActive: boolean;
+    toggle: () => void;
+};
 
-//------------------------------------------------------------------------------
-export default {
-    path: import.meta.VITE_FILE_NAME,
-    code: import.meta.VITE_FILE_CONTENT,
-    title: "Culling Box Geometry",
-    summary:
-        "Three.js overlay with a widget to resize a box geometry that culls scene objects.",
-    element: <App />,
+const CullingBoxGeometryContext = createContext<CullingBoxGeometryContextType | null>(null);
+
+export const useCullingBoxGeometry = () => {
+    const ctx = useContext(CullingBoxGeometryContext);
+    if (!ctx) throw new Error("useCullingBoxGeometry must be used within <CullingBoxGeometry>");
+    return ctx;
 };
 
 //------------------------------------------------------------------------------
-function App() {
-    return (
-        <Livelink
-            sceneId={scene_id}
-            token={token}
-            LoadingPanel={LoadingOverlay}
-            ConnectionErrorPanel={DisconnectedModal}
-        >
-            <AppLayout />
-        </Livelink>
-    );
-}
-
-//------------------------------------------------------------------------------
-function AppLayout() {
-    const { cameraEntity } = useCameraEntity({
-        position: [20, 20, 20],
-        eulerOrientation: [-45, 45, 0],
-    });
-
-    return (
-        <Canvas className="w-full h-full">
-            <Viewport cameraEntity={cameraEntity} className="w-full h-full">
-                <CameraController />
-                <CullingBoxGeometryWidget initialSize={[20, 10, 20]} />
-            </Viewport>
-        </Canvas>
-    );
-}
-
-//------------------------------------------------------------------------------
-function CullingBoxGeometryWidget({
+export const CullingBoxGeometry = ({
     initialSize = [1, 1, 1],
     initialPosition = [0, 0, 0],
+    isActiveByDefault = true,
+    boxColor = "#ffff00",
+    opacity = 0.2,
+    edgeColor = "#000000",
+    children,
 }: {
     initialSize?: Vec3;
     initialPosition?: Vec3;
-}) {
-    const [isEnable, setEnableState] = useState(true);
+    isActiveByDefault?: boolean;
+    boxColor?: THREE.ColorRepresentation;
+    opacity?: number;
+    edgeColor?: THREE.ColorRepresentation;
+    children?: React.ReactNode;
+}) => {
+    const [isEnable, setEnableState] = useState(isActiveByDefault);
     const scene = useMemo(() => new THREE.Scene(), []);
 
     const { entity: boxGeometryEntity } = useEntity(
@@ -102,22 +58,18 @@ function CullingBoxGeometryWidget({
         ["local_transform", "box_geometry"],
     );
 
-    return (
-        <>
-            <div className="absolute bottom-4 right-4">
-                <button
-                    className="button button-primary"
-                    onClick={() => setEnableState(!isEnable)}
-                >
-                    {isEnable ? "Hide" : "Show"} Box Geometry
-                </button>
-            </div>
+    const toggle = () => setEnableState(!isEnable);
 
+    return (
+        <CullingBoxGeometryContext.Provider value={{ isActive: isEnable, toggle }}>
             <ThreeOverlay scene={scene} />
             {boxGeometryEntity && isEnable && (
                 <BoxGeometryMesh
                     boxGeometryEntity={boxGeometryEntity}
                     scene={scene}
+                    boxColor={boxColor}
+                    opacity={opacity}
+                    edgeColor={edgeColor}
                 />
             )}
             {boxGeometryEntity && isEnable && (
@@ -125,17 +77,18 @@ function CullingBoxGeometryWidget({
                     <BoxGeometryHandles boxGeometryEntity={boxGeometryEntity} />
                 </DOM3DOverlay>
             )}
-        </>
+            {children}
+        </CullingBoxGeometryContext.Provider>
     );
-}
+};
 
 //------------------------------------------------------------------------------
 function BoxGeometryMesh({
     boxGeometryEntity,
     scene,
-    boxColor = 0xffff00,
-    opacity = 0.5,
-    edgeColor = 0x000000,
+    boxColor,
+    opacity,
+    edgeColor,
 }: {
     boxGeometryEntity: Entity;
     scene: THREE.Scene;
@@ -144,13 +97,8 @@ function BoxGeometryMesh({
     edgeColor?: THREE.ColorRepresentation;
 }) {
     useEffect(() => {
-        if (
-            !boxGeometryEntity.box_geometry ||
-            !boxGeometryEntity.local_transform
-        ) {
-            console.warn(
-                "BoxGeometryMesh: box_geometry or local_transform component not found.",
-            );
+        if (!boxGeometryEntity.box_geometry || !boxGeometryEntity.local_transform) {
+            console.warn("BoxGeometryMesh: box_geometry or local_transform component not found.");
             return;
         }
 
@@ -180,9 +128,7 @@ function BoxGeometryMesh({
         const updateObjectsTransform = () => {
             const globalTransform = boxGeometryEntity.global_transform;
             globalTransformObject.position.fromArray(globalTransform.position);
-            globalTransformObject.quaternion.fromArray(
-                globalTransform.orientation,
-            );
+            globalTransformObject.quaternion.fromArray(globalTransform.orientation);
             globalTransformObject.scale.fromArray(globalTransform.scale);
             globalTransformObject.updateMatrixWorld();
 
@@ -192,18 +138,12 @@ function BoxGeometryMesh({
             dimensionObject.updateMatrixWorld();
         };
 
-        boxGeometryEntity.addEventListener(
-            "on-entity-updated",
-            updateObjectsTransform,
-        );
+        boxGeometryEntity.addEventListener("on-entity-updated", updateObjectsTransform);
         updateObjectsTransform();
 
         return () => {
             scene.remove(globalTransformObject);
-            boxGeometryEntity.removeEventListener(
-                "on-entity-updated",
-                updateObjectsTransform,
-            );
+            boxGeometryEntity.removeEventListener("on-entity-updated", updateObjectsTransform);
         };
     }, [boxGeometryEntity, scene, edgeColor, boxColor, opacity]);
 
@@ -225,31 +165,18 @@ const geometryHandlesAxes = [
 ] as const;
 
 //------------------------------------------------------------------------------
-function BoxGeometryHandles({
-    boxGeometryEntity,
-}: {
-    boxGeometryEntity: Entity;
-}) {
-    const [geometryHandles, setGeometryHandles] = useState<GeometryHandle[]>(
-        [],
-    );
+function BoxGeometryHandles({ boxGeometryEntity }: { boxGeometryEntity: Entity }) {
+    const [geometryHandles, setGeometryHandles] = useState<GeometryHandle[]>([]);
     const { viewport, viewportDomElement } = useContext(ViewportContext);
 
     useEffect(() => {
-        if (
-            !boxGeometryEntity.box_geometry ||
-            !boxGeometryEntity.local_transform
-        ) {
-            console.warn(
-                "BoxGeometryHandles: box_geometry or local_transform component not found.",
-            );
+        if (!boxGeometryEntity.box_geometry || !boxGeometryEntity.local_transform) {
+            console.warn("BoxGeometryHandles: box_geometry or local_transform component not found.");
             return;
         }
 
         if (!viewport || !viewportDomElement) {
-            console.warn(
-                "BoxGeometryHandles: should be mounted inside a valid Viewport component.",
-            );
+            console.warn("BoxGeometryHandles: should be mounted inside a valid Viewport component.");
             return;
         }
 
@@ -269,19 +196,13 @@ function BoxGeometryHandles({
         updateHandles();
 
         return () => {
-            boxGeometryEntity.removeEventListener(
-                "on-entity-updated",
-                updateHandles,
-            );
+            boxGeometryEntity.removeEventListener("on-entity-updated", updateHandles);
         };
     }, [boxGeometryEntity, viewport, viewportDomElement]);
 
     return geometryHandles.map((handle, index) => (
         <DOM3DElement worldPosition={handle.worldPosition} key={index}>
-            <div
-                className="bg-[white] border border-[black] p-2 rounded-xl cursor-grab"
-                onPointerDown={handle.onPointerDown}
-            />
+            <div className={styles.handle} onPointerDown={handle.onPointerDown} />
         </DOM3DElement>
     ));
 }
@@ -302,16 +223,8 @@ function createBoxGeometryHandle({
     const intersection = new THREE.Vector3();
 
     //--------------------------------------------------------------------------
-    const absAxis = new THREE.Vector3(
-        Math.abs(axis.x),
-        Math.abs(axis.y),
-        Math.abs(axis.z),
-    );
-    const nullifyAxis = new THREE.Vector3(
-        1 - absAxis.x,
-        1 - absAxis.y,
-        1 - absAxis.z,
-    );
+    const absAxis = new THREE.Vector3(Math.abs(axis.x), Math.abs(axis.y), Math.abs(axis.z));
+    const nullifyAxis = new THREE.Vector3(1 - absAxis.x, 1 - absAxis.y, 1 - absAxis.z);
 
     //--------------------------------------------------------------------------
     const boxGeometry = boxGeometryEntity.box_geometry!;
@@ -326,30 +239,19 @@ function createBoxGeometryHandle({
     const { local_from_world, world_position } = computeWorldComponents();
 
     //--------------------------------------------------------------------------
-    const onPointerDown: PointerEventHandler = (
-        event: React.PointerEvent<Element>,
-    ) => {
+    const onPointerDown: PointerEventHandler = (event: React.PointerEvent<Element>) => {
         event.stopPropagation();
 
         //----------------------------------------------------------------------
-        const camera_projection =
-            viewport.camera_projection as CameraProjection;
+        const camera_projection = viewport.camera_projection as CameraProjection;
         if (!camera_projection) {
-            console.warn(
-                "BoxGeometryHandles: viewport should have a valid camera_projection.",
-            );
+            console.warn("BoxGeometryHandles: viewport should have a valid camera_projection.");
             return;
         }
 
         //----------------------------------------------------------------------
-        const cameraDirection = new THREE.Vector3(
-            0.0,
-            0.0,
-            1.0,
-        ).applyQuaternion(
-            new THREE.Quaternion().fromArray(
-                camera_projection.world_orientation,
-            ),
+        const cameraDirection = new THREE.Vector3(0.0, 0.0, 1.0).applyQuaternion(
+            new THREE.Quaternion().fromArray(camera_projection.world_orientation),
         );
         plane.setFromNormalAndCoplanarPoint(cameraDirection, world_position);
 
@@ -383,19 +285,11 @@ function createBoxGeometryHandle({
     } {
         const globalTransform = boxGeometryEntity.global_transform;
 
-        const world_position = new THREE.Vector3().fromArray(
-            globalTransform.position,
-        );
-        const world_orientation = new THREE.Quaternion().fromArray(
-            globalTransform.orientation,
-        );
-        const world_scale = new THREE.Vector3().fromArray(
-            globalTransform.scale,
-        );
+        const world_position = new THREE.Vector3().fromArray(globalTransform.position);
+        const world_orientation = new THREE.Quaternion().fromArray(globalTransform.orientation);
+        const world_scale = new THREE.Vector3().fromArray(globalTransform.scale);
 
-        const local_from_world = new THREE.Matrix4()
-            .compose(world_position, world_orientation, world_scale)
-            .invert();
+        const local_from_world = new THREE.Matrix4().compose(world_position, world_orientation, world_scale).invert();
 
         world_position.add(
             axis
@@ -426,25 +320,17 @@ function createBoxGeometryHandle({
             event,
         });
 
-        const { origin, direction } =
-            camera_projection.computeRayFromScreenPosition({
-                screen_position,
-            });
+        const { origin, direction } = camera_projection.computeRayFromScreenPosition({
+            screen_position,
+        });
 
         ray.origin.fromArray(origin);
         ray.direction.fromArray(direction);
     }
 
     //--------------------------------------------------------------------------
-    function transformBoxGeometry({
-        intersection,
-    }: {
-        intersection: THREE.Vector3;
-    }) {
-        const intersectionInLocalSpace = intersection
-            .clone()
-            .applyMatrix4(local_from_world)
-            .sub(offset);
+    function transformBoxGeometry({ intersection }: { intersection: THREE.Vector3 }) {
+        const intersectionInLocalSpace = intersection.clone().applyMatrix4(local_from_world).sub(offset);
 
         const radius = intersectionInLocalSpace.dot(axis);
 
@@ -453,14 +339,10 @@ function createBoxGeometryHandle({
             .multiply(nullifyAxis)
             .addScaledVector(absAxis, radius * 2);
 
-        const dimensionOffset = new THREE.Vector3()
-            .subVectors(radiusVector, dimensions)
-            .multiplyScalar(0.5);
+        const dimensionOffset = new THREE.Vector3().subVectors(radiusVector, dimensions).multiplyScalar(0.5);
 
         const newDimension = dimensions.clone().add(dimensionOffset);
-        const newOffset = offset
-            .clone()
-            .addScaledVector(dimensionOffset.multiply(axis), 0.5);
+        const newOffset = offset.clone().addScaledVector(dimensionOffset.multiply(axis), 0.5);
 
         boxGeometry.dimension[0] = Math.max(0.0, newDimension.x);
         boxGeometry.dimension[1] = Math.max(0.0, newDimension.y);

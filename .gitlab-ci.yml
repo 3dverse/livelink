@@ -72,8 +72,8 @@ js:build:libs:
   script:
     - npm run build:js
     - npm run build:react
-    - npm run build:react.ui
     - npm run build:three
+    - npm run build:react.ui
     - npm run build:webxr
   rules:
     - if: *default-branch-rule

@@ -115,14 +115,16 @@ export class Livelink {
         token,
         is_transient = false,
         is_headless = false,
+        session_options,
     }: {
         scene_id: UUID;
         token: string;
         is_transient?: boolean;
         is_headless?: boolean;
+        session_options?: Record<string, boolean>;
     }): Promise<Livelink> {
         console.debug(`Starting new session on scene '${scene_id}'`);
-        const session = await Session.create({ scene_id, token, is_transient });
+        const session = await Session.create({ scene_id, token, is_transient, options: session_options });
         return await Livelink.join({ session, is_headless });
     }
 
@@ -151,12 +153,14 @@ export class Livelink {
         session_selector = ({ sessions }: { sessions: Array<SessionInfo> }): SessionInfo => sessions[0],
         is_transient = false,
         is_headless = false,
+        session_options,
     }: {
         scene_id: UUID;
         token: string;
         session_selector?: SessionSelector;
         is_transient?: boolean;
         is_headless?: boolean;
+        session_options?: Record<string, boolean>;
     }): Promise<Livelink> {
         console.debug(`Looking for sessions on scene '${scene_id}'`);
         const session = await Session.find({ scene_id, token, session_selector });
@@ -165,7 +169,7 @@ export class Livelink {
             console.debug(
                 `There's no session currently running on scene '${scene_id}' and satisfiying the provided selector criteria`,
             );
-            return await Livelink.start({ scene_id, token, is_transient, is_headless });
+            return await Livelink.start({ scene_id, token, is_transient, is_headless, session_options });
         }
 
         try {
@@ -184,6 +188,7 @@ export class Livelink {
                 },
                 is_transient,
                 is_headless,
+                session_options,
             });
         }
     }
@@ -537,7 +542,9 @@ export class Livelink {
      * @internal
      */
     async _resize({ size }: { size: Vec2i }): Promise<void> {
+        console.debug("🙏 Requesting remote resize", size);
         const { size: remote_size } = await this.#core.resize({ size });
+        console.debug("📐 Remote resize done", remote_size);
         this.#encoded_frame_consumer?.resize({ frame_dimensions: remote_size });
     }
 

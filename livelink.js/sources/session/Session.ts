@@ -82,14 +82,16 @@ export class Session extends TypedEventTarget<SessionEvents> implements SessionI
         scene_id,
         token,
         is_transient,
+        options,
     }: {
         scene_id: UUID;
         token: string;
         is_transient?: boolean;
+        options?: Record<string, boolean>;
     }): Promise<Session> {
         const res = await fetch(`${Livelink._api_url}/sessions`, {
             method: "POST",
-            body: JSON.stringify({ scene_id, is_transient }),
+            body: JSON.stringify({ scene_id, is_transient, options }),
             headers: {
                 "Content-Type": "application/json",
                 user_token: token,

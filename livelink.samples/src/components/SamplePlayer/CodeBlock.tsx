@@ -34,7 +34,9 @@ export function CodeBlock({ code, title, gitPath }: { code: string; title?: stri
                                     rel="noopener noreferrer"
                                 >
                                     <GitHubIcon className="w-3 h-3" />
-                                    <span className="ml-2 hidden md:inline"><span className="hidden xl:inline">View on </span>GitHub</span>
+                                    <span className="ml-2 hidden md:inline">
+                                        <span className="hidden xl:inline">View on </span>GitHub
+                                    </span>
                                 </a>
                             )}
                             <button className="button button-icon button-xs" onClick={() => setIsCollapsed(true)}>

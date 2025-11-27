@@ -180,7 +180,7 @@ export class Viewport extends TypedEventTarget<ViewportEvents> {
      * The DOM elements of the overlays attached to the viewport.
      */
     get overlay_dom_elements(): Array<HTMLElement> {
-        return this.#overlays.map((overlay) => overlay.container).filter(Boolean) as Array<HTMLElement>;
+        return this.#overlays.map(overlay => overlay.container).filter(Boolean) as Array<HTMLElement>;
     }
 
     /**

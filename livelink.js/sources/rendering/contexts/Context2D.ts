@@ -5,8 +5,15 @@ import type { RelativeRect } from "../surfaces/Rect";
  * @category Rendering Contexts
  */
 export class Context2D extends ContextProvider {
-    private _canvas: HTMLCanvasElement;
-    private _context2D: CanvasRenderingContext2D;
+    /**
+     *
+     */
+    #canvas: HTMLCanvasElement;
+
+    /**
+     *
+     */
+    #context2D: CanvasRenderingContext2D;
 
     /**
      *
@@ -18,8 +25,8 @@ export class Context2D extends ContextProvider {
         if (context === null) {
             throw new Error(`Cannot create a 2d context from canvas ${canvas}`);
         }
-        this._canvas = canvas;
-        this._context2D = context;
+        this.#canvas = canvas;
+        this.#context2D = context;
     }
 
     /**
@@ -31,12 +38,12 @@ export class Context2D extends ContextProvider {
         const frame_width = frame_section.section.width * frame_section.dimensions_in_pixels[0];
         const frame_height = frame_section.section.height * frame_section.dimensions_in_pixels[1];
 
-        const viewport_offset_left = viewport.left * this._canvas.width;
-        const viewport_offset_top = viewport.top * this._canvas.height;
-        const viewport_width = viewport.width * this._canvas.width;
-        const viewport_height = viewport.height * this._canvas.height;
+        const viewport_offset_left = viewport.left * this.#canvas.width;
+        const viewport_offset_top = viewport.top * this.#canvas.height;
+        const viewport_width = viewport.width * this.#canvas.width;
+        const viewport_height = viewport.height * this.#canvas.height;
 
-        this._context2D.drawImage(
+        this.#context2D.drawImage(
             frame_section.pixels,
             frame_offset_left,
             frame_offset_top,
@@ -53,6 +60,6 @@ export class Context2D extends ContextProvider {
      *
      */
     release(): void {
-        this._context2D.reset();
+        this.#context2D.reset();
     }
 }

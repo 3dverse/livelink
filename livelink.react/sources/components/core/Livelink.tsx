@@ -120,6 +120,12 @@ export type LivelinkConnectParameters = {
      * Optional React component or node displayed when the connection is disconnected.
      */
     ConnectionErrorPanel?: React.ComponentType<{ error: string }>;
+
+    /**
+     * @internal
+     * Additional session options.
+     */
+    sessionOptions?: Record<string, boolean>;
 } & SessionOpenMode;
 
 /**
@@ -164,6 +170,7 @@ export function LivelinkProvider({
     autoJoinExisting = true,
     clientType,
     children,
+    sessionOptions,
 }: PropsWithChildren<LivelinkConnectParameters>): JSX.Element {
     const [instance, setInstance] = useState<LivelinkInstance | null>(null);
     const [isConnecting, setIsConnecting] = useState(true);
@@ -191,9 +198,19 @@ export function LivelinkProvider({
 
             if (sceneId) {
                 if (autoJoinExisting) {
-                    return LivelinkInstance.join_or_start({ scene_id: sceneId, token, is_transient: isTransient });
+                    return LivelinkInstance.join_or_start({
+                        scene_id: sceneId,
+                        token,
+                        is_transient: isTransient,
+                        session_options: sessionOptions,
+                    });
                 } else {
-                    return LivelinkInstance.start({ scene_id: sceneId, token, is_transient: isTransient });
+                    return LivelinkInstance.start({
+                        scene_id: sceneId,
+                        token,
+                        is_transient: isTransient,
+                        session_options: sessionOptions,
+                    });
                 }
             }
 
