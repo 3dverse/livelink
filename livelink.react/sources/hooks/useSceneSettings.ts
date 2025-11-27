@@ -1,5 +1,5 @@
 //------------------------------------------------------------------------------
-import { useContext, useEffect, useState } from "react";
+import { useContext, useEffect, useReducer, useState } from "react";
 
 //------------------------------------------------------------------------------
 import type { SceneSettingsRecord, SceneSettingsUpdatedEvent } from "@3dverse/livelink";
@@ -14,12 +14,13 @@ import { LivelinkContext } from "../components/core/Livelink";
  */
 export function useSceneSettings(): {
     isPending: boolean;
-    sceneSettings: SceneSettingsRecord | null;
+    sceneSettings: Readonly<SceneSettingsRecord> | null;
 } {
     const { instance } = useContext(LivelinkContext);
 
-    const [sceneSettings, setSceneSettings] = useState<SceneSettingsRecord | null>(null);
+    const [sceneSettings, setSceneSettings] = useState<Readonly<SceneSettingsRecord> | null>(null);
     const [isPending, setIsPending] = useState<boolean>(true);
+    const [, forceUpdate] = useReducer(x => x + 1, 0);
 
     useEffect(() => {
         if (!instance) {
@@ -28,6 +29,7 @@ export function useSceneSettings(): {
 
         const fetchSettings = async (): Promise<void> => {
             const sceneSettings = await instance.scene.getSettings();
+            console.debug("----- Fetched scene settings:", sceneSettings);
             setSceneSettings(sceneSettings);
             setIsPending(false);
         };
@@ -45,13 +47,8 @@ export function useSceneSettings(): {
             return;
         }
 
-        const onSettingsUpdated = ({ updated_settings }: SceneSettingsUpdatedEvent): void => {
-            for (const [key, value] of Object.entries(updated_settings)) {
-                Object.assign(sceneSettings[key as keyof SceneSettingsRecord], value);
-            }
-
-            console.debug("----- Scene settings updated:", updated_settings);
-            setSceneSettings({ ...sceneSettings });
+        const onSettingsUpdated = async (_: SceneSettingsUpdatedEvent): Promise<void> => {
+            forceUpdate();
         };
 
         instance.scene.addEventListener("on-scene-settings-updated", onSettingsUpdated);
