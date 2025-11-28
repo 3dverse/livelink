@@ -3,6 +3,7 @@ export * from "./hooks/useEntities";
 export * from "./hooks/useClients";
 export * from "./hooks/useCameraEntity";
 export * from "./hooks/useSceneSettings";
+export * from "./hooks/useSceneInfo";
 
 export * from "./components/core/Livelink";
 export * from "./components/core/Canvas";

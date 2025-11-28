@@ -385,7 +385,6 @@ export class Entity extends EntityTransformHandler {
 
             switch (component_name) {
                 case "euid":
-                case "lineage":
                     break;
                 case "local_transform":
                     this._setLocalTransform({ local_transform: components[component_name]! });

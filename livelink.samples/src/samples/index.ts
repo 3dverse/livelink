@@ -39,6 +39,7 @@ import FindingEntities from "./react-core/6-entities/3-finding-entities";
 import SmartObject from "./react-core/6-entities/4-smart-object";
 import Environments from "./react-core/6-entities/5-environments";
 import EntityVisibility from "./react-core/6-entities/6-entity-visibility";
+import SceneSettings from "./react-core/6-entities/7-settings";
 
 //------------------------------------------------------------------------------
 import ActivityWatcher from "./react-ui/1-activity-watcher";
@@ -118,7 +119,15 @@ export default [
     },
     {
         categoryName: "Entities",
-        list: [CreateEntity, EntityPicking, FindingEntities, SmartObject, Environments, EntityVisibility],
+        list: [
+            CreateEntity,
+            EntityPicking,
+            FindingEntities,
+            SmartObject,
+            Environments,
+            EntityVisibility,
+            SceneSettings,
+        ],
     },
     {
         categoryName: "Widgets",

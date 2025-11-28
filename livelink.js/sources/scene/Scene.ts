@@ -20,9 +20,11 @@ import { Entity } from "./Entity";
 import { compute_rpn } from "./Filters";
 import { EntityRegistry } from "./EntityRegistry";
 import { ScriptEventReceived } from "./ScriptEvents";
-import { EntitiesCreatedEvent, EntitiesDeletedEvent, SceneSettingsUpdatedEvent, type SceneEvents } from "./SceneEvents";
+import { EntitiesCreatedEvent, EntitiesDeletedEvent, type SceneEvents } from "./SceneEvents";
 import { TypedEventTarget } from "../TypedEventTarget";
 import { Client } from "../session/Client";
+import { PromiseWithResolver } from "./PromiseWithResolver";
+import { SceneSettings } from "./SceneSettings";
 
 /**
  * Options for creating a new entity.
@@ -41,6 +43,15 @@ export type EntityCreationOptions = {
      * Whether to broadcast the entity automatically.
      */
     auto_broadcast?: boolean;
+};
+
+/**
+ * Information about the scene.
+ *
+ * @category Scene
+ */
+export type SceneInfo = Omit<Events.SceneInfo, "root_entities"> & {
+    root_entities: Array<Entity>;
 };
 
 /**
@@ -63,6 +74,12 @@ export class Scene extends TypedEventTarget<SceneEvents> {
     public readonly _entity_registry = new EntityRegistry();
 
     /**
+     * @internal
+     * The scene settings.
+     */
+    public readonly _settings: SceneSettings = new SceneSettings(this);
+
+    /**
      * The livelink instance.
      */
     #instance: Livelink;
@@ -79,19 +96,9 @@ export class Scene extends TypedEventTarget<SceneEvents> {
     #pending_entity_requests = new Map<RTID, Promise<Array<EntityResponse>>>();
 
     /**
-     * The settings for the scene.
+     * Promise that resolves when the scene graph has finished loading.
      */
-    #settings: SceneSettingsRecord | null = null;
-
-    /**
-     * Promise that resolves when the settings are loaded.
-     */
-    #settings_promise: Promise<void>;
-
-    /**
-     *
-     */
-    #settings_promise_resolver: (() => void) | null = null;
+    #scene_info_promise = new PromiseWithResolver<SceneInfo>();
 
     /**
      * @internal
@@ -100,10 +107,6 @@ export class Scene extends TypedEventTarget<SceneEvents> {
         super();
         this.#instance = instance;
         this.#core = core;
-
-        this.#settings_promise = new Promise<void>(resolve => {
-            this.#settings_promise_resolver = resolve;
-        });
     }
 
     /**
@@ -683,35 +686,37 @@ export class Scene extends TypedEventTarget<SceneEvents> {
 
     /**
      * Get the current scene settings.
+     * These values can be updated in real-time by other clients.
+     * Altering these values locally will update the scene settings on the server
+     * and broadcast the changes to other connected clients.
      *
      * @returns The current scene settings.
      */
-    async getSettings(): Promise<SceneSettingsRecord> {
-        await this.#settings_promise;
-        return this.#settings!;
+    async getSettings(): Promise<Readonly<SceneSettingsRecord>> {
+        return this._settings.values;
+    }
+
+    /**
+     * Get scene information such as the entity count, triangle count,
+     * and scene bounding box.
+     *
+     * @returns The scene info.
+     */
+    async getInfo(): Promise<SceneInfo> {
+        return this.#scene_info_promise.promise;
     }
 
     /**
      * @internal
      */
-    _onSceneSettingsUpdated = ({ updated_settings }: Events.SceneSettingsUpdatedEvent): void => {
-        if (!this.#settings) {
-            this.#settings = updated_settings as SceneSettingsRecord;
+    _onSceneInfoLoaded = (event: Events.SceneInfoLoadedEvent): void => {
+        const root_entities = this.#resolveEntityResponses({ entity_responses: event.scene_info.root_entities });
 
-            if (!this.#settings_promise_resolver) {
-                throw new Error("Settings promise resolver is null when settings are first set.");
-            }
-
-            this.#settings_promise_resolver();
-            this.#settings_promise_resolver = null;
-
-            return;
-        }
-
-        for (const [key, value] of Object.entries(updated_settings)) {
-            Object.assign(this.#settings[key as keyof SceneSettingsRecord], value);
-        }
-
-        this._dispatchEvent(new SceneSettingsUpdatedEvent({ updated_settings, emitter: null }));
+        this.#scene_info_promise.resolve({
+            aabb: event.scene_info.aabb,
+            entity_count: event.scene_info.entity_count,
+            triangle_count: event.scene_info.triangle_count,
+            root_entities: root_entities,
+        });
     };
 }
