@@ -125,6 +125,8 @@ type EntityProps = { name: string; components: ComponentsManifest } | null;
  * Once created, the camera entity will persist with this properties until
  * the component using this hook is unmounted.
  *
+ * When the component is unmounted, the camera entity is deleted from the scene.
+ *
  * @returns The camera entity and a boolean indicating if the entity is pending creation.
  *
  * @category Hooks
@@ -222,6 +224,17 @@ export function useCameraEntity(props: UseCameraEntityProps = {}): {
             setIsPending(true);
         };
     }, [instance, entityProps]);
+
+    //--------------------------------------------------------------------------
+    useEffect(() => {
+        if (!instance || !cameraEntity) {
+            return;
+        }
+
+        return (): void => {
+            instance.scene.deleteEntities({ entities: [cameraEntity] });
+        };
+    }, [instance, cameraEntity]);
 
     return { isPending, cameraEntity };
 }
