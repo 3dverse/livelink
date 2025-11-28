@@ -1,5 +1,11 @@
 # @3dverse/livelink-react-ui
 
+## 0.3.13
+
+### Patch Changes
+
+- fix(livelink.react.ui): optimized three.js imports and allow culling box geometry to be used within an existing overlay three overlay context
+
 ## 0.3.12
 
 ### Patch Changes
