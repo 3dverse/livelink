@@ -177,9 +177,7 @@ export class WebXRHelper {
         }
 
         if (this.#core) {
-            for (const { livelink_viewport } of this.#viewports) {
-                this.#core.removeViewport({ viewport: livelink_viewport });
-            }
+            this.releaseLivelinkViewportsAndCameras();
         }
 
         this.#surface.release();
@@ -298,7 +296,7 @@ export class WebXRHelper {
         enable_fake_alpha?: boolean;
     }): Promise<void> {
         if (this.#core) {
-            this.releaseLivelinkViewports();
+            await this.releaseLivelinkViewportsAndCameras();
         }
 
         this.#core = livelink;
@@ -643,10 +641,17 @@ export class WebXRHelper {
     /**
      *
      */
-    releaseLivelinkViewports(): void {
+    async releaseLivelinkViewportsAndCameras(): Promise<void> {
+        await this.#core!.scene.deleteEntities({
+            entities: this.#viewports.map(
+                ({ livelink_viewport }) => livelink_viewport.camera_projection!.camera_entity,
+            ),
+        });
+
         for (const viewport of this.#viewports) {
-            this.#surface.removeViewport({ viewport: viewport.livelink_viewport });
+            this.#core!.removeViewport({ viewport: viewport.livelink_viewport });
         }
+
         this.#viewports.length = 0;
     }
 
