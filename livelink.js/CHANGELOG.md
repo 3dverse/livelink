@@ -1,5 +1,13 @@
 # @3dverse/livelink
 
+## 0.8.53
+
+### Patch Changes
+
+- feat(livelink.js): scene settings can now be altered
+- feat(livelink.js): added Scene.getInfo
+- fix(livelink.js): lineage component was missing on Entity
+
 ## 0.8.52
 
 ### Patch Changes
