@@ -1,5 +1,18 @@
 # @3dverse/livelink-three
 
+## 0.2.13
+
+### Patch Changes
+
+- feat(livelink.three): expose scene in ThreeOverlayContext
+- Updated dependencies
+- Updated dependencies
+- Updated dependencies
+- Updated dependencies
+- Updated dependencies
+  - @3dverse/livelink@0.8.53
+  - @3dverse/livelink-react@0.2.56
+
 ## 0.2.12
 
 ### Patch Changes

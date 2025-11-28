@@ -1,5 +1,16 @@
 # @3dverse/livelink-react
 
+## 0.2.56
+
+### Patch Changes
+
+- feat(livelink.react): scene settings can now be altered
+- feat(livelink.react): added useSceneInfo
+- Updated dependencies
+- Updated dependencies
+- Updated dependencies
+  - @3dverse/livelink@0.8.53
+
 ## 0.2.55
 
 ### Patch Changes
