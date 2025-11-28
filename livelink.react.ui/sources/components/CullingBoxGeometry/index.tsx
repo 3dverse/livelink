@@ -1,11 +1,26 @@
 //------------------------------------------------------------------------------
 import React, { createContext, PointerEventHandler, useContext, useEffect, useMemo, useState } from "react";
-import * as THREE from "three";
+import {
+    BoxGeometry,
+    ColorRepresentation,
+    EdgesGeometry,
+    LineBasicMaterial,
+    LineSegments,
+    Matrix4,
+    Mesh,
+    MeshBasicMaterial,
+    Object3D,
+    Plane,
+    Quaternion,
+    Ray,
+    Scene,
+    Vector3,
+} from "three";
 
 //------------------------------------------------------------------------------
 import type { Entity, Vec3, Vec2, CameraProjection, Viewport as LiveliveViewport } from "@3dverse/livelink";
 import { useEntity, DOM3DElement, DOM3DOverlay, ViewportContext } from "@3dverse/livelink-react";
-import { ThreeOverlay } from "@3dverse/livelink-three/react";
+import { ThreeOverlay, ThreeOverlayContext } from "@3dverse/livelink-three/react";
 
 //------------------------------------------------------------------------------
 import styles from "./style.module.css";
@@ -33,17 +48,20 @@ export const CullingBoxGeometry = ({
     opacity = 0.2,
     edgeColor = "#000000",
     children,
+    scene: propsScene,
 }: {
     initialSize?: Vec3;
     initialPosition?: Vec3;
     isActiveByDefault?: boolean;
-    boxColor?: THREE.ColorRepresentation;
+    boxColor?: ColorRepresentation;
     opacity?: number;
-    edgeColor?: THREE.ColorRepresentation;
+    edgeColor?: ColorRepresentation;
     children?: React.ReactNode;
+    scene?: Scene;
 }) => {
     const [isEnable, setEnableState] = useState(isActiveByDefault);
-    const scene = useMemo(() => new THREE.Scene(), []);
+    const { scene: contextScene } = useContext(ThreeOverlayContext);
+    const scene = useMemo(() => propsScene ?? contextScene ?? new Scene(), [propsScene, contextScene]);
 
     const { entity: boxGeometryEntity } = useEntity(
         {
@@ -62,7 +80,10 @@ export const CullingBoxGeometry = ({
 
     return (
         <CullingBoxGeometryContext.Provider value={{ isActive: isEnable, toggle }}>
-            <ThreeOverlay scene={scene} />
+            {
+                /** Only render ThreeOverlay if no scene is provided via props or context */
+                !propsScene && !contextScene && <ThreeOverlay scene={scene} />
+            }
             {boxGeometryEntity && isEnable && (
                 <BoxGeometryMesh
                     boxGeometryEntity={boxGeometryEntity}
@@ -91,10 +112,10 @@ function BoxGeometryMesh({
     edgeColor,
 }: {
     boxGeometryEntity: Entity;
-    scene: THREE.Scene;
-    boxColor?: THREE.ColorRepresentation;
+    scene: Scene;
+    boxColor?: ColorRepresentation;
     opacity?: number;
-    edgeColor?: THREE.ColorRepresentation;
+    edgeColor?: ColorRepresentation;
 }) {
     useEffect(() => {
         if (!boxGeometryEntity.box_geometry || !boxGeometryEntity.local_transform) {
@@ -102,25 +123,25 @@ function BoxGeometryMesh({
             return;
         }
 
-        const geometry = new THREE.BoxGeometry(1, 1, 1);
-        const material = new THREE.MeshBasicMaterial({
+        const geometry = new BoxGeometry(1, 1, 1);
+        const material = new MeshBasicMaterial({
             color: boxColor,
             opacity,
             transparent: true,
         });
-        const mesh = new THREE.Mesh(geometry, material);
+        const mesh = new Mesh(geometry, material);
 
-        const edgeGeometry = new THREE.EdgesGeometry(geometry);
-        const edgeMaterial = new THREE.LineBasicMaterial({ color: edgeColor });
-        const edges = new THREE.LineSegments(edgeGeometry, edgeMaterial);
+        const edgeGeometry = new EdgesGeometry(geometry);
+        const edgeMaterial = new LineBasicMaterial({ color: edgeColor });
+        const edges = new LineSegments(edgeGeometry, edgeMaterial);
         mesh.add(edges);
 
         // Object that represents the box geometry component's dimension attributes
-        const dimensionObject = new THREE.Object3D();
+        const dimensionObject = new Object3D();
         dimensionObject.add(mesh);
 
         // Object that represents the box geometry global transform
-        const globalTransformObject = new THREE.Object3D();
+        const globalTransformObject = new Object3D();
         globalTransformObject.add(dimensionObject);
 
         scene.add(globalTransformObject);
@@ -156,12 +177,12 @@ type GeometryHandle = {
     onPointerDown: PointerEventHandler;
 };
 const geometryHandlesAxes = [
-    new THREE.Vector3(1, 0, 0),
-    new THREE.Vector3(-1, 0, 0),
-    new THREE.Vector3(0, 1, 0),
-    new THREE.Vector3(0, -1, 0),
-    new THREE.Vector3(0, 0, 1),
-    new THREE.Vector3(0, 0, -1),
+    new Vector3(1, 0, 0),
+    new Vector3(-1, 0, 0),
+    new Vector3(0, 1, 0),
+    new Vector3(0, -1, 0),
+    new Vector3(0, 0, 1),
+    new Vector3(0, 0, -1),
 ] as const;
 
 //------------------------------------------------------------------------------
@@ -213,23 +234,23 @@ function createBoxGeometryHandle({
     boxGeometryEntity,
     viewport,
 }: {
-    axis: THREE.Vector3;
+    axis: Vector3;
     boxGeometryEntity: Entity;
     viewport: LiveliveViewport;
 }): GeometryHandle {
     //--------------------------------------------------------------------------
-    const ray = new THREE.Ray();
-    const plane = new THREE.Plane();
-    const intersection = new THREE.Vector3();
+    const ray = new Ray();
+    const plane = new Plane();
+    const intersection = new Vector3();
 
     //--------------------------------------------------------------------------
-    const absAxis = new THREE.Vector3(Math.abs(axis.x), Math.abs(axis.y), Math.abs(axis.z));
-    const nullifyAxis = new THREE.Vector3(1 - absAxis.x, 1 - absAxis.y, 1 - absAxis.z);
+    const absAxis = new Vector3(Math.abs(axis.x), Math.abs(axis.y), Math.abs(axis.z));
+    const nullifyAxis = new Vector3(1 - absAxis.x, 1 - absAxis.y, 1 - absAxis.z);
 
     //--------------------------------------------------------------------------
     const boxGeometry = boxGeometryEntity.box_geometry!;
-    const dimensions = new THREE.Vector3().fromArray(boxGeometry.dimension);
-    const offset = new THREE.Vector3().fromArray(boxGeometry.offset);
+    const dimensions = new Vector3().fromArray(boxGeometry.dimension);
+    const offset = new Vector3().fromArray(boxGeometry.offset);
 
     //--------------------------------------------------------------------------
     const maxOffset = offset.clone().addScaledVector(dimensions, 0.5);
@@ -250,8 +271,8 @@ function createBoxGeometryHandle({
         }
 
         //----------------------------------------------------------------------
-        const cameraDirection = new THREE.Vector3(0.0, 0.0, 1.0).applyQuaternion(
-            new THREE.Quaternion().fromArray(camera_projection.world_orientation),
+        const cameraDirection = new Vector3(0.0, 0.0, 1.0).applyQuaternion(
+            new Quaternion().fromArray(camera_projection.world_orientation),
         );
         plane.setFromNormalAndCoplanarPoint(cameraDirection, world_position);
 
@@ -280,16 +301,16 @@ function createBoxGeometryHandle({
 
     //--------------------------------------------------------------------------
     function computeWorldComponents(): {
-        local_from_world: THREE.Matrix4;
-        world_position: THREE.Vector3;
+        local_from_world: Matrix4;
+        world_position: Vector3;
     } {
         const globalTransform = boxGeometryEntity.global_transform;
 
-        const world_position = new THREE.Vector3().fromArray(globalTransform.position);
-        const world_orientation = new THREE.Quaternion().fromArray(globalTransform.orientation);
-        const world_scale = new THREE.Vector3().fromArray(globalTransform.scale);
+        const world_position = new Vector3().fromArray(globalTransform.position);
+        const world_orientation = new Quaternion().fromArray(globalTransform.orientation);
+        const world_scale = new Vector3().fromArray(globalTransform.scale);
 
-        const local_from_world = new THREE.Matrix4().compose(world_position, world_orientation, world_scale).invert();
+        const local_from_world = new Matrix4().compose(world_position, world_orientation, world_scale).invert();
 
         world_position.add(
             axis
@@ -312,7 +333,7 @@ function createBoxGeometryHandle({
         camera_projection,
     }: {
         event: PointerEvent;
-        ray: THREE.Ray;
+        ray: Ray;
         viewport: LiveliveViewport;
         camera_projection: CameraProjection;
     }) {
@@ -329,7 +350,7 @@ function createBoxGeometryHandle({
     }
 
     //--------------------------------------------------------------------------
-    function transformBoxGeometry({ intersection }: { intersection: THREE.Vector3 }) {
+    function transformBoxGeometry({ intersection }: { intersection: Vector3 }) {
         const intersectionInLocalSpace = intersection.clone().applyMatrix4(local_from_world).sub(offset);
 
         const radius = intersectionInLocalSpace.dot(axis);
@@ -339,7 +360,7 @@ function createBoxGeometryHandle({
             .multiply(nullifyAxis)
             .addScaledVector(absAxis, radius * 2);
 
-        const dimensionOffset = new THREE.Vector3().subVectors(radiusVector, dimensions).multiplyScalar(0.5);
+        const dimensionOffset = new Vector3().subVectors(radiusVector, dimensions).multiplyScalar(0.5);
 
         const newDimension = dimensions.clone().add(dimensionOffset);
         const newOffset = offset.clone().addScaledVector(dimensionOffset.multiply(axis), 0.5);
