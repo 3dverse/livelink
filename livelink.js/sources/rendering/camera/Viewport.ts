@@ -507,9 +507,7 @@ export class Viewport extends TypedEventTarget<ViewportEvents> {
     /**
      *
      */
-    #onClick = async (e: MouseEvent): Promise<void> => {
-        e.stopPropagation();
-
+    #onClick = async (_: MouseEvent): Promise<void> => {
         let data = null;
 
         const cursorData = this.#core.session.current_client?._cursor_data;
