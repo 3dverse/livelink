@@ -208,7 +208,9 @@ export class ThreeOverlay implements OverlayInterface {
         this.#drawFrameForCamera({ viewport_camera_projection });
 
         if (output_canvas) {
-            throw new Error("Not implemented");
+            throw new Error(
+                "Cannot draw two different Three.js context on the same output canvas, use a single context",
+            );
         }
 
         return this.#offscreenCanvas;

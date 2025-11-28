@@ -4,13 +4,16 @@ import { createContext, PropsWithChildren, useContext, useEffect, useState } fro
 import { ViewportContext } from "@3dverse/livelink-react";
 import type * as THREE from "three";
 
+//------------------------------------------------------------------------------
 import { ThreeOverlay } from "../";
 
 //------------------------------------------------------------------------------
 export const ThreeOverlayContext = createContext<{
     overlay: ThreeOverlay | null;
+    scene: THREE.Scene | null;
 }>({
     overlay: null,
+    scene: null,
 });
 
 //------------------------------------------------------------------------------
@@ -33,7 +36,7 @@ function ThreeOverlayProvider({ scene, children }: PropsWithChildren<{ scene: TH
         };
     }, [viewport, camera]);
 
-    return <ThreeOverlayContext.Provider value={{ overlay }}>{children}</ThreeOverlayContext.Provider>;
+    return <ThreeOverlayContext.Provider value={{ overlay, scene }}>{children}</ThreeOverlayContext.Provider>;
 }
 
 //------------------------------------------------------------------------------
