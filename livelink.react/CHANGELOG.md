@@ -1,5 +1,17 @@
 # @3dverse/livelink-react
 
+## 0.2.57
+
+### Patch Changes
+
+- fix(livelink.react): unmount useCamera hook now disposes of the entity camera
+- refactor(livelink.react): Viewports are now delaying their resize to not spam the resize requests
+- Updated dependencies
+- Updated dependencies
+- Updated dependencies
+- Updated dependencies
+  - @3dverse/livelink@0.8.54
+
 ## 0.2.56
 
 ### Patch Changes

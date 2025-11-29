@@ -1,5 +1,19 @@
 # @3dverse/livelink-webxr
 
+## 0.1.15
+
+### Patch Changes
+
+- fix(livelink.webxr): release viewports and cameras
+- Updated dependencies
+- Updated dependencies
+- Updated dependencies
+- Updated dependencies
+- Updated dependencies
+- Updated dependencies
+  - @3dverse/livelink@0.8.54
+  - @3dverse/livelink-react@0.2.57
+
 ## 0.1.14
 
 ### Patch Changes
