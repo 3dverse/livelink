@@ -258,10 +258,10 @@ export class Scene extends TypedEventTarget<SceneEvents> {
      * @returns A promise that resolves when the entities are deleted.
      */
     async deleteEntities({ entities }: { entities: Array<Entity> }): Promise<void> {
-        await this.#core.deleteEntities({ entity_uuids: entities.map(e => e.id) });
         for (const entity of entities) {
             this._entity_registry.remove({ entity });
         }
+        await this.#core.deleteEntities({ entity_uuids: entities.map(e => e.id) });
     }
 
     /**

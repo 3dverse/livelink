@@ -102,6 +102,9 @@ export class EntityRegistry {
         if (!this.#entities.delete(entity)) {
             throw new Error(`Trying to remove entity ${entity.id} which has not been registered to the registry.`);
         }
+
+        this.#dirty_entities.delete(entity);
+        this.#entities_to_persist.delete(entity);
     }
 
     /**
