@@ -6,7 +6,13 @@ import {
     CameraController,
     useCameraEntity,
 } from "@3dverse/livelink-react";
-import { LoadingOverlay, CullingBoxGeometry } from "@3dverse/livelink-react-ui";
+import { LoadingOverlay } from "@3dverse/livelink-react-ui";
+
+//------------------------------------------------------------------------------
+import {
+    CullingBoxGeometry,
+    CullingBoxGeometryButton,
+} from "@3dverse/livelink-three/react";
 
 //------------------------------------------------------------------------------
 import { DisconnectedModal } from "../../components/SamplePlayer";
@@ -50,7 +56,31 @@ function AppLayout() {
         <Canvas className="w-full h-full">
             <Viewport cameraEntity={cameraEntity} className="w-full h-full">
                 <CameraController />
-                <CullingBoxGeometry initialSize={[20, 10, 20]} />
+                <CullingBoxGeometry initialSize={[20, 10, 20]}>
+                    <div
+                        style={{
+                            position: "absolute",
+                            bottom: "4rem",
+                            left: "50%",
+                            translate: "-50% 0",
+                        }}
+                    >
+                        <CullingBoxGeometryButton>
+                            {({ toggle, isActive }) => (
+                                <button
+                                    className="button button-primary"
+                                    style={{
+                                        padding: "0.5rem 1rem",
+                                        cursor: "pointer",
+                                    }}
+                                    onClick={toggle}
+                                >
+                                    {isActive ? "Hide" : "Show"} Box Geometry
+                                </button>
+                            )}
+                        </CullingBoxGeometryButton>
+                    </div>
+                </CullingBoxGeometry>
             </Viewport>
         </Canvas>
     );

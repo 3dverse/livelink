@@ -111,9 +111,16 @@ export const Viewport = forwardRef(function (
             return;
         }
 
-        const resizeObserver = new ResizeObserver(onResize);
+        let timeoutId: number;
+        const debouncedOnResize = (): void => {
+            clearTimeout(timeoutId);
+            timeoutId = window.setTimeout(onResize, 200);
+        };
+
+        const resizeObserver = new ResizeObserver(debouncedOnResize);
         resizeObserver.observe(viewportDomElement.current);
         return (): void => {
+            clearTimeout(timeoutId);
             resizeObserver.disconnect();
         };
     }, [viewportDomElement.current, onResize]);

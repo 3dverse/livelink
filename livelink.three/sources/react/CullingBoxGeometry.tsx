@@ -20,10 +20,7 @@ import {
 //------------------------------------------------------------------------------
 import type { Entity, Vec3, Vec2, CameraProjection, Viewport as LiveliveViewport } from "@3dverse/livelink";
 import { useEntity, DOM3DElement, DOM3DOverlay, ViewportContext } from "@3dverse/livelink-react";
-import { ThreeOverlay, ThreeOverlayContext } from "@3dverse/livelink-three/react";
-
-//------------------------------------------------------------------------------
-import styles from "./style.module.css";
+import { ThreeOverlay, ThreeOverlayContext } from ".";
 
 //------------------------------------------------------------------------------
 type CullingBoxGeometryContextType = {
@@ -31,12 +28,24 @@ type CullingBoxGeometryContextType = {
     toggle: () => void;
 };
 
+//------------------------------------------------------------------------------
 const CullingBoxGeometryContext = createContext<CullingBoxGeometryContextType | null>(null);
 
+//------------------------------------------------------------------------------
 export const useCullingBoxGeometry = () => {
     const ctx = useContext(CullingBoxGeometryContext);
     if (!ctx) throw new Error("useCullingBoxGeometry must be used within <CullingBoxGeometry>");
     return ctx;
+};
+
+//------------------------------------------------------------------------------
+const geometryHandleStyle: React.CSSProperties = {
+    backgroundColor: "white",
+    border: "1px solid black",
+    width: "1rem",
+    height: "1rem",
+    borderRadius: "100%",
+    cursor: "grab",
 };
 
 //------------------------------------------------------------------------------
@@ -223,7 +232,7 @@ function BoxGeometryHandles({ boxGeometryEntity }: { boxGeometryEntity: Entity }
 
     return geometryHandles.map((handle, index) => (
         <DOM3DElement worldPosition={handle.worldPosition} key={index}>
-            <div className={styles.handle} onPointerDown={handle.onPointerDown} />
+            <div style={geometryHandleStyle} onPointerDown={handle.onPointerDown} />
         </DOM3DElement>
     ));
 }
@@ -390,3 +399,31 @@ function createBoxGeometryHandle({
         onPointerDown,
     };
 }
+
+//------------------------------------------------------------------------------
+export const CullingBoxGeometryButton = ({
+    children,
+}: {
+    children: React.ReactNode | ((props: { isActive: boolean; toggle: () => void }) => React.ReactNode);
+}) => {
+    const { isActive, toggle } = useCullingBoxGeometry();
+
+    if (typeof children === "function") {
+        return <>{children({ isActive, toggle })}</>;
+    }
+
+    if (React.isValidElement(children)) {
+        const element = children as React.ReactElement<{ onClick?: (e: React.MouseEvent) => void; isActive?: boolean }>;
+        return React.cloneElement(element, {
+            onClick: (e: React.MouseEvent) => {
+                toggle();
+                if (element.props.onClick) {
+                    element.props.onClick(e);
+                }
+            },
+            isActive,
+        });
+    }
+
+    return <>{children}</>;
+};

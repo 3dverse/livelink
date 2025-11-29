@@ -153,7 +153,7 @@ export class RemoteFrameProxy implements DecodedFrameConsumer {
         }
 
         const surface = this.#surfaces[index];
-        surface.removeViewport({ viewport });
+        surface._removeViewport({ viewport });
 
         viewport.release();
 
@@ -175,7 +175,7 @@ export class RemoteFrameProxy implements DecodedFrameConsumer {
             this.#size_multiple = HEVC_MACROBLOCK_SIZE;
         }
 
-        this.#computeSurfaceSize();
+        this.#computeSurfaceSize({ initializing: true });
         return this.#dimensions;
     }
 
@@ -190,7 +190,7 @@ export class RemoteFrameProxy implements DecodedFrameConsumer {
      *
      */
     #addViewport({ viewport }: { viewport: Viewport }): void {
-        viewport.rendering_surface.addViewport({ viewport });
+        viewport.rendering_surface._addViewport({ viewport });
 
         if (this.#surfaces.includes(viewport.rendering_surface)) {
             return;
@@ -212,7 +212,7 @@ export class RemoteFrameProxy implements DecodedFrameConsumer {
      *
      */
     #onFrameLayoutModified = (): void => {
-        this.#computeSurfaceSize();
+        this.#computeSurfaceSize({ initializing: this.#dimensions[0] === 0 && this.#dimensions[1] === 0 });
 
         if (this.#core.isConfigured() && this.#isValid()) {
             if (this.#needs_resize) {
@@ -234,7 +234,7 @@ export class RemoteFrameProxy implements DecodedFrameConsumer {
     /**
      *
      */
-    #computeSurfaceSize(): void {
+    #computeSurfaceSize({ initializing }: { initializing: boolean }): void {
         const { offset, width, height } = this.#computeBoundingRect();
 
         const new_dimensions: Vec2i = [
@@ -242,7 +242,7 @@ export class RemoteFrameProxy implements DecodedFrameConsumer {
             this.#next_multiple(height, this.#size_multiple[1]),
         ];
 
-        if (this.#core.isConfigured() && this.#isValid()) {
+        if (!initializing) {
             this.#needs_resize ||= new_dimensions[0] != this.#dimensions[0] || new_dimensions[1] != this.#dimensions[1];
         }
 

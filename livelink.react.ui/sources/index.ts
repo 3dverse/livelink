@@ -3,8 +3,6 @@ export * from "./components/Provider";
 
 //------------------------------------------------------------------------------
 export * from "./components/CameraSpeedSlider";
-export * from "./components/CullingBoxGeometry";
-export * from "./components/CullingBoxGeometry/CullingBoxGeometryButton";
 export * from "./components/InactivityWarning";
 export * from "./components/LightControl";
 export * from "./components/LightControl/LightPreview/LightPreview";
