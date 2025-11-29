@@ -1,5 +1,19 @@
 # @3dverse/livelink-react-ui
 
+## 0.3.14
+
+### Patch Changes
+
+- refactor(livelink.react.ui): moving CullingBoxGeometry component to livelink-three to remove the dependency to three.js
+- Updated dependencies
+- Updated dependencies
+- Updated dependencies
+- Updated dependencies
+- Updated dependencies
+- Updated dependencies
+  - @3dverse/livelink@0.8.54
+  - @3dverse/livelink-react@0.2.57
+
 ## 0.3.13
 
 ### Patch Changes

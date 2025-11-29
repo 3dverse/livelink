@@ -1,5 +1,14 @@
 # @3dverse/livelink
 
+## 0.8.54
+
+### Patch Changes
+
+- fix(livelink.js): fix an issue where update requests could be send with deleted entities
+- fix(livelink.js): resize was not always triggered in some situations
+- fix(livelink.js): activating picking on a viewport no longer stops the propagation of mouse click events.
+- refactor(livelink.js): surface add and remove viewports functions are now internal
+
 ## 0.8.53
 
 ### Patch Changes
