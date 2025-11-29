@@ -153,7 +153,7 @@ export class RemoteFrameProxy implements DecodedFrameConsumer {
         }
 
         const surface = this.#surfaces[index];
-        surface.removeViewport({ viewport });
+        surface._removeViewport({ viewport });
 
         viewport.release();
 
@@ -190,7 +190,7 @@ export class RemoteFrameProxy implements DecodedFrameConsumer {
      *
      */
     #addViewport({ viewport }: { viewport: Viewport }): void {
-        viewport.rendering_surface.addViewport({ viewport });
+        viewport.rendering_surface._addViewport({ viewport });
 
         if (this.#surfaces.includes(viewport.rendering_surface)) {
             return;

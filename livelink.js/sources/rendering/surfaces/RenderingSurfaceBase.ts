@@ -68,8 +68,10 @@ export abstract class RenderingSurfaceBase extends TypedEventTarget<RenderingSur
      *
      * @param params
      * @param params.viewport - The viewport to add.
+     *
+     * @internal
      */
-    addViewport({ viewport }: { viewport: Viewport }): void {
+    _addViewport({ viewport }: { viewport: Viewport }): void {
         this.viewports.push(viewport);
     }
 
@@ -78,8 +80,10 @@ export abstract class RenderingSurfaceBase extends TypedEventTarget<RenderingSur
      *
      * @param params
      * @param params.viewport - The viewport to remove.
+     *
+     * @internal
      */
-    removeViewport({ viewport }: { viewport: Viewport }): void {
+    _removeViewport({ viewport }: { viewport: Viewport }): void {
         const index = this.viewports.indexOf(viewport);
         if (index !== -1) {
             this.viewports.splice(index, 1);
