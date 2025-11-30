@@ -12,7 +12,7 @@ import { LoadingOverlay } from "@3dverse/livelink-react-ui";
 import {
     CullingBoxGeometry,
     CullingBoxGeometryButton,
-} from "@3dverse/livelink-three/react";
+} from "@3dverse/livelink-react-ui";
 
 //------------------------------------------------------------------------------
 import { DisconnectedModal } from "../../components/SamplePlayer";
