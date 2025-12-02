@@ -47,6 +47,8 @@ export * from "./inputs/GamepadInputRelay";
 
 export type { Transform, Aabb } from "./scene/EntityTransformHandler";
 
+export * as Maths from "threejs-math";
+
 //------------------------------------------------------------------------------
 declare global {
     interface Window {
