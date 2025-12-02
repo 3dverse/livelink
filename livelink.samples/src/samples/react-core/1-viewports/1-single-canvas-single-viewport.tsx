@@ -21,6 +21,7 @@ export default {
     code: import.meta.VITE_FILE_CONTENT,
     title: "Single Viewport",
     summary: "A single viewport inside a single canvas.",
+    image: "single-canvas-single-viewport.png",
     element: <App />,
 };
 

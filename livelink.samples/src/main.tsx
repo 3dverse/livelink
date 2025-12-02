@@ -54,6 +54,14 @@ const route: RouteObject = {
     })),
 };
 
+const standaloneSamplesRoute: RouteObject = {
+    path: "/standalone",
+    children: sampleList.map(sample => ({
+        path: resolveSamplePath(sample.path),
+        element: <div className="flex h-dvh">{sample.element}</div>,
+    })),
+};
+
 if (route.children) {
     route.children.unshift({
         index: true,
@@ -61,7 +69,7 @@ if (route.children) {
     });
 }
 
-const router = createHashRouter([route]);
+const router = createHashRouter([route, standaloneSamplesRoute]);
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
     <StrictMode>
