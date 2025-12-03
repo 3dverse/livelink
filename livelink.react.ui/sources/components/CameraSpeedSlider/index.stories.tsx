@@ -34,21 +34,51 @@ export const _Component: Story = {
         });
         const [cameraController, setCameraController] = useState<DefaultCameraController | null>();
 
+        const handleChange = (speed: number) => {
+            console.log("speed", speed);
+        };
+
         return (
             <Canvas style={{ width: "100vw", height: "100vh" }}>
                 <Viewport cameraEntity={cameraEntity} style={{ width: "100%", height: "100%" }}>
                     <CameraController ref={ref => setCameraController(ref)} preset={CameraControllerPresets.fly} />
                     {cameraController && (
-                        <ViewerPanel
-                            style={{
-                                position: "absolute",
-                                bottom: "10%",
-                                left: "50%",
-                                transform: "translate(-50%, 0)",
-                            }}
-                        >
-                            <CameraSpeedSlider cameraController={cameraController} />
-                        </ViewerPanel>
+                        <>
+                            <ViewerPanel
+                                style={{
+                                    position: "absolute",
+                                    bottom: "5%",
+                                    left: "5%",
+                                    transform: "translate(-50%, 0)",
+                                    height: "90%",
+                                }}
+                            >
+                                <CameraSpeedSlider
+                                    cameraController={cameraController}
+                                    orientation="vertical"
+                                    label="Speed"
+                                    onChange={handleChange}
+                                    {...args}
+                                />
+                            </ViewerPanel>
+                            <ViewerPanel
+                                style={{
+                                    position: "absolute",
+                                    bottom: "5%",
+                                    left: "50%",
+                                    transform: "translate(-50%, 0)",
+                                    width: "25%",
+                                }}
+                            >
+                                <CameraSpeedSlider
+                                    cameraController={cameraController}
+                                    orientation="horizontal"
+                                    label="Speed"
+                                    onChange={handleChange}
+                                    {...args}
+                                />
+                            </ViewerPanel>
+                        </>
                     )}
                 </Viewport>
             </Canvas>
