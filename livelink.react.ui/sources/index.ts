@@ -15,6 +15,7 @@ export * from "./components/LoadingOverlay";
 export * from "./components/PerformancePanel";
 export * from "./components/RenderGraphSettings";
 export * from "./components/SunPositionPicker";
+export * from "./components/VideoRecorder";
 export * from "./components/ViewCube";
 export * from "./components/VirtualGamepad";
 export * from "./components/VirtualJoystick";

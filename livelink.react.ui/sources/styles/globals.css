@@ -37,3 +37,76 @@
 [data-theme="light"] .livelink-react-ui-component {
     color: var(--3dverse-color-content-primary);
 }
+
+/* Animations */
+
+.livelink-react-ui-component {
+    .livelink-animation-appear-bottom,
+    .livelink-animation-appear-top,
+    .livelink-animation-appear-left,
+    .livelink-animation-appear-right {
+        animation-fill-mode: forwards;
+        animation-duration: var(--animation-duration, 0.3s);
+        animation-timing-function: ease-out;
+    }
+    .livelink-animation-appear-bottom {
+        animation-name: livelink-animation-appear-bottom;
+    }
+
+    .livelink-animation-appear-top {
+        animation-name: livelink-animation-appear-top;
+    }
+
+    .livelink-animation-appear-left {
+        animation-name: livelink-animation-appear-left;
+    }
+
+    .livelink-animation-appear-right {
+        animation-name: livelink-animation-appear-right;
+    }
+}
+
+@keyframes livelink-animation-appear-bottom {
+    from {
+        translate: var(--translate-x, 0)
+            calc(calc(var(--tw-translate-y, 0) * 1px) - var(--animation-appear-offset, 12px));
+        opacity: 0;
+    }
+    to {
+        translate: var(--translate-x, 0) var(--translate-y, 0);
+        opacity: 1;
+    }
+}
+
+@keyframes livelink-animation-appear-top {
+    from {
+        translate: var(--translate-x, 0) calc(calc(var(--translate-y, 0) * 1px) + var(--animation-appear-offset, 12px));
+        opacity: 0;
+    }
+    to {
+        translate: var(--translate-x, 0) var(--translate-y, 0);
+        opacity: 1;
+    }
+}
+
+@keyframes livelink-animation-appear-left {
+    from {
+        translate: calc(calc(var(--translate-x, 0) * 1px) + var(--animation-appear-offset, 12px)) var(--translate-y, 0);
+        opacity: 0;
+    }
+    to {
+        translate: var(--translate-x, 0) var(--translate-y, 0);
+        opacity: 1;
+    }
+}
+
+@keyframes livelink-animation-appear-right {
+    from {
+        translate: calc(calc(var(--translate-x, 0) * 1px) - var(--animation-appear-offset, 12px)) var(--translate-y, 0);
+        opacity: 0;
+    }
+    to {
+        translate: var(--translate-x, 0) var(--translate-y, 0);
+        opacity: 1;
+    }
+}

@@ -41,6 +41,11 @@
     &.usePortal.visible {
         animation: appear-in 500ms ease 0s forwards;
     }
+
+    &.positive {
+        --tooltip-bg: var(--3dverse-color-positive);
+        --tooltip-color: var(--3dverse-color-content-primary-dark);
+    }
 }
 
 .wrapper:hover .tooltip,
