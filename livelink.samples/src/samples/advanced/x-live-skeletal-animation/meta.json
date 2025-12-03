@@ -1,0 +1,5 @@
+{
+  "title": "Live Skeletal Animation",
+  "summary": "Shows a 3dverse skeleton driven by a Three.js one that can be either controlled by the user or by a local animation.",
+  "useCustomLayout": true
+}

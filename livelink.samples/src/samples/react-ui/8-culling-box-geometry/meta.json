@@ -1,0 +1,4 @@
+{
+  "title": "Culling Box Geometry",
+  "summary": "Three.js overlay with a widget to resize a box geometry that culls scene objects."
+}

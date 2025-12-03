@@ -20,7 +20,10 @@
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true,
 
-    "types": ["@types/wicg-file-system-access", "vite/client"]
+    "types": ["@types/wicg-file-system-access", "vite/client"],
+    "paths": {
+      "@/*": ["./src/*"]
+    }
   },
   "include": ["src", "eslint.config.mjs"],
   "exclude": ["src/samples/__to_sort__"],

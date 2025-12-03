@@ -1,0 +1,5 @@
+{
+  "title": "Client List",
+  "summary": "Shows a list of clients connected to the current session.",
+  "useCustomLayout": true
+}

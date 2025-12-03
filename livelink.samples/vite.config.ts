@@ -1,7 +1,9 @@
-import { defineConfig } from "vite";
+import { Plugin, defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
 import fs from "node:fs";
+import path from "path";
+import sharp from "sharp";
 
 // https://vitejs.dev/config/
 export default defineConfig({
@@ -14,6 +16,11 @@ export default defineConfig({
                   key: "./ssl/key.pem",
               }
             : undefined,
+    },
+    resolve: {
+        alias: {
+            "@": path.resolve(__dirname, "src"),
+        },
     },
     plugins: [fileContentPlugin(), react(), markdownLoaderPlugin(), tailwindcss()],
 });
@@ -30,7 +37,13 @@ function markdownLoaderPlugin() {
     };
 }
 
-function fileContentPlugin() {
+interface fileContentPluginOptions {
+    outDir?: string;
+    imgQuality?: number;
+}
+
+function fileContentPlugin(options?: fileContentPluginOptions): Plugin {
+    const { outDir = "samples", imgQuality = 80 } = options || {};
     const env = fs.readFileSync(".env", "utf-8");
     const token = env
         .split("\n")
@@ -39,24 +52,65 @@ function fileContentPlugin() {
 
     return {
         name: "vite-plugin-file-content",
-        transform(src: string, id: string) {
+        async transform(src: string, id: string) {
             // Only process files that are not from node_modules or certain other exclusions
             if (id.includes("node_modules")) {
                 return;
             }
 
-            if (!id.endsWith(".tsx")) {
+            if (!id.endsWith("manifest.ts")) {
                 return;
             }
 
-            // Inject the content of the current file into the global environment variable
-            const fileContent = patchCodeSample(fs.readFileSync(id, "utf-8"), token);
+            const sampleDir = id.replace("/manifest.ts", "");
+            const sampleName = sampleDir.substring(sampleDir.lastIndexOf("/") + 3, sampleDir.length);
+            const metaFile = id.replace("manifest.ts", "meta.json");
+            const codeFile = id.replace("manifest.ts", "index.tsx");
+            const metaContent = JSON.parse(fs.readFileSync(metaFile, "utf-8"));
+            const codeContent = patchCodeSample(fs.readFileSync(codeFile, "utf-8"), token);
+
+            //------------------------------------------------------------------
+            // Save code
+            this.emitFile({
+                type: "asset",
+                fileName: path.join(outDir, `${sampleName}.tsx`),
+                source: codeContent,
+            });
+
+            //--------------------------------------------------------------
+            // Save Image
+            let imageFilePath;
+            if (metaContent.image) {
+                const buffer = fs.readFileSync(path.join(sampleDir, metaContent.image));
+                const webpBuffer = await sharp(buffer).webp({ quality: imgQuality }).toBuffer();
+                const imageFile = `${sampleName}.webp`;
+                imageFilePath = path.join(outDir, imageFile);
+
+                // Write output file
+                this.emitFile({
+                    type: "asset",
+                    fileName: imageFilePath,
+                    source: webpBuffer,
+                });
+
+                metaContent.image = imageFile;
+            }
+
+            //------------------------------------------------------------------
+            // Save Meta
+            metaContent.name = sampleName;
+            metaContent.gitUrl = resolveGitPath(codeFile);
+            this.emitFile({
+                type: "asset",
+                fileName: path.join(outDir, `${sampleName}.json`),
+                source: JSON.stringify(metaContent),
+            });
 
             // Use `process.env` to inject the file content into the build process
             return {
                 code: `
-                    const fileContent = ${JSON.stringify(fileContent)};
-                    import.meta.VITE_FILE_NAME = "${id}";
+                    const fileContent = ${JSON.stringify(codeContent)};
+                    import.meta.VITE_FILE_NAME = "${codeFile}";
                     import.meta.VITE_FILE_CONTENT = fileContent;
                     ${src}
                 `,
@@ -69,8 +123,6 @@ function patchCodeSample(sourceCode: string, token: string): string {
     const viteImportToken = "import.meta.env.VITE_PROD_PUBLIC_TOKEN";
     return (
         sourceCode
-            // Remove the 'export default' statement as it only needed to config a sample page
-            .replace(/(\s\/\/\-+)?\sexport\s+default\s+{[^]*?};\n/g, "")
             // Remove the 'import' statements using 'SamplePlayer' as it's a private component
             .replace(/(\s\/\/\-+)?\simport\s+{[^}]*}\s+from\s+["'][^"']*SamplePlayer["'];\n/g, "")
             // Remove the ConnectionErrorPanel prop from sample code since it's a private component
@@ -78,4 +130,10 @@ function patchCodeSample(sourceCode: string, token: string): string {
             // Replace the token with the actual token
             .replace(viteImportToken, `"${token}"`)
     );
+}
+
+//------------------------------------------------------------------------------
+export function resolveGitPath(path: string): string {
+    const relPath = path.substring(path.lastIndexOf("livelink.samples/"));
+    return "https://github.com/3dverse/livelink/tree/release/" + relPath;
 }

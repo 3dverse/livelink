@@ -30,26 +30,41 @@ declare global {
 }
 
 const sampleList = samples.flatMap(({ list }) => list);
+
 const route: RouteObject = {
     path: "/",
     element: <App />,
     errorElement: <ErrorPage />,
+    children: sampleList.map(sample => {
+        return {
+            path: resolveSamplePath(sample.path),
+            element: (
+                <SamplePlayer
+                    key={sample.path}
+                    title={sample.title}
+                    gitPath={resolveGitPath(sample.path)}
+                    path={resolveSamplePath(sample.path)}
+                    summary={sample.summary}
+                    description={sample.description}
+                    useCustomLayout={sample.useCustomLayout}
+                    autoConnect={sample.autoConnect}
+                    code={sample.code}
+                >
+                    <sample.component />
+                </SamplePlayer>
+            ),
+        };
+    }),
+};
+
+const standaloneSamplesRoute: RouteObject = {
+    path: "/standalone",
     children: sampleList.map(sample => ({
         path: resolveSamplePath(sample.path),
         element: (
-            <SamplePlayer
-                key={sample.path}
-                title={sample.title}
-                gitPath={resolveGitPath(sample.path)}
-                path={resolveSamplePath(sample.path)}
-                summary={sample.summary}
-                description={sample.description}
-                useCustomLayout={sample.useCustomLayout}
-                autoConnect={sample.autoConnect}
-                code={sample.code}
-            >
-                {sample.element}
-            </SamplePlayer>
+            <div className="flex h-dvh">
+                <sample.component />
+            </div>
         ),
     })),
 };
@@ -61,7 +76,7 @@ if (route.children) {
     });
 }
 
-const router = createHashRouter([route]);
+const router = createHashRouter([route, standaloneSamplesRoute]);
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
     <StrictMode>
