@@ -49,7 +49,7 @@ function AppLayout() {
         <Canvas className="max-h-screen">
             <div className="absolute bottom-[5vh] left-1/2 -translate-x-1/2 flex flex-col items-center gap-3">
                 {enableRecording && (
-                    <Recorder>
+                    <Recorder onCancel={() => setEnableRecording(false)}>
                         {({ recordTime }: { recordTime: number }) => (
                             <time className="flex flex-col items-center px-6 py-2 text-sm tracking-wider tabular-nums bg-ground rounded-full shadow-md">
                                 {secondToTimeString(recordTime)}
