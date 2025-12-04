@@ -184,12 +184,21 @@ export class WebCodecsDecoder extends EncodedFrameConsumer {
      * @param params.frame_dimensions - The new frame dimensions
      */
     override resize({ frame_dimensions }: { frame_dimensions: Vec2i }): void {
-        if (this.#decoder && this.#video_decoder_config) {
-            this.#video_decoder_config.codedWidth = frame_dimensions[0];
-            this.#video_decoder_config.codedHeight = frame_dimensions[1];
-            this.#first_frame = true;
-            this.#decoder.configure(this.#video_decoder_config);
+        if (!this.#decoder || !this.#video_decoder_config) {
+            return;
         }
+
+        if (
+            frame_dimensions[0] === this.#video_decoder_config.codedWidth &&
+            frame_dimensions[1] === this.#video_decoder_config.codedHeight
+        ) {
+            return;
+        }
+
+        this.#video_decoder_config.codedWidth = frame_dimensions[0];
+        this.#video_decoder_config.codedHeight = frame_dimensions[1];
+        this.#first_frame = true;
+        this.#decoder.configure(this.#video_decoder_config);
     }
 
     /**

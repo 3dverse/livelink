@@ -544,7 +544,13 @@ export class Livelink {
     async _resize({ size }: { size: Vec2i }): Promise<void> {
         console.debug("🙏 Requesting remote resize", size);
         const { size: remote_size } = await this.#core.resize({ size });
-        console.debug("📐 Remote resize done", remote_size);
+
+        if (remote_size[0] === size[0] && remote_size[1] === size[1]) {
+            console.debug("✅ Remote resize acknowledged", remote_size);
+        } else {
+            console.debug("⚠️ Remote unchanged", remote_size);
+        }
+
         this.#encoded_frame_consumer?.resize({ frame_dimensions: remote_size });
     }
 
