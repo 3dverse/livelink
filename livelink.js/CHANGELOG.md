@@ -1,5 +1,15 @@
 # @3dverse/livelink
 
+## 0.8.55
+
+### Patch Changes
+
+- fix(livelink.js): ensure to not break WebCodecsDecoder in case the resize request was denied
+- chore: update dependencies
+- feat(livelink.js): expose threejs-math functions
+- feat(livelink.js): add scale option to OffscreenSurface & RenderingSurface for High-DPI displays (Window.devicePixelRatio)
+- fix(livelink.js): resize request was not always correctly submitted
+
 ## 0.8.54
 
 ### Patch Changes

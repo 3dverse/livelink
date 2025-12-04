@@ -1,5 +1,21 @@
 # @3dverse/livelink-three
 
+## 0.2.15
+
+### Patch Changes
+
+- chore: update dependencies
+- refactor(livelink.three): moved back culling geometry component to livelink-react-ui
+- Updated dependencies
+- Updated dependencies
+- Updated dependencies
+- Updated dependencies
+- Updated dependencies
+- Updated dependencies
+- Updated dependencies
+  - @3dverse/livelink@0.8.55
+  - @3dverse/livelink-react@0.2.58
+
 ## 0.2.14
 
 ### Patch Changes

@@ -1,5 +1,19 @@
 # @3dverse/livelink-react
 
+## 0.2.58
+
+### Patch Changes
+
+- chore: update dependencies
+- feat(livelink.react): add scale option to Canvas component
+- feat(livelink.react): add onSuccess and onCancel properties to Recorder component
+- Updated dependencies
+- Updated dependencies
+- Updated dependencies
+- Updated dependencies
+- Updated dependencies
+  - @3dverse/livelink@0.8.55
+
 ## 0.2.57
 
 ### Patch Changes
