@@ -1,5 +1,24 @@
 # @3dverse/livelink-react-ui
 
+## 0.3.15
+
+### Patch Changes
+
+- chore: update dependencies
+- chore(livelink.react.ui): upgrade storybook
+- feat(livelink.react.ui): new VideoRecorder component
+- refactor(livelink.react.ui): restored CullingGeometry without using three.js
+- feat(livelink.react.ui): add label and orientation properties to camera speed slider
+- Updated dependencies
+- Updated dependencies
+- Updated dependencies
+- Updated dependencies
+- Updated dependencies
+- Updated dependencies
+- Updated dependencies
+  - @3dverse/livelink@0.8.55
+  - @3dverse/livelink-react@0.2.58
+
 ## 0.3.14
 
 ### Patch Changes

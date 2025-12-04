@@ -1,5 +1,21 @@
 # @3dverse/livelink-webxr
 
+## 0.1.16
+
+### Patch Changes
+
+- chore: update dependencies
+- feat(livelink.webxr): add scale option to WebXR component
+- Updated dependencies
+- Updated dependencies
+- Updated dependencies
+- Updated dependencies
+- Updated dependencies
+- Updated dependencies
+- Updated dependencies
+  - @3dverse/livelink@0.8.55
+  - @3dverse/livelink-react@0.2.58
+
 ## 0.1.15
 
 ### Patch Changes
