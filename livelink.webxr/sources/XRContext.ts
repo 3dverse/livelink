@@ -1,7 +1,4 @@
 //------------------------------------------------------------------------------
-import type { Quat, Vec3 } from "@3dverse/livelink.core";
-
-//------------------------------------------------------------------------------
 import { mat4, quat, vec2, vec3 } from "gl-matrix";
 
 //------------------------------------------------------------------------------
@@ -214,7 +211,7 @@ export class XRContext extends ContextProvider {
             this.#projection_offset[1] = xr_view.projectionMatrix[9];
 
             const billboardMatrix = this.#computeBillboardMatrix(this.#billboard_position, scaleX, scaleY);
-            gl.uniform2fv(viewOffsetLocation, this.#projection_offset);
+            gl.uniform2fv(viewOffsetLocation, this.#projection_offset as Float32Array);
 
             gl.viewport(xr_viewport.x, xr_viewport.y, xr_viewport.width, xr_viewport.height);
             gl.uniformMatrix4fv(viewMatrixLocation, false, xr_view.transform.inverse.matrix);
