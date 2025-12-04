@@ -15,6 +15,7 @@ import { LoadingOverlay } from "@3dverse/livelink-react-ui";
 
 //------------------------------------------------------------------------------
 import { DisconnectedModal } from "@/components/SamplePlayer";
+import { ScaleSelector } from "@/components/common/ScaleSelector";
 
 //------------------------------------------------------------------------------
 const scene_id = "11e2da67-4740-4546-951b-1d50df1dc55d";
@@ -27,35 +28,25 @@ const variant_launch_sdk_url = `https://launchar.app/sdk/v1?key=${variant_launch
 export function App() {
     const [xrMode, setXRMode] = useState<XRSessionMode | null>(null);
     const domOverlayRef = useRef<HTMLElement>(null);
+    const [scale, setScale] = useState(1);
 
     //--------------------------------------------------------------------------
     // Important for dom overlay to be displayed by variant launch app clip:
     // https://launch.variant3d.com/docs/troubleshooting/dom-overlay
-    const renderDomOverlay = () => {
+    const renderDomOverlay = useCallback(() => {
         // Create xr dom-overlay root if not exists yet
-        const domOverlayId = "xr-dom-overlay-root-variant-launch";
-        let domOverlay = document.getElementById(domOverlayId);
-        if (!domOverlay) {
-            domOverlay = document.createElement("div");
-            domOverlay.id = domOverlayId;
-            document.body.appendChild(domOverlay);
+        if (!domOverlayRef.current) {
+            domOverlayRef.current = document.createElement("div");
+            domOverlayRef.current.id = "xr-dom-overlay-root-variant-launch";
+            document.body.appendChild(domOverlayRef.current);
         }
-
-        // Set ref and clear previous content
-        domOverlayRef.current = domOverlay;
-        domOverlay.innerHTML = "";
 
         // Create a portal to the actual dom overlay content from the root
         return createPortal(
             <div
                 id="xr-dom-overlay-root"
-                style={{
-                    zIndex: 11000,
-                    position: "absolute",
-                    top: "2rem",
-                    left: "50%",
-                    transform: "translateX(-50%)",
-                }}
+                style={{ zIndex: 11000 }}
+                className="fixed top-3 flex flex-wrap items-center justify-center gap-2 mx-2"
             >
                 <button
                     className="button button-primary"
@@ -63,10 +54,11 @@ export function App() {
                 >
                     Exit XR
                 </button>
+                <ScaleSelector scale={scale} setScale={setScale} />
             </div>,
-            domOverlay,
+            domOverlayRef.current,
         );
-    };
+    }, [scale]);
 
     //--------------------------------------------------------------------------
     return (
@@ -82,20 +74,22 @@ export function App() {
                     onSessionEnd={() => setXRMode(null)}
                     forceSingleView={true}
                     domOverlayRoot={domOverlayRef.current || undefined}
-                    // Overscan with resolution scale throws an error on Variant Launch App Clip
-                    // See `WebXRHelper.#configureOverscan` for more details.
-                    overscanFovFactor={1}
-                    enableOverscanSurfaceScale={false}
-                    enableFakeAlpha={true}
+                    fakeAlpha={true}
+                    overscan={true}
+                    scale={scale}
                 >
                     {renderDomOverlay()}
                 </WebXR>
             ) : (
                 <>
-                    <AppLayout />
+                    <AppLayout scale={scale} />
 
-                    <div className="absolute bottom-[5vh] left-1/2 -translate-x-1/2">
+                    <div className="absolute bottom-[8vh] left-1/2 -translate-x-1/2 flex flex-wrap items-center justify-center gap-2">
                         <XRButton mode="immersive-ar" enterXR={setXRMode} />
+                    </div>
+
+                    <div className="absolute bottom-2 mx-2">
+                        <ScaleSelector scale={scale} setScale={setScale} />
                     </div>
                 </>
             )}
@@ -104,11 +98,11 @@ export function App() {
 }
 
 //------------------------------------------------------------------------------
-function AppLayout() {
+function AppLayout({ scale }: { scale: number }) {
     const { cameraEntity } = useCameraEntity();
 
     return (
-        <Canvas className="w-full h-full">
+        <Canvas className="w-full h-full" scale={scale}>
             <Viewport cameraEntity={cameraEntity} className="w-full h-full">
                 <CameraController />
             </Viewport>

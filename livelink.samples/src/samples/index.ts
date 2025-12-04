@@ -9,6 +9,7 @@ import DoubleCanvasDoubleViewports from "./react-core/1-viewports/4-double-canva
 import CanvasInCanvas from "./react-core/1-viewports/5-canvas-in-canvas/manifest";
 import ViewportInViewport from "./react-core/1-viewports/6-viewport-in-viewport/manifest";
 import ViewportRenderTarget from "./react-core/1-viewports/7-viewport-render-target/manifest";
+import ScaleCanvas from "./react-core/1-viewports/8-scale-canvas/manifest";
 
 //------------------------------------------------------------------------------
 import SceneSelector from "./react-core/2-sessions/1-scene-selector/manifest";
@@ -97,6 +98,7 @@ export default [
             CanvasInCanvas,
             ViewportInViewport,
             ViewportRenderTarget,
+            ScaleCanvas,
         ],
     },
     {
