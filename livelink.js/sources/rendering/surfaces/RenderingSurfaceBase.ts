@@ -4,7 +4,7 @@ import type { Commands, Vec2 } from "@3dverse/livelink.core";
 //------------------------------------------------------------------------------
 import { Rect, RelativeRect } from "./Rect";
 import { Viewport } from "../camera/Viewport";
-import { RenderingSurfaceEvents } from "./RenderingSurfaceEvents";
+import { RenderingSurfaceEvents, RenderingSurfaceResizedEvent } from "./RenderingSurfaceEvents";
 import { TypedEventTarget } from "../../TypedEventTarget";
 import { DecodedFrame } from "../streaming/EncodedFrameConsumer";
 
@@ -37,6 +37,33 @@ export abstract class RenderingSurfaceBase extends TypedEventTarget<RenderingSur
      * Normalized dimensions and offset of the surface relative to the remote rendering surface.
      */
     relative_rect: RelativeRect = new RelativeRect({ left: 0, top: 0, width: 1, height: 1 });
+
+    /**
+     * Scale of the surface.
+     */
+    protected _scale: number = 1.0;
+
+    /**
+     * Scale of the surface.
+     */
+    get scale(): number {
+        return this._scale;
+    }
+
+    /**
+     * Set scale of the surface.
+     */
+    set scale(scale: number) {
+        if (scale <= 0) {
+            throw new Error(`Scale must be a positive number, got ${scale}`);
+        }
+        if (this._scale === scale) {
+            return;
+        }
+        this._scale = scale;
+        this._onScaleUpdated();
+        this._dispatchEvent(new RenderingSurfaceResizedEvent());
+    }
 
     /**
      * Dimensions of the surface.
@@ -72,6 +99,7 @@ export abstract class RenderingSurfaceBase extends TypedEventTarget<RenderingSur
      * @internal
      */
     _addViewport({ viewport }: { viewport: Viewport }): void {
+        this.addEventListener("on-rendering-surface-resized", viewport._onResize);
         this.viewports.push(viewport);
     }
 
@@ -84,6 +112,7 @@ export abstract class RenderingSurfaceBase extends TypedEventTarget<RenderingSur
      * @internal
      */
     _removeViewport({ viewport }: { viewport: Viewport }): void {
+        this.removeEventListener("on-rendering-surface-resized", viewport._onResize);
         const index = this.viewports.indexOf(viewport);
         if (index !== -1) {
             this.viewports.splice(index, 1);
@@ -155,6 +184,13 @@ export abstract class RenderingSurfaceBase extends TypedEventTarget<RenderingSur
             z_index: viewport.z_index,
         }));
     }
+
+    /**
+     * @internal
+     *
+     * Called when the scale of the surface is updated.
+     */
+    protected abstract _onScaleUpdated(): void;
 
     /**
      * @internal

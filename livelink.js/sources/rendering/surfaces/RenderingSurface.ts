@@ -53,14 +53,14 @@ export class RenderingSurface extends RenderingSurfaceBase {
      * Width of the surface.
      */
     get width(): number {
-        return this.#canvas.clientWidth;
+        return this.#canvas.clientWidth * this._scale;
     }
 
     /**
      * Height of the surface.
      */
     get height(): number {
-        return this.#canvas.clientHeight;
+        return this.#canvas.clientHeight * this._scale;
     }
 
     /**
@@ -117,8 +117,8 @@ export class RenderingSurface extends RenderingSurfaceBase {
                 break;
         }
 
-        this.canvas.width = this.canvas.clientWidth;
-        this.canvas.height = this.canvas.clientHeight;
+        this.canvas.width = this.width;
+        this.canvas.height = this.height;
         this.#auto_resizer = new CanvasAutoResizer({ canvas: this.canvas, onResized: this.#onCanvasResized });
         this.#context.refreshSize();
     }
@@ -152,10 +152,21 @@ export class RenderingSurface extends RenderingSurfaceBase {
         if (rect) {
             rect.x = Math.ceil(rect.x);
             rect.y = Math.ceil(rect.y);
-            rect.width = Math.ceil(rect.width);
-            rect.height = Math.ceil(rect.height);
+            rect.width = Math.ceil(rect.width * this._scale);
+            rect.height = Math.ceil(rect.height * this._scale);
         }
         return new Rect(rect ?? { width: this.canvas.width, height: this.canvas.height });
+    }
+
+    /**
+     * @internal
+     *
+     * Refresh scale of the surface.
+     */
+    protected _onScaleUpdated(): void {
+        this.canvas.width = this.width;
+        this.canvas.height = this.height;
+        this.#context.refreshSize();
     }
 
     /**
@@ -196,9 +207,5 @@ export class RenderingSurface extends RenderingSurfaceBase {
     #onCanvasResized = (_: { old_size: Vec2i; new_size: Vec2i }): void => {
         this.#context.refreshSize();
         this._dispatchEvent(new RenderingSurfaceResizedEvent());
-
-        for (const viewport of this.viewports) {
-            viewport._onResize();
-        }
     };
 }
