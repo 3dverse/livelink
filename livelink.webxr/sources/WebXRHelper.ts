@@ -65,6 +65,10 @@ export class WebXRHelper {
     #context: XRContext;
 
     //--------------------------------------------------------------------------
+    #fov_factor: number = 1.0;
+    #resolution_scale: number = 1.0;
+
+    //--------------------------------------------------------------------------
     // WebXR API references
     #session: XRSession | null = null;
     #mode: XRSessionMode = "inline";
@@ -158,10 +162,10 @@ export class WebXRHelper {
             height: window.innerHeight, // Really not sure
             context_constructor: XRContext,
             context_type: "webgl",
-            context_options: { xrCompatible: true },
-            resolution_scale,
+            context_attributes: { xrCompatible: true },
         });
-        this.#context = this.#surface.context as XRContext;
+        this.#resolution_scale = resolution_scale;
+        this.#context = this.#surface.getContext();
         this.#cameras_origin_apply = this.#applyCamerasOrigin;
         this.#cameras_origin_unapply = this.#unapplyCamerasOrigin;
     }
@@ -287,12 +291,12 @@ export class WebXRHelper {
     public async configureViewports({
         livelink,
         overscan_fov_factor,
-        enable_overscan_surface_scale,
+        enable_overscan,
         enable_fake_alpha,
     }: {
         livelink: Livelink;
         overscan_fov_factor?: number;
-        enable_overscan_surface_scale?: boolean;
+        enable_overscan?: boolean;
         enable_fake_alpha?: boolean;
     }): Promise<void> {
         if (this.#core) {
@@ -306,12 +310,15 @@ export class WebXRHelper {
             // Though it's not supported we still try to configure all viewports for each views and deal with the 2
             // first views cameras inside `this.#onXRFrame`.
         }
+        if (enable_overscan) {
+            this.#configureOverscan({
+                xr_views,
+                fov_factor: overscan_fov_factor,
+            });
+        } else {
+            this.#surface.scale = this.#resolution_scale;
+        }
         this.#configureLivelinkViewports(xr_views);
-        this.#configureOverscan({
-            xr_views,
-            fov_factor: overscan_fov_factor,
-            enable_surface_scale: enable_overscan_surface_scale,
-        });
 
         // AR session needs the FTL background to be pure black for the XRContext shader to simulate the background
         // transparency while the feature to send the background mask frame from FTL to the client is not implemented.
@@ -370,29 +377,17 @@ export class WebXRHelper {
     #configureOverscan({
         xr_views,
         fov_factor = 1.5,
-        enable_surface_scale = true,
     }: {
         xr_views: Readonly<Array<XRView>>;
         fov_factor?: number;
-        enable_surface_scale?: boolean;
     }): void {
         if (fov_factor === 1.0) {
             return;
         }
-        // `enable_surface_scale` is exposed because there is a bug on iphone with Variant Launch App Clip:
-        //     - react dev tools raises an error inside `Livelink.#onFrameReceived`.
-        //     - debugging shows the error actually throws inside `WebCodecsDecoder.consumeEncodedFrame`, where
-        //       `this.#decoder!.decode(chunk)` throws with "DataError: Key frame is required".
-        // So surface scale needs to be disabled on iphone Variant Launch App Clip. Also on XR headsets, too high
-        // resolution kills the performance.
-        // `fov_factor` is exposed for testing purpose from apps.
-        // TODO: `fov_factor` shall probably be adjusted automatically based on the streaming latency.
-        if (enable_surface_scale) {
-            this.#surface.resolution_scale = fov_factor;
-            this.#context.scale_factor = this.#surface.resolution_scale;
-        } else {
-            this.#context.scale_factor = fov_factor;
-        }
+
+        this.#fov_factor = fov_factor;
+        this.#surface.scale = fov_factor * this.#resolution_scale;
+        this.#context.scale_factor = fov_factor;
 
         const fovY = xr_views[0].projectionMatrix[5];
         const original_fov = 2 * Math.atan(1 / fovY);
@@ -400,7 +395,7 @@ export class WebXRHelper {
         this.#overridden_fovy = new_fov * (180 / Math.PI);
 
         console.debug(
-            `%cFOV: ${original_fov * (180 / Math.PI)} -> ${this.#overridden_fovy}, scale factor: ${this.#context.scale_factor}, resolution scale: ${this.#surface.resolution_scale}`,
+            `%cFOV: ${original_fov * (180 / Math.PI)} -> ${this.#overridden_fovy}, scale factor: ${this.#context.scale_factor}, resolution scale: ${this.#resolution_scale}, final surface scale: ${this.#surface.scale}`,
             "color: orange; font-weight: bold; font-size: 1.5em",
         );
     }
@@ -757,7 +752,7 @@ export class WebXRHelper {
      *
      */
     get resolution_scale(): number {
-        return this.#surface.resolution_scale;
+        return this.#resolution_scale;
     }
 
     //--------------------------------------------------------------------------
@@ -765,6 +760,7 @@ export class WebXRHelper {
      *
      */
     set resolution_scale(value: number) {
-        this.#surface.resolution_scale = value;
+        this.#resolution_scale = value;
+        this.#surface.scale = this.#resolution_scale * this.#fov_factor;
     }
 }

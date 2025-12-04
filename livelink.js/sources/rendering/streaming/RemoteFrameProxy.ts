@@ -49,10 +49,9 @@ export class RemoteFrameProxy implements DecodedFrameConsumer {
     #size_multiple: Vec2u16 = [32, 32];
 
     /**
-     * Flag indicating that the remote surface needs to be resized.
-     * This needs to be stored, as we not might be able to resize the surface immediately.
+     *
      */
-    #needs_resize: boolean = false;
+    #remote_frame_dimensions: Vec2u16 = [0, 0];
 
     /**
      * Surface dimensions in pixels rounded up to the next multiple of 8.
@@ -175,7 +174,9 @@ export class RemoteFrameProxy implements DecodedFrameConsumer {
             this.#size_multiple = HEVC_MACROBLOCK_SIZE;
         }
 
-        this.#computeSurfaceSize({ initializing: true });
+        this.#computeSurfaceSize();
+        this.#remote_frame_dimensions = this.#dimensions;
+
         return this.#dimensions;
     }
 
@@ -212,12 +213,16 @@ export class RemoteFrameProxy implements DecodedFrameConsumer {
      *
      */
     #onFrameLayoutModified = (): void => {
-        this.#computeSurfaceSize({ initializing: this.#dimensions[0] === 0 && this.#dimensions[1] === 0 });
+        this.#computeSurfaceSize();
 
         if (this.#core.isConfigured() && this.#isValid()) {
-            if (this.#needs_resize) {
+            const needs_resize =
+                this.#remote_frame_dimensions[0] !== this.#dimensions[0] ||
+                this.#remote_frame_dimensions[1] !== this.#dimensions[1];
+
+            if (needs_resize) {
                 this.#core._resize({ size: this.#dimensions });
-                this.#needs_resize = false;
+                this.#remote_frame_dimensions = this.#dimensions;
             }
             console.debug("Viewports reconfigured", this.#config);
             this.#core._setViewports({ viewport_configs: this.#config });
@@ -234,17 +239,13 @@ export class RemoteFrameProxy implements DecodedFrameConsumer {
     /**
      *
      */
-    #computeSurfaceSize({ initializing }: { initializing: boolean }): void {
+    #computeSurfaceSize(): void {
         const { offset, width, height } = this.#computeBoundingRect();
 
         const new_dimensions: Vec2i = [
             this.#next_multiple(width, this.#size_multiple[0]),
             this.#next_multiple(height, this.#size_multiple[1]),
         ];
-
-        if (!initializing) {
-            this.#needs_resize ||= new_dimensions[0] != this.#dimensions[0] || new_dimensions[1] != this.#dimensions[1];
-        }
 
         this.#dimensions = new_dimensions;
 

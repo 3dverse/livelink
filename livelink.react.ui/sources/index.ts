@@ -3,6 +3,8 @@ export * from "./components/Provider";
 
 //------------------------------------------------------------------------------
 export * from "./components/CameraSpeedSlider";
+export * from "./components/CullingBoxGeometry";
+export * from "./components/CullingBoxGeometry/CullingBoxGeometryButton";
 export * from "./components/InactivityWarning";
 export * from "./components/LightControl";
 export * from "./components/LightControl/LightPreview/LightPreview";
@@ -15,6 +17,7 @@ export * from "./components/LoadingOverlay";
 export * from "./components/PerformancePanel";
 export * from "./components/RenderGraphSettings";
 export * from "./components/SunPositionPicker";
+export * from "./components/VideoRecorder";
 export * from "./components/ViewCube";
 export * from "./components/VirtualGamepad";
 export * from "./components/VirtualJoystick";

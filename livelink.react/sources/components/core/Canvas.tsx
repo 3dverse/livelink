@@ -34,7 +34,7 @@ export const CanvasContext = createContext<{
 });
 
 //------------------------------------------------------------------------------
-type CanvasContext =
+type CanvasContext = { scale?: number } & (
     | {
           contextType: "2d";
           contextAttributes?: CanvasRenderingContext2DSettings;
@@ -46,7 +46,8 @@ type CanvasContext =
     | {
           contextType?: undefined;
           contextAttributes?: undefined;
-      };
+      }
+);
 
 /**
  * A component that provides a canvas element and a rendering surface.
@@ -57,6 +58,7 @@ type CanvasContext =
  * @param params.contextAttributes - The context attributes of the canvas.
  * @param params.width - The width of the canvas.
  * @param params.height - The height of the canvas.
+ * @param params.scale - The scale to apply to the rendering surface.
  *
  * @returns The canvas component.
  *
@@ -68,6 +70,7 @@ export function Canvas({
     contextAttributes,
     width,
     height,
+    scale,
     ...props
 }: PropsWithChildren<CanvasContext & HTMLProps<HTMLDivElement>>): JSX.Element {
     const { instance } = useContext(LivelinkContext);
@@ -106,6 +109,13 @@ export function Canvas({
             setRenderingSurface(null);
         };
     }, [instance, contextType, contextAttributes]);
+
+    useEffect(() => {
+        if (!renderingSurface) {
+            return;
+        }
+        renderingSurface.scale = scale ?? 1;
+    }, [renderingSurface, scale]);
 
     return (
         <CanvasContext.Provider value={{ canvas: canvasRef.current, renderingSurface }}>

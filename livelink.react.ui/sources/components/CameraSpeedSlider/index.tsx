@@ -14,7 +14,17 @@ const SPEEDS = [...Array(12).keys()].map(i => (i > 4 ? (i - 3) * 5 : i + 1));
 
 //------------------------------------------------------------------------------
 //------------------------------------------------------------------------------
-export const CameraSpeedSlider = ({ cameraController }: { cameraController?: CameraController }) => {
+export const CameraSpeedSlider = ({
+    cameraController,
+    orientation = "vertical",
+    label,
+    onChange,
+}: {
+    cameraController?: CameraController;
+    orientation?: "vertical" | "horizontal";
+    label?: string;
+    onChange?: (speed: number) => void;
+}) => {
     //--------------------------------------------------------------------------
     const [initialSlide, setInitialSlide] = useState(0);
 
@@ -24,6 +34,7 @@ export const CameraSpeedSlider = ({ cameraController }: { cameraController?: Cam
             return;
         }
         const speed = SPEEDS[event.activeIndex];
+        onChange?.(speed);
         cameraController.truckSpeed = speed * Math.sign(cameraController.truckSpeed);
         switch (cameraController.preset) {
             case CameraControllerPresets.fly:
@@ -49,8 +60,10 @@ export const CameraSpeedSlider = ({ cameraController }: { cameraController?: Cam
 
     //--------------------------------------------------------------------------
     return (
-        <div className={`${styles.container} ${cameraController ? "" : "disabled"} livelink-react-ui-component`}>
-            <div className={styles.growContainer}>
+        <div
+            className={`${styles.container} ${cameraController ? "" : "disabled"} ${orientation === "horizontal" ? styles.horizontal : ""} livelink-react-ui-component`}
+        >
+            <div className={`${styles.growContainer}`}>
                 <div className={styles.headerRow}>
                     <Icon as={RiTriangleFill} className={styles.icon} />
                     <p className={styles.unit}>km/h</p>
@@ -60,7 +73,7 @@ export const CameraSpeedSlider = ({ cameraController }: { cameraController?: Cam
                     <Swiper
                         onSlideChange={handleSlideChange}
                         loop={false}
-                        direction="vertical"
+                        direction={orientation === "vertical" ? "vertical" : "horizontal"}
                         initialSlide={initialSlide}
                         grabCursor
                         mousewheel
@@ -79,8 +92,7 @@ export const CameraSpeedSlider = ({ cameraController }: { cameraController?: Cam
                     </Swiper>
                 </div>
             </div>
-
-            <p className={styles.label}>Move speed</p>
+            {label && <p className={styles.label}>{label}</p>}
         </div>
     );
 };

@@ -43,24 +43,22 @@ export const WebXRContext = createContext<{ webXRHelper: WebXRHelper | null; xrS
 export function WebXR({
     children,
     mode,
-    resolutionScale = 1.0,
     requiredFeatures = [],
     optionalFeatures = [],
     forceSingleView,
-    overscanFovFactor,
-    enableOverscanSurfaceScale,
-    enableFakeAlpha,
+    overscan = false,
+    fakeAlpha = false,
+    scale = 1.0,
     domOverlayRoot,
     onSessionEnd,
 }: PropsWithChildren<{
     mode: XRSessionMode;
-    resolutionScale?: number;
     requiredFeatures?: string[];
     optionalFeatures?: string[];
     forceSingleView?: boolean;
-    overscanFovFactor?: number;
-    enableOverscanSurfaceScale?: boolean;
-    enableFakeAlpha?: boolean;
+    overscan?: boolean;
+    fakeAlpha?: boolean;
+    scale?: number;
     domOverlayRoot?: Element;
     onSessionEnd?: () => void;
 }>): JSX.Element {
@@ -70,7 +68,7 @@ export function WebXR({
     //--------------------------------------------------------------------------
     const containerRef = useRef<HTMLDivElement>(null);
     const webXRHelper = useMemo(
-        () => new WebXRHelper(resolutionScale),
+        () => new WebXRHelper(scale),
         [mode, requiredFeatures.join("-"), optionalFeatures.join("-"), forceSingleView, domOverlayRoot],
     );
     const initializationPromiseRef = useRef<Promise<void> | null>(null);
@@ -78,12 +76,8 @@ export function WebXR({
 
     //--------------------------------------------------------------------------
     useEffect(() => {
-        if (!webXRHelper) {
-            return;
-        }
-
-        webXRHelper.resolution_scale = resolutionScale;
-    }, [webXRHelper, resolutionScale]);
+        webXRHelper.resolution_scale = scale;
+    }, [scale]);
 
     //--------------------------------------------------------------------------
     useEffect(() => {
@@ -108,7 +102,7 @@ export function WebXR({
         // Initialize the WebXR session is kept in a ref to avoid
         // re-initializing it on every render, especially when on strict mode.
         if (!initializationPromiseRef.current) {
-            console.debug("---- Initializing WebXR");
+            console.debug("---- Initializing WebXR", { scale, overscan, fakeAlpha });
 
             initializationPromiseRef.current = webXRHelper
                 .initialize(mode, {
@@ -124,9 +118,8 @@ export function WebXR({
                     console.debug("---- Setting XR viewports");
                     return webXRHelper.configureViewports({
                         livelink: instance,
-                        overscan_fov_factor: overscanFovFactor,
-                        enable_overscan_surface_scale: enableOverscanSurfaceScale,
-                        enable_fake_alpha: enableFakeAlpha,
+                        enable_overscan: overscan,
+                        enable_fake_alpha: fakeAlpha,
                     });
                 })
                 .then(() => {

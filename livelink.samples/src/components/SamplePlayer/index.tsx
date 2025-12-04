@@ -4,10 +4,12 @@ export * from "./SamplePlayer";
 
 //------------------------------------------------------------------------------
 export function resolveSamplePath(path: string): string {
-    return path.substring(path.lastIndexOf("/") + 3, path.lastIndexOf("."));
+    const dir = path.substring(0, path.lastIndexOf("/index.tsx"));
+    return dir.substring(dir.lastIndexOf("/") + 3, path.length - 1);
 }
 
 //------------------------------------------------------------------------------
 export function resolveGitPath(path: string): string {
-    return "https://github.com/3dverse/livelink/tree/release/" + path.substring(path.lastIndexOf("livelink.samples/"));
+    const relPath = path.substring(path.lastIndexOf("livelink.samples/"));
+    return "https://github.com/3dverse/livelink/tree/release/" + relPath;
 }

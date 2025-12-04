@@ -1,0 +1,4 @@
+{
+  "title": "Three.js Transform Controls",
+  "summary": "An overlay with a three.js component to translate, rotate, and scale an entity."
+}

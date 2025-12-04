@@ -1,0 +1,5 @@
+{
+  "title": "Client Avatars",
+  "summary": "Shows other clients connected to the current session as avatars rendered on a DOM overlay.",
+  "useCustomLayout": true
+}

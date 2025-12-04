@@ -472,12 +472,12 @@ export class Viewport extends TypedEventTarget<ViewportEvents> {
     /**
      * @internal
      */
-    _onResize(): void {
+    _onResize = (): void => {
         this.camera_projection?.updateProjectionMatrix();
         for (const overlay of this.#overlays) {
             overlay.resize({ width: this.width, height: this.height });
         }
-    }
+    };
 
     /**
      * Return the screen position from a mouse event.

@@ -1,0 +1,5 @@
+{
+  "title": "Third Person Controller",
+  "summary": "A character controller via a third person camera setup.",
+  "autoConnect": false
+}
