@@ -34,6 +34,8 @@ export const _Component: Story = {
         });
         const [cameraController, setCameraController] = useState<DefaultCameraController | null>();
 
+        const [isOpen, setIsOpen] = useState(true);
+
         const handleChange = (speed: number) => {
             console.log("speed", speed);
         };
@@ -44,40 +46,55 @@ export const _Component: Story = {
                     <CameraController ref={ref => setCameraController(ref)} preset={CameraControllerPresets.fly} />
                     {cameraController && (
                         <>
-                            <ViewerPanel
+                            <button
                                 style={{
                                     position: "absolute",
-                                    bottom: "5%",
-                                    left: "5%",
-                                    transform: "translate(-50%, 0)",
-                                    height: "90%",
+                                    bottom: "2%",
+                                    right: "2%",
                                 }}
+                                onClick={() => setIsOpen(!isOpen)}
                             >
-                                <CameraSpeedSlider
-                                    cameraController={cameraController}
-                                    orientation="vertical"
-                                    label="Speed"
-                                    onChange={handleChange}
-                                    {...args}
-                                />
-                            </ViewerPanel>
-                            <ViewerPanel
-                                style={{
-                                    position: "absolute",
-                                    bottom: "5%",
-                                    left: "50%",
-                                    transform: "translate(-50%, 0)",
-                                    width: "25%",
-                                }}
-                            >
-                                <CameraSpeedSlider
-                                    cameraController={cameraController}
-                                    orientation="horizontal"
-                                    label="Speed"
-                                    onChange={handleChange}
-                                    {...args}
-                                />
-                            </ViewerPanel>
+                                Toggle panels
+                            </button>
+                            {isOpen && (
+                                <ViewerPanel
+                                    style={{
+                                        position: "absolute",
+                                        bottom: "5%",
+                                        left: "0",
+                                        height: "90%",
+                                        borderStartStartRadius: "0",
+                                        borderEndStartRadius: "0",
+                                    }}
+                                >
+                                    <CameraSpeedSlider
+                                        cameraController={cameraController}
+                                        orientation="vertical"
+                                        label="Speed"
+                                        onChange={handleChange}
+                                        {...args}
+                                    />
+                                </ViewerPanel>
+                            )}
+                            {isOpen && (
+                                <ViewerPanel
+                                    style={{
+                                        position: "absolute",
+                                        bottom: "5%",
+                                        left: "50%",
+                                        transform: "translate(-50%, 0)",
+                                        width: "25%",
+                                    }}
+                                >
+                                    <CameraSpeedSlider
+                                        cameraController={cameraController}
+                                        orientation="horizontal"
+                                        label="Speed"
+                                        onChange={handleChange}
+                                        {...args}
+                                    />
+                                </ViewerPanel>
+                            )}
                         </>
                     )}
                 </Viewport>
