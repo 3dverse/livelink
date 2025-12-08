@@ -65,7 +65,9 @@ export class WebXRHelper {
     #context: XRContext;
 
     //--------------------------------------------------------------------------
-    #fov_factor: number = 1.0;
+    #enable_latency_compensation: boolean = true;
+    #enable_overscan: boolean = false;
+    #overscan_fov_factor: number = 1.5;
     #resolution_scale: number = 1.0;
 
     //--------------------------------------------------------------------------
@@ -290,13 +292,10 @@ export class WebXRHelper {
      */
     public async configureViewports({
         livelink,
-        overscan_fov_factor,
-        enable_overscan,
         enable_fake_alpha,
     }: {
         livelink: Livelink;
         overscan_fov_factor?: number;
-        enable_overscan?: boolean;
         enable_fake_alpha?: boolean;
     }): Promise<void> {
         if (this.#core) {
@@ -310,11 +309,8 @@ export class WebXRHelper {
             // Though it's not supported we still try to configure all viewports for each views and deal with the 2
             // first views cameras inside `this.#onXRFrame`.
         }
-        if (enable_overscan) {
-            this.#configureOverscan({
-                xr_views,
-                fov_factor: overscan_fov_factor,
-            });
+        if (this.#enable_overscan && this.#enable_latency_compensation) {
+            this.#configureOverscan({ xr_views });
         } else {
             this.#surface.scale = this.#resolution_scale;
         }
@@ -330,6 +326,25 @@ export class WebXRHelper {
         for (const index in this.#viewports) {
             const { xr_view, xr_viewport, livelink_viewport } = this.#viewports[index];
             await this.#createViewportCamera({ index, xr_view, xr_viewport, viewport: livelink_viewport, dataJSON });
+        }
+    }
+
+    //--------------------------------------------------------------------------
+    /**
+     * Reconfigure the overscan settings of the rendering surface, after the session has been fully initialized.
+     */
+    async #reconfigureOverscan(): Promise<void> {
+        if (!this.session || !this.#reference_space) {
+            return;
+        }
+
+        const xr_views = await this.#getXRViews();
+        if (this.#enable_overscan && this.#enable_latency_compensation) {
+            this.#configureOverscan({ xr_views });
+        } else {
+            this.#surface.scale = this.#resolution_scale;
+            this.#context.scale_factor = 1.0;
+            this.#overridden_fovy = undefined;
         }
     }
 
@@ -371,27 +386,14 @@ export class WebXRHelper {
      * Compute the rendering OffscreenSurface & XRContext resolution scale and
      * the camera fovy.
      * @param xr_views
-     * @param fov_factor
-     * @param enable_surface_scale
      */
-    #configureOverscan({
-        xr_views,
-        fov_factor = 1.5,
-    }: {
-        xr_views: Readonly<Array<XRView>>;
-        fov_factor?: number;
-    }): void {
-        if (fov_factor === 1.0) {
-            return;
-        }
-
-        this.#fov_factor = fov_factor;
-        this.#surface.scale = fov_factor * this.#resolution_scale;
-        this.#context.scale_factor = fov_factor;
+    #configureOverscan({ xr_views }: { xr_views: Readonly<Array<XRView>> }): void {
+        this.#surface.scale = this.#overscan_fov_factor * this.#resolution_scale;
+        this.#context.scale_factor = this.#overscan_fov_factor;
 
         const fovY = xr_views[0].projectionMatrix[5];
         const original_fov = 2 * Math.atan(1 / fovY);
-        const new_fov = 2 * Math.atan(Math.tan(original_fov / 2) * fov_factor);
+        const new_fov = 2 * Math.atan(Math.tan(original_fov / 2) * this.#overscan_fov_factor);
         this.#overridden_fovy = new_fov * (180 / Math.PI);
 
         console.debug(
@@ -587,9 +589,12 @@ export class WebXRHelper {
                 camera.perspective_lens.fovy !== fovy ||
                 camera.perspective_lens.nearPlane !== nearPlane ||
                 camera.perspective_lens.farPlane !== farPlane ||
-                camera.perspective_lens.offset !== offset;
+                camera.perspective_lens.offset.some((v, i) => v !== offset[i]);
             if (has_changed) {
-                // TODO: verify this change check is really necessary or if livelink handles it
+                console.debug(
+                    `🔍 Updating perspective lens for camera ${index} (eye: ${xr_view.eye})`,
+                    new_perspective_lens,
+                );
                 camera.perspective_lens = new_perspective_lens;
             }
         });
@@ -710,7 +715,9 @@ export class WebXRHelper {
         viewportHeight: number,
     ): { fovy: number; aspectRatio: number; nearPlane: number; farPlane: number; offset: [number, number] } {
         const aspectRatio = viewportWidth / viewportHeight;
-        const fovy = this.#overridden_fovy ?? Math.atan(1 / projectionMatrix[5]) * (180 / Math.PI) * 2;
+        const fovy =
+            (this.#enable_latency_compensation ? this.#overridden_fovy : null) ??
+            Math.atan(1 / projectionMatrix[5]) * (180 / Math.PI) * 2;
         let nearPlane = projectionMatrix[14] / (projectionMatrix[10] - 1);
         if (this.is_stereo_vision && this.cameras_origin && this.cameras_origin.scale[0] !== 1) {
             // if using stereo vision and the cameras origin has a scale then use it
@@ -761,6 +768,33 @@ export class WebXRHelper {
      */
     set resolution_scale(value: number) {
         this.#resolution_scale = value;
-        this.#surface.scale = this.#resolution_scale * this.#fov_factor;
+        this.#surface.scale = this.#resolution_scale * this.#overscan_fov_factor;
+    }
+
+    //--------------------------------------------------------------------------
+    /**
+     * Enable or disable latency compensation using billboard rendering
+     */
+    set enable_latency_compensation(value: boolean) {
+        if (this.#enable_latency_compensation === value) {
+            return;
+        }
+
+        this.#enable_latency_compensation = value;
+        this.#context.initialize({ enable_billboard: this.#enable_latency_compensation });
+        this.#reconfigureOverscan();
+    }
+
+    //--------------------------------------------------------------------------
+    /**
+     *
+     */
+    set enable_overscan(value: boolean) {
+        if (this.#enable_overscan === value) {
+            return;
+        }
+
+        this.#enable_overscan = value;
+        this.#reconfigureOverscan();
     }
 }

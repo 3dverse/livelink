@@ -105,7 +105,14 @@ export class XRContext extends ContextProvider {
         this.#context =
             context_type === "webgl" ? (context as WebGLRenderingContext) : (context as WebGL2RenderingContext);
 
-        this.#initShaderProgram();
+        this.initialize();
+    }
+
+    /**
+     *
+     */
+    initialize({ enable_billboard = true }: { enable_billboard?: boolean } = {}): void {
+        this.#initShaderProgram({ enable_billboard });
         this.#initBuffers();
         this.#initTexture();
     }
@@ -259,17 +266,22 @@ export class XRContext extends ContextProvider {
     /**
      *
      */
-    #initShaderProgram(): void {
+    #initShaderProgram({ enable_billboard = true }: { enable_billboard: boolean }): void {
         const gl = this.#context!;
         // Vertex shader
         const vertex_shader_source = `
             attribute vec2 position;
             varying vec2 texCoord;
 
-            uniform mat4 viewMatrix;
-            uniform mat4 projectionMatrix;
-            uniform vec2 scale;
-            uniform mat4 billboardMatrix;
+            ${
+                enable_billboard
+                    ? `
+                uniform mat4 viewMatrix;
+                uniform mat4 projectionMatrix;
+                uniform vec2 scale;
+                uniform mat4 billboardMatrix;`
+                    : ""
+            }
 
             uniform vec2 size;
             uniform vec2 offset;
@@ -279,8 +291,15 @@ export class XRContext extends ContextProvider {
                 texCoord = (position + 1.0) * 0.5;
                 texCoord.y = 1.0 - texCoord.y;
                 texCoord = size * texCoord + offset;
-                gl_Position = projectionMatrix * viewMatrix * billboardMatrix * vec4(position + viewOffset, 0.0, 1.0);
+                ${
+                    enable_billboard
+                        ? `
+                gl_Position = projectionMatrix * viewMatrix * billboardMatrix * vec4(position + viewOffset, 0.0, 1.0);`
+                        : `
+                gl_Position = vec4(position + viewOffset, 0.0, 1.0);`
+                }
             }`;
+
         const vertex_shader = gl.createShader(gl.VERTEX_SHADER)!;
         gl.shaderSource(vertex_shader, vertex_shader_source);
         gl.compileShader(vertex_shader);

@@ -29,15 +29,6 @@ export const WebXRContext = createContext<{ webXRHelper: WebXRHelper | null; xrS
 /**
  * A component that provides a WebXR session
  *
- * @param params
- * @param params.mode - The mode of the XR session.
- * @param params.resolution_scale - The resolution scale of the XR session.
- * @param params.onSessionEnd - The callback to call when the XR session ends.
- * @param params.forceSingleView - Whether to force single view mode.
- * @param params.requiredFeatures - The required features for the XR session.
- * @param params.optionalFeatures - The optional features for the XR session.
- * @param params.domOverlayRoot - Specifies a custom DOM overlay root element.
- *
  * @category Components
  */
 export function WebXR({
@@ -46,20 +37,63 @@ export function WebXR({
     requiredFeatures = [],
     optionalFeatures = [],
     forceSingleView,
+    latencyCompensation = true,
     overscan = false,
-    fakeAlpha = false,
+    fakeAlpha,
     scale = 1.0,
     domOverlayRoot,
     onSessionEnd,
 }: PropsWithChildren<{
+    /**
+     * The mode of the XR session. See {@link https://developer.mozilla.org/en-US/docs/Web/API/XRSystem/requestSession#mode XRSessionMode} for more details.
+     */
     mode: XRSessionMode;
+
+    /**
+     * The required features for the XR session. See {@link https://developer.mozilla.org/en-US/docs/Web/API/XRSystem/requestSession#options XRSessionInit.requiredFeatures} for more details.
+     */
     requiredFeatures?: string[];
+
+    /**
+     * The optional features for the XR session. See {@link https://developer.mozilla.org/en-US/docs/Web/API/XRSystem/requestSession#options XRSessionInit.optionalFeatures} for more details.
+     */
     optionalFeatures?: string[];
+
+    /**
+     * Forces single view mode, even on devices that support stereo rendering.
+     */
     forceSingleView?: boolean;
+
+    /**
+     * Enables latency compensation mode to draw the scene on a plane to reduce perceived latency.
+     * Enabled by default.
+     */
+    latencyCompensation?: boolean;
+
+    /**
+     * Enables overscan for latency compensation mode, increasing the field of view to reduce edge artifacts.
+     */
     overscan?: boolean;
+
+    /**
+     * Enables or disable fake alpha mode for AR sessions, which simulates transparency with black background.
+     * Enabled by default for "immersive-ar" mode.
+     */
     fakeAlpha?: boolean;
+
+    /**
+     * The resolution scale factor to apply to the XR session.
+     */
     scale?: number;
+
+    /**
+     * Specifies a custom DOM overlay root element.
+     */
     domOverlayRoot?: Element;
+
+    /**
+     * Callback invoked when the XR session ends.
+     */
     onSessionEnd?: () => void;
 }>): JSX.Element {
     //--------------------------------------------------------------------------
@@ -77,7 +111,17 @@ export function WebXR({
     //--------------------------------------------------------------------------
     useEffect(() => {
         webXRHelper.resolution_scale = scale;
-    }, [scale]);
+    }, [webXRHelper, scale]);
+
+    //--------------------------------------------------------------------------
+    useEffect(() => {
+        webXRHelper.enable_latency_compensation = latencyCompensation;
+    }, [webXRHelper, latencyCompensation]);
+
+    //--------------------------------------------------------------------------
+    useEffect(() => {
+        webXRHelper.enable_overscan = overscan;
+    }, [webXRHelper, overscan]);
 
     //--------------------------------------------------------------------------
     useEffect(() => {
@@ -118,7 +162,6 @@ export function WebXR({
                     console.debug("---- Setting XR viewports");
                     return webXRHelper.configureViewports({
                         livelink: instance,
-                        enable_overscan: overscan,
                         enable_fake_alpha: fakeAlpha,
                     });
                 })

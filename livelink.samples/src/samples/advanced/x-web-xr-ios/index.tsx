@@ -29,6 +29,8 @@ export function App() {
     const [xrMode, setXRMode] = useState<XRSessionMode | null>(null);
     const domOverlayRef = useRef<HTMLElement>(null);
     const [scale, setScale] = useState(1);
+    const [latencyCompensation, setLatencyCompensation] = useState(true);
+    const [overscan, setOverscan] = useState(true);
 
     //--------------------------------------------------------------------------
     // Important for dom overlay to be displayed by variant launch app clip:
@@ -46,7 +48,7 @@ export function App() {
             <div
                 id="xr-dom-overlay-root"
                 style={{ zIndex: 11000 }}
-                className="fixed top-3 flex flex-wrap items-center justify-center gap-2 mx-2"
+                className="fixed top-3 left-2 right-2 flex flex-col items-center gap-2"
             >
                 <button
                     className="button button-primary"
@@ -54,11 +56,23 @@ export function App() {
                 >
                     Exit XR
                 </button>
-                <ScaleSelector scale={scale} setScale={setScale} />
+                <div className="fixed bottom-2 left-2 right-2 flex flex-col sm:flex-row sm:justify-between items-center gap-2">
+                    <div className="order-2 sm:order-1">
+                        <ScaleSelector scale={scale} setScale={setScale} />
+                    </div>
+                    <div className="order-1 sm:order-2">
+                        <XROptions
+                            latencyCompensation={latencyCompensation}
+                            setLatencyCompensation={setLatencyCompensation}
+                            overscan={overscan}
+                            setOverscan={setOverscan}
+                        />
+                    </div>
+                </div>
             </div>,
             domOverlayRef.current,
         );
-    }, [scale]);
+    }, [scale, latencyCompensation, overscan]);
 
     //--------------------------------------------------------------------------
     return (
@@ -74,8 +88,8 @@ export function App() {
                     onSessionEnd={() => setXRMode(null)}
                     forceSingleView={true}
                     domOverlayRoot={domOverlayRef.current || undefined}
-                    fakeAlpha={true}
-                    overscan={true}
+                    latencyCompensation={latencyCompensation}
+                    overscan={overscan}
                     scale={scale}
                 >
                     {renderDomOverlay()}
@@ -88,8 +102,18 @@ export function App() {
                         <XRButton mode="immersive-ar" enterXR={setXRMode} />
                     </div>
 
-                    <div className="absolute bottom-2 mx-2">
-                        <ScaleSelector scale={scale} setScale={setScale} />
+                    <div className="absolute bottom-2 left-2 right-2 flex flex-col sm:flex-row sm:justify-between items-center gap-2">
+                        <div className="order-2 sm:order-1">
+                            <ScaleSelector scale={scale} setScale={setScale} />
+                        </div>
+                        <div className="order-1 sm:order-2">
+                            <XROptions
+                                latencyCompensation={latencyCompensation}
+                                setLatencyCompensation={setLatencyCompensation}
+                                overscan={overscan}
+                                setOverscan={setOverscan}
+                            />
+                        </div>
                     </div>
                 </>
             )}
@@ -249,5 +273,51 @@ function XRButton({
         >
             {message}
         </button>
+    );
+}
+
+//------------------------------------------------------------------------------
+function XROptions({
+    latencyCompensation,
+    setLatencyCompensation,
+    overscan,
+    setOverscan,
+}: {
+    latencyCompensation: boolean;
+    setLatencyCompensation: (value: boolean) => void;
+    overscan: boolean;
+    setOverscan: (value: boolean) => void;
+}) {
+    const buttonClassName =
+        "px-2 py-1 border-2 border-[#333] rounded-lg min-w-12 text-center";
+    const selectedButtonClassName = "bg-white text-[#333] cursor-pointer";
+    const unselectedButtonClassName = "bg-[#333] text-white cursor-pointer";
+    const disabledButtonClassName =
+        "bg-gray-500 text-gray-300 border-gray-500 cursor-not-allowed opacity-50";
+
+    const isOverscanDisabled = !latencyCompensation;
+
+    return (
+        <div className="flex flex-wrap gap-2 justify-center">
+            <button
+                onClick={() => setLatencyCompensation(!latencyCompensation)}
+                className={`${buttonClassName} ${latencyCompensation ? selectedButtonClassName : unselectedButtonClassName}`}
+            >
+                Smooth Tracking
+            </button>
+            <button
+                onClick={() => !isOverscanDisabled && setOverscan(!overscan)}
+                disabled={isOverscanDisabled}
+                className={`${buttonClassName} ${
+                    isOverscanDisabled
+                        ? disabledButtonClassName
+                        : overscan
+                          ? selectedButtonClassName
+                          : unselectedButtonClassName
+                }`}
+            >
+                Overscan
+            </button>
+        </div>
     );
 }
