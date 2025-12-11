@@ -91,10 +91,10 @@ const LightControlInner = () => {
     return (
         <div className="flex gap-3 p-3 xl:p-4">
             <LightPreview />
-            <div className="flex flex-col gap-4 flex-grow p-1">
+            <div className="flex flex-col gap-4 grow p-1">
                 <div
                     className={`
-                        flex flex-col gap-4 flex-grow transition-opacity duration-220
+                        flex flex-col gap-4 grow transition-opacity duration-220
                         ${isPowered ? "" : "opacity-20 mix-blend-luminosity pointer-events-none"}
                     `}
                 >
@@ -112,7 +112,7 @@ const LightControlInner = () => {
                         <LightBrightnessSlider />
                     </div>
                 </div>
-                <div className="flex flex-col gap-4 flex-grow justify-end items-end transition-opacity duration-220">
+                <div className="flex flex-col gap-4 grow justify-end items-end transition-opacity duration-220">
                     <LightSwitchOnOff />
                 </div>
             </div>

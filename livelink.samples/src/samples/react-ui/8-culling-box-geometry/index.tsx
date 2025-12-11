@@ -47,22 +47,11 @@ function AppLayout() {
             <Viewport cameraEntity={cameraEntity} className="w-full h-full">
                 <CameraController />
                 <CullingBoxGeometry initialSize={[20, 10, 20]}>
-                    <div
-                        style={{
-                            position: "absolute",
-                            bottom: "4rem",
-                            left: "50%",
-                            translate: "-50% 0",
-                        }}
-                    >
+                    <div className="absolute bottom-[5vh] left-1/2 -translate-x-1/2">
                         <CullingBoxGeometryButton>
                             {({ toggle, isActive }) => (
                                 <button
-                                    className="button button-primary"
-                                    style={{
-                                        padding: "0.5rem 1rem",
-                                        cursor: "pointer",
-                                    }}
+                                    className="button button-primary px-4 py-2 cursor-pointer"
                                     onClick={toggle}
                                 >
                                     {isActive ? "Hide" : "Show"} Box Geometry

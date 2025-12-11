@@ -47,7 +47,7 @@ function AppLayout() {
         <Canvas className="w-full h-full">
             <Viewport cameraEntity={cameraEntity} className="w-full h-full">
                 <CameraController>
-                    <div className="absolute bottom-4 right-4 m-4">
+                    <div className="absolute bottom-[10vh] right-[10vh]">
                         <StyledViewCube />
                     </div>
                 </CameraController>
