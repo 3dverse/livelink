@@ -31,6 +31,39 @@ import { AudioPlayer } from "./audio/AudioPlayer";
 import { GamepadsRegistry } from "./inputs/GamepadsRegistry";
 
 /**
+ * Represents the various stages of the Livelink connection process.
+ *
+ * Each stage represents a different phase of establishing a connection to the Livelink service:
+ *
+ * - `"initializing"` - Loading dynamic dependencies and preparing the connection infrastructure
+ * - `"finding-session"` - Looking for existing sessions on the server (used with join and join_or_start methods)
+ * - `"creating-session"` - Creating a new session on the server (used with start method or join_or_start fallback)
+ * - `"registering-client"` - Registering the client with the session and obtaining session credentials
+ * - `"connecting"` - Establishing the WebSocket connection to the gateway server
+ * - `"configuring"` - Setting up the client configuration and preparing for streaming
+ * - `"ready"` - Connection is complete and streaming can begin
+ *
+ * @category Main
+ */
+export type LivelinkConnectionStage =
+    | "initializing"
+    | "finding-session"
+    | "creating-session"
+    | "registering-client"
+    | "connecting"
+    | "configuring"
+    | "ready";
+
+/**
+ * Callback function type for receiving connection progress updates.
+ *
+ * @param stage - The current stage of the connection process.
+ *
+ * @category Main
+ */
+export type LivelinkProgressCallback = (stage: LivelinkConnectionStage) => void;
+
+/**
  * This class represents the Livelink connection between the client and the 3dverse server holding
  * the session.
  * It holds access to the actual socket connection as well as a client local representation of the
@@ -105,6 +138,7 @@ export class Livelink {
      * access to the scene
      * @param params.is_transient  Whether the session should be transient or not.
      * @param params.is_headless Whether the client should be headless or not.
+     * @param params.onProgress Optional callback to receive progress updates during connection.
      *
      * @returns A promise to a Livelink instance holding a session with the specified scene
      *
@@ -116,16 +150,19 @@ export class Livelink {
         is_transient = false,
         is_headless = false,
         session_options,
+        onProgress,
     }: {
         scene_id: UUID;
         token: string;
         is_transient?: boolean;
         is_headless?: boolean;
         session_options?: Record<string, boolean>;
+        onProgress?: LivelinkProgressCallback;
     }): Promise<Livelink> {
         console.debug(`Starting new session on scene '${scene_id}'`);
+        onProgress?.("creating-session");
         const session = await Session.create({ scene_id, token, is_transient, options: session_options });
-        return await Livelink.join({ session, is_headless });
+        return await Livelink.join({ session, is_headless, onProgress });
     }
 
     /**
@@ -141,6 +178,7 @@ export class Livelink {
      * null to fallback to starting a new session.
      * @param params.is_transient  Whether the session should be transient or not.
      * @param params.is_headless Whether the client should be headless or not.
+     * @param params.onProgress Optional callback to receive progress updates during connection.
      *
      * @returns A promise to a Livelink instance holding a session with the
      * specified scene
@@ -154,6 +192,7 @@ export class Livelink {
         is_transient = false,
         is_headless = false,
         session_options,
+        onProgress,
     }: {
         scene_id: UUID;
         token: string;
@@ -161,20 +200,22 @@ export class Livelink {
         is_transient?: boolean;
         is_headless?: boolean;
         session_options?: Record<string, boolean>;
+        onProgress?: LivelinkProgressCallback;
     }): Promise<Livelink> {
         console.debug(`Looking for sessions on scene '${scene_id}'`);
+        onProgress?.("finding-session");
         const session = await Session.find({ scene_id, token, session_selector });
 
         if (session === null) {
             console.debug(
                 `There's no session currently running on scene '${scene_id}' and satisfiying the provided selector criteria`,
             );
-            return await Livelink.start({ scene_id, token, is_transient, is_headless, session_options });
+            return await Livelink.start({ scene_id, token, is_transient, is_headless, session_options, onProgress });
         }
 
         try {
             console.debug("Found session, joining...", session);
-            return await Livelink.join({ session, is_headless });
+            return await Livelink.join({ session, is_headless, onProgress });
         } catch {
             console.error(`Failed to join session '${session.session_id}', trying again with another session.`);
 
@@ -189,6 +230,7 @@ export class Livelink {
                 is_transient,
                 is_headless,
                 session_options,
+                onProgress,
             });
         }
     }
@@ -199,6 +241,7 @@ export class Livelink {
      * @param params
      * @param params.session The session to join
      * @param params.is_headless Whether the client should be headless or not.
+     * @param params.onProgress Optional callback to receive progress updates during connection.
      *
      * @returns A promise to a Livelink instance holding the specified session
      *
@@ -207,14 +250,17 @@ export class Livelink {
     static async join({
         session,
         is_headless = false,
+        onProgress,
     }: {
         session: Session;
         is_headless?: boolean;
+        onProgress?: LivelinkProgressCallback;
     }): Promise<Livelink> {
+        onProgress?.("initializing");
         await DynamicLoader.load();
 
         console.debug("Joining session:", session);
-        return new Livelink({ session }).#connect({ is_headless });
+        return new Livelink({ session }).#connect({ is_headless, onProgress });
     }
 
     /**
@@ -617,10 +663,18 @@ export class Livelink {
     /**
      * Connect to the server and initialize the Livelink instance.
      */
-    async #connect({ is_headless }: { is_headless: boolean }): Promise<Livelink> {
+    async #connect({
+        is_headless,
+        onProgress,
+    }: {
+        is_headless: boolean;
+        onProgress?: LivelinkProgressCallback;
+    }): Promise<Livelink> {
         // Retrieve a session key
+        onProgress?.("registering-client");
         await this.session.registerClient({ is_headless });
 
+        onProgress?.("connecting");
         await this.#core.connect({ session: this.session });
         this.#installEventListeners();
 
