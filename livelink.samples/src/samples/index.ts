@@ -51,6 +51,7 @@ import LightControl from "./react-ui/5-light-control/manifest";
 import CameraSpeedSlider from "./react-ui/6-camera-speed-slider/manifest";
 import PerformancePanel from "./react-ui/7-performance-panel/manifest";
 import CullingBoxGeometry from "./react-ui/8-culling-box-geometry/manifest";
+import VideoRecorder from "./react-ui/9-video-recorder/manifest";
 
 //------------------------------------------------------------------------------
 import LiveSkeletalAnimation from "./advanced/x-live-skeletal-animation/manifest";
@@ -146,6 +147,7 @@ export default [
             CameraSpeedSlider,
             PerformancePanel,
             CullingBoxGeometry,
+            VideoRecorder,
         ],
     },
     {
