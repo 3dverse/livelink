@@ -19,6 +19,7 @@
     "build:webxr": "npm -C livelink.webxr run build",
     "build:samples": "npm -C livelink.samples run build",
     "build": "npm run build:js && npm run build:react && npm run build:three && npm run build:react.ui && npm run build:webxr",
+    "build-storybook": "npm -C livelink.react.ui run build-storybook",
     "clean:js": "npm -C livelink.js run clean",
     "clean:react": "npm -C livelink.react run clean",
     "clean:react.ui": "npm -C livelink.react.ui run clean",
