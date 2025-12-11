@@ -1,19 +1,18 @@
 //------------------------------------------------------------------------------
+import { useContext } from "react";
 import {
     Livelink,
     Canvas,
     Viewport,
     CameraController,
     useCameraEntity,
+    LivelinkContext,
 } from "@3dverse/livelink-react";
 import {
     LoadingOverlay,
     VideoRecorder,
     ViewerPanel,
 } from "@3dverse/livelink-react-ui";
-
-//------------------------------------------------------------------------------
-import {} from "@3dverse/livelink-react-ui";
 
 //------------------------------------------------------------------------------
 import { DisconnectedModal } from "@/components/SamplePlayer";
@@ -38,6 +37,7 @@ export function App() {
 
 //------------------------------------------------------------------------------
 function AppLayout() {
+    const { isConnecting } = useContext(LivelinkContext);
     const { cameraEntity } = useCameraEntity({
         position: [20, 20, 20],
         eulerOrientation: [-45, 45, 0],
@@ -48,7 +48,7 @@ function AppLayout() {
             <Viewport cameraEntity={cameraEntity} className="w-full h-full">
                 <CameraController />
                 <ViewerPanel className="absolute bottom-[5vh] left-1/2 -translate-x-1/2 rounded-md">
-                    <VideoRecorder />
+                    {!isConnecting && <VideoRecorder />}
                 </ViewerPanel>
             </Viewport>
         </Canvas>

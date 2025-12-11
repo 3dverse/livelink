@@ -60,7 +60,6 @@ import WebXRiOS from "./advanced/x-web-xr-ios/manifest";
 import MPR from "./advanced/x-multiplanar-reconstruction/manifest";
 import ThreeTransformControls from "./advanced/x-three-transform-controls/manifest";
 import ScriptEvents from "./advanced/x-script-events/manifest";
-import Recording from "./advanced/x-recording/manifest";
 import Audio from "./advanced/x-audio/manifest";
 import Material from "./advanced/x-material/manifest";
 import HeadlessClient from "./advanced/x-headless-client/manifest";
@@ -159,7 +158,6 @@ export default [
             MPR,
             ThreeTransformControls,
             ScriptEvents,
-            Recording,
             Audio,
             Material,
             HeadlessClient,
