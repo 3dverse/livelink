@@ -1,5 +1,18 @@
 # @3dverse/livelink-react-ui
 
+## 0.3.16
+
+### Patch Changes
+
+- feat(livelink.react.ui): implement livelink connection stages
+- fix(livelink.react.ui): fix CameraSpeedSlider default value
+- Updated dependencies
+- Updated dependencies
+- Updated dependencies
+- Updated dependencies
+  - @3dverse/livelink@0.8.56
+  - @3dverse/livelink-react@0.2.59
+
 ## 0.3.15
 
 ### Patch Changes

@@ -1,5 +1,17 @@
 # @3dverse/livelink-webxr
 
+## 0.1.17
+
+### Patch Changes
+
+- feat(livelink.webxr): expose parameter to enable or disable and configure latency compensation, even at runtime
+- Updated dependencies
+- Updated dependencies
+- Updated dependencies
+- Updated dependencies
+  - @3dverse/livelink@0.8.56
+  - @3dverse/livelink-react@0.2.59
+
 ## 0.1.16
 
 ### Patch Changes
