@@ -1,5 +1,15 @@
 # @3dverse/livelink-react
 
+## 0.2.59
+
+### Patch Changes
+
+- feat(livelink.react): implement livelink connection stages
+- feat(livelink.react): add defaultFilename property to Recorder component
+- Updated dependencies
+- Updated dependencies
+  - @3dverse/livelink@0.8.56
+
 ## 0.2.58
 
 ### Patch Changes

@@ -1,5 +1,12 @@
 # @3dverse/livelink
 
+## 0.8.56
+
+### Patch Changes
+
+- feat(livelink.js): propagate script event without target to all entities
+- feat(livelink.js): add connection stages
+
 ## 0.8.55
 
 ### Patch Changes
