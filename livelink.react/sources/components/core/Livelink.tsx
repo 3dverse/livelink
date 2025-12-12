@@ -3,7 +3,7 @@ import React, { createContext, JSX, PropsWithChildren, useCallback, useEffect, u
 
 //------------------------------------------------------------------------------
 import * as Livelink from "@3dverse/livelink";
-import { Livelink as LivelinkInstance, type UUID } from "@3dverse/livelink";
+import { Livelink as LivelinkInstance, type UUID, type LivelinkConnectionStage } from "@3dverse/livelink";
 import { StrictUnion } from "../../utils";
 
 /**
@@ -109,7 +109,7 @@ export type LivelinkConnectParameters = {
     /**
      * Optional React component or node displayed while the connection is loading.
      */
-    LoadingPanel?: React.ComponentType<{ stage: string }>;
+    LoadingPanel?: React.ComponentType<{ stage: LivelinkConnectionStage }>;
 
     /**
      * Optional React component or node displayed when an inactivity timeout occurs.
@@ -174,6 +174,7 @@ export function LivelinkProvider({
 }: PropsWithChildren<LivelinkConnectParameters>): JSX.Element {
     const [instance, setInstance] = useState<LivelinkInstance | null>(null);
     const [isConnecting, setIsConnecting] = useState(true);
+    const [connectionStage, setConnectionStage] = useState<LivelinkConnectionStage>("initializing");
     const [isConnectionLost, setIsConnectionLost] = useState(false);
     const [inactivityWarning, setInactivityWarning] = useState<Livelink.InactivityWarningEvent | null>(null);
     const [connectionError, setConnectionError] = useState<string>("Unknown error");
@@ -188,12 +189,17 @@ export function LivelinkProvider({
             sessionId,
             clientType,
         }: SessionOpenMode): Promise<Livelink.Livelink> => {
+            const onProgress = (stage: LivelinkConnectionStage): void => {
+                setConnectionStage(stage);
+            };
+
             if (sessionId) {
+                setConnectionStage("finding-session");
                 const session = await Livelink.Session.findById({ session_id: sessionId, token });
                 if (!session) {
                     throw new Error(`Session '${sessionId}' not found on scene '${sceneId}'`);
                 }
-                return LivelinkInstance.join({ session });
+                return LivelinkInstance.join({ session, onProgress });
             }
 
             if (sceneId) {
@@ -203,6 +209,7 @@ export function LivelinkProvider({
                         token,
                         is_transient: isTransient,
                         session_options: sessionOptions,
+                        onProgress,
                     });
                 } else {
                     return LivelinkInstance.start({
@@ -210,17 +217,19 @@ export function LivelinkProvider({
                         token,
                         is_transient: isTransient,
                         session_options: sessionOptions,
+                        onProgress,
                     });
                 }
             }
 
             if (clientType === "guest") {
+                setConnectionStage("finding-session");
                 const session = await Livelink.Session.findByGuestToken({ guest_token: token });
                 if (!session) {
                     throw new Error(`No session available for guest token '${token}'`);
                 }
 
-                return LivelinkInstance.join({ session });
+                return LivelinkInstance.join({ session, onProgress });
             }
 
             throw new Error("What are we doing here?!");
@@ -269,9 +278,11 @@ export function LivelinkProvider({
                 }
 
                 console.debug("Connected to Livelink", instance);
+                setConnectionStage("configuring");
                 configureClient(instance);
                 setInstance(instance);
                 instance.TO_REMOVE__setReadyCallback(async () => {
+                    setConnectionStage("ready");
                     instance.startStreaming();
                     setIsConnecting(false);
                 });
@@ -294,6 +305,7 @@ export function LivelinkProvider({
 
             setInstance(null);
             setIsConnecting(true);
+            setConnectionStage("initializing");
             setIsConnectionLost(false);
             setInactivityWarning(null);
         };
@@ -338,7 +350,7 @@ export function LivelinkProvider({
                 disconnect,
             }}
         >
-            {isConnecting && LoadingPanel && <LoadingPanel stage={""} />}
+            {isConnecting && LoadingPanel && <LoadingPanel stage={connectionStage} />}
             {isConnectionLost && ConnectionErrorPanel && <ConnectionErrorPanel error={connectionError} />}
             {inactivityWarning && InactivityWarningPanel && (
                 <InactivityWarningPanel

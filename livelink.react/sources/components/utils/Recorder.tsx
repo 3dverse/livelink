@@ -1,4 +1,5 @@
 import React, { ReactNode, useContext, useEffect, useState } from "react";
+import { LivelinkContext } from "../core/Livelink";
 import { CanvasContext } from "../core/Canvas";
 
 /**
@@ -14,6 +15,7 @@ import { CanvasContext } from "../core/Canvas";
  * @param params.recorderOptions.videoBitsPerSecond - Target bit rate for video encoding
  * @param params.streamOptions - Configuration for the canvas stream capture
  * @param params.streamOptions.frameRequestRate - Desired frame rate for video capture
+ * @param params.defaultFilename - Default filename for the recording. If not provided, generates a timestamped filename with scene name
  * @param params.onSuccess - Callback function executed when recording is successfully completed and saved
  * @param params.onSuccess.filename - The name of the saved recording file
  * @param params.onCancel - Callback function executed when recording is cancelled by the user
@@ -37,6 +39,7 @@ export function Recorder({
     streamOptions = {
         frameRequestRate: 30,
     },
+    defaultFilename,
     onSuccess,
     onCancel,
     children,
@@ -44,10 +47,12 @@ export function Recorder({
     fileOptions?: FilePickerAcceptType;
     recorderOptions?: MediaRecorderOptions;
     streamOptions?: { frameRequestRate: number };
+    defaultFilename?: string;
     onSuccess?: (filename: string) => void;
     onCancel?: () => void;
     children?: (props: { recordTime: number }) => ReactNode;
 }): ReactNode {
+    const { instance } = useContext(LivelinkContext);
     const { renderingSurface } = useContext(CanvasContext);
     const [recordTime, setRecordTime] = useState(0);
     const [isRecording, setIsRecording] = useState(false);
@@ -84,13 +89,18 @@ export function Recorder({
     }, [renderingSurface]);
 
     useEffect(() => {
-        if (!mediaRecorder) {
+        if (!instance || !mediaRecorder) {
             return;
         }
 
+        const suggestedName = defaultFilename || generateDefaultFilename(instance.session.info.scene_name);
+
         if ("showSaveFilePicker" in window) {
             window
-                .showSaveFilePicker({ types: [fileOptions] })
+                .showSaveFilePicker({
+                    types: [fileOptions],
+                    suggestedName,
+                })
                 .then(async (fileHandle: FileSystemFileHandle) => {
                     const fileStream: FileSystemWritableFileStream = await fileHandle.createWritable();
                     mediaRecorder.ondataavailable = (event: BlobEvent): void => {
@@ -137,21 +147,19 @@ export function Recorder({
                         return;
                     }
 
-                    const filename = "recording.webm";
-
                     const blob = new Blob(chunks, { type: recorderOptions.mimeType });
                     const url = URL.createObjectURL(blob);
                     const a = document.createElement("a");
                     a.style.display = "none";
                     a.href = url;
-                    a.download = filename;
+                    a.download = suggestedName;
                     document.body.appendChild(a);
                     a.click();
                     document.body.removeChild(a);
                     URL.revokeObjectURL(url);
 
                     if (onSuccess) {
-                        onSuccess(filename);
+                        onSuccess(suggestedName);
                     }
                 }, 100);
             };
@@ -162,7 +170,7 @@ export function Recorder({
         return (): void => {
             mediaRecorder.stop();
         };
-    }, [mediaRecorder]);
+    }, [instance, mediaRecorder]);
 
     useEffect(() => {
         if (!isRecording) {
@@ -177,4 +185,22 @@ export function Recorder({
     }, [isRecording]);
 
     return <>{children ? children({ recordTime }) : null}</>;
+}
+
+/**
+ * Generates a default filename with timestamp for recordings.
+ * @param prefix - The prefix for the filename (default: "recording")
+ * @param extension - The file extension (default: "webm")
+ * @returns A filename in the format "prefix_YYYY-MM-DD_HH-MM-SS.extension"
+ */
+function generateDefaultFilename(prefix: string = "recording", extension: string = "webm"): string {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, "0");
+    const day = String(now.getDate()).padStart(2, "0");
+    const hours = String(now.getHours()).padStart(2, "0");
+    const minutes = String(now.getMinutes()).padStart(2, "0");
+    const seconds = String(now.getSeconds()).padStart(2, "0");
+
+    return `${prefix}_${year}-${month}-${day}_${hours}-${minutes}-${seconds}.${extension}`;
 }

@@ -12,3 +12,4 @@ ssl
 .env
 
 *storybook.log
+storybook-static

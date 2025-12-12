@@ -591,10 +591,17 @@ export class Scene extends TypedEventTarget<SceneEvents> {
 
         const script_event_received_event = new ScriptEventReceived({ event_name, emitter_entity, data_object });
 
-        for (const entity_rtid of target_rtids) {
-            const target_entity = this._entity_registry.get({ entity_rtid });
-            if (target_entity) {
-                target_entity._onScriptEventReceived({ script_event_received_event });
+        // If no target RTIDs are specified, broadcast to all entities
+        if (target_rtids.length === 0) {
+            for (const entity of this._entity_registry.all()) {
+                entity._onScriptEventReceived({ script_event_received_event });
+            }
+        } else {
+            for (const entity_rtid of target_rtids) {
+                const target_entity = this._entity_registry.get({ entity_rtid });
+                if (target_entity) {
+                    target_entity._onScriptEventReceived({ script_event_received_event });
+                }
             }
         }
     };

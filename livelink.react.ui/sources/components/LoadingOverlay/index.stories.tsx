@@ -18,5 +18,5 @@ type Story = StoryObj<typeof meta>;
 
 //------------------------------------------------------------------------------
 export const _Component: Story = {
-    args: {},
+    args: { stage: "connecting" },
 };

@@ -51,6 +51,7 @@ import LightControl from "./react-ui/5-light-control/manifest";
 import CameraSpeedSlider from "./react-ui/6-camera-speed-slider/manifest";
 import PerformancePanel from "./react-ui/7-performance-panel/manifest";
 import CullingBoxGeometry from "./react-ui/8-culling-box-geometry/manifest";
+import VideoRecorder from "./react-ui/9-video-recorder/manifest";
 
 //------------------------------------------------------------------------------
 import LiveSkeletalAnimation from "./advanced/x-live-skeletal-animation/manifest";
@@ -59,7 +60,6 @@ import WebXRiOS from "./advanced/x-web-xr-ios/manifest";
 import MPR from "./advanced/x-multiplanar-reconstruction/manifest";
 import ThreeTransformControls from "./advanced/x-three-transform-controls/manifest";
 import ScriptEvents from "./advanced/x-script-events/manifest";
-import Recording from "./advanced/x-recording/manifest";
 import Audio from "./advanced/x-audio/manifest";
 import Material from "./advanced/x-material/manifest";
 import HeadlessClient from "./advanced/x-headless-client/manifest";
@@ -146,6 +146,7 @@ export default [
             CameraSpeedSlider,
             PerformancePanel,
             CullingBoxGeometry,
+            VideoRecorder,
         ],
     },
     {
@@ -157,7 +158,6 @@ export default [
             MPR,
             ThreeTransformControls,
             ScriptEvents,
-            Recording,
             Audio,
             Material,
             HeadlessClient,

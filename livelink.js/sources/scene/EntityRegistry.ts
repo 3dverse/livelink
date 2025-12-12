@@ -120,6 +120,15 @@ export class EntityRegistry {
     }
 
     /**
+     * @internal
+     *
+     * @returns An iterable of all registered entities.
+     */
+    all(): Iterable<Entity> {
+        return this.#entity_rtid_lut.values();
+    }
+
+    /**
      * Returns all entities matching the given EUID or empty array if not found.
      *
      * @param entity_euid The EUID of the entities to get.

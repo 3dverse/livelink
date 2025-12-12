@@ -1,7 +1,8 @@
 //------------------------------------------------------------------------------
 import React from "react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Swiper, SwiperSlide } from "swiper/react";
+import type { Swiper as SwiperType } from "swiper";
 import { RiTriangleFill } from "react-icons/ri";
 import { CameraController, CameraControllerPresets } from "@3dverse/livelink";
 
@@ -27,6 +28,7 @@ export const CameraSpeedSlider = ({
 }) => {
     //--------------------------------------------------------------------------
     const [initialSlide, setInitialSlide] = useState(0);
+    const swiperRef = useRef<SwiperType | null>(null);
 
     //--------------------------------------------------------------------------
     const handleSlideChange = (event: any) => {
@@ -54,9 +56,19 @@ export const CameraSpeedSlider = ({
             console.error("CameraController is not provided");
             return;
         }
-        const index = SPEEDS.findIndex(v => v >= cameraController.truckSpeed);
-        setInitialSlide(index === -1 ? SPEEDS.length - 1 : index);
+        const isFlyMode = cameraController.preset === CameraControllerPresets.fly;
+        const initialSpeed = Math.abs(cameraController.truckSpeed) * (isFlyMode ? 1e-3 : 1);
+        const index = SPEEDS.findIndex(v => v >= initialSpeed);
+        const newInitialSlide = index === -1 ? SPEEDS.length - 1 : index;
+        setInitialSlide(newInitialSlide);
     }, [cameraController]);
+
+    //--------------------------------------------------------------------------
+    useEffect(() => {
+        if (swiperRef.current && swiperRef.current.activeIndex !== initialSlide) {
+            swiperRef.current.slideTo(initialSlide);
+        }
+    }, [initialSlide]);
 
     //--------------------------------------------------------------------------
     return (
@@ -71,6 +83,7 @@ export const CameraSpeedSlider = ({
 
                 <div className={styles.swiperHost}>
                     <Swiper
+                        onSwiper={swiper => (swiperRef.current = swiper)}
                         onSlideChange={handleSlideChange}
                         loop={false}
                         direction={orientation === "vertical" ? "vertical" : "horizontal"}

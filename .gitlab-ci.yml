@@ -80,6 +80,28 @@ js:build:libs:
     - if: *merge-request-on-release-rule
     - if: *release-rule
 
+js:build:storybook:
+  stage: build
+  extends:
+    - .env-dev
+    - .runner-onprem
+  image: node:${NODE_VERSION}
+  needs:
+    - job: js:build:libs
+      artifacts: true
+  artifacts:
+    expire_in: 1 day
+    paths:
+      - "livelink.react.ui/storybook-static/"
+  before_script:
+    - !reference [.node-cache, before_script]
+  variables:
+    NPM_INSTALL_ARGS: "--workspace=livelink.react.ui"
+  script:
+    - npm run build-storybook
+  rules:
+    - if: *default-branch-rule
+
 js:build:samples:
   stage: build
   extends:
@@ -198,13 +220,14 @@ pages:
   needs:
     - job: js:build:samples
       artifacts: true
+    - job: js:build:storybook
+      artifacts: true
   artifacts:
     paths:
       - public/
-  before_script:
-    - mkdir public
   script:
-    - cp -r livelink.samples/dist/* public/
+    - mv -v livelink.samples/dist public
+    - mv -v livelink.react.ui/storybook-static public/storybook
   rules:
     - if: *default-branch-rule
 

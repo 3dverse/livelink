@@ -55,13 +55,14 @@ function AppLayout() {
                 />
                 {cameraController && (
                     <div
-                        className={`absolute bottom-[5vh] left-1/2 -translate-x-1/2
+                        className={`absolute bottom-[5vh] left-1/2 -translate-x-1/2 w-80
                                 bg-[color-mix(in_srgb,var(--color-bg-foreground)_85%,transparent)]
                                 backdrop-blur-xl rounded-lg shadow-[0px_24px_40px_10px_color-mix(in_srgb,black_40%,transparent)]
                             `}
                     >
                         <CameraSpeedSlider
                             cameraController={cameraController}
+                            orientation="horizontal"
                         />
                     </div>
                 )}

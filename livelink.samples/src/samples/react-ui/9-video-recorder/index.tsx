@@ -1,28 +1,32 @@
 //------------------------------------------------------------------------------
+import { useContext } from "react";
 import {
     Livelink,
     Canvas,
     Viewport,
-    useEntity,
-    useCameraEntity,
     CameraController,
+    useCameraEntity,
+    LivelinkContext,
 } from "@3dverse/livelink-react";
-import { LoadingOverlay, SunPositionPicker } from "@3dverse/livelink-react-ui";
+import {
+    LoadingOverlay,
+    VideoRecorder,
+    ViewerPanel,
+} from "@3dverse/livelink-react-ui";
 
 //------------------------------------------------------------------------------
 import { DisconnectedModal } from "@/components/SamplePlayer";
 
 //------------------------------------------------------------------------------
-const scene_id = "bfadafe7-7d75-4e8d-ba55-3b65c4b1d994";
+const scene_id = "5c19522d-a045-4554-a6d3-78bd87e44b86";
 const token = import.meta.env.VITE_PROD_PUBLIC_TOKEN;
 
 //------------------------------------------------------------------------------
 export function App() {
     return (
         <Livelink
-            token={token}
             sceneId={scene_id}
-            isTransient={true}
+            token={token}
             LoadingPanel={LoadingOverlay}
             ConnectionErrorPanel={DisconnectedModal}
         >
@@ -33,40 +37,20 @@ export function App() {
 
 //------------------------------------------------------------------------------
 function AppLayout() {
+    const { isConnecting } = useContext(LivelinkContext);
     const { cameraEntity } = useCameraEntity({
-        settings: { atmosphere: true, gradient: false },
+        position: [20, 20, 20],
+        eulerOrientation: [-45, 45, 0],
     });
 
     return (
         <Canvas className="w-full h-full">
             <Viewport cameraEntity={cameraEntity} className="w-full h-full">
                 <CameraController />
-                <SunWidget />
+                <ViewerPanel className="absolute bottom-[5vh] left-1/2 -translate-x-1/2 rounded-md">
+                    {!isConnecting && <VideoRecorder />}
+                </ViewerPanel>
             </Viewport>
         </Canvas>
-    );
-}
-
-//------------------------------------------------------------------------------
-const SUN_ENTITY_ID = "23e6b1cc-5e04-42c4-b179-12447556a170" as const;
-
-//------------------------------------------------------------------------------
-function SunWidget() {
-    const { isPending, entity: theSun } = useEntity({ euid: SUN_ENTITY_ID });
-
-    if (!isPending && !theSun) {
-        console.error("There's no sun entity in the scene");
-        return null;
-    }
-
-    return (
-        <div
-            className={`absolute bottom-[5vh] left-1/2 -translate-x-1/2 pb-2
-                bg-[color-mix(in_srgb,var(--color-bg-foreground)_85%,transparent)]
-                backdrop-blur-xl rounded-lg shadow-[0px_24px_40px_10px_color-mix(in_srgb,black_40%,transparent)]
-            `}
-        >
-            <SunPositionPicker sun={theSun} />
-        </div>
     );
 }

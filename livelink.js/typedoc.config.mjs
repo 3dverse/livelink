@@ -7,6 +7,8 @@ const config = {
     out: "docs",
     includeVersion: true,
     excludeCategories: [],
+    excludeExternals: true,
+    externalPattern: ["**/threejs-math/**"],
     //defaultCategory: "Other",
     categoryOrder: [
         "Main",
