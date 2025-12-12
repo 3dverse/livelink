@@ -47,7 +47,7 @@ export function App() {
                             className="button button-primary"
                             onClick={() => setXRMode(null)}
                         >
-                            Exit XR
+                            Exit {xrMode === "immersive-ar" ? "AR" : "VR"}
                         </button>
 
                         <XRButton

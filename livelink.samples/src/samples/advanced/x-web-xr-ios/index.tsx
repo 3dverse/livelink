@@ -54,7 +54,7 @@ export function App() {
                     className="button button-primary"
                     onClick={() => setXRMode(null)}
                 >
-                    Exit XR
+                    Exit AR
                 </button>
                 <div className="fixed bottom-2 left-2 right-2 flex flex-col sm:flex-row sm:justify-between items-center gap-2">
                     <div className="order-2 sm:order-1">
