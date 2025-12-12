@@ -12,17 +12,23 @@ import styles from "./style.module.css";
 export function BoxGeometryVisualization({
     boxGeometryEntity,
     boxColor,
-    opacity,
+    boxOpacity,
     edgeColor,
+    edgeOpacity,
 }: {
     boxGeometryEntity: Entity;
-    boxColor?: string;
-    opacity?: number;
-    edgeColor?: string;
+    boxColor: string;
+    boxOpacity: number;
+    edgeColor: string;
+    edgeOpacity: number;
 }) {
     const { viewport } = useContext(ViewportContext);
     const [overlay, setOverlay] = useState<BoxGeometryOverlay | null>(null);
     const [projectedVertices, setProjectedVertices] = useState<Vec3[]>([]);
+
+    //--------------------------------------------------------------------------
+    const sanitizedBoxOpacity = Math.min(Math.max(boxOpacity, 0), 1);
+    const sanitizedEdgeOpacity = Math.min(Math.max(edgeOpacity, 0), 1);
 
     //--------------------------------------------------------------------------
     useEffect(() => {
@@ -75,37 +81,25 @@ export function BoxGeometryVisualization({
     }
 
     return (
-        <div className={styles.wireframe}>
-            <svg width="100%" height="100%" style={{ position: "absolute" }}>
-                {BoxGeometryOverlay.edgesIndices.map(([start, end], index) => {
-                    const startVertex = projectedVertices[start];
-                    const endVertex = projectedVertices[end];
-
-                    return (
-                        <line
-                            key={index}
-                            x1={startVertex[0]}
-                            y1={startVertex[1]}
-                            x2={endVertex[0]}
-                            y2={endVertex[1]}
-                            stroke={edgeColor}
-                            strokeWidth="2"
-                            opacity={opacity ?? 0.8}
-                        />
-                    );
-                })}
-            </svg>
-            <svg width="100%" height="100%" style={{ position: "absolute" }}>
-                {BoxGeometryOverlay.facesIndices.map((indices, index) => (
-                    <polygon
-                        key={index}
-                        points={indices.map(i => `${projectedVertices[i][0]},${projectedVertices[i][1]}`).join(" ")}
-                        fill={boxColor}
-                        opacity={(opacity ?? 0.2) * 0.4}
-                    />
-                ))}
-            </svg>
-        </div>
+        <svg
+            className={styles.wireframe}
+            fill={`color-mix(in srgb, ${boxColor}, transparent var(--opacity, ${100 - sanitizedBoxOpacity * 100}%))`}
+            stroke={`color-mix(in srgb, ${edgeColor}, transparent ${100 - sanitizedEdgeOpacity * 100}%)`}
+        >
+            {BoxGeometryOverlay.facesIndices.map((indices, index) => (
+                <polygon
+                    key={index}
+                    id={`face-${index}`}
+                    points={indices.map(i => `${projectedVertices[i][0]},${projectedVertices[i][1]}`).join(" ")}
+                    strokeWidth="1"
+                    style={{
+                        transitionProperty: "opacity, stroke",
+                        transitionDuration: "0.2s",
+                        transitionTimingFunction: "ease-in-out",
+                    }}
+                />
+            ))}
+        </svg>
     );
 }
 

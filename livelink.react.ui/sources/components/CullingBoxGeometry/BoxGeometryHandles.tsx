@@ -17,16 +17,16 @@ type GeometryHandle = {
     onPointerDown: PointerEventHandler;
 };
 const geometryHandlesAxes = [
-    new Maths.Vector3(1, 0, 0),
-    new Maths.Vector3(-1, 0, 0),
-    new Maths.Vector3(0, 1, 0),
-    new Maths.Vector3(0, -1, 0),
-    new Maths.Vector3(0, 0, 1),
     new Maths.Vector3(0, 0, -1),
+    new Maths.Vector3(0, 0, 1),
+    new Maths.Vector3(0, -1, 0),
+    new Maths.Vector3(1, 0, 0),
+    new Maths.Vector3(0, 1, 0),
+    new Maths.Vector3(-1, 0, 0),
 ] as const;
 
 //------------------------------------------------------------------------------
-export function BoxGeometryHandles({ boxGeometryEntity }: { boxGeometryEntity: Entity }) {
+export function BoxGeometryHandles({ boxGeometryEntity, edgeColor }: { boxGeometryEntity: Entity; edgeColor: string }) {
     const [geometryHandles, setGeometryHandles] = useState<GeometryHandle[]>([]);
     const { viewport, viewportDomElement } = useContext(ViewportContext);
 
@@ -63,7 +63,14 @@ export function BoxGeometryHandles({ boxGeometryEntity }: { boxGeometryEntity: E
 
     return geometryHandles.map((handle, index) => (
         <DOM3DElement worldPosition={handle.worldPosition} key={index}>
-            <div className={styles.handle} onPointerDown={handle.onPointerDown} />
+            <div
+                id={`handle-${index}`}
+                className={styles.handle}
+                style={{
+                    border: `1px solid color-mix(in srgb, ${edgeColor}, transparent 50%)`,
+                }}
+                onPointerDown={handle.onPointerDown}
+            />
         </DOM3DElement>
     ));
 }
