@@ -62,16 +62,16 @@ export function BoxGeometryHandles({ boxGeometryEntity, edgeColor }: { boxGeomet
     }, [boxGeometryEntity, viewport, viewportDomElement]);
 
     return geometryHandles.map((handle, index) => (
-        <DOM3DElement worldPosition={handle.worldPosition} key={index}>
-            <div
-                id={`handle-${index}`}
-                className={styles.handle}
-                style={{
-                    border: `1px solid color-mix(in srgb, ${edgeColor}, transparent 50%)`,
-                }}
-                onPointerDown={handle.onPointerDown}
-            />
-        </DOM3DElement>
+        <DOM3DElement
+            id={`handle-${index}`}
+            key={index}
+            worldPosition={handle.worldPosition}
+            className={styles.handle}
+            style={{
+                border: `1px solid color-mix(in srgb, ${edgeColor}, transparent 50%)`,
+            }}
+            onPointerDown={handle.onPointerDown}
+        />
     ));
 }
 

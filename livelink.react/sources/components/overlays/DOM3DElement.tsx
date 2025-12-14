@@ -1,34 +1,25 @@
 //------------------------------------------------------------------------------
-import React, { PropsWithChildren, useContext } from "react";
-import type { Vec3 } from "@3dverse/livelink";
+import React, { useContext } from "react";
 
 //------------------------------------------------------------------------------
 import { OverlayContext } from "./DOM3DOverlay";
-import type { Anchor } from "../../overlays/React3DElement";
+import { React3DElement, type React3DElementProps } from "../../overlays/React3DElement";
 
 /**
  * A component that renders a 3D DOM element.
  *
  * @category Components
  */
-export function DOM3DElement({
-    worldPosition,
-    anchor = "center",
-    scaleFactor,
-    children,
-}: PropsWithChildren<{
-    worldPosition: Vec3;
-    anchor?: Anchor;
-    scaleFactor?: number;
-}>): React.JSX.Element | null {
+export function DOM3DElement(props: React3DElementProps): React.JSX.Element | null {
+    const { children, containerRef, ...otherProps } = props;
     const overlay = useContext(OverlayContext);
     if (!overlay) {
         return null;
     }
 
     return (
-        <overlay.DOM3DElement worldPosition={worldPosition} anchor={anchor} scaleFactor={scaleFactor}>
+        <React3DElement overlay={overlay} containerRef={containerRef} {...otherProps}>
             {children}
-        </overlay.DOM3DElement>
+        </React3DElement>
     );
 }
