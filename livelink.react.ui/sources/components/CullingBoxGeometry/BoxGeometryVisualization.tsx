@@ -48,7 +48,7 @@ export function BoxGeometryVisualization({
     //--------------------------------------------------------------------------
     useEffect(() => {
         if (!boxGeometryEntity.box_geometry) {
-            console.warn("BoxGeometryVisualization: box_geometry or local_transform component not found.");
+            console.warn("BoxGeometryVisualization: box_geometry component not found.");
             return;
         }
 

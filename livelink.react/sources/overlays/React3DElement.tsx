@@ -51,6 +51,11 @@ export type React3DElementProps = PropsWithChildren<
          * The ref of the container element.
          */
         containerRef?: React.Ref<HTMLDivElement>;
+
+        /**
+         *
+         */
+        onProjectionChange?: (projection: Projection & { z_index: number }) => void;
     } & React.HTMLAttributes<HTMLDivElement> &
         React.DOMAttributes<HTMLDivElement>
 >;
@@ -158,6 +163,7 @@ export class React3DElement extends React.Component<
      */
     setProjection(state: Projection & { z_index: number }): void {
         this.setState(state);
+        this.props.onProjectionChange?.(state);
     }
 
     /**
@@ -196,7 +202,14 @@ export class React3DElement extends React.Component<
             translate(${this.state.translation[0]}%, ${this.state.translation[1]}%)
             translate(${this.state.screen_position[0]}px, ${this.state.screen_position[1]}px)`;
 
-        const { children, style, containerRef, ...otherContainerProps } = this.props;
+        const {
+            children,
+            style,
+            containerRef,
+            worldPosition: _,
+            onProjectionChange: __,
+            ...otherContainerProps
+        } = this.props;
 
         return createPortal(
             <div

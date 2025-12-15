@@ -16,23 +16,28 @@ type GeometryHandle = {
     worldPosition: Vec3;
     onPointerDown: PointerEventHandler;
 };
+
+//------------------------------------------------------------------------------
 const geometryHandlesAxes = [
-    new Maths.Vector3(0, 0, -1),
-    new Maths.Vector3(0, 0, 1),
-    new Maths.Vector3(0, -1, 0),
     new Maths.Vector3(1, 0, 0),
-    new Maths.Vector3(0, 1, 0),
     new Maths.Vector3(-1, 0, 0),
+    new Maths.Vector3(0, 1, 0),
+    new Maths.Vector3(0, -1, 0),
+    new Maths.Vector3(0, 0, 1),
+    new Maths.Vector3(0, 0, -1),
 ] as const;
 
 //------------------------------------------------------------------------------
 export function BoxGeometryHandles({ boxGeometryEntity, edgeColor }: { boxGeometryEntity: Entity; edgeColor: string }) {
     const [geometryHandles, setGeometryHandles] = useState<GeometryHandle[]>([]);
     const { viewport, viewportDomElement } = useContext(ViewportContext);
+    const [handleZIndices, setHandleZIndices] = useState<[number, number, number, number, number, number]>([
+        0, 0, 0, 0, 0, 0,
+    ]);
 
     useEffect(() => {
-        if (!boxGeometryEntity.box_geometry || !boxGeometryEntity.local_transform) {
-            console.warn("BoxGeometryHandles: box_geometry or local_transform component not found.");
+        if (!boxGeometryEntity.box_geometry) {
+            console.warn("BoxGeometryHandles: box_geometry component not found.");
             return;
         }
 
@@ -61,18 +66,33 @@ export function BoxGeometryHandles({ boxGeometryEntity, edgeColor }: { boxGeomet
         };
     }, [boxGeometryEntity, viewport, viewportDomElement]);
 
-    return geometryHandles.map((handle, index) => (
-        <DOM3DElement
-            id={`handle-${index}`}
-            key={index}
-            worldPosition={handle.worldPosition}
-            className={styles.handle}
-            style={{
-                border: `1px solid color-mix(in srgb, ${edgeColor}, transparent 50%)`,
-            }}
-            onPointerDown={handle.onPointerDown}
-        />
-    ));
+    return geometryHandles.map((handle, index) => {
+        const oppositeHandleIndex = index % 2 === 0 ? index + 1 : index - 1;
+        const handleZIndex = handleZIndices[index];
+        const oppositeHandleZIndex = handleZIndices[oppositeHandleIndex];
+        const isBehindTheOtherHandle = handleZIndex < oppositeHandleZIndex;
+
+        return (
+            <DOM3DElement
+                id={`handle-${index}`}
+                key={index}
+                worldPosition={handle.worldPosition}
+                className={styles.handle}
+                style={{
+                    border: `1px solid color-mix(in srgb, ${edgeColor}, transparent 50%)`,
+                    opacity: isBehindTheOtherHandle ? 0.25 : 1.0,
+                }}
+                onPointerDown={handle.onPointerDown}
+                onProjectionChange={projection => {
+                    setHandleZIndices(prev => {
+                        const newPositions = [...prev] as [number, number, number, number, number, number];
+                        newPositions[index] = projection.z_index;
+                        return newPositions;
+                    });
+                }}
+            />
+        );
+    });
 }
 
 //------------------------------------------------------------------------------

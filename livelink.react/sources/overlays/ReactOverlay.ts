@@ -112,7 +112,7 @@ export class ReactOverlay implements OverlayInterface {
     #projectElementOnScreen({ react_element }: { react_element: React3DElement }): Projection {
         const screen_position = this.#viewport.projectWorldToScreen({
             world_position: react_element.world_position,
-            out_screen_position: react_element.screen_position as Vec3,
+            out_screen_position: react_element.screen_position,
         });
 
         const scale = react_element.scale_factor
