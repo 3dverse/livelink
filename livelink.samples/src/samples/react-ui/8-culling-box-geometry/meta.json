@@ -1,4 +1,4 @@
 {
   "title": "Culling Box Geometry",
-  "summary": "Three.js overlay with a widget to resize a box geometry that culls scene objects."
+  "summary": "A widget that controls a box geometry to cull objects outside its bounds."
 }
