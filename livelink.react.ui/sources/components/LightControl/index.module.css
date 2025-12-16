@@ -34,7 +34,8 @@
 }
 
 .label {
-    font-size: var(--3dverse-font-size-2xs);
-    color: var(--3dverse-color-content-tertiary);
+    display: block;
+    font-size: var(--3dverse-font-size-3xs);
+    color: var(--3dverse-color-content-secondary);
     margin-bottom: var(--3dverse-spacing-1);
 }

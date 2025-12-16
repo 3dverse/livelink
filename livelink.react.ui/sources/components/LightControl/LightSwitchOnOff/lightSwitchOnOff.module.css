@@ -6,7 +6,7 @@
     padding: var(--3dverse-spacing-1) var(--3dverse-spacing-2);
 
     color: var(--3dverse-color-content-primary);
-    font-size: var(--3dverse-font-size-xs);
+    font-size: var(--3dverse-font-size-2xs);
     line-height: var(--3dverse-leading-4);
     background-color: color-mix(in srgb, var(--3dverse-color-bg-underground) 10%, transparent);
     border-radius: var(--3dverse-border-radius-md);

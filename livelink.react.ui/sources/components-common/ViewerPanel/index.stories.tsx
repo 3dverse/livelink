@@ -22,6 +22,9 @@ type Story = StoryObj<typeof meta>;
 export const _Component: Story = {
     args: {
         children: <p>Panel optimised for 3D viewer overlay</p>,
+        style: {
+            padding: "0.5rem 1rem",
+        },
     },
     render: (args: any) => <ViewerPanel {...args} />,
 };

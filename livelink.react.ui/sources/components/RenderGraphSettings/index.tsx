@@ -278,7 +278,7 @@ const computeCategories = (inputDescriptor: Input[]): Category => {
 //--------------------------------------------------------------------------
 const ResetAllButton = ({ onClick }: { onClick: () => void }) => {
     return (
-        <Button variant="ghost" size="xs" className={styles.resetAllButton} onClick={onClick}>
+        <Button variant="ghost" size="3xs" className={styles.resetAllButton} onClick={onClick}>
             Reset all
         </Button>
     );

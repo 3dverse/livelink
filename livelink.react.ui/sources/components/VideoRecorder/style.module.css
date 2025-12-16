@@ -4,19 +4,19 @@
     width: 100%;
     height: 100%;
 
-    &.xs {
+    &.size-xs {
         font-size: var(--3dverse-font-size-xs);
     }
 
-    &.sm {
+    &.size-sm {
         font-size: var(--3dverse-font-size-sm);
     }
 
-    &.md {
+    &.size-md {
         font-size: var(--3dverse-font-size-md);
     }
 
-    &.lg {
+    &.size-lg {
         font-size: var(--3dverse-font-size-lg);
     }
 }
@@ -25,7 +25,7 @@
     flex-grow: 1;
     display: block;
     width: 100%;
-    padding-inline: 0.8em;
+    padding-inline: 0.75em;
 
     color: var(--3dverse-color-content-secondary);
     letter-spacing: 0.05em;

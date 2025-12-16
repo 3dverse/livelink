@@ -77,7 +77,7 @@
 }
 
 .label {
-    font-size: 0.875rem;
+    font-size: var(--3dverse-font-size-2xs);
     line-height: 1.25rem;
     font-weight: 400;
     color: var(--3dverse-color-content-primary);
@@ -86,7 +86,7 @@
 .timerLabel {
     margin-top: 1px;
 
-    font-size: 0.75rem;
+    font-size: var(--3dverse-font-size-4xs);
     font-weight: 400;
     letter-spacing: 0.04em;
     color: var(--3dverse-color-content-secondary);

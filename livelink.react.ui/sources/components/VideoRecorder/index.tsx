@@ -18,7 +18,7 @@ export const VideoRecorder = ({
     label?: string;
     recordingLabel?: string;
     successLabel?: string;
-    size?: Size;
+    size?: Exclude<Size, "3xs" | "2xs">;
 }) => {
     //--------------------------------------------------------------------------
     const [isRecording, setIsRecording] = useState<boolean>(false);
@@ -57,7 +57,7 @@ export const VideoRecorder = ({
 
     //--------------------------------------------------------------------------
     return (
-        <div className={`${styles.container} ${styles[size]}`}>
+        <div className={`${styles.container} ${styles[`size-${size}`]}`}>
             {isRecording && (
                 <Recorder onCancel={onCancel} onSuccess={onSuccess}>
                     {({ recordTime }: { recordTime: number }) => (
