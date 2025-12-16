@@ -69,14 +69,13 @@ export const VideoRecorder = ({
             )}
             {isVideoSaved ? (
                 <>
-                    <p style={{ height: getHeight() }} className={styles.successLabel}>
-                        <FaRegFileVideo style={{ fontSize: ".9em", marginRight: ".5em" }} />
-                        <span
-                            style={{ opacity: 0, animationDelay: "0.25s" }}
-                            className="livelink-animation-appear-right"
-                        >
-                            {savedFileName}
-                        </span>
+                    <p
+                        style={{ height: getHeight() }}
+                        className={`${styles.successLabel} livelink-animation-appear-right`}
+                    >
+                        <FaRegFileVideo className={styles.fileIcon} />
+                        <span className={styles.ellipsis}>{savedFileName}</span>
+                        <span style={{ marginLeft: "1px" }}>.webm</span>
                     </p>
                     <Tooltip
                         isVisible
@@ -86,7 +85,7 @@ export const VideoRecorder = ({
                         variant="positive"
                     >
                         <span className={`${styles.successIcon} livelink-animation-appear-top`}>
-                            <FaCheck />
+                            <FaCheck style={{ fontSize: "0.9em" }} />
                         </span>
                     </Tooltip>
                 </>
