@@ -11,25 +11,17 @@ export function DisconnectedModal({ error }: { error: string }) {
 
     //--------------------------------------------------------------------------
     return (
-        <div className="absolute z-20 flex items-center justify-center w-full h-full backdrop-brightness-25 pointer-events-none">
-            <div className="px-10 py-8 flex items-center justify-center flex-col gap-6 bg-ground rounded-xl pointer-events-auto">
-                <p className="text-center">
-                    You have been disconnected from the server.
-                    <span className="block mt-1">
-                        Reason: <span className="px-2 py-[2px] text-informative rounded-full capitalize">{error}</span>
-                    </span>
-                </p>
-                {setConnectionState && (
-                    <button
-                        className="button button-primary"
-                        onClick={() => {
-                            setConnectionState("reconnect");
-                        }}
-                    >
-                        Reconnect
-                    </button>
-                )}
-            </div>
+        <div
+            className="absolute z-20 flex flex-col items-center justify-center gap-5 w-full h-full px-6 md:px-10 py-8 text-center text-balance backdrop-brightness-25 backdrop-blur-xl cursor-default"
+            onClick={() => setConnectionState?.("reconnect")}
+        >
+            <p>
+                You have been disconnected from the server.
+                <span className="block mt-1 cursor-auto">
+                    Reason: <span className="pl-1 py-[2px] text-informative rounded-full capitalize">{error}</span>
+                </span>
+            </p>
+            {setConnectionState && <p className="text-2xs tracking-wide text-accent">Click anywhere to reconnect</p>}
         </div>
     );
 }
