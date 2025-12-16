@@ -75,7 +75,7 @@ export function MainMenu({ isPageEmbedded }: { isPageEmbedded?: boolean }) {
                 className={`absolute xl:relative top-0 transition-all h-dvh overflow-x-hidden z-100 ${isCollapsed ? "w-0 xl:w-3" : "w-80"}`}
             >
                 <div
-                    className="absolute w-80 h-full flex flex-col bg-ground/85 xl:bg-ground border-r border-tertiary xl:border-none rounded-e-xl xl:rounded-none backdrop-blur-xl xl:backdrop-blur-none shadow-2xl lg:shadow-none z-20"
+                    className="absolute w-80 h-full flex flex-col bg-ground/85 xl:bg-ground border-r border-secondary-alpha xl:border-none rounded-e-xl xl:rounded-none backdrop-blur-xl xl:backdrop-blur-none shadow-2xl lg:shadow-none z-20"
                     onClick={isScreenLargerThanLG ? undefined : onCollapse}
                 >
                     <header className={`flex justify-between mt-6 mb-4 pr-1 ${isPageEmbedded ? "pl-3" : "pl-5"}`}>
