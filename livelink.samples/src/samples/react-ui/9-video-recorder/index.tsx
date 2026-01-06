@@ -47,7 +47,7 @@ function AppLayout() {
         <Canvas className="w-full h-full">
             <Viewport cameraEntity={cameraEntity} className="w-full h-full">
                 <CameraController />
-                <ViewerPanel className="absolute bottom-[5vh] left-1/2 rounded-md button-sm">
+                <ViewerPanel className="absolute bottom-[5vh] left-1/2 -translate-x-1/2 rounded-md">
                     {!isConnecting && <VideoRecorder />}
                 </ViewerPanel>
             </Viewport>
