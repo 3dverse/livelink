@@ -41,27 +41,27 @@
 
 /* Sizes */
 
-.button-3xs {
+.3xs {
     font-size: var(--3dverse-font-size-3xs);
     line-height: var(--3dverse-leading-4);
     padding: 2px 6px;
 }
-.button-2xs {
+.2xs {
     font-size: var(--3dverse-font-size-2xs);
     line-height: var(--3dverse-leading-4);
     padding: 3px 7px;
 }
-.button-xs {
+.xs {
     font-size: var(--3dverse-font-size-xs);
     line-height: var(--3dverse-leading-5);
     padding: 4px 8px;
 }
-.button-sm {
+.sm {
     font-size: var(--3dverse-font-size-sm);
     line-height: var(--3dverse-leading-5);
     padding: 5px 12px;
 }
-.button-md {
+.md {
     font-size: var(--3dverse-font-size-md);
     line-height: var(--3dverse-leading-5);
     padding: 8px 16px;

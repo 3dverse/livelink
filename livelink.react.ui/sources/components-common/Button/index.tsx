@@ -18,7 +18,7 @@ export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElemen
 //------------------------------------------------------------------------------
 export const Button: React.FC<ButtonProps> = ({ variant = "ghost", size = "md", className, children, ...props }) => {
     return (
-        <button className={clsx(styles.button, styles[variant], styles[`button-${size}`], className)} {...props}>
+        <button className={clsx(styles.button, styles[variant], styles[size], className)} {...props}>
             {children}
         </button>
     );
