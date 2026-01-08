@@ -1,5 +1,13 @@
 # @3dverse/livelink-react
 
+## 0.2.60
+
+### Patch Changes
+
+- feat(livelink.react): add onProjectionChange to DOM3DElement
+- fix(livelink.js): useEntity and useEntities now delete entities when unmounted if they have been created
+- feat(livelink.react): add HTMLAttributes and DOMAttributes props to DOM3DElement
+
 ## 0.2.59
 
 ### Patch Changes
