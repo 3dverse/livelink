@@ -1,4 +1,5 @@
 //------------------------------------------------------------------------------
+import { useState } from "react";
 import {
     Livelink,
     Canvas,
@@ -42,24 +43,44 @@ function AppLayout() {
         eulerOrientation: [-45, 45, 0],
     });
 
+    const [enableCullingBoxGeometry, setEnableCullingBoxGeometry] =
+        useState(true);
+
     return (
         <Canvas className="w-full h-full">
             <Viewport cameraEntity={cameraEntity} className="w-full h-full">
                 <CameraController />
-                <CullingBoxGeometry initialSize={[20, 10, 20]}>
-                    <div className="absolute bottom-[5vh] left-1/2 -translate-x-1/2">
-                        <CullingBoxGeometryButton>
-                            {({ toggle, isActive }) => (
-                                <button
-                                    className="button button-primary px-4 py-2 cursor-pointer"
-                                    onClick={toggle}
-                                >
-                                    {isActive ? "Hide" : "Show"} Box Geometry
-                                </button>
-                            )}
-                        </CullingBoxGeometryButton>
-                    </div>
-                </CullingBoxGeometry>
+                <div className="absolute bottom-[5vh] left-[5vh]">
+                    <button
+                        className="button button-primary px-4 py-2 cursor-pointer"
+                        onClick={() =>
+                            setEnableCullingBoxGeometry(
+                                !enableCullingBoxGeometry,
+                            )
+                        }
+                    >
+                        {enableCullingBoxGeometry ? "Disable" : "Enable"} Box
+                        Geometry
+                    </button>
+                </div>
+
+                {enableCullingBoxGeometry && (
+                    <CullingBoxGeometry initialSize={[20, 10, 20]}>
+                        <div className="absolute bottom-[5vh] right-[5vh]">
+                            <CullingBoxGeometryButton>
+                                {({ toggle, isActive }) => (
+                                    <button
+                                        className="button button-primary px-4 py-2 cursor-pointer"
+                                        onClick={toggle}
+                                    >
+                                        {isActive ? "Hide" : "Show"} Box
+                                        Geometry
+                                    </button>
+                                )}
+                            </CullingBoxGeometryButton>
+                        </div>
+                    </CullingBoxGeometry>
+                )}
             </Viewport>
         </Canvas>
     );

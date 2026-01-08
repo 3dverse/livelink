@@ -1,10 +1,32 @@
 .handle {
-    background-color: var(--3dverse-color-content-primary);
-    border: 1px solid var(--3dverse-color-border-primary);
     width: 1rem;
     height: 1rem;
+
+    background-color: color-mix(in srgb, var(--3dverse-color-content-primary) 30%, transparent);
     border-radius: 100%;
+
     cursor: grab;
+    backdrop-filter: blur(10px);
+
+    transition: background-color 0.2s ease;
+
+    &:hover,
+    &:active {
+        background-color: color-mix(in srgb, var(--3dverse-color-content-primary) 80%, transparent);
+    }
+}
+
+*:has(> :global(#handle-0)):hover ~ svg > polygon:global(#face-0),
+*:has(> :global(#handle-1)):hover ~ svg > polygon:global(#face-1),
+*:has(> :global(#handle-2)):hover ~ svg > polygon:global(#face-2),
+*:has(> :global(#handle-3)):hover ~ svg > polygon:global(#face-3),
+*:has(> :global(#handle-4)):hover ~ svg > polygon:global(#face-4),
+*:has(> :global(#handle-5)):hover ~ svg > polygon:global(#face-5),
+*:has(> :global(#handle-6)):hover ~ svg > polygon:global(#face-6),
+*:has(> :global(#handle-7)):hover ~ svg > polygon:global(#face-7) {
+    opacity: 0.3;
+    stroke: var(--3dverse-color-accent);
+    stroke-width: 2px;
 }
 
 .wireframe {

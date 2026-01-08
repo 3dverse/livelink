@@ -1,11 +1,8 @@
 //------------------------------------------------------------------------------
-import React from "react";
-
-//------------------------------------------------------------------------------
 import type { Vec3, OverlayInterface, Viewport } from "@3dverse/livelink";
 
 //------------------------------------------------------------------------------
-import { React3DElement, React3DElementProps, createReact3DElementFactory } from "./React3DElement";
+import { React3DElement } from "./React3DElement";
 
 /**
  *
@@ -43,22 +40,9 @@ export class ReactOverlay implements OverlayInterface {
     /**
      *
      */
-    readonly #factory: (props: React3DElementProps) => React.ReactElement;
-
-    /**
-     *
-     */
     constructor({ container, viewport }: { container: HTMLDivElement; viewport: Viewport }) {
         this.container = container;
         this.#viewport = viewport;
-        this.#factory = createReact3DElementFactory(this);
-    }
-
-    /**
-     *
-     */
-    get DOM3DElement(): (props: React3DElementProps) => React.ReactElement {
-        return this.#factory;
     }
 
     /**
@@ -127,8 +111,8 @@ export class ReactOverlay implements OverlayInterface {
      */
     #projectElementOnScreen({ react_element }: { react_element: React3DElement }): Projection {
         const screen_position = this.#viewport.projectWorldToScreen({
-            world_position: react_element.world_position as Vec3,
-            out_screen_position: react_element.screen_position as Vec3,
+            world_position: react_element.world_position,
+            out_screen_position: react_element.screen_position,
         });
 
         const scale = react_element.scale_factor

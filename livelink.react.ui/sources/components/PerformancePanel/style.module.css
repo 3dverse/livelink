@@ -4,7 +4,7 @@
     gap: 1px;
     width: 100%;
 
-    font-size: var(--3dverse-font-size-xs);
+    font-size: var(--3dverse-font-size-2xs);
 }
 
 .indicator {
@@ -29,7 +29,7 @@
 }
 
 .unit {
-    font-size: var(--3dverse-font-size-2xs);
+    font-size: var(--3dverse-font-size-3xs);
     color: var(--3dverse-color-content-tertiary);
     padding-inline-start: 0.5ch;
 }

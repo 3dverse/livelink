@@ -7,7 +7,7 @@ import styles from "./index.module.css";
 
 //------------------------------------------------------------------------------
 export type Variant = "ghost" | "secondary" | "outline";
-export type Size = "xs" | "sm" | "md";
+export type Size = "3xs" | "2xs" | "xs" | "sm" | "md";
 
 //------------------------------------------------------------------------------
 export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {

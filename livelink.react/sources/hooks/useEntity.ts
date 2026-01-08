@@ -1,5 +1,5 @@
 //------------------------------------------------------------------------------
-import { useContext, useEffect, useReducer, useState } from "react";
+import { useContext, useEffect, useReducer, useRef, useState } from "react";
 
 //------------------------------------------------------------------------------
 import {
@@ -35,7 +35,13 @@ type NewEntity = {
     /**
      * The creation options of the entity.
      */
-    options: EntityCreationOptions;
+    options: EntityCreationOptions & {
+        /**
+         * If true, the entity will be deleted when the component using the hook is unmounted.
+         * Default is true.
+         */
+        delete_on_unmount?: boolean;
+    };
 };
 
 /**
@@ -70,6 +76,9 @@ export type EntityProvider =
 /**
  * A hook that provides an entity and a flag indicating if the entity is pending loading.
  *
+ * When the component is unmounted and if the entity was created using this hook,
+ * the entity is deleted from the scene unless `delete_on_unmount` is set to false.
+ *
  * @example
  * ```tsx
  * const { isPending, entity } = useEntity({ euid: "00000000-0000-0000-0000-000000000000" });
@@ -98,6 +107,7 @@ export function useEntity(
     const [entity, setEntity] = useState<Entity | null>(null);
     const [isPending, setIsPending] = useState(true);
     const [, forceUpdate] = useReducer(x => x + 1, 0);
+    const resolveEntityPromises = useRef<Map<string, Promise<Entity | null>>>(new Map());
 
     const findEntityQuery = entityProvider as {
         euid?: UUID;
@@ -113,7 +123,7 @@ export function useEntity(
             return;
         }
 
-        const resolveEntity = async (): Promise<Entity | null> => {
+        const resolveEntity = async (entityProvider: EntityProvider): Promise<Entity | null> => {
             if ("components" in entityProvider) {
                 console.debug("---- Creating entity");
                 return await instance.scene.newEntity(entityProvider);
@@ -137,13 +147,62 @@ export function useEntity(
             return null;
         };
 
+        /**
+         * To deal with React strict mode, and avoiding to create an entity multiple times,
+         * we need to keep track of the entity promises. The promises are stored
+         * using the entity provider parameters as key.
+         *
+         * @returns The promise that resolves to the entity.
+         */
+        const getOrCreateResolveEntityPromise = (entityProvider: EntityProvider): Promise<Entity | null> => {
+            const key = JSON.stringify(entityProvider);
+            let promise = resolveEntityPromises.current.get(key);
+            if (!promise) {
+                promise = resolveEntity(entityProvider).then(instance => {
+                    resolveEntityPromises.current.delete(key);
+                    return instance;
+                });
+                resolveEntityPromises.current.set(key, promise);
+            }
+
+            // Now we have to potentially wait for other promises that are creating entities
+            // to delete them, because they might conflict with the current one.
+            // The risk is almost inexistent, but better be safe than sorry.
+            const otherPromises = Array.from(resolveEntityPromises.current.entries()).filter(
+                ([otherKey]) => otherKey !== key,
+            );
+
+            if (otherPromises.length > 0) {
+                for (const [otherKey, otherPromise] of otherPromises) {
+                    otherPromise.then(async otherEntity => {
+                        const otherEntityProvider = JSON.parse(otherKey) as EntityProvider;
+                        if (
+                            otherEntity &&
+                            entity &&
+                            "components" in otherEntityProvider &&
+                            otherEntityProvider.options.delete_on_unmount !== false
+                        ) {
+                            console.debug(
+                                "---- Deleting entity created by another promise to avoid conflicts",
+                                otherEntity,
+                            );
+                            instance.scene.deleteEntities({ entities: [otherEntity] });
+                        }
+                        return entity;
+                    });
+                }
+            }
+
+            return promise;
+        };
+
         if (findEntityQuery instanceof Entity) {
             setEntity(findEntityQuery);
             setIsPending(false);
             return;
         }
 
-        resolveEntity()
+        getOrCreateResolveEntityPromise(entityProvider)
             .then(foundEntity => setEntity(foundEntity))
             .finally(() => setIsPending(false));
 
@@ -152,6 +211,16 @@ export function useEntity(
             setIsPending(true);
         };
     }, [instance, JSON.stringify(findEntityQuery)]);
+
+    //--------------------------------------------------------------------------
+    useEffect(() => {
+        return (): void => {
+            if (entity && "components" in entityProvider && entityProvider.options.delete_on_unmount !== false) {
+                console.debug("---- Deleting entity");
+                instance?.scene.deleteEntities({ entities: [entity] });
+            }
+        };
+    }, [instance, entity]);
 
     //--------------------------------------------------------------------------
     useEffect(() => {

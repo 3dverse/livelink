@@ -1,5 +1,5 @@
 //------------------------------------------------------------------------------
-import { useContext, useEffect, useReducer, useState } from "react";
+import { useContext, useEffect, useReducer, useRef, useState } from "react";
 
 //------------------------------------------------------------------------------
 import type {
@@ -30,7 +30,13 @@ type NewEntities = {
     /**
      * The creation options of the entities.
      */
-    options?: EntityCreationOptions;
+    options?: EntityCreationOptions & {
+        /**
+         * If true, the entities will be deleted when the component using the hook is unmounted.
+         * Default is true.
+         */
+        delete_on_unmount?: boolean;
+    };
 };
 
 /**
@@ -39,21 +45,24 @@ type NewEntities = {
 export type EntitiesProvider = NewEntities | FindEntityQuery;
 
 /**
- * A hook that provides an entity and a flag indicating if the entity is pending loading.
+ * A hook that provides entities and a flag indicating if the entities are pending loading.
+ *
+ * When the component is unmounted and if the entities were created using this hook,
+ * the entities are deleted from the scene unless `delete_on_unmount` is set to false.
  *
  * @example
  * ```tsx
- * const { isPending, entity } = useEntity({ euid: "00000000-0000-0000-0000-000000000000" });
+ * const { isPending, entities } = useEntities({ components: [{ name: "entity1" }, { name: "entity2" }] });
  * if (isPending) {
  *     return <div>Loading...</div>;
  * }
- * if (!entity) {
- *     return <div>Entity not found</div>;
+ * if (!entities.length) {
+ *     return <div>Entities not found</div>;
  * }
- * return <div>Entity found: {entity.name}</div>;
+ * return <div>Found {entities.length} entities</div>;
  * ```
  * @param entityProvider - The entity provider.
- * @returns The entity and a flag indicating if the entity is pending loading.
+ * @returns The entities and a flag indicating if the entities are pending loading.
  *
  * @category Hooks
  */
@@ -69,6 +78,7 @@ export function useEntities(
     const [entities, setEntities] = useState<Array<Entity>>([]);
     const [isPending, setIsPending] = useState(true);
     const [, forceUpdate] = useReducer(x => x + 1, 0);
+    const resolveEntitiesPromises = useRef<Map<string, Promise<Array<Entity>>>>(new Map());
 
     const propsHash = JSON.stringify(entityProvider);
 
@@ -77,7 +87,7 @@ export function useEntities(
             return;
         }
 
-        const resolveEntity = async (): Promise<Array<Entity>> => {
+        const resolveEntities = async (entityProvider: EntitiesProvider): Promise<Array<Entity>> => {
             if ("components" in entityProvider) {
                 console.debug("---- Creating entities");
                 return await instance.scene.newEntities({
@@ -97,7 +107,56 @@ export function useEntities(
             return [];
         };
 
-        resolveEntity()
+        /**
+         * To deal with React strict mode, and avoiding to create entities multiple times,
+         * we need to keep track of the entities promises. The promises are stored
+         * using the entity provider parameters as key.
+         *
+         * @returns The promise that resolves to the entities.
+         */
+        const getOrCreateResolveEntitiesPromise = (entityProvider: EntitiesProvider): Promise<Array<Entity>> => {
+            const key = JSON.stringify(entityProvider);
+            let promise = resolveEntitiesPromises.current.get(key);
+            if (!promise) {
+                promise = resolveEntities(entityProvider).then(instances => {
+                    resolveEntitiesPromises.current.delete(key);
+                    return instances;
+                });
+                resolveEntitiesPromises.current.set(key, promise);
+            }
+
+            // Now we have to potentially wait for other promises that are creating entities
+            // to delete them, because they might conflict with the current one.
+            // The risk is almost inexistent, but better be safe than sorry.
+            const otherPromises = Array.from(resolveEntitiesPromises.current.entries()).filter(
+                ([otherKey]) => otherKey !== key,
+            );
+
+            if (otherPromises.length > 0) {
+                for (const [otherKey, otherPromise] of otherPromises) {
+                    otherPromise.then(async otherEntities => {
+                        const otherEntityProvider = JSON.parse(otherKey) as EntitiesProvider;
+                        if (
+                            otherEntities.length > 0 &&
+                            entities.length > 0 &&
+                            "components" in otherEntityProvider &&
+                            otherEntityProvider.options?.delete_on_unmount !== false
+                        ) {
+                            console.debug(
+                                "---- Deleting entities created by another promise to avoid conflicts",
+                                otherEntities,
+                            );
+                            instance.scene.deleteEntities({ entities: otherEntities });
+                        }
+                        return entities;
+                    });
+                }
+            }
+
+            return promise;
+        };
+
+        getOrCreateResolveEntitiesPromise(entityProvider)
             .then(foundEntities => setEntities(foundEntities))
             .finally(() => setIsPending(false));
 
@@ -107,6 +166,21 @@ export function useEntities(
         };
     }, [instance, propsHash]);
 
+    //--------------------------------------------------------------------------
+    useEffect(() => {
+        return (): void => {
+            if (
+                entities.length > 0 &&
+                "components" in entityProvider &&
+                entityProvider.options?.delete_on_unmount !== false
+            ) {
+                console.debug("---- Deleting entities");
+                instance?.scene.deleteEntities({ entities });
+            }
+        };
+    }, [instance, entities]);
+
+    //--------------------------------------------------------------------------
     useEffect(() => {
         if (!instance || isPending || !("mandatory_components" in entityProvider)) {
             return;

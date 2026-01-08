@@ -43,7 +43,8 @@ export const _Component: Story = {
                             bottom: "5%",
                             left: "50%",
                             transform: "translate(-50%, 0)",
-                            width: "12rem",
+                            width: "fit-content",
+                            maxWidth: "14rem",
                             borderRadius: "0.25rem",
                         }}
                     >

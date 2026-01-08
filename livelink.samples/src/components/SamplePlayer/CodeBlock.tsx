@@ -15,7 +15,7 @@ export function CodeBlock({ code, title, gitPath }: { code: string; title?: stri
                     className="relative w-full xl:w-10 h-10 xl:h-full bg-foreground rounded-xl xl:[writing-mode:vertical-rl] text-sm tracking-wide text-tertiary hover:text-secondary transition-colors cursor-pointer"
                     onClick={() => setIsCollapsed(false)}
                 >
-                    <span className="absolute top-3 right-4 xl:top-5 xl:right-4">
+                    <span className="absolute top-3 right-4 xl:top-4">
                         <CollapseIcon className="w-3 h-3 rotate-90 xl:rotate-0" />
                     </span>
                     Code

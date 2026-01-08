@@ -1,5 +1,5 @@
 //------------------------------------------------------------------------------
-import React, { createContext, useContext, useState } from "react";
+import React, { createContext, useContext, useRef, useState } from "react";
 
 //------------------------------------------------------------------------------
 import type { Vec3 } from "@3dverse/livelink";
@@ -30,17 +30,23 @@ export const CullingBoxGeometry = ({
     initialSize = [1, 1, 1],
     initialPosition = [0, 0, 0],
     isActiveByDefault = true,
-    boxColor = "#ffff00",
-    opacity = 0.2,
-    edgeColor = "#000000",
+    /* The color of the box */
+    boxColor = "var(--3dverse-color-accent)",
+    /* The opacity of the box color in the range of 0 to 1 */
+    boxOpacity = 0.1,
+    /* The color of the edges */
+    edgeColor = "var(--3dverse-color-border-primary)",
+    /* The opacity of the edges in the range of 0 to 1 */
+    edgeOpacity = 0.9,
     children,
 }: {
     initialSize?: Vec3;
     initialPosition?: Vec3;
     isActiveByDefault?: boolean;
     boxColor?: string;
-    opacity?: number;
+    boxOpacity?: number;
     edgeColor?: string;
+    edgeOpacity?: number;
     children?: React.ReactNode;
 }) => {
     const [isEnable, setEnableState] = useState(isActiveByDefault);
@@ -64,13 +70,14 @@ export const CullingBoxGeometry = ({
         <CullingBoxGeometryContext.Provider value={{ isActive: isEnable, toggle }}>
             {boxGeometryEntity && isEnable && (
                 <DOM3DOverlay>
+                    <BoxGeometryHandles boxGeometryEntity={boxGeometryEntity} edgeColor={edgeColor} />
                     <BoxGeometryVisualization
                         boxGeometryEntity={boxGeometryEntity}
                         boxColor={boxColor}
-                        opacity={opacity}
+                        boxOpacity={boxOpacity}
                         edgeColor={edgeColor}
+                        edgeOpacity={edgeOpacity}
                     />
-                    <BoxGeometryHandles boxGeometryEntity={boxGeometryEntity} />
                 </DOM3DOverlay>
             )}
             {children}

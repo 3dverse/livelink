@@ -101,8 +101,8 @@
     margin-bottom: 2px;
     padding-right: var(--3dverse-spacing-4);
 
-    color: var(--3dverse-color-content-tertiary);
-    font-size: var(--3dverse-font-size-xs);
+    color: var(--3dverse-color-content-secondary);
+    font-size: var(--3dverse-font-size-4xs);
     line-height: 1rem;
     letter-spacing: 0.025em;
 }

@@ -18,7 +18,7 @@
 
 /* Variants */
 .ghost {
-    color: var(--3dverse-color-content-tertiary);
+    color: var(--3dverse-color-content-secondary);
     background-color: transparent;
     border-color: transparent;
 
@@ -28,13 +28,11 @@
         color: var(--3dverse-color-content-primary);
     }
 }
-
 .secondary {
     color: var(--3dverse-color-content-primary);
     background-color: var(--3dverse-color-background-secondary);
     border-color: transparent;
 }
-
 .outline {
     color: var(--3dverse-color-content-primary);
     background-color: transparent;
@@ -42,17 +40,29 @@
 }
 
 /* Sizes */
+
+.3xs {
+    font-size: var(--3dverse-font-size-3xs);
+    line-height: var(--3dverse-leading-4);
+    padding: 2px 6px;
+}
+.2xs {
+    font-size: var(--3dverse-font-size-2xs);
+    line-height: var(--3dverse-leading-4);
+    padding: 3px 7px;
+}
 .xs {
     font-size: var(--3dverse-font-size-xs);
+    line-height: var(--3dverse-leading-5);
     padding: 4px 8px;
 }
-
 .sm {
     font-size: var(--3dverse-font-size-sm);
-    padding: 6px 12px;
+    line-height: var(--3dverse-leading-5);
+    padding: 5px 12px;
 }
-
 .md {
     font-size: var(--3dverse-font-size-md);
+    line-height: var(--3dverse-leading-5);
     padding: 8px 16px;
 }

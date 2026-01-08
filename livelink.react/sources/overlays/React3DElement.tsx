@@ -1,8 +1,7 @@
 import React, { PropsWithChildren, ReactNode } from "react";
 import { createPortal } from "react-dom";
-import { vec3 } from "gl-matrix";
 import type { ReactOverlay, Projection } from "./ReactOverlay";
-import { Vec2 } from "@3dverse/livelink";
+import { Vec2, Vec3 } from "@3dverse/livelink";
 
 /**
  *
@@ -31,27 +30,42 @@ type VerticalAnchor = "top" | "center" | "bottom";
 /**
  *
  */
-export type React3DElementProps = PropsWithChildren<{
-    worldPosition: vec3;
-    anchor: Anchor;
-    scaleFactor?: number;
-}>;
+export type React3DElementProps = PropsWithChildren<
+    {
+        /**
+         * The world position of the 3D element.
+         */
+        worldPosition: Vec3;
 
-/**
- * @internal
- */
-export function createReact3DElementFactory(overlay: ReactOverlay): (props: React3DElementProps) => React.ReactElement {
-    return (props: React3DElementProps): React.ReactElement => {
-        return <React3DElement overlay={overlay} {...props} />;
-    };
-}
+        /**
+         * Where to anchor the element relative to its position.
+         */
+        anchor?: Anchor;
+
+        /**
+         * Whether to scale the element based on its distance from the camera.
+         */
+        scaleFactor?: number;
+
+        /**
+         * The ref of the container element.
+         */
+        containerRef?: React.Ref<HTMLDivElement>;
+
+        /**
+         *
+         */
+        onProjectionChange?: (projection: Projection & { z_index: number }) => void;
+    } & React.HTMLAttributes<HTMLDivElement> &
+        React.DOMAttributes<HTMLDivElement>
+>;
 
 /**
  * @internal
  */
 export class React3DElement extends React.Component<
     { overlay: ReactOverlay } & React3DElementProps,
-    { screen_position: vec3; z_index: number; scale: number; is_visible: boolean; translation: Vec2 }
+    { screen_position: Vec3; z_index: number; scale: number; is_visible: boolean; translation: Vec2 }
 > {
     /**
      *
@@ -75,7 +89,7 @@ export class React3DElement extends React.Component<
      *
      */
     state = {
-        screen_position: vec3.create(),
+        screen_position: [0, 0, 0] as Vec3,
         z_index: 0,
         scale: 1,
         is_visible: false,
@@ -126,14 +140,14 @@ export class React3DElement extends React.Component<
     /**
      *
      */
-    get screen_position(): vec3 {
+    get screen_position(): Vec3 {
         return this.state.screen_position;
     }
 
     /**
      *
      */
-    get world_position(): vec3 {
+    get world_position(): Vec3 {
         return this.props.worldPosition;
     }
 
@@ -149,13 +163,15 @@ export class React3DElement extends React.Component<
      */
     setProjection(state: Projection & { z_index: number }): void {
         this.setState(state);
+        this.props.onProjectionChange?.(state);
     }
 
     /**
      *
      */
     #updateTranslation(): void {
-        if (this.props.anchor === "center") {
+        const anchor = this.props.anchor || "center";
+        if (anchor === "center") {
             this.setState({
                 translation: [
                     React3DElement.HorizontalAnchorPositions.center,
@@ -165,8 +181,7 @@ export class React3DElement extends React.Component<
             return;
         }
 
-        const [anchor_x, anchor_y] = this.props.anchor.split("-") as [HorizontalAnchor, VerticalAnchor];
-
+        const [anchor_x, anchor_y] = anchor.split("-") as [HorizontalAnchor, VerticalAnchor];
         this.setState({
             translation: [
                 React3DElement.HorizontalAnchorPositions[anchor_x],
@@ -187,19 +202,31 @@ export class React3DElement extends React.Component<
             translate(${this.state.translation[0]}%, ${this.state.translation[1]}%)
             translate(${this.state.screen_position[0]}px, ${this.state.screen_position[1]}px)`;
 
+        const {
+            children,
+            style,
+            containerRef,
+            worldPosition: _,
+            onProjectionChange: __,
+            ...otherContainerProps
+        } = this.props;
+
         return createPortal(
             <div
+                ref={containerRef}
                 style={{
                     position: "absolute",
                     transform: transformStyle,
                     zIndex: this.state.z_index,
                     pointerEvents: "auto",
+                    ...style,
                 }}
+                {...otherContainerProps}
             >
                 {this.scale_factor ? (
-                    <div style={{ transform: `scale(${this.state.scale})` }}>{this.props.children}</div>
+                    <div style={{ transform: `scale(${this.state.scale})` }}>{children}</div>
                 ) : (
-                    this.props.children
+                    children
                 )}
             </div>,
             this.props.overlay.container,

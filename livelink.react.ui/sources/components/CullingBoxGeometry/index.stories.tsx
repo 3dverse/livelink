@@ -18,9 +18,6 @@ const meta = {
         initialSize: [5, 5, 5],
         initialPosition: [-2.5, 2.5, 0],
         isActiveByDefault: true,
-        boxColor: "#ffff00",
-        opacity: 0.2,
-        edgeColor: "#000000",
     },
 } satisfies Meta<typeof CullingBoxGeometry>;
 

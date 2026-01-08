@@ -18,7 +18,7 @@ export const VideoRecorder = ({
     label?: string;
     recordingLabel?: string;
     successLabel?: string;
-    size?: Size;
+    size?: Exclude<Size, "3xs" | "2xs">;
 }) => {
     //--------------------------------------------------------------------------
     const [isRecording, setIsRecording] = useState<boolean>(false);
@@ -57,7 +57,7 @@ export const VideoRecorder = ({
 
     //--------------------------------------------------------------------------
     return (
-        <div className={`${styles.container} ${styles[size]}`}>
+        <div className={`${styles.container} ${styles[`size-${size}`]}`}>
             {isRecording && (
                 <Recorder onCancel={onCancel} onSuccess={onSuccess}>
                     {({ recordTime }: { recordTime: number }) => (
@@ -69,14 +69,13 @@ export const VideoRecorder = ({
             )}
             {isVideoSaved ? (
                 <>
-                    <p style={{ height: getHeight() }} className={styles.successLabel}>
-                        <FaRegFileVideo style={{ fontSize: ".9em", marginRight: ".5em" }} />
-                        <span
-                            style={{ opacity: 0, animationDelay: "0.25s" }}
-                            className="livelink-animation-appear-right"
-                        >
-                            {savedFileName}
-                        </span>
+                    <p
+                        style={{ height: getHeight() }}
+                        className={`${styles.successLabel} livelink-animation-appear-right`}
+                    >
+                        <FaRegFileVideo className={styles.fileIcon} />
+                        <span className={styles.ellipsis}>{savedFileName}</span>
+                        <span style={{ marginLeft: "1px" }}>.webm</span>
                     </p>
                     <Tooltip
                         isVisible
@@ -86,7 +85,7 @@ export const VideoRecorder = ({
                         variant="positive"
                     >
                         <span className={`${styles.successIcon} livelink-animation-appear-top`}>
-                            <FaCheck />
+                            <FaCheck style={{ fontSize: "0.9em" }} />
                         </span>
                     </Tooltip>
                 </>
