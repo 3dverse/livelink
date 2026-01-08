@@ -1,5 +1,20 @@
 # @3dverse/livelink-react-ui
 
+## 0.3.17
+
+### Patch Changes
+
+- style(livelink.react.ui): VideoRecorder: style success message
+- style(livelink.react.ui): style Button component based on size props
+- feat(livelink.react): add onProjectionChange to DOM3DElement
+- chore(livelink.react.ui): update @3dverse/design-tokens
+- feat(livelink.react.ui): CullingBoxGeometry: add edgeOpacity properties and rename opacity by boxOpacity
+- feat(livelink.react): add HTMLAttributes and DOMAttributes props to DOM3DElement
+- Updated dependencies
+- Updated dependencies
+- Updated dependencies
+  - @3dverse/livelink-react@0.2.60
+
 ## 0.3.16
 
 ### Patch Changes
