@@ -1,5 +1,12 @@
 # @3dverse/livelink
 
+## 0.8.57
+
+### Patch Changes
+
+- fix(livelink.js): fix global transform computation
+- fix(livelink.js): adding and removing a component from an entity between two broadcast loops may result in unpredictable behavior
+
 ## 0.8.56
 
 ### Patch Changes
