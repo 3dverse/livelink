@@ -677,11 +677,13 @@ class GlobalTransformHandler implements Transform {
     #orientation: Quat;
     #eulerOrientation: Vec3;
     #scale: Vec3;
+    #entity: EntityTransformHandler;
 
     /**
      *
      */
     constructor(_entity: EntityTransformHandler, global_transform: Transform) {
+        this.#entity = _entity;
         this.#position = new Proxy(global_transform.position, {
             get: (target, prop): unknown => {
                 _entity._recalculateGlobalTransformIfNeeded();
@@ -743,6 +745,7 @@ class GlobalTransformHandler implements Transform {
      *
      */
     get position(): Vec3 {
+        this.#entity._recalculateGlobalTransformIfNeeded();
         return this.#position;
     }
 
@@ -750,6 +753,7 @@ class GlobalTransformHandler implements Transform {
      *
      */
     get orientation(): Quat {
+        this.#entity._recalculateGlobalTransformIfNeeded();
         return this.#orientation;
     }
 
@@ -757,6 +761,7 @@ class GlobalTransformHandler implements Transform {
      *
      */
     get eulerOrientation(): Vec3 {
+        this.#entity._recalculateGlobalTransformIfNeeded();
         return this.#eulerOrientation;
     }
 
@@ -764,6 +769,7 @@ class GlobalTransformHandler implements Transform {
      *
      */
     get scale(): Vec3 {
+        this.#entity._recalculateGlobalTransformIfNeeded();
         return this.#scale;
     }
 

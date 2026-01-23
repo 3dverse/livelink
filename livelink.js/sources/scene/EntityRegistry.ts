@@ -211,9 +211,11 @@ export class EntityRegistry {
         } else {
             for (const component_name of entity._dirty_components) {
                 broadcast_data.unsaved_components.add(component_name);
+                broadcast_data.deleted_components.delete(component_name);
             }
             for (const component_name of entity._deleted_components) {
                 broadcast_data.deleted_components.add(component_name);
+                broadcast_data.unsaved_components.delete(component_name);
             }
         }
     }
