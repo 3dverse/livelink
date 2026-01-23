@@ -98,21 +98,28 @@ export function App() {
                 <>
                     <AppLayout scale={scale} />
 
-                    <div className="absolute bottom-[8vh] left-1/2 -translate-x-1/2 flex flex-wrap items-center justify-center gap-2">
-                        <XRButton mode="immersive-ar" enterXR={setXRMode} />
-                    </div>
-
-                    <div className="absolute bottom-2 left-2 right-2 flex flex-col sm:flex-row sm:justify-between items-center gap-2">
-                        <div className="order-2 sm:order-1">
-                            <ScaleSelector scale={scale} setScale={setScale} />
+                    <div className="absolute bottom-2 left-2 right-2 flex flex-col items-center gap-2">
+                        <div className="flex flex-wrap items-center justify-center gap-2">
+                            <XRButton mode="immersive-ar" enterXR={setXRMode} />
                         </div>
-                        <div className="order-1 sm:order-2">
-                            <XROptions
-                                latencyCompensation={latencyCompensation}
-                                setLatencyCompensation={setLatencyCompensation}
-                                overscan={overscan}
-                                setOverscan={setOverscan}
-                            />
+
+                        <div className="flex flex-col sm:flex-row sm:justify-between items-center gap-2 w-full">
+                            <div className="order-2 sm:order-1">
+                                <ScaleSelector
+                                    scale={scale}
+                                    setScale={setScale}
+                                />
+                            </div>
+                            <div className="order-1 sm:order-2">
+                                <XROptions
+                                    latencyCompensation={latencyCompensation}
+                                    setLatencyCompensation={
+                                        setLatencyCompensation
+                                    }
+                                    overscan={overscan}
+                                    setOverscan={setOverscan}
+                                />
+                            </div>
                         </div>
                     </div>
                 </>
