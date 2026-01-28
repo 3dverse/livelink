@@ -6,7 +6,7 @@ import type { StorybookConfig } from "@storybook/react-vite";
 const require = createRequire(import.meta.url);
 
 const config: StorybookConfig = {
-    stories: ["../docs/**/*.mdx", "../sources/**/*.stories.@(js|jsx|mjs|ts|tsx)"],
+    stories: ["../sources/**/*.stories.@(js|jsx|mjs|ts|tsx)"],
     addons: [
         getAbsolutePath("@chromatic-com/storybook"),
         getAbsolutePath("@storybook/addon-docs"),
