@@ -1,5 +1,11 @@
 # @3dverse/livelink
 
+## 0.8.58
+
+### Patch Changes
+
+- feat(livelink.js): add overlays draw call to OffscreenSurface so WebXR can display dom overlays
+
 ## 0.8.57
 
 ### Patch Changes

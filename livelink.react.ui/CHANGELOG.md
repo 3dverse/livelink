@@ -1,5 +1,13 @@
 # @3dverse/livelink-react-ui
 
+## 0.3.18
+
+### Patch Changes
+
+- chore: update dependencies
+- Updated dependencies
+  - @3dverse/livelink@0.8.58
+
 ## 0.3.17
 
 ### Patch Changes
