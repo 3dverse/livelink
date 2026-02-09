@@ -7,11 +7,14 @@ import {
     Livelink,
     Canvas,
     Viewport,
+    DOM3DElement,
+    DOM3DOverlay,
     CameraController,
     useCameraEntity,
 } from "@3dverse/livelink-react";
 import { WebXRHelper, WebXR } from "@3dverse/livelink-webxr";
 import { LoadingOverlay } from "@3dverse/livelink-react-ui";
+import type { Vec3 } from "@3dverse/livelink";
 
 //------------------------------------------------------------------------------
 import { DisconnectedModal } from "@/components/SamplePlayer";
@@ -40,6 +43,13 @@ export function App() {
         if (!domOverlayRef.current) {
             domOverlayRef.current = document.createElement("div");
             domOverlayRef.current.id = "xr-dom-overlay-root-variant-launch";
+            domOverlayRef.current.classList.add(
+                "h-full",
+                "w-full",
+                "absolute",
+                "top-0",
+                "left-0",
+            );
             document.body.appendChild(domOverlayRef.current);
         }
 
@@ -91,6 +101,9 @@ export function App() {
                     latencyCompensation={latencyCompensation}
                     overscan={overscan}
                     scale={scale}
+                    renderViewport={(_viewport, index) => (
+                        <DOM3DSample key={`overlay-${index}`} />
+                    )}
                 >
                     {renderDomOverlay()}
                 </WebXR>
@@ -136,8 +149,75 @@ function AppLayout({ scale }: { scale: number }) {
         <Canvas className="w-full h-full" scale={scale}>
             <Viewport cameraEntity={cameraEntity} className="w-full h-full">
                 <CameraController />
+                <DOM3DOverlay>
+                    <DOM3DSample />
+                </DOM3DOverlay>
             </Viewport>
         </Canvas>
+    );
+}
+
+//------------------------------------------------------------------------------
+function DOM3DSample() {
+    return (
+        <DOM3DOverlay>
+            <DOM3DStaticElements />
+            <DOM3DMovingElement />
+        </DOM3DOverlay>
+    );
+}
+
+//------------------------------------------------------------------------------
+const DOM3DStaticElements = function DOM3DStaticElements() {
+    return (
+        <>
+            <DOM3DElement worldPosition={[-0.2, 4, -1.5]}>
+                <p className="bg-ground p-4 rounded-lg">
+                    I'm a DOM 3D Element using regular DOM3DOverlay in WebXR.{" "}
+                    <br />
+                    Constant size regardless of camera position.
+                </p>
+            </DOM3DElement>
+            <DOM3DElement worldPosition={[-0.1, 2, -0.5]} scaleFactor={0.0025}>
+                <p className="bg-underground p-4 rounded-lg">
+                    Size varies depending on the camera position.
+                </p>
+                <img
+                    src="https://cdn.3dverse.com/assets/3dverse-wordmark.svg"
+                    className="h-60"
+                />
+            </DOM3DElement>
+        </>
+    );
+};
+
+//------------------------------------------------------------------------------
+function DOM3DMovingElement() {
+    const [position, setPosition] = useState<Vec3>([-0.1, 2, -2]);
+
+    useEffect(() => {
+        const interval = setInterval(
+            () =>
+                setPosition(prev => [
+                    prev[0],
+                    prev[1],
+                    Math.sin(Date.now() / 1000),
+                ]),
+            1000 / 60,
+        );
+
+        return () => clearInterval(interval);
+    }, []);
+
+    return (
+        <DOM3DElement worldPosition={position} scaleFactor={0.0025}>
+            <p className="bg-underground p-4 rounded-lg">
+                Moving at [{position[0].toFixed(2)},{position[1].toFixed(2)},{" "}
+                {position[2].toFixed(2)}].
+                <br />
+                This works seamlessly with regular DOM3DOverlay!
+            </p>
+        </DOM3DElement>
     );
 }
 

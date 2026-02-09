@@ -1,4 +1,5 @@
 export * from "./WebXRHelper";
+export * from "./WebXREvents";
 export * from "./react";
 
 //------------------------------------------------------------------------------

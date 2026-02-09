@@ -11,8 +11,10 @@ import React, {
 } from "react";
 
 //------------------------------------------------------------------------------
+import type { Viewport } from "@3dverse/livelink";
 import { LivelinkContext } from "@3dverse/livelink-react";
 import { WebXRHelper } from "../WebXRHelper";
+import { VirtualViewportProvider } from "./VirtualViewportProvider";
 
 //------------------------------------------------------------------------------
 /**
@@ -20,9 +22,14 @@ import { WebXRHelper } from "../WebXRHelper";
  *
  * @category Contexts
  */
-export const WebXRContext = createContext<{ webXRHelper: WebXRHelper | null; xrSession: XRSession | null }>({
+export const WebXRContext = createContext<{
+    webXRHelper: WebXRHelper | null;
+    xrSession: XRSession | null;
+    viewports: ReadonlyArray<Viewport>;
+}>({
     webXRHelper: null,
     xrSession: null,
+    viewports: [],
 });
 
 //------------------------------------------------------------------------------
@@ -43,6 +50,7 @@ export function WebXR({
     scale = 1.0,
     domOverlayRoot,
     onSessionEnd,
+    renderViewport,
 }: PropsWithChildren<{
     /**
      * The mode of the XR session. See {@link https://developer.mozilla.org/en-US/docs/Web/API/XRSystem/requestSession#mode XRSessionMode} for more details.
@@ -95,6 +103,11 @@ export function WebXR({
      * Callback invoked when the XR session ends.
      */
     onSessionEnd?: () => void;
+
+    /**
+     * Render function called for each WebXR viewport. Receives the viewport and should return JSX that will be wrapped in a ViewportContext.Provider.
+     */
+    renderViewport?: (viewport: Viewport, index: number) => React.ReactNode;
 }>): JSX.Element {
     //--------------------------------------------------------------------------
     const { instance } = useContext(LivelinkContext);
@@ -107,6 +120,8 @@ export function WebXR({
     );
     const initializationPromiseRef = useRef<Promise<void> | null>(null);
     const [xrSession, setXrSession] = useState<XRSession | null>(null);
+    const [viewports, setViewports] = useState<ReadonlyArray<Viewport>>([]);
+    const [viewportUpdateCounter, setViewportUpdateCounter] = useState(0);
 
     //--------------------------------------------------------------------------
     useEffect(() => {
@@ -168,6 +183,7 @@ export function WebXR({
                 .then(() => {
                     console.debug("---- WebXR initialized");
                     webXRHelper.start();
+                    setViewports(webXRHelper.viewports);
                     initializationPromiseRef.current = null;
                 });
         }
@@ -179,19 +195,69 @@ export function WebXR({
             console.debug("---- Releasing WebXR");
             webXRHelper.release();
             setXrSession(null);
+            setViewports([]);
         };
     }, [webXRHelper, instance]);
 
     //--------------------------------------------------------------------------
+    const contextValue = useMemo(() => ({ webXRHelper, xrSession, viewports }), [webXRHelper, xrSession, viewports]);
+
+    //--------------------------------------------------------------------------
+    // Create virtual viewport components for each WebXR viewport
+    const virtualViewports = useMemo(() => {
+        if (!renderViewport || viewports.length === 0) {
+            return null;
+        }
+
+        const rootDomOverlay = domOverlayRoot || containerRef.current;
+
+        return viewports.map((viewport, index) => (
+            <VirtualViewportProvider
+                key={`xr-viewport-${index}`}
+                viewport={viewport}
+                rootDomOverlay={rootDomOverlay}
+                index={index}
+            >
+                {renderViewport(viewport, index)}
+            </VirtualViewportProvider>
+        ));
+    }, [renderViewport, viewports, domOverlayRoot, containerRef.current, viewportUpdateCounter]);
+
+    //--------------------------------------------------------------------------
+    // Listen for WebXR viewport updates and trigger a re-render when they change
+    useEffect(() => {
+        const onViewportUpdated = (): void => {
+            setViewportUpdateCounter(counter => counter + 1);
+        };
+
+        webXRHelper.addEventListener("on-viewport-updated", onViewportUpdated);
+
+        return (): void => {
+            webXRHelper.removeEventListener("on-viewport-updated", onViewportUpdated);
+        };
+    }, [webXRHelper, viewports.length]);
+
+    //--------------------------------------------------------------------------
     return (
-        <WebXRContext.Provider value={{ webXRHelper, xrSession }}>
+        <WebXRContext.Provider value={contextValue}>
             {!domOverlayRoot ? (
-                <div data-role="webxr-dom-overlay" ref={containerRef}>
+                <div
+                    data-role="webxr-dom-overlay"
+                    ref={containerRef}
+                    style={{
+                        position: "absolute",
+                        width: "100%",
+                        height: "100%",
+                        top: 0,
+                        left: 0,
+                    }}
+                >
                     {children}
                 </div>
             ) : (
                 <>{children}</>
             )}
+            {virtualViewports}
         </WebXRContext.Provider>
     );
 }
