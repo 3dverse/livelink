@@ -135,5 +135,22 @@ export class OffscreenSurface<ContextType extends CanvasContextType, ContextOpti
             },
             viewport: RelativeRect.default,
         });
+
+        for (const viewport of this.viewports) {
+            const overlayFrame = viewport._drawOverlays();
+            if (!overlayFrame) {
+                continue;
+            }
+
+            this.#context.drawFrameSection({
+                frame_section: {
+                    pixels: overlayFrame,
+                    dimensions_in_pixels: [overlayFrame.width, overlayFrame.height],
+                    meta_data: decoded_frame.meta_data,
+                    section: RelativeRect.default,
+                },
+                viewport: viewport.relative_rect,
+            });
+        }
     }
 }
