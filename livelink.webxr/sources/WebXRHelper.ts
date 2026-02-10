@@ -11,32 +11,22 @@ import {
     RenderGraphDataObject,
     Transform,
 } from "@3dverse/livelink";
-import { XRContext } from "./XRContext";
 import { Quaternion, Vector3, Matrix4 } from "threejs-math";
+
+//------------------------------------------------------------------------------
+import { XRContext } from "./XRContext";
+import { WebXREvents, ViewportUpdatedEvent } from "./WebXREvents";
+import { TypedEventTarget } from "./utils/TypedEventTarget";
+import { createPromiseWithResolvers } from "./utils/createPromiseWithResolvers";
 
 //------------------------------------------------------------------------------
 type XRViewports = Array<{ xr_view: XRView; xr_viewport: XRViewport; livelink_viewport: Viewport }>;
 
 //------------------------------------------------------------------------------
-function createPromiseWithResolvers<T>(): {
-    promise: Promise<T>;
-    resolve: (value: T) => void;
-    reject: (reason?: unknown) => void;
-} {
-    let resolve: (value: T) => void;
-    let reject: (reason?: unknown) => void;
-    const promise = new Promise<T>((_resolve, _reject) => {
-        resolve = _resolve;
-        reject = _reject;
-    });
-    return { promise, resolve: resolve!, reject: reject! };
-}
-
-//------------------------------------------------------------------------------
 /**
  * @experimental
  */
-export class WebXRHelper {
+export class WebXRHelper extends TypedEventTarget<WebXREvents> {
     //--------------------------------------------------------------------------
     // TODO: a better approach (cameras with a parent entity) than relying on
     // cameras_origin & center_eye. It'd be static because to be used from
@@ -135,6 +125,14 @@ export class WebXRHelper {
 
     //--------------------------------------------------------------------------
     /**
+     * The configured livelink viewports for this WebXR session.
+     */
+    get viewports(): ReadonlyArray<Viewport> {
+        return this.#viewports.map(({ livelink_viewport }) => livelink_viewport);
+    }
+
+    //--------------------------------------------------------------------------
+    /**
      * Use to override the near plane provided by the projection matrix of the
      * xr views. Might be useful in the webxr emulator to see things close to
      * the eyes.
@@ -159,6 +157,7 @@ export class WebXRHelper {
 
     //--------------------------------------------------------------------------
     constructor(resolution_scale: number = 1.0) {
+        super();
         this.#surface = new OffscreenSurface({
             width: window.innerWidth, // Not sure
             height: window.innerHeight, // Really not sure
@@ -595,6 +594,7 @@ export class WebXRHelper {
                     `🔍 Updating perspective lens for camera ${index} (eye: ${xr_view.eye})`,
                     new_perspective_lens,
                 );
+                this._dispatchEvent(new ViewportUpdatedEvent({ viewport: livelink_viewport }));
                 camera.perspective_lens = new_perspective_lens;
             }
         });
