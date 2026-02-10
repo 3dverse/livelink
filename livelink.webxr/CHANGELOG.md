@@ -1,5 +1,11 @@
 # @3dverse/livelink-webxr
 
+## 0.1.18
+
+### Patch Changes
+
+- feat(livelink-webxr): add xr dom overlay feature, expose viewports in WebXRContext, export XRContext
+
 ## 0.1.17
 
 ### Patch Changes
