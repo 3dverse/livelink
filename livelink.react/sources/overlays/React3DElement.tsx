@@ -208,6 +208,8 @@ export class React3DElement extends React.Component<
             containerRef,
             worldPosition: _,
             onProjectionChange: __,
+            overlay: ___,
+            scaleFactor: ____,
             ...otherContainerProps
         } = this.props;
 
