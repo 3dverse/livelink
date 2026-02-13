@@ -113,7 +113,6 @@ export class Mouse {
             console.warn("MouseInput: Unsupported mouse button", event.button);
             return;
         }
-        event.stopPropagation();
         const position = this.#getMousePosition(event);
         const input_data = this.#getMouseData({ viewport, x: position.x, y: position.y });
         this.#instance._sendInput({
@@ -132,7 +131,6 @@ export class Mouse {
             console.warn("MouseInput: Unsupported mouse button", event.button);
             return;
         }
-        event.stopPropagation();
         const position = this.#getMousePosition(event);
         const input_data = this.#getMouseData({ viewport, x: position.x, y: position.y });
         this.#instance._sendInput({
@@ -147,8 +145,6 @@ export class Mouse {
      *
      */
     #onMouseMove = ({ viewport, event }: { viewport: Viewport; event: MouseEvent }): void => {
-        event.stopPropagation();
-
         const position = this.#getMousePosition(event);
         const input_data = this.#getMouseData({ viewport, x: position.x, y: position.y });
         this.#instance._sendInput({ input_state: { input_operation: "mouse_move", input_data } });
