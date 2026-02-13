@@ -1,5 +1,13 @@
 # @3dverse/livelink-react
 
+## 0.2.61
+
+### Patch Changes
+
+- fix(livelink.react): remove scaleFactor and overlay prop injection into React3DElement DOM
+- Updated dependencies
+  - @3dverse/livelink@0.8.59
+
 ## 0.2.60
 
 ### Patch Changes

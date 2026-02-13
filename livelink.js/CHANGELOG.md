@@ -1,5 +1,11 @@
 # @3dverse/livelink
 
+## 0.8.59
+
+### Patch Changes
+
+- fix(livelink.js): activating picking on a viewport no longer stops the propagation of mouse events.
+
 ## 0.8.58
 
 ### Patch Changes
