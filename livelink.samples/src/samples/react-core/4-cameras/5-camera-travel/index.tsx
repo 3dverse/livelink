@@ -70,7 +70,7 @@ function AppLayout() {
         const position = labelComponent.camera.slice(0, 3) as Vec3;
         const orientation = labelComponent.camera.slice(3, 7) as Quat;
 
-        const distance = cameraController.getTargetDistance();
+        const distance = cameraController.distance;
         const forward = applyQuaternionToVector3(neutralForward, orientation);
         const scaledForward = forward.map(v => v * distance) as Vec3;
         const target = addVec3(position, scaledForward);
