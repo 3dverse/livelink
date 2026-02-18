@@ -78,35 +78,53 @@ function AppLayout() {
         // Move the camera to the position and look at the target
         cameraController.setLookAt(...position, ...target, true);
     };
-    return (
-        <>
-            <Canvas className="w-full h-full" data-theme="light">
-                <Viewport cameraEntity={cameraEntity} className="w-full h-full">
-                    <CameraController
-                        ref={cameraControllerRef}
-                        preset={cameraPreset}
-                    />
 
-                    <DOM3DOverlay>
+    return (
+        <Canvas className="w-full h-full" data-theme="light">
+            <Viewport cameraEntity={cameraEntity} className="w-full h-full">
+                <CameraController
+                    ref={cameraControllerRef}
+                    preset={cameraPreset}
+                />
+
+                {/* Sidebar with clickable labels list - positioned overlay */}
+                <div className="absolute left-4 top-4 w-64 bg-white/95 border border-gray-100 rounded-lg p-4 overflow-y-auto max-h-96 z-10">
+                    <h3 className="font-normal mb-6 text-gray-500 uppercase tracking-wide text-xs">
+                        Locations
+                    </h3>
+                    <div className="space-y-1">
                         {entities.map(entity => (
-                            <DOMEntity
+                            <button
                                 key={entity.id}
-                                entity={entity}
-                                anchor="center"
+                                className="w-full px-3 py-2 text-left text-sm text-gray-600 bg-transparent border-none rounded hover:bg-gray-50 hover:text-gray-900 transition-all cursor-pointer"
+                                onClick={() => moveCamera(entity)}
+                                title="Click to move camera here"
                             >
-                                <div
-                                    className="px-3 py-1 text-xs text-primary-dark font-medium bg-white/60 border border-white/40 backdrop-blur-3xl rounded-full select-none cursor-pointer hover:scale-105 transition-transform"
-                                    onClick={() => moveCamera(entity)}
-                                    title="Click to move camera here"
-                                >
-                                    {entity.label?.title || "Unnamed Label"}
-                                </div>
-                            </DOMEntity>
+                                {entity.label?.title || "Unnamed Label"}
+                            </button>
                         ))}
-                    </DOM3DOverlay>
-                </Viewport>
-            </Canvas>
-        </>
+                    </div>
+                </div>
+
+                <DOM3DOverlay>
+                    {entities.map(entity => (
+                        <DOMEntity
+                            key={entity.id}
+                            entity={entity}
+                            anchor="center"
+                        >
+                            <div
+                                className="px-3 py-1 text-xs text-primary-dark font-medium bg-white/60 border border-white/40 backdrop-blur-3xl rounded-full select-none cursor-pointer hover:scale-105 transition-transform"
+                                onClick={() => moveCamera(entity)}
+                                title="Click to move camera here"
+                            >
+                                {entity.label?.title || "Unnamed Label"}
+                            </div>
+                        </DOMEntity>
+                    ))}
+                </DOM3DOverlay>
+            </Viewport>
+        </Canvas>
     );
 }
 
