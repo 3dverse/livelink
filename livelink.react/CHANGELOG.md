@@ -1,5 +1,13 @@
 # @3dverse/livelink-react
 
+## 0.2.62
+
+### Patch Changes
+
+- feat(livelink.react): renamed DOM3DElement to DOM3DAnchor and introduced DOM3DDiv
+- Updated dependencies
+  - @3dverse/livelink@0.8.60
+
 ## 0.2.61
 
 ### Patch Changes
