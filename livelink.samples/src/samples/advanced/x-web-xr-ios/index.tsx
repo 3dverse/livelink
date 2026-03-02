@@ -7,7 +7,7 @@ import {
     Livelink,
     Canvas,
     Viewport,
-    DOM3DElement,
+    DOM3DAnchor,
     DOM3DOverlay,
     CameraController,
     useCameraEntity,
@@ -171,14 +171,14 @@ function DOM3DSample() {
 const DOM3DStaticElements = function DOM3DStaticElements() {
     return (
         <>
-            <DOM3DElement worldPosition={[-0.2, 4, -1.5]}>
+            <DOM3DAnchor worldPosition={[-0.2, 4, -1.5]}>
                 <p className="bg-ground p-4 rounded-lg">
                     I'm a DOM 3D Element using regular DOM3DOverlay in WebXR.{" "}
                     <br />
                     Constant size regardless of camera position.
                 </p>
-            </DOM3DElement>
-            <DOM3DElement worldPosition={[-0.1, 2, -0.5]} scaleFactor={0.0025}>
+            </DOM3DAnchor>
+            <DOM3DAnchor worldPosition={[-0.1, 2, -0.5]} scaleFactor={0.0025}>
                 <p className="bg-underground p-4 rounded-lg">
                     Size varies depending on the camera position.
                 </p>
@@ -186,7 +186,7 @@ const DOM3DStaticElements = function DOM3DStaticElements() {
                     src="https://cdn.3dverse.com/assets/3dverse-wordmark.svg"
                     className="h-60"
                 />
-            </DOM3DElement>
+            </DOM3DAnchor>
         </>
     );
 };
@@ -210,14 +210,14 @@ function DOM3DMovingElement() {
     }, []);
 
     return (
-        <DOM3DElement worldPosition={position} scaleFactor={0.0025}>
+        <DOM3DAnchor worldPosition={position} scaleFactor={0.0025}>
             <p className="bg-underground p-4 rounded-lg">
                 Moving at [{position[0].toFixed(2)},{position[1].toFixed(2)},{" "}
                 {position[2].toFixed(2)}].
                 <br />
                 This works seamlessly with regular DOM3DOverlay!
             </p>
-        </DOM3DElement>
+        </DOM3DAnchor>
     );
 }
 

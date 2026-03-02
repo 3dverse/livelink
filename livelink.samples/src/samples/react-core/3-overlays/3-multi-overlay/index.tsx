@@ -8,7 +8,7 @@ import {
     Canvas,
     Viewport,
     DOM3DOverlay,
-    DOM3DElement,
+    DOM3DAnchor,
     useCameraEntity,
     CameraController,
 } from "@3dverse/livelink-react";
@@ -57,7 +57,7 @@ function AppLayout() {
                 <ThreeOverlay scene={scene} />
 
                 <DOM3DOverlay>
-                    <DOM3DElement
+                    <DOM3DAnchor
                         worldPosition={[0, 1.5, 0]}
                         scaleFactor={0.0025}
                     >
@@ -65,13 +65,13 @@ function AppLayout() {
                             ↑ Over me is a Three.js rendered cube ↑
                             <br />↓ Beneath me is a 3dverse rendered cube ↓
                         </p>
-                    </DOM3DElement>
+                    </DOM3DAnchor>
 
-                    <DOM3DElement
+                    <DOM3DAnchor
                         worldPosition={[-3, 1.5, -1]}
                         scaleFactor={0.0025}
                     >
-                        <p className="bg-informative-800 opacity-80 p-4 rounded-lg select-none pointer-events-none">
+                        <p className="bg-informative/80 p-4 rounded-lg select-none pointer-events-none">
                             Note that there's no depth composition between
                             layers.
                             <br />
@@ -81,7 +81,7 @@ function AppLayout() {
                             <br />
                             And finally the 3dverse scene.
                         </p>
-                    </DOM3DElement>
+                    </DOM3DAnchor>
                 </DOM3DOverlay>
             </Viewport>
         </Canvas>

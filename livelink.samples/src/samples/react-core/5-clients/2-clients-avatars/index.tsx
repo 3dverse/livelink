@@ -8,7 +8,7 @@ import {
     CameraController,
     Canvas,
     DOM3DOverlay,
-    DOMEntity,
+    DOM3DEntityAnchor,
     Livelink,
     LivelinkContext,
     useCameraEntity,
@@ -18,10 +18,7 @@ import {
 import { LoadingOverlay } from "@3dverse/livelink-react-ui";
 
 //------------------------------------------------------------------------------
-import {
-    DisconnectedModal,
-    SamplePlayer,
-} from "@/components/SamplePlayer";
+import { DisconnectedModal, SamplePlayer } from "@/components/SamplePlayer";
 
 //------------------------------------------------------------------------------
 const scene_id = "0bb2690b-7962-4c66-baa9-35f83e66e866";
@@ -226,12 +223,12 @@ const Avatar3D = ({ client }: { client: Client }) => {
     }
 
     return (
-        <DOMEntity
+        <DOM3DEntityAnchor
             key={client.id}
             scaleFactor={0.0025}
             entity={clientCameraEntity}
         >
             <Avatar client={client} />
-        </DOMEntity>
+        </DOM3DEntityAnchor>
     );
 };

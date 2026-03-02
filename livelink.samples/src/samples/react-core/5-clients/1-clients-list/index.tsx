@@ -15,10 +15,7 @@ import {
 import { LoadingOverlay } from "@3dverse/livelink-react-ui";
 
 //------------------------------------------------------------------------------
-import {
-    DisconnectedModal,
-    SamplePlayer,
-} from "@/components/SamplePlayer";
+import { DisconnectedModal, SamplePlayer } from "@/components/SamplePlayer";
 
 //------------------------------------------------------------------------------
 const token = import.meta.env.VITE_PROD_PUBLIC_TOKEN;
@@ -123,7 +120,7 @@ function ClientList() {
 
     return (
         <ul className="absolute right-2 bottom-2 flex flex-col-reverse gap-px">
-            <li className={`${badgeClassName} bg-informative-800`}>
+            <li className={`${badgeClassName} bg-informative`}>
                 Current Client = {instance?.session.client_id}
             </li>
             {clients.map((client, i) => {
