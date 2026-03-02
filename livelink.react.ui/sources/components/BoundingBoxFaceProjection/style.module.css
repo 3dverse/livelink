@@ -1,0 +1,77 @@
+.centerQuadrant {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+}
+
+.leftQuadrant {
+    position: absolute;
+    display: flex;
+    justify-content: end;
+}
+
+.topQuadrant {
+    position: absolute;
+    display: flex;
+    justify-content: end;
+    align-items: end;
+}
+
+.rightQuadrant {
+    position: absolute;
+}
+
+.bottomQuadrant {
+    position: absolute;
+}
+
+.debugQuadrant {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    left: 0;
+    top: 0;
+    color: black;
+    font-size: 12px;
+    padding: 2px 4px;
+    pointer-events: none;
+    text-align: center;
+    align-content: center;
+}
+
+.centerQuadrant .debugQuadrant {
+    background-color: rgba(255, 0, 0, 0.5);
+}
+.centerQuadrant .debugQuadrant span {
+    background-color: red;
+}
+
+.leftQuadrant .debugQuadrant {
+    background-color: rgba(0, 255, 0, 0.5);
+}
+.leftQuadrant .debugQuadrant span {
+    background-color: green;
+}
+
+.rightQuadrant .debugQuadrant {
+    background-color: rgba(255, 255, 0, 0.5);
+}
+.rightQuadrant .debugQuadrant span {
+    background-color: yellow;
+}
+
+.topQuadrant .debugQuadrant {
+    background-color: rgba(0, 0, 255, 0.5);
+}
+.topQuadrant .debugQuadrant span {
+    background-color: blue;
+}
+
+.bottomQuadrant .debugQuadrant {
+    background-color: rgba(0, 255, 255, 0.5);
+}
+.bottomQuadrant .debugQuadrant span {
+    background-color: cyan;
+}

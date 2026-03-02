@@ -384,6 +384,61 @@ export class Viewport extends TypedEventTarget<ViewportEvents> {
     }
 
     /**
+     * Projects a world space position to clip space.
+     *
+     * Clip space is a homogeneous coordinate space where the x, y and z coordinates are in the range [-1, 1].
+     * The visible area is defined by the cube from (-1, -1, 0) to (1, 1, 1).
+     *
+     * The position is projected using the camera projection set on the viewport.
+     *
+     * @param params
+     * @param params.world_position - The position in world space to project.
+     * @param params.out_clip_position - The output position in clip space.
+     *
+     * @returns The position in clip space.
+     */
+    projectWorldToClip({
+        world_position,
+        out_clip_position = vec3.create() as Vec3,
+    }: {
+        world_position: Vec3;
+        out_clip_position?: Vec3;
+    }): Vec3 {
+        if (!this.#camera_projection) {
+            throw new Error("No camera set on viewport");
+        }
+
+        return this.#camera_projection.projectWorldToClip({
+            world_position,
+            out_clip_position,
+        });
+    }
+
+    /**
+     * Projects a clip space position to screen space.
+     *
+     * The position is projected using the camera projection set on the viewport.
+     *
+     * @param params
+     * @param params.clip_position - The position in clip space to project.
+     * @param params.out_screen_position - The output position in screen space.
+     *
+     * @returns The position in screen space.
+     */
+    projectClipToScreen({
+        clip_position,
+        out_screen_position = vec3.create() as Vec3,
+    }: {
+        clip_position: Vec3;
+        out_screen_position?: Vec3;
+    }): Vec3 {
+        out_screen_position[0] = (clip_position[0] + 1) * this.width * 0.5;
+        out_screen_position[1] = (-clip_position[1] + 1) * this.height * 0.5;
+
+        return out_screen_position;
+    }
+
+    /**
      * Projects a world space position to screen space.
      *
      * The position is projected using the camera projection set on the viewport.
@@ -401,20 +456,11 @@ export class Viewport extends TypedEventTarget<ViewportEvents> {
         world_position: Vec3;
         out_screen_position?: Vec3;
     }): Vec3 {
-        if (!this.#camera_projection) {
-            throw new Error("No camera set on viewport");
-        }
-
-        const clip_position = this.#camera_projection.projectWorldToClip({
-            world_position,
-            out_clip_position: out_screen_position,
+        this.projectWorldToClip({ world_position, out_clip_position: out_screen_position });
+        return this.projectClipToScreen({
+            clip_position: out_screen_position,
+            out_screen_position,
         });
-
-        const screen_position = clip_position;
-        screen_position[0] = (clip_position[0] + 1) * this.width * 0.5;
-        screen_position[1] = (-clip_position[1] + 1) * this.height * 0.5;
-
-        return screen_position;
     }
 
     /**

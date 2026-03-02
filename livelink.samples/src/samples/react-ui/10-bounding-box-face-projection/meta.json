@@ -1,0 +1,4 @@
+{
+  "title": "Bounding Box Face Projection",
+  "summary": "Projects a 3x3 grid on a face of an entity's bounding box."
+}

@@ -4,10 +4,10 @@ import {
     Canvas,
     Viewport,
     DOM3DOverlay,
-    DOM3DElement,
+    DOM3DAnchor,
     CameraController,
     useCameraEntity,
-    Anchor,
+    AnchorOffset,
 } from "@3dverse/livelink-react";
 import { LoadingOverlay } from "@3dverse/livelink-react-ui";
 import { useState } from "react";
@@ -37,27 +37,27 @@ export function App() {
 function AppLayout() {
     const { cameraEntity } = useCameraEntity();
 
-    const [anchor, setAnchor] = useState<Anchor>("left-top");
+    const [anchor, setAnchor] = useState<AnchorOffset>("left-top");
 
     const cornerAnchors = [
         "left-top",
         "left-bottom",
         "right-top",
         "right-bottom",
-    ] satisfies Array<Anchor>;
+    ] satisfies Array<AnchorOffset>;
 
     const centerAnchors = [
         "center-top",
         "center-bottom",
         "left-center",
         "right-center",
-    ] satisfies Array<Anchor>;
+    ] satisfies Array<AnchorOffset>;
 
     const anchors = [
         ...cornerAnchors,
         "center",
         ...centerAnchors,
-    ] satisfies Array<Anchor>;
+    ] satisfies Array<AnchorOffset>;
 
     return (
         <Canvas className="w-full h-full">
@@ -65,25 +65,30 @@ function AppLayout() {
                 <CameraController />
                 <DOM3DOverlay>
                     {cornerAnchors.map(anchor => (
-                        <DOM3DElement worldPosition={[3, 0, 0]} anchor={anchor}>
-                            <p className="bg-ground p-1 rounded-lg">
-                                ⚓ {anchor}
-                            </p>
-                        </DOM3DElement>
-                    ))}
-
-                    {centerAnchors.map(anchor => (
-                        <DOM3DElement
-                            worldPosition={[-3, 0, 0]}
-                            anchor={anchor}
+                        <DOM3DAnchor
+                            key={anchor}
+                            worldPosition={[3, 0, 0]}
+                            offset={anchor}
                         >
                             <p className="bg-ground p-1 rounded-lg">
                                 ⚓ {anchor}
                             </p>
-                        </DOM3DElement>
+                        </DOM3DAnchor>
                     ))}
 
-                    <DOM3DElement worldPosition={[0, 0, 0]} anchor={anchor}>
+                    {centerAnchors.map(anchor => (
+                        <DOM3DAnchor
+                            key={anchor}
+                            worldPosition={[-3, 0, 0]}
+                            offset={anchor}
+                        >
+                            <p className="bg-ground p-1 rounded-lg">
+                                ⚓ {anchor}
+                            </p>
+                        </DOM3DAnchor>
+                    ))}
+
+                    <DOM3DAnchor worldPosition={[0, 0, 0]} offset={anchor}>
                         <p className="bg-ground px-2 py-1 rounded-lg">
                             ⚓ {anchor}
                         </p>
@@ -99,19 +104,21 @@ function AppLayout() {
                                         name="anchor"
                                         value={a}
                                         checked={a === anchor}
-                                        onChange={() => setAnchor(a as Anchor)}
+                                        onChange={() =>
+                                            setAnchor(a as AnchorOffset)
+                                        }
                                     />
                                     <p>{a}</p>
                                 </label>
                             ))}
                         </fieldset>
-                    </DOM3DElement>
-                    <DOM3DElement worldPosition={[0, 0, 0]}>
+                    </DOM3DAnchor>
+                    <DOM3DAnchor worldPosition={[0, 0, 0]}>
                         <div
                             className="w-2 h-2 rounded-full"
                             style={{ background: "red" }}
                         ></div>
-                    </DOM3DElement>
+                    </DOM3DAnchor>
                 </DOM3DOverlay>
             </Viewport>
         </Canvas>

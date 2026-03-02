@@ -2,6 +2,7 @@
 export * from "./components/Provider";
 
 //------------------------------------------------------------------------------
+export * from "./components/BoundingBoxFaceProjection";
 export * from "./components/CameraSpeedSlider";
 export * from "./components/CullingBoxGeometry";
 export * from "./components/CullingBoxGeometry/CullingBoxGeometryButton";

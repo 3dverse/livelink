@@ -5,22 +5,39 @@ import React, { JSX, PropsWithChildren, useEffect, useState } from "react";
 import type { Entity, Vec3 } from "@3dverse/livelink";
 
 //------------------------------------------------------------------------------
-import { DOM3DElement } from "./DOM3DElement";
-import { Anchor } from "../../overlays/React3DElement";
+import { AnchorOffset, DOM3DAnchor } from "./DOM3DAnchor";
 
 /**
- * A component that renders a DOM element at the position of an entity.
+ * @deprecated Use `DOM3DEntityAnchor` instead.
+ */
+export function DOMEntity({
+    children,
+    ...props
+}: PropsWithChildren<{
+    entity: Entity | null;
+    anchor?: AnchorOffset;
+    scaleFactor?: number;
+}>): JSX.Element | null {
+    return (
+        <DOM3DEntityAnchor offset={props.anchor} {...props}>
+            {children}
+        </DOM3DEntityAnchor>
+    );
+}
+
+/**
+ * A component that renders a <div> anchored to the position of an entity in world space.
  *
  * @category Components
  */
-export function DOMEntity({
+export function DOM3DEntityAnchor({
     entity,
     scaleFactor,
-    anchor,
+    offset,
     children,
 }: PropsWithChildren<{
     entity: Entity | null;
-    anchor?: Anchor;
+    offset?: AnchorOffset;
     scaleFactor?: number;
 }>): JSX.Element | null {
     const [worldPosition, setWorldPosition] = useState<Vec3>(entity ? entity.global_transform.position : [0, 0, 0]);
@@ -51,8 +68,8 @@ export function DOMEntity({
     }
 
     return (
-        <DOM3DElement worldPosition={worldPosition} anchor={anchor} scaleFactor={scaleFactor}>
+        <DOM3DAnchor worldPosition={worldPosition} offset={offset} scaleFactor={scaleFactor}>
             {children}
-        </DOM3DElement>
+        </DOM3DAnchor>
     );
 }

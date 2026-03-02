@@ -20,7 +20,7 @@ import JoinSession from "./react-core/2-sessions/3-join-session/manifest";
 import DOM3DOverlayViewport from "./react-core/3-overlays/1-dom-3d-overlay/manifest";
 import ThreeOverlayViewport from "./react-core/3-overlays/2-threejs-overlay/manifest";
 import MultiOverlayViewport from "./react-core/3-overlays/3-multi-overlay/manifest";
-import DOM3DElementAnchors from "./react-core/3-overlays/4-dom-element-anchors/manifest";
+import DOM3DAnchorOffsets from "./react-core/3-overlays/4-dom-anchor-offsets/manifest";
 
 //------------------------------------------------------------------------------
 import DefaultCameraControllers from "./react-core/4-cameras/1-default-camera-controllers/manifest";
@@ -52,6 +52,7 @@ import CameraSpeedSlider from "./react-ui/6-camera-speed-slider/manifest";
 import PerformancePanel from "./react-ui/7-performance-panel/manifest";
 import CullingBoxGeometry from "./react-ui/8-culling-box-geometry/manifest";
 import VideoRecorder from "./react-ui/9-video-recorder/manifest";
+import BoundingBoxFaceProjection from "./react-ui/10-bounding-box-face-projection/manifest";
 
 //------------------------------------------------------------------------------
 import LiveSkeletalAnimation from "./advanced/x-live-skeletal-animation/manifest";
@@ -107,7 +108,7 @@ export default [
     },
     {
         categoryName: "Overlays",
-        list: [DOM3DOverlayViewport, ThreeOverlayViewport, MultiOverlayViewport, DOM3DElementAnchors],
+        list: [DOM3DOverlayViewport, ThreeOverlayViewport, MultiOverlayViewport, DOM3DAnchorOffsets],
     },
     {
         categoryName: "Cameras",
@@ -147,6 +148,7 @@ export default [
             PerformancePanel,
             CullingBoxGeometry,
             VideoRecorder,
+            BoundingBoxFaceProjection,
         ],
     },
     {

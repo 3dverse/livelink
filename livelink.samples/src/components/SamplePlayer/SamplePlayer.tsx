@@ -1,21 +1,11 @@
-import { createContext, PropsWithChildren, useEffect, useState } from "react";
+import { PropsWithChildren, useEffect, useState } from "react";
 import Markdown from "react-markdown";
 import { LivelinkReactUIProvider } from "@3dverse/livelink-react-ui";
 
 //------------------------------------------------------------------------------
 import { ActionBar } from "./ActionBar";
 import { CodeBlock } from "./CodeBlock";
-
-//------------------------------------------------------------------------------
-export type ConnectionState = "disconnected" | "connected" | "connection-lost" | "reconnect";
-//------------------------------------------------------------------------------
-export const SamplePlayerContext = createContext<{
-    connectionState: ConnectionState;
-    setConnectionState: ((state: ConnectionState) => void) | null;
-}>({
-    connectionState: "disconnected",
-    setConnectionState: null,
-});
+import { ConnectionState, SamplePlayerContext } from "./SamplePlayerContext";
 
 //------------------------------------------------------------------------------
 export function SamplePlayer({

@@ -6,7 +6,7 @@ import type { Entity, Vec3, Vec2, CameraProjection, Viewport as LiveliveViewport
 
 //------------------------------------------------------------------------------
 import { Maths } from "@3dverse/livelink";
-import { DOM3DElement, ViewportContext } from "@3dverse/livelink-react";
+import { DOM3DAnchor, ViewportContext } from "@3dverse/livelink-react";
 
 //------------------------------------------------------------------------------
 import styles from "./style.module.css";
@@ -31,7 +31,7 @@ const geometryHandlesAxes = [
 export function BoxGeometryHandles({ boxGeometryEntity, edgeColor }: { boxGeometryEntity: Entity; edgeColor: string }) {
     const [geometryHandles, setGeometryHandles] = useState<GeometryHandle[]>([]);
     const { viewport, viewportDomElement } = useContext(ViewportContext);
-    const [handleZIndices, setHandleZIndices] = useState<[number, number, number, number, number, number]>([
+    const [handleDepths, setHandleDepths] = useState<[number, number, number, number, number, number]>([
         0, 0, 0, 0, 0, 0,
     ]);
 
@@ -68,12 +68,12 @@ export function BoxGeometryHandles({ boxGeometryEntity, edgeColor }: { boxGeomet
 
     return geometryHandles.map((handle, index) => {
         const oppositeHandleIndex = index % 2 === 0 ? index + 1 : index - 1;
-        const handleZIndex = handleZIndices[index];
-        const oppositeHandleZIndex = handleZIndices[oppositeHandleIndex];
-        const isBehindTheOtherHandle = handleZIndex < oppositeHandleZIndex;
+        const handleDepth = handleDepths[index];
+        const oppositeHandleDepth = handleDepths[oppositeHandleIndex];
+        const isBehindTheOtherHandle = handleDepth > oppositeHandleDepth;
 
         return (
-            <DOM3DElement
+            <DOM3DAnchor
                 id={`handle-${index}`}
                 key={index}
                 worldPosition={handle.worldPosition}
@@ -84,9 +84,9 @@ export function BoxGeometryHandles({ boxGeometryEntity, edgeColor }: { boxGeomet
                 }}
                 onPointerDown={handle.onPointerDown}
                 onProjectionChange={projection => {
-                    setHandleZIndices(prev => {
+                    setHandleDepths(prev => {
                         const newPositions = [...prev] as [number, number, number, number, number, number];
-                        newPositions[index] = projection.z_index;
+                        newPositions[index] = projection.screen_position[2];
                         return newPositions;
                     });
                 }}
