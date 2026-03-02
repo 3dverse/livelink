@@ -1,5 +1,16 @@
 # @3dverse/livelink-react-ui
 
+## 0.3.19
+
+### Patch Changes
+
+- feat(livelink.react.ui): new BoundingBoxFaceProjection UI component
+- chore(livelink.react.ui): upgrade @3dverse/api version to upgrade axios version dure to dependabot security alert
+- Updated dependencies
+- Updated dependencies
+  - @3dverse/livelink-react@0.2.62
+  - @3dverse/livelink@0.8.60
+
 ## 0.3.18
 
 ### Patch Changes

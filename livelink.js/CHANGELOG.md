@@ -1,5 +1,11 @@
 # @3dverse/livelink
 
+## 0.8.60
+
+### Patch Changes
+
+- feat(livelink.js): add view_from_world_matrix, is_perspective and is_orthographic in CameraProjection
+
 ## 0.8.59
 
 ### Patch Changes
