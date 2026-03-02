@@ -13,11 +13,9 @@ export * from "./components/utils/Recorder";
 export { CameraController as DefaultCameraController } from "@3dverse/livelink";
 
 export * from "./components/overlays/DOM3DOverlay";
-export * from "./components/overlays/DOM3DElement";
-export * from "./components/overlays/DOMEntity";
-
-export * from "./overlays/ReactOverlay";
-export * from "./overlays/React3DElement";
+export * from "./components/overlays/DOM3DAnchor";
+export * from "./components/overlays/DOM3DEntityAnchor";
+export * from "./components/overlays/DOM3DDiv";
 
 export * from "./utils";
 
