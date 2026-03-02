@@ -12,11 +12,6 @@ import { EntityUpdatedEvent } from "../../scene/EntityEvents";
 import { quaternionToEuler } from "../../maths";
 
 /**
- *
- */
-const INFINITE_FAR_VALUE = 100000;
-
-/**
  * A ray in 3D space.
  *
  * @category Camera
@@ -81,6 +76,11 @@ export class CameraProjection {
     #world_from_view_matrix = mat4.create();
 
     /**
+     * Transformation matrix from world space to view space, aka the view matrix.
+     */
+    #view_from_world_matrix = mat4.create();
+
+    /**
      * Transformation matrix from view space to clip space, aka the projection matrix.
      */
     get clip_from_view_matrix(): Readonly<Mat4> {
@@ -116,6 +116,13 @@ export class CameraProjection {
     }
 
     /**
+     * Transformation matrix from world space to view space, aka the view matrix.
+     */
+    get view_from_world_matrix(): Readonly<Mat4> {
+        return this.#view_from_world_matrix as Mat4;
+    }
+
+    /**
      * World space position of the camera as used to render the currently processed frame.
      */
     get world_position(): Readonly<Vec3> {
@@ -134,6 +141,20 @@ export class CameraProjection {
      */
     get world_euler_orientation(): Readonly<Vec3> {
         return quaternionToEuler(this.#world_orientation);
+    }
+
+    /**
+     *
+     */
+    is_perspective(): this is { camera_entity: Entity & { perspective_lens: Components.PerspectiveLens } } {
+        return Boolean(this.camera_entity.perspective_lens);
+    }
+
+    /**
+     *
+     */
+    is_orthographic(): this is { camera_entity: Entity & { orthographic_lens: Components.OrthographicLens } } {
+        return Boolean(this.camera_entity.orthographic_lens);
     }
 
     /**
@@ -344,20 +365,19 @@ export class CameraProjection {
         this.#world_orientation = frame_camera_transform.world_orientation;
         this.#world_from_view_matrix = Array.from(frame_camera_transform.world_from_view_matrix) as Mat4;
 
-        const tmp_matrix = this.#clip_from_world_matrix;
-        let view_from_world_matrix = mat4.invert(tmp_matrix, frame_camera_transform.world_from_view_matrix);
-        if (!view_from_world_matrix) {
+        mat4.invert(this.#view_from_world_matrix, frame_camera_transform.world_from_view_matrix);
+        if (!this.#view_from_world_matrix) {
             console.warn(
                 "Failed to invert world_from_view_matrix from frame_camera_transform, using identity matrix instead",
                 frame_camera_transform,
             );
-            view_from_world_matrix = mat4.identity(tmp_matrix);
+            mat4.identity(this.#view_from_world_matrix);
         }
 
         this.#clip_from_world_matrix = mat4.multiply(
             this.#clip_from_world_matrix,
             this.#clip_from_view_matrix,
-            view_from_world_matrix,
+            this.#view_from_world_matrix,
         );
     }
 
@@ -365,12 +385,12 @@ export class CameraProjection {
      *
      */
     #computePerspectiveProjection({ lens }: { lens: Components.PerspectiveLens }): void {
-        mat4.perspective(
+        mat4.perspectiveZO(
             this.#clip_from_view_matrix,
             glMatrix.toRadian(lens.fovy),
             this.viewport.aspect_ratio,
             lens.nearPlane,
-            lens.farPlane || INFINITE_FAR_VALUE,
+            lens.farPlane || Infinity,
         );
     }
 
