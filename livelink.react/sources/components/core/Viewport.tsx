@@ -192,6 +192,13 @@ export const Viewport = forwardRef(function (
 
     //--------------------------------------------------------------------------
     useEffect(() => {
+        if (viewport) {
+            viewport.render_target_index = renderTargetIndex;
+        }
+    }, [viewport, renderTargetIndex]);
+
+    //--------------------------------------------------------------------------
+    useEffect(() => {
         if (client) {
             client.getCameraEntities().then(cameraEntities => {
                 setClientCameraEntity(cameraEntities[cameraIndex ?? 0]);

@@ -1,4 +1,5 @@
 //------------------------------------------------------------------------------
+import { useState } from "react";
 import type { Entity } from "@3dverse/livelink";
 import {
     Livelink,
@@ -53,17 +54,41 @@ function DebugViewports({ cameraEntity }: { cameraEntity: Entity | null }) {
         { index: 4, name: "World Space Normals" },
     ] as const;
 
+    const [selectedRenderTarget, setRenderTarget] = useState(0);
+
     return (
-        <div className="absolute flex h-full flex-col gap-2 top-4 left-4 w-1/5">
-            {RENDER_TARGETS.map(({ index, name }) => (
+        <>
+            <div className="absolute flex h-full flex-col gap-2 top-4 left-4 w-1/5">
+                {RENDER_TARGETS.map(({ index, name }) => (
+                    <Viewport
+                        key={index}
+                        cameraEntity={cameraEntity}
+                        renderTargetIndex={index}
+                        title={name}
+                        className=" aspect-video border border-tertiary"
+                    ></Viewport>
+                ))}
+            </div>
+            <div className="absolute bottom-4 right-4">
                 <Viewport
-                    key={index}
                     cameraEntity={cameraEntity}
-                    renderTargetIndex={index}
-                    title={name}
-                    className=" aspect-video border border-tertiary"
+                    renderTargetIndex={selectedRenderTarget}
+                    className="aspect-video border-2 border-secondary"
                 ></Viewport>
-            ))}
-        </div>
+                <select
+                    className="select select-primary text-xs"
+                    value={selectedRenderTarget}
+                    onChange={event =>
+                        setRenderTarget(Number.parseInt(event.target.value))
+                    }
+                >
+                    {RENDER_TARGETS.map(item => (
+                        <option key={item.index} value={item.index}>
+                            {item.name}
+                        </option>
+                    ))}
+                </select>
+            </div>
+        </>
     );
 }
