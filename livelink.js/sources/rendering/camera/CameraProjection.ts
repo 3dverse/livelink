@@ -177,6 +177,13 @@ export class CameraProjection {
     }
 
     /**
+     * Releases the resources used by the CameraProjection instance.
+     */
+    release(): void {
+        this.camera_entity.removeEventListener("on-entity-updated", this.#onEntityUpdated);
+    }
+
+    /**
      *
      */
     #onEntityUpdated = (event: EntityUpdatedEvent): void => {
@@ -382,7 +389,7 @@ export class CameraProjection {
     }
 
     /**
-     *
+     * Computes the perspective projection matrix for the camera using the Zero to One depth range convention.
      */
     #computePerspectiveProjection({ lens }: { lens: Components.PerspectiveLens }): void {
         mat4.perspectiveZO(
@@ -395,7 +402,7 @@ export class CameraProjection {
     }
 
     /**
-     *
+     * Computes the orthographic projection matrix for the camera using the Zero to One depth range convention.
      */
     #computeOrthographicProjection({ lens }: { lens: Components.OrthographicLens }): void {
         mat4.ortho(

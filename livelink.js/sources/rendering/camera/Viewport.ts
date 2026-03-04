@@ -263,6 +263,7 @@ export class Viewport extends TypedEventTarget<ViewportEvents> {
     release(): void {
         this.deactivatePicking();
         this.deactivateHovering();
+        this.#camera_projection?.release();
     }
 
     /**
