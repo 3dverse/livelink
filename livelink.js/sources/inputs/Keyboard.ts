@@ -10,6 +10,11 @@ export class Keyboard {
     #instance: Livelink;
 
     /**
+     *
+     */
+    #enabled = false;
+
+    /**
      * @internal
      */
     constructor(instance: Livelink) {
@@ -20,20 +25,34 @@ export class Keyboard {
      *
      */
     enable(): void {
+        if (this.#enabled) {
+            console.warn("Keyboard input is already enabled");
+            return;
+        }
+
         window.addEventListener("keydown", this.#onKeyDown);
         window.addEventListener("keyup", this.#onKeyUp);
         window.addEventListener("blur", this.#resetInputs);
+
+        this.#enabled = true;
     }
 
     /**
      *
      */
     disable(): void {
+        if (!this.#enabled) {
+            console.warn("Keyboard input is already disabled");
+            return;
+        }
+
         window.removeEventListener("keydown", this.#onKeyDown);
         window.removeEventListener("keyup", this.#onKeyUp);
         window.removeEventListener("blur", this.#resetInputs);
 
         this.#resetInputs();
+
+        this.#enabled = false;
     }
 
     /**
