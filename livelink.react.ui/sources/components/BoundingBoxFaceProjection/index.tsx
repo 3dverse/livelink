@@ -18,12 +18,15 @@ export const BoundingBoxFaceProjection = ({
     scale = 100,
     invert = false,
     children,
+    ...props
 }: PropsWithChildren<{
     entity: Entity | null;
     face: Face;
     scale?: number;
     invert?: boolean;
-}>) => {
+}> &
+    React.HTMLAttributes<HTMLDivElement> &
+    React.DOMAttributes<HTMLDivElement>) => {
     if (!entity) {
         return null;
     }
@@ -35,7 +38,7 @@ export const BoundingBoxFaceProjection = ({
     });
 
     return (
-        <DOM3DDiv worldQuad={wsQuad} worldUnitToPixelScale={scale}>
+        <DOM3DDiv worldQuad={wsQuad} worldUnitToPixelScale={scale} {...props}>
             {children}
         </DOM3DDiv>
     );
