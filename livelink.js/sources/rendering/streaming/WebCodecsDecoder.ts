@@ -242,6 +242,7 @@ export class WebCodecsDecoder extends EncodedFrameConsumer {
         const meta_data = this.#meta_data_map.get(decoded_frame.timestamp);
         if (!meta_data) {
             console.error("No meta data for frame", decoded_frame.timestamp);
+            decoded_frame.close();
             return;
         }
 
