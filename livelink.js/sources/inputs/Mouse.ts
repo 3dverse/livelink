@@ -1,6 +1,7 @@
 import { Enums } from "@3dverse/livelink.core";
 import { Livelink } from "../Livelink";
 import { Viewport } from "../rendering/camera/Viewport";
+import { BROWSER_ENV } from "../config/env";
 
 /**
  * @category Inputs
@@ -42,9 +43,6 @@ export class Mouse {
      */
     constructor(instance: Livelink) {
         this.#instance = instance;
-        if (typeof document !== "undefined") {
-            document.addEventListener("pointerlockchange", this.#onPointerLockChange);
-        }
     }
 
     /**
@@ -56,6 +54,12 @@ export class Mouse {
      * @param params.viewport The viewport to enable mouse input on.
      */
     enableOnViewport({ viewport }: { viewport: Viewport }): void {
+        if (BROWSER_ENV) {
+            if (this.#viewport_map.size === 0) {
+                document.addEventListener("pointerlockchange", this.#onPointerLockChange);
+            }
+        }
+
         const viewport_data = this.#viewport_map.get(viewport);
         if (viewport_data) {
             viewport_data.ref_count++;
@@ -103,6 +107,12 @@ export class Mouse {
 
         viewport_data.abort_controller.abort();
         this.#viewport_map.delete(viewport);
+
+        if (BROWSER_ENV) {
+            if (this.#viewport_map.size === 0) {
+                document.removeEventListener("pointerlockchange", this.#onPointerLockChange);
+            }
+        }
     }
 
     /**
