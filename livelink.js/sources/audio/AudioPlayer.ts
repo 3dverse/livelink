@@ -43,38 +43,39 @@ export class AudioPlayer {
      *
      */
     playAudioPacket({ packet }: { packet: DataView }): void {
-        const samples = new Float32Array(packet.buffer, packet.byteOffset);
-        const sample_count = packet.byteLength / ((this.#bit_depth / 8) * this.#num_channels);
-        this.#scheduleAudio({ samples, sample_count });
+        const sample_count = packet.byteLength / (this.#bit_depth / 8);
+        const samples = new Float32Array(packet.buffer, packet.byteOffset, sample_count);
+        this.#scheduleAudio({ samples });
     }
 
     /**
      *
      */
-    #scheduleAudio({ samples, sample_count }: { samples: Float32Array; sample_count: number }): void {
+    #scheduleAudio({ samples }: { samples: Float32Array }): void {
+        const sample_frame_count = samples.length / this.#num_channels;
         const source = this.#audio_context.createBufferSource();
-        source.buffer = this.#getBuffer({ samples, sample_count });
+        source.buffer = this.#getBuffer({ samples, sample_frame_count });
         source.connect(this.#audio_context.destination);
 
         if (this.#next_start_time <= this.#audio_context.currentTime) {
             // The first time the source will play, it will play a buffer later to allow for
             // that maximum unexpected latency.
-            this.#next_start_time = 0.1 + this.#audio_context.currentTime + sample_count / this.#sample_rate;
+            this.#next_start_time = 0.1 + this.#audio_context.currentTime + sample_frame_count / this.#sample_rate;
         }
 
         source.start(this.#next_start_time);
-        this.#next_start_time += sample_count / this.#sample_rate;
+        this.#next_start_time += sample_frame_count / this.#sample_rate;
     }
 
     /**
      *
      */
-    #getBuffer({ samples, sample_count }: { samples: Float32Array; sample_count: number }): AudioBuffer {
-        const buffer = this.#audio_context.createBuffer(this.#num_channels, sample_count, this.#sample_rate);
+    #getBuffer({ samples, sample_frame_count }: { samples: Float32Array; sample_frame_count: number }): AudioBuffer {
+        const buffer = this.#audio_context.createBuffer(this.#num_channels, sample_frame_count, this.#sample_rate);
         for (let channel = 0; channel < this.#num_channels; channel++) {
             const channelData = buffer.getChannelData(channel);
-            for (let j = 0; j < sample_count; j++) {
-                channelData[j] = samples[channel * sample_count + j] * this.#global_volume;
+            for (let j = 0; j < sample_frame_count; j++) {
+                channelData[j] = samples[channel * sample_frame_count + j] * this.#global_volume;
             }
         }
         return buffer;
