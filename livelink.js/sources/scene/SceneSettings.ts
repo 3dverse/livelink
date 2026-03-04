@@ -6,7 +6,13 @@ import type { Scene } from "./Scene";
 import { PromiseWithResolver } from "./PromiseWithResolver";
 import { SceneSettingsUpdatedEvent } from "./SceneEvents";
 
-//------------------------------------------------------------------------------
+/**
+ * @internal
+ *
+ * The SceneSettings class is responsible for managing the settings of the scene.
+ * It wraps the scene settings with proxies to trigger updates when the values are changed.
+ * It also listens to updates from the editor and updates the local settings values accordingly.
+ */
 export class SceneSettings {
     /**
      *
