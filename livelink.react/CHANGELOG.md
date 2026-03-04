@@ -1,5 +1,36 @@
 # @3dverse/livelink-react
 
+## 0.2.63
+
+### Patch Changes
+
+- fix(livelink.react): viewports are now correctly released before the surfaces
+- fix(livelink.react): render_target_index prop in Viewport can now be updated
+- docs(livelink.react): update DOM3DAnchor and DOM3DEntityAnchor docs
+- Updated dependencies
+- Updated dependencies
+- Updated dependencies
+- Updated dependencies
+- Updated dependencies
+- Updated dependencies
+- Updated dependencies
+- Updated dependencies
+- Updated dependencies
+- Updated dependencies
+- Updated dependencies
+- Updated dependencies
+- Updated dependencies
+- Updated dependencies
+- Updated dependencies
+- Updated dependencies
+- Updated dependencies
+- Updated dependencies
+- Updated dependencies
+- Updated dependencies
+- Updated dependencies
+- Updated dependencies
+  - @3dverse/livelink@0.8.61
+
 ## 0.2.62
 
 ### Patch Changes

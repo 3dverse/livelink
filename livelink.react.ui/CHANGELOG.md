@@ -1,5 +1,38 @@
 # @3dverse/livelink-react-ui
 
+## 0.3.20
+
+### Patch Changes
+
+- feat(livelink.react.ui): add HTMLAttributes & DOMAttributes props to BoundingBoxFaceProjection
+- Updated dependencies
+- Updated dependencies
+- Updated dependencies
+- Updated dependencies
+- Updated dependencies
+- Updated dependencies
+- Updated dependencies
+- Updated dependencies
+- Updated dependencies
+- Updated dependencies
+- Updated dependencies
+- Updated dependencies
+- Updated dependencies
+- Updated dependencies
+- Updated dependencies
+- Updated dependencies
+- Updated dependencies
+- Updated dependencies
+- Updated dependencies
+- Updated dependencies
+- Updated dependencies
+- Updated dependencies
+- Updated dependencies
+- Updated dependencies
+- Updated dependencies
+  - @3dverse/livelink@0.8.61
+  - @3dverse/livelink-react@0.2.63
+
 ## 0.3.19
 
 ### Patch Changes
