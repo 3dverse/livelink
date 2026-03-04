@@ -1,5 +1,32 @@
 # @3dverse/livelink
 
+## 0.8.61
+
+### Patch Changes
+
+- fix(livelink.js): correct bound checks for RelativeRect.from_dom_elements
+- fix(livelink.js): removed dead code in Session.close
+- fix(livelink.js): throw/log when api calls don't return ok response
+- fix(livelink.js): read the exact number of samples in AudioPlayer and don't rely on DataView size
+- fix(livelink.js): guard against infinite loop if a filter is ill formed
+- fix(livelink.js): clear dangling timeout when releasing canvas auto resizer
+- fix(livelink.js): remove dangling listener when a surface is released
+- fix(livelink.js): clear meta data map on webcodec decoder release and reset first frame to true in configure
+- fix(livelink.js): release pointer lock listener
+- fix(livelink.js): moved the viewport listener registration from the surface to the viewport
+- fix(livelink.js): remove entity updated listener from camera projection when parent viewport is released
+- fix(livelink.js): scene settings with primitive values were not correctly updated
+- fix(livelink.js): unified how input devices are enabled/disabled through a base class
+- fix(livelink.js): guarded keyboard enable/disable functions against reentry
+- fix(livelink.js): entities were not correctly removed from the entity registry
+- fix(livelink.js): close video frame no meta data is found
+- docs(livelink.js): document scene settings
+- fix(livelink.js): test return value of mat4.invert for null instead of the param which is always truthy
+- fix(livelink.js): removed useless frame_timestamp accessor
+- fix(livelink.js): euler orientation was not always correctly computed
+- fix(livelink.js): remove the camera update listener when releasing the camera controller
+- fix(livelink.js): correctly release gl resources when ContextWebGL is released
+
 ## 0.8.60
 
 ### Patch Changes
