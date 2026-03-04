@@ -35,7 +35,8 @@ export function App() {
 //------------------------------------------------------------------------------
 function AppLayout() {
     const { cameraEntity } = useCameraEntity({
-        settings: { volumetricLighting: true },
+        position: [0, 1.6, 9],
+        settings: { volumetricLighting: true, debugLines: true },
     });
 
     const { sceneSettings } = useSceneSettings();
@@ -151,6 +152,34 @@ function EnvironmentSettingsComponent({
                             ambientColorBottomReference[1] = color[1];
                             ambientColorBottomReference[2] = color[2];
                         }}
+                    />
+                </div>
+
+                <div className="flex items-center space-x-4 p-3 bg-white/5 rounded-lg border border-white/10 hover:bg-white/10 transition-all duration-200">
+                    <div className="shrink-0">
+                        <span className="text-2xl">💡</span>
+                    </div>
+                    <div className="flex-1">
+                        <label
+                            htmlFor="hs-color-clear-color-input"
+                            className="text-white font-semibold text-sm tracking-wide drop-shadow-lg block mb-1"
+                        >
+                            Display light debug lines
+                        </label>
+                        <p className="text-gray-300 text-xs w-60">
+                            Toggle to visualize debug lines for lights in the
+                            scene.
+                        </p>
+                    </div>
+                    <input
+                        type="checkbox"
+                        className="h-6 w-6 block bg-white border-2 border-white/20 cursor-pointer rounded transition-all duration-200"
+                        id="hs-color-clear-color-input"
+                        checked={sceneSettings.debug_lines.drawLights}
+                        onChange={e =>
+                            (sceneSettings.debug_lines.drawLights =
+                                e.target.checked)
+                        }
                     />
                 </div>
             </div>
