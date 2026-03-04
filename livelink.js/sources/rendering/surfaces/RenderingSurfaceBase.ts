@@ -88,38 +88,6 @@ export abstract class RenderingSurfaceBase extends TypedEventTarget<RenderingSur
     abstract getBoundingRect(): Rect;
 
     /**
-     * Adds a viewport to the current surface.
-     *
-     * Note that the viewport knows which section of the surface it should draw to using
-     * its {@link Viewport.relative_rect} property.
-     *
-     * @param params
-     * @param params.viewport - The viewport to add.
-     *
-     * @internal
-     */
-    _addViewport({ viewport }: { viewport: Viewport }): void {
-        this.addEventListener("on-rendering-surface-resized", viewport._onResize);
-        this.viewports.push(viewport);
-    }
-
-    /**
-     * Removes a viewport from the current surface.
-     *
-     * @param params
-     * @param params.viewport - The viewport to remove.
-     *
-     * @internal
-     */
-    _removeViewport({ viewport }: { viewport: Viewport }): void {
-        this.removeEventListener("on-rendering-surface-resized", viewport._onResize);
-        const index = this.viewports.indexOf(viewport);
-        if (index !== -1) {
-            this.viewports.splice(index, 1);
-        }
-    }
-
-    /**
      * Releases the resources associated with the current surface.
      */
     release(): void {
@@ -127,6 +95,7 @@ export abstract class RenderingSurfaceBase extends TypedEventTarget<RenderingSur
         for (const viewport of this.viewports) {
             viewport.release();
         }
+        this.viewports.length = 0;
     }
 
     /**
@@ -154,6 +123,36 @@ export abstract class RenderingSurfaceBase extends TypedEventTarget<RenderingSur
     redrawLastFrame(): void {
         if (this.#last_draw_data !== null) {
             this._drawFrame({ decoded_frame: this.#last_draw_data });
+        }
+    }
+
+    /**
+     * Adds a viewport to the current surface.
+     *
+     * Note that the viewport knows which section of the surface it should draw to using
+     * its {@link Viewport.relative_rect} property.
+     *
+     * @param params
+     * @param params.viewport - The viewport to add.
+     *
+     * @internal
+     */
+    _addViewport({ viewport }: { viewport: Viewport }): void {
+        this.viewports.push(viewport);
+    }
+
+    /**
+     * Removes a viewport from the current surface.
+     *
+     * @param params
+     * @param params.viewport - The viewport to remove.
+     *
+     * @internal
+     */
+    _removeViewport({ viewport }: { viewport: Viewport }): void {
+        const index = this.viewports.indexOf(viewport);
+        if (index !== -1) {
+            this.viewports.splice(index, 1);
         }
     }
 

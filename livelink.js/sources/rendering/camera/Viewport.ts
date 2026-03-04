@@ -246,6 +246,8 @@ export class Viewport extends TypedEventTarget<ViewportEvents> {
         this.#render_target_index = options?.render_target_index ?? -1;
         this.#z_index = options?.z_index ?? 0;
         this.#dom_element = options?.dom_element ?? null;
+
+        this.#rendering_surface.addEventListener("on-rendering-surface-resized", this._onResize);
     }
 
     /**
@@ -264,6 +266,7 @@ export class Viewport extends TypedEventTarget<ViewportEvents> {
         this.deactivatePicking();
         this.deactivateHovering();
         this.#camera_projection?.release();
+        this.#rendering_surface.removeEventListener("on-rendering-surface-resized", this._onResize);
     }
 
     /**

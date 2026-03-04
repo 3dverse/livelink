@@ -257,7 +257,7 @@ export class RemoteFrameProxy implements DecodedFrameConsumer {
      */
     #computeBoundingRect(): { offset: Vec2i; width: number; height: number } {
         const min: Vec2i = [Number.MAX_VALUE, Number.MAX_VALUE];
-        const max: Vec2i = [0, 0];
+        const max: Vec2i = [-Number.MAX_VALUE, -Number.MAX_VALUE];
 
         for (const surface of this.#surfaces) {
             const clientRect = surface.getBoundingRect();
