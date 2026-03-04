@@ -79,10 +79,6 @@ export class EntityRegistry {
      * @throws Error if the entity is not registered in the registry.
      */
     remove({ entity }: { entity: Entity }): void {
-        if (!this.#entity_rtid_lut.delete(entity.rtid)) {
-            throw new Error(`Trying to remove entity ${entity.rtid} which has not been registred to the RTID LUT.`);
-        }
-
         const entities = this.#entity_euid_lut.get(entity.id);
         if (!entities) {
             throw new Error(`Trying to remove entity ${entity.id} which has not been registered to the EUID LUT.`);
@@ -93,18 +89,13 @@ export class EntityRegistry {
             throw new Error(`Trying to remove entity ${entity.id} which has not been registered to the EUID LUT.`);
         }
 
-        entities.slice(index, 1);
+        entities.splice(index, 1);
 
         if (entities.length === 0) {
             this.#entity_euid_lut.delete(entity.id);
         }
 
-        if (!this.#entities.delete(entity)) {
-            throw new Error(`Trying to remove entity ${entity.id} which has not been registered to the registry.`);
-        }
-
-        this.#dirty_entities.delete(entity);
-        this.#entities_to_persist.delete(entity);
+        this.#removeEntity({ entity });
     }
 
     /**
@@ -136,6 +127,23 @@ export class EntityRegistry {
      */
     find({ entity_euid }: { entity_euid: UUID }): Array<Entity> {
         return this.#entity_euid_lut.get(entity_euid) ?? [];
+    }
+
+    /**
+     * @internal
+     */
+    _removeAll({ entity_euid }: { entity_euid: UUID }): Array<Entity> {
+        const entities = this.#entity_euid_lut.get(entity_euid);
+        if (!entities) {
+            return [];
+        }
+
+        this.#entity_euid_lut.delete(entity_euid);
+        for (const entity of entities) {
+            this.#removeEntity({ entity });
+        }
+
+        return entities;
     }
 
     /**
@@ -196,6 +204,22 @@ export class EntityRegistry {
         this.#entities_to_persist.clear();
 
         return update_command;
+    }
+
+    /**
+     *
+     */
+    #removeEntity({ entity }: { entity: Entity }): void {
+        if (!this.#entity_rtid_lut.delete(entity.rtid)) {
+            throw new Error(`Trying to remove entity ${entity.rtid} which has not been registred to the RTID LUT.`);
+        }
+
+        if (!this.#entities.delete(entity)) {
+            throw new Error(`Trying to remove entity ${entity.id} which has not been registered to the registry.`);
+        }
+
+        this.#dirty_entities.delete(entity);
+        this.#entities_to_persist.delete(entity);
     }
 
     /**

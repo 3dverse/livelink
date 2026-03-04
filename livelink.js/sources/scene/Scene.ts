@@ -258,10 +258,11 @@ export class Scene extends TypedEventTarget<SceneEvents> {
      * @returns A promise that resolves when the entities are deleted.
      */
     async deleteEntities({ entities }: { entities: Array<Entity> }): Promise<void> {
+        await this.#core.deleteEntities({ entity_uuids: entities.map(e => e.id) });
+
         for (const entity of entities) {
             this._entity_registry.remove({ entity });
         }
-        await this.#core.deleteEntities({ entity_uuids: entities.map(e => e.id) });
     }
 
     /**
@@ -480,9 +481,8 @@ export class Scene extends TypedEventTarget<SceneEvents> {
     }: Events.EntitiesDeletedEvent): void => {
         const entity_ids = Array<RTID>();
         for (const entity_euid of deleted_entity_euids) {
-            const entities = this._entity_registry.find({ entity_euid });
+            const entities = this._entity_registry._removeAll({ entity_euid });
             for (const entity of entities) {
-                this._entity_registry.remove({ entity });
                 entity_ids.push(entity.rtid);
             }
         }
@@ -490,8 +490,8 @@ export class Scene extends TypedEventTarget<SceneEvents> {
         for (const entity_rtid of deleted_entity_rtids) {
             const entity = this._entity_registry.get({ entity_rtid });
             if (entity) {
-                this._entity_registry.remove({ entity });
                 entity_ids.push(entity.rtid);
+                this._entity_registry.remove({ entity });
             }
         }
 
