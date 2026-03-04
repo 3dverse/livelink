@@ -29,6 +29,7 @@ import { Mouse } from "./inputs/Mouse";
 import { Keyboard } from "./inputs/Keyboard";
 import { AudioPlayer } from "./audio/AudioPlayer";
 import { GamepadsRegistry } from "./inputs/GamepadsRegistry";
+import { BROWSER_ENV } from "./config/env";
 
 /**
  * Represents the various stages of the Livelink connection process.
@@ -356,13 +357,6 @@ export class Livelink {
      */
     get latency(): number {
         return this.#core.latency;
-    }
-
-    /**
-     * The renderer timestamp in miliseconds of the latest received frame.
-     */
-    get frame_timestamp(): number {
-        return this.#frame_dt_in_ms;
     }
 
     /**
@@ -724,7 +718,7 @@ export class Livelink {
         this.#core.addEventListener("on-frame-received", this.#onFrameReceived);
         this.#core.addEventListener("on-audio-received", this.#onAudioReceived);
 
-        if (typeof document !== "undefined") {
+        if (BROWSER_ENV) {
             document.addEventListener("visibilitychange", this.#onVisibilityChange);
         }
     }
@@ -736,7 +730,7 @@ export class Livelink {
         this.#core.removeEventListener("on-frame-received", this.#onFrameReceived);
         this.#core.removeEventListener("on-audio-received", this.#onAudioReceived);
 
-        if (typeof document !== "undefined") {
+        if (BROWSER_ENV) {
             document.removeEventListener("visibilitychange", this.#onVisibilityChange);
         }
     }
