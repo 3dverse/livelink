@@ -6,7 +6,13 @@ import type { Scene } from "./Scene";
 import { PromiseWithResolver } from "./PromiseWithResolver";
 import { SceneSettingsUpdatedEvent } from "./SceneEvents";
 
-//------------------------------------------------------------------------------
+/**
+ * @internal
+ *
+ * The SceneSettings class is responsible for managing the settings of the scene.
+ * It wraps the scene settings with proxies to trigger updates when the values are changed.
+ * It also listens to updates from the editor and updates the local settings values accordingly.
+ */
 export class SceneSettings {
     /**
      *
@@ -122,6 +128,9 @@ export class SceneSettings {
 
             //@ts-expect-error Cannot infer the type here
             this.#proxied_settings[settingSectionName as keyof SceneSettingsRecord] = new Proxy(settingProxy, {
+                get: (_, prop): unknown => {
+                    return Reflect.get(this.#raw_settings![settingSectionName as keyof SceneSettingsRecord], prop);
+                },
                 set: (_, prop: keyof SceneSettingsRecord, value: unknown): boolean => {
                     onSettingAttributeChanged(prop, value);
                     return Reflect.set(

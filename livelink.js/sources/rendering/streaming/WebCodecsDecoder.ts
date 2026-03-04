@@ -170,6 +170,7 @@ export class WebCodecsDecoder extends EncodedFrameConsumer {
             error: (e): void => console.error(e.message),
         });
 
+        this.#first_frame = true;
         this.#video_decoder_config = supportedConfig;
         this.#decoder.configure(this.#video_decoder_config);
         console.debug("Codec configured", this.#video_decoder_config);
@@ -207,6 +208,7 @@ export class WebCodecsDecoder extends EncodedFrameConsumer {
     override release(): void {
         this.#last_frame?.close();
         this.#decoder?.close();
+        this.#meta_data_map.clear();
     }
 
     /**
@@ -242,6 +244,7 @@ export class WebCodecsDecoder extends EncodedFrameConsumer {
         const meta_data = this.#meta_data_map.get(decoded_frame.timestamp);
         if (!meta_data) {
             console.error("No meta data for frame", decoded_frame.timestamp);
+            decoded_frame.close();
             return;
         }
 

@@ -9,6 +9,7 @@ import React, {
     useCallback,
     useContext,
     useEffect,
+    useLayoutEffect,
     useRef,
     useState,
     useImperativeHandle,
@@ -139,7 +140,7 @@ export const Viewport = forwardRef(function (
 
     //--------------------------------------------------------------------------
     const zIndex = parentZIndex + 1;
-    useEffect(() => {
+    useLayoutEffect(() => {
         if (!instance || !renderingSurface || !canvas || !viewportDomElement.current) {
             return;
         }
@@ -188,6 +189,13 @@ export const Viewport = forwardRef(function (
             }
         }
     }, [instance, renderingSurface, canvas, zIndex]);
+
+    //--------------------------------------------------------------------------
+    useEffect(() => {
+        if (viewport) {
+            viewport.render_target_index = renderTargetIndex;
+        }
+    }, [viewport, renderTargetIndex]);
 
     //--------------------------------------------------------------------------
     useEffect(() => {

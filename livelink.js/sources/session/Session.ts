@@ -141,6 +141,11 @@ export class Session extends TypedEventTarget<SessionEvents> implements SessionI
             },
         });
 
+        if (!res.ok) {
+            console.debug(`Could not find session with scene id ${scene_id}.`);
+            return null;
+        }
+
         const sessions = (await res.json()) as Array<SessionInfo>;
         if (sessions.length === 0) {
             return null;
@@ -350,6 +355,10 @@ export class Session extends TypedEventTarget<SessionEvents> implements SessionI
             body: JSON.stringify({ is_headless }),
         });
 
+        if (!res.ok) {
+            throw new Error("Error when registering client to session");
+        }
+
         const { session_token, endpoint_info } = (await res.json()) as {
             session_token: string;
             endpoint_info: { ip: string; port: number; ssl_port: number };
@@ -367,10 +376,6 @@ export class Session extends TypedEventTarget<SessionEvents> implements SessionI
      * Close the session.
      */
     async close(): Promise<void> {
-        if (this.info === null) {
-            throw new Error("Cannot close session as it has not been opened yet");
-        }
-
         await fetch(`${Livelink._api_url}/sessions/${this.session_id}`, {
             method: "DELETE",
             headers: this.#authentication_headers,

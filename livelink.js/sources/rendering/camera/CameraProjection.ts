@@ -177,6 +177,13 @@ export class CameraProjection {
     }
 
     /**
+     * Releases the resources used by the CameraProjection instance.
+     */
+    release(): void {
+        this.camera_entity.removeEventListener("on-entity-updated", this.#onEntityUpdated);
+    }
+
+    /**
      *
      */
     #onEntityUpdated = (event: EntityUpdatedEvent): void => {
@@ -365,8 +372,8 @@ export class CameraProjection {
         this.#world_orientation = frame_camera_transform.world_orientation;
         this.#world_from_view_matrix = Array.from(frame_camera_transform.world_from_view_matrix) as Mat4;
 
-        mat4.invert(this.#view_from_world_matrix, frame_camera_transform.world_from_view_matrix);
-        if (!this.#view_from_world_matrix) {
+        const result = mat4.invert(this.#view_from_world_matrix, frame_camera_transform.world_from_view_matrix);
+        if (!result) {
             console.warn(
                 "Failed to invert world_from_view_matrix from frame_camera_transform, using identity matrix instead",
                 frame_camera_transform,
@@ -382,7 +389,7 @@ export class CameraProjection {
     }
 
     /**
-     *
+     * Computes the perspective projection matrix for the camera using the Zero to One depth range convention.
      */
     #computePerspectiveProjection({ lens }: { lens: Components.PerspectiveLens }): void {
         mat4.perspectiveZO(
@@ -395,7 +402,7 @@ export class CameraProjection {
     }
 
     /**
-     *
+     * Computes the orthographic projection matrix for the camera using the Zero to One depth range convention.
      */
     #computeOrthographicProjection({ lens }: { lens: Components.OrthographicLens }): void {
         mat4.ortho(

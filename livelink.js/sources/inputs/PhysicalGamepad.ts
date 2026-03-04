@@ -1,5 +1,6 @@
 import type { Livelink } from "../Livelink";
 import { GamepadInputRelay, GamepadJoystick, GamepadAxis } from "./GamepadInputRelay";
+import { InputDevice } from "./InputDevice";
 
 /**
  * Represent a physical gamepad input device.
@@ -9,7 +10,7 @@ import { GamepadInputRelay, GamepadJoystick, GamepadAxis } from "./GamepadInputR
  * @category Inputs
  * @experimental
  */
-export class PhysicalGamepad {
+export class PhysicalGamepad extends InputDevice {
     /**
      *
      */
@@ -39,6 +40,7 @@ export class PhysicalGamepad {
      * @internal
      */
     constructor({ instance, index, physicalIndex }: { instance: Livelink; index: number; physicalIndex: number }) {
+        super();
         this.#input_relay = new GamepadInputRelay({ instance, index });
         this.#physical_index = physicalIndex;
     }
@@ -46,17 +48,18 @@ export class PhysicalGamepad {
     /**
      *
      */
-    enable(): void {
+    protected override _onEnable(): boolean {
         window.addEventListener("focus", this.#onWindowFocused);
         if (window.document.hasFocus()) {
             this.#setScanTimeout();
         }
+        return true;
     }
 
     /**
      *
      */
-    disable(): void {
+    protected override _onDisable(): void {
         this.#tryClearScanTimeout();
         this.#input_relay.resetInput();
         window.removeEventListener("focus", this.#onWindowFocused);

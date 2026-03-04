@@ -54,6 +54,10 @@ export class CanvasAutoResizer {
      */
     release(): void {
         this.#observer.disconnect();
+        if (this.#resize_debounce_timeout) {
+            clearTimeout(this.#resize_debounce_timeout);
+        }
+        this.#resize_debounce_timeout = null;
     }
 
     /**

@@ -107,8 +107,9 @@ export class RemoteFrameProxy implements DecodedFrameConsumer {
      */
     release(): void {
         for (const surface of this.#surfaces) {
-            surface.release();
+            this.#releaseSurface({ surface });
         }
+        this.#surfaces = [];
     }
 
     /**
@@ -157,8 +158,7 @@ export class RemoteFrameProxy implements DecodedFrameConsumer {
         viewport.release();
 
         if (surface.viewports.length === 0) {
-            surface.removeEventListener("on-rendering-surface-resized", this.#onFrameLayoutModified);
-            surface.release();
+            this.#releaseSurface({ surface });
             this.#surfaces.splice(index, 1);
         }
 
@@ -257,7 +257,7 @@ export class RemoteFrameProxy implements DecodedFrameConsumer {
      */
     #computeBoundingRect(): { offset: Vec2i; width: number; height: number } {
         const min: Vec2i = [Number.MAX_VALUE, Number.MAX_VALUE];
-        const max: Vec2i = [0, 0];
+        const max: Vec2i = [-Number.MAX_VALUE, -Number.MAX_VALUE];
 
         for (const surface of this.#surfaces) {
             const clientRect = surface.getBoundingRect();
@@ -276,6 +276,10 @@ export class RemoteFrameProxy implements DecodedFrameConsumer {
      *
      */
     #computeSurfaceDimensions({ offset, width, height }: { offset: Vec2i; width: number; height: number }): void {
+        if (width === 0 || height === 0) {
+            throw new Error("Invalid surface dimensions");
+        }
+
         for (const surface of this.#surfaces) {
             const clientRect = surface.getBoundingRect();
             surface.relative_rect = new RelativeRect({
@@ -285,5 +289,13 @@ export class RemoteFrameProxy implements DecodedFrameConsumer {
                 height: (clientRect.bottom - clientRect.top) / height,
             });
         }
+    }
+
+    /**
+     *
+     */
+    #releaseSurface({ surface }: { surface: RenderingSurfaceBase }): void {
+        surface.removeEventListener("on-rendering-surface-resized", this.#onFrameLayoutModified);
+        surface.release();
     }
 }

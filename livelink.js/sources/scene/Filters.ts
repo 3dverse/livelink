@@ -55,7 +55,7 @@ export function compute_rpn(filter_value: string): string {
                 break;
             case ")":
                 {
-                    while (operators[operators.length - 1] !== "(") {
+                    while (operators.length > 0 && operators[operators.length - 1] !== "(") {
                         output.push(operators.pop()!);
                     }
                     console.assert(operators[operators.length - 1] === "(");

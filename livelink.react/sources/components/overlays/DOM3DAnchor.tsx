@@ -68,7 +68,7 @@ export type DOM3DAnchorProps = PropsWithChildren<
 >;
 
 /**
- * A component that renders a <div> anchored to a provided world space position.
+ * A component that renders a div anchored to a provided world space position.
  *
  * @category Components
  */
@@ -105,7 +105,7 @@ type HorizontalAnchorOffset = "left" | "center" | "right";
 type VerticalAnchorOffset = "top" | "center" | "bottom";
 
 /**
- * A React component that renders a <div> anchored to a provided world space position, using
+ * A React component that renders a div anchored to a provided world space position, using
  * a ReactOverlay for projection.
  *
  * @internal
