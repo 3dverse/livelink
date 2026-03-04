@@ -141,6 +141,11 @@ export class Session extends TypedEventTarget<SessionEvents> implements SessionI
             },
         });
 
+        if (!res.ok) {
+            console.debug(`Could not find session with scene id ${scene_id}.`);
+            return null;
+        }
+
         const sessions = (await res.json()) as Array<SessionInfo>;
         if (sessions.length === 0) {
             return null;
@@ -349,6 +354,10 @@ export class Session extends TypedEventTarget<SessionEvents> implements SessionI
             headers: { ...this.#authentication_headers, "Content-Type": "application/json" },
             body: JSON.stringify({ is_headless }),
         });
+
+        if (!res.ok) {
+            throw new Error("Error when registering client to session");
+        }
 
         const { session_token, endpoint_info } = (await res.json()) as {
             session_token: string;
