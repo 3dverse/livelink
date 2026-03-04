@@ -376,10 +376,6 @@ export class Session extends TypedEventTarget<SessionEvents> implements SessionI
      * Close the session.
      */
     async close(): Promise<void> {
-        if (this.info === null) {
-            throw new Error("Cannot close session as it has not been opened yet");
-        }
-
         await fetch(`${Livelink._api_url}/sessions/${this.session_id}`, {
             method: "DELETE",
             headers: this.#authentication_headers,
