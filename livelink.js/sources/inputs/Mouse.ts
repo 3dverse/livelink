@@ -2,11 +2,12 @@ import { Enums } from "@3dverse/livelink.core";
 import { Livelink } from "../Livelink";
 import { Viewport } from "../rendering/camera/Viewport";
 import { BROWSER_ENV } from "../config/env";
+import { InputDevice } from "./InputDevice";
 
 /**
  * @category Inputs
  */
-export class Mouse {
+export class Mouse extends InputDevice {
     /**
      *
      */
@@ -42,6 +43,7 @@ export class Mouse {
      * @internal
      */
     constructor(instance: Livelink) {
+        super();
         this.#instance = instance;
     }
 
@@ -114,6 +116,18 @@ export class Mouse {
             }
         }
     }
+
+    /**
+     *
+     */
+    protected override _onEnable(): boolean {
+        return true;
+    }
+
+    /**
+     *
+     */
+    protected override _onDisable(): void {}
 
     /**
      *

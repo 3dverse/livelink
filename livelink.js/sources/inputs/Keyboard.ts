@@ -1,58 +1,43 @@
 import { Livelink } from "../Livelink";
+import { InputDevice } from "./InputDevice";
 
 /**
  * @category Inputs
  */
-export class Keyboard {
+export class Keyboard extends InputDevice {
     /**
      *
      */
     #instance: Livelink;
 
     /**
-     *
-     */
-    #enabled = false;
-
-    /**
      * @internal
      */
     constructor(instance: Livelink) {
+        super();
         this.#instance = instance;
     }
 
     /**
      *
      */
-    enable(): void {
-        if (this.#enabled) {
-            console.warn("Keyboard input is already enabled");
-            return;
-        }
-
+    protected override _onEnable(): boolean {
         window.addEventListener("keydown", this.#onKeyDown);
         window.addEventListener("keyup", this.#onKeyUp);
         window.addEventListener("blur", this.#resetInputs);
 
-        this.#enabled = true;
+        return true;
     }
 
     /**
      *
      */
-    disable(): void {
-        if (!this.#enabled) {
-            console.warn("Keyboard input is already disabled");
-            return;
-        }
-
+    protected override _onDisable(): void {
         window.removeEventListener("keydown", this.#onKeyDown);
         window.removeEventListener("keyup", this.#onKeyUp);
         window.removeEventListener("blur", this.#resetInputs);
 
         this.#resetInputs();
-
-        this.#enabled = false;
     }
 
     /**

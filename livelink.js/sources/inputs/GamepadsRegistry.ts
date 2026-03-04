@@ -1,6 +1,7 @@
 import { PhysicalGamepad } from "./PhysicalGamepad";
 import { Livelink } from "../Livelink";
 import { GamepadInputRelay } from "./GamepadInputRelay";
+import { InputDevice } from "./InputDevice";
 
 /**
  * Registry for managing gamepads in the Livelink instance.
@@ -10,7 +11,7 @@ import { GamepadInputRelay } from "./GamepadInputRelay";
  *
  * @category Inputs
  */
-export class GamepadsRegistry {
+export class GamepadsRegistry extends InputDevice {
     /**
      * The Livelink instance associated with this gamepads registry.
      */
@@ -33,6 +34,7 @@ export class GamepadsRegistry {
      * @internal
      */
     constructor({ instance }: { instance: Livelink }) {
+        super();
         this.#instance = instance;
 
         // Unused variable, but kept for future use if needed.
@@ -40,9 +42,22 @@ export class GamepadsRegistry {
     }
 
     /**
+     * @experimental
+     */
+    createVirtualGamepad(): GamepadInputRelay {
+        // Unused variable, but kept for future use if needed.
+        //this.#last_gamepad_index++;
+        const virtualGamepad = new GamepadInputRelay({
+            instance: this.#instance,
+            index: 0, //Once multiple gamepads support is implemented engine-side index can be this.#lastGamepadIndex instead of 0
+        });
+        return virtualGamepad;
+    }
+
+    /**
      *
      */
-    enable(): void {
+    protected override _onEnable(): boolean {
         const gamepads = navigator.getGamepads();
         this.#physical_gamepads = Array(gamepads.length).fill(null);
 
@@ -60,12 +75,14 @@ export class GamepadsRegistry {
 
         window.addEventListener("gamepadconnected", this.#onGamepadConnected);
         window.addEventListener("gamepaddisconnected", this.#onGamepadDisconnected);
+
+        return true;
     }
 
     /**
      *
      */
-    disable(): void {
+    protected override _onDisable(): void {
         window.removeEventListener("gamepadconnected", this.#onGamepadConnected);
         window.removeEventListener("gamepaddisconnected", this.#onGamepadDisconnected);
 
@@ -75,19 +92,6 @@ export class GamepadsRegistry {
             }
         }
         this.#physical_gamepads = [];
-    }
-
-    /**
-     * @experimental
-     */
-    createVirtualGamepad(): GamepadInputRelay {
-        // Unused variable, but kept for future use if needed.
-        //this.#last_gamepad_index++;
-        const virtualGamepad = new GamepadInputRelay({
-            instance: this.#instance,
-            index: 0, //Once multiple gamepads support is implemented engine-side index can be this.#lastGamepadIndex instead of 0
-        });
-        return virtualGamepad;
     }
 
     /**
