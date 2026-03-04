@@ -494,7 +494,7 @@ export abstract class EntityTransformHandler extends EntityBase {
     #computeGlobalEulerOrientation(): Vec3 {
         const orientationFromEuler = quaternionFromEuler(this.#local_transform.globalEulerOrientation);
         const isQuaternionEqual = orientationFromEuler.every(
-            (value, index) => Math.max(value - this.#global_transform.orientation[index]) < 0.000001,
+            (value, index) => Math.abs(value - this.#global_transform.orientation[index]) < 0.000001,
         );
 
         const quat = isQuaternionEqual
