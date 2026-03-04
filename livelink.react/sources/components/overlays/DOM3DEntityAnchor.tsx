@@ -26,7 +26,7 @@ export function DOMEntity({
 }
 
 /**
- * A component that renders a <div> anchored to the position of an entity in world space.
+ * A component that renders a div anchored to the position of an entity in world space.
  *
  * @category Components
  */
