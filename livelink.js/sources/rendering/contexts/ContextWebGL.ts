@@ -12,40 +12,45 @@ export class ContextWebGL extends ContextProvider {
     /**
      *
      */
-    private _canvas: Canvas;
+    #canvas: Canvas;
 
     /**
      *
      */
-    private _context: WebGLRenderingContext | WebGL2RenderingContext;
+    #context: WebGLRenderingContext | WebGL2RenderingContext;
 
     /**
      * The WebGLRenderingContext of the canvas
      */
-    private _texture_ref: WebGLTexture | null = null;
+    #texture_ref: WebGLTexture | null = null;
 
     /**
      * The WebGLRenderingContext of the canvas
      */
-    private _shader_program: WebGLProgram | null = null;
+    #shader_program: WebGLProgram | null = null;
 
     /**
      * The alternative frame buffer to draw on.
      */
-    private _frame_buffer: WebGLFramebuffer | null = null;
+    #frame_buffer: WebGLFramebuffer | null = null;
+
+    /**
+     * The vertex buffer for the full screen quad.
+     */
+    #vertex_buffer: WebGLBuffer | null = null;
 
     /**
      *
      */
     get native(): WebGLRenderingContext | WebGL2RenderingContext {
-        return this._context;
+        return this.#context;
     }
 
     /**
      *
      */
     set frame_buffer(fb: WebGLFramebuffer) {
-        this._frame_buffer = fb;
+        this.#frame_buffer = fb;
     }
 
     /**
@@ -63,8 +68,8 @@ export class ContextWebGL extends ContextProvider {
             throw new Error(`Cannot create a ${version} context from canvas`);
         }
 
-        this._canvas = canvas;
-        this._context = version === "webgl" ? (context as WebGLRenderingContext) : (context as WebGL2RenderingContext);
+        this.#canvas = canvas;
+        this.#context = version === "webgl" ? (context as WebGLRenderingContext) : (context as WebGL2RenderingContext);
 
         this._initShaderProgram();
         this._initBuffers();
@@ -75,22 +80,22 @@ export class ContextWebGL extends ContextProvider {
      *
      */
     drawFrameSection({ frame_section }: { frame_section: FrameSection }): void {
-        const gl = this._context;
+        const gl = this.#context;
 
-        if (this._frame_buffer !== null) {
-            gl.bindFramebuffer(gl.FRAMEBUFFER, this._frame_buffer);
+        if (this.#frame_buffer !== null) {
+            gl.bindFramebuffer(gl.FRAMEBUFFER, this.#frame_buffer);
         }
 
         gl.clearColor(1, 0, 0, 1);
         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
-        const ls = gl.getUniformLocation(this._shader_program!, "size");
-        const lo = gl.getUniformLocation(this._shader_program!, "offset");
+        const ls = gl.getUniformLocation(this.#shader_program!, "size");
+        const lo = gl.getUniformLocation(this.#shader_program!, "offset");
         gl.uniform2fv(ls, [frame_section.section.width, frame_section.section.height]);
         gl.uniform2fv(lo, [frame_section.section.left, frame_section.section.top]);
 
         gl.activeTexture(gl.TEXTURE0);
-        gl.bindTexture(gl.TEXTURE_2D, this._texture_ref);
+        gl.bindTexture(gl.TEXTURE_2D, this.#texture_ref);
         gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, frame_section.pixels);
         gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
     }
@@ -99,22 +104,26 @@ export class ContextWebGL extends ContextProvider {
      *
      */
     override refreshSize(): void {
-        this._context.viewport(0, 0, this._canvas.width, this._canvas.height);
+        this.#context.viewport(0, 0, this.#canvas.width, this.#canvas.height);
     }
 
     /**
      *
      */
     release(): void {
-        const gl = this._context;
+        const gl = this.#context;
         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+
+        gl.deleteTexture(this.#texture_ref);
+        gl.deleteProgram(this.#shader_program);
+        gl.deleteBuffer(this.#vertex_buffer);
     }
 
     /**
      *
      */
     private _initShaderProgram(): void {
-        const gl = this._context!;
+        const gl = this.#context!;
         // Vertex shader
         const vertex_shader_source = `
             attribute vec2 position;
@@ -161,21 +170,24 @@ export class ContextWebGL extends ContextProvider {
             console.error("Program failed to compile: " + gl.getProgramInfoLog(shader_program));
         }
         gl.useProgram(shader_program);
-        this._shader_program = shader_program;
+        this.#shader_program = shader_program;
+
+        gl.deleteShader(vertex_shader);
+        gl.deleteShader(fragment_shader);
     }
 
     /**
      *
      */
     private _initBuffers(): void {
-        const gl = this._context!;
+        const gl = this.#context!;
 
-        const vertex_buffer = gl.createBuffer();
+        this.#vertex_buffer = gl.createBuffer();
         const vertices = new Float32Array([1, 1, -1, 1, 1, -1, -1, -1]);
-        gl.bindBuffer(gl.ARRAY_BUFFER, vertex_buffer);
+        gl.bindBuffer(gl.ARRAY_BUFFER, this.#vertex_buffer);
         gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW);
 
-        const position_attribute_location = gl.getAttribLocation(this._shader_program!, "position");
+        const position_attribute_location = gl.getAttribLocation(this.#shader_program!, "position");
         gl.enableVertexAttribArray(position_attribute_location);
         gl.vertexAttribPointer(position_attribute_location, 2, gl.FLOAT, false, 0, 0);
     }
@@ -184,16 +196,16 @@ export class ContextWebGL extends ContextProvider {
      *
      */
     private _initTexture(): void {
-        const gl = this._context!;
-        this._texture_ref = gl.createTexture()!;
-        gl.bindTexture(gl.TEXTURE_2D, this._texture_ref);
+        const gl = this.#context!;
+        this.#texture_ref = gl.createTexture()!;
+        gl.bindTexture(gl.TEXTURE_2D, this.#texture_ref);
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
         gl.bindTexture(gl.TEXTURE_2D, null);
 
-        const texture_uniform_location = gl.getUniformLocation(this._shader_program!, "texture");
+        const texture_uniform_location = gl.getUniformLocation(this.#shader_program!, "texture");
         gl.uniform1i(texture_uniform_location, 0);
     }
 }
