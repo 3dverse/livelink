@@ -179,6 +179,7 @@ export class CameraController extends CameraControls {
     release(): void {
         this.#viewport.is_camera_controlled_by_current_client = false;
         this.#viewport.rendering_surface.removeEventListener("on-rendering-surface-resized", this.onViewportResize);
+        this.removeEventListener("update", this.#onCameraUpdate);
         this.deactivate();
         this.dispose();
         this.keyboard_fly_controls?.dispose();
