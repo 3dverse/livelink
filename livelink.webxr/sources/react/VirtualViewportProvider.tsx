@@ -1,7 +1,10 @@
+//------------------------------------------------------------------------------
+import React, { JSX, useMemo, useRef } from "react";
+import { createPortal } from "react-dom";
+
+//------------------------------------------------------------------------------
 import type { Viewport } from "@3dverse/livelink";
 import { ViewportContext } from "@3dverse/livelink-react";
-import React, { JSX, useMemo, useEffect } from "react";
-import { createPortal } from "react-dom";
 
 //------------------------------------------------------------------------------
 /**
@@ -11,24 +14,25 @@ export function VirtualViewportProvider({
     viewport,
     index,
     children,
-    rootDomOverlay,
+    domOverlayRoot,
 }: {
     viewport: Viewport;
     index: number;
     children: React.ReactNode;
-    rootDomOverlay: Element | null;
+    domOverlayRoot: Element;
 }): JSX.Element {
-    // Create a virtual DOM element that matches the viewport size
-    const { viewportDomElement, innerViewportElement } = useMemo(() => {
-        // Outer element: represents the displayable area (clipped to screen)
-        const outerElement = document.createElement("div");
-        outerElement.style.position = "absolute";
-        outerElement.style.overflow = "hidden"; // Clip content that exceeds displayable area
+    //--------------------------------------------------------------------------
+    // Ref for the outer viewport element
+    const outerElementRef = useRef<HTMLDivElement>(null);
+    const innerElementRef = useRef<HTMLDivElement>(null);
 
+    //--------------------------------------------------------------------------
+    // Compute viewport dimensions and positioning
+    const viewportLayout = useMemo(() => {
         // Get root DOM overlay dimensions to compute displayable viewport size
-        const rootRect = rootDomOverlay?.getBoundingClientRect();
-        const rootWidth = rootRect?.width || 0;
-        const rootHeight = rootRect?.height || 0;
+        const rootRect = domOverlayRoot.getBoundingClientRect();
+        const rootWidth = rootRect.width;
+        const rootHeight = rootRect.height;
 
         // Compute displayable position and size from relative rect (clipped to screen)
         const displayableLeft = viewport.relative_rect.left * rootWidth;
@@ -36,40 +40,28 @@ export function VirtualViewportProvider({
         const displayableWidth = viewport.relative_rect.width * rootWidth;
         const displayableHeight = viewport.relative_rect.height * rootHeight;
 
-        outerElement.style.left = `${displayableLeft}px`;
-        outerElement.style.top = `${displayableTop}px`;
-        outerElement.style.width = `${displayableWidth}px`;
-        outerElement.style.height = `${displayableHeight}px`;
-        outerElement.style.pointerEvents = "none";
-        outerElement.setAttribute("data-role", "xr-virtual-viewport-outer");
-        outerElement.setAttribute("data-viewport-index", index.toString());
-
-        // Inner element: represents the full desired viewport dimensions
-        const innerElement = document.createElement("div");
-        innerElement.style.position = "absolute";
-        innerElement.style.left = "0px";
-        innerElement.style.top = "0px";
-
-        // Use actual viewport dimensions for the inner element
+        // Use actual viewport dimensions for the desired size
         const desiredWidth = viewport.width;
         const desiredHeight = viewport.height;
 
-        // Center the content within the displayable area
-        const offsetX = (displayableWidth - desiredWidth) / 2;
-        const offsetY = (displayableHeight - desiredHeight) / 2;
+        // Check if inner element is needed (when desired size differs from displayable size)
+        // This can happen when overscan is enabled, or if the viewport is configured larger than the displayable area
+        const needsInnerElement = desiredWidth !== displayableWidth || desiredHeight !== displayableHeight;
 
-        innerElement.style.width = `${desiredWidth}px`;
-        innerElement.style.height = `${desiredHeight}px`;
-        innerElement.style.transform = `translate(${offsetX}px, ${offsetY}px)`;
-        innerElement.style.transformOrigin = "top left";
-        innerElement.setAttribute("data-role", "xr-virtual-viewport-inner");
-
-        // Append inner to outer
-        outerElement.appendChild(innerElement);
+        // Center the content within the displayable area if using inner element
+        const offsetX = needsInnerElement ? (displayableWidth - desiredWidth) / 2 : 0;
+        const offsetY = needsInnerElement ? (displayableHeight - desiredHeight) / 2 : 0;
 
         return {
-            viewportDomElement: outerElement,
-            innerViewportElement: innerElement,
+            displayableLeft,
+            displayableTop,
+            displayableWidth,
+            displayableHeight,
+            desiredWidth,
+            desiredHeight,
+            overscanEnabled: needsInnerElement,
+            offsetX,
+            offsetY,
         };
     }, [
         viewport.relative_rect.left,
@@ -78,41 +70,74 @@ export function VirtualViewportProvider({
         viewport.relative_rect.height,
         viewport.width,
         viewport.height,
-        index,
-        rootDomOverlay,
+        domOverlayRoot,
     ]);
 
-    // Append the virtual DOM element to the root DOM overlay
-    useEffect(() => {
-        if (!rootDomOverlay) {
-            return;
-        }
-
-        rootDomOverlay.appendChild(viewportDomElement);
-        return (): void => {
-            rootDomOverlay.removeChild(viewportDomElement);
-        };
-    }, [viewportDomElement, rootDomOverlay]);
-
     //--------------------------------------------------------------------------
-    // Clean up the viewport when the component is unmounted
-    useEffect(() => {
-        return (): void => {
-            viewportDomElement.remove();
-        };
-    }, [viewportDomElement]);
-
     // Create ViewportContext value
     const viewportContextValue = useMemo(
         () => ({
             viewport,
-            viewportDomElement: innerViewportElement, // Use the inner element for content placement
+            // Use inner element if overscan is enabled, otherwise use outer element
+            viewportDomElement: viewportLayout.overscanEnabled
+                ? innerElementRef.current
+                : outerElementRef.current,
             zIndex: viewport.z_index,
             camera: viewport.camera_projection,
         }),
-        [viewport, innerViewportElement],
+        [viewport, viewportLayout.overscanEnabled],
     );
 
-    const portal = createPortal(children, innerViewportElement);
-    return <ViewportContext.Provider value={viewportContextValue}>{portal}</ViewportContext.Provider>;
+    //--------------------------------------------------------------------------
+    // Outer viewport styles
+    const outerStyles: React.CSSProperties = {
+        position: "absolute",
+        left: `${viewportLayout.displayableLeft}px`,
+        top: `${viewportLayout.displayableTop}px`,
+        width: `${viewportLayout.displayableWidth}px`,
+        height: `${viewportLayout.displayableHeight}px`,
+        overflow: "hidden", // Clip content that exceeds displayable area
+        pointerEvents: "none",
+    };
+
+    //--------------------------------------------------------------------------
+    // Inner viewport styles (only when needed)
+    const innerStyles: React.CSSProperties = {
+        position: "absolute",
+        left: "0px",
+        top: "0px",
+        width: `${viewportLayout.desiredWidth}px`,
+        height: `${viewportLayout.desiredHeight}px`,
+        transform: `translate(${viewportLayout.offsetX}px, ${viewportLayout.offsetY}px)`,
+        transformOrigin: "top left",
+    };
+
+    //--------------------------------------------------------------------------
+    const content = (
+        <div
+            ref={outerElementRef}
+            style={outerStyles}
+            data-role="xr-virtual-viewport"
+            data-viewport-index={index.toString()}
+        >
+            {viewportLayout.overscanEnabled ? (
+                <div
+                    ref={innerElementRef}
+                    style={innerStyles}
+                    data-role="xr-virtual-viewport-overscan"
+                >
+                    {children}
+                </div>
+            ) : (
+                children
+            )}
+        </div>
+    );
+
+    //--------------------------------------------------------------------------
+    return (
+        <ViewportContext.Provider value={viewportContextValue}>
+            {createPortal(content, domOverlayRoot)}
+        </ViewportContext.Provider>
+    );
 }

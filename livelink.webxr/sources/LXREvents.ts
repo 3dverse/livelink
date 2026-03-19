@@ -13,10 +13,9 @@ export class ViewportUpdatedEvent extends Event {
     readonly viewport: Viewport;
 }
 
-//------------------------------------------------------------------------------
 /**
- * Events emitted by WebXRHelper.
+ * Events emitted by XRLivelink.
  */
-export type WebXREvents = {
+export type LXREvents = {
     "on-viewport-updated": ViewportUpdatedEvent;
 };

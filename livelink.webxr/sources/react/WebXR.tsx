@@ -1,40 +1,27 @@
 //------------------------------------------------------------------------------
 import React, {
-    JSX,
+    type JSX,
     type PropsWithChildren,
-    createContext,
     useContext,
     useEffect,
+    useLayoutEffect,
     useMemo,
     useRef,
     useState,
 } from "react";
 
 //------------------------------------------------------------------------------
-import type { Viewport } from "@3dverse/livelink";
+import type { Transform, Viewport } from "@3dverse/livelink";
 import { LivelinkContext } from "@3dverse/livelink-react";
-import { WebXRHelper } from "../WebXRHelper";
-import { VirtualViewportProvider } from "./VirtualViewportProvider";
+
+//------------------------------------------------------------------------------
+import { XRLivelink } from "../XRLivelink";
+import { XRVirtualViewports } from "./XRVirtualViewports";
+import { WebXRContext } from "./WebXRContext";
 
 //------------------------------------------------------------------------------
 /**
- * Context that provides utilities for WebXR.
- *
- * @category Contexts
- */
-export const WebXRContext = createContext<{
-    webXRHelper: WebXRHelper | null;
-    xrSession: XRSession | null;
-    viewports: ReadonlyArray<Viewport>;
-}>({
-    webXRHelper: null,
-    xrSession: null,
-    viewports: [],
-});
-
-//------------------------------------------------------------------------------
-/**
- * A component that provides a WebXR session
+ * Component providing WebXR experience management.
  *
  * @category Components
  */
@@ -44,6 +31,8 @@ export function WebXR({
     requiredFeatures = [],
     optionalFeatures = [],
     forceSingleView,
+    originTransform,
+    preserveInitialOrientation = false,
     latencyCompensation = true,
     overscan = false,
     fakeAlpha,
@@ -53,189 +42,217 @@ export function WebXR({
     renderViewport,
 }: PropsWithChildren<{
     /**
-     * The mode of the XR session. See {@link https://developer.mozilla.org/en-US/docs/Web/API/XRSystem/requestSession#mode XRSessionMode} for more details.
+     * XR session mode. See {@link https://developer.mozilla.org/en-US/docs/Web/API/XRSystem/requestSession#mode XRSessionMode}.
      */
     mode: XRSessionMode;
 
     /**
-     * The required features for the XR session. See {@link https://developer.mozilla.org/en-US/docs/Web/API/XRSystem/requestSession#options XRSessionInit.requiredFeatures} for more details.
+     * Required features for XR session. See {@link https://developer.mozilla.org/en-US/docs/Web/API/XRSystem/requestSession#options XRSessionInit.requiredFeatures}.
      */
     requiredFeatures?: string[];
 
     /**
-     * The optional features for the XR session. See {@link https://developer.mozilla.org/en-US/docs/Web/API/XRSystem/requestSession#options XRSessionInit.optionalFeatures} for more details.
+     * Optional features for XR session. See {@link https://developer.mozilla.org/en-US/docs/Web/API/XRSystem/requestSession#options XRSessionInit.optionalFeatures}.
      */
     optionalFeatures?: string[];
 
     /**
-     * Forces single view mode, even on devices that support stereo rendering.
+     * Forces single view mode on devices supporting stereo rendering.
      */
     forceSingleView?: boolean;
 
     /**
-     * Enables latency compensation mode to draw the scene on a plane to reduce perceived latency.
-     * Enabled by default.
+     * Transform for XR origin (initial position, orientation, or scale).
+     */
+    originTransform?: Partial<Transform>;
+
+    /**
+     * Whether to preserve the device's physical orientation (pitch/roll) at session start in tracking normalization.
+     *
+     * At session start, the device orientation is captured:
+     * - **Yaw** (horizontal direction): Always starts at 0 (no absolute north reference)
+     * - **Pitch** (tilt up/down): Captured from device inclination relative to gravity
+     * - **Roll** (tilt sideways): Captured from device rotation relative to gravity
+     *
+     * - **false (default)**: Pitch and roll are zeroed out. Virtual world orientation is level and fixed,
+     *   determined solely by `originTransform`. The virtual floor stays horizontal regardless of how you held
+     *   the device when starting the session.
+     * - **true**: Pitch and roll are preserved. If you started the session with your phone tilted 30° upward,
+     *   the virtual coordinate system adapts to that tilt.
+     *
+     * Most use cases want false to ensure consistent, level virtual world orientation.
+     */
+    preserveInitialOrientation?: boolean;
+
+    /**
+     * Enables latency compensation (draws scene on plane to reduce perceived latency). Enabled by default.
      */
     latencyCompensation?: boolean;
 
     /**
-     * Enables overscan for latency compensation mode, increasing the field of view to reduce edge artifacts.
+     * Enables overscan for latency compensation (increases FOV to reduce edge artifacts).
      */
     overscan?: boolean;
 
     /**
-     * Enables or disable fake alpha mode for AR sessions, which simulates transparency with black background.
-     * Enabled by default for "immersive-ar" mode.
+     * Enables/disables fake alpha for AR (simulates transparency with black background). Default: true for "immersive-ar".
      */
     fakeAlpha?: boolean;
 
     /**
-     * The resolution scale factor to apply to the XR session.
+     * Resolution scale factor for XR session.
      */
     scale?: number;
 
     /**
-     * Specifies a custom DOM overlay root element.
+     * Custom DOM overlay root element.
      */
     domOverlayRoot?: Element;
 
     /**
-     * Callback invoked when the XR session ends.
+     * Callback invoked when XR session ends.
      */
-    onSessionEnd?: () => void;
+    onSessionEnd?: (event: XRSessionEvent) => void;
 
     /**
-     * Render function called for each WebXR viewport. Receives the viewport and should return JSX that will be wrapped in a ViewportContext.Provider.
+     * Render function for each WebXR viewport. Returns JSX wrapped in ViewportContext.Provider.
      */
     renderViewport?: (viewport: Viewport, index: number) => React.ReactNode;
 }>): JSX.Element {
     //--------------------------------------------------------------------------
+    // Ref
+    const cleanupPromiseRef = useRef<Promise<void> | null>(null);
+
+    //--------------------------------------------------------------------------
+    // State
+    const [xrLivelink, setXRLivelink] = useState<XRLivelink | null>(null);
+    const [domOverlayRootElement, setDomOverlayRootElement] = useState<Element | undefined>(domOverlayRoot);
+
+    //--------------------------------------------------------------------------
+    // Context
     const { instance } = useContext(LivelinkContext);
 
     //--------------------------------------------------------------------------
-    const containerRef = useRef<HTMLDivElement>(null);
-    const webXRHelper = useMemo(
-        () => new WebXRHelper(scale),
-        [mode, requiredFeatures.join("-"), optionalFeatures.join("-"), forceSingleView, domOverlayRoot],
-    );
-    const initializationPromiseRef = useRef<Promise<void> | null>(null);
-    const [xrSession, setXrSession] = useState<XRSession | null>(null);
-    const [viewports, setViewports] = useState<ReadonlyArray<Viewport>>([]);
-    const [viewportUpdateCounter, setViewportUpdateCounter] = useState(0);
+    // Memoize context value to avoid unnecessary re-renders of consumers
+    const contextValue = useMemo(() => ({ xrLivelink }), [xrLivelink]);
 
     //--------------------------------------------------------------------------
-    useEffect(() => {
-        webXRHelper.resolution_scale = scale;
-    }, [webXRHelper, scale]);
-
-    //--------------------------------------------------------------------------
-    useEffect(() => {
-        webXRHelper.enable_latency_compensation = latencyCompensation;
-    }, [webXRHelper, latencyCompensation]);
-
-    //--------------------------------------------------------------------------
-    useEffect(() => {
-        webXRHelper.enable_overscan = overscan;
-    }, [webXRHelper, overscan]);
-
-    //--------------------------------------------------------------------------
-    useEffect(() => {
-        if (!xrSession || !onSessionEnd) {
+    // Manage xrLivelink lifecycle: create when instance available, release on cleanup
+    useLayoutEffect(() => {
+        if (!instance || !domOverlayRootElement) {
             return;
         }
 
-        xrSession.addEventListener("end", onSessionEnd);
+        // Generate a unique ID for this effect to correlate logs related to the same lifecycle
+        const effectId = Math.random().toString(36).substring(2, 9);
+
+        // Abort controller to avoid side effects when the component is unmounted.
+        // Abort has to be handled in async functions to prevent state updates after the component is unmounted.
+        const abort_controller = new AbortController();
+        const { signal } = abort_controller;
+
+        // Associate the XRLivelink instance with the Livelink instance from context
+        const xr = new XRLivelink(instance);
+        let session: XRSession | null = null;
+
+        const reentrantAsyncInit = async (): Promise<void> => {
+            // Wait for any pending cleanup of the previous instance to complete before initializing
+            if (cleanupPromiseRef.current) {
+                await cleanupPromiseRef.current;
+            }
+            if (signal.aborted) {
+                throw new DOMException(`[${effectId}] XRLivelink start up aborted before initialization`, "AbortError");
+            }
+
+            console.debug(`[${effectId}] XRLivelink start up`, { scale, overscan, fakeAlpha });
+
+            // Initialize XRLivelink and start XR session
+            session = await xr.initialize({
+                mode,
+                xr_session_init: {
+                    requiredFeatures,
+                    optionalFeatures: ["dom-overlay", ...optionalFeatures],
+                    domOverlay: { root: domOverlayRootElement },
+                },
+                force_single_view: forceSingleView,
+                origin_transform: originTransform,
+                preserve_initial_orientation: preserveInitialOrientation,
+                signal,
+            });
+
+            if (onSessionEnd) {
+                session.addEventListener("end", onSessionEnd);
+            }
+
+            console.debug(`[${effectId}] XRLivelink configuring viewports & start XRFrame loop`);
+            xr.start();
+
+            console.debug(`[${effectId}] XRLivelink started`);
+            setXRLivelink(xr);
+        };
+
+        // Start the async initialization and handle any errors (abort or not) to avoid unhandled promise rejections
+        reentrantAsyncInit().catch(error => {
+            if (error.name === "AbortError") {
+                console.debug(`[${effectId}] XRLivelink start up aborted`);
+            } else {
+                console.error(`[${effectId}] Failed to start up XRLivelink`, error);
+            }
+        });
 
         return (): void => {
-            xrSession.removeEventListener("end", onSessionEnd);
+            console.debug(`[${effectId}] Releasing XRLivelink`);
+            if (onSessionEnd) {
+                // TODO: Something's tricky about that onSessionEnd the sample uses it to reset the xr mode to null, but
+                // to switch mode between AR and VR we need to end the session first, which triggers onSessionEnd and
+                // reset the mode to null before we can start the new session.
+                // We need to find a way to differentiate between session end triggered by user and session end
+                // triggered by mode switch.
+                session?.removeEventListener("end", onSessionEnd);
+            }
+            abort_controller.abort();
+            cleanupPromiseRef.current = xr.release().finally(() => {
+                cleanupPromiseRef.current = null;
+                console.debug(`[${effectId}] XRLivelink released`);
+            });
         };
-    }, [xrSession, onSessionEnd]);
+    }, [
+        instance,
+        mode,
+        requiredFeatures.join("-"),
+        optionalFeatures.join("-"),
+        forceSingleView,
+        domOverlayRootElement,
+        fakeAlpha,
+    ]);
 
     //--------------------------------------------------------------------------
     useEffect(() => {
-        const rootDomOverlay = domOverlayRoot || containerRef.current;
-        if (!rootDomOverlay || !instance) {
-            return;
+        if (xrLivelink) {
+            xrLivelink.resolution_scale = scale;
         }
-
-        // Initialize the WebXR session is kept in a ref to avoid
-        // re-initializing it on every render, especially when on strict mode.
-        if (!initializationPromiseRef.current) {
-            console.debug("---- Initializing WebXR", { scale, overscan, fakeAlpha });
-
-            initializationPromiseRef.current = webXRHelper
-                .initialize(mode, {
-                    xrSessionInit: {
-                        requiredFeatures,
-                        optionalFeatures: ["dom-overlay", ...optionalFeatures],
-                        domOverlay: { root: rootDomOverlay },
-                    },
-                    forceSingleView,
-                })
-                .then(session => {
-                    setXrSession(session);
-                    console.debug("---- Setting XR viewports");
-                    return webXRHelper.configureViewports({
-                        livelink: instance,
-                        enable_fake_alpha: fakeAlpha,
-                    });
-                })
-                .then(() => {
-                    console.debug("---- WebXR initialized");
-                    webXRHelper.start();
-                    setViewports(webXRHelper.viewports);
-                    initializationPromiseRef.current = null;
-                });
-        }
-
-        return (): void => {
-            // This function might be called before the initialization promise
-            // is resolved in strict mode. But this is not a problem since the
-            // webXRHelper cannot release anything before the initialization is done.
-            console.debug("---- Releasing WebXR");
-            webXRHelper.release();
-            setXrSession(null);
-            setViewports([]);
-        };
-    }, [webXRHelper, instance]);
+    }, [xrLivelink, scale]);
 
     //--------------------------------------------------------------------------
-    const contextValue = useMemo(() => ({ webXRHelper, xrSession, viewports }), [webXRHelper, xrSession, viewports]);
-
-    //--------------------------------------------------------------------------
-    // Create virtual viewport components for each WebXR viewport
-    const virtualViewports = useMemo(() => {
-        if (!renderViewport || viewports.length === 0) {
-            return null;
-        }
-
-        const rootDomOverlay = domOverlayRoot || containerRef.current;
-
-        return viewports.map((viewport, index) => (
-            <VirtualViewportProvider
-                key={`xr-viewport-${index}`}
-                viewport={viewport}
-                rootDomOverlay={rootDomOverlay}
-                index={index}
-            >
-                {renderViewport(viewport, index)}
-            </VirtualViewportProvider>
-        ));
-    }, [renderViewport, viewports, domOverlayRoot, containerRef.current, viewportUpdateCounter]);
-
-    //--------------------------------------------------------------------------
-    // Listen for WebXR viewport updates and trigger a re-render when they change
     useEffect(() => {
-        const onViewportUpdated = (): void => {
-            setViewportUpdateCounter(counter => counter + 1);
-        };
+        if (xrLivelink) {
+            xrLivelink.enable_latency_compensation = latencyCompensation;
+        }
+    }, [xrLivelink, latencyCompensation]);
 
-        webXRHelper.addEventListener("on-viewport-updated", onViewportUpdated);
+    //--------------------------------------------------------------------------
+    useEffect(() => {
+        if (xrLivelink) {
+            xrLivelink.enable_overscan = overscan;
+        }
+    }, [xrLivelink, overscan]);
 
-        return (): void => {
-            webXRHelper.removeEventListener("on-viewport-updated", onViewportUpdated);
-        };
-    }, [webXRHelper, viewports.length]);
+    //--------------------------------------------------------------------------
+    useEffect(() => {
+        if (xrLivelink && fakeAlpha !== undefined) {
+            xrLivelink.enable_fake_alpha = fakeAlpha;
+        }
+    }, [xrLivelink, fakeAlpha]);
 
     //--------------------------------------------------------------------------
     return (
@@ -243,7 +260,7 @@ export function WebXR({
             {!domOverlayRoot ? (
                 <div
                     data-role="webxr-dom-overlay"
-                    ref={containerRef}
+                    ref={ref => setDomOverlayRootElement(ref || undefined)}
                     style={{
                         position: "absolute",
                         width: "100%",
@@ -257,7 +274,12 @@ export function WebXR({
             ) : (
                 <>{children}</>
             )}
-            {virtualViewports}
+            <XRVirtualViewports
+                xrLivelink={xrLivelink}
+                renderViewport={renderViewport}
+                viewports={xrLivelink?.viewports || []}
+                domOverlayRoot={domOverlayRootElement}
+            />
         </WebXRContext.Provider>
     );
 }

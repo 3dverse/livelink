@@ -1,11 +1,15 @@
-import { ContextProvider, FrameMetaData, FrameSection, Quat, Vec3 } from "@3dverse/livelink";
+//------------------------------------------------------------------------------
+import type { FrameMetaData, FrameSection, Quat, Vec3 } from "@3dverse/livelink";
+import { ContextProvider } from "@3dverse/livelink";
 
+//------------------------------------------------------------------------------
 type Canvas = HTMLCanvasElement | OffscreenCanvas;
 
+//------------------------------------------------------------------------------
 /**
- *
+ * A rendering context that directly uses the WebGL context of the canvas for passthrough rendering.
  */
-export class XRContextPassthrough extends ContextProvider {
+export class LXRContextPassthrough extends ContextProvider {
     /**
      *
      */

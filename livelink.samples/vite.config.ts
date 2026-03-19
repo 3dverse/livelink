@@ -10,6 +10,7 @@ export default defineConfig({
     base: "",
     server: {
         host: "0.0.0.0",
+        allowedHosts: true,
         https: fs.existsSync("ssl")
             ? {
                   cert: "./ssl/cert.crt",

@@ -47,6 +47,7 @@
     "@types/react-dom": ">=18.2.0",
     "@3dverse/livelink": "^0.8.32",
     "@3dverse/livelink-react": "^0.2.45",
+    "@3dverse/livelink-react-ui": "^0.3.18",
     "react": ">=18.2.0",
     "react-dom": ">=18.2.0",
     "threejs-math": "^0.147.0"

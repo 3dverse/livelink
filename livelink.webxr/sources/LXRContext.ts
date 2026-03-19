@@ -2,13 +2,15 @@
 import { mat4, quat, vec2, vec3 } from "gl-matrix";
 
 //------------------------------------------------------------------------------
-import { ContextProvider, FrameMetaData, FrameSection, Transform } from "@3dverse/livelink";
+import type { FrameMetaData, FrameSection, Quat, Vec3 } from "@3dverse/livelink";
+import { ContextProvider } from "@3dverse/livelink";
 
+//------------------------------------------------------------------------------
 /**
  * @experimental
  * @category Rendering Contexts
  */
-export class XRContext extends ContextProvider {
+export class LXRContext extends ContextProvider {
     /**
      *
      */
@@ -139,9 +141,12 @@ export class XRContext extends ContextProvider {
         xr_viewports,
         frame_camera_transforms,
     }: {
-        xr_views: XRView[];
+        xr_views: readonly XRView[];
         xr_viewports: XRViewport[];
-        frame_camera_transforms: Pick<Transform, "position" | "orientation">[];
+        frame_camera_transforms: {
+            position: Vec3;
+            orientation: Quat;
+        }[];
     }): void {
         if (!this.#last_frame_section) {
             return;
@@ -247,6 +252,12 @@ export class XRContext extends ContextProvider {
         const gl = this.#context;
         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
         gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+        if (this.#texture_ref) {
+            gl.deleteTexture(this.#texture_ref);
+        }
+        if (this.#shader_program) {
+            gl.deleteProgram(this.#shader_program);
+        }
     }
 
     /**
@@ -356,6 +367,11 @@ export class XRContext extends ContextProvider {
             console.error("Program failed to compile: " + gl.getProgramInfoLog(shader_program));
         }
         gl.useProgram(shader_program);
+
+        // Release shaders as they are no longer needed after linking
+        gl.deleteShader(vertex_shader);
+        gl.deleteShader(fragment_shader);
+
         this.#shader_program = shader_program;
     }
 
