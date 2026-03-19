@@ -13,7 +13,7 @@ import {
     useCameraEntity,
 } from "@3dverse/livelink-react";
 import { XRLivelink, WebXR, XRVirtualJoysticks } from "@3dverse/livelink-webxr";
-import { LoadingOverlay } from "@3dverse/livelink-react-ui";
+import { LoadingOverlay, PerformancePanel } from "@3dverse/livelink-react-ui";
 import type { Vec3 } from "@3dverse/livelink";
 
 //------------------------------------------------------------------------------
@@ -36,7 +36,20 @@ export function App() {
     const [overscan, setOverscan] = useState(true);
 
     //--------------------------------------------------------------------------
-    // Cleanup dom overlay root when exiting XR or on component unmount
+    // Cleanup dom overlay root on component unmount
+    useEffect(() => {
+        return () => {
+            if (domOverlayRef.current && domOverlayRef.current.parentNode) {
+                domOverlayRef.current.parentNode.removeChild(
+                    domOverlayRef.current,
+                );
+                domOverlayRef.current = null;
+            }
+        };
+    }, []);
+
+    //--------------------------------------------------------------------------
+    // Cleanup dom overlay root when exiting XR mode
     useEffect(() => {
         if (
             xrMode === null &&
@@ -46,15 +59,6 @@ export function App() {
             domOverlayRef.current.parentNode.removeChild(domOverlayRef.current);
             domOverlayRef.current = null;
         }
-
-        return () => {
-            if (domOverlayRef.current && domOverlayRef.current.parentNode) {
-                domOverlayRef.current.parentNode.removeChild(
-                    domOverlayRef.current,
-                );
-                domOverlayRef.current = null;
-            }
-        };
     }, [xrMode]);
 
     //--------------------------------------------------------------------------
@@ -88,7 +92,7 @@ export function App() {
                 >
                     Exit AR
                 </button>
-                <XRVirtualJoysticks />
+                <XRVirtualJoysticks yPos="12rem" />
                 <div className="fixed bottom-2 left-2 right-2 flex flex-col sm:flex-row sm:justify-between items-center gap-2">
                     <div className="order-2 sm:order-1">
                         <ScaleSelector scale={scale} setScale={setScale} />
@@ -100,6 +104,7 @@ export function App() {
                             overscan={overscan}
                             setOverscan={setOverscan}
                         />
+                        <PerformancePanel />
                     </div>
                 </div>
             </div>,

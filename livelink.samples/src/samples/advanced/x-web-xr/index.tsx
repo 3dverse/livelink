@@ -13,7 +13,7 @@ import {
     DOM3DDiv,
 } from "@3dverse/livelink-react";
 import { XRLivelink, WebXR, XRVirtualJoysticks } from "@3dverse/livelink-webxr";
-import { LoadingOverlay } from "@3dverse/livelink-react-ui";
+import { LoadingOverlay, PerformancePanel } from "@3dverse/livelink-react-ui";
 import type { Vec3 } from "@3dverse/livelink";
 
 //------------------------------------------------------------------------------
@@ -53,7 +53,7 @@ export function App() {
                         eulerOrientation: [0, 45, 0],
                     }}
                 >
-                    <XRVirtualJoysticks />
+                    <XRVirtualJoysticks yPos="12rem" />
                     <div className="fixed top-3 flex flex-wrap items-center justify-center gap-3 mx-2">
                         <button
                             className="button button-primary"
@@ -83,6 +83,7 @@ export function App() {
                                 overscan={overscan}
                                 setOverscan={setOverscan}
                             />
+                            <PerformancePanel />
                         </div>
                     </div>
                 </WebXR>
