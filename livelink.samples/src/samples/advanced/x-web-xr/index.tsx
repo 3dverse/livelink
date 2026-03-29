@@ -12,7 +12,11 @@ import {
     useCameraEntity,
     DOM3DDiv,
 } from "@3dverse/livelink-react";
-import { XRLivelink, WebXR, XRVirtualJoysticks } from "@3dverse/livelink-webxr";
+import {
+    XRLivelink,
+    WebXR,
+    WebXRVirtualJoysticks,
+} from "@3dverse/livelink-webxr";
 import { LoadingOverlay, PerformancePanel } from "@3dverse/livelink-react-ui";
 import type { Vec3 } from "@3dverse/livelink";
 
@@ -30,6 +34,7 @@ export function App() {
     const [scale, setScale] = useState(1);
     const [latencyCompensation, setLatencyCompensation] = useState(true);
     const [overscan, setOverscan] = useState(true);
+    const [xrLivelink, setXrLivelink] = useState<XRLivelink | null>(null);
 
     return (
         <Livelink
@@ -52,8 +57,9 @@ export function App() {
                         position: [0, 2, 5],
                         eulerOrientation: [0, 45, 0],
                     }}
+                    ref={ref => setXrLivelink(ref?.livelinkXR ?? null)}
                 >
-                    <XRVirtualJoysticks yPos="12rem" />
+                    <WebXRVirtualJoysticks yPos="12rem" />
                     <div className="fixed top-3 flex flex-wrap items-center justify-center gap-3 mx-2">
                         <button
                             className="button button-primary"
@@ -77,12 +83,20 @@ export function App() {
                             <ScaleSelector scale={scale} setScale={setScale} />
                         </div>
                         <div className="order-1 sm:order-2">
-                            <XROptions
-                                latencyCompensation={latencyCompensation}
-                                setLatencyCompensation={setLatencyCompensation}
-                                overscan={overscan}
-                                setOverscan={setOverscan}
-                            />
+                            {xrLivelink && (
+                                <XROptions
+                                    showScalingOptions={
+                                        xrMode === "immersive-ar"
+                                    }
+                                    latencyCompensation={latencyCompensation}
+                                    setLatencyCompensation={
+                                        setLatencyCompensation
+                                    }
+                                    overscan={overscan}
+                                    setOverscan={setOverscan}
+                                    xrLivelink={xrLivelink}
+                                />
+                            )}
                             <PerformancePanel />
                         </div>
                     </div>
@@ -110,14 +124,22 @@ export function App() {
                                 />
                             </div>
                             <div className="order-1 sm:order-2">
-                                <XROptions
-                                    latencyCompensation={latencyCompensation}
-                                    setLatencyCompensation={
-                                        setLatencyCompensation
-                                    }
-                                    overscan={overscan}
-                                    setOverscan={setOverscan}
-                                />
+                                {xrLivelink && (
+                                    <XROptions
+                                        showScalingOptions={
+                                            xrMode === "immersive-ar"
+                                        }
+                                        latencyCompensation={
+                                            latencyCompensation
+                                        }
+                                        setLatencyCompensation={
+                                            setLatencyCompensation
+                                        }
+                                        overscan={overscan}
+                                        setOverscan={setOverscan}
+                                        xrLivelink={xrLivelink}
+                                    />
+                                )}
                             </div>
                         </div>
                     </div>
@@ -272,15 +294,19 @@ function XRButton({
 
 //------------------------------------------------------------------------------
 function XROptions({
+    showScalingOptions,
     latencyCompensation,
     setLatencyCompensation,
     overscan,
     setOverscan,
+    xrLivelink,
 }: {
+    showScalingOptions: boolean;
     latencyCompensation: boolean;
     setLatencyCompensation: (value: boolean) => void;
     overscan: boolean;
     setOverscan: (value: boolean) => void;
+    xrLivelink: XRLivelink;
 }) {
     const buttonClassName =
         "px-2 py-1 border-2 border-[#333] rounded-lg min-w-12 text-center";
@@ -293,6 +319,22 @@ function XROptions({
 
     return (
         <div className="flex flex-wrap gap-2 justify-center">
+            {showScalingOptions && (
+                <>
+                    <button
+                        onClick={() => xrLivelink.scaleUp()}
+                        className={`${buttonClassName} bg-white text-[#333] cursor-pointer`}
+                    >
+                        +
+                    </button>
+                    <button
+                        onClick={() => xrLivelink.scaleDown()}
+                        className={`${buttonClassName} bg-white text-[#333] cursor-pointer`}
+                    >
+                        -
+                    </button>
+                </>
+            )}
             <button
                 onClick={() => setLatencyCompensation(!latencyCompensation)}
                 className={`${buttonClassName} ${latencyCompensation ? selectedButtonClassName : unselectedButtonClassName}`}

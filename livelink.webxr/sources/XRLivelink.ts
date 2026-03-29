@@ -355,19 +355,20 @@ export class XRLivelink extends TypedEventTarget<LXREvents> {
             xr_views,
         });
 
-        // Initialize camera rig with origin at initial center eye position
-        await this.#camera_rig.initialize({
-            origin_transform,
-            xr_views,
-            preserve_initial_orientation,
-        });
-        this.#throwIfAborted(signal, "viewport configuration");
-
         // Initialize viewports and cameras for each XR view
         for (const xr_view of xr_views) {
             await this.#initializeViewport({ xr_view, is_ar });
             this.#throwIfAborted(signal, "viewport configuration");
         }
+
+        // Initialize camera rig with origin at initial center eye position
+        await this.#camera_rig.initialize({
+            origin_transform,
+            xr_views,
+            lxr_viewports: this.#lxr_viewports,
+            preserve_initial_orientation,
+        });
+        this.#throwIfAborted(signal, "viewport configuration");
 
         // Add viewports to livelink after they have been configured
         this.#livelink.addViewports({ viewports: this.viewports });
@@ -394,12 +395,6 @@ export class XRLivelink extends TypedEventTarget<LXREvents> {
             perspective_lens,
         });
         this.#lxr_viewports.set(xr_view.eye, lxrv);
-
-        const camera_entity = lxrv.viewport.camera_projection?.camera_entity;
-        if (!camera_entity) {
-            throw new Error(`Camera entity not found for XR view ${xr_view.eye}`);
-        }
-        this.#camera_rig.attachCamera(camera_entity);
     }
 
     /**
@@ -546,7 +541,7 @@ export class XRLivelink extends TypedEventTarget<LXREvents> {
      * @returns Perspective lens parameters
      */
     #computePerspectiveLens(projectionMatrix: Float32Array): Components.PerspectiveLens {
-        const scale = this.#camera_rig.anchor_scale;
+        const scale = this.#camera_rig.scale;
 
         const fovy =
             (this.#enable_latency_compensation ? this.#overridden_fovy : null) ??
@@ -625,6 +620,94 @@ export class XRLivelink extends TypedEventTarget<LXREvents> {
     async #reconfigureOverscan(): Promise<void> {
         const xr_views = await this.#session.getXRViews();
         this.#configureOverscan({ xr_views });
+    }
+
+    /**
+     * Scale up the camera rig by increasing the scale factor and adjusting the position to keep the center eye stable.
+     * This allows for virtual movement in the XR space by effectively scaling the user's movements.
+     * It's useful only in immersive AR sessions.
+     *
+     * @returns The new scale factor after scaling up.
+     */
+    scaleUp(): number {
+        const { scale, pose_entity } = this.camera_rig;
+        if (!pose_entity) {
+            throw new Error("No camera rig pose entity initialized");
+        }
+
+        let newScale = 0;
+        if (scale >= 1 && scale < 10) {
+            newScale = (scale * 10 + 5) / 10;
+        } else if (scale >= 10 && scale < 100) {
+            newScale = scale + 10;
+        } else if (scale >= 100 && scale < 1000) {
+            newScale = scale + 100;
+        } else if (scale >= 1000) {
+            newScale = scale;
+        } else if (scale < 1 && scale >= 0.1) {
+            newScale = (scale * 1000 + 50) / 1000;
+        } else if (scale < 0.1 && scale >= 0.01) {
+            newScale = (scale * 1000 + 10) / 1000;
+        } else if (scale < 0.01 && scale >= 0.001) {
+            newScale = (scale * 1000 + 1) / 1000;
+        }
+
+        newScale = Math.min(newScale, 1000);
+        this.camera_rig.scale = newScale;
+
+        // Move the camera rig position accordingly so that the center eye
+        // position remains stable relative to the real world when scaling.
+        const { position: center_eye } = pose_entity.global_transform;
+        const deltaScaleMove = new Vector3(...center_eye)
+            .multiplyScalar(newScale / scale)
+            .sub(new Vector3(...center_eye));
+        this.camera_rig.world_space_offset.position.add(deltaScaleMove);
+
+        return newScale;
+    }
+
+    /**
+     * Scale down the camera rig by decreasing the scale factor and adjusting the position to keep the center eye stable.
+     * This allows for virtual movement in the XR space by effectively scaling the user's movements.
+     * It's useful only in immersive AR sessions.
+     *
+     * @returns The new scale factor after scaling down.
+     */
+    scaleDown(): number {
+        const { scale, pose_entity } = this.camera_rig;
+        if (!pose_entity) {
+            throw new Error("No camera rig pose entity initialized");
+        }
+
+        let newScale = 0;
+        if (scale > 1 && scale <= 10) {
+            newScale = (scale * 10 - 5) / 10;
+        } else if (scale > 10 && scale <= 100) {
+            newScale = scale - 10;
+        } else if (scale > 100 && scale <= 1000) {
+            newScale = scale - 100;
+        } else if (scale <= 1 && scale > 0.1) {
+            newScale = (scale * 1000 - 50) / 1000;
+        } else if (scale <= 0.1 && scale > 0.01) {
+            newScale = (scale * 1000 - 10) / 1000;
+        } else if (scale <= 0.01 && scale > 0.001) {
+            newScale = (scale * 1000 - 1) / 1000;
+        } else {
+            newScale = scale;
+        }
+
+        newScale = Math.max(newScale, 0.001);
+        this.camera_rig.scale = newScale;
+
+        // Move the camera rig position accordingly so that the center eye
+        // position remains stable relative to the real world when scaling.
+        const { position: center_eye } = pose_entity.global_transform;
+        const deltaScaleMove = new Vector3(...center_eye)
+            .multiplyScalar(newScale / scale)
+            .sub(new Vector3(...center_eye));
+        this.camera_rig.world_space_offset.position.add(deltaScaleMove);
+
+        return newScale;
     }
 
     /**

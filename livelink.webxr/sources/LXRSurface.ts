@@ -67,6 +67,11 @@ export class LXRSurface extends OffscreenSurface<"webgl", { xrCompatible: boolea
         return this.context.scale_factor;
     }
 
+    /**
+     * Set the surface scale factor, which is applied to the XR rendering. This scale factor is used to adjust the effective
+     * resolution of the XR surface for performance optimization, overscan rendering, and latency compensation. It is applied
+     * on top of the resolution scale and any overscan scaling.
+     */
     set scale_factor(value: number) {
         this.context.scale_factor = value;
     }

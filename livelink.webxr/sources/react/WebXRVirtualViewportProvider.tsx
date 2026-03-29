@@ -10,7 +10,7 @@ import { ViewportContext } from "@3dverse/livelink-react";
 /**
  * Virtual viewport provider that creates a ViewportContext for a WebXR viewport
  */
-export function VirtualViewportProvider({
+export function WebXRVirtualViewportProvider({
     viewport,
     index,
     children,
@@ -79,9 +79,7 @@ export function VirtualViewportProvider({
         () => ({
             viewport,
             // Use inner element if overscan is enabled, otherwise use outer element
-            viewportDomElement: viewportLayout.overscanEnabled
-                ? innerElementRef.current
-                : outerElementRef.current,
+            viewportDomElement: viewportLayout.overscanEnabled ? innerElementRef.current : outerElementRef.current,
             zIndex: viewport.z_index,
             camera: viewport.camera_projection,
         }),
@@ -121,11 +119,7 @@ export function VirtualViewportProvider({
             data-viewport-index={index.toString()}
         >
             {viewportLayout.overscanEnabled ? (
-                <div
-                    ref={innerElementRef}
-                    style={innerStyles}
-                    data-role="xr-virtual-viewport-overscan"
-                >
+                <div ref={innerElementRef} style={innerStyles} data-role="xr-virtual-viewport-overscan">
                     {children}
                 </div>
             ) : (

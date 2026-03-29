@@ -12,7 +12,11 @@ import {
     CameraController,
     useCameraEntity,
 } from "@3dverse/livelink-react";
-import { XRLivelink, WebXR, XRVirtualJoysticks } from "@3dverse/livelink-webxr";
+import {
+    XRLivelink,
+    WebXR,
+    WebXRVirtualJoysticks,
+} from "@3dverse/livelink-webxr";
 import { LoadingOverlay, PerformancePanel } from "@3dverse/livelink-react-ui";
 import type { Vec3 } from "@3dverse/livelink";
 
@@ -34,6 +38,7 @@ export function App() {
     const [scale, setScale] = useState(1);
     const [latencyCompensation, setLatencyCompensation] = useState(true);
     const [overscan, setOverscan] = useState(true);
+    const [xrLivelink, setXrLivelink] = useState<XRLivelink | null>(null);
 
     //--------------------------------------------------------------------------
     // Cleanup dom overlay root on component unmount
@@ -92,25 +97,29 @@ export function App() {
                 >
                     Exit AR
                 </button>
-                <XRVirtualJoysticks yPos="12rem" />
+                <WebXRVirtualJoysticks yPos="12rem" />
                 <div className="fixed bottom-2 left-2 right-2 flex flex-col sm:flex-row sm:justify-between items-center gap-2">
                     <div className="order-2 sm:order-1">
                         <ScaleSelector scale={scale} setScale={setScale} />
                     </div>
                     <div className="order-1 sm:order-2">
-                        <XROptions
-                            latencyCompensation={latencyCompensation}
-                            setLatencyCompensation={setLatencyCompensation}
-                            overscan={overscan}
-                            setOverscan={setOverscan}
-                        />
+                        {xrLivelink && (
+                            <XROptions
+                                showScalingOptions={xrMode === "immersive-ar"}
+                                latencyCompensation={latencyCompensation}
+                                setLatencyCompensation={setLatencyCompensation}
+                                overscan={overscan}
+                                setOverscan={setOverscan}
+                                xrLivelink={xrLivelink}
+                            />
+                        )}
                         <PerformancePanel />
                     </div>
                 </div>
             </div>,
             domOverlayRef.current,
         );
-    }, [scale, latencyCompensation, overscan]);
+    }, [scale, xrLivelink, xrMode, latencyCompensation, overscan]);
 
     //--------------------------------------------------------------------------
     return (
@@ -136,6 +145,7 @@ export function App() {
                         position: [0, 2, 5],
                         eulerOrientation: [0, 45, 0],
                     }}
+                    ref={ref => setXrLivelink(ref?.livelinkXR ?? null)}
                 >
                     {renderDomOverlay()}
                 </WebXR>
@@ -155,16 +165,24 @@ export function App() {
                                     setScale={setScale}
                                 />
                             </div>
-                            <div className="order-1 sm:order-2">
-                                <XROptions
-                                    latencyCompensation={latencyCompensation}
-                                    setLatencyCompensation={
-                                        setLatencyCompensation
-                                    }
-                                    overscan={overscan}
-                                    setOverscan={setOverscan}
-                                />
-                            </div>
+                            {xrLivelink && (
+                                <div className="order-1 sm:order-2">
+                                    <XROptions
+                                        showScalingOptions={
+                                            xrMode === "immersive-ar"
+                                        }
+                                        latencyCompensation={
+                                            latencyCompensation
+                                        }
+                                        setLatencyCompensation={
+                                            setLatencyCompensation
+                                        }
+                                        overscan={overscan}
+                                        setOverscan={setOverscan}
+                                        xrLivelink={xrLivelink}
+                                    />
+                                </div>
+                            )}
                         </div>
                     </div>
                 </>
@@ -397,15 +415,19 @@ function XRButton({
 
 //------------------------------------------------------------------------------
 function XROptions({
+    showScalingOptions,
     latencyCompensation,
     setLatencyCompensation,
     overscan,
     setOverscan,
+    xrLivelink,
 }: {
+    showScalingOptions: boolean;
     latencyCompensation: boolean;
     setLatencyCompensation: (value: boolean) => void;
     overscan: boolean;
     setOverscan: (value: boolean) => void;
+    xrLivelink: XRLivelink;
 }) {
     const buttonClassName =
         "px-2 py-1 border-2 border-[#333] rounded-lg min-w-12 text-center";
@@ -418,6 +440,22 @@ function XROptions({
 
     return (
         <div className="flex flex-wrap gap-2 justify-center">
+            {showScalingOptions && (
+                <>
+                    <button
+                        onClick={() => xrLivelink.scaleUp()}
+                        className={`${buttonClassName} bg-white text-[#333] cursor-pointer`}
+                    >
+                        +
+                    </button>
+                    <button
+                        onClick={() => xrLivelink.scaleDown()}
+                        className={`${buttonClassName} bg-white text-[#333] cursor-pointer`}
+                    >
+                        -
+                    </button>
+                </>
+            )}
             <button
                 onClick={() => setLatencyCompensation(!latencyCompensation)}
                 className={`${buttonClassName} ${latencyCompensation ? selectedButtonClassName : unselectedButtonClassName}`}

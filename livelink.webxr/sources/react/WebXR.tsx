@@ -1,9 +1,12 @@
 //------------------------------------------------------------------------------
 import React, {
+    forwardRef,
     type JSX,
     type PropsWithChildren,
+    Ref,
     useContext,
     useEffect,
+    useImperativeHandle,
     useLayoutEffect,
     useMemo,
     useRef,
@@ -16,7 +19,7 @@ import { LivelinkContext } from "@3dverse/livelink-react";
 
 //------------------------------------------------------------------------------
 import { XRLivelink } from "../XRLivelink";
-import { XRVirtualViewports } from "./XRVirtualViewports";
+import { WebXRVirtualViewports } from "./WebXRVirtualViewports";
 import { WebXRContext } from "./WebXRContext";
 
 //------------------------------------------------------------------------------
@@ -25,100 +28,103 @@ import { WebXRContext } from "./WebXRContext";
  *
  * @category Components
  */
-export function WebXR({
-    children,
-    mode,
-    requiredFeatures = [],
-    optionalFeatures = [],
-    forceSingleView,
-    originTransform,
-    preserveInitialOrientation = false,
-    latencyCompensation = true,
-    overscan = false,
-    fakeAlpha,
-    scale = 1.0,
-    domOverlayRoot,
-    onSessionEnd,
-    renderViewport,
-}: PropsWithChildren<{
-    /**
-     * XR session mode. See {@link https://developer.mozilla.org/en-US/docs/Web/API/XRSystem/requestSession#mode XRSessionMode}.
-     */
-    mode: XRSessionMode;
+export const WebXR = forwardRef(function (
+    {
+        children,
+        mode,
+        requiredFeatures = [],
+        optionalFeatures = [],
+        forceSingleView,
+        originTransform,
+        preserveInitialOrientation = false,
+        latencyCompensation = true,
+        overscan = false,
+        fakeAlpha,
+        scale = 1.0,
+        domOverlayRoot,
+        onSessionEnd,
+        renderViewport,
+    }: PropsWithChildren<{
+        /**
+         * XR session mode. See {@link https://developer.mozilla.org/en-US/docs/Web/API/XRSystem/requestSession#mode XRSessionMode}.
+         */
+        mode: XRSessionMode;
 
-    /**
-     * Required features for XR session. See {@link https://developer.mozilla.org/en-US/docs/Web/API/XRSystem/requestSession#options XRSessionInit.requiredFeatures}.
-     */
-    requiredFeatures?: string[];
+        /**
+         * Required features for XR session. See {@link https://developer.mozilla.org/en-US/docs/Web/API/XRSystem/requestSession#options XRSessionInit.requiredFeatures}.
+         */
+        requiredFeatures?: string[];
 
-    /**
-     * Optional features for XR session. See {@link https://developer.mozilla.org/en-US/docs/Web/API/XRSystem/requestSession#options XRSessionInit.optionalFeatures}.
-     */
-    optionalFeatures?: string[];
+        /**
+         * Optional features for XR session. See {@link https://developer.mozilla.org/en-US/docs/Web/API/XRSystem/requestSession#options XRSessionInit.optionalFeatures}.
+         */
+        optionalFeatures?: string[];
 
-    /**
-     * Forces single view mode on devices supporting stereo rendering.
-     */
-    forceSingleView?: boolean;
+        /**
+         * Forces single view mode on devices supporting stereo rendering.
+         */
+        forceSingleView?: boolean;
 
-    /**
-     * Transform for XR origin (initial position, orientation, or scale).
-     */
-    originTransform?: Partial<Transform>;
+        /**
+         * Transform for XR origin (initial position, orientation, or scale).
+         */
+        originTransform?: Partial<Transform>;
 
-    /**
-     * Whether to preserve the device's physical orientation (pitch/roll) at session start in tracking normalization.
-     *
-     * At session start, the device orientation is captured:
-     * - **Yaw** (horizontal direction): Always starts at 0 (no absolute north reference)
-     * - **Pitch** (tilt up/down): Captured from device inclination relative to gravity
-     * - **Roll** (tilt sideways): Captured from device rotation relative to gravity
-     *
-     * - **false (default)**: Pitch and roll are zeroed out. Virtual world orientation is level and fixed,
-     *   determined solely by `originTransform`. The virtual floor stays horizontal regardless of how you held
-     *   the device when starting the session.
-     * - **true**: Pitch and roll are preserved. If you started the session with your phone tilted 30° upward,
-     *   the virtual coordinate system adapts to that tilt.
-     *
-     * Most use cases want false to ensure consistent, level virtual world orientation.
-     */
-    preserveInitialOrientation?: boolean;
+        /**
+         * Whether to preserve the device's physical orientation (pitch/roll) at session start in tracking normalization.
+         *
+         * At session start, the device orientation is captured:
+         * - **Yaw** (horizontal direction): Always starts at 0 (no absolute north reference)
+         * - **Pitch** (tilt up/down): Captured from device inclination relative to gravity
+         * - **Roll** (tilt sideways): Captured from device rotation relative to gravity
+         *
+         * - **false (default)**: Pitch and roll are zeroed out. Virtual world orientation is level and fixed,
+         *   determined solely by `originTransform`. The virtual floor stays horizontal regardless of how you held
+         *   the device when starting the session.
+         * - **true**: Pitch and roll are preserved. If you started the session with your phone tilted 30° upward,
+         *   the virtual coordinate system adapts to that tilt.
+         *
+         * Most use cases want false to ensure consistent, level virtual world orientation.
+         */
+        preserveInitialOrientation?: boolean;
 
-    /**
-     * Enables latency compensation (draws scene on plane to reduce perceived latency). Enabled by default.
-     */
-    latencyCompensation?: boolean;
+        /**
+         * Enables latency compensation (draws scene on plane to reduce perceived latency). Enabled by default.
+         */
+        latencyCompensation?: boolean;
 
-    /**
-     * Enables overscan for latency compensation (increases FOV to reduce edge artifacts).
-     */
-    overscan?: boolean;
+        /**
+         * Enables overscan for latency compensation (increases FOV to reduce edge artifacts).
+         */
+        overscan?: boolean;
 
-    /**
-     * Enables/disables fake alpha for AR (simulates transparency with black background). Default: true for "immersive-ar".
-     */
-    fakeAlpha?: boolean;
+        /**
+         * Enables/disables fake alpha for AR (simulates transparency with black background). Default: true for "immersive-ar".
+         */
+        fakeAlpha?: boolean;
 
-    /**
-     * Resolution scale factor for XR session.
-     */
-    scale?: number;
+        /**
+         * Resolution scale factor for XR session.
+         */
+        scale?: number;
 
-    /**
-     * Custom DOM overlay root element.
-     */
-    domOverlayRoot?: Element;
+        /**
+         * Custom DOM overlay root element.
+         */
+        domOverlayRoot?: Element;
 
-    /**
-     * Callback invoked when XR session ends.
-     */
-    onSessionEnd?: (event: XRSessionEvent) => void;
+        /**
+         * Callback invoked when XR session ends.
+         */
+        onSessionEnd?: (event: XRSessionEvent) => void;
 
-    /**
-     * Render function for each WebXR viewport. Returns JSX wrapped in ViewportContext.Provider.
-     */
-    renderViewport?: (viewport: Viewport, index: number) => React.ReactNode;
-}>): JSX.Element {
+        /**
+         * Render function for each WebXR viewport. Returns JSX wrapped in ViewportContext.Provider.
+         */
+        renderViewport?: (viewport: Viewport, index: number) => React.ReactNode;
+    }>,
+    ref: Ref<{ livelinkXR: XRLivelink | undefined }>,
+): JSX.Element {
     //--------------------------------------------------------------------------
     // Ref
     const cleanupPromiseRef = useRef<Promise<void> | null>(null);
@@ -135,6 +141,9 @@ export function WebXR({
     //--------------------------------------------------------------------------
     // Memoize context value to avoid unnecessary re-renders of consumers
     const contextValue = useMemo(() => ({ xrLivelink }), [xrLivelink]);
+
+    //--------------------------------------------------------------------------
+    useImperativeHandle(ref, () => ({ livelinkXR: xrLivelink ?? undefined }), [xrLivelink]);
 
     //--------------------------------------------------------------------------
     // Manage xrLivelink lifecycle: create when instance available, release on cleanup
@@ -274,7 +283,7 @@ export function WebXR({
             ) : (
                 <>{children}</>
             )}
-            <XRVirtualViewports
+            <WebXRVirtualViewports
                 xrLivelink={xrLivelink}
                 renderViewport={renderViewport}
                 viewports={xrLivelink?.viewports || []}
@@ -282,4 +291,4 @@ export function WebXR({
             />
         </WebXRContext.Provider>
     );
-}
+});

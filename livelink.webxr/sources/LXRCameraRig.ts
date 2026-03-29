@@ -5,6 +5,9 @@ import { Vector3, Quaternion, Euler, Matrix4 } from "threejs-math";
 import type { Entity, Vec3, Quat, Scene, Transform } from "@3dverse/livelink";
 
 //------------------------------------------------------------------------------
+import { type LXRViewport } from "./LXRViewport";
+
+//------------------------------------------------------------------------------
 /**
  * Manages XR camera rig with three-layer transform composition: tracking, pose-local offset, and world-space transform.
  *
@@ -47,6 +50,11 @@ import type { Entity, Vec3, Quat, Scene, Transform } from "@3dverse/livelink";
  */
 export class LXRCameraRig {
     /**
+     * Scale factor for the entire rig. 1 = normal, <1 = world feels bigger, >1 = world feels smaller.
+     */
+    #scale: number = 1;
+
+    /**
      * Scene used to create and delete rig entities.
      */
     #scene: Scene;
@@ -60,6 +68,12 @@ export class LXRCameraRig {
      * Pose entity updated every frame with composed tracking and virtual movement.
      */
     #pose_entity: Entity | null = null;
+
+    /**
+     * Attached camera entities (children of `pose_entity`) for easy access when applying rig scale compensation in
+     * {@link #update}.
+     */
+    #cameras: Entity[] = [];
 
     /**
      * XR pose captured at initialization for tracking normalization.
@@ -142,6 +156,7 @@ export class LXRCameraRig {
      */
     constructor(scene: Scene) {
         this.#scene = scene;
+        this.#scale = 1;
     }
 
     /**
@@ -153,10 +168,17 @@ export class LXRCameraRig {
     }
 
     /**
-     * Current scale of the rig anchor. If `anchor_entity` is null, returns undefined.
+     * Get the scale of the AR world, which scales the entire rig and all child entities (including cameras).
      */
-    get anchor_scale(): number | undefined {
-        return this.#anchor_entity?.local_transform.scale[0];
+    get scale(): number {
+        return this.#scale;
+    }
+
+    /**
+     * Set the scale of the AR world. This updates the anchor entity's scale, which scales the entire rig and all child entities (including cameras).
+     */
+    set scale(value: number) {
+        this.#scale = value;
     }
 
     /**
@@ -191,15 +213,18 @@ export class LXRCameraRig {
      * Initialize camera rig hierarchy (creates {@link anchor_entity} and {@link pose_entity} entities).
      *
      * @param xr_views Initial XR views for computing center eye transform
+     * @param lxr_viewports Map of XREye to LXRViewport for attaching cameras (typically one per eye with static IPD offset in local transform)
      * @param origin_transform Optional transform for origin entity
      * @param preserve_initial_orientation If true, preserves device pitch/roll at session start; if false (default), ignores it for level virtual world
      */
     public async initialize({
         xr_views,
+        lxr_viewports,
         origin_transform,
         preserve_initial_orientation = false,
     }: {
         xr_views: readonly XRView[];
+        lxr_viewports: Map<XREye, LXRViewport>;
         origin_transform?: Partial<Transform>;
         preserve_initial_orientation?: boolean;
     }): Promise<void> {
@@ -251,7 +276,7 @@ export class LXRCameraRig {
                 local_transform: {
                     position: [...(origin_transform?.position ?? [0, 0, 0])] as Vec3,
                     orientation: [...(origin_transform?.orientation ?? [0, 0, 0, 1])] as Quat,
-                    scale: [...(origin_transform?.scale ?? [1, 1, 1])] as Vec3,
+                    scale: [this.#scale, this.#scale, this.#scale],
                 },
             },
             options: {
@@ -277,24 +302,19 @@ export class LXRCameraRig {
             },
         });
 
+        lxr_viewports.forEach((lxr_viewport, eye) => {
+            const camera_entity = lxr_viewport.viewport.camera_projection?.camera_entity;
+            if (!camera_entity) {
+                throw new Error(`Camera entity not found for XR view ${eye}`);
+            }
+            camera_entity.parent = this.#pose_entity;
+            this.#cameras.push(camera_entity);
+        });
+
         console.debug("LXRCameraRig initialized:", {
             origin: this.#anchor_entity,
             pose: this.#pose_entity,
         });
-    }
-
-    /**
-     * Add camera entity as child of pose entity.
-     *
-     * @param camera_entity Camera entity to add to the rig (typically one per eye with static IPD offset in local transform)
-     */
-    public async attachCamera(camera_entity: Entity): Promise<void> {
-        if (!this.#pose_entity) {
-            throw new Error("LXRCameraRig must be initialized before adding cameras");
-        }
-
-        // Set the camera's parent to the pose entity
-        camera_entity.parent = this.#pose_entity;
     }
 
     /**
@@ -549,6 +569,14 @@ export class LXRCameraRig {
     }): void {
         // Update camera rig pose based on center eye to ensure virtual movement and XR device movement are properly composed
         this.#updatePoseTransform(center_eye);
+
+        // Apply inverse rig scale to the camera position to give the illusion of scaling the world around the user
+        // instead of scaling the world entities. This allows for a more intuitive scaling experience where the user
+        // feels like they are getting bigger or smaller in the world, rather than the world itself changing size.
+        this.#cameras.forEach(camera => {
+            camera.global_transform.position = camera.global_transform.position.map(v => v / this.#scale) as Vec3;
+        });
+
         // Strip the rig transform from the XR view transforms to get the remote camera transforms for each viewport
         this.#stripRigFromTransforms(remote_camera_transforms);
     }
@@ -576,7 +604,8 @@ export class LXRCameraRig {
             throw new Error("Origin entity not initialized");
         }
 
-        const { position: final_pose_pos, orientation: final_pose_ori } = center_eye;
+        const final_pose_pos = center_eye.position.clone();
+        const final_pose_ori = center_eye.orientation.clone();
 
         // --- 1. Compute tracking relative to the initial tracking pose recorded at init ---
         if (this.#initial_tracking_pose) {
@@ -590,7 +619,7 @@ export class LXRCameraRig {
         // ws_offset_ori_in_anchor_space = conj(anchor) * world_space_ori * anchor
         // ws_offset_pos_in_anchor_space = conj(anchor) * world_space_pos
         const { position: ws_offset_pos, orientation: ws_offset_ori } = this.#ws_offset;
-        const anchor_ori = new Quaternion().fromArray(this.#anchor_entity.global_transform.orientation);
+        const anchor_ori = new Quaternion().fromArray(this.#anchor_entity.local_transform.orientation);
         const inv_anchor_ori = anchor_ori.clone().conjugate();
         const ws_offset_ori_in_anchor_space = new Quaternion()
             .multiplyQuaternions(inv_anchor_ori, ws_offset_ori)
@@ -672,7 +701,7 @@ export class LXRCameraRig {
      * @param frame_camera_transforms World-space camera transforms to reverse in-place
      */
     #stripRigFromTransforms(frame_camera_transforms: { position: Vec3; orientation: Quat }[]): void {
-        const anchor = this.#anchor_entity?.global_transform;
+        const anchor = this.#anchor_entity?.local_transform;
         if (!anchor) {
             return;
         }
@@ -682,7 +711,7 @@ export class LXRCameraRig {
         const anchor_ori = new Quaternion().fromArray(anchor.orientation);
         const anchor_scale = new Vector3().fromArray(anchor.scale);
         const inv_anchor_transform = new Matrix4().compose(anchor_pos, anchor_ori, anchor_scale).invert();
-        const inv_anchor_ori = anchor_ori.conjugate();
+        const inv_anchor_ori = new Quaternion().fromArray(anchor.orientation).conjugate();
 
         const init_tracking_pos = this.#initial_tracking_pose?.position;
         const init_tracking_inv_ori = this.#initial_tracking_pose?.orientation_conjugate;
@@ -690,6 +719,9 @@ export class LXRCameraRig {
         // --- Per-camera: undo anchor → world-space offset → pose-local offset ---
         for (const { position, orientation } of frame_camera_transforms) {
             const p = new Vector3().fromArray(position);
+            // Step 0: undo rig scale to get back xr view pose from the remote frame transform so the billboard is
+            // position remains relative to the XR device pose no matter the rig scale.
+            p.multiplyScalar(this.#scale);
             // Step 1: world → anchor-local
             p.applyMatrix4(inv_anchor_transform);
             // Step 2: subtract world-space offset and compensation, then pose-local offset
@@ -709,6 +741,7 @@ export class LXRCameraRig {
             p.toArray(position);
 
             // Step 7: undo orientation layers (all left-multiplied in reverse order)
+            // Use inv_anchor_ori computed with scale [1,1,1] to avoid scale affecting orientation
             const q = new Quaternion().fromArray(orientation);
             q.premultiply(inv_anchor_ori)
                 .premultiply(this.#ws_offset_in_anchor_space.orientation_conjugate)
@@ -733,5 +766,6 @@ export class LXRCameraRig {
         this.#initial_tracking_pose = null;
         this.resetWorldSpaceOffset();
         this.resetPoseLocalOffset();
+        this.#scale = 1;
     }
 }

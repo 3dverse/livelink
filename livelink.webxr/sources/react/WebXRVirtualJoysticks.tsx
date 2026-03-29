@@ -17,7 +17,7 @@ import { useXRThrustMove, useXRStrafeMove, useXRVerticalMove, useXRYawRotation }
  * - Up/down: move up/down relative to center eye orientation
  * - Left/right: yaw around world Y axis
  */
-export function XRVirtualJoysticks({ xPos = "1.5rem", yPos = "6rem", size = "6.25rem" }): JSX.Element {
+export function WebXRVirtualJoysticks({ xPos = "1.5rem", yPos = "6rem", size = "6.25rem" }): JSX.Element {
     //--------------------------------------------------------------------------
     const [leftContainer, setLeftContainer] = useState<HTMLDivElement | null>(null);
     const [rightContainer, setRightContainer] = useState<HTMLDivElement | null>(null);

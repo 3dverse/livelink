@@ -4,7 +4,7 @@ import React, { type JSX, useEffect, useMemo, useState } from "react";
 //------------------------------------------------------------------------------
 import type { Viewport } from "@3dverse/livelink";
 import type { XRLivelink } from "../XRLivelink";
-import { VirtualViewportProvider } from "./VirtualViewportProvider";
+import { WebXRVirtualViewportProvider } from "./WebXRVirtualViewportProvider";
 
 //------------------------------------------------------------------------------
 /**
@@ -12,7 +12,7 @@ import { VirtualViewportProvider } from "./VirtualViewportProvider";
  *
  * @category Components
  */
-export function XRVirtualViewports({
+export function WebXRVirtualViewports({
     xrLivelink,
     renderViewport,
     viewports,
@@ -36,7 +36,6 @@ export function XRVirtualViewports({
      * Optional DOM overlay root element
      */
     domOverlayRoot?: Element;
-
 }): JSX.Element | null {
     //--------------------------------------------------------------------------
     const [viewportUpdateCounter, setViewportUpdateCounter] = useState(0);
@@ -64,21 +63,21 @@ export function XRVirtualViewports({
             return null;
         }
 
-        if(!domOverlayRoot) {
+        if (!domOverlayRoot) {
             return null;
         }
 
         return (
             <>
                 {viewports.map((viewport, index) => (
-                    <VirtualViewportProvider
+                    <WebXRVirtualViewportProvider
                         key={`xr-virtual-viewport-${index}`}
                         viewport={viewport}
                         domOverlayRoot={domOverlayRoot}
                         index={index}
                     >
                         {renderViewport(viewport, index)}
-                    </VirtualViewportProvider>
+                    </WebXRVirtualViewportProvider>
                 ))}
             </>
         );

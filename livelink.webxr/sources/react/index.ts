@@ -1,5 +1,5 @@
 export * from "./WebXR";
 export * from "./WebXRContext";
-export * from "./XRVirtualViewports";
-export * from "./XRVirtualJoysticks";
+export * from "./WebXRVirtualViewports";
+export * from "./WebXRVirtualJoysticks";
 export * from "./WebXRLocomotionHooks";

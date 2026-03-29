@@ -1,10 +1,20 @@
 //------------------------------------------------------------------------------
 import { useCallback, useContext, useEffect, useRef } from "react";
-import { Quaternion, Vector3 } from "threejs-math";
 
 //------------------------------------------------------------------------------
 import { WebXRContext } from "./WebXRContext";
 import type { XRLivelink } from "../XRLivelink";
+import {
+    LXRStrafeMoveLocalSpace,
+    LXRStrafeMoveWorldSpace,
+    LXRThrustMoveLocalSpace,
+    LXRThrustMoveWorldSpace,
+    LXRVerticalMoveLocalSpace,
+    LXRVerticalMoveWorldSpace,
+    LXRYawRotationLocalSpace,
+    LXRYawRotationWorldSpace,
+} from "../LXRLocomotion";
+// Animation logic moved to WebXRLocomotion.ts
 
 //------------------------------------------------------------------------------
 /**
@@ -12,9 +22,19 @@ import type { XRLivelink } from "../XRLivelink";
  * @param xrLivelink - The XRLivelink instance
  * @param value - The current animation value
  * @param speed - The speed multiplier
- * @param deltaTime - Time elapsed since last frame in seconds
+ * @param dt - Time elapsed since last frame in seconds
  */
-export type XRAnimationCallback = (xrLivelink: XRLivelink, value: number, speed: number, deltaTime: number) => void;
+export type XRAnimationCallback = ({
+    xrLivelink,
+    value,
+    speed,
+    dt,
+}: {
+    xrLivelink: XRLivelink;
+    value: number;
+    speed?: number;
+    dt: number;
+}) => void;
 
 //------------------------------------------------------------------------------
 /**
@@ -22,12 +42,12 @@ export type XRAnimationCallback = (xrLivelink: XRLivelink, value: number, speed:
  * Uses the XR session's requestAnimationFrame to stay in sync with the XR display refresh rate.
  *
  * @param callback - The animation callback to execute on each frame
- * @param speed - Speed multiplier for the animation (default: 0.05)
+ * @param speed - Speed multiplier for the animation (optional)
  * @returns Object with update function to set the animation value
  */
 export function useXRLivelinkAnimation(
     callback: XRAnimationCallback,
-    speed: number = 0.05,
+    speed?: number,
 ): {
     update: (value: number) => void;
 } {
@@ -40,7 +60,7 @@ export function useXRLivelinkAnimation(
     //--------------------------------------------------------------------------
     useEffect(() => {
         const xr_session = xrLivelink?.xr_session;
-        if (!xrLivelink?.camera_rig || !xr_session) {
+        if (!xr_session) {
             return;
         }
 
@@ -48,7 +68,7 @@ export function useXRLivelinkAnimation(
 
         //----------------------------------------------------------------------
         const updateAnimation = (time: DOMHighResTimeStamp, _frame: XRFrame): void => {
-            const deltaTime = lastTimeRef.current ? (time - lastTimeRef.current) / 1000 : 0;
+            const dt = lastTimeRef.current ? (time - lastTimeRef.current) / 1000 : 0;
             lastTimeRef.current = time;
 
             if (Math.abs(valueRef.current) < 0.01) {
@@ -56,7 +76,12 @@ export function useXRLivelinkAnimation(
                 return;
             }
 
-            callback(xrLivelink, valueRef.current, speed, deltaTime);
+            callback({
+                xrLivelink,
+                value: valueRef.current,
+                speed,
+                dt,
+            });
 
             animationFrameRef.current = xr_session.requestAnimationFrame(updateAnimation);
         };
@@ -83,78 +108,150 @@ export function useXRLivelinkAnimation(
 /**
  * Hook for left/right strafe movement
  */
-export function useXRStrafeMove(speed: number = 4): {
+export function useXRStrafeMove({
+    speed,
+    inPoseLocalSpace = true,
+}: { speed?: number; inPoseLocalSpace?: boolean } = {}): {
     update: (value: number) => void;
 } {
-    return useXRLivelinkAnimation((xrLivelink, value, speed, deltaTime) => {
-        const cameraRig = xrLivelink.camera_rig;
-        const poseEntity = cameraRig.pose_entity;
-        if (!poseEntity) {
-            return;
-        }
-
-        const orientation = poseEntity.local_transform.orientation || [0, 0, 0, 1];
-        const orientationQuat = new Quaternion(...orientation);
-
-        const strafe = new Vector3(value * speed * deltaTime, 0, 0);
-        strafe.applyQuaternion(orientationQuat);
-
-        cameraRig.incrementPoseLocalOffset({
-            position: [strafe.x, strafe.y, strafe.z],
-        });
-    }, speed);
+    // Import XRStrafeMove from WebXRLocomotion.ts if needed
+    return useXRLivelinkAnimation(inPoseLocalSpace ? LXRStrafeMoveLocalSpace : LXRStrafeMoveWorldSpace, speed);
 }
 
 //------------------------------------------------------------------------------
 /**
  * Hook for forward/backward thrust movement
  */
-export function useXRThrustMove(speed: number = 4): {
+export function useXRThrustMove({
+    speed,
+    inPoseLocalSpace = true,
+}: { speed?: number; inPoseLocalSpace?: boolean } = {}): {
     update: (value: number) => void;
 } {
-    return useXRLivelinkAnimation((xrLivelink, value, speed, deltaTime) => {
-        const cameraRig = xrLivelink.camera_rig;
-        const poseEntity = cameraRig.pose_entity;
-        if (!poseEntity) {
+    // Import XRThrustMove from WebXRLocomotion.ts if needed
+    return useXRLivelinkAnimation(inPoseLocalSpace ? LXRThrustMoveLocalSpace : LXRThrustMoveWorldSpace, speed);
+}
+
+//------------------------------------------------------------------------------
+/**
+ * Hook for world vertical movement (up/down on world Y axis)
+ */
+export function useXRVerticalMove({
+    speed,
+    inPoseLocalSpace = false,
+}: { speed?: number; inPoseLocalSpace?: boolean } = {}): {
+    update: (value: number) => void;
+} {
+    // Import XRVerticalMove from WebXRLocomotion.ts if needed
+    return useXRLivelinkAnimation(inPoseLocalSpace ? LXRVerticalMoveLocalSpace : LXRVerticalMoveWorldSpace, speed);
+}
+
+//------------------------------------------------------------------------------
+/**
+ * Hook for world yaw rotation (left/right on world Y axis)
+ */
+export function useXRYawRotation({
+    speed,
+    inPoseLocalSpace = false,
+}: { speed?: number; inPoseLocalSpace?: boolean } = {}): {
+    update: (value: number) => void;
+} {
+    // Import XRYawRotation from WebXRLocomotion.ts if needed
+    return useXRLivelinkAnimation(inPoseLocalSpace ? LXRYawRotationLocalSpace : LXRYawRotationWorldSpace, speed);
+}
+
+//------------------------------------------------------------------------------
+/**
+ * Hook for a test animation that moves vertically from 1 to 5 and rotates 360° on world Y axis.
+ * Triggers on the first call to `update()` and runs over a fixed duration.
+ *
+ * @param duration - Duration of the animation in seconds (default: 4)
+ */
+function _useXRWorldSpaceTestAnim({
+    duration = 4,
+    inPoseLocalSpace = false,
+}: { duration?: number; inPoseLocalSpace?: boolean } = {}): {
+    update: (value: number) => void;
+} {
+    const { xrLivelink } = useContext(WebXRContext);
+    const animationFrameRef = useRef<number>(0);
+    const elapsedRef = useRef(0);
+    const lastTimeRef = useRef<DOMHighResTimeStamp>(0);
+    const runningRef = useRef(false);
+    const valueRef = useRef(0);
+
+    const stop = useCallback(() => {
+        if (animationFrameRef.current && xrLivelink?.xr_session) {
+            xrLivelink.xr_session.cancelAnimationFrame(animationFrameRef.current);
+            animationFrameRef.current = 0;
+        }
+        runningRef.current = false;
+    }, [xrLivelink]);
+
+    const start = useCallback(() => {
+        const xr_session = xrLivelink?.xr_session;
+        if (!xrLivelink?.camera_rig || !xr_session || runningRef.current) {
             return;
         }
 
-        const orientation = poseEntity.local_transform.orientation || [0, 0, 0, 1];
-        const orientationQuat = new Quaternion(...orientation);
+        runningRef.current = true;
+        lastTimeRef.current = 0;
 
-        const forward = new Vector3(0, 0, value * speed * deltaTime);
-        forward.applyQuaternion(orientationQuat);
+        // const animate = (time: DOMHighResTimeStamp, _frame: XRFrame): void => {
+        lastTimeRef.current = performance.now();
+        setInterval(() => {
+            if (!runningRef.current) {
+                return;
+            }
 
-        cameraRig.incrementPoseLocalOffset({
-            position: [forward.x, forward.y, forward.z],
-        });
-    }, speed);
-}
+            const time = performance.now();
+            const dt = lastTimeRef.current ? (time - lastTimeRef.current) / 1000 : 0;
+            lastTimeRef.current = time;
+            elapsedRef.current += dt;
 
-//------------------------------------------------------------------------------
-/**
- * Hook for world vertical movement (up/down on world Y axis).
- * Uses world-space transform so vertical movement is always along
- * the world Y axis regardless of head orientation.
- */
-export function useXRVerticalMove(speed: number = 4): {
-    update: (value: number) => void;
-} {
-    return useXRLivelinkAnimation((xrLivelink, value, speed, deltaTime) => {
-        xrLivelink.camera_rig.incrementWorldSpaceOffset({ position: [0, value * speed * deltaTime, 0] });
-    }, speed);
-}
+            // Ping-pong: forward then backward within each cycle
+            const cycle = (elapsedRef.current % (duration * 2)) / duration;
+            const t = cycle <= 1 ? cycle : 2 - cycle;
 
-//------------------------------------------------------------------------------
-/**
- * Hook for world yaw rotation (left/right on world Y axis).
- * Uses world-space transform so the rotation is always around the
- * world Y axis and forward movement follows the rotated direction.
- */
-export function useXRYawRotation(speed: number = 144): {
-    update: (value: number) => void;
-} {
-    return useXRLivelinkAnimation((xrLivelink, value, speed, deltaTime) => {
-        xrLivelink.camera_rig.incrementWorldSpaceOffset({ eulerOrientation: [0, value * speed * deltaTime, 0] });
-    }, speed);
+            // Vertical position: 1 → 5
+            const y = 1 + t * 4;
+            // Yaw rotation: 0 → 360°
+            const yaw = t * 360;
+
+            if (inPoseLocalSpace) {
+                xrLivelink.camera_rig.setPoseLocalOffset({
+                    position: [0, y, 0],
+                    eulerOrientation: [0, yaw, 0],
+                });
+            } else {
+                xrLivelink.camera_rig.setWorldSpaceOffset({
+                    position: [0, y, 0],
+                    eulerOrientation: [0, yaw, 0],
+                });
+            }
+
+            // animationFrameRef.current = xr_session.requestAnimationFrame(animate);
+            // };
+        }, 1000 / 30);
+
+        // animationFrameRef.current = xr_session.requestAnimationFrame(animate);
+    }, [xrLivelink, duration]);
+
+    useEffect(() => {
+        return stop;
+    }, [stop]);
+
+    const update = useCallback(
+        (value: number) => {
+            valueRef.current = value;
+            if (Math.abs(value) >= 0.01 && !runningRef.current) {
+                start();
+            } else if (Math.abs(value) < 0.01 && runningRef.current) {
+                stop();
+            }
+        },
+        [start, stop],
+    );
+
+    return { update };
 }

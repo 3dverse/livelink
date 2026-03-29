@@ -9,6 +9,7 @@ export * from "./LXRCameraRig";
 export * from "./LXRViewport";
 export * from "./LXRContext";
 export * from "./LXRContextPassthrough";
+export * from "./LXRLocomotion";
 
 // React integration
 export * from "./react";
