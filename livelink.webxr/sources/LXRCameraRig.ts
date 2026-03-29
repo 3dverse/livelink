@@ -142,12 +142,38 @@ export class LXRCameraRig {
     readonly #ws_offset_compensation = new Vector3();
 
     /**
-     * World-space offset layer in `anchor_entity` local space for reuse in {@link #stripRigFromTransforms}.
-     * in {@link #updatePoseTransform}.
+     * World-space offset layer in `anchor_entity` local space computed in {@link #updatePoseTransform} for reuse in
+     * {@link #stripRigFromTransforms}.
      */
     readonly #ws_offset_in_anchor_space = {
         position: new Vector3(0, 0, 0),
+        orientation: new Quaternion(0, 0, 0, 1),
         orientation_conjugate: new Quaternion(0, 0, 0, 1),
+    };
+
+    /**
+     * Cached vectors/quaternions for transform composition to avoid GC churn from temporary objects each frame in
+     * {@link #updatePoseTransform} and {@link #stripRigFromTransforms}.
+     */
+    #frame_update_scratch = {
+        final_pose: {
+            position: new Vector3(),
+            orientation: new Quaternion(),
+        },
+        anchor_pose: {
+            position: new Vector3(),
+            orientation: new Quaternion(),
+            orientation_conjugate: new Quaternion(),
+            scale: new Vector3(),
+            inv_transform: new Matrix4(),
+        },
+        prev_ws_offset_ori_in_anchor_space: new Quaternion(),
+        old_rotated: new Vector3(),
+        new_rotated: new Vector3(),
+        frame_camera_pose: {
+            position: new Vector3(),
+            orientation: new Quaternion(),
+        },
     };
 
     /**
@@ -604,27 +630,46 @@ export class LXRCameraRig {
             throw new Error("Origin entity not initialized");
         }
 
-        const final_pose_pos = center_eye.position.clone();
-        const final_pose_ori = center_eye.orientation.clone();
+        // Cache anchor pose for converting world-space offset to anchor-local space
+        const { orientation: anchor_ori, orientation_conjugate: inv_anchor_ori } =
+            this.#frame_update_scratch.anchor_pose;
+        anchor_ori.fromArray(this.#anchor_entity.local_transform.orientation);
+        inv_anchor_ori.copy(anchor_ori).conjugate();
+
+        // Cache pose-local offset for easy access during composition
+        const {
+            position: ls_offset_pos,
+            orientation: ls_offset_ori,
+            orientation_conjugate: inv_ls_offset_ori,
+        } = this.#pose_ls_offset;
+        const ls_offset_compensation = this.#pose_ls_offset_compensation;
+
+        // Cache world-space offset for easy access during composition
+        const { position: ws_offset_pos, orientation: ws_offset_ori } = this.#ws_offset;
+        const { position: ws_offset_pos_in_anchor_space, orientation: ws_offset_ori_in_anchor_space } =
+            this.#ws_offset_in_anchor_space;
+
+        // --- Start with center eye tracking pose as the base of the composition ---
+        const { position: final_pose_pos, orientation: final_pose_ori } = this.#frame_update_scratch.final_pose;
+        final_pose_pos.copy(center_eye.position);
+        final_pose_ori.copy(center_eye.orientation);
 
         // --- 1. Compute tracking relative to the initial tracking pose recorded at init ---
         if (this.#initial_tracking_pose) {
-            const init_tracking_pos = this.#initial_tracking_pose.position;
-            const init_tracking_ori = this.#initial_tracking_pose.orientation;
-            final_pose_pos.sub(init_tracking_pos).applyQuaternion(init_tracking_ori);
-            final_pose_ori.multiplyQuaternions(init_tracking_ori, center_eye.orientation);
+            const { position: tracking_pos, orientation: tracking_ori } = this.#initial_tracking_pose;
+            final_pose_pos.sub(tracking_pos).applyQuaternion(tracking_ori);
+            final_pose_ori.multiplyQuaternions(tracking_ori, center_eye.orientation);
+        } else {
+            final_pose_ori.copy(center_eye.orientation);
         }
 
         // --- 2. Convert world-space offset to anchor local-space ---
         // ws_offset_ori_in_anchor_space = conj(anchor) * world_space_ori * anchor
         // ws_offset_pos_in_anchor_space = conj(anchor) * world_space_pos
-        const { position: ws_offset_pos, orientation: ws_offset_ori } = this.#ws_offset;
-        const anchor_ori = new Quaternion().fromArray(this.#anchor_entity.local_transform.orientation);
-        const inv_anchor_ori = anchor_ori.clone().conjugate();
-        const ws_offset_ori_in_anchor_space = new Quaternion()
-            .multiplyQuaternions(inv_anchor_ori, ws_offset_ori)
-            .multiply(anchor_ori);
-        const ws_offset_pos_in_anchor_space = ws_offset_pos.clone().applyQuaternion(inv_anchor_ori);
+        ws_offset_ori_in_anchor_space.multiplyQuaternions(inv_anchor_ori, ws_offset_ori).multiply(anchor_ori);
+        ws_offset_pos_in_anchor_space.copy(ws_offset_pos).applyQuaternion(inv_anchor_ori);
+
+        const { old_rotated, new_rotated } = this.#frame_update_scratch;
 
         // --- 3. Rotate tracking by pose-local offset orientation ---
         // When the user has turned via virtual locomotion (joystick), physical device movement
@@ -632,46 +677,47 @@ export class LXRCameraRig {
         // Compensation prevents orbiting: when the user has physically moved from room origin,
         // a joystick turn should rotate in place, not swing them in an arc.
         if (this.#pose_ls_offset_orientation_changed) {
-            this.#pose_ls_offset.orientation_conjugate.copy(this.#pose_ls_offset.orientation).conjugate();
-            const old_rotated = final_pose_pos.clone().applyQuaternion(this.#previous_pose_ls_offset_orientation);
-            const new_rotated = final_pose_pos.clone().applyQuaternion(this.#pose_ls_offset.orientation);
-            this.#pose_ls_offset_compensation.add(old_rotated.sub(new_rotated));
+            const prev_orientation = this.#previous_pose_ls_offset_orientation;
+            inv_ls_offset_ori.copy(ls_offset_ori).conjugate();
+            old_rotated.copy(final_pose_pos).applyQuaternion(prev_orientation);
+            new_rotated.copy(final_pose_pos).applyQuaternion(ls_offset_ori);
+            ls_offset_compensation.add(old_rotated.sub(new_rotated));
 
-            this.#previous_pose_ls_offset_orientation.copy(this.#pose_ls_offset.orientation);
+            prev_orientation.copy(ls_offset_ori);
             this.#pose_ls_offset_orientation_changed = false;
         }
-        final_pose_pos.applyQuaternion(this.#pose_ls_offset.orientation).add(this.#pose_ls_offset_compensation);
+        final_pose_pos.applyQuaternion(ls_offset_ori).add(ls_offset_compensation);
 
         // --- 4. Accumulate compensation when orientation changed ---
+        const ws_offset_compensation = this.#ws_offset_compensation;
         if (this.#ws_offset_orientation_changed) {
-            const prev_ws_offset_ori_in_anchor_space = new Quaternion()
-                .multiplyQuaternions(inv_anchor_ori, this.#previous_ws_offset_orientation)
-                .multiply(anchor_ori);
+            const prev_orientation = this.#frame_update_scratch.prev_ws_offset_ori_in_anchor_space;
+            prev_orientation.multiplyQuaternions(inv_anchor_ori, this.#previous_ws_offset_orientation);
+            prev_orientation.multiply(anchor_ori);
 
-            const old_rotated = final_pose_pos.clone().applyQuaternion(prev_ws_offset_ori_in_anchor_space);
-            const new_rotated = final_pose_pos.clone().applyQuaternion(ws_offset_ori_in_anchor_space);
-            this.#ws_offset_compensation.add(old_rotated.sub(new_rotated));
+            old_rotated.copy(final_pose_pos).applyQuaternion(prev_orientation);
+            new_rotated.copy(final_pose_pos).applyQuaternion(ws_offset_ori_in_anchor_space);
+            ws_offset_compensation.add(old_rotated.sub(new_rotated));
 
             this.#previous_ws_offset_orientation.copy(ws_offset_ori);
             this.#ws_offset_orientation_changed = false;
         }
 
         // --- 5. Compose final pose ---
-        final_pose_pos.applyQuaternion(ws_offset_ori_in_anchor_space).add(this.#ws_offset_compensation);
-        final_pose_pos.add(this.#pose_ls_offset.position);
+        final_pose_pos.applyQuaternion(ws_offset_ori_in_anchor_space).add(ws_offset_compensation);
+        final_pose_pos.add(ls_offset_pos);
         final_pose_pos.add(ws_offset_pos_in_anchor_space);
 
         // orientation = ws_offset_ori_in_anchor_space * pose_ls_offset.orientation * "relative tracking ori"
         // ls_ori must wrap tracking (not be inside it) so device rotation axes stay in room space
-        final_pose_ori.premultiply(this.#pose_ls_offset.orientation).premultiply(ws_offset_ori_in_anchor_space);
+        final_pose_ori.premultiply(ls_offset_ori).premultiply(ws_offset_ori_in_anchor_space);
 
         // Update pose entity's local transform with the composed result
-        final_pose_pos.toArray(this.#pose_entity.local_transform.position);
-        final_pose_ori.toArray(this.#pose_entity.local_transform.orientation);
+        const { position: pose_position, orientation: pose_orientation } = this.#pose_entity.local_transform;
+        final_pose_pos.toArray(pose_position);
+        final_pose_ori.toArray(pose_orientation);
 
-        // --- 6. Save world-space transform values for the billboard unapply pass ---
-        // Prefer copy to ref reassignment for GC efficiency since these are used every frame in unapplyRigTransforms
-        this.#ws_offset_in_anchor_space.position.copy(ws_offset_pos_in_anchor_space);
+        // --- 6. Cache world-space offset in anchor space for stripping from camera transforms ---
         this.#ws_offset_in_anchor_space.orientation_conjugate.copy(ws_offset_ori_in_anchor_space).conjugate();
     }
 
@@ -706,19 +752,27 @@ export class LXRCameraRig {
             return;
         }
 
+        const {
+            position: anchor_pos,
+            orientation: anchor_ori,
+            orientation_conjugate: inv_anchor_ori,
+            scale: anchor_scale,
+            inv_transform: inv_anchor_transform,
+        } = this.#frame_update_scratch.anchor_pose;
+
         // --- Pre-compute inverse transforms (once per frame) ---
-        const anchor_pos = new Vector3().fromArray(anchor.position);
-        const anchor_ori = new Quaternion().fromArray(anchor.orientation);
-        const anchor_scale = new Vector3().fromArray(anchor.scale);
-        const inv_anchor_transform = new Matrix4().compose(anchor_pos, anchor_ori, anchor_scale).invert();
-        const inv_anchor_ori = new Quaternion().fromArray(anchor.orientation).conjugate();
+        anchor_pos.fromArray(anchor.position);
+        anchor_ori.fromArray(anchor.orientation);
+        inv_anchor_ori.fromArray(anchor.orientation).conjugate();
+        anchor_scale.fromArray(anchor.scale);
+        inv_anchor_transform.compose(anchor_pos, anchor_ori, anchor_scale).invert();
 
         const init_tracking_pos = this.#initial_tracking_pose?.position;
         const init_tracking_inv_ori = this.#initial_tracking_pose?.orientation_conjugate;
 
         // --- Per-camera: undo anchor → world-space offset → pose-local offset ---
         for (const { position, orientation } of frame_camera_transforms) {
-            const p = new Vector3().fromArray(position);
+            const p = this.#frame_update_scratch.frame_camera_pose.position.fromArray(position);
             // Step 0: undo rig scale to get back xr view pose from the remote frame transform so the billboard is
             // position remains relative to the XR device pose no matter the rig scale.
             p.multiplyScalar(this.#scale);
@@ -742,7 +796,7 @@ export class LXRCameraRig {
 
             // Step 7: undo orientation layers (all left-multiplied in reverse order)
             // Use inv_anchor_ori computed with scale [1,1,1] to avoid scale affecting orientation
-            const q = new Quaternion().fromArray(orientation);
+            const q = this.#frame_update_scratch.frame_camera_pose.orientation.fromArray(orientation);
             q.premultiply(inv_anchor_ori)
                 .premultiply(this.#ws_offset_in_anchor_space.orientation_conjugate)
                 .premultiply(this.#pose_ls_offset.orientation_conjugate);
