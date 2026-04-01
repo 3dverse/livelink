@@ -10,9 +10,14 @@ import {
     DOM3DAnchor,
     CameraController,
     useCameraEntity,
+    DOM3DDiv,
 } from "@3dverse/livelink-react";
-import { WebXRHelper, WebXR } from "@3dverse/livelink-webxr";
-import { LoadingOverlay } from "@3dverse/livelink-react-ui";
+import {
+    XRLivelink,
+    WebXR,
+    WebXRVirtualJoysticks,
+} from "@3dverse/livelink-webxr";
+import { LoadingOverlay, PerformancePanel } from "@3dverse/livelink-react-ui";
 import type { Vec3 } from "@3dverse/livelink";
 
 //------------------------------------------------------------------------------
@@ -29,6 +34,7 @@ export function App() {
     const [scale, setScale] = useState(1);
     const [latencyCompensation, setLatencyCompensation] = useState(true);
     const [overscan, setOverscan] = useState(true);
+    const [xrLivelink, setXrLivelink] = useState<XRLivelink | null>(null);
 
     return (
         <Livelink
@@ -47,7 +53,13 @@ export function App() {
                     renderViewport={(_viewport, index) => (
                         <DOM3DSample key={`overlay-${index}`} />
                     )}
+                    originTransform={{
+                        position: [0, 2, 5],
+                        eulerOrientation: [0, 45, 0],
+                    }}
+                    ref={ref => setXrLivelink(ref?.livelinkXR ?? null)}
                 >
+                    <WebXRVirtualJoysticks yPos="12rem" />
                     <div className="fixed top-3 flex flex-wrap items-center justify-center gap-3 mx-2">
                         <button
                             className="button button-primary"
@@ -71,12 +83,21 @@ export function App() {
                             <ScaleSelector scale={scale} setScale={setScale} />
                         </div>
                         <div className="order-1 sm:order-2">
-                            <XROptions
-                                latencyCompensation={latencyCompensation}
-                                setLatencyCompensation={setLatencyCompensation}
-                                overscan={overscan}
-                                setOverscan={setOverscan}
-                            />
+                            {xrLivelink && (
+                                <XROptions
+                                    showScalingOptions={
+                                        xrMode === "immersive-ar"
+                                    }
+                                    latencyCompensation={latencyCompensation}
+                                    setLatencyCompensation={
+                                        setLatencyCompensation
+                                    }
+                                    overscan={overscan}
+                                    setOverscan={setOverscan}
+                                    xrLivelink={xrLivelink}
+                                />
+                            )}
+                            <PerformancePanel />
                         </div>
                     </div>
                 </WebXR>
@@ -103,14 +124,22 @@ export function App() {
                                 />
                             </div>
                             <div className="order-1 sm:order-2">
-                                <XROptions
-                                    latencyCompensation={latencyCompensation}
-                                    setLatencyCompensation={
-                                        setLatencyCompensation
-                                    }
-                                    overscan={overscan}
-                                    setOverscan={setOverscan}
-                                />
+                                {xrLivelink && (
+                                    <XROptions
+                                        showScalingOptions={
+                                            xrMode === "immersive-ar"
+                                        }
+                                        latencyCompensation={
+                                            latencyCompensation
+                                        }
+                                        setLatencyCompensation={
+                                            setLatencyCompensation
+                                        }
+                                        overscan={overscan}
+                                        setOverscan={setOverscan}
+                                        xrLivelink={xrLivelink}
+                                    />
+                                )}
                             </div>
                         </div>
                     </div>
@@ -150,29 +179,47 @@ function DOM3DSample() {
 function DOM3DStaticElements() {
     return (
         <>
-            <DOM3DAnchor worldPosition={[-0.2, 4, -1.5]}>
-                <p className="bg-ground p-4 rounded-lg">
-                    I'm a DOM 3D Element using regular DOM3DOverlay in WebXR.{" "}
-                    <br />
-                    Constant size regardless of camera position.
-                </p>
-            </DOM3DAnchor>
-            <DOM3DAnchor worldPosition={[-0.1, 2, -0.5]} scaleFactor={0.0025}>
-                <p className="bg-underground p-4 rounded-lg">
-                    Size varies depending on the camera position.
-                </p>
-                <img
-                    src="https://cdn.3dverse.com/assets/3dverse-wordmark.svg"
-                    className="h-60"
-                />
-            </DOM3DAnchor>
+            {!location.hash.includes("/standalone/") && (
+                <DOM3DAnchor worldPosition={[2, 1, -0.5]} scaleFactor={0.005}>
+                    <p className="bg-underground p-4 rounded-lg max-w-xs">
+                        If you are using the WebXR emulator in your dev tools,
+                        we highly recommend switching to use the headless page
+                        of this demo
+                        <br />
+                        See{" "}
+                        <a href="/#/standalone/web-xr" className="underline">
+                            here
+                        </a>{" "}
+                    </p>
+                </DOM3DAnchor>
+            )}
+
+            <DOM3DDiv
+                worldQuad={{
+                    bl: [-2, 0, 0],
+                    tl: [-2, 2, 0],
+                    tr: [0, 2, 0],
+                    br: [0, 0, 0],
+                }}
+            >
+                <div className="bg-ground p-4 rounded-lg flex flex-col items-center gap-4">
+                    <img
+                        src="https://cdn.3dverse.com/assets/3dverse-wordmark.svg"
+                        className="h-20"
+                    />
+                    <p className=" text-center">
+                        I'm a DOM3DDiv, which allows me to be rendered as a flat
+                        surface in 3D space.
+                    </p>
+                </div>
+            </DOM3DDiv>
         </>
     );
 }
 
 //------------------------------------------------------------------------------
 function DOM3DMovingElement() {
-    const [position, setPosition] = useState<Vec3>([-0.1, 2, -2]);
+    const [position, setPosition] = useState<Vec3>([-0.1, 1, -2]);
 
     useEffect(() => {
         const interval = setInterval(
@@ -220,7 +267,7 @@ function XRButton({
             return;
         }
 
-        WebXRHelper.isSessionSupported(mode).then(supported => {
+        XRLivelink.isSessionSupported(mode).then(supported => {
             if (!supported) {
                 setMessage(`WebXR '${mode}' is not supported on this device.`);
             } else {
@@ -247,15 +294,19 @@ function XRButton({
 
 //------------------------------------------------------------------------------
 function XROptions({
+    showScalingOptions,
     latencyCompensation,
     setLatencyCompensation,
     overscan,
     setOverscan,
+    xrLivelink,
 }: {
+    showScalingOptions: boolean;
     latencyCompensation: boolean;
     setLatencyCompensation: (value: boolean) => void;
     overscan: boolean;
     setOverscan: (value: boolean) => void;
+    xrLivelink: XRLivelink;
 }) {
     const buttonClassName =
         "px-2 py-1 border-2 border-[#333] rounded-lg min-w-12 text-center";
@@ -268,6 +319,22 @@ function XROptions({
 
     return (
         <div className="flex flex-wrap gap-2 justify-center">
+            {showScalingOptions && (
+                <>
+                    <button
+                        onClick={() => xrLivelink.scaleUp()}
+                        className={`${buttonClassName} bg-white text-[#333] cursor-pointer`}
+                    >
+                        +
+                    </button>
+                    <button
+                        onClick={() => xrLivelink.scaleDown()}
+                        className={`${buttonClassName} bg-white text-[#333] cursor-pointer`}
+                    >
+                        -
+                    </button>
+                </>
+            )}
             <button
                 onClick={() => setLatencyCompensation(!latencyCompensation)}
                 className={`${buttonClassName} ${latencyCompensation ? selectedButtonClassName : unselectedButtonClassName}`}
@@ -290,3 +357,5 @@ function XROptions({
         </div>
     );
 }
+
+//------------------------------------------------------------------------------

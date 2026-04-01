@@ -11,6 +11,7 @@ import {
     LivelinkContext,
     useCameraEntity,
     CameraController,
+    useEntity,
 } from "@3dverse/livelink-react";
 import { LoadingOverlay } from "@3dverse/livelink-react-ui";
 
@@ -23,21 +24,29 @@ const scene_id = "d19ecb53-6488-48c1-a085-fab7de85b189";
 
 //------------------------------------------------------------------------------
 export function App() {
-    const [sessionId, setSessionId] = useState<UUID | null>(null);
+    const [sessionInfo, setSessionInfo] = useState<{
+        session_id: UUID;
+        camera_entity_id: UUID;
+    } | null>(null);
 
     return (
         <div className="relative flex w-full h-full">
-            <SessionCreator setSessionId={setSessionId} />
-            <SessionJoiner sessionId={sessionId} />
+            <SessionCreator setSessionInfo={setSessionInfo} />
+            <SessionFollower sessionInfo={sessionInfo} />
         </div>
     );
 }
 
 //------------------------------------------------------------------------------
 function SessionCreator({
-    setSessionId,
+    setSessionInfo,
 }: {
-    setSessionId: (sessionId: UUID | null) => void;
+    setSessionInfo: (
+        sessionInfo: {
+            session_id: UUID;
+            camera_entity_id: UUID;
+        } | null,
+    ) => void;
 }) {
     return (
         <SamplePlayer
@@ -52,16 +61,22 @@ function SessionCreator({
                 ConnectionErrorPanel={DisconnectedModal}
                 autoJoinExisting={false}
             >
-                <SessionSniffer setSessionId={setSessionId} />
-                <AppLayout />
+                <AppLayout setSessionInfo={setSessionInfo} />
             </Livelink>
         </SamplePlayer>
     );
 }
 
 //------------------------------------------------------------------------------
-function SessionJoiner({ sessionId }: { sessionId: UUID | null }) {
-    if (!sessionId) {
+function SessionFollower({
+    sessionInfo,
+}: {
+    sessionInfo: {
+        session_id: UUID;
+        camera_entity_id: UUID;
+    } | null;
+}) {
+    if (!sessionInfo) {
         return (
             <div className="flex flex-col items-center justify-center w-full h-full">
                 <p className="text-center">Start by creating a session</p>
@@ -73,25 +88,42 @@ function SessionJoiner({ sessionId }: { sessionId: UUID | null }) {
         <SamplePlayer
             autoConnect={false}
             title="Join Session"
-            summary={
-                "Create a new client that joins the session created in the first canvas"
-            }
+            summary="Follow the camera from the created session"
         >
             <Livelink
-                sessionId={sessionId}
+                sessionId={sessionInfo.session_id}
                 token={token}
                 LoadingPanel={LoadingOverlay}
                 ConnectionErrorPanel={DisconnectedModal}
             >
-                <AppLayout />
+                <FollowerLayout cameraEntityId={sessionInfo.camera_entity_id} />
             </Livelink>
         </SamplePlayer>
     );
 }
 
 //------------------------------------------------------------------------------
-function AppLayout() {
+function AppLayout({
+    setSessionInfo,
+}: {
+    setSessionInfo: (
+        sessionInfo: {
+            session_id: UUID;
+            camera_entity_id: UUID;
+        } | null,
+    ) => void;
+}) {
+    const { instance } = useContext(LivelinkContext);
     const { cameraEntity } = useCameraEntity();
+
+    useEffect(() => {
+        if (instance && cameraEntity) {
+            setSessionInfo({
+                session_id: instance.session.session_id,
+                camera_entity_id: cameraEntity.id,
+            });
+        }
+    }, [instance, cameraEntity, setSessionInfo]);
 
     return (
         <Canvas className="w-full h-full">
@@ -103,15 +135,12 @@ function AppLayout() {
 }
 
 //------------------------------------------------------------------------------
-function SessionSniffer({
-    setSessionId,
-}: {
-    setSessionId: (sessionId: UUID | null) => void;
-}) {
-    const { instance } = useContext(LivelinkContext);
-    useEffect(() => {
-        setSessionId(instance?.session.session_id ?? null);
-        return () => setSessionId(null);
-    }, [instance, setSessionId]);
-    return null;
-}
+const FollowerLayout = ({ cameraEntityId }: { cameraEntityId: UUID }) => {
+    const { entity: camera } = useEntity({ euid: cameraEntityId });
+
+    return (
+        <Canvas className="w-full h-full">
+            <Viewport className="w-full h-full" cameraEntity={camera} />
+        </Canvas>
+    );
+};

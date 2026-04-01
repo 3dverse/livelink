@@ -1,0 +1,5 @@
+{
+  "title": "Follow Session Camera",
+  "summary": "Start by creating a session on one canvas then follow it from another canvas.",
+  "useCustomLayout": true
+}

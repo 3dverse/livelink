@@ -102,24 +102,22 @@ export class SceneSettings {
             for (const [attributeName, attributeValue] of Object.entries(settingSection)) {
                 const typedAttributeName = attributeName as keyof typeof settingSection;
                 if (typeof attributeValue !== "object" && !Array.isArray(attributeValue)) {
-                    //@ts-expect-error: Cannot infer the type here
-                    settingProxy[typedAttributeName] = attributeValue;
                     continue;
                 }
 
-                settingProxy[attributeName as keyof typeof settingSection] = new Proxy(
-                    settingSection[attributeName as keyof typeof settingSection],
+                settingProxy[typedAttributeName] = new Proxy(
+                    settingSection[typedAttributeName],
                     {
                         get: (_, prop): unknown =>
-                            Reflect.get(settingSection[attributeName as keyof typeof settingSection], prop),
+                            Reflect.get(settingSection[typedAttributeName], prop),
                         set: (_, prop, v: unknown): boolean => {
                             const result = Reflect.set(
-                                settingSection[attributeName as keyof typeof settingSection],
+                                settingSection[typedAttributeName],
                                 prop,
                                 v,
                             );
-                            const value = settingSection[attributeName as keyof typeof settingSection];
-                            onSettingAttributeChanged(attributeName as keyof SceneSettingsRecord, value);
+                            const value = settingSection[typedAttributeName];
+                            onSettingAttributeChanged(typedAttributeName, value);
                             return result;
                         },
                     },
@@ -129,6 +127,9 @@ export class SceneSettings {
             //@ts-expect-error Cannot infer the type here
             this.#proxied_settings[settingSectionName as keyof SceneSettingsRecord] = new Proxy(settingProxy, {
                 get: (_, prop): unknown => {
+                    if(Object.prototype.hasOwnProperty.call(settingProxy, prop)) {
+                        return Reflect.get(settingProxy, prop);
+                    }
                     return Reflect.get(this.#raw_settings![settingSectionName as keyof SceneSettingsRecord], prop);
                 },
                 set: (_, prop: keyof SceneSettingsRecord, value: unknown): boolean => {

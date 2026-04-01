@@ -1,5 +1,17 @@
-export * from "./WebXRHelper";
-export * from "./WebXREvents";
+// Main WebXR classes
+export * from "./XRLivelink";
+export * from "./LXREvents";
+
+// Manager classes (for advanced usage)
+export * from "./LXRSession";
+export * from "./LXRSurface";
+export * from "./LXRCameraRig";
+export * from "./LXRViewport";
+export * from "./LXRContext";
+export * from "./LXRContextPassthrough";
+export * from "./LXRLocomotion";
+
+// React integration
 export * from "./react";
 
 //------------------------------------------------------------------------------

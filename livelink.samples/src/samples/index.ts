@@ -15,6 +15,7 @@ import ScaleCanvas from "./react-core/1-viewports/8-scale-canvas/manifest";
 import SceneSelector from "./react-core/2-sessions/1-scene-selector/manifest";
 import MultiSession from "./react-core/2-sessions/2-multi-session/manifest";
 import JoinSession from "./react-core/2-sessions/3-join-session/manifest";
+import FollowSessionCamera from "./react-core/2-sessions/4-follow-session-camera/manifest";
 
 //------------------------------------------------------------------------------
 import DOM3DOverlayViewport from "./react-core/3-overlays/1-dom-3d-overlay/manifest";
@@ -104,7 +105,7 @@ export default [
     },
     {
         categoryName: "Sessions",
-        list: [SceneSelector, MultiSession, JoinSession],
+        list: [SceneSelector, MultiSession, JoinSession, FollowSessionCamera],
     },
     {
         categoryName: "Overlays",

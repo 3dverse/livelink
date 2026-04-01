@@ -12,8 +12,12 @@ import {
     CameraController,
     useCameraEntity,
 } from "@3dverse/livelink-react";
-import { WebXRHelper, WebXR } from "@3dverse/livelink-webxr";
-import { LoadingOverlay } from "@3dverse/livelink-react-ui";
+import {
+    XRLivelink,
+    WebXR,
+    WebXRVirtualJoysticks,
+} from "@3dverse/livelink-webxr";
+import { LoadingOverlay, PerformancePanel } from "@3dverse/livelink-react-ui";
 import type { Vec3 } from "@3dverse/livelink";
 
 //------------------------------------------------------------------------------
@@ -34,6 +38,33 @@ export function App() {
     const [scale, setScale] = useState(1);
     const [latencyCompensation, setLatencyCompensation] = useState(true);
     const [overscan, setOverscan] = useState(true);
+    const [xrLivelink, setXrLivelink] = useState<XRLivelink | null>(null);
+
+    //--------------------------------------------------------------------------
+    // Cleanup dom overlay root on component unmount
+    useEffect(() => {
+        return () => {
+            if (domOverlayRef.current && domOverlayRef.current.parentNode) {
+                domOverlayRef.current.parentNode.removeChild(
+                    domOverlayRef.current,
+                );
+                domOverlayRef.current = null;
+            }
+        };
+    }, []);
+
+    //--------------------------------------------------------------------------
+    // Cleanup dom overlay root when exiting XR mode
+    useEffect(() => {
+        if (
+            xrMode === null &&
+            domOverlayRef.current &&
+            domOverlayRef.current.parentNode
+        ) {
+            domOverlayRef.current.parentNode.removeChild(domOverlayRef.current);
+            domOverlayRef.current = null;
+        }
+    }, [xrMode]);
 
     //--------------------------------------------------------------------------
     // Important for dom overlay to be displayed by variant launch app clip:
@@ -58,7 +89,7 @@ export function App() {
             <div
                 id="xr-dom-overlay-root"
                 style={{ zIndex: 11000 }}
-                className="fixed top-3 left-2 right-2 flex flex-col items-center gap-2"
+                className="fixed w-full h-full top-3 left-2 right-2 flex flex-col items-center gap-2"
             >
                 <button
                     className="button button-primary"
@@ -66,23 +97,29 @@ export function App() {
                 >
                     Exit AR
                 </button>
+                <WebXRVirtualJoysticks yPos="12rem" />
                 <div className="fixed bottom-2 left-2 right-2 flex flex-col sm:flex-row sm:justify-between items-center gap-2">
                     <div className="order-2 sm:order-1">
                         <ScaleSelector scale={scale} setScale={setScale} />
                     </div>
                     <div className="order-1 sm:order-2">
-                        <XROptions
-                            latencyCompensation={latencyCompensation}
-                            setLatencyCompensation={setLatencyCompensation}
-                            overscan={overscan}
-                            setOverscan={setOverscan}
-                        />
+                        {xrLivelink && (
+                            <XROptions
+                                showScalingOptions={xrMode === "immersive-ar"}
+                                latencyCompensation={latencyCompensation}
+                                setLatencyCompensation={setLatencyCompensation}
+                                overscan={overscan}
+                                setOverscan={setOverscan}
+                                xrLivelink={xrLivelink}
+                            />
+                        )}
+                        <PerformancePanel />
                     </div>
                 </div>
             </div>,
             domOverlayRef.current,
         );
-    }, [scale, latencyCompensation, overscan]);
+    }, [scale, xrLivelink, xrMode, latencyCompensation, overscan]);
 
     //--------------------------------------------------------------------------
     return (
@@ -104,6 +141,11 @@ export function App() {
                     renderViewport={(_viewport, index) => (
                         <DOM3DSample key={`overlay-${index}`} />
                     )}
+                    originTransform={{
+                        position: [0, 2, 5],
+                        eulerOrientation: [0, 45, 0],
+                    }}
+                    ref={ref => setXrLivelink(ref?.livelinkXR ?? null)}
                 >
                     {renderDomOverlay()}
                 </WebXR>
@@ -123,16 +165,24 @@ export function App() {
                                     setScale={setScale}
                                 />
                             </div>
-                            <div className="order-1 sm:order-2">
-                                <XROptions
-                                    latencyCompensation={latencyCompensation}
-                                    setLatencyCompensation={
-                                        setLatencyCompensation
-                                    }
-                                    overscan={overscan}
-                                    setOverscan={setOverscan}
-                                />
-                            </div>
+                            {xrLivelink && (
+                                <div className="order-1 sm:order-2">
+                                    <XROptions
+                                        showScalingOptions={
+                                            xrMode === "immersive-ar"
+                                        }
+                                        latencyCompensation={
+                                            latencyCompensation
+                                        }
+                                        setLatencyCompensation={
+                                            setLatencyCompensation
+                                        }
+                                        overscan={overscan}
+                                        setOverscan={setOverscan}
+                                        xrLivelink={xrLivelink}
+                                    />
+                                </div>
+                            )}
                         </div>
                     </div>
                 </>
@@ -271,7 +321,7 @@ function XRButton({
                 window.location.href = VLaunch.getLaunchUrl(url.toString());
                 return;
             }
-            WebXRHelper.isSessionSupported(mode).then(async supported => {
+            XRLivelink.isSessionSupported(mode).then(async supported => {
                 setMessage(
                     supported
                         ? `Enter ${modeTitle}`
@@ -289,7 +339,7 @@ function XRButton({
             setMessage("WebXR requires a secure context (https).");
             return;
         }
-        WebXRHelper.isSessionSupported(mode).then(async supported => {
+        XRLivelink.isSessionSupported(mode).then(async supported => {
             if (supported) {
                 // Not on an iOS device requiring Variant Launch SDK for WebXR,
                 // Or variant Launch SDK is already loaded.
@@ -365,15 +415,19 @@ function XRButton({
 
 //------------------------------------------------------------------------------
 function XROptions({
+    showScalingOptions,
     latencyCompensation,
     setLatencyCompensation,
     overscan,
     setOverscan,
+    xrLivelink,
 }: {
+    showScalingOptions: boolean;
     latencyCompensation: boolean;
     setLatencyCompensation: (value: boolean) => void;
     overscan: boolean;
     setOverscan: (value: boolean) => void;
+    xrLivelink: XRLivelink;
 }) {
     const buttonClassName =
         "px-2 py-1 border-2 border-[#333] rounded-lg min-w-12 text-center";
@@ -386,6 +440,22 @@ function XROptions({
 
     return (
         <div className="flex flex-wrap gap-2 justify-center">
+            {showScalingOptions && (
+                <>
+                    <button
+                        onClick={() => xrLivelink.scaleUp()}
+                        className={`${buttonClassName} bg-white text-[#333] cursor-pointer`}
+                    >
+                        +
+                    </button>
+                    <button
+                        onClick={() => xrLivelink.scaleDown()}
+                        className={`${buttonClassName} bg-white text-[#333] cursor-pointer`}
+                    >
+                        -
+                    </button>
+                </>
+            )}
             <button
                 onClick={() => setLatencyCompensation(!latencyCompensation)}
                 className={`${buttonClassName} ${latencyCompensation ? selectedButtonClassName : unselectedButtonClassName}`}
