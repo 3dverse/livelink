@@ -1,5 +1,16 @@
 # @3dverse/livelink-webxr
 
+## 0.1.19
+
+### Patch Changes
+
+- feat(livelink.webxr): rig scaling feature, review locomotion api, naming & doc review
+- fix(livelink.samples): x-web-xr-ios dom overlay and add performance panel to xr samples
+- feat(livelink.webxr): full revamp of livelink.webxr implementation, new features:
+- feat(livelink.webxr): use scratch math objects to reduce per frame allocation in LXRCameraRig.update
+- Updated dependencies
+  - @3dverse/livelink@0.8.62
+
 ## 0.1.18
 
 ### Patch Changes

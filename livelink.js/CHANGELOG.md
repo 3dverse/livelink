@@ -1,5 +1,11 @@
 # @3dverse/livelink
 
+## 0.8.62
+
+### Patch Changes
+
+- fix(livelink.js): non-primitive scene settings were not correctly updated when their properties were set individually
+
 ## 0.8.61
 
 ### Patch Changes
