@@ -70,6 +70,15 @@ export class LXRCameraRig {
     #pose_entity: Entity | null = null;
 
     /**
+     * Xr space Center eye. Computed from XR views each frame in {@link #updateCenterEye}. Updated in {@link #updatePoseTransform}.
+     */
+    #xr_space_center_eye: { position: Vector3; orientation: Quaternion; orientation_conjugate: Quaternion } = {
+        position: new Vector3(),
+        orientation: new Quaternion(),
+        orientation_conjugate: new Quaternion(),
+    };
+
+    /**
      * Attached camera entities (children of `pose_entity`) for easy access when applying rig scale compensation in
      * {@link #update}.
      */
@@ -218,6 +227,14 @@ export class LXRCameraRig {
     }
 
     /**
+     * Current center eye position and orientation computed from XR views. Used for computing camera transforms and
+     * virtual movement directions relative to the user's current facing direction.
+     */
+    get xr_space_center_eye(): { position: Vector3; orientation: Quaternion; orientation_conjugate: Quaternion } {
+        return this.#xr_space_center_eye;
+    }
+
+    /**
      * Current pose-local offset (virtual movement over XR tracking).
      * Modify via {@link setPoseLocalOffset}, {@link incrementPoseLocalOffset}, or direct mutation.
      * If mutating `orientation` directly, call {@link markPoseLocalOffsetOrientationChanged} first.
@@ -283,15 +300,19 @@ export class LXRCameraRig {
             // By default, ignore initial head orientation so virtual world orientation is fixed (most common use case)
             // Only preserve initial orientation if explicitly requested (advanced use case where virtual world adapts
             // to initial viewing direction)
-            const center_eye = LXRCameraRig.computeCenterEye(xr_views);
+            this.updateXrSpaceCenterEye(xr_views);
             if (!preserve_initial_orientation) {
                 this.#initial_tracking_pose = {
-                    position: center_eye.position,
+                    position: this.#xr_space_center_eye.position.clone(),
                     orientation: new Quaternion(),
                     orientation_conjugate: new Quaternion(),
                 };
             } else {
-                this.#initial_tracking_pose = center_eye;
+                this.#initial_tracking_pose = {
+                    position: this.#xr_space_center_eye.position.clone(),
+                    orientation: this.#xr_space_center_eye.orientation.clone(),
+                    orientation_conjugate: this.#xr_space_center_eye.orientation_conjugate.clone(),
+                };
             }
         }
 
@@ -344,51 +365,41 @@ export class LXRCameraRig {
     }
 
     /**
-     * Compute center eye position/orientation from XR views (midpoint between eyes).
+     * Update XR SPACE center eye position/orientation from XR views (midpoint between eyes).
      *
      * @param xr_views XR views to compute center eye from
      */
-    public static computeCenterEye(xr_views: readonly XRView[]): {
-        position: Vector3;
-        orientation: Quaternion;
-        orientation_conjugate: Quaternion;
-    } {
+    public updateXrSpaceCenterEye(xr_views: readonly XRView[]): void {
         const xr_views_transforms = xr_views.map(view => view.transform);
         if (xr_views_transforms.length === 0) {
-            return {
-                position: new Vector3(),
-                orientation: new Quaternion(),
-                orientation_conjugate: new Quaternion(),
-            };
+            this.#xr_space_center_eye.position.set(0, 0, 0);
+            this.#xr_space_center_eye.orientation.set(0, 0, 0, 1);
+            this.#xr_space_center_eye.orientation_conjugate.set(0, 0, 0, 1);
+            return;
         }
 
+        // Use orientation from first view (both eyes should have similar orientation)
+        const { orientation: first_quat } = xr_views_transforms[0];
+        this.#xr_space_center_eye.orientation.set(first_quat.x, first_quat.y, first_quat.z, first_quat.w);
+        this.#xr_space_center_eye.orientation_conjugate.copy(this.#xr_space_center_eye.orientation).conjugate();
+
         if (xr_views_transforms.length === 1) {
-            const { position: pos, orientation: quat } = xr_views_transforms[0];
-            return {
-                position: new Vector3(pos.x, pos.y, pos.z),
-                orientation: new Quaternion(quat.x, quat.y, quat.z, quat.w),
-                orientation_conjugate: new Quaternion(quat.x, quat.y, quat.z, quat.w).conjugate(),
-            };
+            const { position: pos } = xr_views_transforms[0];
+            this.#xr_space_center_eye.position.set(pos.x, pos.y, pos.z);
+            return;
         }
 
         // Compute average position
         const center_pos = new Vector3(0, 0, 0);
         for (const xr_view of xr_views_transforms) {
-            const pos = xr_view.position;
+            const { position: pos } = xr_view;
             center_pos.x += pos.x;
             center_pos.y += pos.y;
             center_pos.z += pos.z;
         }
         center_pos.divideScalar(xr_views_transforms.length);
 
-        // Use orientation from first view (both eyes should have similar orientation)
-        const first_quat = xr_views_transforms[0].orientation;
-
-        return {
-            position: center_pos,
-            orientation: new Quaternion(first_quat.x, first_quat.y, first_quat.z, first_quat.w),
-            orientation_conjugate: new Quaternion(first_quat.x, first_quat.y, first_quat.z, first_quat.w).conjugate(),
-        };
+        this.#xr_space_center_eye.position.copy(center_pos);
     }
 
     /**
@@ -587,14 +598,12 @@ export class LXRCameraRig {
      * @param remote_camera_transforms World-space camera transforms to reverse in-place for billboard placement (passed in to avoid redundant computation since caller also needs it for drawing cameras)
      */
     public update({
-        center_eye,
         remote_camera_transforms,
     }: {
-        center_eye: { position: Vector3; orientation: Quaternion };
         remote_camera_transforms: { position: Vec3; orientation: Quat }[];
     }): void {
         // Update camera rig pose based on center eye to ensure virtual movement and XR device movement are properly composed
-        this.#updatePoseTransform(center_eye);
+        this.#updatePoseTransform(this.#xr_space_center_eye);
 
         // Apply inverse rig scale to the camera position to give the illusion of scaling the world around the user
         // instead of scaling the world entities. This allows for a more intuitive scaling experience where the user
@@ -805,6 +814,15 @@ export class LXRCameraRig {
             }
             q.toArray(orientation);
         }
+    }
+
+    /**
+     * Reset all offsets and scale to identity.
+     */
+    reset(): void {
+        this.resetWorldSpaceOffset();
+        this.resetPoseLocalOffset();
+        this.#scale = 1;
     }
 
     /**
