@@ -271,7 +271,7 @@ export const WebXR = forwardRef(function (
                     data-role="webxr-dom-overlay"
                     ref={ref => setDomOverlayRootElement(ref || undefined)}
                     style={{
-                        position: "absolute",
+                        position: "fixed",
                         width: "100%",
                         height: "100%",
                         top: 0,
