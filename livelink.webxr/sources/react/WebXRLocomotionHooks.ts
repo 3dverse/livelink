@@ -3,7 +3,7 @@ import { useCallback, useContext, useEffect, useRef } from "react";
 
 //------------------------------------------------------------------------------
 import { WebXRContext } from "./WebXRContext";
-import type { XRLivelink } from "../XRLivelink";
+import type { LXRCameraRig } from "../LXRCameraRig";
 import {
     LXRStrafeMoveLocalSpace,
     LXRStrafeMoveWorldSpace,
@@ -19,18 +19,18 @@ import {
 //------------------------------------------------------------------------------
 /**
  * Callback function type for XR animations
- * @param xrLivelink - The XRLivelink instance
+ * @param camera_rig - The LXRCameraRig instance
  * @param value - The current animation value
  * @param speed - The speed multiplier
  * @param dt - Time elapsed since last frame in seconds
  */
 export type XRAnimationCallback = ({
-    xrLivelink,
+    camera_rig,
     value,
     speed,
     dt,
 }: {
-    xrLivelink: XRLivelink;
+    camera_rig: LXRCameraRig;
     value: number;
     speed?: number;
     dt: number;
@@ -77,7 +77,7 @@ export function useXRLivelinkAnimation(
             }
 
             callback({
-                xrLivelink,
+                camera_rig: xrLivelink.camera_rig,
                 value: valueRef.current,
                 speed,
                 dt,

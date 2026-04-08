@@ -10,6 +10,7 @@ export * from "./LXRViewport";
 export * from "./LXRContext";
 export * from "./LXRContextPassthrough";
 export * from "./LXRLocomotion";
+export * from "./LXRScaling";
 
 // React integration
 export * from "./react";

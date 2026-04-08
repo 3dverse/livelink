@@ -16,6 +16,8 @@ import {
     XRLivelink,
     WebXR,
     WebXRVirtualJoysticks,
+    LXRScaleUp,
+    LXRScaleDown,
 } from "@3dverse/livelink-webxr";
 import { LoadingOverlay, PerformancePanel } from "@3dverse/livelink-react-ui";
 import type { Vec3 } from "@3dverse/livelink";
@@ -30,12 +32,14 @@ const token = import.meta.env.VITE_PROD_PUBLIC_TOKEN;
 
 //------------------------------------------------------------------------------
 export function App() {
+    //--------------------------------------------------------------------------
     const [xrMode, setXRMode] = useState<XRSessionMode | null>(null);
     const [scale, setScale] = useState(1);
     const [latencyCompensation, setLatencyCompensation] = useState(true);
     const [overscan, setOverscan] = useState(true);
     const [xrLivelink, setXrLivelink] = useState<XRLivelink | null>(null);
 
+    //--------------------------------------------------------------------------
     return (
         <Livelink
             sceneId={scene_id}
@@ -59,8 +63,8 @@ export function App() {
                     }}
                     ref={ref => setXrLivelink(ref?.livelinkXR ?? null)}
                 >
-                    <WebXRVirtualJoysticks yPos="12rem" />
-                    <div className="fixed top-3 flex flex-wrap items-center justify-center gap-3 mx-2">
+                    <WebXRVirtualJoysticks />
+                    <div className="fixed place-self-center top-3 flex flex-wrap items-center justify-center gap-3 mx-2">
                         <button
                             className="button button-primary"
                             onClick={() => setXRMode(null)}
@@ -78,11 +82,11 @@ export function App() {
                             setXRMode={setXRMode}
                         />
                     </div>
-                    <div className="absolute bottom-2 left-2 right-2 flex flex-col sm:flex-row sm:justify-between items-center gap-2">
+                    <div className="absolute place-self-center p-2 bottom-0 flex flex-col sm:flex-row sm:justify-between items-center gap-2">
                         <div className="order-2 sm:order-1">
                             <ScaleSelector scale={scale} setScale={setScale} />
                         </div>
-                        <div className="order-1 sm:order-2">
+                        <div className="order-1 sm:order-2 sm:w-auto w-full">
                             {xrLivelink && (
                                 <XROptions
                                     showScalingOptions={
@@ -97,7 +101,6 @@ export function App() {
                                     xrLivelink={xrLivelink}
                                 />
                             )}
-                            <PerformancePanel />
                         </div>
                     </div>
                 </WebXR>
@@ -308,6 +311,8 @@ function XROptions({
     setOverscan: (value: boolean) => void;
     xrLivelink: XRLivelink;
 }) {
+    const [worldScale, setWorldScale] = useState(xrLivelink.camera_rig.scale);
+
     const buttonClassName =
         "px-2 py-1 border-2 border-[#333] rounded-lg min-w-12 text-center";
     const selectedButtonClassName = "bg-white text-[#333] cursor-pointer";
@@ -318,42 +323,66 @@ function XROptions({
     const isOverscanDisabled = !latencyCompensation;
 
     return (
-        <div className="flex flex-wrap gap-2 justify-center">
-            {showScalingOptions && (
-                <>
-                    <button
-                        onClick={() => xrLivelink.scaleUp()}
-                        className={`${buttonClassName} bg-white text-[#333] cursor-pointer`}
-                    >
-                        +
-                    </button>
-                    <button
-                        onClick={() => xrLivelink.scaleDown()}
-                        className={`${buttonClassName} bg-white text-[#333] cursor-pointer`}
-                    >
-                        -
-                    </button>
-                </>
-            )}
-            <button
-                onClick={() => setLatencyCompensation(!latencyCompensation)}
-                className={`${buttonClassName} ${latencyCompensation ? selectedButtonClassName : unselectedButtonClassName}`}
-            >
-                Smooth Latency
-            </button>
-            <button
-                onClick={() => !isOverscanDisabled && setOverscan(!overscan)}
-                disabled={isOverscanDisabled}
-                className={`${buttonClassName} ${
-                    isOverscanDisabled
-                        ? disabledButtonClassName
-                        : overscan
-                          ? selectedButtonClassName
-                          : unselectedButtonClassName
-                }`}
-            >
-                Overscan
-            </button>
+        <div className="flex flex-row gap-2 justify-center">
+            <div className="flex flex-col gap-2 flex-1">
+                {showScalingOptions && (
+                    <div className="flex flex-row flex-wrap gap-2 justify-center">
+                        <button
+                            onClick={() =>
+                                setWorldScale(
+                                    LXRScaleUp(xrLivelink.camera_rig, {
+                                        compensate_anchor_position: true,
+                                    }),
+                                )
+                            }
+                            className={`${buttonClassName} bg-white text-[#333] cursor-pointer`}
+                        >
+                            +
+                        </button>
+                        <span
+                            className={`${buttonClassName} bg-[#333] text-white min-w-16 select-none`}
+                        >
+                            x{+worldScale.toFixed(3)}
+                        </span>
+                        <button
+                            onClick={() =>
+                                setWorldScale(
+                                    LXRScaleDown(xrLivelink.camera_rig, {
+                                        compensate_anchor_position: true,
+                                    }),
+                                )
+                            }
+                            className={`${buttonClassName} bg-white text-[#333] cursor-pointer`}
+                        >
+                            -
+                        </button>
+                    </div>
+                )}
+                <button
+                    onClick={() => setLatencyCompensation(!latencyCompensation)}
+                    className={`${buttonClassName} ${latencyCompensation ? selectedButtonClassName : unselectedButtonClassName}`}
+                >
+                    Smooth Latency
+                </button>
+                <button
+                    onClick={() =>
+                        !isOverscanDisabled && setOverscan(!overscan)
+                    }
+                    disabled={isOverscanDisabled}
+                    className={`${buttonClassName} ${
+                        isOverscanDisabled
+                            ? disabledButtonClassName
+                            : overscan
+                              ? selectedButtonClassName
+                              : unselectedButtonClassName
+                    }`}
+                >
+                    Overscan
+                </button>
+            </div>
+            <div className="flex">
+                <PerformancePanel className="p-1 mt-1 bg-[color-mix(in_srgb,var(--color-bg-foreground)_85%,transparent)] backdrop-blur-xl rounded-lg shadow-[0px_24px_40px_10px_color-mix(in_srgb,black_40%,transparent)]" />
+            </div>
         </div>
     );
 }
