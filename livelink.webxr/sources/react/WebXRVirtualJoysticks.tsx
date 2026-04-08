@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
-import React, { type JSX, useState } from "react";
-import { VirtualJoystick } from "@3dverse/livelink-react-ui";
+import React, { type JSX, useCallback, useMemo, useState } from "react";
+import { VirtualJoystick, VirtualJoystickOptions } from "@3dverse/livelink-react-ui";
 
 //------------------------------------------------------------------------------
 import { useXRThrustMove, useXRStrafeMove, useXRVerticalMove, useXRYawRotation } from "./WebXRLocomotionHooks";
@@ -17,81 +17,146 @@ import { useXRThrustMove, useXRStrafeMove, useXRVerticalMove, useXRYawRotation }
  * - Up/down: move up/down relative to center eye orientation
  * - Left/right: yaw around world Y axis
  */
-export function WebXRVirtualJoysticks({ xPos = "1.5rem", yPos = "6rem", size = "6.25rem" }): JSX.Element {
+export function WebXRVirtualJoysticks({
+    speedFactor = 1,
+    sizeInRem,
+    rightRect,
+    leftRect,
+    leftJoystickOptions,
+    rightJoystickOptions,
+}: {
+    speedFactor?: number;
+    rightRect?: React.CSSProperties;
+    leftRect?: React.CSSProperties;
+    sizeInRem?: string;
+    leftJoystickOptions?: Omit<VirtualJoystickOptions, "container">;
+    rightJoystickOptions?: Omit<VirtualJoystickOptions, "container">;
+}): JSX.Element {
     //--------------------------------------------------------------------------
     const [leftContainer, setLeftContainer] = useState<HTMLDivElement | null>(null);
     const [rightContainer, setRightContainer] = useState<HTMLDivElement | null>(null);
 
     //--------------------------------------------------------------------------
-    const thrust = useXRThrustMove();
-    const strafe = useXRStrafeMove();
-    const vertical = useXRVerticalMove();
-    const yaw = useXRYawRotation();
+    const thrust = useXRThrustMove({ speed: 4 * speedFactor });
+    const strafe = useXRStrafeMove({ speed: 2 * speedFactor });
+    const vertical = useXRVerticalMove({ speed: 2 * speedFactor });
+    const yaw = useXRYawRotation({ speed: 40 * speedFactor });
 
     //--------------------------------------------------------------------------
-    const sizePx = leftContainer?.clientWidth ?? 0;
+    leftRect = {
+        ...leftRect,
+        left: leftRect?.left ?? 0,
+        width: leftRect?.width ?? "50%",
+        height: leftRect?.height ?? "100%",
+    };
+    rightRect = {
+        ...rightRect,
+        right: rightRect?.right ?? 0,
+        width: rightRect?.width ?? "50%",
+        height: rightRect?.height ?? "100%",
+    };
+
+    //--------------------------------------------------------------------------
+    const remToPx = (rem: number): number => {
+        const rootFontSize = parseFloat(getComputedStyle(document.documentElement).fontSize);
+        return rem * rootFontSize;
+    };
+
+    //--------------------------------------------------------------------------
+    const leftSizePx = useMemo(
+        () => (sizeInRem ? remToPx(parseFloat(sizeInRem)) : (leftContainer?.clientWidth ?? 0) / 2),
+        [sizeInRem, leftContainer],
+    );
+    const leftOptions: VirtualJoystickOptions | undefined = useMemo(() => {
+        if (!leftContainer) {
+            return undefined;
+        }
+        return {
+            container: leftContainer,
+            mode: "dynamic",
+            maxNumberOfNipples: 1,
+            position: { left: "50%", top: "50%" },
+            color: "orange",
+            size: leftSizePx,
+            ...leftJoystickOptions,
+        };
+    }, [leftContainer, leftJoystickOptions, leftSizePx]);
+
+    //--------------------------------------------------------------------------
+    const rightSizePx = useMemo(
+        () => (sizeInRem ? remToPx(parseFloat(sizeInRem)) : (rightContainer?.clientWidth ?? 0) / 2),
+        [sizeInRem, rightContainer],
+    );
+    const rightOptions: VirtualJoystickOptions | undefined = useMemo(() => {
+        if (!rightContainer) {
+            return undefined;
+        }
+        return {
+            container: rightContainer,
+            mode: "dynamic",
+            maxNumberOfNipples: 1,
+            position: { left: "50%", top: "50%" },
+            color: "lime",
+            size: rightSizePx,
+            ...rightJoystickOptions,
+        };
+    }, [rightContainer, rightJoystickOptions, rightSizePx]);
+
+    //--------------------------------------------------------------------------
+    const onLeftJoystickMove = useCallback(
+        (event: { vector: { x: number; y: number } }) => {
+            vertical.update(event.vector.y);
+            yaw.update(-event.vector.x);
+        },
+        [vertical, yaw],
+    );
+
+    //--------------------------------------------------------------------------
+    const onLeftJoystickEnd = useCallback(() => {
+        vertical.update(0);
+        yaw.update(0);
+    }, [vertical, yaw]);
+
+    //--------------------------------------------------------------------------
+    const onRightJoystickMove = useCallback(
+        (event: { vector: { x: number; y: number } }) => {
+            thrust.update(-event.vector.y);
+            strafe.update(event.vector.x);
+        },
+        [thrust, strafe],
+    );
+
+    //--------------------------------------------------------------------------
+    const onRightJoystickEnd = useCallback(() => {
+        thrust.update(0);
+        strafe.update(0);
+    }, [thrust, strafe]);
+
+    //--------------------------------------------------------------------------
     return (
         <>
             <div
                 ref={setLeftContainer}
                 style={{
                     position: "absolute",
-                    left: xPos,
-                    bottom: yPos,
-                    width: size,
-                    height: size,
                     pointerEvents: "auto",
+                    ...leftRect,
                 }}
             >
                 {leftContainer && (
-                    <VirtualJoystick
-                        options={{
-                            container: leftContainer,
-                            mode: "static",
-                            position: { left: "50%", top: "50%" },
-                            color: "orange",
-                            size: sizePx,
-                        }}
-                        onMove={event => {
-                            vertical.update(event.vector.y);
-                            yaw.update(-event.vector.x);
-                        }}
-                        onEnd={() => {
-                            vertical.update(0);
-                            yaw.update(0);
-                        }}
-                    />
+                    <VirtualJoystick options={leftOptions} onMove={onLeftJoystickMove} onEnd={onLeftJoystickEnd} />
                 )}
             </div>
             <div
                 ref={setRightContainer}
                 style={{
                     position: "absolute",
-                    right: xPos,
-                    bottom: yPos,
-                    width: size,
-                    height: size,
                     pointerEvents: "auto",
+                    ...rightRect,
                 }}
             >
                 {rightContainer && (
-                    <VirtualJoystick
-                        options={{
-                            container: rightContainer,
-                            mode: "static",
-                            position: { left: "50%", top: "50%" },
-                            color: "lime",
-                            size: sizePx,
-                        }}
-                        onMove={event => {
-                            thrust.update(-event.vector.y);
-                            strafe.update(event.vector.x);
-                        }}
-                        onEnd={() => {
-                            thrust.update(0);
-                            strafe.update(0);
-                        }}
-                    />
+                    <VirtualJoystick options={rightOptions} onMove={onRightJoystickMove} onEnd={onRightJoystickEnd} />
                 )}
             </div>
         </>

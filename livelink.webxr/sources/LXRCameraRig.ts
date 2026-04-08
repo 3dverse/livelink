@@ -203,6 +203,17 @@ export class LXRCameraRig {
     }
 
     /**
+     * Initial XR tracking pose captured at initialization for tracking normalization. If `origin_transform` is provided at init, this is set to the XR device pose at that moment; otherwise, it's `null` and raw XR tracking is used.
+     */
+    get initial_tracking_pose(): {
+        position: Vector3;
+        orientation: Quaternion;
+        orientation_conjugate: Quaternion;
+    } | null {
+        return this.#initial_tracking_pose;
+    }
+
+    /**
      * Get the scale of the AR world, which scales the entire rig and all child entities (including cameras).
      */
     get scale(): number {
@@ -323,7 +334,7 @@ export class LXRCameraRig {
                 local_transform: {
                     position: [...(origin_transform?.position ?? [0, 0, 0])] as Vec3,
                     orientation: [...(origin_transform?.orientation ?? [0, 0, 0, 1])] as Quat,
-                    scale: [this.#scale, this.#scale, this.#scale],
+                    scale: [1, 1, 1],
                 },
             },
             options: {
