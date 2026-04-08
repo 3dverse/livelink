@@ -1,5 +1,17 @@
 # @3dverse/livelink-webxr
 
+## 0.2.1
+
+### Patch Changes
+
+- feat(livelink.webxr): upgrade minor version
+- fix(livelink.webxr): fixed css position for default dom overlay root so virtual viewports fit the webgl canvas which has full screen size
+- docs(livelink.webxr): README and fixed tsconfig
+- feat(livelink.webxr): add LXRScaling feature, review LXRLocomotion interface, more flexible config for WebXRVirtualJoysticks
+- feat(livelink.webxr): review camera rig center eye update
+- Updated dependencies
+  - @3dverse/livelink-react-ui@0.3.21
+
 ## 0.1.19
 
 ### Patch Changes

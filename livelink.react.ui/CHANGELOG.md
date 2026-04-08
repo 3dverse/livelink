@@ -1,5 +1,11 @@
 # @3dverse/livelink-react-ui
 
+## 0.3.21
+
+### Patch Changes
+
+- feat(livelink.react.ui): increase perf panel indicator spacing
+
 ## 0.3.20
 
 ### Patch Changes
