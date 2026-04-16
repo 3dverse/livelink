@@ -1,5 +1,12 @@
 # @3dverse/livelink-webxr
 
+## 0.2.2
+
+### Patch Changes
+
+- docs(livelink.webxr): LXRContext doc
+- feat(livelink.webxr): expose fake_alpha_scale get/set
+
 ## 0.2.1
 
 ### Patch Changes
