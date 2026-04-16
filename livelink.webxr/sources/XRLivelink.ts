@@ -182,6 +182,22 @@ export class XRLivelink extends TypedEventTarget<LXREvents> {
     }
 
     /**
+     * The fake alpha scale value used to adjust the strength of the fake alpha effect. A value of 0 means no fake
+     * alpha effect, while a value of 1 means full fake alpha effect based on the FTL frame pixel luminance.
+     */
+    get fake_alpha_scale(): number {
+        return this.#surface.fake_alpha_scale;
+    }
+
+    /**
+     * Set the fake alpha scale value used to adjust the strength of the fake alpha effect. A value of 0 means no fake ,
+     * alpha effect while a value of 1 means full fake alpha effect based on the FTL frame pixel luminance.
+     */
+    set fake_alpha_scale(value: number) {
+        this.#surface.fake_alpha_scale = value;
+    }
+
+    /**
      * Wheter to enable overscan configuration for XR sessions billboard. This enlarges billboard rendering to hide the
      * billboard position latency to the user by adding padding to the XRWebGLLayer.
      */

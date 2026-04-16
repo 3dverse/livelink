@@ -34,6 +34,7 @@
     "@tailwindcss/vite": "^4.1.17",
     "@types/react": "^19.2.7",
     "@types/react-dom": "^19.2.3",
+    "@types/three": "0.170.0",
     "@types/wicg-file-system-access": "^2023.10.7",
     "@typescript-eslint/eslint-plugin": "^8.48.1",
     "@typescript-eslint/parser": "^8.48.1",
@@ -46,6 +47,6 @@
     "sharp": "^0.34.5",
     "tailwindcss": "^4.1.17",
     "typescript": "^5.9.3",
-    "vite": "^7.2.6"
+    "vite": "^7.3.2"
   }
 }

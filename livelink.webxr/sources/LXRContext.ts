@@ -12,85 +12,101 @@ import { ContextProvider } from "@3dverse/livelink";
  */
 export class LXRContext extends ContextProvider {
     /**
-     *
+     * The WebGLRenderingContext of the canvas
      */
     #context: WebGLRenderingContext | WebGL2RenderingContext;
 
     /**
-     * The WebGLRenderingContext of the canvas
+     * WebGL texture updated each frame with decoded pixel data.
      */
     #texture_ref: WebGLTexture | null = null;
 
     /**
-     * The WebGLRenderingContext of the canvas
+     * Shader program for rendering XR views.
      */
     #shader_program: WebGLProgram | null = null;
 
     /**
-     * The alternative frame buffer to draw on.
+     * Alternative frame buffer to draw on.
      */
     #frame_buffer: WebGLFramebuffer | null = null;
 
     /**
-     *
+     * Last drawn frame section, used for rendering and frame metadata.
      */
     #last_frame_section: FrameSection | null = null;
 
     /**
-     *
+     * The distance from the camera to the screen, used for calculating the projection matrix.
      */
     screen_distance: number = 25;
 
     /**
-     *
+     * The scale factor for resolution scaling. This is used to scale the size of the rendered frame in the XR views.
      */
     scale_factor: number = 1;
 
     /**
-     *
+     * When enabled, simulates alpha transparency based on pixel luminance, useful for AR passthrough.
      */
     fake_alpha_enabled: boolean = false;
 
     /**
-     *
+     * Overall transparency multiplier for the fake alpha effect.
      */
     fake_alpha_scale: number = 1;
 
     /**
-     *
+     * Neutral forward direction in camera local space.
      */
     readonly #neutral_direction: vec3 = vec3.fromValues(0, 0, -1);
 
     /**
-     *
+     * Billboard world-space position, recalculated each frame.
      */
     #billboard_position: vec3 = vec3.create();
+    /**
+     * Billboard model matrix, recalculated each frame to face the camera.
+     */
     #billboard_model_matrix: mat4 = mat4.create();
+    /**
+     * Projection offset from the XR view matrix, used to handle off-center projections.
+     */
     #projection_offset: vec2 = vec2.create();
 
     /**
-     *
+     * Camera world-space position, updated each frame.
      */
     #camera_position: vec3 = vec3.create();
+    /**
+     * Camera orientation quaternion, updated each frame.
+     */
     #camera_orientation: quat = quat.create();
+    /**
+     * Camera forward direction, derived from orientation each frame.
+     */
     #camera_direction: vec3 = vec3.create();
 
     /**
-     *
+     * The underlying WebGL rendering context.
      */
     get native(): WebGLRenderingContext | WebGL2RenderingContext {
         return this.#context;
     }
 
     /**
-     *
+     * Custom framebuffer for rendering. Defaults to the canvas framebuffer.
      */
     set frame_buffer(fb: WebGLFramebuffer) {
         this.#frame_buffer = fb;
     }
 
     /**
-     *
+     * Creates a new LXRContext instance.
+     * @param canvas The HTMLCanvasElement or OffscreenCanvas to use for rendering.
+     * @param context_type The type of WebGL context to create ("webgl" or "webgl2").
+     * @param context_attributes Optional attributes for the WebGL context, including xrCompatible for XR rendering.
+     * @throws Error if the context cannot be created.
      */
     constructor(
         canvas: HTMLCanvasElement | OffscreenCanvas,
@@ -111,7 +127,8 @@ export class LXRContext extends ContextProvider {
     }
 
     /**
-     *
+     * Initializes shaders, buffers, and textures.
+     * @param enable_billboard Whether to include billboard calculations in the shader for facing the camera.
      */
     initialize({ enable_billboard = true }: { enable_billboard?: boolean } = {}): void {
         this.#initShaderProgram({ enable_billboard });
@@ -120,21 +137,25 @@ export class LXRContext extends ContextProvider {
     }
 
     /**
-     *
+     * Stores the frame section to be rendered on the next XR frame
+     * @param frame_section The section of the frame to render, including pixel data and metadata.
      */
     drawFrameSection({ frame_section }: { frame_section: FrameSection }): void {
         this.#last_frame_section = frame_section;
     }
 
     /**
-     *
+     * Metadata of the last drawn frame section.
      */
     get meta_data(): FrameMetaData | null {
         return this.#last_frame_section?.meta_data || null;
     }
 
     /**
-     *
+     * Renders all XR views for the current frame.
+     * @param xr_views The XR views to render, containing view and projection matrices.
+     * @param xr_viewports The corresponding viewports for each XR view, defining where to render on the canvas.
+     * @param frame_camera_transforms The world-space camera transforms for this frame, used for billboard calculations.
      */
     drawXRFrame({
         xr_views,
@@ -246,7 +267,7 @@ export class LXRContext extends ContextProvider {
     override refreshSize(): void {}
 
     /**
-     *
+     * Releases GPU resources held by this context.
      */
     release(): void {
         const gl = this.#context;
@@ -261,7 +282,10 @@ export class LXRContext extends ContextProvider {
     }
 
     /**
-     *
+     * Computes the billboard model matrix so it always faces the camera.
+     * @param billboard_position The world-space position of the billboard.
+     * @param scaleX The horizontal scale of the billboard based on the XR view's FOV and resolution scaling.
+     * @param scaleY The vertical scale of the billboard based on the XR view's FOV and resolution scaling.
      */
     #computeBillboardMatrix(billboard_position: vec3, scaleX: number, scaleY: number): Float32Array {
         mat4.fromRotationTranslationScale(
@@ -275,7 +299,8 @@ export class LXRContext extends ContextProvider {
     }
 
     /**
-     *
+     * Compiles and links the vertex and fragment shaders into a shader program.
+     * @param enable_billboard Whether to include billboard calculations in the shader for facing the camera.
      */
     #initShaderProgram({ enable_billboard = true }: { enable_billboard: boolean }): void {
         const gl = this.#context!;
@@ -376,7 +401,7 @@ export class LXRContext extends ContextProvider {
     }
 
     /**
-     *
+     * Sets up the vertex buffer for a full-screen quad.
      */
     #initBuffers(): void {
         const gl = this.#context!;
@@ -392,7 +417,7 @@ export class LXRContext extends ContextProvider {
     }
 
     /**
-     *
+     * Creates and configures the WebGL texture for frame pixel data.
      */
     #initTexture(): void {
         const gl = this.#context!;
