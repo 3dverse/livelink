@@ -1,5 +1,11 @@
 # @3dverse/livelink-three
 
+## 0.2.16
+
+### Patch Changes
+
+- fix(livelink.three): fixed three peer dependency
+
 ## 0.2.15
 
 ### Patch Changes
