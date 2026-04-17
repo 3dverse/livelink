@@ -1,5 +1,11 @@
 # @3dverse/livelink-webxr
 
+## 0.2.3
+
+### Patch Changes
+
+- feat(livelink.webxr): expose flag to allow to toggle init tracking pose compensation manually
+
 ## 0.2.2
 
 ### Patch Changes
