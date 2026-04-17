@@ -314,6 +314,7 @@ export class LXRCameraRig {
                     )
                     .toArray(origin_transform.orientation);
             }
+            this.enable_tracking_pose_compensation = true;
         }
 
         // By default, ignore initial head orientation so virtual world orientation is fixed (most common use case)
