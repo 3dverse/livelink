@@ -85,6 +85,13 @@ export class LXRCameraRig {
     #cameras: Entity[] = [];
 
     /**
+     * Whether to apply compensation of {@link #initial_tracking_pose}. Useful when `origin_transform` is provided at
+     * init to ensure the user starts at the exact position of the anchor entity, but may be undesirable in some cases.
+     * User may want to set this when modifying {@link #anchor_entity} transform manually.
+     */
+    enable_tracking_pose_compensation: boolean = false;
+
+    /**
      * XR pose captured at initialization for tracking normalization.
      *
      * Set only when `origin_transform` is provided. Subsequent XR tracking is made relative to this pose in
@@ -307,24 +314,24 @@ export class LXRCameraRig {
                     )
                     .toArray(origin_transform.orientation);
             }
+        }
 
-            // By default, ignore initial head orientation so virtual world orientation is fixed (most common use case)
-            // Only preserve initial orientation if explicitly requested (advanced use case where virtual world adapts
-            // to initial viewing direction)
-            this.updateXrSpaceCenterEye(xr_views);
-            if (!preserve_initial_orientation) {
-                this.#initial_tracking_pose = {
-                    position: this.#xr_space_center_eye.position.clone(),
-                    orientation: new Quaternion(),
-                    orientation_conjugate: new Quaternion(),
-                };
-            } else {
-                this.#initial_tracking_pose = {
-                    position: this.#xr_space_center_eye.position.clone(),
-                    orientation: this.#xr_space_center_eye.orientation.clone(),
-                    orientation_conjugate: this.#xr_space_center_eye.orientation_conjugate.clone(),
-                };
-            }
+        // By default, ignore initial head orientation so virtual world orientation is fixed (most common use case)
+        // Only preserve initial orientation if explicitly requested (advanced use case where virtual world adapts
+        // to initial viewing direction)
+        this.updateXrSpaceCenterEye(xr_views);
+        if (!preserve_initial_orientation) {
+            this.#initial_tracking_pose = {
+                position: this.#xr_space_center_eye.position.clone(),
+                orientation: new Quaternion(),
+                orientation_conjugate: new Quaternion(),
+            };
+        } else {
+            this.#initial_tracking_pose = {
+                position: this.#xr_space_center_eye.position.clone(),
+                orientation: this.#xr_space_center_eye.orientation.clone(),
+                orientation_conjugate: this.#xr_space_center_eye.orientation_conjugate.clone(),
+            };
         }
 
         // Create the root origin entity
@@ -675,7 +682,7 @@ export class LXRCameraRig {
         final_pose_ori.copy(center_eye.orientation);
 
         // --- 1. Compute tracking relative to the initial tracking pose recorded at init ---
-        if (this.#initial_tracking_pose) {
+        if (this.enable_tracking_pose_compensation && this.#initial_tracking_pose) {
             const { position: tracking_pos, orientation: tracking_ori } = this.#initial_tracking_pose;
             final_pose_pos.sub(tracking_pos).applyQuaternion(tracking_ori);
             final_pose_ori.multiplyQuaternions(tracking_ori, center_eye.orientation);
@@ -787,8 +794,12 @@ export class LXRCameraRig {
         anchor_scale.fromArray(anchor.scale);
         inv_anchor_transform.compose(anchor_pos, anchor_ori, anchor_scale).invert();
 
-        const init_tracking_pos = this.#initial_tracking_pose?.position;
-        const init_tracking_inv_ori = this.#initial_tracking_pose?.orientation_conjugate;
+        let init_tracking_pos: Vector3 | undefined = undefined;
+        let init_tracking_inv_ori: Quaternion | undefined = undefined;
+        if (this.enable_tracking_pose_compensation) {
+            init_tracking_pos = this.#initial_tracking_pose?.position;
+            init_tracking_inv_ori = this.#initial_tracking_pose?.orientation_conjugate;
+        }
 
         // --- Per-camera: undo anchor → world-space offset → pose-local offset ---
         for (const { position, orientation } of frame_camera_transforms) {
