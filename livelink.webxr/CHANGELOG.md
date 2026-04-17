@@ -1,5 +1,11 @@
 # @3dverse/livelink-webxr
 
+## 0.2.4
+
+### Patch Changes
+
+- fix(livelink.webxr): enable tracking compensation by default if origin_transform specified at init
+
 ## 0.2.3
 
 ### Patch Changes
