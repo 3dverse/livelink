@@ -3,18 +3,26 @@ import React from "react";
 import type { Preview } from "@storybook/react-vite";
 import { themes } from "storybook/theming";
 import { withThemeByDataAttribute } from "@storybook/addon-themes";
+import type { StoryContext } from "storybook/internal/csf";
 import { Renderer } from "storybook/internal/types";
 import { Livelink } from "@3dverse/livelink-react";
+import type { UUID } from "@3dverse/livelink";
 
 //------------------------------------------------------------------------------
 import { LivelinkReactUIProvider } from "../sources/components/Provider";
-import "./doc-pages-style.css";
 
 //------------------------------------------------------------------------------
 import "@3dverse/design-tokens/css/design-tokens.css";
+import "./doc-pages-style.css";
+import { SWORD_SCENE_ID } from "./sceneIds";
 
 //------------------------------------------------------------------------------
-const scene_id = "4a5ed051-d3c7-444d-9049-ce752af9748d";
+/** Passed via `story.parameters.livelinkSceneId` / `meta.parameters.livelinkSceneId`. */
+function resolveLivelinkSceneId(context: StoryContext): UUID {
+    const fromParameters =
+        typeof context.parameters.livelinkSceneId === "string" ? context.parameters.livelinkSceneId : undefined;
+    return (fromParameters ?? SWORD_SCENE_ID) as UUID;
+}
 
 //------------------------------------------------------------------------------
 const preview: Preview = {
@@ -55,10 +63,11 @@ const preview: Preview = {
             defaultTheme: "dark",
             attributeName: "data-theme",
         }),
-        (Story: React.ComponentType) => {
+        (Story: React.ComponentType, context: StoryContext) => {
             const token = import.meta.env.STORYBOOK_3DVERSE_PUBLIC_TOKEN;
+            const sceneId = resolveLivelinkSceneId(context);
             return (
-                <Livelink token={token} sceneId={scene_id}>
+                <Livelink token={token} sceneId={sceneId}>
                     <LivelinkReactUIProvider>
                         <Story />
                     </LivelinkReactUIProvider>

@@ -1,0 +1,102 @@
+.root {
+    color: var(--color, #000);
+
+    position: relative;
+    padding-bottom: 8rem;
+    opacity: 1;
+
+    transition:
+        opacity 300ms ease,
+        transform 300ms ease;
+}
+
+/* Inline-start: label grows up-left from anchor at bottom-right */
+.rootStart {
+    padding-right: 8rem;
+    transform: translate(-9.5rem, -12rem);
+}
+
+@starting-style {
+    .rootStart {
+        opacity: 0;
+        transform: translate(-8rem, -12rem);
+    }
+}
+
+/* Inline-end: label grows up-right from anchor at bottom-left */
+.rootEnd {
+    padding-left: 8rem;
+    transform: translate(9.5rem, -12rem);
+}
+
+@starting-style {
+    .rootEnd {
+        opacity: 0;
+        transform: translate(8rem, -12rem);
+    }
+}
+
+.legend {
+    position: relative;
+    box-sizing: border-box;
+    max-width: 20rem;
+    padding-bottom: 0.5rem;
+
+    font-size: 1.25rem;
+    line-height: 1.75rem;
+    font-weight: 400;
+    text-transform: capitalize;
+    text-shadow: 1px 1px 1px lch(from var(--color, #FFF) calc(l - 100) c h);
+    overflow-wrap: break-word;
+
+    border-bottom: 1px solid currentColor;
+}
+
+.legendStart {
+    padding-right: 2rem;
+}
+
+.legendEnd {
+    text-align: right;
+    padding-left: 2rem;
+}
+
+.cornerAccent {
+    position: absolute;
+    bottom: -2px;
+    width: 11rem;
+    height: 0;
+    border-bottom: 1px solid currentColor;
+}
+
+.cornerAccentStart {
+    right: 1px;
+    transform-origin: top right;
+    transform: rotate(-135deg);
+}
+
+.cornerAccentEnd {
+    left: 1px;
+    transform-origin: top left;
+    transform: rotate(135deg);
+}
+
+.anchorDot {
+    position: absolute;
+    bottom: 0;
+    width: 0.75rem;
+    height: 0.75rem;
+    border-radius: 9999px;
+    border: 1px solid currentColor;
+    box-sizing: border-box;
+}
+
+.anchorDotStart {
+    right: 0;
+    transform: translate(50%, 50%);
+}
+
+.anchorDotEnd {
+    left: 0;
+    transform: translate(-50%, 50%);
+}

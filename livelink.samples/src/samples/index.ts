@@ -54,6 +54,7 @@ import PerformancePanel from "./react-ui/7-performance-panel/manifest";
 import CullingBoxGeometry from "./react-ui/8-culling-box-geometry/manifest";
 import VideoRecorder from "./react-ui/9-video-recorder/manifest";
 import BoundingBoxFaceProjection from "./react-ui/10-bounding-box-face-projection/manifest";
+import DOM3DAnchorLegendSample from "./react-ui/12-dom-3d-anchor-legend/manifest";
 
 //------------------------------------------------------------------------------
 import LiveSkeletalAnimation from "./advanced/x-live-skeletal-animation/manifest";
@@ -150,6 +151,7 @@ export default [
             CullingBoxGeometry,
             VideoRecorder,
             BoundingBoxFaceProjection,
+            DOM3DAnchorLegendSample,
         ],
     },
     {
