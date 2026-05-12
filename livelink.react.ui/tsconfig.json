@@ -10,10 +10,12 @@
     "declaration": true,
     "declarationMap": true,
     "emitDeclarationOnly": true,
+    "rootDir": "./sources",
     "skipLibCheck": true,
     "types": ["vite/client"],
     "module": "es2022"
   },
 
-  "exclude": ["./dist/**/*"]
+  "include": ["./sources"],
+  "exclude": ["./sources/**/*.stories.ts", "./sources/**/*.stories.tsx"]
 }
