@@ -163,7 +163,7 @@ export class EntityRegistry {
     /**
      * @internal
      */
-    _getEntitiesToUpdate(): Array<UpdateEntityCommand> {
+    _flushDirtyEntities(): Array<UpdateEntityCommand> {
         const update_command = new Array<UpdateEntityCommand>(this.#dirty_entities.size);
 
         let i = 0;
@@ -189,7 +189,7 @@ export class EntityRegistry {
     /**
      * @internal
      */
-    _getEntitiesToPersist(): Array<UpdateEntityCommand> {
+    _flushPersistentEntities(): Array<UpdateEntityCommand> {
         const update_command = new Array<UpdateEntityCommand>(this.#entities_to_persist.size);
 
         let i = 0;

@@ -820,7 +820,7 @@ export class Livelink {
      * @internal
      */
     _updateEntities = (): void => {
-        const update_commands = this.scene._entity_registry._getEntitiesToUpdate();
+        const update_commands = this.scene._entity_registry._flushDirtyEntities();
         if (update_commands.length > 0) {
             this.#core.updateEntities({ update_commands, persist: false });
         }
@@ -830,7 +830,7 @@ export class Livelink {
      *
      */
     #broadcastEntities = (): void => {
-        const update_commands = this.scene._entity_registry._getEntitiesToPersist();
+        const update_commands = this.scene._entity_registry._flushPersistentEntities();
         if (update_commands.length > 0) {
             this.#core.updateEntities({ update_commands, persist: true });
         }
