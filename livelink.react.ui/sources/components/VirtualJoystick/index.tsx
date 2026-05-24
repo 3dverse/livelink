@@ -2,16 +2,28 @@
 import { useEffect, useState } from "react";
 
 //------------------------------------------------------------------------------
-import type {
-    JoystickManager,
-    EventData,
-    JoystickOutputData,
-    JoystickManagerEventTypes,
-    JoystickManagerOptions,
-} from "nipplejs";
+// nipplejs v5 does not re-export its internal types as named exports.
+// Derive manager and options types from the exported `create` function instead.
+import type { create as nippleCreate } from "nipplejs";
+
+type NippleManager = ReturnType<typeof nippleCreate>;
+type NippleOptions = Parameters<typeof nippleCreate>[0];
 
 //------------------------------------------------------------------------------
-export type JoystickEvent = JoystickOutputData;
+/**
+ * The event data emitted on joystick move events.
+ *
+ * Mirrors the `JoystickEventData` shape from nipplejs v5.
+ */
+export type JoystickEvent = {
+    angle: { degree: number; radian: number };
+    direction?: { x?: "left" | "right"; y?: "up" | "down"; angle?: string };
+    vector: { x: number; y: number };
+    distance: number;
+    force: number;
+    position: { x: number; y: number };
+    pressure: number;
+};
 
 /**
  *
@@ -28,11 +40,11 @@ export const VirtualJoystick = ({
     onMove?: JoystickCallback;
     onEnd?: JoystickCallback;
 }) => {
-    const [manager, setManager] = useState<JoystickManager | null>(null);
+    const [manager, setManager] = useState<NippleManager | null>(null);
 
     useEffect(() => {
         let isMounted = true;
-        let currentManager: JoystickManager | null = null;
+        let currentManager: NippleManager | null = null;
 
         createNippleJSManager(propsOptions).then(manager => {
             if (isMounted) {
@@ -63,8 +75,8 @@ export const VirtualJoystick = ({
  *
  */
 function useJoystickEvent(
-    manager: JoystickManager | null,
-    eventName: JoystickManagerEventTypes | JoystickManagerEventTypes[],
+    manager: NippleManager | null,
+    eventName: string,
     callback: ((data: JoystickEvent) => void) | undefined,
 ) {
     useEffect(() => {
@@ -72,23 +84,26 @@ function useJoystickEvent(
             return;
         }
 
-        const handler = (_event: EventData, data: JoystickEvent) => {
-            callback(data);
+        // nipplejs v5 callbacks receive a single InternalEvent<T> where the
+        // payload is in `evt.data`. The `on` overloads are per-event-name, so
+        // we cast through unknown to call with a dynamic event name.
+        type EventHandler = (evt: { data: JoystickEvent }) => void;
+        const handler: EventHandler = evt => callback(evt.data);
+        const m = manager as unknown as {
+            on(event: string, handler: EventHandler): void;
+            off(event: string, handler: EventHandler): void;
         };
 
-        manager.on(eventName, handler);
-
-        return () => {
-            manager.off(eventName, handler);
-        };
+        m.on(eventName, handler);
+        return () => m.off(eventName, handler);
     }, [manager, eventName, callback]);
 }
 
 /**
  *
  */
-async function createNippleJSManager(options?: VirtualJoystickOptions): Promise<JoystickManager> {
-    let formattedOptions: JoystickManagerOptions = {};
+async function createNippleJSManager(options?: VirtualJoystickOptions): Promise<NippleManager> {
+    let formattedOptions: NippleOptions = {};
     if (options) {
         formattedOptions = {
             ...options,
@@ -127,7 +142,7 @@ export type VirtualJoystickOptions = {
 
     /**
      * Defaults to `'white'`
-     * The background color of your joystick’s elements.
+     * The background color of your joystick's elements.
      *
      * Can be any valid CSS color.
      */
@@ -148,7 +163,7 @@ export type VirtualJoystickOptions = {
      *
      * If, for reasons, you need to have multiple nipples into the same zone.
      *
-     * Otherwise it will only get one, and all new touches won’t do a thing.
+     * Otherwise it will only get one, and all new touches won't do a thing.
      *
      * Please note that multitouch is off when in static or semi modes.
      */
@@ -166,7 +181,7 @@ export type VirtualJoystickOptions = {
     /**
      * Defaults to `false`
      *
-     * The library won’t draw anything in the DOM and will only trigger events with data.
+     * The library won't draw anything in the DOM and will only trigger events with data.
      */
     isHidden?: boolean;
 
@@ -219,14 +234,14 @@ export type VirtualJoystickOptions = {
     /**
      * Defaults to `false`
      *
-     * Locks joystick’s movement to the x (horizontal) axis
+     * Locks joystick's movement to the x (horizontal) axis
      */
     lockX?: boolean;
 
     /**
      * Defaults to `false`
      *
-     * Locks joystick’s movement to the y (vertical) axis
+     * Locks joystick's movement to the y (vertical) axis
      */
     lockY?: boolean;
 
