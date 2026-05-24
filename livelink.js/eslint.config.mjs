@@ -21,6 +21,15 @@ export default [
             },
         },
     },
+    {
+        files: ["tests/**/*.ts"],
+        languageOptions: {
+            parserOptions: {
+                project: ["./tsconfig.test.json"],
+                tsconfigRootDir: __dirname,
+            },
+        },
+    },
     pluginJs.configs.recommended,
     ...tseslint.configs.recommended,
     {

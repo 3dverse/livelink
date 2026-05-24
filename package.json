@@ -38,7 +38,8 @@
     "dev-core": "npm link @3dverse/livelink.core && npm run dev",
     "dev-docs": "npm -C livelink.js run docs",
     "=============== Test =================": "",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test:js": "npm -C livelink.js run test",
+    "test": "npm run test:js"
   },
   "author": "",
   "license": "ISC",
