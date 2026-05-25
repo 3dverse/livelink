@@ -124,6 +124,27 @@ js:build:samples:
   rules:
     - if: *default-branch-rule
 
+# TESTS ###############################################################################################################
+js:livelink.js:test:unit:
+  stage: test
+  extends:
+    - .env-dev
+    - .runner-onprem
+  image: node:${NODE_VERSION}
+  needs:
+    - job: js:build:libs
+      artifacts: true
+  before_script:
+    - !reference [.node-cache, before_script]
+  variables:
+    NPM_INSTALL_ARGS: "--workspace=livelink.js"
+  script:
+    - npm run test:js
+  rules:
+    - if: *default-branch-rule
+    - if: *merge-request-on-release-rule
+    - if: *release-rule
+
 # VERSION #############################################################################################################
 version:update-mr:
   stage: deploy
