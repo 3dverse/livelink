@@ -44,7 +44,6 @@
     "typescript": "^6.0.3"
   },
   "peerDependencies": {
-    "@3dverse/api": "^0.8.14",
     "@3dverse/livelink": "^0.8.54",
     "@3dverse/livelink-react": "^0.2.55",
     "@types/react": ">=18.2.0",
