@@ -1,5 +1,15 @@
 # @3dverse/livelink
 
+## 0.8.63
+
+### Patch Changes
+
+- fix(livelink.js): incorrect parsing for double negated expressions like "! ! a"
+- chore: update dependencies
+- fix(livelink.js): during a join_or_start session, make sure the session found matches the transient criteria
+- refactor(livelink.js): renamed internal functions
+- chore: update dependencies
+
 ## 0.8.62
 
 ### Patch Changes

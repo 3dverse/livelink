@@ -1,5 +1,22 @@
 # @3dverse/livelink-webxr
 
+## 0.2.5
+
+### Patch Changes
+
+- chore: update dependencies
+- Updated dependencies
+- Updated dependencies
+- Updated dependencies
+- Updated dependencies
+- Updated dependencies
+- Updated dependencies
+- Updated dependencies
+- Updated dependencies
+  - @3dverse/livelink-react-ui@0.3.22
+  - @3dverse/livelink@0.8.63
+  - @3dverse/livelink-react@0.2.64
+
 ## 0.2.4
 
 ### Patch Changes

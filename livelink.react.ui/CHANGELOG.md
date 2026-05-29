@@ -1,5 +1,21 @@
 # @3dverse/livelink-react-ui
 
+## 0.3.22
+
+### Patch Changes
+
+- feat(livelink.react.ui): replace @3dverse/api dependency by basic fetch with API_HOSTNAME constant
+- chore: update storybook
+- feat(livelink.react.ui): new DOM3DAnchorLegend component
+- chore: update dependencies
+- Updated dependencies
+- Updated dependencies
+- Updated dependencies
+- Updated dependencies
+- Updated dependencies
+  - @3dverse/livelink@0.8.63
+  - @3dverse/livelink-react@0.2.64
+
 ## 0.3.21
 
 ### Patch Changes
