@@ -466,7 +466,7 @@ export class CameraController extends CameraControls {
         if (!mouse_actions || mouse_actions.length === 0) {
             return false;
         }
-        let mouse_action: ACTION = ACTION.NONE;
+        let mouse_action: ACTION;
         switch (event.button) {
             case MouseEventButton.main:
                 mouse_action = this.mouseButtons.left;

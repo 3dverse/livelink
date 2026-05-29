@@ -23,6 +23,12 @@ function has_greater_precedence(op1: keyof typeof op_prio, op2: keyof typeof op_
 }
 
 /**
+ * Unary prefix operators are right-associative: "! ! a" must parse as !(!(a)),
+ * so a second "!" should not pop the first one off the stack.
+ */
+const right_associative = new Set<string>(["!"]);
+
+/**
  * @internal
  */
 export function compute_rpn(filter_value: string): string {
@@ -39,7 +45,7 @@ export function compute_rpn(filter_value: string): string {
                 {
                     while (operators.length > 0) {
                         const op = operators[operators.length - 1] as keyof typeof op_prio;
-                        if (!is_operator(op) || has_greater_precedence(token, op)) {
+                        if (!is_operator(op) || has_greater_precedence(token, op) || right_associative.has(token) && op_prio[op] === op_prio[token]) {
                             break;
                         }
                         operators.pop();

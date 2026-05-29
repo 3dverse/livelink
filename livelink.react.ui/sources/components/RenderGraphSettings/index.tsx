@@ -1,7 +1,6 @@
 //------------------------------------------------------------------------------
 import React, { CSSProperties, useEffect, useState } from "react";
 import { Entity, RenderGraphDataObject } from "@3dverse/livelink";
-import { getAssetDescription, setUserToken } from "@3dverse/api";
 import { FaArrowRotateLeft, FaFolder } from "react-icons/fa6";
 
 //------------------------------------------------------------------------------
@@ -62,15 +61,16 @@ export const RenderGraphSettings = ({
                 return null;
             }
             // Get render graph description
-            setUserToken(userToken);
-            const { data: renderGraphDescription } = await getAssetDescription({
-                asset_id: renderGraphRef,
-                asset_container: "render_graphs",
-            });
-            if (!renderGraphDescription) {
+            const response = await fetch(
+                `https://${API_HOSTNAME}/app/v1/assets/render_graphs/${renderGraphRef}/description`,
+                { headers: { user_token: userToken } },
+            );
+            if (!response.ok) {
                 console.error("No render graph description");
                 return null;
             }
+            console.log("Render graph description response", response);
+            const renderGraphDescription = await response.json();
             // Group by categories
             const inputDescriptorsGroupedByCategories = computeCategories(
                 renderGraphDescription.inputDescriptor as Input[],

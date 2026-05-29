@@ -189,7 +189,7 @@ export class Livelink {
     static async join_or_start({
         scene_id,
         token,
-        session_selector = ({ sessions }: { sessions: Array<SessionInfo> }): SessionInfo => sessions[0],
+        session_selector = ({ sessions }: { sessions: Array<SessionInfo> }): SessionInfo | null => sessions.find(s => s.is_transient_session === is_transient) ?? null,
         is_transient = false,
         is_headless = false,
         session_options,
@@ -820,7 +820,7 @@ export class Livelink {
      * @internal
      */
     _updateEntities = (): void => {
-        const update_commands = this.scene._entity_registry._getEntitiesToUpdate();
+        const update_commands = this.scene._entity_registry._flushDirtyEntities();
         if (update_commands.length > 0) {
             this.#core.updateEntities({ update_commands, persist: false });
         }
@@ -830,7 +830,7 @@ export class Livelink {
      *
      */
     #broadcastEntities = (): void => {
-        const update_commands = this.scene._entity_registry._getEntitiesToPersist();
+        const update_commands = this.scene._entity_registry._flushPersistentEntities();
         if (update_commands.length > 0) {
             this.#core.updateEntities({ update_commands, persist: true });
         }

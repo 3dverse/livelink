@@ -17,6 +17,7 @@ const commonBuildOptions = {
     define: {
         PACKAGE_NAME: `"${pkg.name}"`,
         LIVELINK_REACT_UI_VERSION: `"${pkg.version}"`,
+        API_HOSTNAME: `"api.3dverse.com"`,
     },
     target: "es2022",
     plugins: [
