@@ -1,8 +1,16 @@
 /* Core */
 
+* {
+    scrollbar-width: inherit;
+    scrollbar-color: inherit;
+}
+
 html {
     scroll-padding-top: 4rem;
     scroll-behavior: smooth;
+
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-content-tertiary) transparent;
 }
 
 body {
@@ -13,9 +21,14 @@ body {
     text-rendering: optimizeLegibility;
     -webkit-tap-highlight-color: color-mix(in srgb, var(--color-content-tertiary) 8%, transparent);
 
-    scrollbar-color: var(--color-content-tertiary) transparent;
-    /* scrollbar-gutter: stable both-edges; */
-    /* scrollbar-width: thin; */
+    scrollbar-gutter: stable both-edges;
+}
+
+::-webkit-scrollbar-thumb {
+    background-color: var(--color-accent);
+    border-radius: 999px;
+    border: 2px solid transparent;
+    background-clip: padding-box;
 }
 
 @layer base {
