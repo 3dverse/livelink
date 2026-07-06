@@ -107,7 +107,7 @@ export class RemoteFrameProxy implements DecodedFrameConsumer {
      */
     release(): void {
         for (const surface of this.#surfaces) {
-            this.#releaseSurface({ surface });
+            this.#removeSurface({ surface });
         }
         this.#surfaces = [];
     }
@@ -158,7 +158,7 @@ export class RemoteFrameProxy implements DecodedFrameConsumer {
         viewport.release();
 
         if (surface.viewports.length === 0) {
-            this.#releaseSurface({ surface });
+            this.#removeSurface({ surface });
             this.#surfaces.splice(index, 1);
         }
 
@@ -294,8 +294,8 @@ export class RemoteFrameProxy implements DecodedFrameConsumer {
     /**
      *
      */
-    #releaseSurface({ surface }: { surface: RenderingSurfaceBase }): void {
+    #removeSurface({ surface }: { surface: RenderingSurfaceBase }): void {
         surface.removeEventListener("on-rendering-surface-resized", this.#onFrameLayoutModified);
-        surface.release();
+        surface.reset();
     }
 }

@@ -127,6 +127,13 @@ export abstract class RenderingSurfaceBase extends TypedEventTarget<RenderingSur
     }
 
     /**
+     * Resets the surface states.
+     */
+    reset(): void {
+        this.#last_draw_data = null;
+    }
+
+    /**
      * Adds a viewport to the current surface.
      *
      * Note that the viewport knows which section of the surface it should draw to using
