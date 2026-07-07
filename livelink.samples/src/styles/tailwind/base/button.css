@@ -99,7 +99,7 @@
     }
 
     .button-xs {
-        @apply text-2xs px-2 py-px min-h-6;
+        @apply text-3xs px-2 py-px min-h-6;
     }
 
     .button-2xs {

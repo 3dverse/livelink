@@ -23,7 +23,7 @@ export function CodeBlock({ code, title, gitPath }: { code: string; title?: stri
             ) : (
                 <article className="relative flex flex-col max-h-[50%] xl:max-h-none xl:max-w-[50ch] 2xl:max-w-[60ch] 3xl:max-w-[70ch] 4xl:max-w-[85ch] bg-foreground rounded-xl overflow-y-clip">
                     <header className="flex justify-between items-center gap-3 px-3 py-3 border-b border-quaternary">
-                        {title ? <p className="text-xs text-tertiary">{title}</p> : <div />}
+                        {title ? <p className="text-xs">{title}</p> : <div />}
                         <div className="flex items-center gap-2">
                             <CopyCodeButton code={code} />
                             {gitPath && (
@@ -47,7 +47,7 @@ export function CodeBlock({ code, title, gitPath }: { code: string; title?: stri
                     <Highlight theme={themes.nightOwl} code={code} language="tsx">
                         {({ style, tokens, getLineProps, getTokenProps }) => (
                             <pre
-                                className="h-full text-[.8em] !m-0 !bg-transparent !py-[1em] overflow-auto"
+                                className="h-full text-[.72em] m-0! bg-transparent! py-[1em]! overflow-auto"
                                 style={style}
                             >
                                 {tokens.map((line, i) => (
