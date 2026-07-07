@@ -1,5 +1,11 @@
 # @3dverse/livelink
 
+## 0.8.64
+
+### Patch Changes
+
+- fix(livelink.js): remote frame proxy was releasing surface resources it contained no viewport
+
 ## 0.8.63
 
 ### Patch Changes
