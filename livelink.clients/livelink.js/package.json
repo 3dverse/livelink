@@ -16,7 +16,7 @@
     "dist"
   ],
   "scripts": {
-    "prebuild": "node ci/auto-generate.js ../node_modules/ ci/ ./_prebuild/",
+    "prebuild": "node ci/auto-generate.js ../../node_modules/ ci/ ./_prebuild/",
     "build": "node esbuild.js && tsc",
     "lint": "eslint sources _prebuild",
     "clean": "rimraf _prebuild dist docs docs-md",
@@ -26,12 +26,12 @@
     "dev:tsc": "tsc -w",
     "predocs": "run-p clean:docs",
     "docs": "run-p typedoc typedoc:md",
-    "pretest": "node ci/auto-generate.js ../node_modules/ ci/ ./_prebuild/",
+    "pretest": "node ci/auto-generate.js ../../node_modules/ ci/ ./_prebuild/",
     "test": "vitest run",
     "test:watch": "vitest",
     "typedoc": "typedoc --options typedoc.config.mjs",
     "typedoc:md": "typedoc --options typedoc-md.config.mjs --plugin typedoc-plugin-no-inherit --plugin typedoc-plugin-markdown --out docs-md",
-    "posttypedoc:md": "prettier --config ../.prettierrc --write ./docs-md"
+    "posttypedoc:md": "prettier --config ../../.prettierrc --write ./docs-md"
   },
   "repository": {
     "type": "git",

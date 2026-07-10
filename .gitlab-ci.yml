@@ -65,10 +65,12 @@ js:build:libs:
     paths:
       - "*/_prebuild/"
       - "*/dist/"
+      - "livelink.clients/*/_prebuild/"
+      - "livelink.clients/*/dist/"
   before_script:
     - !reference [.node-cache, before_script]
   variables:
-    NPM_INSTALL_ARGS: "--workspace=livelink.js --workspace=livelink.react --workspace=livelink.react.ui --workspace=livelink.three --workspace=livelink.webxr"
+    NPM_INSTALL_ARGS: "--workspace=livelink.clients/livelink.js --workspace=livelink.react --workspace=livelink.react.ui --workspace=livelink.three --workspace=livelink.webxr"
   script:
     - npm run build:js
     - npm run build:react
@@ -115,6 +117,7 @@ js:build:samples:
     expire_in: 1 day
     paths:
       - "*/dist/"
+      - "livelink.clients/*/dist/"
   before_script:
     - !reference [.node-cache, before_script]
   variables:
@@ -137,7 +140,7 @@ js:livelink.js:test:unit:
   before_script:
     - !reference [.node-cache, before_script]
   variables:
-    NPM_INSTALL_ARGS: "--workspace=livelink.js"
+    NPM_INSTALL_ARGS: "--workspace=livelink.clients/livelink.js"
   script:
     - npm run test:js
   rules:
@@ -166,6 +169,8 @@ version:update-version:
     paths:
       - "*/package.json"
       - "*/CHANGELOG.md"
+      - "livelink.clients/*/package.json"
+      - "livelink.clients/*/CHANGELOG.md"
       - "./package-lock.json"
   script:
     - changesets-tools generate-changesets
@@ -188,6 +193,7 @@ version:publish:
     expire_in: 1 day
     paths:
       - "*/package.json"
+      - "livelink.clients/*/package.json"
   before_script:
     - |
       git config --global user.name "${BOT_3DVERSE_USER_NAME}"
@@ -264,7 +270,7 @@ js:livelink.js:docs:
       artifacts: true
       optional: true
   variables:
-    PACKAGE_DIR: livelink.js
+    PACKAGE_DIR: livelink.clients/livelink.js
   rules:
     - if: *release-rule
     - if: *manual-doc-publish-rule
