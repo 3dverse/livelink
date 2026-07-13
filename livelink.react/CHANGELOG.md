@@ -1,5 +1,11 @@
 # @3dverse/livelink-react
 
+## 0.2.65
+
+### Patch Changes
+
+- feat(livelink.react): change default far plane to 0 (infinite) instead of 10000
+
 ## 0.2.64
 
 ### Patch Changes
