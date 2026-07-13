@@ -1,17 +1,16 @@
 //------------------------------------------------------------------------------
 import React from "react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Swiper, SwiperSlide } from "swiper/react";
 import type { Swiper as SwiperType } from "swiper";
 import { RiTriangleFill } from "react-icons/ri";
 import { CameraController, CameraControllerPresets } from "@3dverse/livelink";
+import { useSceneInfo } from "@3dverse/livelink-react";
 
 //------------------------------------------------------------------------------
 import { Icon } from "../../components-common/Icon";
 import styles from "./style.module.css";
-
-//------------------------------------------------------------------------------
-const SPEEDS = [...Array(12).keys()].map(i => (i > 4 ? (i - 3) * 5 : i + 1));
+import { DEFAULT_SPEEDS, computeDiagonalKm, generateSpeeds } from "./speeds";
 
 //------------------------------------------------------------------------------
 //------------------------------------------------------------------------------
@@ -29,13 +28,18 @@ export const CameraSpeedSlider = ({
     //--------------------------------------------------------------------------
     const [initialSlide, setInitialSlide] = useState(0);
     const swiperRef = useRef<SwiperType | null>(null);
+    const { sceneInfo } = useSceneInfo();
+    const speeds = useMemo(
+        () => (sceneInfo?.aabb ? generateSpeeds(computeDiagonalKm(sceneInfo.aabb)) : DEFAULT_SPEEDS),
+        [sceneInfo],
+    );
 
     //--------------------------------------------------------------------------
     const handleSlideChange = (event: any) => {
         if (!cameraController) {
             return;
         }
-        const speed = SPEEDS[event.activeIndex];
+        const speed = speeds[event.activeIndex];
         onChange?.(speed);
         cameraController.truckSpeed = speed * Math.sign(cameraController.truckSpeed);
         switch (cameraController.preset) {
@@ -58,10 +62,10 @@ export const CameraSpeedSlider = ({
         }
         const isFlyMode = cameraController.preset === CameraControllerPresets.fly;
         const initialSpeed = Math.abs(cameraController.truckSpeed) * (isFlyMode ? 1e-3 : 1);
-        const index = SPEEDS.findIndex(v => v >= initialSpeed);
-        const newInitialSlide = index === -1 ? SPEEDS.length - 1 : index;
+        const index = speeds.findIndex(v => v >= initialSpeed);
+        const newInitialSlide = index === -1 ? speeds.length - 1 : index;
         setInitialSlide(newInitialSlide);
-    }, [cameraController]);
+    }, [cameraController, speeds]);
 
     //--------------------------------------------------------------------------
     useEffect(() => {
@@ -69,6 +73,15 @@ export const CameraSpeedSlider = ({
             swiperRef.current.slideTo(initialSlide);
         }
     }, [initialSlide]);
+
+    //--------------------------------------------------------------------------
+    useEffect(() => {
+        // Swiper doesn't recompute its slide grid on its own when the number of
+        // slides changes after mount (e.g. once the scene-derived speeds replace
+        // the DEFAULT_SPEEDS fallback) — without this, slides overlap and the far
+        // end of the range becomes unreachable.
+        swiperRef.current?.update();
+    }, [speeds]);
 
     //--------------------------------------------------------------------------
     return (
@@ -90,13 +103,13 @@ export const CameraSpeedSlider = ({
                         initialSlide={initialSlide}
                         grabCursor
                         mousewheel
-                        slidesPerView={11}
+                        slidesPerView={12}
                         freeMode
                         centeredSlides
                         slideToClickedSlide
                         className={styles.swiper}
                     >
-                        {SPEEDS.map(v => (
+                        {speeds.map(v => (
                             <SwiperSlide className={styles.slide} key={v}>
                                 <span className={styles.slideRule} />
                                 {v}

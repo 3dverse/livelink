@@ -111,7 +111,7 @@ const DEFAULT_RENDER_GRAPH_SETTINGS = { grid: true, skybox: false, gradient: tru
 /**
  * @internal
  */
-const DEFAULT_PERSPECTIVE_LENS = { fovy: 60, nearPlane: 0.1, farPlane: 10000 };
+const DEFAULT_PERSPECTIVE_LENS = { fovy: 60, nearPlane: 0.1, farPlane: 0 };
 
 /**
  *

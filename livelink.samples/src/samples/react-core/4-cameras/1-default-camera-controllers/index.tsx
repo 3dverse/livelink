@@ -6,12 +6,13 @@ import {
     CameraController,
     DefaultCameraController,
     useCameraEntity,
+    useSceneSettings,
 } from "@3dverse/livelink-react";
 import { LoadingOverlay } from "@3dverse/livelink-react-ui";
 
 //------------------------------------------------------------------------------
 import { DisconnectedModal } from "@/components/SamplePlayer";
-import { useRef, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import {
     CameraControllerPresets,
     CameraControllerPreset,
@@ -41,20 +42,30 @@ function AppLayout() {
     const cameraControllerRef = useRef<DefaultCameraController>(null);
     const [cameraControllerPreset, setCameraControllerPreset] =
         useState<CameraControllerPreset>(CameraControllerPresets.orbital);
+    const { sceneSettings } = useSceneSettings();
 
     const presetKeys = Object.keys(
         CameraControllerPresets,
     ) as (keyof typeof CameraControllerPresets)[];
 
-    const moveCamera = () => {
-        const targetPosition = [5, 0, 0] as const;
+    // Move the camera to the default position and look at the origin
+    const moveCamera = useCallback(() => {
+        const targetPosition = sceneSettings
+            ? ([...sceneSettings.default_camera_transform.position] as const)
+            : ([5, 0, 0] as const);
         const lookAtPosition = [0, 0, 0] as const;
         cameraControllerRef.current?.setLookAt(
             ...targetPosition,
             ...lookAtPosition,
             true,
         );
-    };
+    }, [sceneSettings]);
+
+    // Override some properties of the preset to make it more suitable for this sample scene
+    const overridenPreset = { ...cameraControllerPreset };
+    if (cameraControllerPreset === CameraControllerPresets.fly) {
+        overridenPreset.truckSpeed! *= 10;
+    }
 
     return (
         <>
@@ -62,7 +73,7 @@ function AppLayout() {
                 <Viewport cameraEntity={cameraEntity} className="w-full h-full">
                     <CameraController
                         ref={cameraControllerRef}
-                        preset={cameraControllerPreset}
+                        preset={overridenPreset}
                     />
                 </Viewport>
             </Canvas>
