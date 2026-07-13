@@ -1,5 +1,13 @@
 # @3dverse/livelink-react-ui
 
+## 0.3.23
+
+### Patch Changes
+
+- feat(livelink.react.ui): adjust speeds of CameraSpeedSlider to scene bounding box
+- Updated dependencies
+  - @3dverse/livelink-react@0.2.65
+
 ## 0.3.22
 
 ### Patch Changes
