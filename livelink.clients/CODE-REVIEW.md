@@ -1,34 +1,50 @@
 # Code review — branch `agent`
 
-> Review 2026-07-10; findings resolved by 2026-07-16. Claude Code
-> `/code-review`, high effort, Claude Fable 5 (`claude-fable-5`).
+> Initial review 2026-07-10; re-reviewed 2026-07-15 after the agent SDK rework
+> (`SessionPool` merged into `Agent`, `AgentEvents` rename, update-loop guard).
+> Both runs: Claude Code `/code-review`, high effort, Claude Fable 5
+> (`claude-fable-5`).
 > Scope: `git diff main...HEAD` plus the uncommitted working tree — the repo
-> restructure into `livelink.clients/` and the extraction of the shared
-> headless core (`livelink.base`) from `livelink.js`.
+> restructure into `livelink.clients/`, the extraction of the shared headless
+> core (`livelink.base`), the new headless agent SDK (`livelink.agent`), and
+> the new samples.
 
 ## Overall assessment
 
-The extraction is clean and behavior-preserving: `livelink.js`'s old public
-export surface and behavior are unchanged, CI and packaging are wired
-coherently, and the old top-level `livelink.js/` tree is fully deleted. Two
-of the initial findings were base-scoped (a double-started update-loop leak
-and contradictory `getComponent` docs) — both fixed. Three further
-correctness bugs surfaced in the shared session/scene/entity model on
-2026-07-15 (a quat/euler desync on the mutate-then-flag path, a
-`Session.find` / `list` contract drift from `main`, and an O(n) client
-lookup on the per-frame path) — all fixed by 2026-07-16. The three design
-notes (browser-only proxy-cache machinery relocated out of the headless
-core, the phantom `Session` generic, invariance casts replaced by
-per-consumer host types) are resolved as well. Sole leftover, minor: the js
-`tests/helpers/mock-scene.ts` still casts its stub `as unknown as Scene`
-(the base helper is already structurally typed).
+The branch is a clean, well-tested refactor: the base/js split preserves the
+old public export surface and behavior, CI and packaging are wired coherently,
+and the old top-level `livelink.js/` tree is fully deleted. All 8 findings of
+the initial review are now resolved — the agent SDK rework fixed the 4
+correctness bugs in the session lifecycle plus the stale docs, and the
+2026-07-16 follow-up closed the remaining cleanup items. All suites pass
+(106 base + 39 agent + 139 js) and every workspace package, including the
+samples, builds.
+
+The re-review found no new correctness bug in the reworked agent lifecycle.
+**All findings of both reviews are now resolved (2026-07-16)**: the `main`
+session contracts were restored, `Client.client_type` exposed and used by the
+default leave predicate, the leave-during-failed-join marker transfer
+centralized in `#consumePendingLeave`, the dead maths copy deleted, the stale
+comment rewritten, and the quat/euler mutate-then-flag desync fixed with
+shadow-based re-sync on flag (finding 1). The three design notes are resolved
+as well (proxy cache moved into the browser generated layer, phantom Session
+generic removed via the structural `SessionClass`, invariance casts replaced
+by per-consumer `SceneHost` picks). Sole leftover, minor: the js
+`tests/helpers/mock-scene.ts` still casts its stub `as unknown as Scene` (the
+base helper is already structurally typed).
 
 ## Status of the 2026-07-10 findings
 
-| #   | Finding                                                                   | Status                                                                                                                                                 |
-| --- | ------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 1   | Double-started update loop leaks intervals                                | **Fixed** — `_startUpdateLoop` stops any running loop before installing new intervals, after rate validation (`LivelinkBase.ts:274`)                    |
-| 2   | Contradictory `getComponent` docs                                         | **Fixed** — the class doc now describes the mutate-then-flag contract: `getComponent()` returns the current value, `updateComponent()` flags and sends it (`livelink.base/sources/scene/Entity.ts:31`) |
+| #   | Finding                                                                   | Status                                                                                                                                                                                                              |
+| --- | ------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | Unhandled rejection from the client-count listener can crash a Node agent | **Fixed** — the listener wraps the evaluation with a `.catch` dispatching `on-error` (`Agent.ts:601`)                                                                                                               |
+| 2   | Leave-timer race can abandon a session with a live viewer                 | **Fixed** — the timer re-checks `should_stay` via `#leaveIfStillAlone` before leaving, and errs on staying (`Agent.ts:739`)                                                                                         |
+| 3   | `leave()` during an in-flight join is silently lost                       | **Fixed** — `#leave_during_join` records the request and `#establish` aborts the join (`Agent.ts:579`)                                                                                                              |
+| 4   | Double-started update loop leaks intervals                                | **Fixed** — `_startUpdateLoop` stops any running loop before installing new intervals, after rate validation (`LivelinkBase.ts:274`)                                                                                |
+| 5   | Stale `context` API in docs and examples                                  | **Fixed** — README and `Agent` docs use `event.livelink` / `({ livelink, other_clients })`                                                                                                                          |
+| 6   | `stop()` leaves sessions strictly sequentially                            | **Fixed** (2026-07-16) — the leaves are mapped to promises and awaited with `Promise.all` (`Agent.ts:439`)                                                                                                          |
+| 7   | Sample creates entities one round-trip at a time                          | **Fixed** (2026-07-16) — the sample batches creation with a single `newEntities` call (`livelink.samples/src/lib/orbiting-animation.ts:166`)                                                                        |
+| 8   | Contradictory `getComponent` docs                                         | **Fixed** (2026-07-16) — the class doc now describes the mutate-then-flag contract: `getComponent()` returns the current value, `updateComponent()` flags and sends it (`livelink.base/sources/scene/Entity.ts:31`) |
 
 ## New findings (2026-07-15)
 
@@ -84,17 +100,75 @@ the rewrite had replaced `main`'s O(1) `#clients.get(client_id)` with
 metadata entry. Resolved by restoring the direct `this.#clients.get(client_id)`
 map lookup, identical to `main`.
 
+#### 4. Roster-missing fallback could keep sessions alive forever — FIXED 2026-07-16
+
+`livelink.agent/sources/Agent.ts:190`
+
+When `agent_roster_id` was configured but the entity missing (deleted or
+misconfigured), `defaultShouldStay` fell back to "stay while any other client
+is present", so two `join-all` agents in the same session each counted the
+other as company and the session never met the leave condition. Resolved:
+`defaultShouldStay`'s fallback now only counts clients with `client_type`
+`"user"` or `"guest"` as company (using the getter added for docs finding 6),
+aligning it with the `is_headless`-based rejoin policy (`#mayRejoin`). Test
+stubs updated to model `client_type` and a regression test added ("leaves when
+the only other client is another headless agent"). Residual caveat: an agent
+authenticating with a _user_ token may be reported as `client_type: "user"`
+and still count as company — `is_headless` stays the stricter signal if the
+server exposes it per connected client; the roster remains the precise
+mechanism. Nit: the inline fallback comment ("stay while any other client is
+connected") and the `should_stay` / `agent_roster_id` config docs
+(`Agent.ts:116,123`) still describe the old plain-presence fallback.
+
+#### 5. `leave()` racing a join that then fails loses the "never rejoin" marker — FIXED 2026-07-16
+
+`livelink.agent/sources/Agent.ts:557`
+
+`#join`'s `finally` deleted the `#leave_during_join` marker unconditionally. If
+a `leave()` landed while the join was in flight and the join then _failed_, the
+marker was dropped without ever reaching `#left`, so a watch-enabled agent could
+rejoin a session the user deliberately left, on a later tick. Resolved by
+extracting the marker transfer into `#consumePendingLeave`, which moves the
+reason to `#left` and is now called on both paths: `#establish`'s join abort and
+`#join`'s `finally`. On the success path the `finally` call is a no-op —
+`#establish` already consumed the marker, and no leave can land between its
+check and `#records.set` (the code between them is synchronous). Regression test
+added ("keeps the leave marker when a join left mid-flight then fails"); it
+fails against the old `finally` (the watch loop rejoins, `join` called twice).
+
 ### Docs / cleanup
 
-#### 4. Dead byte-identical copy of the quaternion module in livelink.js — FIXED 2026-07-16
+#### 6. README `should_stay` example did not compile — FIXED 2026-07-16
+
+`livelink.agent/README.md:128`
+
+The example predicate reads `c.client_type === "user"`, but `other_clients`
+is `ReadonlyArray<Client>` and `Client` exposed no `client_type` — only `id` /
+`user_id` / `username` / `is_external`. Resolved by exposing a `client_type`
+getter on the base `Client` (`livelink.base/sources/session/Client.ts:81`),
+which makes the example compile as written. The default `should_stay`
+fallback now uses it too — see finding 4, fixed the same day.
+
+#### 7. Dead byte-identical copy of the quaternion module in livelink.js — FIXED 2026-07-16
 
 `livelink.js/sources/maths/` (deleted)
 
 `livelink.js/sources/maths/` was a byte-for-byte copy of
 `livelink.base/sources/maths/` with a duplicated 120-line test; no livelink.js
 source imported it (everything uses `@livelink.base/maths`). Resolved by
-deleting the copy and its test — the canonical quaternion tests remain in
-`livelink.base/tests/maths/`.
+deleting the copy and its test — the js suite drops from 151 to 136 tests
+(the removed duplicates), all passing; the canonical quaternion tests remain
+in `livelink.base/tests/maths/`.
+
+#### 8. Stale comment referenced the deleted session pool — FIXED 2026-07-16
+
+`livelink.base/sources/LivelinkBase.ts:251`
+
+The `_startUpdateLoop` doc comment said "the public `start()` plus the session
+pool's own per-session start" — `SessionPool` no longer exists and the agent
+facade method is now `startUpdateLoop()`. Resolved: the comment now describes
+the restart-safe behavior without referencing any concrete caller; no
+session-pool references remain in the file.
 
 ### Design notes (non-blocking)
 
@@ -139,7 +213,7 @@ SessionBase<Client>` (non-generic, as on `main`) and `_instantiateClient`
   the statics now constrain `this` to the structural `SessionClass`
   (`prototype` + `_make` only, no construct signature — same rationale as the
   pre-existing `InstanceOf`), with `_make` made public `@internal` and holding
-  the single centralized constructor cast. Other base callers infer the same
+  the single centralized constructor cast. Base callers (agent) infer the same
   types as before. The three `as never` casts in the event-map bridge remain:
   they bridge the event-map _extension_ (the deprecated viewport event), not
   the client generic.
@@ -192,6 +266,15 @@ SessionBase<Client>` (non-generic, as on `main`) and `_instantiateClient`
 
 ## Checked and found sound
 
+- The agent rework itself: `#leave_during_join` abort path, `#leaveIfStillAlone`
+  re-check (including erring on staying when the re-check throws), the
+  `#started` gating of timers and in-flight promises, `#establish`'s
+  disconnect-mid-setup handling and created/joined/ready event ordering, and
+  the restart-safe `_startUpdateLoop`.
+- The watch/rejoin policy (`#mayRejoin`) and its interaction with leave reasons.
+- The `join_or_start` retry chain in the agent `Livelink` (failed-session
+  exclusions accumulate through the wrapped selectors; empty candidate list
+  falls through to `start`).
 - The ES-module shadowing scheme in `livelink.js/sources/index.ts` — no dropped
   or ambiguous public exports vs `main` (the connection-stage types moved to
   `LivelinkBase` remain exported through the star re-export).
@@ -201,5 +284,17 @@ SessionBase<Client>` (non-generic, as on `main`) and `_instantiateClient`
 - CI wiring (`.gitlab-ci.yml`), workspace/package layout, and the
   `@livelink.base/*` alias build (tsc + tsc-alias).
 - Coding conventions (brace rule from the user-level CLAUDE.md): no violations.
-- Verification run: `npm run test` — base and js suites pass; both workspace
-  packages build; `tsc --noEmit -p tsconfig.test.json` clean for both.
+- Full verification run 2026-07-15: `npm run test` — 98 + 37 + 151 pass;
+  all workspace packages and the samples build. Re-verified 2026-07-16 after
+  the follow-up fixes: 98 + 39 + 136 (js drop is the deleted duplicate
+  quaternion tests of finding 7; agent gained the finding-4 and finding-5
+  regression tests). Re-verified again 2026-07-16 after the `SceneHost`
+  extraction (types-only, counts unchanged at 98 + 39 + 136): all three
+  packages typecheck and lint clean. Run 2026-07-16 after the finding-1
+  fix: 106 + 39 + 139, all passing; base and js typecheck clean
+  (`tsc --noEmit -p tsconfig.test.json`); base, agent and js build clean.
+  Final run 2026-07-17 after the proxy-cache extraction + SIM-4 cleanup:
+  112 + 39 + 139 (base gained the merge-identity contract test and the
+  `ComponentProxyCache` unit tests), typechecks and builds clean; the
+  generated `_prebuild/EntityComponentsProxy.ts` instantiates the base-hosted
+  cache.

@@ -38,14 +38,14 @@ variables:
       curl \
           --location --header "JOB-TOKEN: ${CI_JOB_TOKEN}" \
           --upload-file docs-md.tgz \
-          "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/${PACKAGE_DIR}/latest/docs-md.tgz"
+          "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/${PACKAGE_NAME}/latest/docs-md.tgz"
 
       if [ -n "$CI_COMMIT_TAG" ]; then
           echo "Package $CI_COMMIT_TAG"
           curl \
               --location --header "JOB-TOKEN: ${CI_JOB_TOKEN}" \
               --upload-file docs-md.tgz \
-              "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/${PACKAGE_DIR}/${CI_COMMIT_TAG}/docs-md.tgz"
+              "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/${PACKAGE_NAME}/${CI_COMMIT_TAG}/docs-md.tgz"
       fi
 
 # JOBS ################################################################################################################
@@ -70,9 +70,10 @@ js:build:libs:
   before_script:
     - !reference [.node-cache, before_script]
   variables:
-    NPM_INSTALL_ARGS: "--workspace=livelink.clients/livelink.js --workspace=livelink.react --workspace=livelink.react.ui --workspace=livelink.three --workspace=livelink.webxr"
+    NPM_INSTALL_ARGS: "--workspace=livelink.clients/livelink.js --workspace=livelink.clients/livelink.agent --workspace=livelink.react --workspace=livelink.react.ui --workspace=livelink.three --workspace=livelink.webxr"
   script:
     - npm run build:js
+    - npm run build:agent
     - npm run build:react
     - npm run build:three
     - npm run build:react.ui
@@ -140,9 +141,9 @@ js:livelink.js:test:unit:
   before_script:
     - !reference [.node-cache, before_script]
   variables:
-    NPM_INSTALL_ARGS: "--workspace=livelink.clients/livelink.js"
+    NPM_INSTALL_ARGS: "--workspace=livelink.clients/livelink.base --workspace=livelink.clients/livelink.js --workspace=livelink.clients/livelink.agent"
   script:
-    - npm run test:js
+    - npm run test
   rules:
     - if: *default-branch-rule
     - if: *merge-request-on-release-rule
@@ -271,6 +272,24 @@ js:livelink.js:docs:
       optional: true
   variables:
     PACKAGE_DIR: livelink.clients/livelink.js
+    PACKAGE_NAME: livelink.js
+  rules:
+    - if: *release-rule
+    - if: *manual-doc-publish-rule
+
+js:livelink.agent:docs:
+  stage: deploy
+  extends:
+    - .docs
+  needs:
+    - job: js:build:libs
+      artifacts: true
+    - job: version:publish
+      artifacts: true
+      optional: true
+  variables:
+    PACKAGE_DIR: livelink.clients/livelink.agent
+    PACKAGE_NAME: livelink.agent
   rules:
     - if: *release-rule
     - if: *manual-doc-publish-rule
@@ -287,6 +306,7 @@ js:livelink.react:docs:
       optional: true
   variables:
     PACKAGE_DIR: livelink.react
+    PACKAGE_NAME: livelink.react
   rules:
     - if: *release-rule
     - if: *manual-doc-publish-rule
@@ -299,10 +319,12 @@ js:livelink.js:docs-trigger:
     - job: js:livelink.react:docs
       artifacts: false
       optional: true
+    - job: js:livelink.agent:docs
+      artifacts: false
   variables:
     # These variables will be used in the triggered downstream pipeline to download the generated docs artifacts.
     DISABLE_DEFAULT_PIPELINES: "true"
-    LIVELINK_PACKAGE_NAMES: livelink.js livelink.react
+    LIVELINK_PACKAGE_NAMES: livelink.js livelink.agent livelink.react
     LIVELINK_PACKAGE_ROOT: ${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/
     LIVELINK_PACKAGE_PATH: /latest/docs-md.tgz
     SYNC_LIVELINK_JS: "true"

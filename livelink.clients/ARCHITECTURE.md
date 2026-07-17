@@ -1,25 +1,26 @@
 # Architecture — `livelink.clients/`
 
-This folder hosts the family of 3dverse client SDKs. It contains two sibling
+This folder hosts the family of 3dverse client SDKs. It contains three sibling
 packages built around one shared, headless core:
 
 ```
 livelink.clients/
 ├── livelink.base/     @3dverse/livelink-base   (private — never published)
-└── livelink.js/       @3dverse/livelink        (browser SDK)
+├── livelink.js/       @3dverse/livelink        (browser SDK)
+└── livelink.agent/    @3dverse/livelink-agent  (headless agent SDK, Node + browser)
 ```
 
 ```
-                 ┌────────────────────────┐
-                 │   @3dverse/livelink    │
-                 │      (livelink.js)     │
-                 │                        │
-                 │ streaming / rendering  │
-                 │ viewports / inputs     │
-                 │ audio / proxied Entity │
-                 └───────────┬────────────┘
-                             │ bundles (source alias)
-                             ▼
+                 ┌────────────────────────┐   ┌──────────────────────────┐
+                 │   @3dverse/livelink    │   │ @3dverse/livelink-agent  │
+                 │      (livelink.js)     │   │     (livelink.agent)     │
+                 │                        │   │                          │
+                 │ streaming / rendering  │   │  Agent (attach policy)   │
+                 │ viewports / inputs     │   │  watch & leave policies  │
+                 │ audio / proxied Entity │   │  headless Livelink       │
+                 └───────────┬────────────┘   └────────────┬─────────────┘
+                             │      bundles (source alias) │
+                             ▼                             ▼
                  ┌─────────────────────────────────────────────────────┐
                  │        livelink.base  (shared headless core)        │
                  │  LivelinkBase · Session/Client · SceneBase/Entity   │
@@ -37,16 +38,16 @@ livelink.clients/
 
 Everything that does not depend on a browser: the connection facade, the
 session/client model, the scene/entity model, dirty-state tracking and the
-update loops. It is **private and never published**: `livelink.js` consumes
-it as a _source folder_ through the `@livelink.base/*` import alias and
-compiles / bundles it into its own artifact. There is exactly one copy of the
-core logic at runtime — inside `livelink.js`.
+update loops. It is **private and never published**: the two SDKs consume it
+as a _source folder_ through the `@livelink.base/*` import alias and compile /
+bundle it into their own artifacts. There is exactly one copy of the core
+logic at runtime — inside whichever SDK you installed.
 
 Key modules (`livelink.base/sources/`):
 
 | Module                          | Responsibility                                                                                                                                                                                                                                                                                                                                                                                                                             |
-| -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `LivelinkBase.ts`               | Abstract connection facade: owns the `LivelinkCore`, registers the client, installs/uninstalls the core event listeners, runs the update & broadcast loops that flush dirty entities and scene settings (restart-safe: starting the loop again stops any loop already running). Also defines the shared connection-stage vocabulary (`LivelinkConnectionStage` / `LivelinkProgressCallback`) used by the facade's `onProgress` callback. |
+| ------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `LivelinkBase.ts`               | Abstract connection facade: owns the `LivelinkCore`, registers the client, installs/uninstalls the core event listeners, runs the update & broadcast loops that flush dirty entities and scene settings (restart-safe: starting the loop again stops any loop already running). Also defines the shared connection-stage vocabulary (`LivelinkConnectionStage` / `LivelinkProgressCallback`) used by both facades' `onProgress` callbacks. |
 | `LivelinkInstance.ts`           | Minimal structural interface (`session`, `scene`, `_updateEntities`) so `Session`, `Client` and `SceneBase` stay decoupled from any concrete facade.                                                                                                                                                                                                                                                                                       |
 | `session/Session.ts`            | Session REST lifecycle (`create` / `list` / `find` / `findById` / `findByGuestToken`), client registration against the gateway, connected-client map, session events. Generic in its `ClientType`.                                                                                                                                                                                                                                         |
 | `session/Client.ts`             | A connected client, reduced to its identity (`id`, `user_id`, `username`, `client_type`, `is_external`). What a client _shows_ comes from the client metadata piggybacked on the video frames, so it lives on the browser SDK's subclass — see below.                                                                                                                                                                                       |
@@ -55,7 +56,7 @@ Key modules (`livelink.base/sources/`):
 | `scene/ComponentProxyCache.ts`  | Standalone stable-Proxy cache for client flavours exposing a proxied component model; instantiated only by the browser SDK's generated `EntityComponentsProxy`.                                                                                                                                                                                                                                                                            |
 | `scene/EntityRegistry.ts`       | RTID/EUID lookup tables, dirty & broadcast lists — generic in `EntityType`.                                                                                                                                                                                                                                                                                                                                                                |
 | `TypedEventTarget.ts`           | Typed wrapper over DOM `EventTarget`, the event backbone of every layer.                                                                                                                                                                                                                                                                                                                                                                   |
-| `config/api.ts`                 | Mutable API base URL (`getApiUrl` / `setApiUrl`), surfaced by the facade as `Livelink._api_url`.                                                                                                                                                                                                                                                                                                                                           |
+| `config/api.ts`                 | Mutable API base URL (`getApiUrl` / `setApiUrl`), surfaced by the facades as `Livelink._api_url`.                                                                                                                                                                                                                                                                                                                                          |
 | `config/env.ts`                 | `BROWSER_ENV` / `NODE_ENV` detection without relying on DOM or Node ambient types.                                                                                                                                                                                                                                                                                                                                                         |
 | `_prebuild/EntityComponents.ts` | **Generated** (see "Code generation"): the component storage class with one accessor per engine component.                                                                                                                                                                                                                                                                                                                                 |
 
@@ -82,12 +83,45 @@ core model classes:
   `Session._updateClients` (fed by the frame handler) and the state it writes on
   `Client` only exist where there is a stream.
 
+### `livelink.agent` — the headless agent SDK
+
+A small SDK for driving sessions programmatically (bots, server-side logic),
+with no rendering at all. Runs in Node.js or the browser.
+
+- `Livelink.ts` — headless facade: `Livelink.start` / `join` / `join_or_start`
+  and a public `startUpdateLoop()` that launches the shared update loop.
+  Exposes the core almost as-is (`extends LivelinkBase<Entity, Scene, Session>`
+  using the _base_ entity/scene directly).
+- `Agent.ts` — the user-facing class and the session-attachment policy engine in
+  one (`extends TypedEventTarget<AgentEvents>`, so you listen on the agent
+  itself). Exposes `start` / `stop` / `join` / `leave`, the attached
+  `livelinks` / `getLivelink`, and single-session conveniences (`session`,
+  `scene`). The policy it implements:
+  - **modes**: `start`, `join`, `join-or-start` (default), `join-all`, `manual`;
+  - **watch loop**: polls the session list and joins sessions as they appear
+    (`join` / `join-all` modes only), with a per-reason rejoin policy;
+  - **leave-on-condition**: leaves a session once a configurable `should_stay`
+    predicate has been false for `after_seconds`; the default predicate can use
+    an `agent_roster` entity (each agent registers a marker child named after
+    its client id) to distinguish real viewers from other agents;
+  - sessions are listed/started/joined through the `Session`/`Livelink` statics
+    directly; tests spy on those statics rather than injecting a seam.
+  - a single `#started` flag gates everything reached from a timer or an
+    in-flight promise, and a pending-leave map catches `leave()` / `stop()`
+    calls that land while a join is still in flight, so the agent never ends
+    up attached to a session it was asked to leave;
+  - the leave timer re-checks `should_stay` before actually leaving
+    (`#leaveIfStillAlone`), so a stale async evaluation can never abandon a
+    session that has a live viewer.
+- `AgentEvents.ts` — `on-session-created/joined/ready/left`, `on-error`;
+  every event carries the session's `livelink`.
+
 ## The two component models
 
 Both SDKs share one storage layer, `_prebuild/EntityComponents`, but expose it
 differently:
 
-- **Explicit model (base)** — components are read through
+- **Explicit model (base + agent)** — components are read through
   `getComponent()` (live value) or the generated getters, patched through
   `updateComponent()` / `updateComponents()` (apply a partial patch and/or
   flag dirty — "mutate-then-flag") or the generated setters (`entity.foo =
@@ -143,9 +177,8 @@ server ──► core events (on-entities-updated, on-client-connected, …)
 
 ## Generics: how each SDK gets its own flavour
 
-The core is written once but must hand out browser entities to the browser
-SDK while remaining usable in its own plain (headless) form. This is
-threaded through three seams:
+The core is written once but must hand out browser entities in the browser SDK
+and plain entities in the agent SDK. This is threaded through three seams:
 
 - `LivelinkBase<EntityType, SceneType, SessionType>` with abstract
   `_createScene` (the entity type is threaded explicitly because
@@ -239,7 +272,7 @@ identity.
   relative paths so `dist` is self-contained for consumers.
 - **Workspaces**: the root `package.json` declares `livelink.clients/*` as npm
   workspaces; root scripts build in dependency order
-  (`build:base → build:js → …`).
+  (`build:base → build:agent → build:js → …`).
 
 ## Testing
 
@@ -247,5 +280,8 @@ Each package has its own `vitest` suite under `tests/`:
 
 - `livelink.base/tests/` — core model tests (component dirty classification,
   transform sync, session find, events, filters) against a mock scene helper;
+- `livelink.agent/tests/` — `Agent` policy tests (start/stop lifecycle, modes,
+  watch loop, leave-on-condition, roster, stop/rejoin) spying on the
+  `Session.list` / `Livelink` connection statics;
 - `livelink.js/tests/` — browser-flavour tests (proxied component identity,
   transform handling, rendering events).
