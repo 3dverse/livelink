@@ -81,9 +81,9 @@ export function MainMenu({ isPageEmbedded }: { isPageEmbedded?: boolean }) {
                     <header className={`flex justify-between mt-6 mb-4 pr-1 ${isPageEmbedded ? "pl-3" : "pl-5"}`}>
                         <NavLink
                             to="/"
-                            className="flex items-start gap-3 pl-3 font-primary text-secondary text-[1.1rem] tracking-wider"
+                            className="flex items-start gap-3 pl-3 font-primary text-secondary tracking-wider"
                         >
-                            {!isPageEmbedded && <Logo3dverse className="h-4 mt-[5px]" />}
+                            {!isPageEmbedded && <Logo3dverse className="h-4 mt-[3px]" />}
                             Samples
                         </NavLink>
                         <button className="button button-icon button-xs text-tertiary mr-3" onClick={onCollapse}>
@@ -95,7 +95,7 @@ export function MainMenu({ isPageEmbedded }: { isPageEmbedded?: boolean }) {
                         <ul className={`flex flex-col gap-6  pb-16 text-secondary ${isPageEmbedded ? "px-3" : "px-5"}`}>
                             {samples.map((category, i) => (
                                 <li key={i}>
-                                    <p className="mb-1 pl-3 text-2xs uppercase text-tertiary tracking-wider opacity-80">
+                                    <p className="mb-1 pl-3 text-4xs uppercase text-tertiary tracking-wider opacity-80">
                                         {category.categoryName}
                                     </p>
                                     {category.list.map((s, y) => (
@@ -104,7 +104,7 @@ export function MainMenu({ isPageEmbedded }: { isPageEmbedded?: boolean }) {
                                             to={resolveSamplePath(s.path)}
                                             className={({ isActive }) =>
                                                 [
-                                                    "button button-ghost px-3 py-[3px] text-xs leading-normal justify-start rounded-lg",
+                                                    "button button-ghost px-3 py-[3px] text-3xs leading-normal justify-start rounded-lg",
                                                     isActive ? "active" : "",
                                                 ].join(" ")
                                             }
