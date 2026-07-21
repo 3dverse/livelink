@@ -16,11 +16,13 @@ import { DEFAULT_SPEEDS, computeDiagonalKm, generateSpeeds } from "./speeds";
 //------------------------------------------------------------------------------
 export const CameraSpeedSlider = ({
     cameraController,
+    defaultSpeed,
     orientation = "vertical",
     label,
     onChange,
 }: {
     cameraController?: CameraController;
+    defaultSpeed?: number;
     orientation?: "vertical" | "horizontal";
     label?: string;
     onChange?: (speed: number) => void;
@@ -36,11 +38,13 @@ export const CameraSpeedSlider = ({
 
     //--------------------------------------------------------------------------
     const handleSlideChange = (event: any) => {
+        const speed = speeds[event.activeIndex];
+        onChange?.(speed);
+
         if (!cameraController) {
             return;
         }
-        const speed = speeds[event.activeIndex];
-        onChange?.(speed);
+
         cameraController.truckSpeed = speed * Math.sign(cameraController.truckSpeed);
         switch (cameraController.preset) {
             case CameraControllerPresets.fly:
@@ -57,11 +61,11 @@ export const CameraSpeedSlider = ({
     //--------------------------------------------------------------------------
     useEffect(() => {
         if (!cameraController) {
-            console.error("CameraController is not provided");
-            return;
+            console.warn("CameraController is not provided");
         }
-        const isFlyMode = cameraController.preset === CameraControllerPresets.fly;
-        const initialSpeed = Math.abs(cameraController.truckSpeed) * (isFlyMode ? 1e-3 : 1);
+        const isFlyMode = cameraController?.preset === CameraControllerPresets.fly;
+        const initialSpeed =
+            Math.abs(defaultSpeed ? defaultSpeed : (cameraController?.truckSpeed ?? 3)) * (isFlyMode ? 1e-3 : 1);
         const index = speeds.findIndex(v => v >= initialSpeed);
         const newInitialSlide = index === -1 ? speeds.length - 1 : index;
         setInitialSlide(newInitialSlide);
@@ -86,7 +90,7 @@ export const CameraSpeedSlider = ({
     //--------------------------------------------------------------------------
     return (
         <div
-            className={`${styles.container} ${cameraController ? "" : "disabled"} ${orientation === "horizontal" ? styles.horizontal : ""} livelink-react-ui-component`}
+            className={`${styles.container} ${orientation === "horizontal" ? styles.horizontal : ""} livelink-react-ui-component`}
         >
             <div className={`${styles.growContainer}`}>
                 <div className={styles.headerRow}>
