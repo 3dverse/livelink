@@ -101,6 +101,12 @@ export class XRLivelink extends TypedEventTarget<LXREvents> {
     #resolution_scale: number = 1.0;
 
     /**
+     * Scene-space depth the latency-compensation billboard stands in for, in scene units. See
+     * {@link billboard_reference_depth}.
+     */
+    #billboard_reference_depth: number = 25;
+
+    /**
      * Whether {@link release} has been entered. Set before the session is ended so that the `end`
      * event it triggers can be told apart from an end initiated by the system or the user, which
      * is the only one consumers should react to. See {@link SessionEndEvent}.
@@ -267,6 +273,29 @@ export class XRLivelink extends TypedEventTarget<LXREvents> {
         this.#enable_latency_compensation = value;
         this.#surface.context.initialize({ enable_billboard: this.#enable_latency_compensation });
         this.#reconfigureOverscan();
+    }
+
+    /**
+     * Scene-space depth the latency-compensation billboard stands in for, in scene units.
+     *
+     * The billboard is drawn in XR space, where the same scene depth lands `camera_rig.scale`
+     * metres away, so the metric distance handed to the context is this value scaled by the rig —
+     * see {@link #updateBillboardDistance}. Raise it for a scene whose interesting content sits
+     * further out than the default, lower it for one the user is right up against.
+     */
+    get billboard_reference_depth(): number {
+        return this.#billboard_reference_depth;
+    }
+
+    /**
+     * Set the scene-space depth the latency-compensation billboard stands in for, in scene units.
+     */
+    set billboard_reference_depth(value: number) {
+        if (!(value > 0)) {
+            throw new Error("Billboard reference depth must be strictly positive");
+        }
+
+        this.#billboard_reference_depth = value;
     }
 
     /**
@@ -585,12 +614,47 @@ export class XRLivelink extends TypedEventTarget<LXREvents> {
         const remote_camera_transforms = lxr_viewports.map(lxrv => lxrv.getCameraRemoteTransform());
         this.#camera_rig.update({ remote_camera_transforms });
 
+        // Keep the billboard at the apparent depth of the scene, which the rig scale moves.
+        this.#updateBillboardDistance(xr_views);
+
         // Draw the frame for each viewport with the latest XR view and remote camera transform data
         this.#surface.context.drawXRFrame({
             xr_views,
             xr_viewports: lxr_viewports.map(lxr_viewport => lxr_viewport.xr_viewport),
             frame_camera_transforms: remote_camera_transforms,
         });
+    }
+
+    /**
+     * Place the latency-compensation billboard at the apparent depth of the scene for this frame.
+     *
+     * The rig divides camera positions by its scale, so a point `d` scene units from the camera is
+     * `d * scale` metres away in XR space — a fixed 25 m plane is only right at scale 1, and lands
+     * a kilometre inside the content at 1000:1 or well behind the user's hands at "Fit 1m³". The
+     * reprojection is exact only on the plane itself, and everywhere else the error grows with the
+     * distance to it, so the plane follows the scale.
+     *
+     * The result is clamped to the frustum the projection matrix actually describes: a billboard
+     * past the far plane is clipped away entirely and one inside the near plane just as much, and
+     * the extreme scale steps reach both ends.
+     *
+     * @param xr_views The XR views for this frame, whose projection matrix gives the frustum bounds.
+     */
+    #updateBillboardDistance(xr_views: readonly XRView[]): void {
+        if (xr_views.length === 0) {
+            return;
+        }
+
+        const projection_matrix = xr_views[0].projectionMatrix;
+        const near_plane = projection_matrix[14] / (projection_matrix[10] - 1);
+        const far_plane = projection_matrix[14] / (projection_matrix[10] + 1);
+
+        const min_distance = near_plane * 2;
+        // An infinite far plane — projection_matrix[10] === -1 — yields a non-finite far_plane here.
+        const max_distance = Number.isFinite(far_plane) ? Math.max(far_plane * 0.5, min_distance) : Infinity;
+
+        const distance = this.#billboard_reference_depth * this.#camera_rig.scale;
+        this.#surface.context.screen_distance = Math.min(Math.max(distance, min_distance), max_distance);
     }
 
     /**
