@@ -454,8 +454,12 @@ export class LXRContext extends ContextProvider {
                     }
 
                     // Premultiply RGB by alpha to avoid color bleeding on transparent edges
-                    // (required for correct blending in compositing / XR rendering)
-                    gl_FragColor.rgb *= alpha;
+                    // (required for correct blending in compositing / XR rendering).
+                    // It has to be the final alpha, not the pre-scale luminance one: the compositor
+                    // computes rgb + dst * (1 - a), so premultiplying by more than a adds the
+                    // scene on top of an undimmed passthrough instead of fading it into it — the
+                    // whole image reads as brighter rather than more transparent.
+                    gl_FragColor.rgb *= gl_FragColor.a;
                 }
             }`;
         const fragment_shader = gl.createShader(gl.FRAGMENT_SHADER)!;
