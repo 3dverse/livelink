@@ -13,6 +13,10 @@ export default defineConfig({
             // First match wins, so the _prebuild entry must precede the sources one.
             "@livelink.base/_prebuild": resolve(process.cwd(), "../livelink.base/_prebuild"),
             "@livelink.base": resolve(process.cwd(), "../livelink.base/sources"),
+            // `node-opcua-client` is an optional peer this repository does not install, so the
+            // OPC UA transport's lazy import is pointed at a fake that lets it be driven without a
+            // server. Nothing else resolves it.
+            "node-opcua-client": resolve(process.cwd(), "tests/fakes/node-opcua-client.ts"),
         },
     },
     test: {

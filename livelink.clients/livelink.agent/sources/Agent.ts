@@ -674,7 +674,8 @@ export class Agent extends TypedEventTarget<AgentEvents> {
      * dispatched as `on-error` events so a roster failure never aborts the session setup.
      */
     async #registerInRoster({ livelink }: { livelink: Livelink }): Promise<void> {
-        const agent_roster_id = this.#config.leave_on_condition?.agent_roster_id;
+        const leave_on_condition = this.#config.leave_on_condition;
+        const agent_roster_id = leave_on_condition?.agent_roster_id;
         if (!agent_roster_id) {
             return;
         }

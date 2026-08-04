@@ -21,3 +21,8 @@ export { EntityComponents } from "@livelink.base/_prebuild/EntityComponents";
 export * from "./Livelink";
 export * from "./Agent";
 export * from "./AgentEvents";
+
+// The data-ingestion layer (transports, pipeline, SceneIngestion). Optional at runtime: its heavy
+// dependencies (mqtt / @azure/event-hubs / ajv) are external + lazily imported, so re-exporting it
+// here never pulls them in unless a consumer actually uses the corresponding transport/validation.
+export * from "./data/index";

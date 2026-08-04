@@ -1,4 +1,4 @@
-# Code review — branch `agent`
+# Code review — branches `agent`, `agent-data-sdk`
 
 > Initial review 2026-07-10; re-reviewed 2026-07-15 after the agent SDK rework
 > (`SessionPool` merged into `Agent`, `AgentEvents` rename, update-loop guard).
@@ -298,3 +298,136 @@ SessionBase<Client>` (non-generic, as on `main`) and `_instantiateClient`
   `ComponentProxyCache` unit tests), typechecks and builds clean; the
   generated `_prebuild/EntityComponentsProxy.ts` instantiates the base-hosted
   cache.
+
+---
+
+# Branch `agent-data-sdk` (2026-07-28)
+
+> Reviewed 2026-07-28 with Claude Code, Claude Opus 5 (`claude-opus-5`).
+> Scope: `git diff agent...agent-data-sdk` â€” the data-ingestion layer
+> (`IngestionAgent` + `EventMapping` + transports/resolvers/applier), the two new
+> samples (`x-headless-agent`, `x-session-lobby`), and the packaging changes.
+> **All findings fixed the same day**; every fix is verified below.
+
+## Overall assessment
+
+The data module's shape is good: `EventMapping` as a plain object is a genuinely
+small API for the problem, the compile-once / resolve-per-session / dedup-writes
+split is clean, and `CachingEntityResolver`'s in-flight dedup (cache nulls, don't
+cache throws) is right. Docs and ARCHITECTURE.md match the code.
+
+The branch arrived **red**, though: 30 of 63 agent tests failed, and lint failed
+on two spots. Both are fixed. Final state: **67 agent + 112 base + 139 js tests
+pass**, all three packages typecheck, lint and build clean, and the samples app
+builds and typechecks.
+
+## Findings
+
+| #   | Finding                                                                        | Status                                                                                                     |
+| --- | ------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------- |
+| 1   | Unconditional 500 ms sleep hung 30/63 agent tests under fake timers            | **Fixed** â€” root cause resolved; the delay and its `roster_registration_delay_ms` knob are removed (`Agent.ts`)        |
+| 2   | â€¦and taxed every agent, including those with no roster configured            | **Fixed** â€” same change; the wait no longer exists                                                        |
+| 3   | Debug `console.log` shipped in `livelink.react.ui` `CameraSpeedSlider`         | **Fixed** by the author                                                                                    |
+| 4   | Optional-dep claim vs. reality (see the correction below)                      | **Fixed** â€” `node:fs/promises` made bundler-opaque; docs made precise                                    |
+| 5   | A failed transport start disabled ingestion for good                           | **Fixed** â€” `#transport` published only after a successful start (`IngestionAgent.ts:350`)               |
+| 6   | `stop()` racing an in-flight transport start leaked the connection             | **Fixed** â€” `#started` cleared first; the resuming start closes what it opened (`IngestionAgent.ts:262`) |
+| 7   | File playback loop: unhandled rejection, file re-read per lap, empty-file spin | **Fixed** â€” loops from memory (`PlaybackTransport.ts`, `#scheduleNext`)                                  |
+| 8   | Sample: `isHostedByMe` was `true` whenever the agent ref was null              | **Fixed** â€” `agent !== null && â€¦` (`x-session-lobby/index.tsx:158`)                                    |
+| 9   | Stale `{@link DataPipeline}` / `{@link Transformer}` typedoc links             | **Fixed** â€” now point at `IngestionAgent` / `EventMapping`                                               |
+| 10  | Samples: animation started for a session left mid-spawn                        | **Fixed** â€” both samples re-check `getLivelink` after the await and stop the orphan                      |
+| 11  | Unreachable resolver cache invalidation                                        | **Fixed** â€” `IngestionAgent.forget({ id })` + optional `EntityResolver.forget`                           |
+| 12  | Lint red on two pre-existing missing return types                              | **Fixed** â€” `data.test.ts:137`, `ingestion-agent.test.ts:95`                                             |
+
+### 1â€“2. The roster registration delay
+
+`Agent.ts` gated every session establish on
+`await new Promise(resolve => setTimeout(resolve, 500))` â€” a TODO workaround for a
+race that leaves the roster marker unregistered. `Agent.test.ts` runs under
+`vi.useFakeTimers()` and never advanced that timer, so **every** `#establish`
+hung: 30 tests died at the 5 s limit and the suite took 151 s instead of 0.4 s.
+
+The workaround itself also ran unconditionally, delaying `on-session-ready` by
+500 ms for the majority of agents, which configure no roster at all.
+
+Initially worked around by moving the wait inside `#registerInRoster`, _after_
+the `if (!agent_roster_id) return;` guard, and making its duration the
+`leave_on_condition.roster_registration_delay_ms` knob (default 500, `0` opts
+out). The underlying race in the roster marker registration has since been
+found and fixed, so the delay and the `roster_registration_delay_ms` knob
+(config, `#registerInRoster`, README, and the tests that set it to `0`) were
+removed entirely.
+
+### 4. Correction: the optional peers do NOT break consumer builds
+
+The docs claimed importing the package "never pulls in" `mqtt` /
+`@azure/event-hubs` / `ajv`, while the samples build emits 357 kB + 112 kB chunks
+for two of them. The obvious conclusion â€” that a consumer without them installed
+gets an unresolved-import build failure â€” was **tested and is wrong**. Against an
+isolated fixture with only the agent dist in `node_modules`:
+
+- **Vite 7** builds fine, emitting a 0.12 kB stub chunk per unresolvable dynamic
+  import;
+- **esbuild** builds fine, leaving the `import("mqtt")` calls untouched.
+
+So the runtime promise holds â€” the chunks exist only where the packages are
+installed, and are never fetched unless the code path runs. The docs were
+imprecise, not wrong, and now say so exactly.
+
+One real breakage did surface from that experiment: `import("node:fs/promises")`
+in the playback transport (then `FilePlaybackTransport`, now `PlaybackTransport`,
+where the file system is one source form among several) is a **hard resolve
+error** for any browser-targeted
+esbuild consumer (`Could not resolve "node:fs/promises"`, exit 1) â€” in a package
+whose own description advertises browser compatibility, for a transport such a
+consumer can never reach. Vite only warns, and stubbed it into the samples bundle.
+Resolved by assembling the specifier at runtime so no bundler analyses it, with a
+type-position `import(...)` preserving the types. Verified: the browser esbuild
+build now exits 0, the `__vite-browser-external` stub is gone from the samples
+bundle, and a Node smoke test confirms the transport still reads, replays, loops
+and stops.
+
+### 5â€“6. Transport lifecycle
+
+`#ensureTransportStarted` assigned `#transport` _before_ `await transport.start()`,
+so a broker that was down at first bind left a non-null, never-started transport
+that made the `if (this.#transport â€¦) return` guard short-circuit every later
+binding â€” ingestion silently dead, `onRunning` never fired, and `stop()` calling
+`stop()` on something never started.
+
+Symmetrically, `stop()` awaited `this.#transport?.stop()` while a start was still
+in its `await createTransport(...)` window: it saw `null`, stopped nothing, and
+the resuming start then opened a connection nobody would ever close (enough to
+keep a Node process alive). Note `#started` was only cleared in the innermost
+`finally`, so checking it was not sufficient either.
+
+Resolved together: `#started = false` moved to the first line of `stop()`, and
+`#ensureTransportStarted` now starts the transport first, closes it if the agent
+stopped meanwhile, and only then publishes it and fires `onRunning`. Two
+regression tests added ("retries the transport on the next binding when its start
+fails", "closes a transport whose start finished after stop()").
+
+### 7. File playback loop
+
+`#scheduleNext` looped via `void this.start()`: it re-read and re-parsed the whole
+file every lap, and its rejection was unhandled (fatal under Node's default
+`--unhandled-rejections=throw`). An empty JSON array also made it re-read the file
+in a hot loop forever. Now it rewinds the in-memory sequence and returns early on
+an empty one; both verified with Node smoke tests.
+
+## Checked and found sound
+
+- `EventMapping` selection (`matchChannel` including the trailing-`#` and
+  segment-count edges), the compile-once target-id path, and `updates` error
+  isolation.
+- `CachingEntityResolver`: cache-nulls / don't-cache-throws, single in-flight
+  production per id, and the `.finally` cleanup ordering.
+- `ComponentPatchApplier`'s `WeakMap`-per-entity dedup and its documented
+  "another client may have overwritten in between" caveat.
+- `SchemaValidator`'s lazy ajv load: the rejected promise is always awaited in the
+  same tick, so no unhandled rejection; first-event-only validation is deliberate.
+- The `EventHubTransport` credential redaction and `EntityPath=` 2-arg/3-arg
+  client construction.
+- `esbuild.js`: the deliberate unminified prod build â€” the rationale (Node stack
+  frames) is documented in place and left as the author's call; browser consumers
+  now ship an unminified bundle, which is worth revisiting only if it bites.
+- Coding conventions (brace rule from the user-level CLAUDE.md): no violations.

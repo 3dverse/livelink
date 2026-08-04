@@ -10,6 +10,9 @@ const commonBuildOptions = {
     bundle: true,
     platform: "neutral",
     packages: "bundle",
+    // Optional peer dependencies of the data module (lazily imported at runtime) and the node
+    // builtins used by the file transport must not be bundled in.
+    external: ["mqtt", "@azure/event-hubs", "ajv", "node-opcua-client", "node:*"],
     mainFields: ["browser", "module", "main"],
     sourcemap: true,
     alias: {
@@ -42,8 +45,14 @@ const devBuildOptions = {
     minify: false,
 };
 
+// Not minified on purpose: this package is consumed by Node backends where minification saves
+// nothing at runtime but wrecks debuggability. Minified, a single-line bundle makes consumers'
+// stack frames land on `index.mjs:2:3426`, and even with the shipped source maps applied the
+// column-crowded mappings resolve to the wrong line. keepNames additionally preserves class and
+// function names so frames read `TransportRegistry.create` rather than `nt.create`.
 const prodBuildOptions = {
-    minify: true,
+    minify: false,
+    keepNames: true,
     pure: ["console.debug"],
 };
 
