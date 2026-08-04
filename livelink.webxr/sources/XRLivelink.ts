@@ -52,6 +52,20 @@ export class XRLivelink extends TypedEventTarget<LXREvents> {
     #animation_frame_request_id: number = 0;
 
     /**
+     * Whether the XR frame loop should keep re-arming itself. Lowered by {@link stop} so that a
+     * callback already queued when the loop was stopped — every frame in flight when the session
+     * ends — does not queue another one.
+     */
+    #is_frame_loop_running: boolean = false;
+
+    /**
+     * Message of the last error caught in {@link #onXRFrame}, or undefined if the last frame
+     * succeeded. A failing frame usually fails again on the next one, so only transitions are
+     * logged rather than every frame of a 72–90 Hz loop.
+     */
+    #last_frame_error_message?: string;
+
+    /**
      * Whether latency compensation using billboard rendering is enabled.
      * This affects overscan configuration and FOV adjustments.
      */
@@ -457,6 +471,7 @@ export class XRLivelink extends TypedEventTarget<LXREvents> {
      * Start the XR frame animation loop
      */
     public start(): void {
+        this.#is_frame_loop_running = true;
         this.#animation_frame_request_id = this.#xr_session.requestAnimationFrame(this.#onXRFrame);
     }
 
@@ -464,6 +479,8 @@ export class XRLivelink extends TypedEventTarget<LXREvents> {
      * Stop the XR frame animation loop
      */
     public stop(): void {
+        this.#is_frame_loop_running = false;
+
         if (this.#animation_frame_request_id && this.xr_session) {
             try {
                 this.xr_session.cancelAnimationFrame(this.#animation_frame_request_id);
@@ -493,21 +510,56 @@ export class XRLivelink extends TypedEventTarget<LXREvents> {
     };
 
     /**
-     * XR frame callback
+     * XR frame callback. Drives the frame and then re-arms the loop, whatever the frame did.
+     *
+     * A frame is allowed to fail. The session is still alive when it does, so a loop that stopped
+     * re-arming would leave the user staring at the last frame ever drawn, rigidly following their
+     * head with no way out but a page reload. Skipping a frame is recoverable; dying is not.
      *
      * @param _ The high resolution timestamp for the current frame, which can be used for synchronizing animations or other time-based updates.
      * @param frame The XRFrame containing the latest pose and view data from the XR session, which is used to update the viewports and render the frame.
      */
     #onXRFrame = (_: DOMHighResTimeStamp, frame: XRFrame): void => {
-        const session = this.#xr_session;
+        try {
+            this.#renderXRFrame(frame);
+            this.#last_frame_error_message = undefined;
+        } catch (error) {
+            const message = error instanceof Error ? error.message : String(error);
+            if (message !== this.#last_frame_error_message) {
+                this.#last_frame_error_message = message;
+                console.error("Skipped an XR frame:", error);
+            }
+        }
+
+        this.#requestNextXRFrame();
+    };
+
+    /**
+     * Re-arm the XR frame loop, unless it has been stopped in the meantime — which is the case for
+     * any frame still in flight when the session ended.
+     */
+    #requestNextXRFrame(): void {
+        const session = this.#session.native;
+        if (!this.#is_frame_loop_running || !session) {
+            return;
+        }
+
+        this.#animation_frame_request_id = session.requestAnimationFrame(this.#onXRFrame);
+    }
+
+    /**
+     * Render a single XR frame: update the viewports and camera rig from the current viewer pose,
+     * then draw. May throw; see {@link #onXRFrame}.
+     *
+     * @param frame The XRFrame containing the latest pose and view data from the XR session.
+     */
+    #renderXRFrame(frame: XRFrame): void {
         const reference_space = this.#xr_reference_space;
         const gl_layer = this.#base_gl_layer;
 
         // Get viewer pose
         const pose = frame.getViewerPose(reference_space);
         if (!pose) {
-            // Request next frame
-            this.#animation_frame_request_id = session.requestAnimationFrame(this.#onXRFrame);
             return;
         }
 
@@ -539,10 +591,7 @@ export class XRLivelink extends TypedEventTarget<LXREvents> {
             xr_viewports: lxr_viewports.map(lxr_viewport => lxr_viewport.xr_viewport),
             frame_camera_transforms: remote_camera_transforms,
         });
-
-        // Request next frame
-        this.#animation_frame_request_id = session.requestAnimationFrame(this.#onXRFrame);
-    };
+    }
 
     /**
      * Get the LXRViewport corresponding to the given XR eye. Throws an error if no viewport is found for the eye.
@@ -565,7 +614,7 @@ export class XRLivelink extends TypedEventTarget<LXREvents> {
      *
      * @param xr_view The XR view containing the current transform and lens information for the camera.
      * @param lxr_viewport The LXRViewport to update based on the XR view data.
-     * @param gl_layer The XRWebGLLayer for validating viewport consistency with the current XR session configuration.
+     * @param gl_layer The XRWebGLLayer to reconcile the viewport rect against for the current frame.
      * @param center_eye The position of the center eye, used to compute the IPD offset for the camera's local transform.
      */
     #updateViewport({
@@ -579,8 +628,10 @@ export class XRLivelink extends TypedEventTarget<LXREvents> {
         gl_layer: XRWebGLLayer;
         center_eye: { position: Vector3; orientation: Quaternion; orientation_conjugate: Quaternion };
     }): void {
-        // Validate LXRViewport consistency with current XRView and XRWebGLLayer configuration
-        lxr_viewport.validateViewportConsistency({ xr_view, gl_layer });
+        // Reconcile the LXRViewport with the current XRView and XRWebGLLayer configuration. The user
+        // agent may resize the viewport on any frame, dynamic viewport scaling being the whole point
+        // of `requestViewportScale`, so this reconfigures the viewport instead of failing.
+        let is_viewport_updated = lxr_viewport.syncViewportRect({ xr_view, gl_layer });
 
         // Update the viewport's camera with the latest XR view data and center eye position for IPD offset
         const camera = lxr_viewport.updateCamera({
@@ -594,6 +645,11 @@ export class XRLivelink extends TypedEventTarget<LXREvents> {
         if (!camera.perspective_lens || this.#areDistinctLens(perspective_lens, camera.perspective_lens)) {
             console.debug(`🔍 Updating perspective lens for camera ${camera.name}`, perspective_lens);
             camera.perspective_lens = perspective_lens;
+            is_viewport_updated = true;
+        }
+
+        // A rect change and a lens change usually arrive together — notify consumers once.
+        if (is_viewport_updated) {
             this._dispatchEvent(new ViewportUpdatedEvent({ viewport: lxr_viewport.viewport }));
         }
     }
