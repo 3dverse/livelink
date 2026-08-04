@@ -200,14 +200,21 @@ export class LXRSession {
             throw new Error("Cannot get XR views: session or reference space not initialized");
         }
 
+        const session = this.#xr_session;
         const { promise, resolve, reject } = createPromiseWithResolvers<Readonly<Array<XRView>>>();
+
+        // An ended session stops servicing animation frames, so without this the poll below simply
+        // never fires again and the promise hangs forever — stranding the whole initialization.
+        const onSessionEnd = (): void => reject(new Error("XR session ended while waiting for XR views."));
+        session.addEventListener("end", onSessionEnd, { once: true });
+        promise.finally(() => session.removeEventListener("end", onSessionEnd)).catch(() => {});
 
         let remaining_attempts = 200;
         const onFirstXRFrame = async (_: DOMHighResTimeStamp, frame: XRFrame): Promise<Array<XRView> | undefined> => {
             const xr_views = frame.getViewerPose(this.#xr_reference_space!)?.views;
             if (!xr_views) {
                 if (--remaining_attempts > 0) {
-                    this.#xr_session!.requestAnimationFrame(onFirstXRFrame);
+                    session.requestAnimationFrame(onFirstXRFrame);
                 } else {
                     reject(new Error("Failed to get XR views."));
                 }
@@ -221,7 +228,7 @@ export class LXRSession {
                 resolve(xr_views);
             }
         };
-        this.#xr_session.requestAnimationFrame(onFirstXRFrame);
+        session.requestAnimationFrame(onFirstXRFrame);
         return promise;
     }
 

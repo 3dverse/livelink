@@ -7,7 +7,7 @@ import { LXRSurface } from "./LXRSurface";
 import { LXRCameraRig } from "./LXRCameraRig";
 import { LXRViewport } from "./LXRViewport";
 import { TypedEventTarget } from "./utils/TypedEventTarget";
-import { type LXREvents, ViewportUpdatedEvent } from "./LXREvents";
+import { type LXREvents, SessionEndEvent, ViewportUpdatedEvent } from "./LXREvents";
 import { Quaternion, Vector3 } from "threejs-math";
 
 //------------------------------------------------------------------------------
@@ -87,6 +87,13 @@ export class XRLivelink extends TypedEventTarget<LXREvents> {
     #resolution_scale: number = 1.0;
 
     /**
+     * Whether {@link release} has been entered. Set before the session is ended so that the `end`
+     * event it triggers can be told apart from an end initiated by the system or the user, which
+     * is the only one consumers should react to. See {@link SessionEndEvent}.
+     */
+    #is_releasing: boolean = false;
+
+    /**
      * Test if the provided XR session mode is supported by this browser.
      */
     public static async isSessionSupported(mode: XRSessionMode): Promise<boolean> {
@@ -118,6 +125,14 @@ export class XRLivelink extends TypedEventTarget<LXREvents> {
      */
     get xr_mode(): XRSessionMode {
         return this.#session.xr_mode;
+    }
+
+    /**
+     * Whether {@link release} has been entered. Any XRSession `end` observed from now on is one we
+     * asked for, not one the user or the system initiated.
+     */
+    get is_releasing(): boolean {
+        return this.#is_releasing;
     }
 
     /**
@@ -353,6 +368,10 @@ export class XRLivelink extends TypedEventTarget<LXREvents> {
     }): Promise<XRSession> {
         const is_ar = mode === "immersive-ar";
 
+        // A previously released instance being initialized again starts a new session, whose end is
+        // once more something consumers need to hear about.
+        this.#is_releasing = false;
+
         // Initialize XR session
         const session = await this.#session.initialize({
             mode,
@@ -360,6 +379,13 @@ export class XRLivelink extends TypedEventTarget<LXREvents> {
             force_single_view,
             signal,
         });
+
+        // Listen for the session ending as early as possible: the rest of this method can take
+        // several seconds (surface, viewports, camera rig), and a session ended in that window
+        // would otherwise never be reported — leaving the consumer waiting on an initialization
+        // that can no longer complete.
+        session.addEventListener("end", this.#onXRSessionEnd);
+
         this.#throwIfAborted(signal);
 
         // Configure XRWebGLLayer and display parameters
@@ -439,10 +465,32 @@ export class XRLivelink extends TypedEventTarget<LXREvents> {
      */
     public stop(): void {
         if (this.#animation_frame_request_id && this.xr_session) {
-            this.xr_session.cancelAnimationFrame(this.#animation_frame_request_id);
+            try {
+                this.xr_session.cancelAnimationFrame(this.#animation_frame_request_id);
+            } catch (error) {
+                // Cancelling on an already ended session throws in some UAs. The loop is dead
+                // either way, so this must not prevent the rest of the teardown from running.
+                console.warn("Could not cancel the XR animation frame:", error);
+            }
             this.#animation_frame_request_id = 0;
         }
     }
+
+    /**
+     * Handle the XRSession ending. Ends we caused ourselves through {@link release} are swallowed;
+     * everything else — system menu, back gesture, doff timeout — is forwarded to consumers, which
+     * is their only chance to leave the XR mode they optimistically entered.
+     */
+    #onXRSessionEnd = (event: XRSessionEvent): void => {
+        this.stop();
+
+        if (this.#is_releasing) {
+            return;
+        }
+
+        console.debug("XR session ended externally");
+        this._dispatchEvent(new SessionEndEvent({ xr_session_event: event }));
+    };
 
     /**
      * XR frame callback
@@ -642,7 +690,12 @@ export class XRLivelink extends TypedEventTarget<LXREvents> {
      * Release all resources and end the session
      */
     public async release(): Promise<void> {
+        // Raised before anything else so that the `end` event ultimately triggered by
+        // `#session.release()` is recognised as ours and not forwarded as a SessionEndEvent.
+        this.#is_releasing = true;
+
         this.stop();
+        this.xr_session?.removeEventListener("end", this.#onXRSessionEnd);
 
         this.#lxr_viewports.forEach(lxr_viewport => lxr_viewport.release());
         this.#lxr_viewports.clear();
