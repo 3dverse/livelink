@@ -13,7 +13,8 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@3dverse/livelink": "file:../livelink.js",
+    "@3dverse/livelink": "file:../livelink.clients/livelink.js",
+    "@3dverse/livelink-agent": "file:../livelink.clients/livelink.agent",
     "@3dverse/livelink-react": "file:../livelink.react",
     "@3dverse/livelink-react-ui": "file:../livelink.react.ui",
     "@3dverse/livelink-three": "file:../livelink.three",
