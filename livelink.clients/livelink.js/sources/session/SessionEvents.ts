@@ -1,6 +1,5 @@
 import { Viewport } from "../rendering/camera/Viewport";
 import type { Client } from "./Client";
-import type { Client as ClientBase } from "@livelink.base/session/Client";
 import {
     ClientJoinedEvent as ClientJoinedEventBase,
     ClientLeftEvent as ClientLeftEventBase,
@@ -9,33 +8,57 @@ import {
 
 /**
  * @internal
+ *
+ * The runtime class, unchanged: the shared base is what actually constructs and dispatches the
+ * event, so re-exporting the very same value keeps `instanceof` working. Only the type below
+ * differs, and the two merge into one public `ClientJoinedEvent` name.
  */
 export const ClientJoinedEvent = ClientJoinedEventBase;
 /**
+ * Event emitted when a client joins the session.
+ *
  * The browser SDK resolves clients as its own {@link Client} subclass, so the shared client
- * lifecycle events are re-exported here with their default type parameter rebound to the browser
- * Client (the shared base defaults it to the headless `ClientBase`). The runtime value is
- * unchanged — only the type default differs.
+ * lifecycle event is re-exported here with its type parameter rebound to the browser Client (the
+ * shared base defaults it to the headless client). Declared as an interface rather than a type
+ * alias so the payload it carries is documented on the type consumers actually see.
  *
  * @event
+ * @noInheritDoc
  * @category Session
  */
-export type ClientJoinedEvent<ClientType extends Client = Client> = ClientJoinedEventBase<ClientType>;
+export interface ClientJoinedEvent<ClientType extends Client = Client> extends ClientJoinedEventBase<ClientType> {
+    /**
+     * The client that joined the session.
+     */
+    readonly client: ClientType;
+}
 
 /**
  * @internal
+ *
+ * The runtime class, unchanged: the shared base is what actually constructs and dispatches the
+ * event, so re-exporting the very same value keeps `instanceof` working. Only the type below
+ * differs, and the two merge into one public `ClientLeftEvent` name.
  */
 export const ClientLeftEvent = ClientLeftEventBase;
 /**
+ * Event emitted when a client leaves the session.
+ *
  * The browser SDK resolves clients as its own {@link Client} subclass, so the shared client
- * lifecycle events are re-exported here with their default type parameter rebound to the browser
- * Client (the shared base defaults it to the headless `ClientBase`). The runtime value is
- * unchanged — only the type default differs.
+ * lifecycle event is re-exported here with its type parameter rebound to the browser Client (the
+ * shared base defaults it to the headless client). Declared as an interface rather than a type
+ * alias so the payload it carries is documented on the type consumers actually see.
  *
  * @event
+ * @noInheritDoc
  * @category Session
  */
-export type ClientLeftEvent<ClientType extends Client = Client> = ClientLeftEventBase<ClientType>;
+export interface ClientLeftEvent<ClientType extends Client = Client> extends ClientLeftEventBase<ClientType> {
+    /**
+     * The client that left the session.
+     */
+    readonly client: ClientType;
+}
 
 /**
  * @deprecated
@@ -63,7 +86,7 @@ export class TO_REMOVE__ViewportsAddedEvent extends Event {
  * @event
  * @category Session
  */
-export type SessionEvents<ClientType extends ClientBase = Client> = SessionEventsBase<ClientType> & {
+export type SessionEvents<ClientType extends Client = Client> = SessionEventsBase<ClientType> & {
     /**
      * @deprecated
      */

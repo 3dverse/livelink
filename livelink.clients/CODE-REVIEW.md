@@ -431,3 +431,97 @@ an empty one; both verified with Node smoke tests.
   frames) is documented in place and left as the author's call; browser consumers
   now ship an unminified bundle, which is worth revisiting only if it bites.
 - Coding conventions (brace rule from the user-level CLAUDE.md): no violations.
+
+---
+
+# Public API surface pruning — `livelink.js/sources/index.ts` (2026-08-05)
+
+> Reviewed 2026-08-05 with Claude Code, Claude Opus 5 (`claude-opus-5`).
+> Scope: the working-tree rewrite of `livelink.js/sources/index.ts` — dropping
+> the star re-exports of the overridden base modules and the `*Base` alias
+> re-exports, so overridden base symbols stop adding noise to the docs.
+> **All findings fixed the same day.**
+
+## Overall assessment
+
+The pruning is safe and worth keeping: nothing in `livelink.react`,
+`livelink.react.ui`, `livelink.three`, `livelink.webxr` or `livelink.samples`
+imports any dropped name, and none of them existed before this branch, so no
+consumer breaks.
+
+One premise needs correcting, though. Measured against the previously generated
+docs: `ClientBase`, `SessionBase`, `EntityBase`, `SceneBase`,
+`SessionEventsBase`, `ClientJoinedEventBase` and `EntitiesCreatedEventBase`
+**never produced a documentation page** — TypeDoc drops an aliased re-export
+whose original symbol is shadowed by a same-named explicit export, so they only
+ever surfaced as unlinked plain text inside generic constraints. The change
+therefore shrinks the _TypeScript_ public surface (good on its own); it does not
+remove doc noise, because there was none to remove. It supersedes the
+"no dropped or ambiguous public exports vs `main`" note in the section above.
+
+## Findings
+
+| #   | Finding                                                                        | Status                                                                                     |
+| --- | ------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------- |
+| 1   | `@internal` interfaces named in an explicit re-export → broken `index.d.ts`    | **Fixed** — `SceneEntityInterface` / `SceneScriptEventInterface` dropped from `index.ts`   |
+| 2   | Type-only names re-exported as values (hygiene, not a breakage)                | **Fixed** — `export type` for the six of them                                              |
+| 3   | Two `{@link}`s to now-unexported base classes                                  | **Fixed** — reworded in `scene/Scene.ts` and `session/Session.ts`                          |
+| 4   | `SessionEvents` still constrained on the unexported `ClientBase`               | **Fixed** — constrained on the browser `Client`                                            |
+| 5   | The three rebound events documented no payload at all (pre-existing)           | **Fixed** — type aliases replaced by interfaces redeclaring the payload                    |
+
+### 1. `@internal` interfaces in an explicit re-export break the emitted `.d.ts`
+
+`export { …, SceneEntityInterface, SceneScriptEventInterface } from "@livelink.base/scene/Scene"`.
+Both interfaces are `@internal`, and `stripInternal: true` deletes them from the
+emitted `Scene.d.ts` — so `index.d.ts` would re-export names that do not exist
+(TS2305 for any consumer not running `skipLibCheck`). The star export it
+replaced was immune, since it names nothing. Both are internal by design;
+removed. Verified on the rebuilt `dist/livelink.js/sources/index.d.ts`.
+
+Note the same latent hazard survives elsewhere: `SceneBase`'s emitted
+declaration still carries `implements SceneEntityInterface<EntityType>` while
+the interface itself is stripped. Pre-existing, hidden by `skipLibCheck`, not
+touched here.
+
+### 2. Type-only names re-exported as values
+
+`LivelinkConnectionStage`, `LivelinkProgressCallback`, `SessionSelector`,
+`SceneEvents`, `EntityCreationOptions` and `SceneInfo` are types, re-exported
+with the value form. Nothing breaks today: `tsc` tolerates it (this project sets
+neither `isolatedModules` nor `verbatimModuleSyntax`), and esbuild was tested
+explicitly — a name missing from a `.ts` module is assumed to be a type and
+silently dropped from the bundle, so the build stays green. Hygiene fix only:
+all six now use `export type`, matching the file's own prior style and keeping
+the surface honest if either flag is ever turned on.
+
+### 5. The rebound events documented no payload (pre-existing)
+
+`EntitiesCreatedEvent`, `ClientJoinedEvent` and `ClientLeftEvent` were published
+as `@internal const` + `type X = XBase<…>`. TypeDoc renders such an alias as a
+bare reference with a type-parameter table and **no members**, so
+`event.entities` / `event.client` were documented nowhere — and, the `*Base`
+class having no page, nothing linked there either. Independent of the pruning
+above; the pruning only made it more visible.
+
+Dropping the rebinding was rejected: `livelink.react` annotates
+`(event: EntitiesCreatedEvent)` explicitly (`hooks/useEntities.ts:213`) and
+feeds the result to a `setEntities(Entity[])`, so the browser-flavour default is
+load-bearing.
+
+Resolved by keeping the `const` (same class ⇒ `instanceof` unchanged) and making
+the type half a **generic interface extending the base event class** that
+redeclares the payload member, with `@noInheritDoc` as every event class here
+already does. The pages now render the payload
+(`docs-md/interfaces/EntitiesCreatedEvent.md` et al.). Residual cosmetic: the
+`Hierarchy` / `Overrides` lines still name the base class as plain text —
+accepted for the exactness of extending it.
+
+## Verification (2026-08-05)
+
+`livelink.js` typechecks (`tsconfig.test.json`) and lints clean; 147 tests pass;
+`build:js` (esbuild + tsc + tsc-alias) emits a clean `index.d.ts`, and
+`dist/index.mjs` still exports the three event classes as functions. Downstream
+`build:react`, `build:three`, `build:webxr`, `build:react.ui` and
+`build:samples` all pass. `dev-docs:js` reports 0 errors and 2 warnings, both
+pre-existing and unrelated (`Session._updateClients` link, `ComponentProxyCache`
+not exported).

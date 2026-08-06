@@ -7,7 +7,7 @@ import { Events, UUID } from "@3dverse/livelink.core";
 import { Client } from "./Client";
 
 /**
- * The browser SDK ships its own Session subclass, overriding the shared {@link SessionBase} class:
+ * The browser SDK ships its own Session subclass, overriding the shared headless session:
  * clients are resolved as the browser {@link Client} (which adds camera/viewer metadata), the
  * client metadata carried by the video frames is dispatched to them, and the event map is extended
  * with the (deprecated) viewport event.

@@ -8,9 +8,9 @@ import { Entity } from "./Entity";
 /**
  * The browser {@link Scene}, producing the proxied browser {@link Entity}.
  *
- * It reuses all the shared scene logic from {@link SceneBase} and only specializes the entity
- * factory so that every scene method returns the browser entity flavour (proxied component access +
- * transform helpers).
+ * It reuses all the shared headless scene logic and only specializes the entity factory so that
+ * every scene method returns the browser entity flavour (proxied component access + transform
+ * helpers).
  *
  * @category Scene
  */

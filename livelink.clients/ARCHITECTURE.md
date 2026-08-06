@@ -243,12 +243,45 @@ surface by construction.
 
 ## Public API surface
 
-Each SDK's `sources/index.ts` star re-exports the shared base modules and then
-_shadows_ the few classes it overrides with explicit named re-exports (ES
-module semantics: explicit exports win over star exports). The shadowed base
-symbols remain public under alias names (`SessionBase`, `ClientBase`,
-`EntityBase`, `SessionEventsBase`, …) so they keep a documented, linkable
-identity.
+The agent SDK's `sources/index.ts` star re-exports the shared base modules
+as-is — it overrides none of them.
+
+The browser SDK cannot: for the six modules it overrides (`LivelinkBase`,
+`Session`, `SessionEvents`, `Entity`, `Scene`, `SceneEvents`) a star re-export
+would put the base flavour on the public surface right next to the browser one
+it exists to back. Those modules are therefore **not** star re-exported; only
+their non-overridden siblings are picked out by name (`SessionSelector`,
+`DisconnectedEvent`, `EntitiesDeletedEvent`, `SceneInfo`, …). The shadowed base
+symbols are not re-exported under alias names either (`SessionBase`,
+`ClientBase`, `EntityBase`, … are gone) — TypeDoc never gave an aliased
+re-export of a shadowed symbol a page anyway, so the aliases only ever widened
+the TypeScript surface. Pick base siblings out with `export type { … }` when
+they are types: `stripInternal` deletes `@internal` declarations from the
+emitted `.d.ts`, so naming one explicitly would leave `index.d.ts` re-exporting
+a declaration that no longer exists.
+
+Three events are **rebound** rather than shadowed. `EntitiesCreatedEvent`,
+`ClientJoinedEvent` and `ClientLeftEvent` are generic in the entity/client
+flavour, and the shared base defaults that parameter to the headless one; the
+browser SDK republishes each name so an explicit annotation
+(`(event: EntitiesCreatedEvent) => …`, as `livelink.react` writes) resolves to
+the browser flavour. Each is a pair sharing one name:
+
+```ts
+/** @internal */
+export const ClientJoinedEvent = ClientJoinedEventBase; // the value: same class, so `instanceof` holds
+/** @event @noInheritDoc @category Session */
+export interface ClientJoinedEvent<ClientType extends Client = Client> extends ClientJoinedEventBase<ClientType> {
+    readonly client: ClientType; // redeclared so the payload is documented on the public type
+}
+```
+
+A `const` alone would only bind a value — `(event: ClientJoinedEvent)` would
+not compile — which is why the type half exists. It is an **interface**, not a
+`type X = XBase<…>` alias: TypeDoc renders such an alias as a bare reference
+with no members, so the payload went undocumented. Extending the base class
+keeps the shape exact (and nominal — a real dispatched instance stays
+assignable); the redeclared member is what the docs page shows.
 
 ## Build & packaging
 
