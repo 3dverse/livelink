@@ -32,8 +32,8 @@ export { Entity, type Transform, type Aabb } from "./scene/Entity";
 
 // The browser SDK augments the shared scene event map (proxied-Entity event payloads).
 export { EntitiesDeletedEvent, SceneSettingsUpdatedEvent } from "@livelink.base/scene/SceneEvents";
-export type { SceneEvents } from "@livelink.base/scene/SceneEvents";
 export { EntitiesCreatedEvent } from "./scene/SceneEvents";
+export type { SceneEvents } from "./scene/SceneEvents";
 export type { EntityCreationOptions, SceneInfo } from "@livelink.base/scene/Scene";
 export { EntityComponentsProxy } from "../_prebuild/EntityComponentsProxy";
 export { Scene } from "./scene/Scene";

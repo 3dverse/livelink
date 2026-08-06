@@ -1,5 +1,9 @@
 import type { Entity } from "./Entity";
-import { EntitiesCreatedEvent as EntitiesCreatedEventBase } from "@livelink.base/scene/SceneEvents";
+import {
+    EntitiesCreatedEvent as EntitiesCreatedEventBase,
+    EntitiesDeletedEvent,
+    SceneSettingsUpdatedEvent,
+} from "@livelink.base/scene/SceneEvents";
 
 /**
  * @internal
@@ -11,6 +15,8 @@ import { EntitiesCreatedEvent as EntitiesCreatedEventBase } from "@livelink.base
 export const EntitiesCreatedEvent = EntitiesCreatedEventBase;
 /**
  * Event that is fired when one or more entities are created.
+ *
+ * Dispatched by {@link Scene} as `on-entities-created`.
  *
  * The browser SDK resolves entities as its proxied {@link Entity}, so the shared entity-creation
  * event is re-exported here with its type parameter rebound to the browser Entity (the shared base
@@ -28,3 +34,21 @@ export interface EntitiesCreatedEvent<EntityType extends Entity = Entity> extend
      */
     readonly entities: Array<EntityType>;
 }
+
+/**
+ * The events dispatched by {@link Scene}.
+ *
+ * Declared key by key rather than aliasing the shared map so every entry points at the flavour the
+ * browser SDK actually publishes — an alias would leave `on-entities-created` pointing at the
+ * shared base class, which has no documented identity here. Structurally identical to the shared
+ * map, so {@link Scene} needs no bridge: its inherited listener methods already carry these types.
+ * `livelink.js/tests/EventMaps.test.ts` fails to compile if the two ever diverge.
+ *
+ * @event
+ * @category Scene
+ */
+export type SceneEvents<EntityType extends Entity = Entity> = {
+    "on-entities-created": EntitiesCreatedEvent<EntityType>;
+    "on-entities-deleted": EntitiesDeletedEvent;
+    "on-scene-settings-updated": SceneSettingsUpdatedEvent;
+};

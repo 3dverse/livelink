@@ -1,9 +1,11 @@
 import { Viewport } from "../rendering/camera/Viewport";
 import type { Client } from "./Client";
 import {
+    ActivityDetectedEvent,
     ClientJoinedEvent as ClientJoinedEventBase,
     ClientLeftEvent as ClientLeftEventBase,
-    SessionEvents as SessionEventsBase,
+    DisconnectedEvent,
+    InactivityWarningEvent,
 } from "@livelink.base/session/SessionEvents";
 
 /**
@@ -16,6 +18,8 @@ import {
 export const ClientJoinedEvent = ClientJoinedEventBase;
 /**
  * Event emitted when a client joins the session.
+ *
+ * Dispatched by {@link Session} as `on-client-joined`.
  *
  * The browser SDK resolves clients as its own {@link Client} subclass, so the shared client
  * lifecycle event is re-exported here with its type parameter rebound to the browser Client (the
@@ -44,6 +48,8 @@ export const ClientLeftEvent = ClientLeftEventBase;
 /**
  * Event emitted when a client leaves the session.
  *
+ * Dispatched by {@link Session} as `on-client-left`.
+ *
  * The browser SDK resolves clients as its own {@link Client} subclass, so the shared client
  * lifecycle event is re-exported here with its type parameter rebound to the browser Client (the
  * shared base defaults it to the headless client). Declared as an interface rather than a type
@@ -61,6 +67,8 @@ export interface ClientLeftEvent<ClientType extends Client = Client> extends Cli
 }
 
 /**
+ * Dispatched by {@link Session} as `TO_REMOVE__viewports-added`.
+ *
  * @deprecated
  *
  * @event
@@ -83,10 +91,22 @@ export class TO_REMOVE__ViewportsAddedEvent extends Event {
 }
 
 /**
+ * The events dispatched by {@link Session}.
+ *
+ * Declared key by key rather than intersecting the shared map with the browser-only entry: TypeDoc
+ * expands only the literal half of an intersection, so the shared events went undocumented, and the
+ * client lifecycle entries have to point at the flavours the browser SDK publishes.
+ * `livelink.js/tests/EventMaps.test.ts` fails to compile if this drifts from the shared map.
+ *
  * @event
  * @category Session
  */
-export type SessionEvents<ClientType extends Client = Client> = SessionEventsBase<ClientType> & {
+export type SessionEvents<ClientType extends Client = Client> = {
+    "on-inactivity-warning": InactivityWarningEvent;
+    "on-activity-detected": ActivityDetectedEvent;
+    "on-disconnected": DisconnectedEvent;
+    "on-client-joined": ClientJoinedEvent<ClientType>;
+    "on-client-left": ClientLeftEvent<ClientType>;
     /**
      * @deprecated
      */

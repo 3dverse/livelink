@@ -6,6 +6,8 @@ import { Entity } from "../../scene/Entity";
  *
  * The event that is fired when an entity is hovered.
  *
+ * Dispatched by {@link Viewport} as `on-entity-hovered`.
+ *
  * @event
  * @noInheritDoc
  * @category Camera
@@ -48,6 +50,8 @@ export class EntityHoveredEvent extends Event {
 /**
  * The event that is fired when an entity is picked.
  *
+ * Dispatched by {@link Viewport} as `on-entity-picked`.
+ *
  * @event
  * @noInheritDoc
  * @category Camera
@@ -88,6 +92,8 @@ export class EntityPickedEvent extends Event {
 }
 
 /**
+ * The events dispatched by {@link Viewport}.
+ *
  * @event
  * @category Camera
  */

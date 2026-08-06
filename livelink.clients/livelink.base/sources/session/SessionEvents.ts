@@ -3,6 +3,8 @@ import { Client } from "./Client";
 /**
  * Event emitted when the session is disconnected.
  *
+ * Dispatched by {@link Session} as `on-disconnected`.
+ *
  * @event
  * @noInheritDoc
  * @category Session
@@ -24,6 +26,8 @@ export class DisconnectedEvent extends Event {
 
 /**
  * Event emitted when the client is about to be disconnected due to inactivity.
+ *
+ * Dispatched by {@link Session} as `on-inactivity-warning`.
  *
  * @event
  * @noInheritDoc
@@ -52,6 +56,8 @@ export class InactivityWarningEvent extends Event {
 /**
  * Event emitted when activity is detected after a period of inactivity.
  *
+ * Dispatched by {@link Session} as `on-activity-detected`.
+ *
  * @event
  * @noInheritDoc
  * @category Session
@@ -67,6 +73,8 @@ export class ActivityDetectedEvent extends Event {
 
 /**
  * Event emitted when a client joins the session.
+ *
+ * Dispatched by {@link Session} as `on-client-joined`.
  *
  * @event
  * @noInheritDoc
@@ -90,6 +98,8 @@ export class ClientJoinedEvent<ClientType extends Client = Client> extends Event
 /**
  * Event emitted when a client leaves the session.
  *
+ * Dispatched by {@link Session} as `on-client-left`.
+ *
  * @event
  * @noInheritDoc
  * @category Session
@@ -110,6 +120,8 @@ export class ClientLeftEvent<ClientType extends Client = Client> extends Event {
 }
 
 /**
+ * The events dispatched by {@link Session}.
+ *
  * @event
  * @category Session
  */

@@ -6,6 +6,8 @@ import { Client } from "../session/Client";
  * The event that is fired when an entity is updated, either by adding, modifying or removing
  * components.
  *
+ * Dispatched by {@link Entity} as `on-entity-updated`.
+ *
  * @event
  * @noInheritDoc
  * @category Scene
@@ -85,6 +87,8 @@ export class EntityUpdatedEvent extends EditionEvent {
 /**
  * The event that is fired when the entity visibility changes.
  *
+ * Dispatched by {@link Entity} as `on-entity-visibility-changed`.
+ *
  * @event
  * @noInheritDoc
  * @category Scene
@@ -113,6 +117,8 @@ export class EntityVisibilityChangedEvent extends Event {
 }
 
 /**
+ * The events dispatched by {@link Entity}.
+ *
  * @event
  * @category Scene
  */

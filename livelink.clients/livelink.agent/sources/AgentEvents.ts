@@ -5,6 +5,8 @@ import type { SessionLeaveReason } from "./Agent";
 /**
  * Event emitted when the agent has created a new session.
  *
+ * Dispatched by {@link Agent} as `on-session-created`.
+ *
  * @event
  * @noInheritDoc
  * @category Main
@@ -26,6 +28,8 @@ export class SessionCreatedEvent extends Event {
 
 /**
  * Event emitted when the agent has joined a pre-existing session.
+ *
+ * Dispatched by {@link Agent} as `on-session-joined`.
  *
  * @event
  * @noInheritDoc
@@ -49,6 +53,8 @@ export class SessionJoinedEvent extends Event {
 /**
  * Event emitted when a session is ready, after it has been created or joined.
  *
+ * Dispatched by {@link Agent} as `on-session-ready`.
+ *
  * @event
  * @noInheritDoc
  * @category Main
@@ -70,6 +76,8 @@ export class SessionReadyEvent extends Event {
 
 /**
  * Event emitted when the agent has left a session.
+ *
+ * Dispatched by {@link Agent} as `on-session-left`.
  *
  * @event
  * @noInheritDoc
@@ -98,6 +106,8 @@ export class SessionLeftEvent extends Event {
 
 /**
  * Event emitted when an error occurs in the agent.
+ *
+ * Dispatched by {@link Agent} as `on-error`.
  *
  * @event
  * @noInheritDoc

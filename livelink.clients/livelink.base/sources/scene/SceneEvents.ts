@@ -6,6 +6,8 @@ import type { RTID, SceneSettingsManifest } from "@3dverse/livelink.core";
 /**
  * Event that is fired when one or more entities are created.
  *
+ * Dispatched by {@link Scene} as `on-entities-created`.
+ *
  * @event
  * @noInheritDoc
  * @category Scene
@@ -27,6 +29,8 @@ export class EntitiesCreatedEvent<EntityType extends Entity = Entity> extends Ed
 
 /**
  * Event that is fired when one or more entities are deleted.
+ *
+ * Dispatched by {@link Scene} as `on-entities-deleted`.
  *
  * @event
  * @noInheritDoc
@@ -57,6 +61,8 @@ export class EntitiesDeletedEvent extends EditionEvent {
 /**
  * Event that is fired when the scene settings are updated.
  *
+ * Dispatched by {@link Scene} as `on-scene-settings-updated`.
+ *
  * @event
  * @noInheritDoc
  * @category Scene
@@ -78,6 +84,8 @@ export class SceneSettingsUpdatedEvent extends EditionEvent {
 }
 
 /**
+ * The events dispatched by {@link Scene}.
+ *
  * @event
  * @category Scene
  */

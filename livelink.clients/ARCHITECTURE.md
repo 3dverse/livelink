@@ -283,6 +283,43 @@ with no members, so the payload went undocumented. Extending the base class
 keeps the shape exact (and nominal — a real dispatched instance stays
 assignable); the redeclared member is what the docs page shows.
 
+### Event maps are declared key by key
+
+Every `*Events` map is spelled out entry by entry, never derived from another
+map. Two rules of TypeDoc's rendering force it:
+
+- an **alias** (`type SceneEvents = SceneEventsBase<EntityType>`) renders as an
+  opaque reference — no entries at all — and its entries would point at the
+  shared classes, which the browser SDK does not publish;
+- an **intersection** (`SessionEventsBase<ClientType> & { … }`) expands only its
+  literal half, silently dropping every inherited entry from the page.
+
+So `livelink.js` declares `SceneEvents` and `SessionEvents` in full, and
+`livelink.agent` declares `SceneIngestionEvents` in full rather than
+`Omit<AgentEvents, "on-error"> & { … }`. The browser `SceneEvents` is
+structurally identical to the shared one, so `Scene` needs no bridge — its
+inherited listener methods already carry these types; `Session` keeps its
+`as never` bridge because its map adds a key.
+
+The cost is duplication, so each SDK carries a `tests/EventMaps.test.ts` whose
+type-level assertions fail to **compile** if a map drifts from the one it
+mirrors (a missing key, an extra key or a retyped entry all break it).
+
+### Every event names its emitter
+
+Each event class/interface carries a `Dispatched by {@link X} as \`event-name\`.`
+line, and each map carries the reciprocal `The events dispatched by {@link X}.`,
+so the relationship reads from either end instead of only through
+`X extends TypedEventTarget<XEvents>`.
+
+In the shared base, write the emitter link **unqualified** (`{@link Scene}`,
+`{@link Session}`, `{@link Entity}`): none of the event modules import those
+classes, so the name resolves against whichever flavour the consuming SDK
+publishes — the browser one in the `livelink.js` docs, the headless one in the
+`livelink.agent` docs. Where the module _does_ import the class (`ScriptEvents.ts`
+imports `Entity`), a link would bind to the shared symbol, which has no page in
+the browser docs; use unlinked prose there.
+
 ## Build & packaging
 
 - **Code generation** (`livelink.base/ci/auto-generate.js` + templates): reads

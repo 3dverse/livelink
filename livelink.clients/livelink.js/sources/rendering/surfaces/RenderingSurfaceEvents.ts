@@ -1,6 +1,9 @@
 /**
  * An event that is fired when a rendering surface is resized.
  *
+ * Dispatched by {@link RenderingSurfaceBase} — and so by {@link RenderingSurface} and
+ * {@link OffscreenSurface} — as `on-rendering-surface-resized`.
+ *
  * @event
  * @noInheritDoc
  * @category Rendering Surfaces
@@ -15,6 +18,8 @@ export class RenderingSurfaceResizedEvent extends Event {
 }
 
 /**
+ * The events dispatched by {@link RenderingSurfaceBase}.
+ *
  * @event
  * @category Rendering Surfaces
  */

@@ -525,3 +525,60 @@ accepted for the exactness of extending it.
 `build:samples` all pass. `dev-docs:js` reports 0 errors and 2 warnings, both
 pre-existing and unrelated (`Session._updateClients` link, `ComponentProxyCache`
 not exported).
+
+## Event documentation follow-up (2026-08-05)
+
+Two further defects found by reading the regenerated pages, both fixed.
+
+### 9. Event maps documented a fraction of their entries
+
+Measured in the generated HTML:
+
+- `types/SceneEvents.html` linked `EntitiesDeletedEvent` and
+  `SceneSettingsUpdatedEvent` but **not** `EntitiesCreatedEvent` — a regression
+  from finding 5. The map lives in the shared base and names the shared class
+  symbol, which has no page; the browser interface of the same name is a
+  different symbol.
+- `types/SessionEvents.html` documented **one key out of six**. Pre-existing:
+  the map was `SessionEventsBase<ClientType> & { … }` and TypeDoc expands only
+  the literal half of an intersection, so `ClientJoinedEvent`,
+  `ClientLeftEvent`, `DisconnectedEvent`, `InactivityWarningEvent` and
+  `ActivityDetectedEvent` never appeared at all.
+- The same intersection defect was found and fixed in the agent SDK's
+  `SceneIngestionEvents` (`Omit<AgentEvents, "on-error"> & { … }`), which hid
+  the four re-emitted session events.
+
+Resolved by declaring all three maps key by key against the flavours their SDK
+publishes. `Scene` needs no bridge (the browser map is structurally identical to
+the shared one); `Session` keeps its existing `as never` bridge. Verified: all
+three entries linked on `SceneEvents`, all six on `SessionEvents`, all eight on
+`SceneIngestionEvents`.
+
+The duplication that buys is guarded by `livelink.js/tests/EventMaps.test.ts`
+and `livelink.agent/tests/EventMaps.test.ts` — type-level mutual-assignability
+assertions that fail to compile on drift. The helper was checked against a
+missing key, an extra key and a retyped entry; all three break it.
+
+### 10. No event said who emits it
+
+Pre-existing, `main` included. The emitter was only recoverable indirectly, via
+`Scene extends TypedEventTarget<SceneEvents>` and the map's entries — landing on
+an event page from search told you nothing about where to listen.
+
+Every event now carries `Dispatched by {@link X} as \`event-name\`.`, and every
+map the reciprocal `The events dispatched by {@link X}.` — 24 events across the
+three packages. In the shared base the links are written unqualified so they
+resolve to each SDK's own flavour; verified in both outputs
+(`livelink.js/docs/interfaces/EntitiesCreatedEvent.html` → browser `Scene.html`,
+`livelink.agent/docs/classes/EntitiesCreatedEvent.html` → headless `Scene.html`).
+`ScriptEvents.ts` imports `Entity`, so a link there would bind to the shared
+symbol; it uses unlinked prose naming `addScriptEventListener` instead.
+
+### Verification
+
+All three packages typecheck (`tsconfig.test.json`) and lint clean.
+**112 base + 171 agent + 148 js tests pass.** `build:base`, `build:agent`,
+`build:js`, then `build:react`, `build:three`, `build:webxr`, `build:react.ui`
+and `build:samples` all pass. `npm run dev-docs` (js + agent, HTML and markdown):
+still **0 errors / 2 warnings**, the same two pre-existing ones — no `{@link}`
+added here failed to resolve.

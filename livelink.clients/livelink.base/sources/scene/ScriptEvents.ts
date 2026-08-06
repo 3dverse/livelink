@@ -5,6 +5,10 @@ import type { SceneScriptEventInterface } from "./Scene";
 /**
  * The event that is fired when an entity receives a script event.
  *
+ * Dispatched by the entity the script targets — listen with its `addScriptEventListener` method,
+ * whose `onReceived` callback takes this event. The event name is the script event's own
+ * `<event_map_id>/<event_name>` id, not a fixed key.
+ *
  * @event
  * @noInheritDoc
  * @category Scene
@@ -40,6 +44,10 @@ export class ScriptEventReceived extends Event {
 
 /**
  * The event that is fired when an entity emits a script event.
+ *
+ * Dispatched by the emitting entity — listen with its `addScriptEventListener` method, whose
+ * `onEmitted` callback takes this event. The event name is the script event's own
+ * `<event_map_id>/<event_name>` id, not a fixed key.
  *
  * @event
  * @noInheritDoc

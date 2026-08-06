@@ -1,9 +1,16 @@
 //------------------------------------------------------------------------------
 import type { Livelink } from "../Livelink";
-import type { AgentEvents } from "../AgentEvents";
+import type {
+    SessionCreatedEvent,
+    SessionJoinedEvent,
+    SessionLeftEvent,
+    SessionReadyEvent,
+} from "../AgentEvents";
 
 /**
  * Event emitted once the sources have started and the ingestion is live.
+ *
+ * Dispatched by {@link SceneIngestion} as `on-running`.
  *
  * @event
  * @noInheritDoc
@@ -21,6 +28,8 @@ export class IngestionRunningEvent extends Event {
 /**
  * Event emitted when a session's scene has been bound to the pipeline — from here on, ingested
  * events drive its entities.
+ *
+ * Dispatched by {@link SceneIngestion} as `on-session-bound`.
  *
  * @event
  * @noInheritDoc
@@ -44,6 +53,8 @@ export class SessionBoundEvent extends Event {
 /**
  * Event emitted when a session's scene has been unbound from the pipeline.
  *
+ * Dispatched by {@link SceneIngestion} as `on-session-unbound`.
+ *
  * @event
  * @noInheritDoc
  * @category Data
@@ -66,6 +77,8 @@ export class SessionUnboundEvent extends Event {
 /**
  * Event emitted when a source fails to start, a mapping throws, or the underlying agent errors.
  * Ingestion continues — this reports, it does not stop.
+ *
+ * Dispatched by {@link SceneIngestion} as `on-error`.
  *
  * @event
  * @noInheritDoc
@@ -93,10 +106,18 @@ export class IngestionErrorEvent extends Event {
  * consumer observes one object instead of reaching through `ingestion.agent` for half of what it
  * needs. `on-error` covers both the agent's errors and the ingestion's own.
  *
+ * Declared key by key rather than as `Omit<AgentEvents, "on-error"> & { … }`: TypeDoc expands only
+ * the literal half of an intersection, so the re-emitted session events went undocumented.
+ * `livelink.agent/tests/EventMaps.test.ts` fails to compile if this drifts from {@link AgentEvents}.
+ *
  * @event
  * @category Data
  */
-export type SceneIngestionEvents = Omit<AgentEvents, "on-error"> & {
+export type SceneIngestionEvents = {
+    "on-session-created": SessionCreatedEvent;
+    "on-session-joined": SessionJoinedEvent;
+    "on-session-ready": SessionReadyEvent;
+    "on-session-left": SessionLeftEvent;
     "on-running": IngestionRunningEvent;
     "on-session-bound": SessionBoundEvent;
     "on-session-unbound": SessionUnboundEvent;
