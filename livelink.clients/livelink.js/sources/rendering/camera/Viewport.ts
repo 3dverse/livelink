@@ -1,5 +1,6 @@
 //------------------------------------------------------------------------------
 import type { Enums, Vec2, Vec3 } from "@3dverse/livelink.core";
+import { TypedEventTarget } from "@livelink.base/TypedEventTarget";
 
 //------------------------------------------------------------------------------
 import { vec3 } from "gl-matrix";
@@ -7,7 +8,6 @@ import { vec3 } from "gl-matrix";
 //------------------------------------------------------------------------------
 import { Livelink } from "../../Livelink";
 import { Entity } from "../../scene/Entity";
-import { TypedEventTarget } from "../../TypedEventTarget";
 
 import { RelativeRect } from "../surfaces/Rect";
 import { OverlayInterface } from "../surfaces/OverlayInterface";

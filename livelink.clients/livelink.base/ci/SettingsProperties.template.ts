@@ -8,7 +8,7 @@ import type { SceneSettings } from "@3dverse/livelink.core";
 /**
  *
  */
-export class SettingsBase extends EventTarget {
+export class SettingsProperties extends EventTarget {
     /**
      *
      */

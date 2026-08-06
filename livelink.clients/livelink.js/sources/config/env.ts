@@ -1,2 +1,3 @@
-export const BROWSER_ENV = typeof window !== "undefined" && typeof window.document !== "undefined";
-export const NODE_ENV = typeof process !== "undefined" && process.versions != null && process.versions.node != null;
+// Same environment detection as the shared base, which declares the maybe-missing globals itself
+// instead of relying on @types/node / DOM ambient types being in the program.
+export * from "@livelink.base/config/env";

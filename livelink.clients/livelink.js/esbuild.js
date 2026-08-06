@@ -1,7 +1,6 @@
-/* eslint-disable */
-
 //------------------------------------------------------------------------------
 const esbuild = require("esbuild");
+const path = require("path");
 const pkg = require("./package.json");
 
 //------------------------------------------------------------------------------
@@ -13,6 +12,12 @@ const commonBuildOptions = {
     packages: "bundle",
     mainFields: ["browser", "module", "main"],
     sourcemap: true,
+    alias: {
+        // livelink.base is a shared source folder bundled in (not a package dependency).
+        // Longest alias wins, so the _prebuild entry takes precedence over the sources one.
+        "@livelink.base/_prebuild": path.resolve(__dirname, "../livelink.base/_prebuild"),
+        "@livelink.base": path.resolve(__dirname, "../livelink.base/sources"),
+    },
     define: {
         PACKAGE_NAME: `"${pkg.name}"`,
         LIVELINK_VERSION: `"${pkg.version}"`,

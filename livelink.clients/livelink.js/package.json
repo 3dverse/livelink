@@ -4,10 +4,10 @@
   "description": "",
   "main": "./dist/index.cjs",
   "module": "./dist/index.mjs",
-  "typings": "./dist/sources/index.d.ts",
+  "typings": "./dist/livelink.js/sources/index.d.ts",
   "exports": {
     ".": {
-      "types": "./dist/sources/index.d.ts",
+      "types": "./dist/livelink.js/sources/index.d.ts",
       "import": "./dist/index.mjs",
       "require": "./dist/index.cjs"
     }
@@ -16,17 +16,18 @@
     "dist"
   ],
   "scripts": {
-    "prebuild": "node ci/auto-generate.js ../../node_modules/ ci/ ./_prebuild/",
-    "build": "node esbuild.js && tsc",
+    "prebuild": "node ../livelink.base/ci/auto-generate.js ../../node_modules/ ../livelink.base/ci/ ../livelink.base/_prebuild/ && node ci/auto-generate.js ../../node_modules/ ci/ ./_prebuild/",
+    "build": "node esbuild.js && tsc && tsc-alias",
+    "typecheck": "tsc --noEmit -p tsconfig.test.json",
     "lint": "eslint sources _prebuild",
     "clean": "rimraf _prebuild dist docs docs-md",
     "clean:docs": "rimraf docs docs-md",
     "dev": "run-p dev:*",
     "dev:esbuild": "node esbuild.js dev",
-    "dev:tsc": "tsc -w",
+    "dev:tsc": "tsc -w --noEmit",
     "predocs": "run-p clean:docs",
     "docs": "run-p typedoc typedoc:md",
-    "pretest": "node ci/auto-generate.js ../../node_modules/ ci/ ./_prebuild/",
+    "pretest": "node ../livelink.base/ci/auto-generate.js ../../node_modules/ ../livelink.base/ci/ ../livelink.base/_prebuild/ && node ci/auto-generate.js ../../node_modules/ ci/ ./_prebuild/",
     "test": "vitest run",
     "test:watch": "vitest",
     "typedoc": "typedoc --options typedoc.config.mjs",
@@ -62,6 +63,7 @@
     "npm-run-all": "^4.1.5",
     "prettier": "^3.8.3",
     "rimraf": "^6.1.3",
+    "tsc-alias": "^1.8.16",
     "typedoc": "^0.28.19",
     "typedoc-plugin-markdown": "^4.11.0",
     "typedoc-plugin-mermaid": "^1.12.0",

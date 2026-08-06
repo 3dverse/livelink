@@ -1,12 +1,12 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { ScriptDataObject, UUID } from "@3dverse/livelink.core";
-import { EntityUpdatedEvent, EntityVisibilityChangedEvent } from "../../sources/scene/EntityEvents";
-import { ScriptEventReceived } from "../../sources/scene/ScriptEvents";
-import type { Scene } from "../../sources/scene/Scene";
-import { EntityRegistry } from "../../sources/scene/EntityRegistry";
+import { EntityUpdatedEvent, EntityVisibilityChangedEvent } from "@livelink.base/scene/EntityEvents";
+import { ScriptEventReceived } from "@livelink.base/scene/ScriptEvents";
+import { EntityRegistry } from "@livelink.base/scene/EntityRegistry";
+import type { MockScene } from "../helpers/mock-scene";
 import { createMockScene, makeEntity } from "../helpers/mock-scene";
 
-let scene: Scene;
+let scene: MockScene;
 let registry: EntityRegistry;
 
 beforeEach(() => {
@@ -233,7 +233,11 @@ describe("script event listeners", () => {
     // The listener key is `event_map_id + "/" + event_name`.
     // ScriptEventReceived.type must equal that compound key for the listener to fire —
     // which means the server's event_name field must include the event_map_id prefix.
-    function makeScriptEvent(event_map_id: UUID, event_name: string, data_object: ScriptDataObject = {}): ScriptEventReceived {
+    function makeScriptEvent(
+        event_map_id: UUID,
+        event_name: string,
+        data_object: ScriptDataObject = {},
+    ): ScriptEventReceived {
         return new ScriptEventReceived({
             event_name: `${event_map_id}/${event_name}`,
             emitter_entity: null,
@@ -324,7 +328,9 @@ describe("script event listeners", () => {
         entity.addScriptEventListener({ event_map_id, event_name: "on-hit", onReceived: handler });
 
         const payload: ScriptDataObject = { damage: 42 };
-        entity._onScriptEventReceived({ script_event_received_event: makeScriptEvent(event_map_id, "on-hit", payload) });
+        entity._onScriptEventReceived({
+            script_event_received_event: makeScriptEvent(event_map_id, "on-hit", payload),
+        });
 
         expect(handler.mock.calls[0][0].data_object).toEqual(payload);
     });

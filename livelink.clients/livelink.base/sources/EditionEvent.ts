@@ -1,6 +1,7 @@
 import type { Client } from "./session/Client";
 
 /**
+ * @noInheritDoc
  * @category Utils
  */
 export class EditionEvent extends Event {

@@ -1,8 +1,9 @@
 import type { Mat4, Quat, Events, UUID, Vec3 } from "@3dverse/livelink.core";
-import type { FrameCameraTransform } from "./FrameCameraTransform";
-import type { EntityRegistry } from "../../scene/EntityRegistry";
-import type { Viewport } from "../camera/Viewport";
 import type { Client } from "../../session/Client";
+import type { EntityRegistry } from "@livelink.base/scene/EntityRegistry";
+import type { Entity } from "../../scene/Entity";
+import type { FrameCameraTransform } from "./FrameCameraTransform";
+import type { Viewport } from "../camera/Viewport";
 
 /**
  * @category Streaming
@@ -43,7 +44,7 @@ export function convertRawFrameMetaDataToFrameMetaData({
 }: {
     raw_frame_meta_data: Events.RawFrameMetaData;
     client_id: UUID;
-    entity_registry: EntityRegistry;
+    entity_registry: EntityRegistry<Entity>;
     viewports: Array<Viewport>;
     resolve_client: ({ client_id }: { client_id: UUID }) => Client | null;
 }): FrameMetaData {

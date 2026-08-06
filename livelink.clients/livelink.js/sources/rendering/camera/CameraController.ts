@@ -28,6 +28,7 @@ enum MouseEventButton {
 /**
  * A camera controller based on the `camera-controls` library.
  *
+ * @noInheritDoc
  * @category Camera
  */
 export class CameraController extends CameraControls {

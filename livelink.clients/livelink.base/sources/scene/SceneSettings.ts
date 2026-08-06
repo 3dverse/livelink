@@ -2,9 +2,19 @@
 import type { Events, SceneSettingsManifest, SceneSettingsRecord } from "@3dverse/livelink.core";
 //------------------------------------------------------------------------------
 
-import type { Scene } from "./Scene";
+import type { SceneBase } from "./Scene";
 import { PromiseWithResolver } from "./PromiseWithResolver";
 import { SceneSettingsUpdatedEvent } from "./SceneEvents";
+
+/**
+ * @internal
+ *
+ * The SceneHost type is a subset of the SceneBase class that is used by the SceneSettings class to interact with the scene.
+ * It exposes only the methods that are needed by the SceneSettings class, and hides the rest of the SceneBase API.
+ * This allows for better encapsulation and separation of concerns between the SceneSettings and SceneBase classes.
+ * It also allows for easier testing and mocking of the SceneBase class in unit tests for the SceneSettings class.
+ */
+type SceneHost = Pick<SceneBase, "_dispatchEvent" | "_resolveEmitter">;
 
 /**
  * @internal
@@ -17,7 +27,7 @@ export class SceneSettings {
     /**
      *
      */
-    #scene: Scene;
+    #scene: SceneHost;
 
     /**
      * The settings for the scene without proxies.
@@ -47,7 +57,7 @@ export class SceneSettings {
     /**
      * @internal
      */
-    constructor(scene: Scene) {
+    constructor(scene: SceneHost) {
         this.#scene = scene;
     }
 
@@ -105,29 +115,21 @@ export class SceneSettings {
                     continue;
                 }
 
-                settingProxy[typedAttributeName] = new Proxy(
-                    settingSection[typedAttributeName],
-                    {
-                        get: (_, prop): unknown =>
-                            Reflect.get(settingSection[typedAttributeName], prop),
-                        set: (_, prop, v: unknown): boolean => {
-                            const result = Reflect.set(
-                                settingSection[typedAttributeName],
-                                prop,
-                                v,
-                            );
-                            const value = settingSection[typedAttributeName];
-                            onSettingAttributeChanged(typedAttributeName, value);
-                            return result;
-                        },
+                settingProxy[typedAttributeName] = new Proxy(settingSection[typedAttributeName], {
+                    get: (_, prop): unknown => Reflect.get(settingSection[typedAttributeName], prop),
+                    set: (_, prop, v: unknown): boolean => {
+                        const result = Reflect.set(settingSection[typedAttributeName], prop, v);
+                        const value = settingSection[typedAttributeName];
+                        onSettingAttributeChanged(typedAttributeName, value);
+                        return result;
                     },
-                );
+                });
             }
 
             //@ts-expect-error Cannot infer the type here
             this.#proxied_settings[settingSectionName as keyof SceneSettingsRecord] = new Proxy(settingProxy, {
                 get: (_, prop): unknown => {
-                    if(Object.prototype.hasOwnProperty.call(settingProxy, prop)) {
+                    if (Object.prototype.hasOwnProperty.call(settingProxy, prop)) {
                         return Reflect.get(settingProxy, prop);
                     }
                     return Reflect.get(this.#raw_settings![settingSectionName as keyof SceneSettingsRecord], prop);

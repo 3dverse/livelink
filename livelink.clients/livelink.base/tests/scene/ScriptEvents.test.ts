@@ -30,8 +30,8 @@ describe("ScriptEventReceived", () => {
 // ---------------------------------------------------------------------------
 
 describe("ScriptEventEmitted", () => {
-    function makeScene(found: Entity | null = null): Scene {
-        return { _findEntity: vi.fn().mockResolvedValue(found) } as unknown as Scene;
+    function makeScene(found: Entity | null = null): Pick<Scene, "_findEntity"> {
+        return { _findEntity: vi.fn().mockResolvedValue(found) };
     }
 
     it("type is the event_name passed to the constructor", () => {

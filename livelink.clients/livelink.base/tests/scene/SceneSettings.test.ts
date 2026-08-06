@@ -4,7 +4,6 @@ import { SceneSettings } from "../../sources/scene/SceneSettings";
 import { SceneSettingsUpdatedEvent } from "../../sources/scene/SceneEvents";
 import type { SceneEvents } from "../../sources/scene/SceneEvents";
 import { TypedEventTarget } from "../../sources/TypedEventTarget";
-import type { Scene } from "../../sources/scene/Scene";
 
 function settingsEvent(updated_settings: SceneSettingsRecord): Events.SceneSettingsUpdatedEvent {
     return { updated_settings, emitter: null } as unknown as Events.SceneSettingsUpdatedEvent;
@@ -32,7 +31,7 @@ let settings: SceneSettings;
 
 beforeEach(() => {
     mock = new MockScene();
-    settings = new SceneSettings(mock as unknown as Scene);
+    settings = new SceneSettings(mock);
 });
 
 // ---------------------------------------------------------------------------

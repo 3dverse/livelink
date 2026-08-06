@@ -1,15 +1,9 @@
 //------------------------------------------------------------------------------
-import type {
-    ActivityWatcher,
-    Enums,
-    Commands,
-    Events,
-    LivelinkCore,
-    Queries,
-    UUID,
-    Vec2i,
-} from "@3dverse/livelink.core";
+import type { Enums, Commands, Events, LivelinkCore, Queries, UUID, Vec2i } from "@3dverse/livelink.core";
 import { DynamicLoader } from "@3dverse/livelink.core";
+import { LivelinkBase, type LivelinkProgressCallback } from "@livelink.base/LivelinkBase";
+import type { SessionSelector } from "@livelink.base/session/Session";
+import type { SessionInfo } from "@livelink.base/session/SessionInfo";
 
 //------------------------------------------------------------------------------
 import { EncodedFrameConsumer } from "./rendering/streaming/EncodedFrameConsumer";
@@ -21,8 +15,7 @@ import { Viewport } from "./rendering/camera/Viewport";
 import { Scene } from "./scene/Scene";
 import { Entity } from "./scene/Entity";
 
-import { Session, SessionSelector } from "./session/Session";
-import { SessionInfo } from "./session/SessionInfo";
+import { Session } from "./session/Session";
 import { TO_REMOVE__ViewportsAddedEvent } from "./session/SessionEvents";
 
 import { Mouse } from "./inputs/Mouse";
@@ -30,39 +23,6 @@ import { Keyboard } from "./inputs/Keyboard";
 import { AudioPlayer } from "./audio/AudioPlayer";
 import { GamepadsRegistry } from "./inputs/GamepadsRegistry";
 import { BROWSER_ENV } from "./config/env";
-
-/**
- * Represents the various stages of the Livelink connection process.
- *
- * Each stage represents a different phase of establishing a connection to the Livelink service:
- *
- * - `"initializing"` - Loading dynamic dependencies and preparing the connection infrastructure
- * - `"finding-session"` - Looking for existing sessions on the server (used with join and join_or_start methods)
- * - `"creating-session"` - Creating a new session on the server (used with start method or join_or_start fallback)
- * - `"registering-client"` - Registering the client with the session and obtaining session credentials
- * - `"connecting"` - Establishing the WebSocket connection to the gateway server
- * - `"configuring"` - Setting up the client configuration and preparing for streaming
- * - `"ready"` - Connection is complete and streaming can begin
- *
- * @category Main
- */
-export type LivelinkConnectionStage =
-    | "initializing"
-    | "finding-session"
-    | "creating-session"
-    | "registering-client"
-    | "connecting"
-    | "configuring"
-    | "ready";
-
-/**
- * Callback function type for receiving connection progress updates.
- *
- * @param stage - The current stage of the connection process.
- *
- * @category Main
- */
-export type LivelinkProgressCallback = (stage: LivelinkConnectionStage) => void;
 
 /**
  * This class represents the Livelink connection between the client and the 3dverse server holding
@@ -124,12 +84,7 @@ export type LivelinkProgressCallback = (stage: LivelinkConnectionStage) => void;
  *
  * @category Main
  */
-export class Livelink {
-    /**
-     * @internal
-     */
-    static _api_url = `https://${API_HOSTNAME}/app/v1`;
-
+export class Livelink extends LivelinkBase<Entity, Scene, Session> {
     /**
      * Start a new session on the specified scene.
      *
@@ -189,7 +144,8 @@ export class Livelink {
     static async join_or_start({
         scene_id,
         token,
-        session_selector = ({ sessions }: { sessions: Array<SessionInfo> }): SessionInfo | null => sessions.find(s => s.is_transient_session === is_transient) ?? null,
+        session_selector = ({ sessions }: { sessions: Array<SessionInfo> }): SessionInfo | null =>
+            sessions.find(s => s.is_transient_session === is_transient) ?? null,
         is_transient = false,
         is_headless = false,
         session_options,
@@ -265,21 +221,6 @@ export class Livelink {
     }
 
     /**
-     * The session associated with this Livelink instance.
-     */
-    public readonly session: Session;
-
-    /**
-     * The scene the current session is running.
-     */
-    public readonly scene: Scene;
-
-    /**
-     * The core object managing the connection to the server.
-     */
-    #core: LivelinkCore;
-
-    /**
      * The codec used by the renderer.
      */
     #codec: Enums.CodecType | null = null;
@@ -315,16 +256,6 @@ export class Livelink {
     #gamepads_registry: GamepadsRegistry;
 
     /**
-     * Interval between updates sent to the renderer.
-     */
-    #update_interval: ReturnType<typeof setInterval> | null = null;
-
-    /**
-     * Interval between broadcasts sent to the editor.
-     */
-    #broadcast_interval: ReturnType<typeof setInterval> | null = null;
-
-    /**
      * The renderer timestamp in miliseconds of the latest received frame.
      */
     #frame_timestamp_in_ms: number = 0;
@@ -342,21 +273,6 @@ export class Livelink {
      */
     get default_decoded_frame_consumer(): DecodedFrameConsumer {
         return this.#remote_frame_proxy;
-    }
-
-    /**
-     * The activity watcher disconnects the session if no activity is detected for a certain amount
-     * of time.
-     */
-    get activity_watcher(): ActivityWatcher {
-        return this.#core.activity_watcher;
-    }
-
-    /**
-     * The latency of the connection in milliseconds.
-     */
-    get latency(): number {
-        return this.#core.latency;
     }
 
     /**
@@ -380,30 +296,31 @@ export class Livelink {
      * @param params.session The session to associate with the Livelink instance
      */
     private constructor({ session }: { session: Session }) {
-        this.session = session;
-        this.#core = new DynamicLoader.Core();
-        this.scene = new Scene(this, this.#core);
+        super({ session });
         this.#mouse = new Mouse(this);
         this.#keyboard = new Keyboard(this);
         this.#gamepads_registry = new GamepadsRegistry({ instance: this });
     }
 
     /**
+     * @internal
+     */
+    protected _createScene({ core }: { core: LivelinkCore }): Scene {
+        return new Scene(this, core);
+    }
+
+    /**
      * Disconnect from the server and release all local resources.
      *
      * Note that the session is not closed, it can be reconnected later.
+     * Safe to call multiple times.
      */
-    async disconnect(): Promise<void> {
-        this.#uninstallEventListeners();
+    override async disconnect(): Promise<void> {
+        if (this._is_disconnected) {
+            return;
+        }
+
         this.#uninstallStreamEventListeners();
-
-        if (this.#update_interval) {
-            clearInterval(this.#update_interval);
-        }
-
-        if (this.#broadcast_interval) {
-            clearInterval(this.#broadcast_interval);
-        }
 
         if (this.#encoded_frame_consumer !== null) {
             this.#encoded_frame_consumer.release();
@@ -412,7 +329,7 @@ export class Livelink {
         this.#remote_frame_proxy.release();
         this.#audio_player?.release();
 
-        await this.#core.disconnect();
+        await super.disconnect();
     }
 
     /**
@@ -459,7 +376,7 @@ export class Livelink {
         };
 
         console.debug("Initial surface size", this.#remote_frame_proxy.dimensions);
-        const res = await this.#core.configureClient({ client_config });
+        const res = await this._core.configureClient({ client_config });
 
         this.#codec = res.codec;
         return res;
@@ -506,51 +423,10 @@ export class Livelink {
         if (typeof document !== "undefined") {
             this.#onVisibilityChange();
         } else {
-            this.#core.resume();
+            this._core.resume();
         }
 
-        this.#startUpdateLoop();
-    }
-
-    /**
-     * Send a script event to the server to start the simulation.
-     */
-    startSimulation(): void {
-        this.#core.setSimulationState({ state: "start_simulation" });
-    }
-
-    /**
-     * Send a script event to the server to pause the simulation.
-     */
-    pauseSimulation(): void {
-        this.#core.setSimulationState({ state: "pause_simulation" });
-    }
-
-    /**
-     * Send a script event to the server to stop the simulation.
-     */
-    stopSimulation(): void {
-        this.#core.setSimulationState({ state: "stop_simulation" });
-    }
-
-    /**
-     * Send a partial skeleton pose targeting a specific animation controller.
-     *
-     * @param params
-     * @param params.controller The entity having the animation controller component.
-     * @param params.partial_pose The partial pose to send.
-     */
-    sendSkeletonPose({
-        controller,
-        partial_pose,
-    }: {
-        controller: Entity;
-        partial_pose: Commands.SkeletonPartialPose;
-    }): void {
-        this.#core.sendSkeletonPose({
-            controller_rtid: controller.rtid,
-            partial_pose,
-        });
+        this._startUpdateLoop();
     }
 
     /**
@@ -568,14 +444,14 @@ export class Livelink {
      * @experimental
      */
     async startHeadlessClient(): Promise<void> {
-        this.#startUpdateLoop();
+        this._startUpdateLoop();
     }
 
     /**
      * @internal
      */
     _sendInput({ input_state }: { input_state: Commands.InputStateData }): void {
-        this.#core.sendInputState({ input_state });
+        this._core.sendInputState({ input_state });
     }
 
     /**
@@ -583,7 +459,7 @@ export class Livelink {
      */
     async _resize({ size }: { size: Vec2i }): Promise<void> {
         console.debug("🙏 Requesting remote resize", size);
-        const { size: remote_size } = await this.#core.resize({ size });
+        const { size: remote_size } = await this._core.resize({ size });
 
         if (remote_size[0] === size[0] && remote_size[1] === size[1]) {
             console.debug("✅ Remote resize acknowledged", remote_size);
@@ -598,7 +474,7 @@ export class Livelink {
      * @internal
      */
     _setViewports({ viewport_configs }: { viewport_configs: Array<Commands.ViewportConfig> }): void {
-        this.#core.setViewports({ viewport_configs });
+        this._core.setViewports({ viewport_configs });
     }
 
     /**
@@ -609,7 +485,7 @@ export class Livelink {
     }: {
         screenSpaceRayQuery: Queries.ScreenSpaceRayQuery;
     }): Promise<Queries.ScreenSpaceRayResponse> {
-        return this.#core.castScreenSpaceRay({ screenSpaceRayQuery });
+        return this._core.castScreenSpaceRay({ screenSpaceRayQuery });
     }
 
     /**
@@ -664,59 +540,16 @@ export class Livelink {
         is_headless: boolean;
         onProgress?: LivelinkProgressCallback;
     }): Promise<Livelink> {
-        // Retrieve a session key
-        onProgress?.("registering-client");
-        await this.session.registerClient({ is_headless });
-
-        onProgress?.("connecting");
-        await this.#core.connect({ session: this.session });
-        this.#installEventListeners();
-
+        await this._connect({ is_headless, onProgress });
         return this;
-    }
-
-    /**
-     * Install event listeners on the core object.
-     */
-    #installEventListeners(): void {
-        this.#core.addEventListener("on-disconnected", this.session._onDisconnected);
-        this.#core.addEventListener("on-inactivity-warning", this.session._onInactivityWarning);
-        this.#core.addEventListener("on-scene-info-loaded", this.scene._onSceneInfoLoaded);
-        this.#core.addEventListener("on-activity-detected", this.session._onActivityDetected);
-        this.#core.addEventListener("on-entities-created", this.scene._onEntitiesCreated);
-        this.#core.addEventListener("on-entities-updated", this.#onEntitiesUpdated);
-        this.#core.addEventListener("on-entities-deleted", this.scene._onEntitiesDeleted);
-        this.#core.addEventListener("on-entity-visibility-changed", this.scene._onEntityVisibilityChanged);
-        this.#core.addEventListener("on-scene-settings-updated", this.scene._settings._onSceneSettingsUpdated);
-        this.#core.addEventListener("on-script-event-received", this.scene._onScriptEventReceived);
-        this.#core.addEventListener("on-client-connected", this.#onClientConnectedEvent);
-        this.#core.addEventListener("on-clients-disconnected", this.#onClientsDisconnectedEvent);
-    }
-
-    /**
-     * Uninstall event listeners on the core object.
-     */
-    #uninstallEventListeners(): void {
-        this.#core.removeEventListener("on-disconnected", this.session._onDisconnected);
-        this.#core.removeEventListener("on-inactivity-warning", this.session._onInactivityWarning);
-        this.#core.removeEventListener("on-scene-info-loaded", this.scene._onSceneInfoLoaded);
-        this.#core.removeEventListener("on-activity-detected", this.session._onActivityDetected);
-        this.#core.removeEventListener("on-entities-created", this.scene._onEntitiesCreated);
-        this.#core.removeEventListener("on-entities-updated", this.#onEntitiesUpdated);
-        this.#core.removeEventListener("on-entities-deleted", this.scene._onEntitiesDeleted);
-        this.#core.removeEventListener("on-entity-visibility-changed", this.scene._onEntityVisibilityChanged);
-        this.#core.removeEventListener("on-scene-settings-updated", this.scene._settings._onSceneSettingsUpdated);
-        this.#core.removeEventListener("on-script-event-received", this.scene._onScriptEventReceived);
-        this.#core.removeEventListener("on-client-connected", this.#onClientConnectedEvent);
-        this.#core.removeEventListener("on-clients-disconnected", this.#onClientsDisconnectedEvent);
     }
 
     /**
      * Install event listeners for the stream (audio and video)
      */
     #installStreamEventListeners(): void {
-        this.#core.addEventListener("on-frame-received", this.#onFrameReceived);
-        this.#core.addEventListener("on-audio-received", this.#onAudioReceived);
+        this._core.addEventListener("on-frame-received", this.#onFrameReceived);
+        this._core.addEventListener("on-audio-received", this.#onAudioReceived);
 
         if (BROWSER_ENV) {
             document.addEventListener("visibilitychange", this.#onVisibilityChange);
@@ -727,8 +560,8 @@ export class Livelink {
      * Uninstall event listeners for the stream (audio and video)
      */
     #uninstallStreamEventListeners(): void {
-        this.#core.removeEventListener("on-frame-received", this.#onFrameReceived);
-        this.#core.removeEventListener("on-audio-received", this.#onAudioReceived);
+        this._core.removeEventListener("on-frame-received", this.#onFrameReceived);
+        this._core.removeEventListener("on-audio-received", this.#onAudioReceived);
 
         if (BROWSER_ENV) {
             document.removeEventListener("visibilitychange", this.#onVisibilityChange);
@@ -739,7 +572,7 @@ export class Livelink {
      *
      */
     #onFrameReceived = ({ encoded_frame, meta_data: raw_frame_meta_data }: Events.FrameReceivedEvent): void => {
-        this.session._updateClients({ core: this, client_data: raw_frame_meta_data.clients });
+        this.session._updateClients({ client_data: raw_frame_meta_data.clients });
         const meta_data = convertRawFrameMetaDataToFrameMetaData({
             raw_frame_meta_data,
             client_id: this.session.client_id!,
@@ -773,97 +606,11 @@ export class Livelink {
     /**
      *
      */
-    #onEntitiesUpdated = ({ updated_entities, emitter }: Events.EntitiesUpdatedEvent): void => {
-        for (const { entity_euid, updated_components, deleted_components } of updated_entities) {
-            this.scene._updateEntityFromEvent({ entity_euid, updated_components, deleted_components, emitter });
-        }
-    };
-
-    /**
-     *
-     */
-    #onClientConnectedEvent = ({ client_info }: Events.ClientConnectedEvent): void => {
-        this.session._onClientJoined({ core: this, client_info });
-    };
-
-    /**
-     *
-     */
-    #onClientsDisconnectedEvent = ({ client_ids }: Events.ClientsDisconnectedEvent): void => {
-        for (const client_id of client_ids) {
-            this.session._onClientLeft({ client_id });
-        }
-    };
-
-    /**
-     *
-     */
-    #startUpdateLoop({
-        updatesPerSecond = 30,
-        broadcastsPerSecond = 1,
-    }: {
-        updatesPerSecond?: number;
-        broadcastsPerSecond?: number;
-    } = {}): void {
-        this.#update_interval = setInterval(() => {
-            this._updateEntities();
-            this.#updateSceneSettings();
-        }, 1000 / updatesPerSecond);
-
-        this.#broadcast_interval = setInterval(() => {
-            this.#broadcastEntities();
-            this.#broadcastSceneSettings();
-        }, 1000 / broadcastsPerSecond);
-    }
-
-    /**
-     * @internal
-     */
-    _updateEntities = (): void => {
-        const update_commands = this.scene._entity_registry._flushDirtyEntities();
-        if (update_commands.length > 0) {
-            this.#core.updateEntities({ update_commands, persist: false });
-        }
-    };
-
-    /**
-     *
-     */
-    #broadcastEntities = (): void => {
-        const update_commands = this.scene._entity_registry._flushPersistentEntities();
-        if (update_commands.length > 0) {
-            this.#core.updateEntities({ update_commands, persist: true });
-        }
-    };
-
-    /**
-     *
-     */
-    #updateSceneSettings = (): void => {
-        const updated_settings = this.scene._settings._getAndClearSettingsToUpdate();
-        if (Object.keys(updated_settings).length > 0) {
-            this.#core.updateSceneSettings({ updated_settings, persist: false });
-        }
-    };
-
-    /**
-     *
-     */
-    #broadcastSceneSettings = (): void => {
-        const updated_settings = this.scene._settings._getAndClearSettingsToBroadcast();
-        if (Object.keys(updated_settings).length > 0) {
-            this.#core.updateSceneSettings({ updated_settings, persist: true });
-        }
-    };
-
-    /**
-     *
-     */
     #onVisibilityChange = (): void => {
         if (document.hidden) {
-            this.#core.suspend();
+            this._core.suspend();
         } else {
-            this.#core.resume();
+            this._core.resume();
         }
     };
 

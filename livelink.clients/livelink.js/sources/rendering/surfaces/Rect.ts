@@ -84,6 +84,7 @@ export class Rect {
 
 /**
  * Occurs when an element has an invalid size.
+ * @noInheritDoc
  * @category Rendering Surfaces
  */
 export class InvalidSizeError extends Error {
@@ -103,6 +104,7 @@ export class InvalidSizeError extends Error {
 
 /**
  * Occurs when an element is not contained into its parent bounds.
+ * @noInheritDoc
  * @category Rendering Surfaces
  */
 export class OutOfBoundsError extends Error {

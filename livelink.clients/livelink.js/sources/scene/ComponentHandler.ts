@@ -1,9 +1,16 @@
-import type { Entity } from "./Entity";
+import type { Entity } from "@livelink.base/scene/Entity";
 import type { ComponentName } from "@3dverse/livelink.core";
 
 export type ComponentHandlers = Record<ComponentName | "default", typeof ComponentHandler>;
 
 /**
+ * Proxy handler for a component value living in the entity's storage core.
+ *
+ * It makes the browser entity's component getters behave as before: mutating a nested property
+ * (`entity.local_transform.position[0] = 5`, `entity.tags.value.push(...)`) flags the owning entity
+ * dirty through the shared base's {@link EntityComponents._markComponentAsDirty}. The component value itself is
+ * mutated in place, so the storage core (used for serialization) stays a plain object.
+ *
  * @internal
  */
 /* eslint-disable */

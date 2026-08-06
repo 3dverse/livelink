@@ -1,9 +1,8 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import type { Scene } from "../../sources/scene/Scene";
-import { EntityRegistry } from "../../sources/scene/EntityRegistry";
-import { createMockScene, makeEntity } from "../helpers/mock-scene";
+import { EntityRegistry } from "@livelink.base/scene/EntityRegistry";
+import { createMockScene, makeEntity, MockScene } from "../helpers/mock-scene";
 
-let scene: Scene;
+let scene: MockScene;
 let registry: EntityRegistry;
 
 beforeEach(() => {
@@ -145,13 +144,13 @@ describe("ls_to_ws matrix", () => {
         const m = entity.ls_to_ws;
 
         // gl-matrix identity: diagonal is 1, rest is 0
-        expect(m[0]).toBeCloseTo(1);   // col 0 row 0
-        expect(m[5]).toBeCloseTo(1);   // col 1 row 1
-        expect(m[10]).toBeCloseTo(1);  // col 2 row 2
-        expect(m[15]).toBeCloseTo(1);  // col 3 row 3
-        expect(m[12]).toBeCloseTo(0);  // tx
-        expect(m[13]).toBeCloseTo(0);  // ty
-        expect(m[14]).toBeCloseTo(0);  // tz
+        expect(m[0]).toBeCloseTo(1); // col 0 row 0
+        expect(m[5]).toBeCloseTo(1); // col 1 row 1
+        expect(m[10]).toBeCloseTo(1); // col 2 row 2
+        expect(m[15]).toBeCloseTo(1); // col 3 row 3
+        expect(m[12]).toBeCloseTo(0); // tx
+        expect(m[13]).toBeCloseTo(0); // ty
+        expect(m[14]).toBeCloseTo(0); // tz
     });
 
     it("translation appears at indices [12], [13], [14] (column-major)", () => {
@@ -291,5 +290,61 @@ describe("dirty tracking via transforms", () => {
         registry._flushDirtyEntities();
 
         expect(registry._flushDirtyEntities()).toHaveLength(0);
+    });
+});
+
+// ---------------------------------------------------------------------------
+
+describe("mutate-then-flag on the raw stored local_transform", () => {
+    // `getComponent` returns the raw stored value, bypassing the transform proxies: flagging must
+    // re-sync the two rotation representations and the derived global transform.
+
+    it("re-syncs eulerOrientation and the global transform when orientation was mutated", () => {
+        const entity = makeEntity(scene);
+
+        const raw = entity.getComponent("local_transform")!;
+        // 90° around Z, mutated element-wise (the transform proxies capture the array references).
+        raw.orientation[2] = Math.SQRT1_2;
+        raw.orientation[3] = Math.SQRT1_2;
+        entity.updateComponent("local_transform");
+
+        expect(raw.eulerOrientation[2]).toBeCloseTo(90, 4);
+        // The proxy view reads the same live array.
+        expect(entity.local_transform.eulerOrientation[2]).toBeCloseTo(90, 4);
+
+        // The global transform was flagged dirty and reflects the new rotation.
+        const ori = entity.global_transform.orientation;
+        expect(ori[2]).toBeCloseTo(Math.SQRT1_2);
+        expect(ori[3]).toBeCloseTo(Math.SQRT1_2);
+    });
+
+    it("re-syncs orientation when eulerOrientation was mutated", () => {
+        const entity = makeEntity(scene);
+
+        const raw = entity.getComponent("local_transform")!;
+        raw.eulerOrientation[2] = 90;
+        entity.updateComponent("local_transform");
+
+        expect(raw.orientation[2]).toBeCloseTo(Math.SQRT1_2, 4);
+        expect(raw.orientation[3]).toBeCloseTo(Math.SQRT1_2, 4);
+    });
+
+    it("attributes a raw euler mutation correctly after a server-driven update", () => {
+        const entity = makeEntity(scene);
+
+        // Server-driven update rotates via the quaternion (routed through _setLocalTransform).
+        entity._applyComponentsUpdate({
+            components: { local_transform: { orientation: [0, 0, Math.SQRT1_2, Math.SQRT1_2] } },
+            dispatch_event: false,
+        });
+
+        // The caller then mutates the euler representation: it must win over the server quat.
+        const raw = entity.getComponent("local_transform")!;
+        raw.eulerOrientation[2] = 45;
+        entity.updateComponent("local_transform");
+
+        expect(raw.eulerOrientation[2]).toBeCloseTo(45, 4);
+        expect(raw.orientation[2]).toBeCloseTo(Math.sin(Math.PI / 8), 4);
+        expect(raw.orientation[3]).toBeCloseTo(Math.cos(Math.PI / 8), 4);
     });
 });

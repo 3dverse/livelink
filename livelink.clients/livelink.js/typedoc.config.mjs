@@ -22,16 +22,20 @@ const config = {
     ],
     excludeInternal: true,
     sort: ["kind", "source-order"],
+    // Inherited members are documented by default so subclasses of the shared livelink.base
+    // classes (Session, Scene, Entity, ...) expose the full inherited API. Classes extending
+    // DOM/lib types (Event, Error, CameraControls) opt out individually with @noInheritDoc.
     plugin: ["typedoc-plugin-mermaid", "typedoc-plugin-no-inherit"],
-    inheritNone: true,
     categorizeByGroup: false,
     navigation: {
         includeCategories: true,
         includeGroups: true,
     },
 
-    modifierTags: [...OptionDefaults.modifierTags, "@noInheritDoc"],
-    excludeTags: [...OptionDefaults.excludeTags, "@noInheritDoc"],
+    // typedoc-plugin-no-inherit looks the tag up with comment.getTag(), which only searches
+    // block tags, so @noInheritDoc must be registered as a block tag (not a modifier) and must
+    // not be in excludeTags. The plugin strips the tag from the output itself.
+    blockTags: [...OptionDefaults.blockTags, "@noInheritDoc"],
 
     sourceLinkTemplate: "https://github.com/3dverse/livelink/tree/release/{path}#L{line}",
 };

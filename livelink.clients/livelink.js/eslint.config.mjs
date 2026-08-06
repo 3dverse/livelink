@@ -10,7 +10,7 @@ const __dirname = dirname(__filename);
 /** @type {import('eslint').Linter.Config[]} */
 export default [
     {
-        ignores: ["dist"],
+        ignores: ["dist", "eslint.config.mjs", "esbuild.js", "vitest.config.ts"],
     },
     {
         languageOptions: {

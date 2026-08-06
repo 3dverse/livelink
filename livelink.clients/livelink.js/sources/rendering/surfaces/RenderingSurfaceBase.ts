@@ -1,11 +1,11 @@
 //------------------------------------------------------------------------------
 import type { Commands, Vec2 } from "@3dverse/livelink.core";
+import { TypedEventTarget } from "@livelink.base/TypedEventTarget";
 
 //------------------------------------------------------------------------------
 import { Rect, RelativeRect } from "./Rect";
 import { Viewport } from "../camera/Viewport";
 import { RenderingSurfaceEvents, RenderingSurfaceResizedEvent } from "./RenderingSurfaceEvents";
-import { TypedEventTarget } from "../../TypedEventTarget";
 import { DecodedFrame } from "../streaming/EncodedFrameConsumer";
 
 /**

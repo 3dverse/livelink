@@ -13,10 +13,6 @@ const componentTypeDeclarationFile = path.join(
     nodeModulePath,
     "@3dverse/livelink.core/dist/_prebuild/engine_types/components.d.ts",
 );
-const settingsTypeDeclarationFile = path.join(
-    nodeModulePath,
-    "@3dverse/livelink.core/dist/_prebuild/engine_types/sceneSettings.d.ts",
-);
 
 //------------------------------------------------------------------------------
 const pascalCaseToSnakeCase = str =>
@@ -27,19 +23,22 @@ const pascalCaseToSnakeCase = str =>
         .toLowerCase();
 
 //------------------------------------------------------------------------------
+// Browser flavour: proxied getters (nested mutations flag the entity dirty through the shared base).
+// The setter must be re-declared alongside the getter: an accessor override replaces the whole
+// get/set pair, so a getter-only override would drop the base setter (read-only type, runtime TypeError).
 function generateComponentAccessors(componentName, componentType, componentDescription) {
     return `    ${componentDescription}
-    get ${componentName}() : Components.${componentType} | undefined {
-        return this.#core.${componentName};
+    override get ${componentName}() : Components.${componentType} | undefined {
+        return this.#component_proxies.wrap({entity: this, component_name: "${componentName}", value: super.${componentName}, ComponentHandler});
     }
 
-    set ${componentName}(value: Partial<Components.${componentType}> | DefaultValue | undefined) {
-        this.#core.${componentName} = this._setComponentValue({ ref: this.#core.${componentName}, component_name: "${componentName}", value });
+    override set ${componentName}(value: Partial<Components.${componentType}> | DefaultValue | undefined) {
+        this._setComponentValue({component_name: "${componentName}", value});
     }`;
 }
 
 //------------------------------------------------------------------------------
-function generateEntityBase() {
+function generateEntityComponentsProxy() {
     const program = ts.createProgram([componentTypeDeclarationFile], {});
     const checker = program.getTypeChecker();
     const sourceFile = program.getSourceFile(componentTypeDeclarationFile);
@@ -63,38 +62,10 @@ function generateEntityBase() {
     });
 
     //--------------------------------------------------------------------------
-    applyTemplate("EntityBase.template.ts", path.join("EntityBase.ts"), {
+    applyTemplate("EntityComponentsProxy.template.ts", path.join("EntityComponentsProxy.ts"), {
         componentAttributes: componentAttributes.join("\n\n"),
         componentNames:
             componentExports.map(symbol => `        "${pascalCaseToSnakeCase(symbol.name)}"`).join(",\n") + ",",
-    });
-}
-
-// ----------------------------------------------------------------------------
-function generateSettingsBase() {
-    const program = ts.createProgram([settingsTypeDeclarationFile], {});
-    const checker = program.getTypeChecker();
-    const sourceFile = program.getSourceFile(settingsTypeDeclarationFile);
-    if (!sourceFile) {
-        console.error("Could not find source file", settingsTypeDeclarationFile);
-        throw new Error("Could not find source file");
-    }
-
-    const exportSymbol = checker.getSymbolAtLocation(sourceFile?.getChildAt(0));
-    const exports = checker.getExportsAndPropertiesOfModule(exportSymbol || sourceFile.symbol);
-
-    // For now filter only types with comments. This might not work for in the future.
-    const settingsType = exports
-        .filter(symbol =>
-            symbol.declarations.some(declaration => declaration.jsDoc?.some(jsDoc => jsDoc.comment?.length > 0)),
-        )
-        .map(symbol => symbol.name);
-
-    //--------------------------------------------------------------------------
-    applyTemplate("SettingsBase.template.ts", path.join("SettingsBase.ts"), {
-        settingsAttributes: settingsType
-            .map(type => `    ${pascalCaseToSnakeCase(type)}?: SceneSettings.${type};`)
-            .join("\n"),
     });
 }
 
@@ -115,5 +86,4 @@ function applyTemplate(templateFileName, outputSchemaName, dictionnary) {
 }
 
 //------------------------------------------------------------------------------
-generateEntityBase();
-//generateSettingsBase();
+generateEntityComponentsProxy();

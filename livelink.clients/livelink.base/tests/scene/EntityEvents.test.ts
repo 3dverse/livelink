@@ -12,7 +12,7 @@ describe("EntityUpdatedEvent", () => {
         updated_components = [],
         deleted_components = [],
         emitter = null,
-    }: Partial<ConstructorParameters<typeof EntityUpdatedEvent>[0]> = {}) {
+    }: Partial<ConstructorParameters<typeof EntityUpdatedEvent>[0]> = {}): EntityUpdatedEvent {
         return new EntityUpdatedEvent({ new_components, updated_components, deleted_components, emitter });
     }
 

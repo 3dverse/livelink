@@ -1,6 +1,6 @@
 import { RTID, ScriptDataObject } from "@3dverse/livelink.core";
-import { Entity } from "./Entity";
-import { Scene } from "./Scene";
+import type { Entity } from "./Entity";
+import type { SceneScriptEventInterface } from "./Scene";
 
 /**
  * The event that is fired when an entity receives a script event.
@@ -59,7 +59,7 @@ export class ScriptEventEmitted extends Event {
     /**
      *
      */
-    #scene: Scene;
+    #scene: SceneScriptEventInterface;
 
     /**
      *
@@ -94,7 +94,7 @@ export class ScriptEventEmitted extends Event {
         target_rtids,
         data_object,
     }: {
-        scene: Scene;
+        scene: SceneScriptEventInterface;
         event_name: string;
         emitter_entity: Entity;
         target_rtids: Array<RTID>;

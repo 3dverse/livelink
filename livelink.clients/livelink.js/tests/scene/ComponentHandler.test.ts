@@ -3,7 +3,10 @@ import { ComponentHandler } from "../../sources/scene/ComponentHandler";
 import type { Entity } from "../../sources/scene/Entity";
 import type { ComponentName } from "@3dverse/livelink.core";
 
-function makeProxy<T extends object>(target: T, component_name: ComponentName = "debug_name") {
+function makeProxy<T extends object>(
+    target: T,
+    component_name: ComponentName = "debug_name",
+): { proxy: T; entity: Entity } {
     const entity = { _markComponentAsDirty: vi.fn() } as unknown as Entity;
     const handler = new ComponentHandler(entity, component_name);
     return { proxy: new Proxy(target, handler) as T, entity };

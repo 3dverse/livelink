@@ -8,8 +8,8 @@ import type { Components, Mat4, Quat, Vec2, Vec3 } from "@3dverse/livelink.core"
 import { Entity } from "../../scene/Entity";
 import { Viewport } from "./Viewport";
 import { FrameCameraTransform } from "../streaming/FrameCameraTransform";
-import { EntityUpdatedEvent } from "../../scene/EntityEvents";
-import { quaternionToEuler } from "../../maths";
+import { EntityUpdatedEvent } from "@livelink.base/scene/EntityEvents";
+import { quaternionToEuler } from "@livelink.base/maths";
 
 /**
  * A ray in 3D space.

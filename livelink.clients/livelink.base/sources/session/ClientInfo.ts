@@ -1,5 +1,5 @@
 //------------------------------------------------------------------------------
-import { RTID, UUID, Vec3 } from "@3dverse/livelink.core";
+import { UUID } from "@3dverse/livelink.core";
 
 /**
  * Information about a client in a session.
@@ -25,6 +25,7 @@ export type ClientInfo = {
 
     /**
      * Indicates if the client is headless (no streaming).
+     * n.b: this is not synced across clients, so a headless client may not know if another client is headless or not.
      */
     is_headless: boolean;
 
@@ -39,25 +40,4 @@ export type ClientInfo = {
      * The username associated to the user on the 3dverse platform.
      */
     username: string;
-};
-
-/**
- * @internal
- */
-export type CursorData = {
-    /**
-     * The entity currently hovered by the client's mouse pointer.
-     * If no entity is under the mouse pointer, this is set to null.
-     */
-    hovered_entity_rtid: RTID;
-
-    /**
-     * The position in world space of the pixel under the client's mouse pointer.
-     */
-    hovered_ws_position: Vec3;
-
-    /**
-     * The normal in world space of the pixel under the client's mouse pointer.
-     */
-    hovered_ws_normal: Vec3;
 };

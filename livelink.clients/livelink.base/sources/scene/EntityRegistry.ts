@@ -2,7 +2,7 @@
 import type { RTID, UUID, ComponentName, UpdateEntityCommand } from "@3dverse/livelink.core";
 
 //------------------------------------------------------------------------------
-import { Entity } from "./Entity";
+import type { Entity } from "./Entity";
 
 /**
  * @internal
@@ -13,33 +13,35 @@ import { Entity } from "./Entity";
  *  - dirty entities that have components that have been updated and need to be broadcasted to the editor.
  *  - entities that have components that have been detached and need to be removed from the editor.
  *  - entities that have updates that need to be broadcasted to the editor.
+ *
+ * Generic over the concrete entity type `EntityType` so each SDK gets its own entity flavour back.
  */
-export class EntityRegistry {
+export class EntityRegistry<EntityType extends Entity = Entity> {
     /**
      * A set of all resolved entities that are ready to be used in the client application.
      */
-    #entities = new Set<Entity>();
+    #entities = new Set<EntityType>();
 
     /**
      * Map from rtid to entity.
      */
-    #entity_rtid_lut = new Map<RTID, Entity>();
+    #entity_rtid_lut = new Map<RTID, EntityType>();
 
     /**
      * Map from EUID to a list of entities sharing the same EUID.
      */
-    #entity_euid_lut = new Map<UUID, Array<Entity>>();
+    #entity_euid_lut = new Map<UUID, Array<EntityType>>();
 
     /**
      * List of dirty entities sorted by component type.
      */
-    #dirty_entities = new Set<Entity>();
+    #dirty_entities = new Set<EntityType>();
 
     /**
      * List of dirty entities that need to be broadcasted to the editor sorted by component type.
      */
     #entities_to_persist = new Map<
-        Entity,
+        EntityType,
         {
             unsaved_components: Set<ComponentName>;
             deleted_components: Set<ComponentName>;
@@ -53,7 +55,7 @@ export class EntityRegistry {
      * @param entity The entity to add.
      * @throws Error if the entity is invalid or if an entity with the same RTID is already registered.
      */
-    add({ entity }: { entity: Entity }): void {
+    add({ entity }: { entity: EntityType }): void {
         const existingEntity = this.#entity_rtid_lut.get(entity.rtid);
         if (existingEntity) {
             throw new Error(
@@ -78,7 +80,7 @@ export class EntityRegistry {
      * @param entity The entity to remove.
      * @throws Error if the entity is not registered in the registry.
      */
-    remove({ entity }: { entity: Entity }): void {
+    remove({ entity }: { entity: EntityType }): void {
         const entities = this.#entity_euid_lut.get(entity.id);
         if (!entities) {
             throw new Error(`Trying to remove entity ${entity.id} which has not been registered to the EUID LUT.`);
@@ -106,7 +108,7 @@ export class EntityRegistry {
      * @param entity_rtid The RTID of the entity to get.
      * @returns The entity with the given RTID or null if not found.
      */
-    get({ entity_rtid }: { entity_rtid: RTID }): Entity | null {
+    get({ entity_rtid }: { entity_rtid: RTID }): EntityType | null {
         return this.#entity_rtid_lut.get(entity_rtid) ?? null;
     }
 
@@ -115,7 +117,7 @@ export class EntityRegistry {
      *
      * @returns An iterable of all registered entities.
      */
-    all(): Iterable<Entity> {
+    all(): Iterable<EntityType> {
         return this.#entity_rtid_lut.values();
     }
 
@@ -125,14 +127,14 @@ export class EntityRegistry {
      * @param entity_euid The EUID of the entities to get.
      * @returns All entities matching the given EUID or empty array if not found.
      */
-    find({ entity_euid }: { entity_euid: UUID }): Array<Entity> {
+    find({ entity_euid }: { entity_euid: UUID }): Array<EntityType> {
         return this.#entity_euid_lut.get(entity_euid) ?? [];
     }
 
     /**
      * @internal
      */
-    _removeAll({ entity_euid }: { entity_euid: UUID }): Array<Entity> {
+    _removeAll({ entity_euid }: { entity_euid: UUID }): Array<EntityType> {
         const entities = this.#entity_euid_lut.get(entity_euid);
         if (!entities) {
             return [];
@@ -149,14 +151,14 @@ export class EntityRegistry {
     /**
      * @internal
      */
-    _addDirtyEntity({ entity }: { entity: Entity }): void {
+    _addDirtyEntity({ entity }: { entity: EntityType }): void {
         this.#dirty_entities.add(entity);
     }
 
     /**
      * @internal
      */
-    _removeEntityFromBroadcastList({ entity }: { entity: Entity }): void {
+    _removeEntityFromBroadcastList({ entity }: { entity: EntityType }): void {
         this.#entities_to_persist.delete(entity);
     }
 
@@ -209,7 +211,7 @@ export class EntityRegistry {
     /**
      *
      */
-    #removeEntity({ entity }: { entity: Entity }): void {
+    #removeEntity({ entity }: { entity: EntityType }): void {
         if (!this.#entity_rtid_lut.delete(entity.rtid)) {
             throw new Error(`Trying to remove entity ${entity.rtid} which has not been registred to the RTID LUT.`);
         }
@@ -225,7 +227,7 @@ export class EntityRegistry {
     /**
      * @internal
      */
-    #updateBroadcastList({ entity }: { entity: Entity }): void {
+    #updateBroadcastList({ entity }: { entity: EntityType }): void {
         const broadcast_data = this.#entities_to_persist.get(entity);
         if (!broadcast_data) {
             this.#entities_to_persist.set(entity, {

@@ -1,10 +1,9 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import type { UUID } from "@3dverse/livelink.core";
-import { EntityRegistry } from "../../sources/scene/EntityRegistry";
-import type { Scene } from "../../sources/scene/Scene";
-import { createMockScene, makeEntity, makeLinkedEntities } from "../helpers/mock-scene";
+import { EntityRegistry } from "@livelink.base/scene/EntityRegistry";
+import { createMockScene, makeEntity, makeLinkedEntities, MockScene } from "../helpers/mock-scene";
 
-let scene: Scene;
+let scene: MockScene;
 let registry: EntityRegistry;
 
 beforeEach(() => {
