@@ -7,7 +7,7 @@ import { Client } from "./Client";
  *
  * @event
  * @noInheritDoc
- * @category Session
+ * @category Session / Events
  */
 export class DisconnectedEvent extends Event {
     /**
@@ -31,7 +31,7 @@ export class DisconnectedEvent extends Event {
  *
  * @event
  * @noInheritDoc
- * @category Session
+ * @category Session / Events
  */
 export class InactivityWarningEvent extends Event {
     /**
@@ -60,7 +60,7 @@ export class InactivityWarningEvent extends Event {
  *
  * @event
  * @noInheritDoc
- * @category Session
+ * @category Session / Events
  */
 export class ActivityDetectedEvent extends Event {
     /**
@@ -78,7 +78,7 @@ export class ActivityDetectedEvent extends Event {
  *
  * @event
  * @noInheritDoc
- * @category Session
+ * @category Session / Events
  */
 export class ClientJoinedEvent<ClientType extends Client = Client> extends Event {
     /**
@@ -102,7 +102,7 @@ export class ClientJoinedEvent<ClientType extends Client = Client> extends Event
  *
  * @event
  * @noInheritDoc
- * @category Session
+ * @category Session / Events
  */
 export class ClientLeftEvent<ClientType extends Client = Client> extends Event {
     /**
@@ -123,7 +123,7 @@ export class ClientLeftEvent<ClientType extends Client = Client> extends Event {
  * The events dispatched by {@link Session}.
  *
  * @event
- * @category Session
+ * @category Session / Events
  */
 export type SessionEvents<ClientType extends Client = Client> = {
     "on-inactivity-warning": InactivityWarningEvent;

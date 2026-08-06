@@ -10,7 +10,7 @@ import type { RTID, SceneSettingsManifest } from "@3dverse/livelink.core";
  *
  * @event
  * @noInheritDoc
- * @category Scene
+ * @category Scene / Events
  */
 export class EntitiesCreatedEvent<EntityType extends Entity = Entity> extends EditionEvent {
     /**
@@ -34,7 +34,7 @@ export class EntitiesCreatedEvent<EntityType extends Entity = Entity> extends Ed
  *
  * @event
  * @noInheritDoc
- * @category Scene
+ * @category Scene / Events
  */
 export class EntitiesDeletedEvent extends EditionEvent {
     /**
@@ -65,7 +65,7 @@ export class EntitiesDeletedEvent extends EditionEvent {
  *
  * @event
  * @noInheritDoc
- * @category Scene
+ * @category Scene / Events
  */
 export class SceneSettingsUpdatedEvent extends EditionEvent {
     /**
@@ -87,7 +87,7 @@ export class SceneSettingsUpdatedEvent extends EditionEvent {
  * The events dispatched by {@link Scene}.
  *
  * @event
- * @category Scene
+ * @category Scene / Events
  */
 export type SceneEvents<EntityType extends Entity = Entity> = {
     "on-entities-created": EntitiesCreatedEvent<EntityType>;

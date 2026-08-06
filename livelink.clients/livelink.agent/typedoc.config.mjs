@@ -10,15 +10,18 @@ const config = {
     excludeExternals: true,
     externalPattern: ["**/threejs-math/**"],
     //defaultCategory: "Other",
+    // Events live in a `<Area> / Events` sibling category, interleaved here so each sits right
+    // after the area it belongs to. See ARCHITECTURE.md for why it is a sibling rather than a
+    // nested group.
     categoryOrder: [
         "Main",
+        "Main / Events",
         "Session",
+        "Session / Events",
         "Scene",
-        "Streaming",
-        "Camera",
-        "Rendering Surfaces",
-        "Rendering Contexts",
-        "Inputs",
+        "Scene / Events",
+        "Data",
+        "Data / Events",
     ],
     excludeInternal: true,
     sort: ["kind", "source-order"],

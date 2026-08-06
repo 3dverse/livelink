@@ -10,7 +10,7 @@ import { Entity } from "../../scene/Entity";
  *
  * @event
  * @noInheritDoc
- * @category Camera
+ * @category Camera / Events
  */
 export class EntityHoveredEvent extends Event {
     /**
@@ -54,7 +54,7 @@ export class EntityHoveredEvent extends Event {
  *
  * @event
  * @noInheritDoc
- * @category Camera
+ * @category Camera / Events
  */
 export class EntityPickedEvent extends Event {
     /**
@@ -95,7 +95,7 @@ export class EntityPickedEvent extends Event {
  * The events dispatched by {@link Viewport}.
  *
  * @event
- * @category Camera
+ * @category Camera / Events
  */
 export type ViewportEvents = {
     "on-entity-picked": EntityPickedEvent;

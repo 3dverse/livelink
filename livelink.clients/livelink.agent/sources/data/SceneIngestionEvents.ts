@@ -14,7 +14,7 @@ import type {
  *
  * @event
  * @noInheritDoc
- * @category Data
+ * @category Data / Events
  */
 export class IngestionRunningEvent extends Event {
     /**
@@ -33,7 +33,7 @@ export class IngestionRunningEvent extends Event {
  *
  * @event
  * @noInheritDoc
- * @category Data
+ * @category Data / Events
  */
 export class SessionBoundEvent extends Event {
     /**
@@ -57,7 +57,7 @@ export class SessionBoundEvent extends Event {
  *
  * @event
  * @noInheritDoc
- * @category Data
+ * @category Data / Events
  */
 export class SessionUnboundEvent extends Event {
     /**
@@ -82,7 +82,7 @@ export class SessionUnboundEvent extends Event {
  *
  * @event
  * @noInheritDoc
- * @category Data
+ * @category Data / Events
  */
 export class IngestionErrorEvent extends Event {
     /**
@@ -111,7 +111,7 @@ export class IngestionErrorEvent extends Event {
  * `livelink.agent/tests/EventMaps.test.ts` fails to compile if this drifts from {@link AgentEvents}.
  *
  * @event
- * @category Data
+ * @category Data / Events
  */
 export type SceneIngestionEvents = {
     "on-session-created": SessionCreatedEvent;

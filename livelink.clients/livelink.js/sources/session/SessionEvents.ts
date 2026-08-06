@@ -28,7 +28,7 @@ export const ClientJoinedEvent = ClientJoinedEventBase;
  *
  * @event
  * @noInheritDoc
- * @category Session
+ * @category Session / Events
  */
 export interface ClientJoinedEvent<ClientType extends Client = Client> extends ClientJoinedEventBase<ClientType> {
     /**
@@ -57,7 +57,7 @@ export const ClientLeftEvent = ClientLeftEventBase;
  *
  * @event
  * @noInheritDoc
- * @category Session
+ * @category Session / Events
  */
 export interface ClientLeftEvent<ClientType extends Client = Client> extends ClientLeftEventBase<ClientType> {
     /**
@@ -73,7 +73,7 @@ export interface ClientLeftEvent<ClientType extends Client = Client> extends Cli
  *
  * @event
  * @noInheritDoc
- * @category Session
+ * @category Session / Events
  */
 export class TO_REMOVE__ViewportsAddedEvent extends Event {
     /**
@@ -99,7 +99,7 @@ export class TO_REMOVE__ViewportsAddedEvent extends Event {
  * `livelink.js/tests/EventMaps.test.ts` fails to compile if this drifts from the shared map.
  *
  * @event
- * @category Session
+ * @category Session / Events
  */
 export type SessionEvents<ClientType extends Client = Client> = {
     "on-inactivity-warning": InactivityWarningEvent;

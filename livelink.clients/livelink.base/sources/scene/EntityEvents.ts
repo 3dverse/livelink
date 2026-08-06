@@ -10,7 +10,7 @@ import { Client } from "../session/Client";
  *
  * @event
  * @noInheritDoc
- * @category Scene
+ * @category Scene / Events
  */
 export class EntityUpdatedEvent extends EditionEvent {
     /**
@@ -91,7 +91,7 @@ export class EntityUpdatedEvent extends EditionEvent {
  *
  * @event
  * @noInheritDoc
- * @category Scene
+ * @category Scene / Events
  */
 export class EntityVisibilityChangedEvent extends Event {
     /**
@@ -120,7 +120,7 @@ export class EntityVisibilityChangedEvent extends Event {
  * The events dispatched by {@link Entity}.
  *
  * @event
- * @category Scene
+ * @category Scene / Events
  */
 export type EntityEvents = {
     "on-entity-updated": EntityUpdatedEvent;

@@ -26,7 +26,7 @@ export const EntitiesCreatedEvent = EntitiesCreatedEventBase;
  *
  * @event
  * @noInheritDoc
- * @category Scene
+ * @category Scene / Events
  */
 export interface EntitiesCreatedEvent<EntityType extends Entity = Entity> extends EntitiesCreatedEventBase<EntityType> {
     /**
@@ -45,7 +45,7 @@ export interface EntitiesCreatedEvent<EntityType extends Entity = Entity> extend
  * `livelink.js/tests/EventMaps.test.ts` fails to compile if the two ever diverge.
  *
  * @event
- * @category Scene
+ * @category Scene / Events
  */
 export type SceneEvents<EntityType extends Entity = Entity> = {
     "on-entities-created": EntitiesCreatedEvent<EntityType>;

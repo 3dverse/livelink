@@ -11,7 +11,7 @@ import type { SceneScriptEventInterface } from "./Scene";
  *
  * @event
  * @noInheritDoc
- * @category Scene
+ * @category Scene / Events
  */
 export class ScriptEventReceived extends Event {
     /**
@@ -51,7 +51,7 @@ export class ScriptEventReceived extends Event {
  *
  * @event
  * @noInheritDoc
- * @category Scene
+ * @category Scene / Events
  */
 export class ScriptEventEmitted extends Event {
     /**
@@ -119,7 +119,7 @@ export class ScriptEventEmitted extends Event {
 /**
  * @internal
  * @event
- * @category Scene
+ * @category Scene / Events
  */
 export type ScriptEvents<T> = {
     [event_id: string]: T;

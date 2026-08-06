@@ -53,7 +53,6 @@ Key modules (`livelink.base/sources/`):
 | `session/Client.ts`             | A connected client, reduced to its identity (`id`, `user_id`, `username`, `client_type`, `is_external`). What a client _shows_ comes from the client metadata piggybacked on the video frames, so it lives on the browser SDK's subclass — see below.                                                                                                                                                                                       |
 | `scene/Scene.ts`                | `SceneBase<EntityType>`: entity creation/lookup/deletion, script events, incoming core events (`_onEntitiesCreated`, `_updateEntityFromEvent`, …). Abstract `_instantiateEntity` lets each SDK produce its own entity flavour. Also exports the concrete headless `Scene`.                                                                                                                                                                 |
 | `scene/Entity.ts`               | The headless entity with the **explicit component model** (see below), dirty/deleted component sets, script event targets, parenting.                                                                                                                                                                                                                                                                                                      |
-| `scene/ComponentProxyCache.ts`  | Standalone stable-Proxy cache for client flavours exposing a proxied component model; instantiated only by the browser SDK's generated `EntityComponentsProxy`.                                                                                                                                                                                                                                                                            |
 | `scene/EntityRegistry.ts`       | RTID/EUID lookup tables, dirty & broadcast lists — generic in `EntityType`.                                                                                                                                                                                                                                                                                                                                                                |
 | `TypedEventTarget.ts`           | Typed wrapper over DOM `EventTarget`, the event backbone of every layer.                                                                                                                                                                                                                                                                                                                                                                   |
 | `config/api.ts`                 | Mutable API base URL (`getApiUrl` / `setApiUrl`), surfaced by the facades as `Livelink._api_url`.                                                                                                                                                                                                                                                                                                                                          |
@@ -75,6 +74,11 @@ core model classes:
 - `scene/Entity.ts` — browser entity: **proxied component accessors** plus the
   transform layer (`local_transform` / `global_transform` proxy handlers, lazy
   `ls_to_ws` / `ws_to_ls` matrices, parent-chain dirty propagation).
+- `scene/ComponentHandler.ts` / `scene/ComponentProxyCache.ts` — the two halves
+  of the proxied model: the `ProxyHandler` that flags the entity dirty on nested
+  mutation, and the stable-Proxy cache the generated `EntityComponentsProxy`
+  hands its accessors through. Both are browser-only and type their entity as
+  the _base_ `Entity`, so neither pulls browser code into the shared core.
 - `scene/Scene.ts` — implements `_instantiateEntity` to produce browser entities.
 - `session/Session.ts` / `session/Client.ts` — fix the base generics to the
   browser `Client` so events and lookups yield the browser flavours, and own the
@@ -138,11 +142,11 @@ differently:
   (`entity.point_light.color[0] = 1`) automatically flag the entity dirty,
   and setters delegate to `updateComponent` / `deleteComponent`.
   React-friendly: proxies are cached per component so reference identity
-  survives re-renders. The caching logic lives in the shared core as the
-  standalone `ComponentProxyCache` utility (reusable by any future client
-  flavour), but only the browser's generated layer instantiates it — headless
-  entities hand out the raw stored values and carry no proxy state, and the
-  codegen template stays thin glue.
+  survives re-renders. The caching logic lives in the browser SDK as the
+  standalone `ComponentProxyCache` utility, next to the `ComponentHandler` it
+  builds proxies with, so the codegen template stays thin glue. Headless
+  entities have no counterpart: they hand out the raw stored values and carry
+  no proxy state.
 
 Three invariants keep the browser transform proxies coherent:
 
@@ -270,7 +274,7 @@ the browser flavour. Each is a pair sharing one name:
 ```ts
 /** @internal */
 export const ClientJoinedEvent = ClientJoinedEventBase; // the value: same class, so `instanceof` holds
-/** @event @noInheritDoc @category Session */
+/** @event @noInheritDoc @category Session / Events */
 export interface ClientJoinedEvent<ClientType extends Client = Client> extends ClientJoinedEventBase<ClientType> {
     readonly client: ClientType; // redeclared so the payload is documented on the public type
 }
@@ -319,6 +323,32 @@ publishes — the browser one in the `livelink.js` docs, the headless one in the
 `livelink.agent` docs. Where the module _does_ import the class (`ScriptEvents.ts`
 imports `Entity`), a link would bind to the shared symbol, which has no page in
 the browser docs; use unlinked prose there.
+
+### Events live in a `<Area> / Events` category
+
+Every `@event`-carrying declaration — the event classes/interfaces *and* the
+`*Events` maps that describe them — is tagged `@category <Area> / Events` rather
+than `@category <Area>`, so each area's events collect into their own sidebar
+node instead of trailing at the bottom of the area's list. The
+`categoryOrder` in both `typedoc.config.mjs` files interleaves the titles so
+`Session / Events` sits right after `Session`, and so on.
+
+It is a **sibling category, not a nested group**, because TypeDoc renders a
+category node's children flat (`DefaultTheme.buildNavigation`) — there is no
+group-inside-category nesting, so `@group Events` cannot add a sub-node under
+`Session`. The only nesting TypeDoc offers is the other way round
+(`categorizeByGroup: true` renders a group's *categories* as children), which
+would mean moving every area from the category axis to the group axis. That is
+ruled out by `@3dverse/livelink.core`: it ships its own `@category` tags
+(`Core`, `Engine Types`, `Engine Schemas`, …) and no `@group`, and it is a
+separate package, so its symbols would stay on the category axis while ours
+moved — the sidebar would mix our areas with TypeDoc's default
+`Classes` / `Interfaces` / `Type Aliases` buckets. A category title is just a
+trimmed string, so `Session / Events` is a normal top-level node whose name
+carries the relationship; the `/` is not a path and does not split into folders.
+
+Left alone: `EditionEvent` stays in `@category Utils` — it is the shared base
+class of the edition events, not an event itself.
 
 ## Build & packaging
 

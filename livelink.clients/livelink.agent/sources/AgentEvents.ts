@@ -9,7 +9,7 @@ import type { SessionLeaveReason } from "./Agent";
  *
  * @event
  * @noInheritDoc
- * @category Main
+ * @category Main / Events
  */
 export class SessionCreatedEvent extends Event {
     /**
@@ -33,7 +33,7 @@ export class SessionCreatedEvent extends Event {
  *
  * @event
  * @noInheritDoc
- * @category Main
+ * @category Main / Events
  */
 export class SessionJoinedEvent extends Event {
     /**
@@ -57,7 +57,7 @@ export class SessionJoinedEvent extends Event {
  *
  * @event
  * @noInheritDoc
- * @category Main
+ * @category Main / Events
  */
 export class SessionReadyEvent extends Event {
     /**
@@ -81,7 +81,7 @@ export class SessionReadyEvent extends Event {
  *
  * @event
  * @noInheritDoc
- * @category Main
+ * @category Main / Events
  */
 export class SessionLeftEvent extends Event {
     /**
@@ -111,7 +111,7 @@ export class SessionLeftEvent extends Event {
  *
  * @event
  * @noInheritDoc
- * @category Main
+ * @category Main / Events
  */
 export class AgentErrorEvent extends Event {
     /**
@@ -139,7 +139,7 @@ export class AgentErrorEvent extends Event {
  * Events emitted by the {@link Agent}.
  *
  * @event
- * @category Main
+ * @category Main / Events
  */
 export type AgentEvents = {
     "on-session-created": SessionCreatedEvent;

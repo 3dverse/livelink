@@ -6,7 +6,7 @@
  *
  * @event
  * @noInheritDoc
- * @category Rendering Surfaces
+ * @category Rendering Surfaces / Events
  */
 export class RenderingSurfaceResizedEvent extends Event {
     /**
@@ -21,7 +21,7 @@ export class RenderingSurfaceResizedEvent extends Event {
  * The events dispatched by {@link RenderingSurfaceBase}.
  *
  * @event
- * @category Rendering Surfaces
+ * @category Rendering Surfaces / Events
  */
 export type RenderingSurfaceEvents = {
     "on-rendering-surface-resized": RenderingSurfaceResizedEvent;

@@ -582,3 +582,35 @@ All three packages typecheck (`tsconfig.test.json`) and lint clean.
 and `build:samples` all pass. `npm run dev-docs` (js + agent, HTML and markdown):
 still **0 errors / 2 warnings**, the same two pre-existing ones — no `{@link}`
 added here failed to resolve.
+
+## `ComponentProxyCache` relocated to `livelink.js` (2026-08-06)
+
+The 2026-07-17 extraction (finding above) parked `ComponentProxyCache` in
+`livelink.base/sources/scene/` so "a future client flavour could opt in". That
+flavour never appeared, and it structurally cannot: the cache is the browser's
+proxied component model, which the base and agent SDKs deliberately do not have
+— their entities hand out raw stored values and carry no proxy state.
+
+So the shared core was hosting a class it can never use. The class moved to
+`livelink.js/sources/scene/ComponentProxyCache.ts`, next to the `ComponentHandler`
+it builds proxies with — the same shape of neighbour: browser-only, `@internal`,
+and typing its `entity` as the _base_ `Entity`, so neither drags browser code
+into the core. Its unit tests moved alongside to `livelink.js/tests/scene/`
+(js's `tests/helpers/mock-scene.ts` already re-exports base's `createMockScene`).
+The rule this originally illustrated is unchanged: the logic stays a hand-written,
+directly-compiled, unit-tested class, and `EntityComponentsProxy.template.ts` stays
+thin glue — one field plus one-line generated accessors.
+
+Incidental fix: the template's `{@link ComponentProxyCache}` pointed at a symbol
+no package exports, which was one of the two standing `dev-docs:js` warnings. The
+comment now describes the caching in prose instead, so **`dev-docs:js` is down to
+0 errors / 1 warning** (the `Session._updateClients` link).
+
+### Verification
+
+All three packages typecheck (`tsconfig.test.json`); `livelink.js` lints clean.
+**107 base + 171 agent + 153 js tests pass** — the 5 `ComponentProxyCache` cases
+moved from base to js, every other count unchanged. `npm run build` (base, agent,
+js, react, three, react.ui, webxr) and `build:samples` all pass; the agent build
+is the proof the headless bundle never reached the class. No
+`@livelink.base/scene/ComponentProxyCache` specifier survives anywhere.
