@@ -5,4 +5,5 @@
 //------------------------------------------------------------------------------
 export { SourceTextPanel } from "./SourceTextPanel";
 export { EventTracePanel, useEventTrace, type TraceRow } from "./EventTracePanel";
-export { IngestionStatsBar } from "./IngestionStatsBar";
+export { IngestionStatsPanel } from "./IngestionStatsPanel";
+export { SpeedSelect } from "./SpeedSelect";

@@ -1,0 +1,82 @@
+# A plant floor for the "MQTT Ingestion" sample: two production lines of three
+# machine cells each, publishing motor telemetry at 40 Hz and a status every few
+# seconds.
+#
+# A Mosquitto broker and the simulator (https://github.com/marcelo-6/mqtt-sim)
+# publishing this file into it, both from `docker-compose-mosquitto.yml` — run
+# from this file's directory:
+#
+#   docker compose -f docker-compose-mosquitto.yml up
+#
+# The simulator runs in the broker's network namespace there, so `localhost`
+# below is the broker — the same value that works if you'd rather install it on
+# your host instead:
+#
+#   uv tool install mqtt-simulator
+#   mqtt-sim validate -c mqtt-sim.toml
+#   mqtt-sim run -c mqtt-sim.toml
+#
+# To use a broker you already have, point `[brokers.local]` at it here and set
+# MQTT_BROKER_URL to its address. The compose file exposes two ports on the same
+# broker: 1883 for plain TCP, which is what the simulator publishes to and what
+# the agent subscribes over, and 8000 for WebSocket — unused here, but the only
+# way a browser can speak MQTT, and this sample's mappings run in a page
+# unchanged.
+#
+# `livelink-demo` is the topic prefix; change it here and MQTT_SITE has to
+# change with it.
+
+config_version = 1
+
+[brokers.local]
+host = "localhost"
+port = 1883
+
+[clients.plant]
+broker = "local"
+id = "livelink-mqtt-sim"
+
+#-------------------------------------------------------------------------------
+# Motor telemetry. `expand` is cartesian, so these two variables produce six
+# independent streams — and six entities in the scene, because the mapping reads
+# the cell's identity straight out of the topic.
+#-------------------------------------------------------------------------------
+[[streams]]
+name = "motor"
+client = "plant"
+topic = "livelink-demo/plant/${line_id}/${cell_id}/motor"
+# The publishing interval is the ceiling on how smooth the scene can look: the
+# entities only move when a sample arrives, so at the more typical 100 ms this
+# is a visible 10 Hz staircase. 25 ms is 40 Hz, and the `step` values below are
+# a quarter of what they'd be at 100 ms so the signals still travel at the same
+# speed per second rather than four times faster. Change one, change the other.
+every = "25ms"
+mode = "fixed-rate"
+
+[streams.expand]
+line_id = { list = ["line-a", "line-b"] }
+cell_id = { range = [1, 3] }
+
+[streams.payload.json]
+rpm = { walk = { type = "int", min = 400, max = 1800, step = 15, start = 900 } }
+load = { random = { type = "float", min = 0.1, max = 1.0, precision = 2 } }
+temp_c = { walk = { type = "float", min = 20, max = 95, step = 0.375, start = 45 } }
+
+#-------------------------------------------------------------------------------
+# Machine status. Retained, so a subscriber that connects mid-run is told the
+# state of every cell immediately instead of waiting up to four seconds for it.
+#-------------------------------------------------------------------------------
+[[streams]]
+name = "status"
+client = "plant"
+topic = "livelink-demo/plant/${line_id}/${cell_id}/status"
+every = "4s"
+qos = 1
+retain = true
+
+[streams.expand]
+line_id = { list = ["line-a", "line-b"] }
+cell_id = { range = [1, 3] }
+
+[streams.payload.json]
+state = { pick = ["running", "idle", "fault"] }

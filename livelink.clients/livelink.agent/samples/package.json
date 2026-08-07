@@ -1,0 +1,23 @@
+{
+  "name": "@3dverse/livelink-agent-samples",
+  "version": "0.5.0",
+  "private": true,
+  "description": "Runnable ingestion agents for @3dverse/livelink-agent, against infrastructure you start yourself",
+  "//": "Deliberately NOT a root workspace. `node-opcua-client` pulls ~90 packages, and npm hoists a workspace's devDependencies to the root node_modules — where livelink.samples would then resolve it, follow the SDK's lazy import() into it, and drag the whole Node-only tree into a browser bundle. Kept here, it is installed on demand and reaches nothing else: `npm install` in this directory, once.",
+  "scripts": {
+    "mqtt": "tsx --env-file-if-exists=.env --tsconfig tsconfig.runtime.json mqtt-ingestion/index.ts",
+    "opcua": "tsx --env-file-if-exists=.env --tsconfig tsconfig.runtime.json opcua-ingestion/index.ts",
+    "generate:x-agent-data-ingestion": "tsx --tsconfig tsconfig.runtime.json playback-generators/gen-playback-x-agent-data-ingestion.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@3dverse/livelink-agent": "file:..",
+    "mqtt": "^5.3.6",
+    "node-opcua-client": "^2.175.0"
+  },
+  "devDependencies": {
+    "@types/node": "^25.9.1",
+    "tsx": "^4.20.6",
+    "typescript": "^6.0.3"
+  }
+}

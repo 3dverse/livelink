@@ -66,8 +66,7 @@ import ScriptEvents from "./advanced/x-script-events/manifest";
 import Audio from "./advanced/x-audio/manifest";
 import Material from "./advanced/x-material/manifest";
 import HeadlessClient from "./advanced/x-headless-client/manifest";
-import HeadlessAgent from "./advanced/x-headless-agent/manifest";
-import DataIngestion from "./advanced/x-data-ingestion/manifest";
+import DataIngestion from "./advanced/x-agent-data-ingestion/manifest";
 import MultiplayerGame from "./advanced/x-agent-multiplayer-game/manifest";
 
 //------------------------------------------------------------------------------
@@ -169,7 +168,6 @@ export default [
             Audio,
             Material,
             HeadlessClient,
-            HeadlessAgent,
             DataIngestion,
             MultiplayerGame,
         ],

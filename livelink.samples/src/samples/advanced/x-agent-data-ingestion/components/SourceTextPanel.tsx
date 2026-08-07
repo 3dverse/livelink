@@ -2,7 +2,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 //------------------------------------------------------------------------------
-import { ConsolePanel } from "../ConsolePanel";
+import { ConsolePanel } from "../../../../components/common/ConsolePanel";
 
 //------------------------------------------------------------------------------
 const LINE_HEIGHT_PX = 15;
@@ -37,7 +37,10 @@ export function SourceTextPanel({
     currentLine.current = activeLine;
 
     const lineCount = useMemo(() => text.split("\n").length, [text]);
-    const lineNumbers = useMemo(() => Array.from({ length: lineCount }, (_, i) => i + 1).join("\n"), [lineCount]);
+    const lineNumbers = useMemo(
+        () => Array.from({ length: lineCount }, (_, i) => i + 1).join("\n"),
+        [lineCount],
+    );
 
     const scrollToActiveLine = useCallback(() => {
         const element = scroller.current;
@@ -77,15 +80,26 @@ export function SourceTextPanel({
                 ) : undefined
             }
         >
-            <div ref={attachScroller} className="flex-1 min-h-0 overflow-auto text-[10px] leading-[15px] font-mono">
-                <div className="relative flex" style={{ height: lineCount * LINE_HEIGHT_PX }}>
+            <div
+                ref={attachScroller}
+                className="flex-1 min-h-0 max-h-[10vh] overflow-auto text-[10px] leading-3.75 font-mono"
+            >
+                <div
+                    className="relative flex"
+                    style={{ height: lineCount * LINE_HEIGHT_PX }}
+                >
                     {activeLine !== null && (
                         <div
                             className="absolute inset-x-0 bg-[#addb67]/15 border-l-2 border-[#addb67]"
-                            style={{ top: activeLine * LINE_HEIGHT_PX, height: LINE_HEIGHT_PX }}
+                            style={{
+                                top: activeLine * LINE_HEIGHT_PX,
+                                height: LINE_HEIGHT_PX,
+                            }}
                         />
                     )}
-                    <pre className="px-2 text-right text-[#637777] select-none m-0!">{lineNumbers}</pre>
+                    <pre className="px-2 text-right text-[#637777] select-none m-0!">
+                        {lineNumbers}
+                    </pre>
                     <pre className="pr-3 text-[#addb67] m-0!">{text}</pre>
                 </div>
             </div>

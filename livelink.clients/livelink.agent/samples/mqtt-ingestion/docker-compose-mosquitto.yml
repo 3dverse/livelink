@@ -1,0 +1,38 @@
+# Everything the "MQTT Ingestion" sample needs on the data side: a broker, and
+# the simulator publishing into it. From this directory:
+#
+#   docker compose -f docker-compose-mosquitto.yml up
+#
+# The broker comes up first — `sim` waits on its healthcheck — and the agent then
+# subscribes to the same broker over TCP.
+services:
+  broker:
+    image: eclipse-mosquitto:2
+    container_name: mqtt-sim-broker
+    volumes:
+      - ./mosquitto.conf:/mosquitto/config/mosquitto.conf:ro
+    ports:
+      - "1883:1883" # plain TCP — what the simulator and the agent both use
+      - "8000:8000" # WebSocket — for a page of your own on the same broker
+    healthcheck:
+      test: ["CMD-SHELL", "mosquitto_pub -h 127.0.0.1 -p 1883 -t __healthcheck -m ok -q 0 >/dev/null 2>&1"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 5s
+    restart: unless-stopped
+
+  sim:
+    image: ghcr.io/marcelo-6/mqtt-sim:latest
+    container_name: mqtt-sim
+    volumes:
+      - ./mqtt-sim.toml:/work/mqtt-sim.toml:ro
+    command: ["run", "-c", "/work/mqtt-sim.toml"]
+    # Inside the broker's network namespace, so `localhost` in the TOML is the
+    # broker — the same value that works if you'd rather install the simulator
+    # on your host with `uv tool install mqtt-simulator`.
+    network_mode: "service:broker"
+    depends_on:
+      broker:
+        condition: service_healthy
+    restart: unless-stopped

@@ -5,7 +5,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import type { IngestEvent } from "@3dverse/livelink-agent";
 
 //------------------------------------------------------------------------------
-import { ConsolePanel } from "../ConsolePanel";
+import { ConsolePanel } from "../../../../components/common/ConsolePanel";
 
 //------------------------------------------------------------------------------
 /**
@@ -108,7 +108,13 @@ export function useEventTrace({
 /**
  * The events going into the pipeline, as they go in.
  */
-export function EventTracePanel({ rows, title = "ingested events" }: { rows: Array<TraceRow>; title?: string }) {
+export function EventTracePanel({
+    rows,
+    title = "ingested events",
+}: {
+    rows: Array<TraceRow>;
+    title?: string;
+}) {
     const scroller = useRef<HTMLDivElement | null>(null);
 
     const scrollToEnd = useCallback(() => {
@@ -130,18 +136,28 @@ export function EventTracePanel({ rows, title = "ingested events" }: { rows: Arr
     useEffect(scrollToEnd, [rows, scrollToEnd]);
 
     return (
-        <ConsolePanel title={title} note={rows.length > 0 ? `last ${rows.length}` : undefined}>
+        <ConsolePanel
+            title={title}
+            note={rows.length > 0 ? `last ${rows.length}` : undefined}
+        >
             <div
                 ref={attachScroller}
-                className="flex-1 min-h-0 overflow-auto px-2 py-1 text-[10px] leading-[15px] font-mono"
+                className="flex-1 min-h-0 max-h-[10vh] overflow-auto px-2 py-1 text-[10px] leading-3.75 font-mono"
             >
                 {rows.length === 0 ? (
-                    <p className="text-[#637777]">Waiting for the first event…</p>
+                    <p className="text-[#637777]">
+                        Waiting for the first event…
+                    </p>
                 ) : (
                     rows.map(row => (
-                        <div key={row.seq} className="flex gap-2 whitespace-nowrap tabular-nums">
+                        <div
+                            key={row.seq}
+                            className="flex gap-2 whitespace-nowrap tabular-nums"
+                        >
                             <span className="text-[#637777]">{row.time}</span>
-                            <span className="text-[#c792ea]">{row.channel}</span>
+                            <span className="text-[#c792ea]">
+                                {row.channel}
+                            </span>
                             <span className="text-[#addb67]">{row.detail}</span>
                         </div>
                     ))

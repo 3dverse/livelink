@@ -1,0 +1,3 @@
+# The root .gitignore's blanket `.npmrc` rule (kept for registry/auth config) would otherwise
+# also swallow this one — it carries no secrets, just install-links=true (see its own comment).
+!.npmrc

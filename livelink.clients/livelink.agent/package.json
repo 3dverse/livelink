@@ -19,7 +19,7 @@
         "prebuild": "node ../livelink.base/ci/auto-generate.js ../../node_modules/ ../livelink.base/ci/ ../livelink.base/_prebuild/",
         "build": "node esbuild.js && tsc && tsc-alias",
         "typecheck": "tsc --noEmit -p tsconfig.test.json",
-        "lint": "eslint sources",
+        "lint": "eslint sources samples",
         "clean": "rimraf dist docs docs-md",
         "clean:docs": "rimraf docs docs-md",
         "dev": "run-p dev:*",

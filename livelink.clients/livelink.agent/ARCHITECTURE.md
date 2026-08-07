@@ -301,7 +301,15 @@ Every piece remains public and usable alone: the `IngestionPipeline` with no age
 | Folder        | Contents                                                                                                                                                                                 |
 | ------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | root          | `IngestionPipeline.ts` (engine), `SceneIngestion.ts` (wiring), `SceneIngestionEvents.ts`, `EventMapping.ts`, `IngestEvent.ts`, `Transport.ts`, `IngestionStats.ts`, `SchemaValidator.ts` |
-| `transports/` | `TransportRegistry.ts`, `PlaybackTransport.ts`, `MqttTransport.ts`, `AzureEventHubTransport.ts`, `OpcUaTransport.ts` (+ `OpcUaClientModule.ts`, its uninstalled peer declared rather than imported) |
+| `transports/` | `TransportRegistry.ts`, `PlaybackTransport.ts`, `MqttTransport.ts`, `AzureEventHubTransport.ts`, `OpcUaTransport.ts` (+ `OpcUaClientModule.ts`, its optional peer declared rather than imported) |
 | `resolvers/`  | `EntityResolver.ts` (caching base), `ExistingEntityResolver.ts`, `SpawningEntityResolver.ts`                                                                                             |
 | `apply/`      | `ComponentPatchApplier.ts` (write dedup)                                                                                                                                                 |
 | `util/`       | `channel.ts`, `reporting.ts`                                                                                                                                                             |
+
+Outside `sources/`, [`samples/`](samples/README.md) holds two runnable agents — one per live
+transport, MQTT and OPC UA — each against a source you start with one docker command. It is a
+standalone package with its own `node_modules`, kept out of the workspaces so that
+`node-opcua-client` cannot hoist to the root and be picked up by the browser samples app. The
+scripts compile against this package's build output rather than against `sources/`, so what they
+exercise is what a consumer gets; they are the place to reproduce an ingestion bug a unit test
+cannot reach.

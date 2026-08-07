@@ -169,6 +169,14 @@ Telegraf's `inputs.opcua`, Kepware, Ignition — point `mqtt` at that broker ins
 and no OPC UA session to keep alive next to the scene. `opcua` is for the servers that offer no such
 bridge.
 
+A runnable version of both, against infrastructure you start yourself with one docker command, lives
+in [`samples/`](samples/README.md): `opcua-ingestion/` drives a machine cell from Microsoft's
+simulated PLC, [iot-edge-opc-plc](https://github.com/Azure-Samples/iot-edge-opc-plc), and
+`mqtt-ingestion/` drives a plant floor from any broker, fed by
+[mqtt-sim](https://github.com/marcelo-6/mqtt-sim) and a TOML config shipped with it. Both are
+headless Node.js scripts, but only one of them has to be: the MQTT mappings run in a page unchanged
+over `ws://`, whereas `opcua` cannot run in a browser at all.
+
 `playback` replays a recorded event stream from wherever it lives — a file, a URL, a string, bytes,
 a stream, or records you parsed yourself — so the same mapping can be brought up against a dump
 before it ever meets a broker, in Node or in the browser:

@@ -1,11 +1,13 @@
 //------------------------------------------------------------------------------
 // Everything the OPC UA transport needs to know about `node-opcua-client` **without importing it**.
 //
-// That package is an optional peer this repository deliberately does not install: it is the only
-// mature OPC UA stack for TypeScript, but its dependency tree is ~90 `node-opcua-*` packages, and
-// {@link OpcUaTransport} calls six of its methods. So the module is described here instead, and the
-// lazy `import("node-opcua-client")` in `start()` is cast to {@link OpcUaClientModule} — the
+// That package is an optional peer this repository deliberately does not install *here*: it is the
+// only mature OPC UA stack for TypeScript, but its dependency tree is ~90 `node-opcua-*` packages,
+// and {@link OpcUaTransport} calls six of its methods. So the module is described here instead, and
+// the lazy `import("node-opcua-client")` in `start()` is cast to {@link OpcUaClientModule} — the
 // compiler accepts the specifier thanks to the ambient declaration in `optional-peers.d.ts`.
+// (`samples/` does install it, in its own `node_modules` off this resolution path, so that the OPC
+// UA sample can actually connect to a PLC. Nothing here sees it.)
 //
 // The file has two halves, and they carry very different risk:
 //
@@ -18,9 +20,10 @@
 //     transport's tests run against a fake. It is kept as small as possible for that reason: three
 //     classes, and only the members actually called.
 //
-// To go back to the real types instead, install `node-opcua-client` as a devDependency and replace
-// the second half with a single `import type` — the first half can stay either way, since the
-// constants are cheaper to read than the enum lookups they replace.
+// To go back to the real types instead, install `node-opcua-client` as a devDependency of this
+// package, drop the ambient declaration and replace the second half with a single `import type` —
+// the first half can stay either way, since the constants are cheaper to read than the enum lookups
+// they replace.
 
 //------------------------------------------------------------------------------
 // Specification constants.

@@ -1,0 +1,23 @@
+{
+  // Used only by `tsx` when actually running a sample (see the "mqtt"/"opcua" scripts). Deliberately
+  // does NOT `extends` tsconfig.json: the `paths` remap there sends `@3dverse/livelink-agent` straight
+  // to `../`, the package's real source directory, and `tsx` applies tsconfig `paths` at runtime too
+  // (not just for type-checking). That redirect happens before Node's module resolver ever sees
+  // `node_modules`, so the transport's lazy `import("node-opcua-client")` then resolves from outside
+  // samples/ and misses the copy installed here. (An empty `paths` override on top of an `extends`
+  // chain does not clear an inherited alias — the tools that read this merge `paths` across the
+  // chain rather than replacing it file-by-file the way `tsc` does — so this config stays standalone.)
+  // Plain node_modules resolution is also the more accurate simulation of a real consumer, who has no
+  // `paths` remap at all.
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "nodenext",
+    "moduleResolution": "nodenext",
+    "esModuleInterop": true,
+    "strict": true,
+    "skipLibCheck": true,
+    "noEmit": true,
+    "types": ["node"]
+  },
+  "include": ["."]
+}
