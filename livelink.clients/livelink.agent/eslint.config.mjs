@@ -33,12 +33,12 @@ export default [
     {
         // `samples/` holds the runnable Node.js scripts that go with the package — see
         // `samples/README.md`. They are programs rather than library code, hence the Node globals
-        // and their own tsconfig.
+        // and their own tsconfig, which gives them a consumer's view of the package.
         files: ["samples/**/*.ts"],
         languageOptions: {
             globals: globals.node,
             parserOptions: {
-                project: ["./samples/tsconfig.json"],
+                project: ["./tsconfig.samples.json"],
                 tsconfigRootDir: __dirname,
             },
         },

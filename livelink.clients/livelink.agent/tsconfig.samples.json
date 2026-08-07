@@ -1,0 +1,23 @@
+{
+  // The samples are Node.js scripts run through tsx, never emitted: this config only type-checks
+  // them, and serves the `tsx` run too. They stay out of the package's own program — the root
+  // config's `include` is `./sources`.
+  //
+  // The `paths` entry gives them a *consumer's* view of the package: without it the compiler
+  // follows the workspace symlink into `sources/index.ts` and checks the samples against the
+  // implementation, dragging in the livelink.base sources and esbuild's ambient globals
+  // (`API_HOSTNAME` & co., an immediate TS2304). Mapped to the package *directory*, resolution
+  // goes through its `exports` and lands on the emitted `.d.ts` — what `npm install` hands over.
+  // Pointing straight at the `.d.ts` would type-check the same, but tsx reads these paths too and
+  // would try to *execute* a declaration file. So `npm run build` has to have run first.
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "lib": ["ESNext"],
+    "types": ["node"],
+    "paths": {
+      "@3dverse/livelink-agent": ["."]
+    }
+  },
+  "include": ["./samples"]
+}

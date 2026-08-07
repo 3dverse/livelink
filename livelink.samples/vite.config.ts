@@ -23,6 +23,17 @@ export default defineConfig({
             "@": path.resolve(__dirname, "src"),
         },
     },
+    // `node-opcua-client` is an optional, Node-only peer of `@3dverse/livelink-agent`, lazily
+    // imported on a code path no browser sample takes. It's hoisted into the root node_modules by
+    // npm workspaces, so without these it gets resolved and pulls ~90 Node packages into the bundle.
+    optimizeDeps: {
+        exclude: ["node-opcua-client"],
+    },
+    build: {
+        rollupOptions: {
+            external: ["node-opcua-client"],
+        },
+    },
     plugins: [fileContentPlugin(), react(), markdownLoaderPlugin(), tailwindcss()],
 });
 

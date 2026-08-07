@@ -4,6 +4,39 @@ import { OpcUaTransport, decodeOpcUaVariant } from "../sources/data/transports/O
 import { defaultTransportRegistry } from "../sources/data/transports/TransportRegistry";
 import type { IngestEvent } from "../sources/data/IngestEvent";
 import { fake_opcua } from "./fakes/node-opcua-client";
+import type { OpcUaDataValue, OpcUaVariant } from "../sources/data/transports/OpcUaClientModule";
+import type { DataValue, Variant } from "node-opcua-client";
+
+//------------------------------------------------------------------------------
+// `OpcUaVariant` / `OpcUaDataValue` name only the fields the decoder reads, so the samples below can
+// be plain object literals rather than fully constructed `DataValue`s. These assertions are what
+// keeps that narrowing honest: they fail at *typecheck* time (`npm run typecheck`) if node-opcua
+// ever delivers something the projections no longer describe.
+//
+// Field by field rather than whole-object, deliberately. Every field of both projections is
+// optional, which makes them **weak types**: `const x: OpcUaVariant = someVariant` succeeds as long
+// as a single field still overlaps, so an upstream *rename* would slip straight through. Indexing
+// each field turns a rename into "property does not exist on type 'Variant'" and a retype into a
+// failed assignment.
+//
+// The direction is the one that matters: the real class must be assignable to the projection, i.e.
+// the projection is a supertype of what actually arrives at runtime.
+type Assignable<From, To> = [From] extends [To] ? true : never;
+
+export const variant_value_matches: Assignable<Variant["value"], OpcUaVariant["value"]> = true;
+export const variant_data_type_matches: Assignable<Variant["dataType"], OpcUaVariant["dataType"]> = true;
+export const variant_array_type_matches: Assignable<Variant["arrayType"], OpcUaVariant["arrayType"]> = true;
+
+export const data_value_value_matches: Assignable<DataValue["value"], OpcUaDataValue["value"]> = true;
+export const data_value_status_matches: Assignable<DataValue["statusCode"], OpcUaDataValue["statusCode"]> = true;
+export const data_value_source_ts_matches: Assignable<
+    DataValue["sourceTimestamp"],
+    OpcUaDataValue["sourceTimestamp"]
+> = true;
+export const data_value_server_ts_matches: Assignable<
+    DataValue["serverTimestamp"],
+    OpcUaDataValue["serverTimestamp"]
+> = true;
 
 //------------------------------------------------------------------------------
 // `MessageSecurityMode` and `DataType`, per the OPC UA specification — the same constants the
@@ -46,6 +79,21 @@ beforeEach(() => {
     vi.spyOn(console, "error").mockImplementation(() => {});
     fake_opcua.reset();
     sink = new CollectingSink();
+});
+
+//------------------------------------------------------------------------------
+describe("the payload projections", () => {
+    it("still describe what node-opcua delivers (enforced at typecheck time)", () => {
+        expect([
+            variant_value_matches,
+            variant_data_type_matches,
+            variant_array_type_matches,
+            data_value_value_matches,
+            data_value_status_matches,
+            data_value_source_ts_matches,
+            data_value_server_ts_matches,
+        ]).toEqual([true, true, true, true, true, true, true]);
+    });
 });
 
 //------------------------------------------------------------------------------

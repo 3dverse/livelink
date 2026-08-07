@@ -20,31 +20,30 @@ it starts driving it. Set `SESSION_ID` to pin an agent to a session that is alre
 
 ## Setup
 
-This is a **standalone package, deliberately outside the repository's workspaces**: `npm install` at
-the root does not install it, and running it takes one explicit install here. The reason is
-`node-opcua-client` — ~90 packages that npm would hoist to the root `node_modules`, from where
-`livelink.samples` resolves it, follows the SDK's lazy `import()` into it, and drags a Node-only
-tree into a browser bundle. Kept local, it reaches nothing else.
+These are scripts of the `@3dverse/livelink-agent` package, not a package of their own: the root
+`npm install` covers them, and everything below runs from the **package root** (`..`), not from this
+directory.
 
 ```bash
+cd ..                          # livelink.clients/livelink.agent
 npm -C ../.. run build:agent   # the samples compile and run against the build output
-npm install                    # from this directory
-cp .env.example .env           # then put your token in it
+cp samples/.env.example samples/.env   # then put your token in it
 ```
 
-The `.npmrc` here sets `install-links=true`, so `@3dverse/livelink-agent` (a `file:..`
-dependency) is copied rather than symlinked into `node_modules` — required for the OPC UA
-sample's lazy `node-opcua-client` import to resolve from this directory's own install instead
-of escaping through the symlink's real path. Don't delete it.
+`node-opcua-client` — ~90 packages, Node-only — is a devDependency of the package, so npm hoists it
+to the root `node_modules`. It is kept out of the browser samples bundle at the one place that could
+pull it in: `livelink.samples/vite.config.ts` excludes the specifier, which the OPC UA transport
+reaches only through a lazy `import()` on a code path no browser sample takes. If you ever see a
+`node-opcua-*` chunk in that bundle, that exclusion is what regressed.
 
 ## Running
 
-Two terminals each, from this directory:
+Two terminals each, from the package root:
 
 ```bash
 # MQTT — the broker and the simulator
-docker compose -f mqtt-ingestion/docker-compose-mosquitto.yml up
-npm run mqtt
+docker compose -f samples/mqtt-ingestion/docker-compose-mosquitto.yml up
+npm run sample:mqtt
 ```
 
 ```bash
@@ -53,7 +52,7 @@ npm run mqtt
 docker run --rm -it -p 50000:50000 -p 8080:8080 --name opcplc \
   mcr.microsoft.com/iotedge/opc-plc:latest \
   --pn=50000 --autoaccept --unsecuretransport --ct=50 --sc=100
-npm run opcua
+npm run sample:opcua
 ```
 
 Each prints its pipeline counters every 5 seconds, and only when something moved — a silent source
@@ -61,9 +60,11 @@ leaves the transport's own reconnection messages legible instead of burying them
 counters. `Ctrl-C` stops the agent, and the entities it spawned go with it
 (`delete_on_client_disconnection`).
 
-`npm run typecheck` checks both scripts. It resolves `@3dverse/livelink-agent` to the package's
-**build output** rather than to its sources, so what the samples compile against is what a consumer
-installing the package gets — which also means `build:agent` has to have run first.
+`npm run typecheck:samples` checks every script here, against `tsconfig.samples.json`. It resolves
+`@3dverse/livelink-agent` to the package's **build output** rather than to its sources, so what the
+samples compile against is what a consumer installing the package gets — which also means
+`build:agent` has to have run first. The same config drives `tsx` at run time, so a sample runs
+against exactly what it type-checked against.
 
 ## Generating a recording
 
@@ -80,15 +81,15 @@ npm run generate:x-agent-data-ingestion   # rewrites the dump the browser "Data 
 as a second dump to point a `PlaybackTransport` at, smaller and more abstract than the fleet one.
 
 `gen-playback-x-agent-data-ingestion.ts` simulates a warehouse fleet — one forklift and two drones on
-closed circuits, under real cornering, acceleration and yaw-rate limits, each trajectory periodic and
-starting from rest so `loop: true` replays it without a seam. Every frame carries the telemetry such
-a fleet publishes alongside its pose — speed, battery and state for both, load and mast height for the
-forklift, altitude and radio link for a drone — all of it derived from the trajectory and periodic
-too, battery included, so nothing jumps at the loop. The same recording also carries the joint stream
-of a stationary 4-DOF robotic arm — one event per pivot, each a smoothly oscillating angle rather than
-a pose — which is what the sample's other mapping (`byUuid`, driving entities already in the scene) is
-there to demonstrate. It is deterministic: same seeds, same file. It writes into `livelink.samples/`
-by default; pass a path to write elsewhere.
+closed circuits, under real cornering, acceleration and yaw-rate limits. Trajectories start from rest
+and are periodic, as is the telemetry each frame carries alongside the pose — speed, battery and state
+for both kinds, load and mast height for the forklift, altitude and radio link for a drone — so
+`loop: true` replays without a seam, battery included. The same recording carries a stationary 4-DOF
+arm's joint stream, one event per pivot holding an oscillating angle rather than a pose, which is what
+the sample's other mapping (`byUuid`, onto entities already in the scene) demonstrates. Deterministic:
+same seeds, same file, so a re-run that changes the committed dump means the generator changed. Writes
+into `livelink.samples/` by default — a path anchored to the script, not the working directory — or to
+a path given as argument.
 
 ## Configuration
 

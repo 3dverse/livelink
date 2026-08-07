@@ -997,17 +997,19 @@ function DataIngestion({
             // overwritten in the dirty entity and never sent), some carry none,
             // and the motion judders even though every position was ingested.
             // Keep the flush rate comfortably above the data rate and each sample
-            // gets its own flush. Rates are capped at 125 (an 8 ms interval).
-            //
-            // `broadcastsPerSecond` is the *other* loop — the one that persists
-            // `auto_broadcast` entities for the other clients — and it defaults to
-            // 1, which is why anything watching an ingested entity from another
-            // client sees it lurch once a second. Raising it is only affordable
-            // because the only things on that list are the empty companion
-            // entities; the vehicles themselves never join it.
+            // gets its own flush. Rates are capped at 125 Hz (an 8 ms interval)
+            // because the client does not support a faster timer.
             headless_client: {
-                updatesPerSecond: 120,
-                broadcastsPerSecond: 60,
+                // Generated recordings are 30 Hz, so the flush rate has to be at
+                // least that to avoid dropping samples.
+                updatesPerSecond: 40,
+                // `broadcastsPerSecond` is the *other* loop — the one that persists
+                // `auto_broadcast` entities for the other clients — and it defaults to
+                // 1, which is why anything watching an ingested entity from another
+                // client sees it lurch once a second. Raising it is only affordable
+                // because the only things on that list are the empty companion
+                // entities; the vehicles themselves never join it.
+                broadcastsPerSecond: 20,
             },
         };
 

@@ -614,3 +614,115 @@ moved from base to js, every other count unchanged. `npm run build` (base, agent
 js, react, three, react.ui, webxr) and `build:samples` all pass; the agent build
 is the proof the headless bundle never reached the class. No
 `@livelink.base/scene/ComponentProxyCache` specifier survives anywhere.
+
+---
+
+# `livelink.agent/samples` folded into the package (2026-08-07)
+
+> Scope: retiring the standalone `livelink.agent/samples` npm package, installing
+> `node-opcua-client` as a devDependency, and switching `OpcUaClientModule.ts` to
+> the real upstream types.
+
+## Why
+
+`samples/` carried its own `package.json`, `package-lock.json`, `.npmrc`,
+`.gitignore` and **two** tsconfigs, plus a private `node_modules`. Every one of
+those existed for a single reason: keeping `node-opcua-client` (~90 Node-only
+packages) out of the root `node_modules`, where npm workspace hoisting would
+expose it to `livelink.samples`' Vite build. The `.npmrc`'s `install-links=true`
+and the deliberate "does NOT extend" split between `tsconfig.json` and
+`tsconfig.runtime.json` were both consequences of that one constraint.
+
+This **supersedes** the 2026-07-28 finding-4 note ("declared rather than
+installed") for `node-opcua-client`. That note's reasoning still holds for what it
+was: the type-safety cost was real, and the transport's tests run against a fake
+that would keep passing through upstream drift — so the type check was the only
+thing standing behind those six calls, and it was switched off.
+
+What the earlier decision did not weigh is that the hazard's blast radius is
+exactly **one file**. Measured, not assumed:
+
+- `livelink.samples` is the only browser-bundled consumer of the agent
+  (`livelink.react`, `.react.ui`, `.three`, `.webxr` do not depend on it);
+- `mqtt` and `ajv` were **already** hoisted devDependencies producing 357 kB and
+  112 kB chunks in that same bundle — the identical mechanism, already lived with,
+  tolerated only because those two are browser-capable;
+- the opcua tree needs no native builds (no install scripts), so the cost is
+  install time and disk only.
+
+## Changes
+
+| Area | Change |
+| ---- | ------ |
+| `livelink.samples/vite.config.ts` | Excludes `node-opcua-client` from `optimizeDeps` (dev server) and `build.rollupOptions.external` (production) |
+| `livelink.agent/package.json` | `node-opcua-client` + `tsx` as devDependencies; `sample:mqtt`, `sample:opcua`, `generate:x-agent-data-ingestion`, `typecheck:samples` scripts |
+| `livelink.agent/tsconfig.samples.json` | One config replacing `samples/tsconfig.json` + `samples/tsconfig.runtime.json` |
+| `OpcUaClientModule.ts` | Real `import type` for the module and the four instance types; `optional-peers.d.ts` deleted |
+| `eslint.config.mjs` | `samples/**` now parsed with `tsconfig.samples.json` |
+| `samples/` | `package.json`, `package-lock.json`, `.npmrc`, `.gitignore`, both tsconfigs and `node_modules` deleted; a one-line `tsconfig.json` shim added back (see below) |
+
+Two things surfaced during the work that the plan had flagged as open questions,
+both resolved by measurement rather than assumption:
+
+1. **The `paths` remap is required**, not redundant. Without it the compiler
+   follows the workspace symlink into `sources/index.ts` and checks the samples
+   against the implementation, dragging in the livelink.base sources and esbuild's
+   ambient globals (`API_HOSTNAME`, TS2304). It is kept, mapping to the package
+   *directory* so tsx can execute what it resolves.
+2. **The generator's default output path was cwd-relative** (`../../../livelink.samples/…`),
+   computed for a cwd of `samples/`. Running it from the package root wrote one
+   directory too high (ENOENT). Re-anchored to `__dirname`, so it is
+   cwd-independent.
+
+`OpcUaVariant` / `OpcUaDataValue` deliberately stay narrow structural projections
+rather than aliases of the real `Variant` / `DataValue`: they name only the fields
+the decoder reads, which keeps a test sample a plain object literal. They are
+pinned **field by field** in `opcua-transport.test.ts` — whole-object assertions
+would be vacuous, since every field is optional and TypeScript's weak-type check
+passes on a single overlapping field, letting an upstream *rename* through.
+Verified by mutation: renaming `dataType` and retyping `sourceTimestamp` each break
+the build; reverting restores it.
+
+### Follow-up: the editor lost the samples (found after the fact)
+
+Deleting `samples/tsconfig.json` broke VS Code without breaking the CLI. tsserver picks a project by
+walking up for a file named literally `tsconfig.json` — it never auto-discovers
+`tsconfig.samples.json` — and the first one it finds, the package's own, is sources-only. The sample
+scripts therefore landed in an **inferred project** with default options: no `types: ["node"]`, so
+`process` and `__dirname` stopped resolving in the editor while `typecheck:samples` stayed green,
+because that script names its config explicitly and the editor cannot.
+
+This walked into a convention the repo had already established and documented: every package carries
+a `tests/tsconfig.json` that is a one-line `extends` whose comment says it "exists solely so the VS
+Code TypeScript language server auto-discovers a config". The fix is the identical shim for
+`samples/`, and the two remaining tsconfigs are still one fewer than the three the standalone package
+carried (`tsconfig.json` + `tsconfig.runtime.json` + its `package.json`).
+
+Worth recording as a review lesson: a green CLI is not evidence the editor works, and the two
+diverge exactly where a config is selected by name rather than passed by flag. Verified by comparing
+the shim against the real config — same 5 files in the program, same resolved `types` / `lib` /
+`paths`, and `@3dverse/livelink-agent` still resolving to `dist/` rather than `sources/` (a leak
+would have reproduced the `API_HOSTNAME` TS2304 that the `paths` remap exists to prevent).
+
+## Verification
+
+- **107 base + 172 agent + 153 js tests pass** (agent +1: the new projections test).
+- All three packages typecheck; `livelink.agent` lints clean (exit 0).
+- `npm run build` (base, agent, js, react, three, react.ui, webxr) and
+  `build:samples` all pass.
+- **The critical check** — the emitted browser bundle contains no `node-opcua-*`
+  chunk, and the only `node-opcua-client` occurrences in `index-*.js` are the
+  externalized bare specifier plus its error-message string. No package code.
+  Marginally better than before, in fact: Vite previously emitted an empty stub
+  chunk that would resolve and then fail with a `TypeError` on `.OPCUAClient`;
+  the specifier now stays unresolvable, so the transport's own `catch` produces
+  the friendly "install node-opcua-client" message.
+- No emitted `.d.ts` references `node-opcua-client` as a type — `stripInternal`
+  removes every `@internal` OPC UA declaration, so a consumer who installs no such
+  peer still sees nothing of it. The lazy `import()` remains `external` in the
+  agent's own esbuild config; the runtime contract is unchanged.
+- Runtime resolution verified both ways: the built `dist` resolves
+  `node-opcua-client` from the root `node_modules`, and `tsx` resolves
+  `@3dverse/livelink-agent` to the built `dist` through the `paths` remap.
+- `generate:x-agent-data-ingestion` is deterministic across runs and reproduces the
+  committed recording byte-for-byte.

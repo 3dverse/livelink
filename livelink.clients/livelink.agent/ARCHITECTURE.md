@@ -19,16 +19,31 @@ empty stub chunk). Where they _are_ installed, a bundler emits them as separate 
 only if the code path runs. (One entry = one bundle = one core: an earlier `/data` subpath split was
 collapsed to avoid a duplicated-core hazard when a consumer used both entries.)
 
-Optional at runtime is not the same as absent at development time: `mqtt`, `@azure/event-hubs` and
-`ajv` are also devDependencies, so `tsc` checks the calls against their real types.
-`node-opcua-client` is the one exception — its tree is ~90 packages for the six methods
-`OpcUaTransport` calls, so it is **declared rather than installed**, in
-`transports/OpcUaClientModule.ts`. That trade is worth naming before repeating it: the install cost
-disappears, but so does the compiler's ability to notice that the upstream API moved. A signature
-change there fails at runtime, not at build time, and the transport's tests run against a fake that
-would keep passing. It is the right call when the used surface is tiny, stable and mostly
-specification-fixed — as it is here — and the wrong one as soon as a transport needs more than a
-handful of an SDK's methods.
+Optional at runtime is not the same as absent at development time: all four — `mqtt`,
+`@azure/event-hubs`, `ajv` and `node-opcua-client` — are also devDependencies, so `tsc` checks the
+calls against their real types and a signature change upstream fails the build rather than a live
+connection. `transports/OpcUaClientModule.ts` names those types (`import type`, erased at compile
+time, so nothing static is added to the bundle) alongside the OPC UA specification constants, which
+stay spelled out because they read more cheaply than the enum lookups they replace.
+
+`node-opcua-client` is ~90 Node-only packages, which is why it was for a while **declared rather
+than installed** — an ambient `declare module` plus a hand-written structural view of the six methods
+`OpcUaTransport` calls. That traded the compiler's ability to notice upstream drift for an install
+cost, and it was retired once the install cost was paid: the transport's tests run against a fake
+that would keep passing through any such drift, so the type check was the only thing standing behind
+those six calls.
+
+The reason it could not simply be installed before is worth keeping in mind, because it is a
+property of npm workspaces rather than of this package: a workspace member's devDependencies hoist
+to the root `node_modules`, where `livelink.samples` — the one browser-bundled consumer of this SDK
+— resolves them, and npm has no per-workspace opt-out. The transport reaches its peer through a
+statically analysable `import("node-opcua-client")`, so a bundler that *can* resolve the specifier
+will pull the whole Node-only tree into a browser bundle. That is now prevented at the single place
+it can happen: `livelink.samples/vite.config.ts` excludes the specifier from both the dev-server
+prebundle and the production build, restoring exactly the behavior of a consumer who never installed
+it. The two payload projections (`OpcUaVariant` / `OpcUaDataValue`) stay narrow structural types so a
+test sample can be a plain object literal; `opcua-transport.test.ts` pins them field by field against
+the real `Variant` / `DataValue` so the narrowing cannot drift.
 
 ---
 
@@ -307,9 +322,22 @@ Every piece remains public and usable alone: the `IngestionPipeline` with no age
 | `util/`       | `channel.ts`, `reporting.ts`                                                                                                                                                             |
 
 Outside `sources/`, [`samples/`](samples/README.md) holds two runnable agents — one per live
-transport, MQTT and OPC UA — each against a source you start with one docker command. It is a
-standalone package with its own `node_modules`, kept out of the workspaces so that
-`node-opcua-client` cannot hoist to the root and be picked up by the browser samples app. The
-scripts compile against this package's build output rather than against `sources/`, so what they
-exercise is what a consumer gets; they are the place to reproduce an ingestion bug a unit test
-cannot reach.
+transport, MQTT and OPC UA — each against a source you start with one docker command, plus the
+playback generators that write the dumps `PlaybackTransport` replays. They are scripts of this
+package, not a package of their own: `npm run sample:mqtt` / `sample:opcua` /
+`generate:x-agent-data-ingestion` from the package root, type-checked by `typecheck:samples`.
+
+One `tsconfig.samples.json` serves both the type-check and the `tsx` run. Its `paths` entry maps
+`@3dverse/livelink-agent` to the package *directory*, so resolution goes through the package's
+`exports` and lands on the **build output** rather than following the workspace symlink back into
+`sources/` — what the samples exercise is what a consumer gets, and `build:agent` has to have run
+first. (Mapping straight at the `.d.ts` would type-check identically but tsx reads these paths too
+and would try to execute a declaration file.) They are the place to reproduce an ingestion bug a
+unit test cannot reach.
+
+`samples/tsconfig.json` is a one-line `extends` of that config and exists **only** so the editor
+finds it: tsserver picks a project by walking up for a file named literally `tsconfig.json`, and the
+package's own one is sources-only, so without the shim VS Code drops the samples into an inferred
+project with no `types: ["node"]` and no `paths` — `process` and `__dirname` stop resolving while
+the CLI stays green, because `typecheck:samples` names its config explicitly and the editor cannot.
+Same shim, same reason, as the `tests/tsconfig.json` each package carries.

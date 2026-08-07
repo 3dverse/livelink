@@ -1,29 +1,28 @@
 //------------------------------------------------------------------------------
-// Everything the OPC UA transport needs to know about `node-opcua-client` **without importing it**.
+// Everything the OPC UA transport needs to know about `node-opcua-client`.
 //
-// That package is an optional peer this repository deliberately does not install *here*: it is the
-// only mature OPC UA stack for TypeScript, but its dependency tree is ~90 `node-opcua-*` packages,
-// and {@link OpcUaTransport} calls six of its methods. So the module is described here instead, and
-// the lazy `import("node-opcua-client")` in `start()` is cast to {@link OpcUaClientModule} — the
-// compiler accepts the specifier thanks to the ambient declaration in `optional-peers.d.ts`.
-// (`samples/` does install it, in its own `node_modules` off this resolution path, so that the OPC
-// UA sample can actually connect to a PLC. Nothing here sees it.)
+// That package stays an **optional peer** for consumers — `opc.tcp://` is raw TCP, so the transport
+// is Node-only and most consumers never install it, which is why {@link OpcUaTransport.start} reaches
+// it through a lazy `import()` and esbuild keeps it `external`. But it *is* a devDependency here, so
+// the types below are the real ones and a signature change upstream fails the build rather than a
+// PLC connection. (Every type in this file is `@internal`, so `stripInternal` deletes it from the
+// emitted `.d.ts`: a consumer who installs no such peer never sees a reference to it.)
 //
-// The file has two halves, and they carry very different risk:
+// The file has two halves:
 //
 //   - **Specification constants.** Attribute ids, data types, security modes, status severities.
 //     These travel on the wire and are fixed by the OPC UA specification (Parts 4 and 6), so
 //     hard-coding them cannot drift: node-opcua's enums merely spell them out. `AttributeIds.Value`
-//     has been `13` since 2006 and will stay `13`.
-//   - **The structural module view.** This one mirrors an API rather than a standard, so it *can*
-//     drift silently — a signature change in node-opcua would not fail to compile here, and the
-//     transport's tests run against a fake. It is kept as small as possible for that reason: three
-//     classes, and only the members actually called.
+//     has been `13` since 2006 and will stay `13`. They are kept spelled out because they read more
+//     cheaply than the enum lookups they replace.
+//   - **The module types**, derived from the real module rather than restated — the instance types
+//     come back out of the three `create` calls, so there is no hand-maintained shape left to drift.
 //
-// To go back to the real types instead, install `node-opcua-client` as a devDependency of this
-// package, drop the ambient declaration and replace the second half with a single `import type` —
-// the first half can stay either way, since the constants are cheaper to read than the enum lookups
-// they replace.
+// The two payload projections ({@link OpcUaVariant}, {@link OpcUaDataValue}) are the deliberate
+// exception: they name only the fields the decoder reads, so a sample can be written as a plain
+// object literal in a test instead of a fully constructed `DataValue`. `opcua-transport.test.ts`
+// pins them against the real `DataValue` / `Variant` with type-level assertions, so narrowing them
+// costs no drift detection.
 
 //------------------------------------------------------------------------------
 // Specification constants.
@@ -84,7 +83,79 @@ export const SECURITY_POLICIES = [
 export const SECURITY_POLICY_URI_PREFIX = "http://opcfoundation.org/UA/SecurityPolicy#";
 
 //------------------------------------------------------------------------------
-// Structural view of the module.
+// The module types.
+//
+// `import type` is erased at compile time, so naming these costs no runtime import: the transport
+// still reaches the module only through the lazy `import()` in `start()`, and esbuild still keeps
+// the package `external`. Aliases rather than derivations through the methods that produce them —
+// `createSession` is overloaded three ways, and `Parameters<>` / `ReturnType<>` resolve against the
+// last overload (the callback form), which yields the callback type and `void` instead of an
+// identity and a session.
+
+import type {
+    ClientMonitoredItem,
+    ClientSession,
+    ClientSubscription,
+    OPCUAClient,
+    UserIdentityInfo,
+} from "node-opcua-client";
+
+/**
+ * The `node-opcua-client` module, as the lazy `import()` in {@link OpcUaTransport.start} hands it
+ * over. Naming the real module is what makes the calls the transport makes checked against the
+ * upstream signatures.
+ *
+ * @internal
+ */
+export type OpcUaClientModule = typeof import("node-opcua-client");
+
+/**
+ * The identity a session is opened with. Omitted = anonymous.
+ *
+ * @internal
+ */
+export type OpcUaUserIdentity = UserIdentityInfo;
+
+/**
+ * Produced by `OPCUAClient.create`.
+ *
+ * @internal
+ */
+export type OpcUaClient = OPCUAClient;
+
+/**
+ * Produced by {@link OpcUaClient.createSession}.
+ *
+ * @internal
+ */
+export type OpcUaSession = ClientSession;
+
+/**
+ * Produced by `ClientSubscription.create`. Carries `publishingInterval`, the interval the server
+ * **revised** the request to — the only one that describes how the subscription actually behaves,
+ * readable from `"started"` on.
+ *
+ * @internal
+ */
+export type OpcUaSubscription = ClientSubscription;
+
+/**
+ * Produced by `ClientMonitoredItem.create`. Carries `result`, the `MonitoredItemCreateResult` the
+ * server answered with — readable from `"initialized"` on, which is what tells you the revised
+ * sampling interval and queue size.
+ *
+ * @internal
+ */
+export type OpcUaMonitoredItem = ClientMonitoredItem;
+
+//------------------------------------------------------------------------------
+// Payload projections.
+//
+// These two name only the fields {@link decodeOpcUaVariant} and the sample handler read, rather than
+// aliasing node-opcua's `Variant` / `DataValue` classes. That keeps a test sample a plain object
+// literal instead of a fully constructed `DataValue` — worth it for a decoder that is pure
+// projection. `opcua-transport.test.ts` asserts at type level that the real classes are assignable
+// to both, so narrowing them here still cannot drift away from what arrives at runtime.
 
 /**
  * A variant, as node-opcua delivers it: the decoded value plus what is needed to know how to read it
@@ -108,111 +179,4 @@ export type OpcUaDataValue = {
     statusCode?: { value?: number; name?: string } | null;
     sourceTimestamp?: Date | null;
     serverTimestamp?: Date | null;
-};
-
-/**
- * The `node-opcua-client` module itself, reduced to the three classes the transport constructs.
- *
- * @internal
- */
-export type OpcUaClientModule = {
-    OPCUAClient: {
-        create(options: {
-            applicationName: string;
-            endpointMustExist: boolean;
-            keepSessionAlive: boolean;
-            securityMode: number;
-            securityPolicy: string;
-            connectionStrategy: { initialDelay: number; maxDelay: number; maxRetry: number };
-        }): OpcUaClient;
-    };
-    ClientSubscription: {
-        create(
-            session: OpcUaSession,
-            options: {
-                requestedPublishingInterval: number;
-                requestedLifetimeCount: number;
-                requestedMaxKeepAliveCount: number;
-                maxNotificationsPerPublish: number;
-                publishingEnabled: boolean;
-                priority: number;
-            },
-        ): OpcUaSubscription;
-    };
-    ClientMonitoredItem: {
-        create(
-            subscription: OpcUaSubscription,
-            item_to_monitor: { nodeId: string; attributeId: number },
-            parameters: { samplingInterval: number; discardOldest: boolean; queueSize: number },
-            timestamps_to_return: number,
-        ): OpcUaMonitoredItem;
-    };
-};
-
-/**
- * The identity a session is opened with. Omitted = anonymous.
- *
- * @internal
- */
-export type OpcUaUserIdentity = { type: number; userName: string; password: string };
-
-/**
- * @see OpcUaClientModule
- *
- * @internal
- */
-export type OpcUaClient = {
-    connect(endpoint_url: string): Promise<void>;
-    createSession(user_identity?: OpcUaUserIdentity): Promise<OpcUaSession>;
-    disconnect(): Promise<void>;
-    on(event: "connection_lost" | "connection_reestablished", listener: () => void): void;
-};
-
-/**
- * @see OpcUaClientModule
- *
- * @internal
- */
-export type OpcUaSession = { close(): Promise<void> };
-
-/**
- * @see OpcUaClientModule
- *
- * @internal
- */
-export type OpcUaSubscription = {
-    /**
-     * The publishing interval the server **revised** the request to, which is the only one that
-     * describes how the subscription actually behaves. Readable from `"started"` on.
-     */
-    readonly publishingInterval?: number;
-
-    terminate(): Promise<void>;
-    on(event: "internal_error", listener: (error: Error) => void): void;
-    /**
-     * `create()` returns before the server has answered; this fires when the CreateSubscription
-     * response lands, and again whenever node-opcua recreates the subscription after a reconnection.
-     */
-    on(event: "started", listener: (subscription_id: number) => void): void;
-};
-
-/**
- * @see OpcUaClientModule
- *
- * @internal
- */
-export type OpcUaMonitoredItem = {
-    /**
-     * The `MonitoredItemCreateResult` the server answered with, carrying the parameters it
-     * **revised** the request to. Readable from `"initialized"` on.
-     */
-    readonly result?: { revisedSamplingInterval?: number; revisedQueueSize?: number } | null;
-
-    on(event: "changed", listener: (data_value: OpcUaDataValue) => void): void;
-    on(event: "err", listener: (message: string) => void): void;
-    /**
-     * Fires once the server has answered the CreateMonitoredItems request, i.e. once
-     * {@link OpcUaMonitoredItem.result} holds something.
-     */
-    on(event: "initialized", listener: () => void): void;
 };

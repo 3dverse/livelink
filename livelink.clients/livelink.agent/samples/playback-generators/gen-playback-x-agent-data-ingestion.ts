@@ -41,11 +41,15 @@ import { writeFileSync } from "node:fs";
 import { resolve } from "node:path";
 
 //------------------------------------------------------------------------------
-// Where the recording lands. Relative to the working directory, which `npm run`
-// makes this package's own — the sample that replays it lives across the repo.
+// Where the recording lands: the sample that replays it lives across the repo.
+// Anchored to this script rather than to the working directory, so that running
+// it from anywhere writes the same file — `npm run` sets the cwd to the package
+// root, but invoking the script directly does not.
 //------------------------------------------------------------------------------
-const DEFAULT_OUTPUT =
-    "../../../livelink.samples/src/samples/advanced/x-agent-data-ingestion/x-agent-data-ingestion-recording.json";
+const DEFAULT_OUTPUT = resolve(
+    __dirname,
+    "../../../../livelink.samples/src/samples/advanced/x-agent-data-ingestion/x-agent-data-ingestion-recording.json",
+);
 
 //------------------------------------------------------------------------------
 // The volume the fleet evolves in: X ±10 m, Z ±15 m, altitude 0..10 m.
