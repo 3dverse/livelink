@@ -1,5 +1,15 @@
 # @3dverse/livelink
 
+## 0.8.65
+
+### Patch Changes
+
+- chore(repo): introduce livelink.clients/ family and move livelink.js into it
+- refactor(livelink.clients): declare event maps explicitly
+- refactor(livelink.base): extract shared headless core from livelink.js
+- feat(livelink.js): remove \*Base re-export and declare overridden events as interface so the payload carried by the event is documented
+- docs(livelink.clients): group events in a "<Area> / Events" sidebar category
+
 ## 0.8.64
 
 ### Patch Changes

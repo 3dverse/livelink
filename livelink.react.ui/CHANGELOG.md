@@ -1,5 +1,17 @@
 # @3dverse/livelink-react-ui
 
+## 0.3.24
+
+### Patch Changes
+
+- feat(livelink.react.ui): allow CameraSpeedSlider to be used without actual camera controller
+- Updated dependencies
+- Updated dependencies
+- Updated dependencies
+- Updated dependencies
+- Updated dependencies
+  - @3dverse/livelink@0.8.65
+
 ## 0.3.23
 
 ### Patch Changes
