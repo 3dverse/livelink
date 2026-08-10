@@ -1,0 +1,7 @@
+{
+  // Exists solely so the VS Code TypeScript language server auto-discovers a config for test
+  // files. tsserver only picks up files literally named `tsconfig.json`; the root config excludes
+  // ./tests, so without this the editor drops tests into an inferred project. This delegates to the
+  // full test program (which also backs ESLint's type-aware rules).
+  "extends": "../tsconfig.test.json"
+}

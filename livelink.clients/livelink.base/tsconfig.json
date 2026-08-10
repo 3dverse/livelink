@@ -1,0 +1,16 @@
+{
+  "compilerOptions": {
+    "outDir": "dist",
+    "target": "ES2022",
+    "esModuleInterop": true,
+    "module": "nodenext",
+    "moduleResolution": "nodenext",
+    "strict": true,
+    "sourceMap": true,
+    "noEmit": true,
+    "skipLibCheck": true,
+    "noImplicitOverride": true
+  },
+
+  "exclude": ["./tests/**/*", "./ci/**"]
+}

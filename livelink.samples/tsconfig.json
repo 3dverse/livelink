@@ -26,6 +26,6 @@
     }
   },
   "include": ["src", "eslint.config.mjs"],
-  "exclude": ["src/samples/__to_sort__"],
+  "exclude": ["src/samples/agent/"],
   "references": [{ "path": "./tsconfig.node.json" }]
 }

@@ -66,6 +66,8 @@ import ScriptEvents from "./advanced/x-script-events/manifest";
 import Audio from "./advanced/x-audio/manifest";
 import Material from "./advanced/x-material/manifest";
 import HeadlessClient from "./advanced/x-headless-client/manifest";
+import DataIngestion from "./advanced/x-agent-data-ingestion/manifest";
+import MultiplayerGame from "./advanced/x-agent-multiplayer-game/manifest";
 
 //------------------------------------------------------------------------------
 type SampleCategory = {
@@ -166,6 +168,8 @@ export default [
             Audio,
             Material,
             HeadlessClient,
+            DataIngestion,
+            MultiplayerGame,
         ],
     },
 ] as Array<SampleCategory>;

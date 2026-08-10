@@ -19,6 +19,7 @@ import { LivelinkContext } from "@3dverse/livelink-react";
 
 //------------------------------------------------------------------------------
 import { XRLivelink } from "../XRLivelink";
+import type { SessionEndEvent } from "../LXREvents";
 import { WebXRVirtualViewports } from "./WebXRVirtualViewports";
 import { WebXRContext } from "./WebXRContext";
 
@@ -43,6 +44,7 @@ export const WebXR = forwardRef(function (
         scale = 1.0,
         domOverlayRoot,
         onSessionEnd,
+        onError,
         renderViewport,
     }: PropsWithChildren<{
         /**
@@ -114,9 +116,22 @@ export const WebXR = forwardRef(function (
         domOverlayRoot?: Element;
 
         /**
-         * Callback invoked when XR session ends.
+         * Callback invoked when the XR session ends on its own — headset system menu, back gesture,
+         * doff timeout, or a UA-side failure.
+         *
+         * Ends caused by this component releasing the session (unmount, or a switch from AR to VR)
+         * are not reported, so this can be wired unconditionally to leaving the XR mode.
          */
         onSessionEnd?: (event: XRSessionEvent) => void;
+
+        /**
+         * Callback invoked when the XR session could not be started — permission dismissed,
+         * `requestSession` rejected, reference space unavailable, no XR view obtained.
+         *
+         * There is no session and no rendering when this fires: the consumer that decided to enter
+         * XR is the only one that can undo that decision, so it should reset its XR mode here.
+         */
+        onError?: (error: unknown) => void;
 
         /**
          * Render function for each WebXR viewport. Returns JSX wrapped in ViewportContext.Provider.
@@ -128,6 +143,14 @@ export const WebXR = forwardRef(function (
     //--------------------------------------------------------------------------
     // Ref
     const cleanupPromiseRef = useRef<Promise<void> | null>(null);
+
+    //--------------------------------------------------------------------------
+    // Held in refs so that a caller passing inline closures neither re-runs the session lifecycle
+    // effect below on every render nor gets called through a stale closure.
+    const onSessionEndRef = useRef(onSessionEnd);
+    const onErrorRef = useRef(onError);
+    onSessionEndRef.current = onSessionEnd;
+    onErrorRef.current = onError;
 
     //--------------------------------------------------------------------------
     // State
@@ -162,7 +185,15 @@ export const WebXR = forwardRef(function (
 
         // Associate the XRLivelink instance with the Livelink instance from context
         const xr = new XRLivelink(instance);
-        let session: XRSession | null = null;
+
+        // Subscribed before initialization starts: a session the user backs out of while the
+        // viewports are still being configured ends without ever having been reported otherwise.
+        // XRLivelink suppresses the ends it causes itself, so this fires only for the ones the
+        // consumer has to react to.
+        const onXRSessionEnd = (event: SessionEndEvent): void => {
+            onSessionEndRef.current?.(event.xr_session_event);
+        };
+        xr.addEventListener("on-session-end", onXRSessionEnd);
 
         const reentrantAsyncInit = async (): Promise<void> => {
             // Wait for any pending cleanup of the previous instance to complete before initializing
@@ -176,7 +207,7 @@ export const WebXR = forwardRef(function (
             console.debug(`[${effectId}] XRLivelink start up`, { scale, overscan, fakeAlpha });
 
             // Initialize XRLivelink and start XR session
-            session = await xr.initialize({
+            await xr.initialize({
                 mode,
                 xr_session_init: {
                     requiredFeatures,
@@ -189,10 +220,6 @@ export const WebXR = forwardRef(function (
                 signal,
             });
 
-            if (onSessionEnd) {
-                session.addEventListener("end", onSessionEnd);
-            }
-
             console.debug(`[${effectId}] XRLivelink configuring viewports & start XRFrame loop`);
             xr.start();
 
@@ -202,29 +229,29 @@ export const WebXR = forwardRef(function (
 
         // Start the async initialization and handle any errors (abort or not) to avoid unhandled promise rejections
         reentrantAsyncInit().catch(error => {
-            if (error.name === "AbortError") {
+            if (error?.name === "AbortError") {
                 console.debug(`[${effectId}] XRLivelink start up aborted`);
-            } else {
-                console.error(`[${effectId}] Failed to start up XRLivelink`, error);
+                return;
             }
+
+            // Nothing was rendered and no session is live, but the consumer already committed to an
+            // XR mode to get here. Without this it stays committed, with no session, no 3D view and
+            // — since the exit affordance usually depends on a live session — no way back out.
+            console.error(`[${effectId}] Failed to start up XRLivelink`, error);
+            onErrorRef.current?.(error);
         });
 
         return (): void => {
             console.debug(`[${effectId}] Releasing XRLivelink`);
-            if (onSessionEnd) {
-                // TODO: Something's tricky about that onSessionEnd the sample uses it to reset the xr mode to null, but
-                // to switch mode between AR and VR we need to end the session first, which triggers onSessionEnd and
-                // reset the mode to null before we can start the new session.
-                // We need to find a way to differentiate between session end triggered by user and session end
-                // triggered by mode switch.
-                session?.removeEventListener("end", onSessionEnd);
-            }
+            xr.removeEventListener("on-session-end", onXRSessionEnd);
             abort_controller.abort();
             cleanupPromiseRef.current = xr.release().finally(() => {
                 cleanupPromiseRef.current = null;
                 console.debug(`[${effectId}] XRLivelink released`);
             });
         };
+        // `fakeAlpha` is deliberately absent: it is applied by its own effect below, and listing it
+        // here would tear the XR session down and restart it just to toggle transparency.
     }, [
         instance,
         mode,
@@ -232,7 +259,6 @@ export const WebXR = forwardRef(function (
         optionalFeatures.join("-"),
         forceSingleView,
         domOverlayRootElement,
-        fakeAlpha,
     ]);
 
     //--------------------------------------------------------------------------

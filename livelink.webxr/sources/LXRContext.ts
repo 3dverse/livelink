@@ -7,6 +7,31 @@ import { ContextProvider } from "@3dverse/livelink";
 
 //------------------------------------------------------------------------------
 /**
+ * Uniforms of the billboard program that the draw call feeds. Their locations are fixed once the
+ * program is linked, so they are resolved once in `#initShaderProgram` rather than on every frame.
+ */
+const UNIFORM_NAMES = [
+    "size",
+    "offset",
+    "viewOffset",
+    "viewMatrix",
+    "projectionMatrix",
+    "billboardMatrix",
+    "fakeAlphaEnabled",
+    "fakeAlphaScale",
+    "texture",
+] as const;
+
+//------------------------------------------------------------------------------
+/**
+ * A uniform of the billboard program. Locations are nullable: uniforms the compiler drops — the
+ * billboard matrices when `enable_billboard` is false — resolve to `null`, which the `gl.uniform*`
+ * calls then ignore.
+ */
+type UniformLocations = Record<(typeof UNIFORM_NAMES)[number], WebGLUniformLocation | null>;
+
+//------------------------------------------------------------------------------
+/**
  * @experimental
  * @category Rendering Contexts
  */
@@ -27,6 +52,23 @@ export class LXRContext extends ContextProvider {
     #shader_program: WebGLProgram | null = null;
 
     /**
+     * Uniform locations of {@link #shader_program}, resolved when it is linked. Re-resolved by every
+     * {@link initialize}, since a new program invalidates them.
+     */
+    #uniform_locations: UniformLocations | null = null;
+
+    /**
+     * Vertex buffer holding the billboard quad.
+     */
+    #vertex_buffer: WebGLBuffer | null = null;
+
+    /**
+     * Location of the `position` attribute in {@link #shader_program}. Kept so the vertex buffer can
+     * be rebound on every draw rather than trusting attribute state to survive between frames.
+     */
+    #position_attribute_location: number = -1;
+
+    /**
      * Alternative frame buffer to draw on.
      */
     #frame_buffer: WebGLFramebuffer | null = null;
@@ -37,7 +79,14 @@ export class LXRContext extends ContextProvider {
     #last_frame_section: FrameSection | null = null;
 
     /**
-     * The distance from the camera to the screen, used for calculating the projection matrix.
+     * Distance, in XR space metres, at which the billboard is placed in front of the camera.
+     *
+     * The reprojection it carries is only exact for content sitting on that plane, so it should
+     * track the apparent depth of the scene rather than stay fixed: at 1000:1 the content is a
+     * kilometre away and at "Fit 1m³" it is at arm's length, and a plane in the wrong place turns
+     * head translation into parallax that fights the image — in stereo, a comfort problem as much
+     * as a quality one. {@link XRLivelink} keeps it in sync with the camera rig scale each frame;
+     * setting it directly only holds until the next frame of an active session.
      */
     screen_distance: number = 25;
 
@@ -128,9 +177,15 @@ export class LXRContext extends ContextProvider {
 
     /**
      * Initializes shaders, buffers, and textures.
+     *
+     * Callable more than once — toggling latency compensation re-initializes the whole pipeline —
+     * so it drops the previous GL objects first. Without that, every toggle of a user-facing button
+     * leaked a program, a buffer and a texture.
+     *
      * @param enable_billboard Whether to include billboard calculations in the shader for facing the camera.
      */
     initialize({ enable_billboard = true }: { enable_billboard?: boolean } = {}): void {
+        this.#releaseGLResources();
         this.#initShaderProgram({ enable_billboard });
         this.#initBuffers();
         this.#initTexture();
@@ -185,15 +240,24 @@ export class LXRContext extends ContextProvider {
         gl.enable(gl.BLEND);
         gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
 
-        const sizeLocation = gl.getUniformLocation(this.#shader_program!, "size");
-        const offsetLocation = gl.getUniformLocation(this.#shader_program!, "offset");
-        const viewMatrixLocation = gl.getUniformLocation(this.#shader_program!, "viewMatrix");
-        const viewOffsetLocation = gl.getUniformLocation(this.#shader_program!, "viewOffset");
+        // The XR compositor shares this context, so nothing guarantees the program and the vertex
+        // attribute state left behind at init are still current. Rebind them rather than inherit
+        // whatever the last frame happened to leave bound.
+        gl.useProgram(this.#shader_program);
+        gl.bindBuffer(gl.ARRAY_BUFFER, this.#vertex_buffer);
+        gl.enableVertexAttribArray(this.#position_attribute_location);
+        gl.vertexAttribPointer(this.#position_attribute_location, 2, gl.FLOAT, false, 0, 0);
 
-        const projectionMatrixLocation = gl.getUniformLocation(this.#shader_program!, "projectionMatrix");
-        const billboardMatrixLocation = gl.getUniformLocation(this.#shader_program!, "billboardMatrix");
-        const fakeAlphaEnabledLocation = gl.getUniformLocation(this.#shader_program!, "fakeAlphaEnabled");
-        const fakeAlphaScaleLocation = gl.getUniformLocation(this.#shader_program!, "fakeAlphaScale");
+        const {
+            size: sizeLocation,
+            offset: offsetLocation,
+            viewMatrix: viewMatrixLocation,
+            viewOffset: viewOffsetLocation,
+            projectionMatrix: projectionMatrixLocation,
+            billboardMatrix: billboardMatrixLocation,
+            fakeAlphaEnabled: fakeAlphaEnabledLocation,
+            fakeAlphaScale: fakeAlphaScaleLocation,
+        } = this.#uniform_locations!;
 
         gl.activeTexture(gl.TEXTURE0);
         gl.bindTexture(gl.TEXTURE_2D, this.#texture_ref);
@@ -273,12 +337,31 @@ export class LXRContext extends ContextProvider {
         const gl = this.#context;
         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
         gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+        this.#releaseGLResources();
+    }
+
+    /**
+     * Deletes the program, vertex buffer and texture created by {@link initialize}, if any, and
+     * forgets everything derived from them. Safe to call on a context that was never initialized.
+     */
+    #releaseGLResources(): void {
+        const gl = this.#context;
+
         if (this.#texture_ref) {
             gl.deleteTexture(this.#texture_ref);
+            this.#texture_ref = null;
+        }
+        if (this.#vertex_buffer) {
+            gl.deleteBuffer(this.#vertex_buffer);
+            this.#vertex_buffer = null;
         }
         if (this.#shader_program) {
             gl.deleteProgram(this.#shader_program);
+            this.#shader_program = null;
         }
+
+        this.#uniform_locations = null;
+        this.#position_attribute_location = -1;
     }
 
     /**
@@ -371,8 +454,12 @@ export class LXRContext extends ContextProvider {
                     }
 
                     // Premultiply RGB by alpha to avoid color bleeding on transparent edges
-                    // (required for correct blending in compositing / XR rendering)
-                    gl_FragColor.rgb *= alpha;
+                    // (required for correct blending in compositing / XR rendering).
+                    // It has to be the final alpha, not the pre-scale luminance one: the compositor
+                    // computes rgb + dst * (1 - a), so premultiplying by more than a adds the
+                    // scene on top of an undimmed passthrough instead of fading it into it — the
+                    // whole image reads as brighter rather than more transparent.
+                    gl_FragColor.rgb *= gl_FragColor.a;
                 }
             }`;
         const fragment_shader = gl.createShader(gl.FRAGMENT_SHADER)!;
@@ -398,6 +485,12 @@ export class LXRContext extends ContextProvider {
         gl.deleteShader(fragment_shader);
 
         this.#shader_program = shader_program;
+
+        // Uniform locations are fixed for the life of a program: resolve them here, once, instead
+        // of on every frame of a 72–90 Hz loop.
+        this.#uniform_locations = Object.fromEntries(
+            UNIFORM_NAMES.map(name => [name, gl.getUniformLocation(shader_program, name)]),
+        ) as UniformLocations;
     }
 
     /**
@@ -406,14 +499,14 @@ export class LXRContext extends ContextProvider {
     #initBuffers(): void {
         const gl = this.#context!;
 
-        const vertex_buffer = gl.createBuffer();
+        this.#vertex_buffer = gl.createBuffer();
         const vertices = new Float32Array([1, 1, -1, 1, 1, -1, -1, -1]);
-        gl.bindBuffer(gl.ARRAY_BUFFER, vertex_buffer);
+        gl.bindBuffer(gl.ARRAY_BUFFER, this.#vertex_buffer);
         gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW);
 
-        const position_attribute_location = gl.getAttribLocation(this.#shader_program!, "position");
-        gl.enableVertexAttribArray(position_attribute_location);
-        gl.vertexAttribPointer(position_attribute_location, 2, gl.FLOAT, false, 0, 0);
+        this.#position_attribute_location = gl.getAttribLocation(this.#shader_program!, "position");
+        gl.enableVertexAttribArray(this.#position_attribute_location);
+        gl.vertexAttribPointer(this.#position_attribute_location, 2, gl.FLOAT, false, 0, 0);
     }
 
     /**
@@ -423,13 +516,16 @@ export class LXRContext extends ContextProvider {
         const gl = this.#context!;
         this.#texture_ref = gl.createTexture()!;
         gl.bindTexture(gl.TEXTURE_2D, this.#texture_ref);
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+        // The billboard is essentially never sampled at the resolution it was decoded at — overscan
+        // and resolution scaling guarantee it — so NEAREST showed up as per-pixel shimmer crawling
+        // over the image on every head movement. LINEAR is safe on the NPOT frame texture as long
+        // as no mipmap filter and no repeat wrapping are used, which is the case here.
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
         gl.bindTexture(gl.TEXTURE_2D, null);
 
-        const texture_uniform_location = gl.getUniformLocation(this.#shader_program!, "texture");
-        gl.uniform1i(texture_uniform_location, 0);
+        gl.uniform1i(this.#uniform_locations!.texture, 0);
     }
 }

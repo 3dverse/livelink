@@ -1,0 +1,31 @@
+{
+  // Single config: `tsc` emits the declaration build, `tsc --noEmit` (typecheck/dev scripts) just
+  // type-checks. rootDir spans livelink.clients/ so the livelink.base sources pulled in via the
+  // @livelink.base/* alias are emitted alongside (dist/livelink.agent/** + dist/livelink.base/**)
+  // with declaration maps pointing at the canonical sources. tsc keeps the alias specifiers
+  // verbatim in the emitted d.ts, so the build script runs tsc-alias afterwards to rewrite them to
+  // relative paths, making dist self-contained for published consumers.
+  "compilerOptions": {
+    "target": "ES2022",
+    "esModuleInterop": true,
+    "module": "nodenext",
+    "moduleResolution": "nodenext",
+    "strict": true,
+    "sourceMap": true,
+    "declaration": true,
+    "declarationMap": true,
+    "emitDeclarationOnly": true,
+    "rootDir": "..",
+    "outDir": "./dist",
+    "skipLibCheck": true,
+    "stripInternal": true,
+    "noImplicitOverride": true,
+    "paths": {
+      "@livelink.base/_prebuild/*": ["../livelink.base/_prebuild/*"],
+      "@livelink.base/*": ["../livelink.base/sources/*"]
+    }
+  },
+
+  // Only the entry tree; tests/ci/vitest.config stay out of the emitted program.
+  "include": ["./sources"]
+}

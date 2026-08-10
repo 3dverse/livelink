@@ -42,15 +42,23 @@ export class LXRViewport {
     readonly #xr_recommended_viewport_scale?: number;
 
     /**
-     * The XR viewport obtained from the XRWebGLLayer.
+     * The XR viewport obtained from the XRWebGLLayer. Not fixed for the lifetime of the session:
+     * see {@link syncViewportRect}.
      */
-    readonly xr_viewport: XRViewport;
+    #xr_viewport: XRViewport;
 
     /**
      * The livelink viewport corresponding to the XR view.
      */
     readonly viewport: Viewport;
-
+    
+    /**
+     * The XR viewport this eye is currently rendered into, in XRWebGLLayer framebuffer coordinates.
+     */
+    get xr_viewport(): XRViewport {
+        return this.#xr_viewport;
+    }
+    
     /**
      * Creates a new LXRViewport instance for a given XRView and rendering surface. This method initializes the
      * LXRViewport by creating a corresponding camera entity with the appropriate perspective lens.
@@ -137,24 +145,10 @@ export class LXRViewport {
                 "XRViewport could not be obtained from the XRWebGLLayer. This may indicate an issue with the XR session or device.",
             );
         }
-        this.xr_viewport = { x: xrv.x, y: xrv.y, width: xrv.width, height: xrv.height };
-
-        // Determine if XR viewports are normalized (0-1 range)
-        const is_xr_viewport_normalized = xrv.x <= 1 && xrv.y <= 1 && xrv.width <= 1 && xrv.height <= 1;
+        this.#xr_viewport = { x: xrv.x, y: xrv.y, width: xrv.width, height: xrv.height };
 
         // Compute relative rect (normalized coordinates)
-        const { x: left, y: top, width, height } = xrv;
-        const { framebufferWidth, framebufferHeight } = xr_base_gl_layer;
-        const rect = new RelativeRect(
-            is_xr_viewport_normalized
-                ? { left, top, width, height }
-                : {
-                      left: left / framebufferWidth,
-                      top: top / framebufferHeight,
-                      width: width / framebufferWidth,
-                      height: height / framebufferHeight,
-                  },
-        );
+        const rect = this.#computeRelativeRect({ xr_viewport: xrv, gl_layer: xr_base_gl_layer });
         console.debug(`Viewport rect for ${xr_view.eye} eye:`, rect);
 
         // Create livelink viewport
@@ -166,16 +160,48 @@ export class LXRViewport {
     }
 
     /**
-     * Validates whether the given XR view and its corresponding viewport from the XRWebGLLayer match the current
-     * viewport's XR view and viewport. This method is used to ensure that the XR session's viewports remain consistent
-     * throughout the session, as changes to the viewports may indicate issues with the XR session or device. If the
-     * viewports do not match, an error is thrown.
+     * Computes the livelink viewport rect from an XR viewport, normalized against the XRWebGLLayer
+     * framebuffer. Some user agents already hand back normalized coordinates, which are used as-is.
      *
-     * @param xr_view The XR view to validate against the current viewport's XR view.
-     * @param gl_layer The XRWebGLLayer from which to obtain the viewport for the given XR view.
-     * @returns True if viewports are not equal, false otherwise.
+     * @param xr_viewport The XR viewport to normalize.
+     * @param gl_layer The XRWebGLLayer the XR viewport belongs to, providing the framebuffer dimensions.
+     * @returns The corresponding relative rect for the livelink viewport.
      */
-    public validateViewportConsistency({ xr_view, gl_layer }: { xr_view: XRView; gl_layer: XRWebGLLayer }): void {
+    #computeRelativeRect({ xr_viewport, gl_layer }: { xr_viewport: XRViewport; gl_layer: XRWebGLLayer }): RelativeRect {
+        const { x: left, y: top, width, height } = xr_viewport;
+
+        // Determine if XR viewports are normalized (0-1 range)
+        const is_xr_viewport_normalized = left <= 1 && top <= 1 && width <= 1 && height <= 1;
+
+        const { framebufferWidth, framebufferHeight } = gl_layer;
+        return new RelativeRect(
+            is_xr_viewport_normalized
+                ? { left, top, width, height }
+                : {
+                      left: left / framebufferWidth,
+                      top: top / framebufferHeight,
+                      width: width / framebufferWidth,
+                      height: height / framebufferHeight,
+                  },
+        );
+    }
+
+    /**
+     * Reconciles this viewport with the XRWebGLLayer's viewport for the given XR view, as it stands
+     * on the current frame.
+     *
+     * A changed rect is a reconfiguration, not a failure. The user agent may hand back a different
+     * viewport on any frame — dynamic viewport scaling, which this class opts into in its
+     * constructor through `requestViewportScale`, is exactly that mechanism, and thermal throttling
+     * on a standalone headset triggers it routinely. So the cached XR viewport and the livelink
+     * viewport's relative rect are both recomputed, and the caller is told so it can notify
+     * consumers.
+     *
+     * @param xr_view The XR view to reconcile against.
+     * @param gl_layer The XRWebGLLayer from which to obtain the current viewport for that view.
+     * @returns True if the rect changed and the viewport was reconfigured, false if it was already up to date.
+     */
+    public syncViewportRect({ xr_view, gl_layer }: { xr_view: XRView; gl_layer: XRWebGLLayer }): boolean {
         if (this.#xr_view_eye !== xr_view.eye) {
             throw new Error(`XR view eye mismatch. Expected ${this.#xr_view_eye}, got ${xr_view.eye}`);
         }
@@ -187,17 +213,25 @@ export class LXRViewport {
             );
         }
 
-        const current = this.xr_viewport;
+        const current = this.#xr_viewport;
         if (
-            current.width !== xr_viewport.width ||
-            current.height !== xr_viewport.height ||
-            current.x !== xr_viewport.x ||
-            current.y !== xr_viewport.y
+            current.width === xr_viewport.width &&
+            current.height === xr_viewport.height &&
+            current.x === xr_viewport.x &&
+            current.y === xr_viewport.y
         ) {
-            throw new Error(
-                `XR viewports' rect have changed for eye ${this.#xr_view_eye}. Current: ${JSON.stringify(current)}, New: ${JSON.stringify(xr_viewport)}`,
-            );
+            return false;
         }
+
+        console.debug(
+            `XR viewport rect changed for eye ${this.#xr_view_eye}. Previous: ${JSON.stringify(current)}, new: ${JSON.stringify(xr_viewport)}`,
+        );
+
+        const { x, y, width, height } = xr_viewport;
+        this.#xr_viewport = { x, y, width, height };
+        this.viewport.relative_rect = this.#computeRelativeRect({ xr_viewport, gl_layer });
+
+        return true;
     }
 
     /**

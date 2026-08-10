@@ -7,7 +7,7 @@ import { LXRSurface } from "./LXRSurface";
 import { LXRCameraRig } from "./LXRCameraRig";
 import { LXRViewport } from "./LXRViewport";
 import { TypedEventTarget } from "./utils/TypedEventTarget";
-import { type LXREvents, ViewportUpdatedEvent } from "./LXREvents";
+import { type LXREvents, SessionEndEvent, ViewportUpdatedEvent } from "./LXREvents";
 import { Quaternion, Vector3 } from "threejs-math";
 
 //------------------------------------------------------------------------------
@@ -52,6 +52,20 @@ export class XRLivelink extends TypedEventTarget<LXREvents> {
     #animation_frame_request_id: number = 0;
 
     /**
+     * Whether the XR frame loop should keep re-arming itself. Lowered by {@link stop} so that a
+     * callback already queued when the loop was stopped — every frame in flight when the session
+     * ends — does not queue another one.
+     */
+    #is_frame_loop_running: boolean = false;
+
+    /**
+     * Message of the last error caught in {@link #onXRFrame}, or undefined if the last frame
+     * succeeded. A failing frame usually fails again on the next one, so only transitions are
+     * logged rather than every frame of a 72–90 Hz loop.
+     */
+    #last_frame_error_message?: string;
+
+    /**
      * Whether latency compensation using billboard rendering is enabled.
      * This affects overscan configuration and FOV adjustments.
      */
@@ -87,6 +101,19 @@ export class XRLivelink extends TypedEventTarget<LXREvents> {
     #resolution_scale: number = 1.0;
 
     /**
+     * Scene-space depth the latency-compensation billboard stands in for, in scene units. See
+     * {@link billboard_reference_depth}.
+     */
+    #billboard_reference_depth: number = 25;
+
+    /**
+     * Whether {@link release} has been entered. Set before the session is ended so that the `end`
+     * event it triggers can be told apart from an end initiated by the system or the user, which
+     * is the only one consumers should react to. See {@link SessionEndEvent}.
+     */
+    #is_releasing: boolean = false;
+
+    /**
      * Test if the provided XR session mode is supported by this browser.
      */
     public static async isSessionSupported(mode: XRSessionMode): Promise<boolean> {
@@ -118,6 +145,14 @@ export class XRLivelink extends TypedEventTarget<LXREvents> {
      */
     get xr_mode(): XRSessionMode {
         return this.#session.xr_mode;
+    }
+
+    /**
+     * Whether {@link release} has been entered. Any XRSession `end` observed from now on is one we
+     * asked for, not one the user or the system initiated.
+     */
+    get is_releasing(): boolean {
+        return this.#is_releasing;
     }
 
     /**
@@ -241,6 +276,29 @@ export class XRLivelink extends TypedEventTarget<LXREvents> {
     }
 
     /**
+     * Scene-space depth the latency-compensation billboard stands in for, in scene units.
+     *
+     * The billboard is drawn in XR space, where the same scene depth lands `camera_rig.scale`
+     * metres away, so the metric distance handed to the context is this value scaled by the rig —
+     * see {@link #updateBillboardDistance}. Raise it for a scene whose interesting content sits
+     * further out than the default, lower it for one the user is right up against.
+     */
+    get billboard_reference_depth(): number {
+        return this.#billboard_reference_depth;
+    }
+
+    /**
+     * Set the scene-space depth the latency-compensation billboard stands in for, in scene units.
+     */
+    set billboard_reference_depth(value: number) {
+        if (!(value > 0)) {
+            throw new Error("Billboard reference depth must be strictly positive");
+        }
+
+        this.#billboard_reference_depth = value;
+    }
+
+    /**
      * Get overscan FOV factor
      */
     get overscan_fov_factor(): number {
@@ -353,6 +411,10 @@ export class XRLivelink extends TypedEventTarget<LXREvents> {
     }): Promise<XRSession> {
         const is_ar = mode === "immersive-ar";
 
+        // A previously released instance being initialized again starts a new session, whose end is
+        // once more something consumers need to hear about.
+        this.#is_releasing = false;
+
         // Initialize XR session
         const session = await this.#session.initialize({
             mode,
@@ -360,6 +422,13 @@ export class XRLivelink extends TypedEventTarget<LXREvents> {
             force_single_view,
             signal,
         });
+
+        // Listen for the session ending as early as possible: the rest of this method can take
+        // several seconds (surface, viewports, camera rig), and a session ended in that window
+        // would otherwise never be reported — leaving the consumer waiting on an initialization
+        // that can no longer complete.
+        session.addEventListener("end", this.#onXRSessionEnd);
+
         this.#throwIfAborted(signal);
 
         // Configure XRWebGLLayer and display parameters
@@ -431,6 +500,7 @@ export class XRLivelink extends TypedEventTarget<LXREvents> {
      * Start the XR frame animation loop
      */
     public start(): void {
+        this.#is_frame_loop_running = true;
         this.#animation_frame_request_id = this.#xr_session.requestAnimationFrame(this.#onXRFrame);
     }
 
@@ -438,28 +508,87 @@ export class XRLivelink extends TypedEventTarget<LXREvents> {
      * Stop the XR frame animation loop
      */
     public stop(): void {
+        this.#is_frame_loop_running = false;
+
         if (this.#animation_frame_request_id && this.xr_session) {
-            this.xr_session.cancelAnimationFrame(this.#animation_frame_request_id);
+            try {
+                this.xr_session.cancelAnimationFrame(this.#animation_frame_request_id);
+            } catch (error) {
+                // Cancelling on an already ended session throws in some UAs. The loop is dead
+                // either way, so this must not prevent the rest of the teardown from running.
+                console.warn("Could not cancel the XR animation frame:", error);
+            }
             this.#animation_frame_request_id = 0;
         }
     }
 
     /**
-     * XR frame callback
+     * Handle the XRSession ending. Ends we caused ourselves through {@link release} are swallowed;
+     * everything else — system menu, back gesture, doff timeout — is forwarded to consumers, which
+     * is their only chance to leave the XR mode they optimistically entered.
+     */
+    #onXRSessionEnd = (event: XRSessionEvent): void => {
+        this.stop();
+
+        if (this.#is_releasing) {
+            return;
+        }
+
+        console.debug("XR session ended externally");
+        this._dispatchEvent(new SessionEndEvent({ xr_session_event: event }));
+    };
+
+    /**
+     * XR frame callback. Drives the frame and then re-arms the loop, whatever the frame did.
+     *
+     * A frame is allowed to fail. The session is still alive when it does, so a loop that stopped
+     * re-arming would leave the user staring at the last frame ever drawn, rigidly following their
+     * head with no way out but a page reload. Skipping a frame is recoverable; dying is not.
      *
      * @param _ The high resolution timestamp for the current frame, which can be used for synchronizing animations or other time-based updates.
      * @param frame The XRFrame containing the latest pose and view data from the XR session, which is used to update the viewports and render the frame.
      */
     #onXRFrame = (_: DOMHighResTimeStamp, frame: XRFrame): void => {
-        const session = this.#xr_session;
+        try {
+            this.#renderXRFrame(frame);
+            this.#last_frame_error_message = undefined;
+        } catch (error) {
+            const message = error instanceof Error ? error.message : String(error);
+            if (message !== this.#last_frame_error_message) {
+                this.#last_frame_error_message = message;
+                console.error("Skipped an XR frame:", error);
+            }
+        }
+
+        this.#requestNextXRFrame();
+    };
+
+    /**
+     * Re-arm the XR frame loop, unless it has been stopped in the meantime — which is the case for
+     * any frame still in flight when the session ended.
+     */
+    #requestNextXRFrame(): void {
+        const session = this.#session.native;
+        if (!this.#is_frame_loop_running || !session) {
+            return;
+        }
+
+        this.#animation_frame_request_id = session.requestAnimationFrame(this.#onXRFrame);
+    }
+
+    /**
+     * Render a single XR frame: update the viewports and camera rig from the current viewer pose,
+     * then draw. May throw; see {@link #onXRFrame}.
+     *
+     * @param frame The XRFrame containing the latest pose and view data from the XR session.
+     */
+    #renderXRFrame(frame: XRFrame): void {
         const reference_space = this.#xr_reference_space;
         const gl_layer = this.#base_gl_layer;
 
         // Get viewer pose
         const pose = frame.getViewerPose(reference_space);
         if (!pose) {
-            // Request next frame
-            this.#animation_frame_request_id = session.requestAnimationFrame(this.#onXRFrame);
             return;
         }
 
@@ -485,16 +614,48 @@ export class XRLivelink extends TypedEventTarget<LXREvents> {
         const remote_camera_transforms = lxr_viewports.map(lxrv => lxrv.getCameraRemoteTransform());
         this.#camera_rig.update({ remote_camera_transforms });
 
+        // Keep the billboard at the apparent depth of the scene, which the rig scale moves.
+        this.#updateBillboardDistance(xr_views);
+
         // Draw the frame for each viewport with the latest XR view and remote camera transform data
         this.#surface.context.drawXRFrame({
             xr_views,
             xr_viewports: lxr_viewports.map(lxr_viewport => lxr_viewport.xr_viewport),
             frame_camera_transforms: remote_camera_transforms,
         });
+    }
 
-        // Request next frame
-        this.#animation_frame_request_id = session.requestAnimationFrame(this.#onXRFrame);
-    };
+    /**
+     * Place the latency-compensation billboard at the apparent depth of the scene for this frame.
+     *
+     * The rig divides camera positions by its scale, so a point `d` scene units from the camera is
+     * `d * scale` metres away in XR space — a fixed 25 m plane is only right at scale 1, and lands
+     * a kilometre inside the content at 1000:1 or well behind the user's hands at "Fit 1m³". The
+     * reprojection is exact only on the plane itself, and everywhere else the error grows with the
+     * distance to it, so the plane follows the scale.
+     *
+     * The result is clamped to the frustum the projection matrix actually describes: a billboard
+     * past the far plane is clipped away entirely and one inside the near plane just as much, and
+     * the extreme scale steps reach both ends.
+     *
+     * @param xr_views The XR views for this frame, whose projection matrix gives the frustum bounds.
+     */
+    #updateBillboardDistance(xr_views: readonly XRView[]): void {
+        if (xr_views.length === 0) {
+            return;
+        }
+
+        const projection_matrix = xr_views[0].projectionMatrix;
+        const near_plane = projection_matrix[14] / (projection_matrix[10] - 1);
+        const far_plane = projection_matrix[14] / (projection_matrix[10] + 1);
+
+        const min_distance = near_plane * 2;
+        // An infinite far plane — projection_matrix[10] === -1 — yields a non-finite far_plane here.
+        const max_distance = Number.isFinite(far_plane) ? Math.max(far_plane * 0.5, min_distance) : Infinity;
+
+        const distance = this.#billboard_reference_depth * this.#camera_rig.scale;
+        this.#surface.context.screen_distance = Math.min(Math.max(distance, min_distance), max_distance);
+    }
 
     /**
      * Get the LXRViewport corresponding to the given XR eye. Throws an error if no viewport is found for the eye.
@@ -517,7 +678,7 @@ export class XRLivelink extends TypedEventTarget<LXREvents> {
      *
      * @param xr_view The XR view containing the current transform and lens information for the camera.
      * @param lxr_viewport The LXRViewport to update based on the XR view data.
-     * @param gl_layer The XRWebGLLayer for validating viewport consistency with the current XR session configuration.
+     * @param gl_layer The XRWebGLLayer to reconcile the viewport rect against for the current frame.
      * @param center_eye The position of the center eye, used to compute the IPD offset for the camera's local transform.
      */
     #updateViewport({
@@ -531,8 +692,10 @@ export class XRLivelink extends TypedEventTarget<LXREvents> {
         gl_layer: XRWebGLLayer;
         center_eye: { position: Vector3; orientation: Quaternion; orientation_conjugate: Quaternion };
     }): void {
-        // Validate LXRViewport consistency with current XRView and XRWebGLLayer configuration
-        lxr_viewport.validateViewportConsistency({ xr_view, gl_layer });
+        // Reconcile the LXRViewport with the current XRView and XRWebGLLayer configuration. The user
+        // agent may resize the viewport on any frame, dynamic viewport scaling being the whole point
+        // of `requestViewportScale`, so this reconfigures the viewport instead of failing.
+        let is_viewport_updated = lxr_viewport.syncViewportRect({ xr_view, gl_layer });
 
         // Update the viewport's camera with the latest XR view data and center eye position for IPD offset
         const camera = lxr_viewport.updateCamera({
@@ -546,6 +709,11 @@ export class XRLivelink extends TypedEventTarget<LXREvents> {
         if (!camera.perspective_lens || this.#areDistinctLens(perspective_lens, camera.perspective_lens)) {
             console.debug(`🔍 Updating perspective lens for camera ${camera.name}`, perspective_lens);
             camera.perspective_lens = perspective_lens;
+            is_viewport_updated = true;
+        }
+
+        // A rect change and a lens change usually arrive together — notify consumers once.
+        if (is_viewport_updated) {
             this._dispatchEvent(new ViewportUpdatedEvent({ viewport: lxr_viewport.viewport }));
         }
     }
@@ -642,7 +810,12 @@ export class XRLivelink extends TypedEventTarget<LXREvents> {
      * Release all resources and end the session
      */
     public async release(): Promise<void> {
+        // Raised before anything else so that the `end` event ultimately triggered by
+        // `#session.release()` is recognised as ours and not forwarded as a SessionEndEvent.
+        this.#is_releasing = true;
+
         this.stop();
+        this.xr_session?.removeEventListener("end", this.#onXRSessionEnd);
 
         this.#lxr_viewports.forEach(lxr_viewport => lxr_viewport.release());
         this.#lxr_viewports.clear();

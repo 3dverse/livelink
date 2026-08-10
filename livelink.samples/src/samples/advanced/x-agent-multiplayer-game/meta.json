@@ -1,0 +1,5 @@
+{
+  "title": "Multiplayer Game",
+  "summary": "A multiplayer cube-clearing game hosted by a headless agent: create a room to join it, click cubes to score, and let the agent referee the round, keep the scoreboard in tags components and call the winner. A single agent hosts every room.",
+  "useCustomLayout": true
+}
