@@ -57,8 +57,8 @@ import { openSessionInEditor } from "../lib/open-in-editor";
 // `npm run opcua` reads the `.env` beside it if there is one, so the token can
 // live in a file next to these scripts or come straight from the shell.
 //------------------------------------------------------------------------------
-const TOKEN = process.env.LIVELINK_TOKEN;
-const LIVELINK_API_KEY = process.env.LIVELINK_API_KEY;
+const TOKEN = process.env.VITE_PROD_PUBLIC_TOKEN;
+const ENVIRONMENT_ID = process.env.ENVIRONMENT_ID ?? "37e658f5-0dec-4ccd-bae6-c39d27f93d91";
 const SCENE_ID = process.env.SCENE_ID ?? "1c7da705-5532-4fdb-9b31-4034fdbf5cde";
 const SESSION_ID = process.env.SESSION_ID;
 const ENDPOINT_URL = process.env.OPCUA_ENDPOINT ?? "opc.tcp://localhost:50000";
@@ -457,7 +457,7 @@ async function readNamespaceIndex(): Promise<number> {
 
 //------------------------------------------------------------------------------
 function withTimeout<T>(work: Promise<T>, milliseconds: number): Promise<T> {
-    let timer: NodeJS.Timeout;
+    let timer: ReturnType<typeof setTimeout>;
     const expiry = new Promise<never>((_, reject) => {
         timer = setTimeout(() => reject(new Error(`timed out after ${milliseconds} ms`)), milliseconds);
     });
@@ -511,12 +511,6 @@ async function main(): Promise<void> {
                 "then run `npm run opcua`.",
         );
     }
-    if (!LIVELINK_API_KEY) {
-        throw new Error(
-            "LIVELINK_API_KEY is not set. Put it in `.env` next to these samples (see `.env.example`) or export it, " +
-                "then run `npm run opcua`.",
-        );
-    }
 
     const namespace_index = await resolveNamespaceIndex();
     console.log(`[opcua-agent] opc-plc nodes are at ns=${namespace_index} on ${ENDPOINT_URL}`);
@@ -542,7 +536,12 @@ async function main(): Promise<void> {
             `[opcua-agent] Driving session ${livelink.session.session_id}. ` +
                 `Join it from any viewer on scene ${SCENE_ID} to watch the cell move.`,
         );
-        void openSessionInEditor({ session_id: livelink.session.session_id, token: LIVELINK_API_KEY });
+        void openSessionInEditor({
+            environment_id: ENVIRONMENT_ID,
+            scene_id: SCENE_ID,
+            session_id: livelink.session.session_id,
+            token: TOKEN,
+        });
     });
 
     await ingestion.start();

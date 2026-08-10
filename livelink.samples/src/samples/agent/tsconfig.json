@@ -10,14 +10,14 @@
   // goes through its `exports` and lands on the emitted `.d.ts` — what `npm install` hands over.
   // Pointing straight at the `.d.ts` would type-check the same, but tsx reads these paths too and
   // would try to *execute* a declaration file. So `npm run build` has to have run first.
-  "extends": "./tsconfig.json",
+  "extends": "../../../../livelink.clients/livelink.agent/tsconfig.json",
   "compilerOptions": {
+    "rootDir": ".",
     "noEmit": true,
-    "lib": ["ESNext"],
+    "lib": ["ESNext", "DOM"],
     "types": ["node"],
-    "paths": {
-      "@3dverse/livelink-agent": ["."]
-    }
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
   },
-  "include": ["./samples"]
+  "include": ["./**/*.ts"]
 }

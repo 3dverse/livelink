@@ -13,18 +13,21 @@ import { spawn } from "node:child_process";
  * logged and swallowed rather than thrown, since this is a convenience on top of
  * the agent driving the scene, not something that should ever take it down.
  */
-export async function openSessionInEditor({ session_id, token }: { session_id: string; token: string }): Promise<void> {
+export async function openSessionInEditor({
+    environment_id,
+    scene_id,
+    session_id,
+    token,
+}: {
+    environment_id: string;
+    scene_id: string;
+    session_id: string;
+    token: string;
+}): Promise<void> {
     try {
-        const res = await fetch(`https://api.3dverse.com/app/v1/sessions/${session_id}/guests`, {
-            method: "POST",
-            headers: { api_key: token },
-        });
-        if (!res.ok) {
-            throw new Error(`guest token request failed with status ${res.status}`);
-        }
-
-        const { guest_token } = (await res.json()) as { guest_token: string };
-        openBrowser(`https://console.3dverse.com/editor/${guest_token}`);
+        openBrowser(
+            `https://console.3dverse.com/app-launcher/session/join/default/${environment_id}/${scene_id}/${session_id}/?token=${token}`,
+        );
     } catch (error) {
         console.warn(`[open-in-editor] Could not open the editor automatically (${error}).`);
     }

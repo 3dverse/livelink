@@ -289,7 +289,7 @@ export class SceneIngestion extends ObservedEventTarget<SceneIngestionEvents> im
 
     #onSessionReady = (event: SessionReadyEvent): void => {
         this._dispatchEvent(new SessionReadyEvent({ livelink: event.livelink }));
-        void this.#bindSession(event.livelink);
+        this.#bindSession(event.livelink);
     };
 
     #onSessionLeft = (event: SessionLeftEvent): void => {
