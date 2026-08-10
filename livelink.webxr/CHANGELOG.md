@@ -1,5 +1,22 @@
 # @3dverse/livelink-webxr
 
+## 0.2.6
+
+### Patch Changes
+
+- feat(livelink.webxr): allow xr viewport live change and secure xr loop if it throws
+- feat(livelink.webxr): allow earlier session-end event subscribe, add onError callback if init error, remove unintended fakeAlpha dependency from react layout effect
+- feat(livelink.webxr): improve LXRContext texture magnification quality, do not resolve shader program uniforms on each draw call, fix gl resource leak, adapt screen distance to rig scale
+- fix(livelink.webxr): LXRContext's fragment shader premultiplied RGB by the pre-scale luminance alpha instead of the final one, so lowering alpha made the image brighter rather than translucent.
+- Updated dependencies
+- Updated dependencies
+- Updated dependencies
+- Updated dependencies
+- Updated dependencies
+- Updated dependencies
+  - @3dverse/livelink@0.8.65
+  - @3dverse/livelink-react-ui@0.3.24
+
 ## 0.2.5
 
 ### Patch Changes

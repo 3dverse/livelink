@@ -1,6 +1,6 @@
 {
   "name": "@3dverse/livelink",
-  "version": "0.8.64",
+  "version": "0.8.65",
   "description": "",
   "main": "./dist/index.cjs",
   "module": "./dist/index.mjs",
