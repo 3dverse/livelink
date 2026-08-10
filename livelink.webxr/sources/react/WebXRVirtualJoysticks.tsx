@@ -4,6 +4,7 @@ import { VirtualJoystick, VirtualJoystickOptions } from "@3dverse/livelink-react
 
 //------------------------------------------------------------------------------
 import { useXRThrustMove, useXRStrafeMove, useXRVerticalMove, useXRYawRotation } from "./WebXRLocomotionHooks";
+import type { LXRAxisSmoothingOptions, LXRTurnMode } from "../LXRComfort";
 
 //------------------------------------------------------------------------------
 /**
@@ -15,7 +16,10 @@ import { useXRThrustMove, useXRStrafeMove, useXRVerticalMove, useXRYawRotation }
  *
  * Left joystick:
  * - Up/down: move up/down relative to center eye orientation
- * - Left/right: yaw around world Y axis
+ * - Left/right: yaw around world Y axis — snapped or continuous, see `turnMode`
+ *
+ * Every axis is conditioned before it reaches the rig: a deadzone, a shaped response and a ramp in
+ * and out. See {@link LXRAxisSmoother}.
  */
 export function WebXRVirtualJoysticks({
     speedFactor = 1,
@@ -24,6 +28,9 @@ export function WebXRVirtualJoysticks({
     leftRect,
     leftJoystickOptions,
     rightJoystickOptions,
+    turnMode,
+    snapTurnAngle,
+    smoothing,
 }: {
     speedFactor?: number;
     rightRect?: React.CSSProperties;
@@ -31,16 +38,35 @@ export function WebXRVirtualJoysticks({
     sizeInRem?: string;
     leftJoystickOptions?: Omit<VirtualJoystickOptions, "container">;
     rightJoystickOptions?: Omit<VirtualJoystickOptions, "container">;
+
+    /**
+     * How the left stick's X axis turns the user. Left undefined it follows the session mode:
+     * snapped in a headset, where continuous yaw is the most reliable way to make someone sick, and
+     * continuous on a handheld screen, where there is no vection to speak of and a snapping window
+     * reads as a fault.
+     */
+    turnMode?: LXRTurnMode;
+
+    /**
+     * Degrees turned by one snap, when `turnMode` resolves to `snap`. 30 and 45 are the usual
+     * choices; 45 is the default.
+     */
+    snapTurnAngle?: number;
+
+    /**
+     * Comfort conditioning applied to every axis. Pass `false` to feed the sticks straight through.
+     */
+    smoothing?: LXRAxisSmoothingOptions | false;
 }): JSX.Element {
     //--------------------------------------------------------------------------
     const [leftContainer, setLeftContainer] = useState<HTMLDivElement | null>(null);
     const [rightContainer, setRightContainer] = useState<HTMLDivElement | null>(null);
 
     //--------------------------------------------------------------------------
-    const thrust = useXRThrustMove({ speed: 4 * speedFactor });
-    const strafe = useXRStrafeMove({ speed: 2 * speedFactor });
-    const vertical = useXRVerticalMove({ speed: 2 * speedFactor });
-    const yaw = useXRYawRotation({ speed: 40 * speedFactor });
+    const thrust = useXRThrustMove({ speed: 4 * speedFactor, smoothing });
+    const strafe = useXRStrafeMove({ speed: 2 * speedFactor, smoothing });
+    const vertical = useXRVerticalMove({ speed: 2 * speedFactor, smoothing });
+    const yaw = useXRYawRotation({ speed: 40 * speedFactor, smoothing, turnMode, snapAngle: snapTurnAngle });
 
     //--------------------------------------------------------------------------
     leftRect = {

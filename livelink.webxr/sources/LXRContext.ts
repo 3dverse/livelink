@@ -19,6 +19,8 @@ const UNIFORM_NAMES = [
     "billboardMatrix",
     "fakeAlphaEnabled",
     "fakeAlphaScale",
+    "vignetteStrength",
+    "vignetteScale",
     "texture",
 ] as const;
 
@@ -104,6 +106,17 @@ export class LXRContext extends ContextProvider {
      * Overall transparency multiplier for the fake alpha effect.
      */
     fake_alpha_scale: number = 1;
+
+    /**
+     * Strength of the comfort vignette, from 0 (off) to 1 (the aperture closes to a narrow tunnel).
+     *
+     * Restricting the periphery during virtual locomotion is the standard countermeasure to the
+     * conflict that makes people sick in VR: the optical flow that says "you are moving" is loudest
+     * at the edge of the field of view, and that is exactly where the inner ear has nothing to
+     * corroborate it with. {@link XRLivelink} raises and lowers this as the user moves; it is not
+     * meant to be set per frame by hand.
+     */
+    vignette_strength: number = 0;
 
     /**
      * Neutral forward direction in camera local space.
@@ -257,6 +270,8 @@ export class LXRContext extends ContextProvider {
             billboardMatrix: billboardMatrixLocation,
             fakeAlphaEnabled: fakeAlphaEnabledLocation,
             fakeAlphaScale: fakeAlphaScaleLocation,
+            vignetteStrength: vignetteStrengthLocation,
+            vignetteScale: vignetteScaleLocation,
         } = this.#uniform_locations!;
 
         gl.activeTexture(gl.TEXTURE0);
@@ -273,6 +288,10 @@ export class LXRContext extends ContextProvider {
         const viewportHeight = this.#last_frame_section.section.height;
 
         gl.uniform2fv(sizeLocation, [viewportWidth, viewportHeight]);
+
+        // Both are the same for every view of the frame.
+        gl.uniform1f(vignetteStrengthLocation, this.vignette_strength);
+        gl.uniform1f(vignetteScaleLocation, this.scale_factor);
 
         const combinedViewportWidth = xr_viewports.reduce((acc, { width }) => acc + width, 0);
 
@@ -391,6 +410,7 @@ export class LXRContext extends ContextProvider {
         const vertex_shader_source = `
             attribute vec2 position;
             varying vec2 texCoord;
+            varying vec2 vignetteCoord;
 
             ${
                 enable_billboard
@@ -405,11 +425,17 @@ export class LXRContext extends ContextProvider {
             uniform vec2 size;
             uniform vec2 offset;
             uniform vec2 viewOffset;
+            uniform float vignetteScale;
 
             void main() {
                 texCoord = (position + 1.0) * 0.5;
                 texCoord.y = 1.0 - texCoord.y;
                 texCoord = size * texCoord + offset;
+                // Distance from the centre of the view, normalized so 1.0 is the edge of what the
+                // user can actually see. With overscan the quad extends past that by the surface
+                // scale factor, which is what vignetteScale corrects for — without it the vignette
+                // would close in around a ring the user never looks at.
+                vignetteCoord = position * vignetteScale;
                 ${
                     enable_billboard
                         ? `
@@ -430,9 +456,11 @@ export class LXRContext extends ContextProvider {
         const fragment_shader_source = `
             precision mediump float;
             varying vec2 texCoord;
+            varying vec2 vignetteCoord;
             uniform sampler2D texture;
             uniform int fakeAlphaEnabled;
             uniform float fakeAlphaScale;
+            uniform float vignetteStrength;
 
             float luminance(vec3 color) {
                 // sRGB luminance approximation
@@ -452,13 +480,30 @@ export class LXRContext extends ContextProvider {
                     if(fakeAlphaScale < 1.0) {
                         gl_FragColor.a *= fakeAlphaScale;
                     }
+                }
 
+                if(vignetteStrength > 0.0) {
+                    // Comfort vignette: fade the periphery out while the user is moving virtually.
+                    // The aperture both narrows and deepens with the strength, so the effect grows
+                    // continuously out of "off" rather than popping in at a fixed radius the
+                    // instant locomotion starts.
+                    float strength = clamp(vignetteStrength, 0.0, 1.0);
+                    float outer_radius = mix(1.45, 0.85, strength);
+                    float inner_radius = outer_radius * 0.55;
+                    float falloff = smoothstep(inner_radius, outer_radius, length(vignetteCoord));
+                    gl_FragColor.a *= 1.0 - falloff * strength;
+                }
+
+                if(fakeAlphaEnabled == 1) {
                     // Premultiply RGB by alpha to avoid color bleeding on transparent edges
                     // (required for correct blending in compositing / XR rendering).
                     // It has to be the final alpha, not the pre-scale luminance one: the compositor
                     // computes rgb + dst * (1 - a), so premultiplying by more than a adds the
                     // scene on top of an undimmed passthrough instead of fading it into it — the
                     // whole image reads as brighter rather than more transparent.
+                    // Which is also why the vignette lands on the alpha above and not here: it has
+                    // to be part of the alpha this multiplies by, or the two disagree and the
+                    // darkened ring turns into a bright one.
                     gl_FragColor.rgb *= gl_FragColor.a;
                 }
             }`;

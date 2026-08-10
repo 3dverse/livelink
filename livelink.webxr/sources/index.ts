@@ -11,6 +11,7 @@ export * from "./LXRContext";
 export * from "./LXRContextPassthrough";
 export * from "./LXRLocomotion";
 export * from "./LXRScaling";
+export * from "./LXRComfort";
 
 // React integration
 export * from "./react";
