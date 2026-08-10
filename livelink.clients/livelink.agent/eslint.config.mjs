@@ -30,19 +30,6 @@ export default [
             },
         },
     },
-    {
-        // `samples/` holds the runnable Node.js scripts that go with the package — see
-        // `samples/README.md`. They are programs rather than library code, hence the Node globals
-        // and their own tsconfig, which gives them a consumer's view of the package.
-        files: ["samples/**/*.ts"],
-        languageOptions: {
-            globals: globals.node,
-            parserOptions: {
-                project: ["./tsconfig.samples.json"],
-                tsconfigRootDir: __dirname,
-            },
-        },
-    },
     pluginJs.configs.recommended,
     ...tseslint.configs.recommended,
     {
@@ -56,15 +43,6 @@ export default [
                     caughtErrorsIgnorePattern: "^_",
                 },
             ],
-        },
-    },
-    {
-        // Sample code is read top to bottom, and annotating the return type of every inline
-        // callback is noise there in a way it is not in the library: the mappings are dense with
-        // them, and the type is right there in the `EventMapping` they are handed to.
-        files: ["samples/**/*.ts"],
-        rules: {
-            "@typescript-eslint/explicit-function-return-type": ["error", { allowExpressions: true }],
         },
     },
 ];
