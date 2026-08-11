@@ -1,5 +1,12 @@
 # @3dverse/livelink-agent
 
+## 0.5.2
+
+### Patch Changes
+
+- chore(livelink.agent): remove deprecated eslint config for nodejs samples moved to livelink.samples
+- docs(livelink.agent): review README
+
 ## 0.5.1
 
 ### Patch Changes
