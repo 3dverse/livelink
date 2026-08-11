@@ -37,7 +37,7 @@ The reason it could not simply be installed before is worth keeping in mind, bec
 property of npm workspaces rather than of this package: a workspace member's devDependencies hoist
 to the root `node_modules`, where `livelink.samples` — the one browser-bundled consumer of this SDK
 — resolves them, and npm has no per-workspace opt-out. The transport reaches its peer through a
-statically analysable `import("node-opcua-client")`, so a bundler that *can* resolve the specifier
+statically analysable `import("node-opcua-client")`, so a bundler that _can_ resolve the specifier
 will pull the whole Node-only tree into a browser bundle. That is now prevented at the single place
 it can happen: `livelink.samples/vite.config.ts` excludes the specifier from both the dev-server
 prebundle and the production build, restoring exactly the behavior of a consumer who never installed
@@ -52,11 +52,11 @@ the real `Variant` / `DataValue` so the narrowing cannot drift.
 An integration answers three questions. The engine that answers the middle one is a standalone
 object, and the one that answers the third is thin wiring:
 
-| Question                          | Concept                                  | Options                                                                               |
-| --------------------------------- | ---------------------------------------- | ------------------------------------------------------------------------------------- |
+| Question                          | Concept                                  | Options                                                                                   |
+| --------------------------------- | ---------------------------------------- | ----------------------------------------------------------------------------------------- |
 | Where do events come from?        | **Transport** (a source)                 | `playback`, `mqtt`, `azure-event-hub`, `opcua`, your own — or nothing, and push events in |
-| How does an event drive entities? | **EventMapping** → **IngestionPipeline** | a plain object: selection + `entities` + `updates`                                    |
-| Which scene(s)/session(s)?        | **Agent** + **SceneIngestion**           | the `Agent`'s mode: one session (`join-or-start`) … all sessions (`join-all` + watch) |
+| How does an event drive entities? | **EventMapping** → **IngestionPipeline** | a plain object: selection + `entities` + `updates`                                        |
+| Which scene(s)/session(s)?        | **Agent** + **SceneIngestion**           | the `Agent`'s mode: one session (`join-or-start`) … all sessions (`join-all` + watch)     |
 
 ```typescript
 import { Agent, SceneIngestion, type EventMapping } from "@3dverse/livelink-agent";
@@ -158,7 +158,7 @@ a constant. Narrow a dump with `channel_filter` rather than pre-filtering the re
 
 ## Playback is a source, not a file
 
-`PlaybackTransport` replays a *dump of an event stream*. Where those bytes live is incidental, so
+`PlaybackTransport` replays a _dump of an event stream_. Where those bytes live is incidental, so
 `source` accepts a file path (`{ file_path }`, Node only), a URL (`{ url }`, `fetch`, so browser and
 Node), the dump itself as a string or bytes, a `ReadableStream` or async iterable, records the caller
 already parsed, or a `() => source` factory. Only the `{ file_path }` form touches Node's file
@@ -313,22 +313,22 @@ Every piece remains public and usable alone: the `IngestionPipeline` with no age
 
 ## Layout (`sources/data/`)
 
-| Folder        | Contents                                                                                                                                                                                 |
-| ------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| root          | `IngestionPipeline.ts` (engine), `SceneIngestion.ts` (wiring), `SceneIngestionEvents.ts`, `EventMapping.ts`, `IngestEvent.ts`, `Transport.ts`, `IngestionStats.ts`, `SchemaValidator.ts` |
+| Folder        | Contents                                                                                                                                                                                         |
+| ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| root          | `IngestionPipeline.ts` (engine), `SceneIngestion.ts` (wiring), `SceneIngestionEvents.ts`, `EventMapping.ts`, `IngestEvent.ts`, `Transport.ts`, `IngestionStats.ts`, `SchemaValidator.ts`         |
 | `transports/` | `TransportRegistry.ts`, `PlaybackTransport.ts`, `MqttTransport.ts`, `AzureEventHubTransport.ts`, `OpcUaTransport.ts` (+ `OpcUaClientModule.ts`, its optional peer declared rather than imported) |
-| `resolvers/`  | `EntityResolver.ts` (caching base), `ExistingEntityResolver.ts`, `SpawningEntityResolver.ts`                                                                                             |
-| `apply/`      | `ComponentPatchApplier.ts` (write dedup)                                                                                                                                                 |
-| `util/`       | `channel.ts`, `reporting.ts`                                                                                                                                                             |
+| `resolvers/`  | `EntityResolver.ts` (caching base), `ExistingEntityResolver.ts`, `SpawningEntityResolver.ts`                                                                                                     |
+| `apply/`      | `ComponentPatchApplier.ts` (write dedup)                                                                                                                                                         |
+| `util/`       | `channel.ts`, `reporting.ts`                                                                                                                                                                     |
 
-Outside `sources/`, [`samples/`](samples/README.md) holds two runnable agents — one per live
+Outside `sources/`, [`livelink.samples/src/samples/agent/`](livelink.samples/src/samples/agent/README.md) holds two runnable agents — one per live
 transport, MQTT and OPC UA — each against a source you start with one docker command, plus the
 playback generators that write the dumps `PlaybackTransport` replays. They are scripts of this
 package, not a package of their own: `npm run sample:mqtt` / `sample:opcua` /
 `generate:x-agent-data-ingestion` from the package root, type-checked by `typecheck:samples`.
 
 One `tsconfig.samples.json` serves both the type-check and the `tsx` run. Its `paths` entry maps
-`@3dverse/livelink-agent` to the package *directory*, so resolution goes through the package's
+`@3dverse/livelink-agent` to the package _directory_, so resolution goes through the package's
 `exports` and lands on the **build output** rather than following the workspace symlink back into
 `sources/` — what the samples exercise is what a consumer gets, and `build:agent` has to have run
 first. (Mapping straight at the `.d.ts` would type-check identically but tsx reads these paths too

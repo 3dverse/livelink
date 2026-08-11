@@ -168,6 +168,30 @@ export class LXRCameraRig {
     };
 
     /**
+     * Highest locomotion magnitude reported since the last frame was rendered, in `[0, 1]`.
+     * See {@link reportLocomotionIntensity}.
+     */
+    #locomotion_intensity: number = 0;
+
+    /**
+     * The value {@link #locomotion_intensity} held on the previous rendered frame, kept so a render
+     * frame that lands before this frame's locomotion callbacks still sees the motion. The
+     * locomotion loops and the render loop are separate `requestAnimationFrame` chains with no
+     * defined order between them, so without the one-frame hold the intensity would flicker.
+     */
+    #previous_locomotion_intensity: number = 0;
+
+    /**
+     * Scratch orientation values for {@link incrementPoseLocalOffset} and friends, which are called
+     * once per axis per frame from the locomotion loops. Reuse is safe because none of them is
+     * re-entered while a scratch value is live.
+     */
+    readonly #offset_scratch = {
+        quaternion: new Quaternion(),
+        euler: new Euler(0, 0, 0, "XYZ"),
+    };
+
+    /**
      * Cached vectors/quaternions for transform composition to avoid GC churn from temporary objects each frame in
      * {@link #updatePoseTransform} and {@link #stripRigFromTransforms}.
      */
@@ -189,6 +213,11 @@ export class LXRCameraRig {
         frame_camera_pose: {
             position: new Vector3(),
             orientation: new Quaternion(),
+        },
+        camera_scale_compensation: {
+            position: new Vector3(),
+            pose_ls_to_ws: new Matrix4(),
+            pose_ws_to_ls: new Matrix4(),
         },
     };
 
@@ -440,17 +469,28 @@ export class LXRCameraRig {
 
         if (orientation) {
             this.markPoseLocalOffsetOrientationChanged();
-            this.#pose_ls_offset.orientation.multiply(new Quaternion().fromArray(orientation));
+            this.#pose_ls_offset.orientation.multiply(this.#offset_scratch.quaternion.fromArray(orientation));
         } else if (eulerOrientation) {
-            const euler = new Euler(
-                (eulerOrientation[0] * Math.PI) / 180,
-                (eulerOrientation[1] * Math.PI) / 180,
-                (eulerOrientation[2] * Math.PI) / 180,
-                "XYZ",
-            );
             this.markPoseLocalOffsetOrientationChanged();
-            this.#pose_ls_offset.orientation.multiply(new Quaternion().setFromEuler(euler));
+            this.#pose_ls_offset.orientation.multiply(this.#quaternionFromDegrees(eulerOrientation));
         }
+    }
+
+    /**
+     * Convert an euler orientation in degrees into the scratch quaternion.
+     *
+     * @param euler_orientation Euler angles in degrees, XYZ order
+     * @returns The scratch quaternion, valid until the next call
+     */
+    #quaternionFromDegrees(euler_orientation: Vec3): Quaternion {
+        const { quaternion, euler } = this.#offset_scratch;
+        euler.set(
+            (euler_orientation[0] * Math.PI) / 180,
+            (euler_orientation[1] * Math.PI) / 180,
+            (euler_orientation[2] * Math.PI) / 180,
+            "XYZ",
+        );
+        return quaternion.setFromEuler(euler);
     }
 
     /**
@@ -472,14 +512,8 @@ export class LXRCameraRig {
             this.markPoseLocalOffsetOrientationChanged();
             this.#pose_ls_offset.orientation.fromArray(orientation);
         } else if (eulerOrientation) {
-            const euler = new Euler(
-                (eulerOrientation[0] * Math.PI) / 180,
-                (eulerOrientation[1] * Math.PI) / 180,
-                (eulerOrientation[2] * Math.PI) / 180,
-                "XYZ",
-            );
             this.markPoseLocalOffsetOrientationChanged();
-            this.#pose_ls_offset.orientation.setFromEuler(euler);
+            this.#pose_ls_offset.orientation.copy(this.#quaternionFromDegrees(eulerOrientation));
         }
     }
 
@@ -517,13 +551,7 @@ export class LXRCameraRig {
             this.#ws_offset.orientation.fromArray(orientation);
         } else if (eulerOrientation) {
             this.markWorldSpaceOffsetOrientationChanged();
-            const euler = new Euler(
-                (eulerOrientation[0] * Math.PI) / 180,
-                (eulerOrientation[1] * Math.PI) / 180,
-                (eulerOrientation[2] * Math.PI) / 180,
-                "XYZ",
-            );
-            this.#ws_offset.orientation.setFromEuler(euler);
+            this.#ws_offset.orientation.copy(this.#quaternionFromDegrees(eulerOrientation));
         }
     }
 
@@ -546,16 +574,10 @@ export class LXRCameraRig {
 
         if (orientation) {
             this.markWorldSpaceOffsetOrientationChanged();
-            this.#ws_offset.orientation.multiply(new Quaternion().fromArray(orientation));
+            this.#ws_offset.orientation.multiply(this.#offset_scratch.quaternion.fromArray(orientation));
         } else if (eulerOrientation) {
             this.markWorldSpaceOffsetOrientationChanged();
-            const euler = new Euler(
-                (eulerOrientation[0] * Math.PI) / 180,
-                (eulerOrientation[1] * Math.PI) / 180,
-                (eulerOrientation[2] * Math.PI) / 180,
-                "XYZ",
-            );
-            this.#ws_offset.orientation.multiply(new Quaternion().setFromEuler(euler));
+            this.#ws_offset.orientation.multiply(this.#quaternionFromDegrees(eulerOrientation));
         }
     }
 
@@ -627,12 +649,81 @@ export class LXRCameraRig {
         // Apply inverse rig scale to the camera position to give the illusion of scaling the world around the user
         // instead of scaling the world entities. This allows for a more intuitive scaling experience where the user
         // feels like they are getting bigger or smaller in the world, rather than the world itself changing size.
-        this.#cameras.forEach(camera => {
-            camera.global_transform.position = camera.global_transform.position.map(v => v / this.#scale) as Vec3;
-        });
+        this.#applyScaleToCameraPositions();
 
         // Strip the rig transform from the XR view transforms to get the remote camera transforms for each viewport
         this.#stripRigFromTransforms(remote_camera_transforms);
+    }
+
+    /**
+     * Divide every attached camera's world position by the rig scale.
+     *
+     * Written through `local_transform` rather than `global_transform`, even though the quantity
+     * being scaled is a world position. Assigning to `global_transform.position` goes through a
+     * per-component proxy, so each of the three components separately converts back to local space,
+     * recomposes the local-to-world matrix and inverts it — two thirds of that work computing
+     * intermediate values that the next component overwrites. Doing the space conversion here
+     * instead costs one matrix pair per frame for all cameras, and the write is three plain array
+     * stores. The read-modify-write also allocated an array per camera per frame through `.map`.
+     *
+     * The cameras are children of the pose entity, so the conversion is exactly that entity's
+     * local-to-world matrix and its inverse; both getters recompute the transform first if the pose
+     * update above left it dirty, which it always does.
+     */
+    #applyScaleToCameraPositions(): void {
+        // At scale 1 the division is the identity and the local position is already the value it
+        // would be written back with.
+        if (this.#scale === 1 || !this.#pose_entity || this.#cameras.length === 0) {
+            return;
+        }
+
+        const { position, pose_ls_to_ws, pose_ws_to_ls } = this.#frame_update_scratch.camera_scale_compensation;
+        // `fromArray` only reads, so the readonly matrices can be handed to it as-is rather than
+        // copied into a mutable array every frame just to satisfy the signature.
+        pose_ls_to_ws.fromArray(this.#pose_entity.ls_to_ws as unknown as number[]);
+        pose_ws_to_ls.fromArray(this.#pose_entity.ws_to_ls as unknown as number[]);
+
+        for (const camera of this.#cameras) {
+            const local_position = camera.local_transform.position;
+            position
+                .set(local_position[0], local_position[1], local_position[2])
+                .applyMatrix4(pose_ls_to_ws)
+                .divideScalar(this.#scale)
+                .applyMatrix4(pose_ws_to_ls);
+
+            local_position[0] = position.x;
+            local_position[1] = position.y;
+            local_position[2] = position.z;
+        }
+    }
+
+    /**
+     * Report that virtual locomotion was applied on this frame, so the session can dim the
+     * periphery while it lasts — see {@link XRLivelink.comfort_vignette_strength}.
+     *
+     * Called by the locomotion functions rather than derived from the pose, because the pose also
+     * moves when the user physically walks, and physical movement is precisely the one that needs
+     * no comfort treatment.
+     *
+     * @param intensity Signed magnitude of the axis driving the motion; only its absolute value,
+     * clamped to 1, is kept. The highest reported by any axis wins, since they are simultaneous
+     * parts of one movement rather than separate ones.
+     */
+    public reportLocomotionIntensity(intensity: number): void {
+        this.#locomotion_intensity = Math.max(this.#locomotion_intensity, Math.min(Math.abs(intensity), 1));
+    }
+
+    /**
+     * @internal
+     *
+     * Read the locomotion intensity for the frame being rendered and roll the accumulator over.
+     * Call exactly once per rendered frame.
+     */
+    _consumeLocomotionIntensity(): number {
+        const intensity = Math.max(this.#locomotion_intensity, this.#previous_locomotion_intensity);
+        this.#previous_locomotion_intensity = this.#locomotion_intensity;
+        this.#locomotion_intensity = 0;
+        return intensity;
     }
 
     /**
@@ -846,6 +937,8 @@ export class LXRCameraRig {
         this.resetWorldSpaceOffset();
         this.resetPoseLocalOffset();
         this.#scale = 1;
+        this.#locomotion_intensity = 0;
+        this.#previous_locomotion_intensity = 0;
     }
 
     /**
@@ -859,8 +952,11 @@ export class LXRCameraRig {
         this.#pose_entity = null;
         this.#anchor_entity = null;
         this.#initial_tracking_pose = null;
+        this.#cameras.length = 0;
         this.resetWorldSpaceOffset();
         this.resetPoseLocalOffset();
         this.#scale = 1;
+        this.#locomotion_intensity = 0;
+        this.#previous_locomotion_intensity = 0;
     }
 }

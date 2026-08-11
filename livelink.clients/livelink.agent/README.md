@@ -6,6 +6,17 @@ Headless agent package for controlling 3dverse rendering sessions programmatical
 
 An agent is a headless client that attaches to one or more sessions of a scene and controls them through the entity API: create, update and delete entities, and react to changes made by other clients. Typical use case: bridging an external datasource (MQTT broker, OPC-UA server, WebSocket feed...) to live 3dverse scenes.
 
+See the official documentation: [Connect Live Data](https://docs.3dverse.com/connect-live-data)
+
+## Samples
+
+**Try it**: [Agent Data Ingestion Demo](https://samples.livelink.3dverse.com/#/agent-data-ingestion)
+
+Runnable examples:
+
+- **Node.js agents** (MQTT and OPC UA): [`livelink.samples/src/samples/agent/`](https://github.com/3dverse/livelink/tree/release/livelink.samples/src/samples/agent/README.md) — headless scripts that drive a scene from live infrastructure you start yourself with one docker command. `opcua-ingestion/` drives a machine cell from Microsoft's simulated PLC, [iot-edge-opc-plc](https://github.com/Azure-Samples/iot-edge-opc-plc), and `mqtt-ingestion/` drives a plant floor from a broker fed by [mqtt-sim](https://github.com/marcelo-6/mqtt-sim).
+- **Browser samples**: [`x-agent-data-ingestion/`](https://samples.livelink.3dverse.com/#/agent-data-ingestion/) — replays recorded event streams using the `playback` transport, and [`x-agent-multiplayer-game/`](https://samples.livelink.3dverse.com/#/agent-multiplayer-game/) — demonstrates multi-session agent coordination.
+
 ## Installation
 
 ```bash
@@ -129,6 +140,8 @@ misread as "nothing flowed".
 `on-session-unbound`, `on-error`, and re-emits the agent's own session events, so you never have to
 reach through `.agent` to observe it.
 
+### Transports
+
 The bundled transports are `mqtt`, `opcua`, `azure-event-hub` and `playback`. **Note that `channel`
 only means something on some of them**: it is the topic on MQTT, the node id — or its alias — on OPC
 UA, the recorded topic on playback, and the _partition id_ — a load-balancing artifact — on Azure
@@ -169,14 +182,6 @@ Telegraf's `inputs.opcua`, Kepware, Ignition — point `mqtt` at that broker ins
 and no OPC UA session to keep alive next to the scene. `opcua` is for the servers that offer no such
 bridge.
 
-A runnable version of both, against infrastructure you start yourself with one docker command, lives
-in [`samples/`](samples/README.md): `opcua-ingestion/` drives a machine cell from Microsoft's
-simulated PLC, [iot-edge-opc-plc](https://github.com/Azure-Samples/iot-edge-opc-plc), and
-`mqtt-ingestion/` drives a plant floor from any broker, fed by
-[mqtt-sim](https://github.com/marcelo-6/mqtt-sim) and a TOML config shipped with it. Both are
-headless Node.js scripts, but only one of them has to be: the MQTT mappings run in a page unchanged
-over `ws://`, whereas `opcua` cannot run in a browser at all.
-
 `playback` replays a recorded event stream from wherever it lives — a file, a URL, a string, bytes,
 a stream, or records you parsed yourself — so the same mapping can be brought up against a dump
 before it ever meets a broker, in Node or in the browser:
@@ -188,6 +193,8 @@ sources: [{ kind: "playback", config: { source: { url: "/recordings/devices.json
 Only `source: { file_path }` needs Node. `speed` scales the recorded pace (default `1`, real time)
 and `loop` (default `true`) starts the recording over when it ends. The former `file` kind is a
 deprecated alias.
+
+For runnable examples, see the [Samples](#samples) section above.
 
 Need the raw `Agent` API instead — no ingestion layer? See
 [Using the agent directly](#using-the-agent-directly).

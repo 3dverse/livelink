@@ -8,7 +8,28 @@ import { LXRCameraRig } from "./LXRCameraRig";
 import { LXRViewport } from "./LXRViewport";
 import { TypedEventTarget } from "./utils/TypedEventTarget";
 import { type LXREvents, SessionEndEvent, ViewportUpdatedEvent } from "./LXREvents";
+import { LXR_DEFAULT_COMFORT_VIGNETTE_STRENGTH } from "./LXRComfort";
 import { Quaternion, Vector3 } from "threejs-math";
+
+//------------------------------------------------------------------------------
+/**
+ * Seconds the comfort vignette takes to close once locomotion starts. Short: the vection it is
+ * there to suppress starts with the movement, so a vignette that arrives late has already missed
+ * the moment it exists for.
+ */
+const VIGNETTE_FADE_IN_SECONDS = 0.12;
+
+/**
+ * Seconds the comfort vignette takes to open again once locomotion stops. Longer than the fade in,
+ * so that tapping a stick repeatedly does not strobe the periphery.
+ */
+const VIGNETTE_FADE_OUT_SECONDS = 0.35;
+
+/**
+ * Longest frame delta the vignette fade will honour, in seconds, so a stalled frame does not turn
+ * the fade into a cut.
+ */
+const MAX_VIGNETTE_FADE_DELTA_SECONDS = 0.1;
 
 //------------------------------------------------------------------------------
 /**
@@ -105,6 +126,23 @@ export class XRLivelink extends TypedEventTarget<LXREvents> {
      * {@link billboard_reference_depth}.
      */
     #billboard_reference_depth: number = 25;
+
+    /**
+     * How far the comfort vignette closes at full locomotion. See {@link comfort_vignette_strength}.
+     */
+    #comfort_vignette_strength: number = LXR_DEFAULT_COMFORT_VIGNETTE_STRENGTH;
+
+    /**
+     * Current position of the comfort vignette fade, in `[0, 1]`, eased towards the locomotion
+     * intensity every frame.
+     */
+    #vignette_intensity: number = 0;
+
+    /**
+     * Timestamp of the previous XR frame, used to derive the frame delta the vignette fade needs.
+     * 0 means there has not been one yet.
+     */
+    #last_frame_timestamp: DOMHighResTimeStamp = 0;
 
     /**
      * Whether {@link release} has been entered. Set before the session is ended so that the `end`
@@ -299,6 +337,34 @@ export class XRLivelink extends TypedEventTarget<LXREvents> {
     }
 
     /**
+     * How far the comfort vignette closes when the user is at full virtual locomotion speed, from 0
+     * (never) to 1 (down to a narrow tunnel).
+     *
+     * Restricting the periphery during virtual locomotion is the standard countermeasure to
+     * simulator sickness: the optical flow claiming the user is moving is strongest at the edge of
+     * the field of view, and that is exactly where the inner ear has nothing to corroborate it
+     * with. The vignette fades in and out with the motion rather than following it instantly.
+     *
+     * Defaulted per session mode by {@link initialize} — on by default in a headset, off in
+     * handheld AR, where the room around the screen is already a fixed reference and darkening the
+     * edges of a phone just reads as a rendering fault.
+     */
+    get comfort_vignette_strength(): number {
+        return this.#comfort_vignette_strength;
+    }
+
+    /**
+     * Set how far the comfort vignette closes at full virtual locomotion speed. 0 disables it.
+     */
+    set comfort_vignette_strength(value: number) {
+        if (value < 0 || value > 1) {
+            throw new Error("Comfort vignette strength must be between 0 and 1");
+        }
+
+        this.#comfort_vignette_strength = value;
+    }
+
+    /**
      * Get overscan FOV factor
      */
     get overscan_fov_factor(): number {
@@ -435,6 +501,11 @@ export class XRLivelink extends TypedEventTarget<LXREvents> {
         const xr_views = await this.#surface.initialize({ session, is_ar });
         this.#throwIfAborted(signal);
 
+        // Comfort defaults follow the device class, like fake alpha above — see
+        // `comfort_vignette_strength`. A consumer that wants something else sets it after this
+        // resolves, which is the same contract `enable_fake_alpha` already has.
+        this.#comfort_vignette_strength = is_ar ? 0 : LXR_DEFAULT_COMFORT_VIGNETTE_STRENGTH;
+
         // Configure overscan after surface initialization
         this.#configureOverscan({
             xr_views,
@@ -501,6 +572,8 @@ export class XRLivelink extends TypedEventTarget<LXREvents> {
      */
     public start(): void {
         this.#is_frame_loop_running = true;
+        this.#last_frame_timestamp = 0;
+        this.#vignette_intensity = 0;
         this.#animation_frame_request_id = this.#xr_session.requestAnimationFrame(this.#onXRFrame);
     }
 
@@ -545,12 +618,15 @@ export class XRLivelink extends TypedEventTarget<LXREvents> {
      * re-arming would leave the user staring at the last frame ever drawn, rigidly following their
      * head with no way out but a page reload. Skipping a frame is recoverable; dying is not.
      *
-     * @param _ The high resolution timestamp for the current frame, which can be used for synchronizing animations or other time-based updates.
+     * @param time The high resolution timestamp for the current frame, used to derive the frame delta time-based effects need.
      * @param frame The XRFrame containing the latest pose and view data from the XR session, which is used to update the viewports and render the frame.
      */
-    #onXRFrame = (_: DOMHighResTimeStamp, frame: XRFrame): void => {
+    #onXRFrame = (time: DOMHighResTimeStamp, frame: XRFrame): void => {
+        const dt = this.#last_frame_timestamp ? (time - this.#last_frame_timestamp) / 1000 : 0;
+        this.#last_frame_timestamp = time;
+
         try {
-            this.#renderXRFrame(frame);
+            this.#renderXRFrame(frame, dt);
             this.#last_frame_error_message = undefined;
         } catch (error) {
             const message = error instanceof Error ? error.message : String(error);
@@ -581,8 +657,9 @@ export class XRLivelink extends TypedEventTarget<LXREvents> {
      * then draw. May throw; see {@link #onXRFrame}.
      *
      * @param frame The XRFrame containing the latest pose and view data from the XR session.
+     * @param dt Seconds since the previous XR frame, 0 on the first one.
      */
-    #renderXRFrame(frame: XRFrame): void {
+    #renderXRFrame(frame: XRFrame, dt: number): void {
         const reference_space = this.#xr_reference_space;
         const gl_layer = this.#base_gl_layer;
 
@@ -616,6 +693,9 @@ export class XRLivelink extends TypedEventTarget<LXREvents> {
 
         // Keep the billboard at the apparent depth of the scene, which the rig scale moves.
         this.#updateBillboardDistance(xr_views);
+
+        // Close the comfort vignette by as much as the user is moving under virtual locomotion.
+        this.#updateComfortVignette(dt);
 
         // Draw the frame for each viewport with the latest XR view and remote camera transform data
         this.#surface.context.drawXRFrame({
@@ -655,6 +735,37 @@ export class XRLivelink extends TypedEventTarget<LXREvents> {
 
         const distance = this.#billboard_reference_depth * this.#camera_rig.scale;
         this.#surface.context.screen_distance = Math.min(Math.max(distance, min_distance), max_distance);
+    }
+
+    /**
+     * Ease the comfort vignette towards the locomotion the camera rig reports for this frame, and
+     * hand the result to the context that draws it.
+     *
+     * Eased rather than applied directly because the intensity itself is a stick position: it
+     * arrives as a step the moment the user pushes, and a periphery that snaps dark is its own
+     * discomfort. The rig accumulator is drained on every frame, including the ones where the
+     * vignette is disabled, so that turning it back on mid-session does not inherit a stale value.
+     *
+     * @param dt Seconds since the previous XR frame.
+     */
+    #updateComfortVignette(dt: number): void {
+        const target = this.#camera_rig._consumeLocomotionIntensity();
+        const { context } = this.#surface;
+
+        if (this.#comfort_vignette_strength === 0) {
+            this.#vignette_intensity = 0;
+            context.vignette_strength = 0;
+            return;
+        }
+
+        if (dt > 0) {
+            const fade_time = target > this.#vignette_intensity ? VIGNETTE_FADE_IN_SECONDS : VIGNETTE_FADE_OUT_SECONDS;
+            const max_delta = Math.min(dt, MAX_VIGNETTE_FADE_DELTA_SECONDS) / fade_time;
+            const delta = target - this.#vignette_intensity;
+            this.#vignette_intensity += Math.abs(delta) <= max_delta ? delta : Math.sign(delta) * max_delta;
+        }
+
+        context.vignette_strength = this.#vignette_intensity * this.#comfort_vignette_strength;
     }
 
     /**
