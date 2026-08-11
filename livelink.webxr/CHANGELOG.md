@@ -1,5 +1,13 @@
 # @3dverse/livelink-webxr
 
+## 0.2.7
+
+### Patch Changes
+
+- feat(livelink.webxr): improve scratch-buffering in LXRCameraRig and LXRLocomotion - motion thickness improvements for VR: dead zone, acceleration ramp, ease on stop for joysticks ; snap turn mode in VR ; comfort vignette in VR (field-of-view reduction aka tunnel vision)
+- Updated dependencies
+  - @3dverse/livelink@0.8.66
+
 ## 0.2.6
 
 ### Patch Changes

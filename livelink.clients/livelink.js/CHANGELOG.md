@@ -1,5 +1,11 @@
 # @3dverse/livelink
 
+## 0.8.66
+
+### Patch Changes
+
+- chore(livelink.js): return known data instead of null in castScreenSpaceRay if the hit entity is unknown
+
 ## 0.8.65
 
 ### Patch Changes
