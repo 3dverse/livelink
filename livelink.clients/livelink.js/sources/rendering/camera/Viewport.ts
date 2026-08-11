@@ -341,6 +341,7 @@ export class Viewport extends TypedEventTarget<ViewportEvents> {
      * Casts a screen space ray and returns the **first** entity and world space position and normal that the ray
      * intersects.
      * If no entity is intersected, null is returned.
+     * If an unknown entity is intersected, the entity is returned as null but valid world space position and normal are returned.
      *
      * Note that transparent objects will be picked if they are in front of opaque objects even if their
      * opacity is set to 0.
@@ -353,7 +354,7 @@ export class Viewport extends TypedEventTarget<ViewportEvents> {
      * @param params.screen_position - The screen space position to cast the ray from.
      * @param params.mode - The highlight mode to use.
      *
-     * @returns The entity and world space position and normal that the ray intersects, or null if no entity is
+     * @returns The entity if known and world space position and normal that the ray intersects, or null if no entity is
      * intersected.
      */
     async castScreenSpaceRay({
@@ -362,7 +363,7 @@ export class Viewport extends TypedEventTarget<ViewportEvents> {
     }: {
         screen_position: Vec2;
         mode: Enums.HighlightMode;
-    }): Promise<{ entity: Entity; world_position: Vec3; world_normal: Vec3 } | null> {
+    }): Promise<{ entity: Entity | null; world_position: Vec3; world_normal: Vec3 } | null> {
         if (!this.#camera_projection) {
             return null;
         }
@@ -375,15 +376,11 @@ export class Viewport extends TypedEventTarget<ViewportEvents> {
             },
         });
 
-        if (res.entity_rtid === null) {
+        if (res.entity_rtid === 0n) {
             return null;
         }
 
         const entity = await this.#core.scene._findEntity({ entity_rtid: res.entity_rtid });
-        if (entity === null) {
-            return null;
-        }
-
         return { entity, world_position: res.position, world_normal: res.normal };
     }
 
