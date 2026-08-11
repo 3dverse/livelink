@@ -49,7 +49,6 @@ import { openSessionInEditor } from "../lib/open-in-editor";
 // live in a file next to these scripts or come straight from the shell.
 //------------------------------------------------------------------------------
 const TOKEN = process.env.VITE_PROD_PUBLIC_TOKEN;
-const ENVIRONMENT_ID = process.env.ENVIRONMENT_ID ?? "37e658f5-0dec-4ccd-bae6-c39d27f93d91";
 const SCENE_ID = process.env.SCENE_ID ?? "48949b83-5acf-49ef-b43a-b180d22e669b";
 const SESSION_ID = process.env.SESSION_ID;
 
@@ -318,10 +317,9 @@ async function main(): Promise<void> {
                 `Join it from any viewer on scene ${SCENE_ID} to watch the floor fill up.`,
         );
         void openSessionInEditor({
-            environment_id: ENVIRONMENT_ID,
             scene_id: SCENE_ID,
             session_id: livelink.session.session_id,
-            token: TOKEN,
+            public_token: TOKEN,
         });
     });
 

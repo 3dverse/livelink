@@ -58,7 +58,6 @@ import { openSessionInEditor } from "../lib/open-in-editor";
 // live in a file next to these scripts or come straight from the shell.
 //------------------------------------------------------------------------------
 const TOKEN = process.env.VITE_PROD_PUBLIC_TOKEN;
-const ENVIRONMENT_ID = process.env.ENVIRONMENT_ID ?? "37e658f5-0dec-4ccd-bae6-c39d27f93d91";
 const SCENE_ID = process.env.SCENE_ID ?? "1c7da705-5532-4fdb-9b31-4034fdbf5cde";
 const SESSION_ID = process.env.SESSION_ID;
 const ENDPOINT_URL = process.env.OPCUA_ENDPOINT ?? "opc.tcp://localhost:50000";
@@ -537,10 +536,9 @@ async function main(): Promise<void> {
                 `Join it from any viewer on scene ${SCENE_ID} to watch the cell move.`,
         );
         void openSessionInEditor({
-            environment_id: ENVIRONMENT_ID,
             scene_id: SCENE_ID,
             session_id: livelink.session.session_id,
-            token: TOKEN,
+            public_token: TOKEN,
         });
     });
 
