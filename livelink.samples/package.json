@@ -11,6 +11,7 @@
     "build": "tsc && vite build",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "preview": "vite preview",
+    "agent-sample:quickstart": "tsx --env-file-if-exists=./.env --tsconfig src/samples/agent/tsconfig.json src/samples/agent/quickstart/index.ts",
     "agent-sample:mqtt": "tsx --env-file-if-exists=./.env --tsconfig src/samples/agent/tsconfig.json src/samples/agent/mqtt-ingestion/index.ts",
     "agent-sample:opcua": "tsx --env-file-if-exists=./.env --tsconfig src/samples/agent/tsconfig.json src/samples/agent/opcua-ingestion/index.ts"
   },
