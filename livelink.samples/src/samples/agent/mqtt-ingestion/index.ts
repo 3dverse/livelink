@@ -1,41 +1,12 @@
 //------------------------------------------------------------------------------
-// A headless agent that drives a 3dverse scene from a **live MQTT broker**, using
-// the data-ingestion layer of `@3dverse/livelink-agent`.
+// Headless agent: drives a 3dverse scene from a live MQTT broker.
+// Can also run in browser (MQTT over WebSocket).
 //
 //   npm run mqtt
-//
-// Unlike "OPC UA Ingestion" next door, nothing forces this one into Node: MQTT is
-// web-native over WebSocket, so the very same mappings and the very same transport
-// run in a page against a `ws://` broker. What changes here is one URL — Node
-// speaks the broker's plain TCP `mqtt://` listener directly. `opc.tcp://` has no
-// such second form, which is the difference between the two samples.
-//
-// The data comes from mqtt-sim (https://github.com/marcelo-6/mqtt-sim) driven by
-// the `mqtt-sim.toml` shipped next to this file. It publishes two production lines
-// of three machine cells, each cell sending motor telemetry at 40 Hz and a
-// retained status every few seconds. A broker and the simulator come up together,
-// from this directory:
-//
 //   docker compose -f docker-compose-mosquitto.yml up
 //
-// Any broker of your own does just as well: point the TOML at it and set
-// MQTT_BROKER_URL to its address.
-//
-// What this sample shows that a recording cannot is **wildcard fan-out**: one
-// mapping, six entities, entity identity carried by the routing key. The topic is
-// the id, so adding a seventh cell to the TOML adds a seventh machine to the scene
-// with nothing to change here.
-//
-// The session it opens is a normal one, so any viewer pointed at the same scene
-// joins it and watches the floor fill up.
-//
-// Everything is configured through the environment:
-//
-//   LIVELINK_TOKEN    (required)                the 3dverse access token
-//   MQTT_BROKER_URL   mqtt://localhost:1883     the broker to subscribe to
-//   MQTT_SITE         livelink-demo             topic prefix; must match the TOML
-//   SCENE_ID          the shared samples scene  the scene to drive
-//   SESSION_ID        (none)                    pin to a session already open
+// Demonstrates wildcard fan-out: one mapping drives entities identified by topics.
+// Configured via environment: LIVELINK_TOKEN, MQTT_BROKER_URL, SCENE_ID, etc.
 //------------------------------------------------------------------------------
 import { Agent, IngestionPipeline, SceneIngestion } from "@3dverse/livelink-agent";
 import type { AgentConfig, ComponentsManifest, EventMapping, SessionInfo } from "@3dverse/livelink-agent";
@@ -45,26 +16,18 @@ import { asNumber, channelSegment, yawQuaternion } from "../lib/ingestion";
 import { openSessionInEditor } from "../lib/open-in-editor";
 
 //------------------------------------------------------------------------------
-// `npm run mqtt` reads the `.env` beside it if there is one, so the token can
-// live in a file next to these scripts or come straight from the shell.
-//------------------------------------------------------------------------------
+// Read from .env or shell environment.
 const TOKEN = process.env.VITE_PROD_PUBLIC_TOKEN;
 const SCENE_ID = process.env.SCENE_ID ?? "48949b83-5acf-49ef-b43a-b180d22e669b";
 const SESSION_ID = process.env.SESSION_ID;
 
-// The plain TCP listener of the Mosquitto broker started by
-// `docker-compose-mosquitto.yml`. The compose file also exposes a WebSocket
-// listener on 8000, which this script has no use for — it is there for a page of
-// your own pointed at the same broker, a browser being able to speak MQTT no
-// other way.
+// Mosquitto broker (plain TCP listener; WebSocket on 8000 for browsers).
 const BROKER_URL = process.env.MQTT_BROKER_URL ?? "mqtt://localhost:1883";
 
-// The topic prefix, which is what keeps this sample's traffic apart from anything
-// else on the broker. Must match the TOML.
+// Topic prefix (must match mqtt-sim.toml).
 const SITE = process.env.MQTT_SITE ?? "livelink-demo";
 
-// The same cube mesh and materials the other samples use, so the floor needs
-// nothing authored in the scene: this script creates every cell on it.
+// Cube mesh and materials (shared with other samples).
 const MESH_REF = "0577814f-4677-420b-89e8-1e5a4dd56914";
 
 const MATERIAL_REF = {
@@ -82,13 +45,7 @@ const MATERIAL_BY_STATE: Record<string, string> = {
     fault: MATERIAL_REF.orange,
 };
 
-// Turning the shaft at its true speed does not work, at any update rate: 900 rpm
-// is 15 revolutions a second, so even a 40 Hz feed advances it 135° per sample and
-// a 60 fps frame catches it 90° further along. Past half a turn per sample the
-// direction itself is ambiguous — the shaft reads as jittering in place rather
-// than spinning. So the cell shows a geared-down shaft, the way a machine display
-// does: 900 rpm becomes a legible 15 rpm, and the *number* on the wire stays the
-// real one.
+// Gear ratio: real 900 rpm shown as 15 rpm (avoids aliasing at 40 Hz).
 const SHAFT_GEAR_RATIO = 60;
 
 //==============================================================================
@@ -96,11 +53,7 @@ const SHAFT_GEAR_RATIO = 60;
 //==============================================================================
 
 //------------------------------------------------------------------------------
-// A cell is identified by the two topic segments before the last:
-// `<site>/plant/line-a/2/motor` is cell `line-a-2`. Counting back from the end
-// rather than forward from the start keeps this working whatever the site prefix
-// is — one segment here, three at a plant that namespaces by region.
-//------------------------------------------------------------------------------
+// Extract cell ID from topic (count backward to work with any site prefix).
 function cellId(channel: string): string | null {
     const line = channelSegment(channel, -3);
     const cell = channelSegment(channel, -2);
@@ -108,10 +61,7 @@ function cellId(channel: string): string | null {
 }
 
 //------------------------------------------------------------------------------
-// Where a cell stands on the floor, derived from its id alone. The stream defines
-// the population, so the layout has to be a function of the id rather than a table
-// someone maintains: adding a cell to the TOML adds it to the scene.
-//------------------------------------------------------------------------------
+// Calculate cell position from ID (stream-driven layout).
 function cellPosition(id: string, height: number): [number, number, number] {
     const [line, cell] = id.split(/-(?=\d+$)/);
     const row = line.charCodeAt(line.length - 1) - "a".charCodeAt(0);
@@ -120,30 +70,22 @@ function cellPosition(id: string, height: number): [number, number, number] {
 }
 
 //------------------------------------------------------------------------------
-// Motor temperature, as the height of the cell. 20 °C is cold and flat, 95 °C is
-// the top of the simulated range.
-//------------------------------------------------------------------------------
+// Map motor temperature to cell height (20°C flat, 95°C max).
 function cellHeight(temperature: number): number {
     const normalized = Math.max(0, Math.min(1, (temperature - 20) / 75));
     return 0.4 + normalized * 2;
 }
 
 //------------------------------------------------------------------------------
-// One mapping per topic family. Both are built from the site prefix, because the
-// prefix is a deployment decision and `channel` patterns are literal.
-//------------------------------------------------------------------------------
+// Create mappings (built from site prefix for deployment flexibility).
 function createMappings({ site }: { site: string }): Array<EventMapping> {
-    // rpm is a *rate*, and a transform takes an angle: the shaft angle is the
-    // integral of the rate over the time between two samples. One accumulator per
-    // cell, created with the mappings so restarting the ingestion starts the
-    // shafts from zero rather than from wherever they were left.
+    // Integrate RPM into angle over time (one accumulator per cell).
     const shafts = new Map<string, { angle: number; at: number }>();
 
     const integrateShaftAngle = (id: string, rpm: number): number => {
         const now = performance.now();
         const shaft = shafts.get(id) ?? { angle: 0, at: now };
-        // Clamped: a process that was stalled for a minute must not make the shaft
-        // jump a thousand turns on the first sample back.
+        // Clamp to prevent large jumps on stalled processes.
         const elapsed_seconds = Math.min((now - shaft.at) / 1000, 0.5);
         const angle = shaft.angle + ((rpm * 2 * Math.PI) / 60 / SHAFT_GEAR_RATIO) * elapsed_seconds;
         shafts.set(id, { angle, at: now });
@@ -154,9 +96,7 @@ function createMappings({ site }: { site: string }): Array<EventMapping> {
     const MOTOR_MAPPING: EventMapping = {
         channel: `${site}/plant/+/+/motor`,
 
-        // Validated on the first event by default, so a simulator config that does
-        // not carry what the mapping reads is reported instead of silently doing
-        // nothing.
+        // Schema validated on first event (catches config mismatches).
         schema: {
             type: "object",
             properties: {
@@ -166,8 +106,7 @@ function createMappings({ site }: { site: string }): Array<EventMapping> {
             required: ["rpm", "temp_c"],
         },
 
-        // The stream defines the population: one entity per cell that publishes,
-        // created on its first message, deleted when this script disconnects.
+        // Stream-driven population (spawn on first message, delete on disconnect).
         entities: {
             spawn: {
                 name: "cell-{id}",
@@ -218,12 +157,7 @@ function createMappings({ site }: { site: string }): Array<EventMapping> {
     const STATUS_MAPPING: EventMapping = {
         channel: `${site}/plant/+/+/status`,
 
-        // This one addresses entities that already exist, by the name the mapping
-        // above spawned them under. The status topics are retained, so on connect
-        // the broker replays them all at once — before any motor telemetry has
-        // spawned anything. Those resolve to nothing and are counted as
-        // `unresolved_entity` in the drops, then resolve on their own as soon as
-        // the cells appear.
+        // Address existing entities by name (initially unresolved if replayed before motor events).
         entities: {
             byName: "cell-{id}",
         },
@@ -251,12 +185,10 @@ function agentConfig({ token }: { token: string }): AgentConfig {
         scene_id: SCENE_ID,
         token,
 
-        // Not transient, so a viewer can find and join this very session.
+        // Persistent session (viewers can find and join).
         is_transient: false,
 
-        // Default mode is "join-or-start": whichever of a viewer and this script
-        // comes up first opens the session, and the other one joins it. Set
-        // SESSION_ID to pin the agent to a session already open.
+        // Pin to existing session if SESSION_ID is set.
         ...(SESSION_ID
             ? {
                   session_selector: ({ sessions }: { sessions: Array<SessionInfo> }) =>
@@ -264,12 +196,12 @@ function agentConfig({ token }: { token: string }): AgentConfig {
               }
             : {}),
 
-        // The client flushes dirty entities on a fixed timer, 30 times a second by
-        // default. Leave it near the data rate and the two free-running timers
-        // alias — some flushes carry two samples, some none, and the motion judders
-        // although every sample was ingested. Keep the flush rate above the data
-        // rate: 40 Hz per cell here, so 120 is threefold headroom. Capped at 125.
-        headless_client: { updatesPerSecond: 120 },
+        // Writes are not sent one by one: a timer flushes whatever changed, 30
+        // times a second by default, and only the last value written between two
+        // flushes goes out. Each cell here publishes every 25 ms, faster than that
+        // default — it would send 3 samples out of every 4. 80 gives each one a
+        // flush of its own, with room to spare for a late message.
+        headless_client: { updatesPerSecond: 80 },
     };
 }
 
@@ -291,13 +223,7 @@ async function main(): Promise<void> {
             onError: error => console.error("[mqtt-agent]", error),
         }),
 
-        // A source is started on the first session the agent is ready in, and
-        // stopped with the ingestion. A start that fails is reported on "on-error"
-        // and retried by the next session to bind — which is the loop that survives
-        // the broker being down when the agent comes up.
-        //
-        // Subscribing to the two families the mappings select on, rather than to
-        // `#`, keeps everything else living on the broker off this agent entirely.
+        // Subscribe only to mapping channels (not all topics).
         sources: [
             {
                 kind: "mqtt",
@@ -325,9 +251,7 @@ async function main(): Promise<void> {
 
     await ingestion.start();
 
-    // Only report when something moved, so a silent broker leaves the transport's
-    // own reconnection messages legible instead of burying them under empty
-    // counters.
+    // Only report when stats change (avoid cluttering logs).
     let last_reported = 0;
     const report = setInterval(() => {
         const stats = ingestion.stats;

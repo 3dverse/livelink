@@ -1,58 +1,15 @@
 //------------------------------------------------------------------------------
-// This sample drives a 3dverse scene from *recorded event streams*, using the
-// data-ingestion layer of the `@3dverse/livelink-agent` package.
+// This sample drives a 3dverse scene from recorded event data (like MQTT streams).
+// It has three main parts:
+//   • <Viewer/> — shows the 3D scene with vehicle telemetry overlays
+//   • <DataIngestion/> — processes the event stream and updates entities
+//   • Overlay panels — display the recording, event trace, and statistics
 //
-// Nothing here talks to a broker. A dump of what a fleet — and one stationary
-// machine — published, the exact shape you would capture off MQTT, is replayed
-// by a `PlaybackTransport` at its recorded pace, into one pipeline:
+// Data includes: vehicles (forklifts/drones) as sub-scene instances, and a
+// stationary robotic arm with its pre-existing pivots.
 //
-//   • `x-agent-data-ingestion-recording.json` — a forklift and two drones over a
-//                                20 × 30 m floor, 30 Hz each, plus the four-pivot
-//                                joint stream of a stationary robotic arm.
-//                                A vehicle is a *sub-scene instance*: its mapping
-//                                spawns it with a `scene_ref`, so what shows up
-//                                in the viewport is a real asset, not a proxy
-//                                cube. Every frame carries telemetry besides the
-//                                pose — speed, battery, state, and what the kind
-//                                of vehicle warrants. The arm is the opposite
-//                                case: its four pivots are entities *already* in
-//                                the scene, so its mapping resolves them by a
-//                                fixed id → UUID table (`byUuid`) instead of
-//                                spawning anything — see `ARM_MAPPING` below.
-//
-// The dump is handed over as a **string** (`import ... ?raw`), which is why this
-// runs in the browser: the transport reads a *source*, and a file path is only
-// one of the forms it accepts.
-//
-// For the same pipeline fed by live infrastructure instead, see the MQTT and
-// OPC UA samples under `livelink.clients/livelink.agent/samples/` — headless
-// Node.js agents rather than pages, run against a broker or a PLC you start
-// yourself with one docker command.
-//
-// The page is split in three:
-//
-//   • <Viewer/>         — a regular livelink-react viewport, so you can watch
-//                         what the ingestion does to the scene. Behind the
-//                         "telemetry" button a `DOM3DOverlay` floats a readout
-//                         over every vehicle, and it gets there the long way
-//                         round: the mapping writes the readings onto a `tags`
-//                         component, and the viewport reads them back off the
-//                         scene, as any other client in the session would. It
-//                         never touches the event stream — which is why the
-//                         button has to reach into the agent, and why the tags go
-//                         on a *companion* entity rather than the vehicle. See
-//                         `VEHICLE_BROADCAST_MAPPING` below.
-//   • <DataIngestion/>  — runs the ingestion. It does no rendering at all: it
-//                         only maps events onto entities, exactly like a
-//                         server-side process would.
-//   • the overlay panels — stacked on the left, all collapsible: the recording
-//                         with a cursor on the event being replayed, the live
-//                         event trace, and the pipeline counters.
-//
-// IMPORTANT: everything under the "Ingestion" banner is plain TypeScript with
-// **no React or DOM dependency**. The very same code can run in any JS runtime —
-// most notably as a Node.js script, where `source` would be
-// `{ file_path: "./x-agent-data-ingestion-recording.json" }` instead.
+// The "Ingestion" section is runtime-agnostic: plain TypeScript with no React.
+// The same code runs in Node.js, browser, or anywhere JavaScript runs.
 //------------------------------------------------------------------------------
 import { useCallback, useContext, useEffect, useRef, useState } from "react";
 
@@ -102,10 +59,7 @@ import {
 } from "./components";
 
 //------------------------------------------------------------------------------
-// The recorded event stream, imported as raw text: this exact string is what the
-// transport replays, and what the left panel displays. It is generated —
-// `npm run generate:x-agent-data-ingestion` in `livelink.clients/livelink.agent/samples/`
-// rewrites it; edit the script there to retune the motion.
+// Pre-recorded event stream (replayed by the transport).
 import RECORDING_TEXT from "./x-agent-data-ingestion-recording.json?raw";
 import { CameraControllerPresets } from "@3dverse/livelink";
 import type { Entity } from "@3dverse/livelink";
@@ -125,10 +79,7 @@ type SessionInfo = {
 export function App() {
     const [sessionInfo, setSessionInfo] = useState<SessionInfo | null>(null);
 
-    // The labels belong to the viewport and their switch belongs with the other
-    // controls, so the two ends of the page share this one piece of state. Off to
-    // begin with: showing them costs the session a broadcast per vehicle per
-    // frame, which is precisely what an ingestion agent is built to avoid.
+    // Shared state for telemetry label visibility (saves bandwidth when off).
     const [areLabelsVisible, setAreLabelsVisible] = useState(true);
 
     return (
@@ -190,9 +141,7 @@ function AppLayout({ areLabelsVisible }: { areLabelsVisible: boolean }) {
 }
 
 //------------------------------------------------------------------------------
-// `tags` is a flat list of strings, so the readings come back out of it the way
-// they went in.
-//------------------------------------------------------------------------------
+// Parse key=value tags into a record.
 function parseTags(tags: Array<string>): Record<string, string> {
     return Object.fromEntries(
         tags.map(tag => {
@@ -205,20 +154,10 @@ function parseTags(tags: Array<string>): Record<string, string> {
 }
 
 //------------------------------------------------------------------------------
-// The readouts floating over the fleet.
-//
-// Nothing here knows the recording exists. The entities are found in the scene by
-// the component the ingestion tagged them with, and every value on a label — where
-// to draw it included — was read back off the scene, the same thing a dashboard
-// opened on another machine would see.
+// Render telemetry labels for all vehicles (entities with "tags" component).
 //------------------------------------------------------------------------------
 function VehicleLabels() {
-    // Nothing is there when the page opens: the agent spawns the companions when
-    // the ingestion starts, and deletes them when it stops. This is the one
-    // provider that keeps its list live off the scene's own
-    // `on-entities-created`/`on-entities-deleted` events, so the labels come and
-    // go with the "Start ingestion" button on their own. The second argument
-    // re-renders them on a `tags` write; the anchor watches the transform itself.
+    // Re-render when tags change; transform updates tracked by anchor.
     const { entities } = useEntities({ mandatory_components: ["tags"] }, [
         "tags",
     ]);
@@ -229,23 +168,16 @@ function VehicleLabels() {
 }
 
 //------------------------------------------------------------------------------
-// One vehicle's label, anchored on the companion entity the ingestion drives.
-//
-// That entity is already parked at the height the readout should float at, so
-// there is nothing to offset here: `center-bottom` rests the bottom edge of the
-// card on it and the anchor keeps it that size on screen at any distance.
-//------------------------------------------------------------------------------
+// Render one vehicle's telemetry label (anchored at center-bottom of entity).
 function VehicleLabel({ entity }: { entity: Entity }) {
     const telemetry = parseTags(entity.tags?.value ?? []);
 
-    // Anything else in the scene that happens to carry tags is none of our
-    // business.
+    // Skip if not a vehicle.
     if (!telemetry.kind) {
         return null;
     }
 
-    // Speed is a display concern only: to one decimal place, both vehicle kinds
-    // stay under 10 m/s so this is also a fixed length, e.g. "3.2 m/s".
+    // Format speed to one decimal place (e.g., "3.2 m/s").
     const speed = `${Number(telemetry.speed).toFixed(1)} m/s`;
 
     const readings: Array<{ label: string; value: string; color?: string }> =
@@ -283,9 +215,7 @@ function VehicleLabel({ entity }: { entity: Entity }) {
                         {readings.map(({ label, value, color }) => (
                             <div key={label}>
                                 <div className="text-[#63ffff]">{label}</div>
-                                {/* Fixed width so a value gaining or losing a
-                                    digit (e.g. "35 %" vs "100 %") never shifts
-                                    the columns after it. */}
+                                {/* Fixed width to prevent layout shift. */}
                                 <div
                                     className="w-[7ch]"
                                     style={color ? { color } : undefined}
@@ -361,19 +291,14 @@ function SessionSniffer({
 //==============================================================================
 
 //------------------------------------------------------------------------------
-// The `index`-th `/`-separated segment of a channel, or null when the channel has no such segment.
-// A negative index counts back from the end, `-1` being the last segment.
-//------------------------------------------------------------------------------
+// Get the index-th "/" -separated segment from a channel string (negative counts from end).
 function channelSegment(channel: string, index: number): string | null {
     const segments = channel.split("/");
     return segments[index < 0 ? segments.length + index : index] ?? null;
 }
 
 //------------------------------------------------------------------------------
-// The quaternion for a recorded attitude: yaw about Y (up), then pitch about X,
-// then roll about the forward axis. A device that only reports a heading passes
-// `yaw` alone and stays level; a drone reports all three and leans into its turns.
-//------------------------------------------------------------------------------
+// Convert yaw/pitch/roll angles to a quaternion.
 function orientationQuaternion({
     yaw,
     pitch = 0,
@@ -396,26 +321,15 @@ function orientationQuaternion({
 }
 
 //------------------------------------------------------------------------------
-// The id of whatever published the event — a device, a forklift, a drone — is the
-// middle segment of the recorded channel: the same routing key the broker used,
-// preserved by the playback.
-//------------------------------------------------------------------------------
+// Extract device ID from the channel's middle segment.
 function deviceId(channel: string): string | null {
     return channelSegment(channel, 1);
 }
 
 //------------------------------------------------------------------------------
-// The vehicle stream: spawn on the first event for an id, move on every one
-// after. What it spawns is a **sub-scene** — a `scene_ref` component instantiates
-// a whole authored asset under the entity, so the ingestion drives an actual
-// forklift and actual drones rather than proxy cubes. `+` matches exactly one
-// channel segment.
-//
-// A vehicle publishes more than a pose: how fast it is going, how full its
-// battery is, what it is doing, and — depending on what it is — its load and mast
-// height or its altitude and radio link. None of that lands on *this* entity
-// though: it goes on a companion entity spawned by the mapping below, for reasons
-// that are entirely about what the two flush loops cost.
+// Vehicle stream: spawn on first event, move on subsequent events.
+// Telemetry (speed, battery, etc.) goes on a companion entity (see
+// VEHICLE_BROADCAST_MAPPING below) to optimize network broadcasts.
 //------------------------------------------------------------------------------
 type VehicleTelemetry = {
     pos: Vec3;
@@ -445,10 +359,7 @@ function vehicleScale(id: string): number {
 }
 
 //------------------------------------------------------------------------------
-// The telemetry, as the `tags` component carries it: a flat list of strings, so
-// each reading goes in as `key=value` and comes back out with `parseTags()` at
-// the other end. `kind` is what tells our vehicles apart from anything else in
-// the scene that happens to be tagged.
+// Telemetry stored as key=value tags (e.g., "speed=5.2", "battery=87").
 //------------------------------------------------------------------------------
 const TAGGED_FIELDS = [
     "speed",
@@ -475,12 +386,7 @@ function vehicleTags(id: string, telemetry: VehicleTelemetry): Array<string> {
 }
 
 //------------------------------------------------------------------------------
-// Not every field deserves the stream's rate. A position has to arrive 30 times a
-// second or the motion judders; a text readout re-drawn that often only costs a
-// component flush and a broadcast to every client watching. So the pose goes in
-// on every event and the tags four times a second, on the wall clock — the point
-// is to cap the real-time write rate, whatever speed the replay runs at.
-//------------------------------------------------------------------------------
+// Update telemetry tags 4x per second (250ms) to reduce network traffic.
 const TAG_REFRESH_MS = 250;
 const last_tag_refresh = new Map<string, number>();
 
@@ -561,31 +467,11 @@ const VEHICLE_MAPPING: EventMapping = {
 };
 
 //------------------------------------------------------------------------------
-// The same events again, this time spawning the entity the *clients* follow.
-//
-// A client writes to the session through two loops, and they are not the same
-// pipe. The update loop flushes every dirty entity ~30 times a second so the
-// renderer can draw it; the broadcast loop flushes only `auto_broadcast` entities,
-// **once a second by default**, and it flushes them with `persist: true` — it
-// writes them to the scene. So a viewport's own copy of an ingested entity is a
-// second stale, and turning that rate up means persisting whatever is on the list
-// thirty times a second. Doing that to a `scene_ref` root — a whole instantiated
-// sub-scene — is what makes the rendered motion stutter.
-//
-// So the two jobs go to two entities. The vehicle above drives the renderer and is
-// never broadcast. This one is empty: a name, a position and the telemetry, small
-// enough that persisting it 30 times a second costs nothing. It has no mesh, so it
-// is invisible; the only thing that ever looks at it is the DOM overlay.
-//
-// It is spawned at the scene root rather than under its vehicle *because* the
-// vehicle is not broadcast: a child's world position is resolved through its
-// parent's matrix, and every client's copy of that parent is frozen at the pose it
-// was created with. Parented, every label would sit where its vehicle started.
+// Broadcast entity: carries telemetry for the DOM overlay to read.
+// Separate from the main vehicle entity to optimize network updates.
 //------------------------------------------------------------------------------
 
-// How high above the vehicle's own origin the readout floats. The broadcast entity
-// is placed there directly, so the label is anchored on a real point in the world
-// rather than pushed up the screen by a guess at the camera distance.
+// Height above vehicle where label floats.
 const LABEL_HEIGHT_M: Record<string, number> = { forklift: 2.7, drone: 3 };
 
 function labelPosition(id: string, telemetry: VehicleTelemetry): Vec3 {
@@ -600,8 +486,7 @@ function broadcastEntityName(id: string): string {
 const VEHICLE_BROADCAST_MAPPING: EventMapping = {
     channel: `${VEHICLE_CHANNEL_PREFIX}+/telemetry`,
 
-    // Same events, already validated by the mapping above — every mapping whose
-    // channel matches gets the event, in the order they were registered.
+    // Reuse validated events from VEHICLE_MAPPING.
     entities: {
         spawn: {
             name: ({ id }) => broadcastEntityName(id),
@@ -612,9 +497,7 @@ const VEHICLE_BROADCAST_MAPPING: EventMapping = {
                     local_transform: {
                         position: labelPosition(id, telemetry),
                     },
-                    // Spawned *with* its tags, not given them on the next event:
-                    // the viewer picks these entities up by the components they
-                    // are created with.
+                    // Tags included at creation (not updated later).
                     tags: { value: vehicleTags(id, telemetry) },
                 };
             },
@@ -641,17 +524,9 @@ const VEHICLE_BROADCAST_MAPPING: EventMapping = {
 };
 
 //------------------------------------------------------------------------------
-// The arm: a stationary 4-DOF machine, its four pivots already authored in the
-// scene rather than spawned. Its stream reports one axis per event — `{ axis,
-// angle }` — so unlike a vehicle, the id this mapping resolves comes from the
-// *payload*, not the channel, and it resolves against entities the mapping
-// never creates.
-//
-// That is `byUuid`: a fixed id → entity UUID table, the right strategy for a
-// known, closed population (the four pivots of one machine) that already
-// exists. Fill in the four UUIDs below with the pivot entities from your own
-// copy of the scene — until then the resolver logs one "not found" warning per
-// pivot and otherwise ignores their events.
+// Robotic arm: four pivots already in the scene.
+// Uses byUuid mapping to resolve entities by UUID instead of spawning them.
+// Fill in the pivot UUIDs with your own scene's values.
 //------------------------------------------------------------------------------
 type ArmJointTelemetry = { axis: number; angle: number };
 
@@ -680,16 +555,7 @@ const PIVOT_ENTITIES: Record<string, UUID> = {
 };
 
 //------------------------------------------------------------------------------
-// The pose the scene authored each pivot with.
-//
-// A joint reports one angle, about one axis — so it drives exactly one of the
-// three components of its pivot's rotation, and the other two have to come from
-// somewhere. Sending a bare rotation about the driven axis alone would zero
-// them, folding the arm flat the moment the first event lands. So the authored
-// pose is read off the scene once, and only the driven component is replaced.
-//
-// Re-reading it on a later run is harmless: the only component the ingestion
-// ever wrote is the one that gets replaced anyway.
+// Read each pivot's initial pose once, then update only the driven rotation axis.
 //------------------------------------------------------------------------------
 const pivot_rest_euler = new Map<string, Vec3>();
 
@@ -707,11 +573,7 @@ async function readPivotRestPoses(scene: AgentScene): Promise<void> {
 }
 
 //------------------------------------------------------------------------------
-// Where a joint angle puts its pivot: the rest pose with the driven component
-// overwritten. `eulerOrientation` is in degrees and ordered [X, Y, Z] — the same
-// order the rotation axis is written in, so the axis' one non-zero entry is the
-// index to write. Null until the rest pose has been read, which drops a frame or
-// two at the very start rather than flattening the arm.
+// Calculate pivot rotation: rest pose with driven axis updated.
 //------------------------------------------------------------------------------
 function pivotEuler(id: string, angle: number): Vec3 | null {
     const rest = pivot_rest_euler.get(id);
@@ -757,8 +619,7 @@ const ARM_MAPPING: EventMapping = {
 };
 
 //------------------------------------------------------------------------------
-// An `EventSink` that reports every event before passing it on. `SceneIngestion` *is* the real
-// sink, so wrapping it is all it takes to watch the stream go by — no SDK hook needed.
+// Wrap the event sink to observe events before processing.
 //------------------------------------------------------------------------------
 function observedSink({
     sink,
@@ -776,18 +637,10 @@ function observedSink({
 }
 
 //------------------------------------------------------------------------------
-// Putting the companion entities on the broadcast list.
+// Toggle broadcast state of companion entities based on label visibility.
 //
 // `auto_broadcast` is what decides whether an entity joins the persist list the
-// broadcast loop flushes — the pipeline holds it at `false` for everything it
-// touches, so nothing an ingestion drives is persisted behind your back. The
-// vehicles stay that way for good. Their companions are switched on and off with
-// the readouts: nobody is reading them while the overlay is hidden, so nothing
-// needs sending.
-//
-// Returns a function to call whenever the wanted state may have drifted. The
-// entities are looked up by the names the mapping spawned them under and kept: a
-// run of calls costs one lookup rather than one apiece.
+// broadcast loop flushes
 //------------------------------------------------------------------------------
 function vehicleBroadcastSync(): (params: {
     ingestion: SceneIngestion;
@@ -803,9 +656,7 @@ function vehicleBroadcastSync(): (params: {
             return;
         }
 
-        // An id turns up on the stream a moment before the pipeline has finished
-        // spawning its entity, so a lookup can come back empty. Whatever is still
-        // missing is simply retried on the next call.
+        // Retry missing companions on next call.
         const missing = ids.filter(id => !companions.has(id));
         if (missing.length > 0 && !is_resolving) {
             is_resolving = true;
@@ -832,9 +683,7 @@ function vehicleBroadcastSync(): (params: {
 }
 
 //------------------------------------------------------------------------------
-// The recording being replayed. It holds one event per line, so an event index
-// *is* a line index in the panel that displays it (line 0 being the opening
-// bracket).
+// Recording metadata (one event per line).
 //------------------------------------------------------------------------------
 const RECORDING = {
     title: "x-agent-data-ingestion-recording.json",
@@ -846,8 +695,7 @@ const RECORDING = {
 };
 
 //------------------------------------------------------------------------------
-// Build the ingestion: an agent to attach to the session, a pipeline holding the
-// mappings, and the playback source feeding them.
+// Create ingestion: agent, pipeline, and playback source.
 //------------------------------------------------------------------------------
 function createIngestion({
     config,
@@ -936,21 +784,16 @@ function DataIngestion({
     const [stats, setStats] = useState<IngestionStats | null>(null);
     const [error, setError] = useState<string | null>(null);
 
-    // Events arrive up to ~330 times a second: the trace buffers them and
-    // publishes on a timer rather than setting state per event.
+    // Buffer events and publish on timer (not per event).
     const { rows, onEvent, reset } = useEventTrace({
         describe: describePayload,
     });
 
-    // How far into each recording its own transport has got, counted per event
-    // and published on the same 100 ms tick as the stats below — the panels only
-    // need a cursor, not a re-render per event.
+    // Track playback progress (updated every 100ms, not per event).
     const replayed = useRef(0);
     const [cursor, setCursor] = useState(0);
 
-    // The stream defines the fleet, here as much as in the mapping: a vehicle is
-    // known by the id its channel carried. Held in a ref and read on the tick
-    // below, where the broadcast state is reconciled.
+    // Track vehicle IDs from event stream.
     const vehicle_ids = useRef<Set<string>>(new Set());
     const are_labels_visible = useRef(areLabelsVisible);
     are_labels_visible.current = areLabelsVisible;
@@ -974,9 +817,7 @@ function DataIngestion({
             throw new Error("Session info is not available");
         }
 
-        // Default mode is "join-or-start". The session selector pins the agent to
-        // the exact transient session the viewer created, so the entities the
-        // ingestion drives show up live in the viewport behind these panels.
+        // Connect to the viewer's session.
         const config: AgentConfig = {
             scene_id: SCENE_ID,
             token: sessionInfo.token,
@@ -989,28 +830,27 @@ function DataIngestion({
                 sessions.find(s => s.session_id === sessionInfo.session_id) ??
                 null,
 
-            // The one tuning an ingestion agent actually needs. The client does
-            // not send an entity the moment you write it: it flushes whatever is
-            // dirty on a fixed timer, 30 times a second by default. Leave that at
-            // 30 while the stream also arrives at 30 Hz and the two free-running
-            // timers alias — some flushes carry two samples (the first is
-            // overwritten in the dirty entity and never sent), some carry none,
-            // and the motion judders even though every position was ingested.
-            // Keep the flush rate comfortably above the data rate and each sample
-            // gets its own flush. Rates are capped at 125 Hz (an 8 ms interval)
-            // because the client does not support a faster timer.
+            // The one tuning an ingestion agent actually needs.
             headless_client: {
-                // Generated recordings are 30 Hz, so the flush rate has to be at
-                // least that to avoid dropping samples.
-                updatesPerSecond: 40,
-                // `broadcastsPerSecond` is the *other* loop — the one that persists
-                // `auto_broadcast` entities for the other clients — and it defaults to
-                // 1, which is why anything watching an ingested entity from another
-                // client sees it lurch once a second. Raising it is only affordable
-                // because the only things on that list are the empty companion
-                // entities; the vehicles themselves never join it.
+                // Writes are not sent one by one: a timer flushes whatever
+                // changed, 30 times a second by default, and only the last value
+                // written between two flushes goes out. The recording is 30 Hz,
+                // so the default only just keeps up — 60 leaves room, and still
+                // covers the 2× replay. (At 5× the samples arrive faster than any
+                // flush rate can follow, and the motion simply gets coarser.)
+                updatesPerSecond: 60,
+                // The other loop: the one that persists `auto_broadcast` entities
+                // so other clients see them. It defaults to 1, which is why a
+                // label driven this way lurches once a second. Only the companion
+                // entities carrying the labels are on that list — the pipeline
+                // sets `auto_broadcast = false` on everything it drives, so the
+                // vehicles never join it. It cannot usefully go above
+                // `updatesPerSecond`, which is the loop that fills the list.
                 broadcastsPerSecond: 20,
             },
+
+            // Leave session 1 minute after all viewers disconnect.
+            leave_on_condition: { after_seconds: 60 },
         };
 
         const ingestion = createIngestion({
@@ -1024,9 +864,7 @@ function DataIngestion({
         return ingestion;
     }, [sessionInfo, speed, onRecordingEvent]);
 
-    // Restarts on a speed change: the source is fixed when the ingestion is built
-    // and the transport paces off the recorded timestamps when it starts, so a
-    // new speed means a new replay.
+    // Restart ingestion on speed change.
     useEffect(() => {
         if (!isStarted || !sessionInfo) {
             return;
@@ -1040,8 +878,7 @@ function DataIngestion({
         replayed.current = 0;
         setCursor(0);
 
-        // A fresh run means fresh entities — the old ones went with the agent
-        // that spawned them — so the fleet is learnt again from the stream.
+        // Learn fleet from stream again.
         vehicle_ids.current = new Set();
         const syncBroadcast = vehicleBroadcastSync();
 
@@ -1065,10 +902,7 @@ function DataIngestion({
             setStats(ingestion?.stats ?? null);
             setCursor(replayed.current);
 
-            // Reconciled rather than fired on the button: a vehicle that spawns
-            // while the labels are already on has to be caught too, and settling
-            // both cases on the same tick means neither has to know about the
-            // other. Once every vehicle matches, this costs a set difference.
+            // Sync broadcast state for all vehicles.
             if (ingestion) {
                 void syncBroadcast({
                     ingestion,
@@ -1133,10 +967,7 @@ function DataIngestion({
                         label="Replay speed"
                     />
 
-                    {/* The overlay is a view of the scene, not a source: switching
-                        it off leaves the ingestion running untouched. It does take
-                        the companion entities off the broadcast list though —
-                        nobody is reading them while it is hidden. */}
+                    {/* Toggle overlay (view only); manages broadcast state. */}
                     <button
                         className={`px-2 py-1 rounded-sm text-center cursor-pointer text-xs ${
                             areLabelsVisible
