@@ -320,24 +320,3 @@ Every piece remains public and usable alone: the `IngestionPipeline` with no age
 | `resolvers/`  | `EntityResolver.ts` (caching base), `ExistingEntityResolver.ts`, `SpawningEntityResolver.ts`                                                                                                     |
 | `apply/`      | `ComponentPatchApplier.ts` (write dedup)                                                                                                                                                         |
 | `util/`       | `channel.ts`, `reporting.ts`                                                                                                                                                                     |
-
-Outside `sources/`, [`livelink.samples/src/samples/agent/`](livelink.samples/src/samples/agent/README.md) holds two runnable agents — one per live
-transport, MQTT and OPC UA — each against a source you start with one docker command, plus the
-playback generators that write the dumps `PlaybackTransport` replays. They are scripts of this
-package, not a package of their own: `npm run sample:mqtt` / `sample:opcua` /
-`generate:x-agent-data-ingestion` from the package root, type-checked by `typecheck:samples`.
-
-One `tsconfig.samples.json` serves both the type-check and the `tsx` run. Its `paths` entry maps
-`@3dverse/livelink-agent` to the package _directory_, so resolution goes through the package's
-`exports` and lands on the **build output** rather than following the workspace symlink back into
-`sources/` — what the samples exercise is what a consumer gets, and `build:agent` has to have run
-first. (Mapping straight at the `.d.ts` would type-check identically but tsx reads these paths too
-and would try to execute a declaration file.) They are the place to reproduce an ingestion bug a
-unit test cannot reach.
-
-`samples/tsconfig.json` is a one-line `extends` of that config and exists **only** so the editor
-finds it: tsserver picks a project by walking up for a file named literally `tsconfig.json`, and the
-package's own one is sources-only, so without the shim VS Code drops the samples into an inferred
-project with no `types: ["node"]` and no `paths` — `process` and `__dirname` stop resolving while
-the CLI stays green, because `typecheck:samples` names its config explicitly and the editor cannot.
-Same shim, same reason, as the `tests/tsconfig.json` each package carries.

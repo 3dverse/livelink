@@ -1,34 +1,7 @@
 //------------------------------------------------------------------------------
-// This sample is a small competitive multiplayer game, built on the *session
-// pool* of the `@3dverse/livelink-agent`.
-//
-// The page is a multi-room lobby — each room hosted by exactly one agent:
-//
-//   • The page runs one idle agent which attaches to newly created rooms.
-//     Creating a room also joins it, so you land straight in the game.
-//   • The agent is the *referee*. Clients only delete the cube they clicked;
-//     the agent turns that deletion into a point for whoever emitted it, so two
-//     players clicking the same cube can never both score.
-//   • A single entity is the room's whole protocol. The agent creates a `Game`
-//     entity and publishes everything in its `tags`, a plain `Array<string>`
-//     used as a "key=value" store:
-//
-//       key                  written by   meaning
-//       ────────────────────────────────────────────────────────────────────
-//       host                 agent        the agent's own client id
-//       round                agent        round number, bumped on every start
-//       state                agent        "playing" | "over"
-//       cubes                agent        how many cubes are left
-//       started_at/ended_at  agent        round timing, in epoch ms
-//       score.<client_id>    agent        that player's points
-//       restart              any client   asks for a fresh swarm when > round
-//
-//   • Clearing the last cube ends the round: final scores, winner(s) and how
-//     long it took. Anyone can then ask the agent for a fresh swarm.
-//
-// IMPORTANT: everything under the "Agent" banner is plain TypeScript with no
-// React or DOM dependency — the very same `createGameAgent` could run as a
-// Node.js process hosting the rooms.
+// Multiplayer game: rooms hosted by agents (referees), controlled via shared tags.
+// Click cubes to score; agent awards points and manages rounds.
+// Lobby: multi-room browser UI; Agent: can run as Node.js headless service.
 //------------------------------------------------------------------------------
 import {
     useCallback,
@@ -73,13 +46,10 @@ import type { OrbitingAnimation } from "@/samples/advanced/x-agent-multiplayer-g
 const token = import.meta.env.VITE_PROD_PUBLIC_TOKEN;
 const SCENE_ID = "916f6c80-d6e7-4610-82ba-cfd35f4d6dbc";
 
-// A well-known entity in the scene. The agent SDK registers each hosting agent under it (a marker
-// entity named after the agent's client id) to run its leave condition, and this sample hangs the
-// room's `Game` entity there too so clients have somewhere fixed to look for it.
+// Well-known roster entity: agents register themselves here.
 const AGENT_ROSTER_ENTITY_ID = "d577efd3-cca8-41ca-a58e-27e944f7b5de";
 
-// The scene and assets are the same ones used by the react-core
-// "6-entities/1-create-entity" sample.
+// Shared scene assets (cube mesh and materials).
 const MESH_REF = "0577814f-4677-420b-89e8-1e5a4dd56914";
 const MATERIAL_REFS = [
     "5bd5d2c5-65d3-4cdb-adb1-c85ae1502840", // Light
@@ -94,27 +64,24 @@ const MATERIAL_REFS = [
 // The name of the entity carrying the room's game state.
 const GAME_ENTITY_NAME = "Game";
 
-// The tag every cube of the swarm carries, so a client can tell the cubes apart
-// from the rest of the scene when picking.
+// Tag that marks cubes for picking.
 const CUBE_TAG = "cube";
 
-// Tag keys clients care about writing or matching.
+// Game state tag keys.
 const SCORE_TAG_PREFIX = "score.";
 const RESTART_TAG = "restart";
 
-// How often the lobby refreshes the room list.
+// Lobby refresh interval.
 const LOBBY_POLL_SECONDS = 2;
 
-// When a hosted room has no other client (no viewer, no lobby reader) for this
-// long, the agent leaves it so the empty transient session can close.
+// Agent leaves when alone (closes transient session).
 const AGENT_LEAVE_WHEN_ALONE_SECONDS = 20;
 
 // The most rooms the lobby will create at once.
 const MAX_ROOMS = 4;
 
 //==============================================================================
-// Shared: reading the `Game` entity's tags. Modelled as pure functions over the
-// tag array so the very same code serves the browser entity and the agent's.
+// Shared: pure functions to parse/read game state from tags.
 //==============================================================================
 function parseTags(values: Array<string> = []): Record<string, string> {
     const entries: Record<string, string> = {};
@@ -170,8 +137,7 @@ function formatDuration(milliseconds: number): string {
 }
 
 //------------------------------------------------------------------------------
-// App: the lobby. Runs one idle agent for the whole page and renders one
-// self-contained card per room.
+// Lobby: runs one idle agent and displays room cards.
 export function App() {
     const agentRef = useRef<Agent | null>(null);
 
@@ -186,7 +152,7 @@ export function App() {
         joinedRoomIds.has(room.session_id),
     );
 
-    // Start the lobby agent once on page load. It will attach to room once created.
+    // Start lobby agent (attaches to rooms when created).
     useEffect(() => {
         const agent = createGameAgent({
             config: {
@@ -196,9 +162,7 @@ export function App() {
                 mode: "manual",
                 leave_on_condition: {
                     after_seconds: AGENT_LEAVE_WHEN_ALONE_SECONDS,
-                    // The agent registers itself in this roster (a marker entity named after its
-                    // client id), so the default leave_on_condition check can tell other agents
-                    // apart from real viewers .
+                    // Agent registers in roster to distinguish from viewers.
                     agent_roster_id: AGENT_ROSTER_ENTITY_ID,
                 },
             },
@@ -233,8 +197,7 @@ export function App() {
         return () => clearInterval(timer);
     }, [refreshRooms]);
 
-    // Create a new room, become its host and sit down at the table: the agent attaches to the
-    // session and starts a round, while we join it as a player.
+    // Create room and join as player (agent hosts and starts round).
     const createRoom = async (): Promise<void> => {
         if (roomCount >= MAX_ROOMS) {
             return;
@@ -259,12 +222,11 @@ export function App() {
         }
     };
 
-    // Render a card for a room, either joined or unjoined.
+    // Render room card (joined or unjoined).
     const renderCard = (room: SessionInfo) => {
         const { session_id } = room;
         const agent = agentRef.current;
-        // Careful: `agent?.getLivelink(...) !== null` would be `true` when the agent itself is
-        // null (`undefined !== null`), marking every room as ours before the agent even starts.
+        // Check if we (the agent) are hosting this room.
         const isHostedByMe =
             agent !== null && agent.getLivelink({ session_id }) !== null;
         return (
@@ -342,13 +304,13 @@ export function App() {
 }
 
 //------------------------------------------------------------------------------
-// Lay the room cards out in as square a grid as possible.
+// Calculate grid columns for square-ish layout.
 function gridColumns(count: number): number {
     return Math.max(1, Math.ceil(Math.sqrt(count)));
 }
 
 //------------------------------------------------------------------------------
-// A room card: the per-room controls and, when joined, the game itself.
+// Room card: controls + game (if joined).
 function RoomCard({
     room,
     isJoined,
@@ -402,8 +364,7 @@ function RoomCard({
 }
 
 //------------------------------------------------------------------------------
-// The game: the viewport you click cubes in, the scoreboard, the round HUD and
-// the end-of-round panel.
+// Game: viewport, scoreboard, round HUD, and end-of-round panel.
 function GameLayout() {
     const { instance } = useContext(LivelinkContext);
     const { cameraEntity } = useCameraEntity();
@@ -421,9 +382,7 @@ function GameLayout() {
         });
     }, [instance, hoveredCube]);
 
-    // Cubes are the only entities of the scene carrying this tag. Once the round is over there is
-    // no cube left to click, so the picking callbacks never need to know about the round — which
-    // keeps their identity stable, and <Viewport> re-arms picking whenever they change.
+    // Identify cubes by tag (only clickable entity type).
     const isCube = useCallback(
         (entity: Entity | null): entity is Entity =>
             entity?.tags?.value.includes(CUBE_TAG) ?? false,
@@ -438,7 +397,7 @@ function GameLayout() {
         [isCube],
     );
 
-    // Clicking a cube only *deletes* it. Turning that deletion into a point is the agent's job.
+    // Delete cube; agent awards points.
     const onPick = useCallback(
         (data: { entity: Entity } | null) => {
             const entity = data?.entity ?? null;
@@ -597,12 +556,7 @@ function NeonBanner({ children }: { children: string }) {
 }
 
 //------------------------------------------------------------------------------
-// The room's game, as published by its host: find the `Game` entity, follow its
-// tags, and expose the one thing a client may write back to it.
-//
-// `hostLeft` says the entity we were following was deleted, which only happens
-// when the agent hosting the room disconnects.
-//------------------------------------------------------------------------------
+// Read game state from agent's `Game` entity; detect if host disconnected.
 function useGame(): {
     game: GameState | null;
     hostLeft: boolean;
@@ -613,9 +567,7 @@ function useGame(): {
     const [game, setGame] = useState<GameState | null>(null);
     const [hostLeft, setHostLeft] = useState(false);
 
-    // Look for the entity under the well-known roster entity. The host may not have created it
-    // yet, so retry whenever entities appear — and stop listening as soon as we have it, rather
-    // than re-querying on every cube cleared.
+    // Find Game entity under roster (retry on entities-created events).
     useEffect(() => {
         if (!instance || entity) {
             return;
@@ -653,7 +605,7 @@ function useGame(): {
         };
     }, [instance, entity]);
 
-    // Follow the round.
+    // Track game state updates.
     useEffect(() => {
         if (!instance || !entity) {
             return;
@@ -684,8 +636,7 @@ function useGame(): {
         };
     }, [instance, entity]);
 
-    // The only tag a client writes: bumping it past the current round asks the host for a fresh
-    // swarm. Every other key belongs to the agent, so keep them all.
+    // Client-writable tag: bump restart value to ask for fresh swarm.
     const requestRestart = useCallback(() => {
         if (!entity || !game) {
             return;
@@ -710,9 +661,7 @@ type Player = {
 };
 
 //------------------------------------------------------------------------------
-// Everyone in the room but the agent hosting it, numbered in client id order so
-// that every client labels the same person the same way.
-//------------------------------------------------------------------------------
+// Get all players except hosting agent (sorted by client ID for consistency).
 function usePlayers({ game }: { game: GameState | null }): Array<Player> {
     const { instance } = useContext(LivelinkContext);
     const { clients } = useClients();
@@ -734,9 +683,7 @@ function usePlayers({ game }: { game: GameState | null }): Array<Player> {
 }
 
 //------------------------------------------------------------------------------
-// Ticks while a round is running, so the elapsed time keeps moving. Once the
-// round is over the duration is the one the agent published, identical for all.
-//------------------------------------------------------------------------------
+// Track round elapsed time (live while running, frozen when over).
 function useRoundClock(game: GameState | null): number {
     const [, tick] = useReducer((count: number) => count + 1, 0);
 
@@ -757,13 +704,11 @@ function useRoundClock(game: GameState | null): number {
 }
 
 //==============================================================================
-// Agent: this whole section is runtime-agnostic. It only depends on
-// `@3dverse/livelink-agent` and could be lifted verbatim into a Node.js script.
+// Agent: runtime-agnostic (can run as Node.js headless service).
 //==============================================================================
 
 //------------------------------------------------------------------------------
-// Per-room state, keyed by session id — the agent itself keeps none. Everything
-// here that clients need to see is mirrored into `game_entity`'s tags.
+// Per-room state (mirrored to Game entity tags).
 type Room = {
     livelink: AgentLivelink;
     game_entity: AgentEntity;
@@ -778,17 +723,13 @@ type Room = {
 };
 
 //------------------------------------------------------------------------------
-// Build an agent that hosts a cube-clearing game in every room it holds: it
-// spawns the swarm, referees the clicks and keeps the scoreboard.
-//------------------------------------------------------------------------------
+// Game agent: spawns swarm, referees clicks, keeps scoreboard.
 function createGameAgent({ config }: { config: AgentConfig }): Agent {
     const agent = new Agent({ config });
     const rooms = new Map<UUID, Room>();
 
     //--------------------------------------------------------------------------
-    // Publish the room's state to every client. Rebuilding the whole tag array
-    // rather than merging into the previous one is what drops the scores of
-    // players who left; `restart` is the one key we do not own, so keep it.
+    // Publish game state to clients (rebuild tag array to drop disconnected players).
     const publishGameState = ({ room }: { room: Room }): void => {
         const value = [
             `host=${room.livelink.session.client_id ?? ""}`,
@@ -813,21 +754,19 @@ function createGameAgent({ config }: { config: AgentConfig }): Agent {
     };
 
     //--------------------------------------------------------------------------
-    // Clear the board and spawn a fresh swarm. Also used to start the very
-    // first round, where there is nothing to clear yet.
+    // Clear board and spawn fresh swarm (or start first round).
     const startRound = async ({ room }: { room: Room }): Promise<void> => {
         const { livelink } = room;
         const { session_id } = livelink.session;
 
-        // Claim the round synchronously: a second restart request landing while we spawn must not
-        // start a competing swarm — it will no longer be ahead of `room.round`.
+        // Claim round synchronously (prevent competing swarms).
         room.round += 1;
         room.ended_at = 0;
         room.scores.clear();
         room.animation?.stop();
         room.animation = null;
 
-        // Our own deletions raise no local `on-entities-deleted` event, so prune the set by hand.
+        // Prune cube set (agent deletions don't raise local events).
         const leftovers = Array.from(room.cubes);
         room.cubes.clear();
         if (leftovers.length > 0) {
@@ -843,8 +782,7 @@ function createGameAgent({ config }: { config: AgentConfig }): Agent {
             tags: [CUBE_TAG],
         });
 
-        // Spawning the entities took a few round trips: the agent may have left the room in the
-        // meantime, in which case `on-session-left` already ran and found nothing to tear down.
+        // Check if we're still in this room (may have left while spawning).
         if (agent.getLivelink({ session_id }) === null) {
             animation.stop();
             return;
@@ -863,9 +801,7 @@ function createGameAgent({ config }: { config: AgentConfig }): Agent {
     };
 
     //--------------------------------------------------------------------------
-    // A client cleared one or more cubes. The agent is the single authority that
-    // turns a deletion into a point, so two players clicking the same cube
-    // cannot both score: only one deletion ever reaches this handler.
+    // Client cleared cubes; agent awards points (single authority).
     const onCubesCleared = ({
         room,
         event,
@@ -948,8 +884,7 @@ function createGameAgent({ config }: { config: AgentConfig }): Agent {
             onCubesCleared({ room, event });
         scene.addEventListener("on-entities-deleted", onEntitiesDeleted);
 
-        // Anyone in the room can ask for a fresh swarm by bumping the `restart` tag past the
-        // current round. Our own edits come back as local events, which this ignores.
+        // Restart request: when restart tag > current round (ignore local edits).
         const onGameEntityUpdated = (event: AgentEntityUpdatedEvent): void => {
             if (!event.isExternal() || !event.includes("tags")) {
                 return;
@@ -978,8 +913,7 @@ function createGameAgent({ config }: { config: AgentConfig }): Agent {
         await startRound({ room });
     });
 
-    // Tear down a room's animation and listeners when leaving the session. The `Game` entity and
-    // the cubes are deleted by the server on disconnection, which is how the clients find out.
+    // Tear down room on disconnect (server deletes Game entity and cubes).
     agent.addEventListener("on-session-left", ({ livelink }) => {
         const { session_id } = livelink.session;
         const room = rooms.get(session_id);

@@ -1,3 +1,10 @@
+spec:
+  inputs:
+    generate_docs:
+      description: "Publish docs for livelink.js, livelink.agent and livelink.react (only takes effect on the default branch)"
+      type: boolean
+      default: false
+---
 # SETTINGS ############################################################################################################
 include:
   - project: 3dverse/platform/ci-utils/gitlab-templates
@@ -10,7 +17,7 @@ variables:
   NODE_VERSION: "24"
 
 # RULES     ###########################################################################################################
-.manual-doc-publish-rule: &manual-doc-publish-rule $CI_DEFAULT_BRANCH == $CI_DEFAULT_BRANCH && $GENERATE_DOCS == "true"
+.manual-doc-publish-rule: &manual-doc-publish-rule $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && $[[ inputs.generate_docs ]] == true
 
 .release-rule: &release-rule $CI_COMMIT_BRANCH == "release"
 

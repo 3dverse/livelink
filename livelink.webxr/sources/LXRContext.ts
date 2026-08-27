@@ -137,6 +137,13 @@ export class LXRContext extends ContextProvider {
     #projection_offset: vec2 = vec2.create();
 
     /**
+     * Whether the program currently linked draws the billboard. Mirrors the argument of the last
+     * {@link initialize}, which is re-run on every latency-compensation toggle. Read by
+     * {@link drawXRFrame}, which feeds the two paths differently — see the note there.
+     */
+    #enable_billboard: boolean = true;
+
+    /**
      * Camera world-space position, updated each frame.
      */
     #camera_position: vec3 = vec3.create();
@@ -199,6 +206,7 @@ export class LXRContext extends ContextProvider {
      */
     initialize({ enable_billboard = true }: { enable_billboard?: boolean } = {}): void {
         this.#releaseGLResources();
+        this.#enable_billboard = enable_billboard;
         this.#initShaderProgram({ enable_billboard });
         this.#initBuffers();
         this.#initTexture();
@@ -323,8 +331,18 @@ export class LXRContext extends ContextProvider {
                 this.screen_distance,
             );
 
-            this.#projection_offset[0] = xr_view.projectionMatrix[8];
-            this.#projection_offset[1] = xr_view.projectionMatrix[9];
+            // The off-axis correction belongs to the billboard path only. That quad is a world
+            // plane seen through this eye's asymmetric projectionMatrix, which lands its centre at
+            // NDC -offset; adding the offset back is what makes it fill [-1, 1] and map the frame
+            // onto the eye 1:1. The direct quad never goes through a projection — `position` is
+            // already NDC — so the same term is a pure displacement there, and since the offset has
+            // opposite signs for the two eyes it pushes their images apart. That is a wrong-signed
+            // horizontal disparity across the whole scene, which in a headset reads as the eyes
+            // being crossed. Handheld AR never showed it: one view, near-symmetric projection, so
+            // the offset is ~0 either way.
+            const applies_view_offset = this.#enable_billboard;
+            this.#projection_offset[0] = applies_view_offset ? xr_view.projectionMatrix[8] : 0;
+            this.#projection_offset[1] = applies_view_offset ? xr_view.projectionMatrix[9] : 0;
 
             const billboardMatrix = this.#computeBillboardMatrix(this.#billboard_position, scaleX, scaleY);
             gl.uniform2fv(viewOffsetLocation, this.#projection_offset as Float32Array);

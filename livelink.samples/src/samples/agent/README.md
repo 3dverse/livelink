@@ -1,22 +1,39 @@
 # Samples
 
-Two runnable agents, each driving a 3dverse scene from infrastructure you start yourself with one
-docker command. They are the concrete counterpart to the data-ingestion section of the
+Runnable agents, the concrete counterpart to the data-ingestion section of the
 [README](../README.md): same mappings, same pipeline, against a live source rather than a snippet.
+`quickstart/` needs nothing but Node — start there if you haven't written a mapping yet.
+`mqtt-ingestion/` and `opcua-ingestion/` each drive a scene from infrastructure you start yourself
+with one docker command.
 
 | Sample                                 | Source                                                                            | Shows                                                               |
 | -------------------------------------- | --------------------------------------------------------------------------------- | ------------------------------------------------------------------- |
+| [`quickstart/`](quickstart/)           | an in-memory recording, no infra to start                                         | the minimal ingestion example                                       |
 | [`mqtt-ingestion/`](mqtt-ingestion/)   | a Mosquitto broker fed by [mqtt-sim](https://github.com/marcelo-6/mqtt-sim)       | wildcard fan-out — one mapping, six entities, identity in the topic |
 | [`opcua-ingestion/`](opcua-ingestion/) | Microsoft's [iot-edge-opc-plc](https://github.com/Azure-Samples/iot-edge-opc-plc) | one signal per part of a machine cell, spawned into an empty scene  |
 
-The split between them is the one that matters in practice: MQTT is web-native, so those mappings
-run in a page over `ws://` exactly as they do here over `mqtt://`. `opc.tcp://` is raw TCP and only
-ever runs in Node — which is also where an OPC UA client belongs, next to the PLC, with the scene as
-its only outbound connection.
+The split between the last two is the one that matters in practice: MQTT is web-native, so those
+mappings run in a page over `ws://` exactly as they do here over `mqtt://`. `opc.tcp://` is raw TCP
+and only ever runs in Node — which is also where an OPC UA client belongs, next to the PLC, with
+the scene as its only outbound connection.
 
-Both open a joinable (non-transient) session, so a viewer pointed at the same scene watches what the
-agent is doing — and both open the 3dverse editor on that session in your browser automatically once
-it starts driving it. Set `SESSION_ID` to pin an agent to a session that is already open instead.
+`mqtt-ingestion` and `opcua-ingestion` both open a joinable (non-transient) session, so a viewer
+pointed at the same scene watches what the agent is doing — and both open the 3dverse editor on
+that session in your browser automatically once it starts driving it. Set `SESSION_ID` to pin an
+agent to a session that is already open instead.
+
+## Also in this package
+
+Two related samples live under [`../advanced/`](../advanced/), building the same ingestion
+pipeline into a React/browser context instead of a headless Node agent:
+
+- [`x-agent-data-ingestion`](../advanced/x-agent-data-ingestion/) — the same kind of recorded
+  playback, driving a live `<Viewer/>` with trace and stats panels alongside the 3D scene.
+- [`x-agent-multiplayer-game`](../advanced/x-agent-multiplayer-game/) — a different use of the same
+  agent: hosting a multiplayer game and refereeing rounds through shared tags, rather than ingesting
+  telemetry.
+
+Both run from the samples app (`npm run dev`), not from the command line.
 
 ## Setup
 
@@ -25,9 +42,8 @@ These are scripts of the `@3dverse/livelink-agent` package, not a package of the
 directory.
 
 ```bash
-cd ..                          # livelink.clients/livelink.agent
-npm -C ../.. run build:agent   # the samples compile and run against the build output
-cp samples/.env.example samples/.env   # then put your token in it
+cd ../../..                  # livelink.samples
+npm -C ../ run build:agent   # the samples compile and run against the build output
 ```
 
 `node-opcua-client` — ~90 packages, Node-only — is a devDependency of the package, so npm hoists it
@@ -36,15 +52,24 @@ pull it in: `livelink.samples/vite.config.ts` excludes the specifier, which the 
 reaches only through a lazy `import()` on a code path no browser sample takes. If you ever see a
 `node-opcua-*` chunk in that bundle, that exclusion is what regressed.
 
-## Running
+## Running the quickstart
 
-Two terminals each, from the package root:
+One terminal from the livelink.samples root:
+```
+npm run agent-sample:quickstart
+```
+
+## Running the mqtt & opcua samples
+
+Two terminals each, from the livelink.samples root:
 
 ```bash
 # MQTT — the broker and the simulator
-docker compose -f samples/mqtt-ingestion/docker-compose-mosquitto.yml up
-npm run sample:mqtt
+docker compose -f src/samples/agent/mqtt-ingestion/docker-compose-mosquitto.yml up
+npm run agent-sample:mqtt
 ```
+
+Two terminals each, from the livelink.samples root:
 
 ```bash
 # OPC UA — the simulated PLC. --ct/--sc run it at 20 Hz instead of the default 10 Hz;
@@ -52,7 +77,7 @@ npm run sample:mqtt
 docker run --rm -it -p 50000:50000 -p 8080:8080 --name opcplc \
   mcr.microsoft.com/iotedge/opc-plc:latest \
   --pn=50000 --autoaccept --unsecuretransport --ct=50 --sc=100
-npm run sample:opcua
+npm run agent-sample:opcua
 ```
 
 Each prints its pipeline counters every 5 seconds, and only when something moved — a silent source
@@ -93,5 +118,4 @@ a path given as argument.
 
 ## Configuration
 
-Everything is read from the environment, including a `.env` in this directory. `LIVELINK_TOKEN` is
-the only required one; the header comment of each script lists the rest with its default.
+Everything is read from the environment, including a `.env` of livelink.samples root directory.

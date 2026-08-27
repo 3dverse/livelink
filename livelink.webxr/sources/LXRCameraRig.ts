@@ -174,16 +174,8 @@ export class LXRCameraRig {
     #locomotion_intensity: number = 0;
 
     /**
-     * The value {@link #locomotion_intensity} held on the previous rendered frame, kept so a render
-     * frame that lands before this frame's locomotion callbacks still sees the motion. The
-     * locomotion loops and the render loop are separate `requestAnimationFrame` chains with no
-     * defined order between them, so without the one-frame hold the intensity would flicker.
-     */
-    #previous_locomotion_intensity: number = 0;
-
-    /**
      * Scratch orientation values for {@link incrementPoseLocalOffset} and friends, which are called
-     * once per axis per frame from the locomotion loops. Reuse is safe because none of them is
+     * once per axis per frame from the locomotion callbacks. Reuse is safe because none of them is
      * re-entered while a scratch value is live.
      */
     readonly #offset_scratch = {
@@ -716,12 +708,17 @@ export class LXRCameraRig {
     /**
      * @internal
      *
-     * Read the locomotion intensity for the frame being rendered and roll the accumulator over.
+     * Read the locomotion intensity for the frame being rendered and reset the accumulator.
      * Call exactly once per rendered frame.
+     *
+     * This used to also carry the previous frame's value, because the locomotion callbacks and the
+     * render ran in separate `requestAnimationFrame` chains with no order between them, and a
+     * render landing first would have read a hole. They are now one loop with the locomotion in the
+     * `input` phase, ahead of the draw on the same frame, so what is reported here is what this
+     * frame moved by.
      */
     _consumeLocomotionIntensity(): number {
-        const intensity = Math.max(this.#locomotion_intensity, this.#previous_locomotion_intensity);
-        this.#previous_locomotion_intensity = this.#locomotion_intensity;
+        const intensity = this.#locomotion_intensity;
         this.#locomotion_intensity = 0;
         return intensity;
     }
@@ -938,7 +935,6 @@ export class LXRCameraRig {
         this.resetPoseLocalOffset();
         this.#scale = 1;
         this.#locomotion_intensity = 0;
-        this.#previous_locomotion_intensity = 0;
     }
 
     /**
@@ -957,6 +953,5 @@ export class LXRCameraRig {
         this.resetPoseLocalOffset();
         this.#scale = 1;
         this.#locomotion_intensity = 0;
-        this.#previous_locomotion_intensity = 0;
     }
 }

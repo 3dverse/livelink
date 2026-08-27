@@ -14,22 +14,21 @@ import { spawn } from "node:child_process";
  * the agent driving the scene, not something that should ever take it down.
  */
 export async function openSessionInEditor({
-    environment_id,
     scene_id,
     session_id,
-    token,
+    public_token,
 }: {
-    environment_id: string;
     scene_id: string;
     session_id: string;
-    token: string;
+    public_token: string;
 }): Promise<void> {
+    const url = `https://console.3dverse.com/app-launcher/session/join/editor/${scene_id}/${session_id}/?public_token=${public_token}`;
     try {
-        openBrowser(
-            `https://console.3dverse.com/app-launcher/session/join/default/${environment_id}/${scene_id}/${session_id}/?token=${token}`,
-        );
+        openBrowser(url);
     } catch (error) {
-        console.warn(`[open-in-editor] Could not open the editor automatically (${error}).`);
+        console.warn(
+            `[open-in-editor] Could not open the editor automatically (${error}). Open this URL manually: ${url}`,
+        );
     }
 }
 
