@@ -9,6 +9,14 @@ import { LXRViewport } from "./LXRViewport";
 import { TypedEventTarget } from "./utils/TypedEventTarget";
 import { type LXREvents, SessionEndEvent, ViewportUpdatedEvent } from "./LXREvents";
 import { LXR_DEFAULT_COMFORT_VIGNETTE_STRENGTH } from "./LXRComfort";
+import {
+    LXRFrameCallbacks,
+    LXRFrameErrorLog,
+    LXR_FRAME_PHASES,
+    type LXRFrameCallback,
+    type LXRFrameCallbackArgs,
+    type LXRFramePhase,
+} from "./LXRFrameLoop";
 import { Quaternion, Vector3 } from "threejs-math";
 
 //------------------------------------------------------------------------------
@@ -80,11 +88,49 @@ export class XRLivelink extends TypedEventTarget<LXREvents> {
     #is_frame_loop_running: boolean = false;
 
     /**
-     * Message of the last error caught in {@link #onXRFrame}, or undefined if the last frame
-     * succeeded. A failing frame usually fails again on the next one, so only transitions are
-     * logged rather than every frame of a 72–90 Hz loop.
+     * Deduplicating log for everything {@link #onXRFrame} catches outside a consumer callback. A
+     * failing frame usually fails again on the next one, so only transitions are logged rather than
+     * every frame of a 72–90 Hz loop.
      */
-    #last_frame_error_message?: string;
+    readonly #frame_error_log = new LXRFrameErrorLog();
+
+    /**
+     * Consumer callbacks, one list per {@link LXRFramePhase}, run in phase order by
+     * {@link #onXRFrame} before the rig update and the draw.
+     */
+    readonly #frame_callbacks: Record<LXRFramePhase, LXRFrameCallbacks> = {
+        input: new LXRFrameCallbacks("input"),
+        anchor: new LXRFrameCallbacks("anchor"),
+    };
+
+    /**
+     * The argument object handed to every frame callback, refilled rather than rebuilt each frame.
+     * Its contents are only valid during the call — see {@link LXRFrameCallbackArgs}.
+     */
+    readonly #frame_callback_args: LXRFrameCallbackArgs = {
+        frame: undefined as unknown as XRFrame,
+        time: 0,
+        dt: 0,
+        viewer_pose: null,
+    };
+
+    /**
+     * Scratch arrays refilled by {@link #renderXRFrame} every frame. Their contents never outlive
+     * the frame that fills them — {@link LXRCameraRig.update} mutates the transforms in place and
+     * {@link LXRContext.drawXRFrame} consumes everything synchronously — so rebuilding four arrays
+     * per frame was pure garbage at display rate.
+     */
+    readonly #frame_scratch: {
+        xr_views: XRView[];
+        lxr_viewports: LXRViewport[];
+        remote_camera_transforms: ReturnType<LXRViewport["getCameraRemoteTransform"]>[];
+        xr_viewports: XRViewport[];
+    } = {
+        xr_views: [],
+        lxr_viewports: [],
+        remote_camera_transforms: [],
+        xr_viewports: [],
+    };
 
     /**
      * Whether latency compensation using billboard rendering is enabled.
@@ -419,17 +465,6 @@ export class XRLivelink extends TypedEventTarget<LXREvents> {
     }
 
     /**
-     * Access the active XRReferenceSpace. Throws an error if no session or reference space is active.
-     */
-    get #xr_reference_space(): XRReferenceSpace {
-        const { reference_space } = this.#session;
-        if (!reference_space) {
-            throw new Error("No XR reference space");
-        }
-        return reference_space;
-    }
-
-    /**
      * Access the active XRWebGLLayer. Throws an error if no session or XRWebGLLayer is active.
      */
     get #base_gl_layer(): XRWebGLLayer {
@@ -612,7 +647,53 @@ export class XRLivelink extends TypedEventTarget<LXREvents> {
     };
 
     /**
-     * XR frame callback. Drives the frame and then re-arms the loop, whatever the frame did.
+     * Register a callback to run once per XR frame, in the given phase.
+     *
+     * This is the only frame loop of the session. A consumer arming its own
+     * `XRSession.requestAnimationFrame` gets no ordering guarantee against this one, which matters
+     * as soon as it writes something the rig or the draw then reads: an anchor transform updated
+     * after the frame that consumed it is a frame of lag, seen as anchored content jittering
+     * against the real world. Registering here instead puts the work in a defined place — `input`,
+     * then `anchor`, then the rig update, then the draw.
+     *
+     * The loop keeps running through a callback that throws, and stops calling every callback once
+     * the session ends, so a consumer cannot strand a loop it did not start.
+     *
+     * @param phase When in the frame to run. Defaults to `input`.
+     * @param callback The callback to run. Registering the same function twice has no effect.
+     * @returns A function unregistering the callback.
+     */
+    public addFrameCallback({
+        phase = "input",
+        callback,
+    }: {
+        phase?: LXRFramePhase;
+        callback: LXRFrameCallback;
+    }): () => void {
+        return this.#frame_callbacks[phase].add(callback);
+    }
+
+    /**
+     * Unregister a callback previously passed to {@link addFrameCallback}. Calling the function
+     * that method returned does the same thing.
+     *
+     * @param phase The phase it was registered in. Defaults to `input`.
+     * @param callback The callback to remove.
+     */
+    public removeFrameCallback({
+        phase = "input",
+        callback,
+    }: {
+        phase?: LXRFramePhase;
+        callback: LXRFrameCallback;
+    }): void {
+        this.#frame_callbacks[phase].remove(callback);
+    }
+
+    /**
+     * XR frame callback, and the session's only one. Runs the frame phases in order — `input`,
+     * `anchor`, then the rig update and the draw of {@link #renderXRFrame} — and re-arms the loop,
+     * whatever any of them did.
      *
      * A frame is allowed to fail. The session is still alive when it does, so a loop that stopped
      * re-arming would leave the user staring at the last frame ever drawn, rigidly following their
@@ -625,19 +706,57 @@ export class XRLivelink extends TypedEventTarget<LXREvents> {
         const dt = this.#last_frame_timestamp ? (time - this.#last_frame_timestamp) / 1000 : 0;
         this.#last_frame_timestamp = time;
 
-        try {
-            this.#renderXRFrame(frame, dt);
-            this.#last_frame_error_message = undefined;
-        } catch (error) {
-            const message = error instanceof Error ? error.message : String(error);
-            if (message !== this.#last_frame_error_message) {
-                this.#last_frame_error_message = message;
-                console.error("Skipped an XR frame:", error);
-            }
+        // One viewer pose for the whole frame. Every phase wants it — the anchor phase to project
+        // onto the screen, the draw to place the cameras — and it cannot change within a frame.
+        const viewer_pose = this.#getViewerPose(frame);
+
+        const args = this.#frame_callback_args;
+        args.frame = frame;
+        args.time = time;
+        args.dt = dt;
+        args.viewer_pose = viewer_pose;
+
+        for (const phase of LXR_FRAME_PHASES) {
+            this.#frame_callbacks[phase].run(args);
         }
+
+        try {
+            this.#renderXRFrame({ dt, viewer_pose });
+            this.#frame_error_log.reportSuccess();
+        } catch (error) {
+            this.#frame_error_log.report("Skipped an XR frame", error);
+        }
+
+        // Nothing may hold on to a pose the user agent is about to invalidate.
+        args.frame = undefined as unknown as XRFrame;
+        args.viewer_pose = null;
 
         this.#requestNextXRFrame();
     };
+
+    /**
+     * Read the viewer pose for the current frame, once, for every phase to share.
+     *
+     * Never throws: a missing reference space or a user agent refusing the pose is a frame with
+     * nothing truthful to draw, which every consumer of the pose already handles, and not a reason
+     * to skip the phases that do not need it.
+     *
+     * @param frame The XRFrame to read the pose from.
+     * @returns The viewer pose, or null if there is none for this frame.
+     */
+    #getViewerPose(frame: XRFrame): XRViewerPose | null {
+        const { reference_space } = this.#session;
+        if (!reference_space) {
+            return null;
+        }
+
+        try {
+            return frame.getViewerPose(reference_space) ?? null;
+        } catch (error) {
+            this.#frame_error_log.report("Could not read the XR viewer pose", error);
+            return null;
+        }
+    }
 
     /**
      * Re-arm the XR frame loop, unless it has been stopped in the meantime — which is the case for
@@ -656,39 +775,45 @@ export class XRLivelink extends TypedEventTarget<LXREvents> {
      * Render a single XR frame: update the viewports and camera rig from the current viewer pose,
      * then draw. May throw; see {@link #onXRFrame}.
      *
-     * @param frame The XRFrame containing the latest pose and view data from the XR session.
      * @param dt Seconds since the previous XR frame, 0 on the first one.
+     * @param viewer_pose The viewer pose for this frame, resolved once by {@link #onXRFrame}, or null when there is none.
      */
-    #renderXRFrame(frame: XRFrame, dt: number): void {
-        const reference_space = this.#xr_reference_space;
-        const gl_layer = this.#base_gl_layer;
-
-        // Get viewer pose
-        const pose = frame.getViewerPose(reference_space);
-        if (!pose) {
+    #renderXRFrame({ dt, viewer_pose }: { dt: number; viewer_pose: XRViewerPose | null }): void {
+        if (!viewer_pose) {
             return;
         }
 
-        // Filter the XR views to only those that have corresponding viewports (e.g. in case of more than 2 views,
+        const gl_layer = this.#base_gl_layer;
+        const { xr_views, lxr_viewports, remote_camera_transforms, xr_viewports } = this.#frame_scratch;
+        xr_views.length = 0;
+        lxr_viewports.length = 0;
+        remote_camera_transforms.length = 0;
+        xr_viewports.length = 0;
+
+        // Keep only the XR views that have corresponding viewports (e.g. in case of more than 2 views,
         // or views for which we failed to initialize a viewport, or force_single_view mode which only initializes a
         // viewport for the first view)
-        const xr_views = pose.views.filter(xr_view => this.#lxr_viewports.has(xr_view.eye));
+        for (const xr_view of viewer_pose.views) {
+            if (this.#lxr_viewports.has(xr_view.eye)) {
+                xr_views.push(xr_view);
+            }
+        }
 
         // Compute center eye position for camera IPD offset calculations
         this.#camera_rig.updateXrSpaceCenterEye(xr_views);
 
         // Update each viewport with latest XR view data
-        const lxr_viewports: LXRViewport[] = [];
         for (const xr_view of xr_views) {
             const lxr_viewport = this.#getLXRViewportByEye(xr_view.eye);
             this.#updateViewport({ xr_view, lxr_viewport, gl_layer, center_eye: this.#camera_rig.xr_space_center_eye });
             lxr_viewports.push(lxr_viewport);
+            xr_viewports.push(lxr_viewport.xr_viewport);
+            remote_camera_transforms.push(lxr_viewport.getCameraRemoteTransform());
         }
 
         // Update camera rig with latest center eye position and remote camera transforms for this frame.
         // The rig uses this data to compute the final camera transforms for the viewports, which may include virtual
         // movement offsets and/or latency compensation adjustments.
-        const remote_camera_transforms = lxr_viewports.map(lxrv => lxrv.getCameraRemoteTransform());
         this.#camera_rig.update({ remote_camera_transforms });
 
         // Keep the billboard at the apparent depth of the scene, which the rig scale moves.
@@ -700,7 +825,7 @@ export class XRLivelink extends TypedEventTarget<LXREvents> {
         // Draw the frame for each viewport with the latest XR view and remote camera transform data
         this.#surface.context.drawXRFrame({
             xr_views,
-            xr_viewports: lxr_viewports.map(lxr_viewport => lxr_viewport.xr_viewport),
+            xr_viewports,
             frame_camera_transforms: remote_camera_transforms,
         });
     }
@@ -927,6 +1052,12 @@ export class XRLivelink extends TypedEventTarget<LXREvents> {
 
         this.stop();
         this.xr_session?.removeEventListener("end", this.#onXRSessionEnd);
+
+        // Consumers unregister themselves as they tear down, but nothing orders their teardown
+        // against this one, and a released session must not keep any of them alive.
+        for (const phase of LXR_FRAME_PHASES) {
+            this.#frame_callbacks[phase].clear();
+        }
 
         this.#lxr_viewports.forEach(lxr_viewport => lxr_viewport.release());
         this.#lxr_viewports.clear();

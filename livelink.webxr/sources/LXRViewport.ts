@@ -51,7 +51,19 @@ export class LXRViewport {
      * The livelink viewport corresponding to the XR view.
      */
     readonly viewport: Viewport;
-    
+
+    /**
+     * Scratch transform returned by {@link getCameraRemoteTransform}, refilled rather than rebuilt
+     * on every frame. One per viewport, so the two eyes never share one; the caller reads it within
+     * the frame — the camera rig reverses it in place and the draw consumes it synchronously — and
+     * an object plus two arrays per eye per frame is a steady stream of garbage at display rate.
+     */
+    readonly #remote_transform_scratch: { position: Vec3; orientation: Quat } = {
+        position: [0, 0, 0],
+        orientation: [0, 0, 0, 1],
+    };
+
+
     /**
      * The XR viewport this eye is currently rendered into, in XRWebGLLayer framebuffer coordinates.
      */
@@ -280,17 +292,26 @@ export class LXRViewport {
     /**
      * Get the latest remote transform of the camera entity associated with this viewport.
      *
-     * @returns An object containing the position and orientation of the camera.
+     * @returns The position and orientation of the camera, in a scratch object owned by this
+     * viewport and overwritten on the next call. Valid for the current frame only.
      */
     public getCameraRemoteTransform(): { position: Vec3; orientation: Quat } {
         const camera_projection = this.viewport?.camera_projection;
         if (!camera_projection) {
             throw new Error(`Missing camera projection for ${this.#xr_view_eye} eye`);
         }
-        return {
-            position: Array.from(camera_projection.world_position) as Vec3,
-            orientation: Array.from(camera_projection.world_orientation) as Quat,
-        };
+
+        const { position, orientation } = this.#remote_transform_scratch;
+        const { world_position, world_orientation } = camera_projection;
+        position[0] = world_position[0];
+        position[1] = world_position[1];
+        position[2] = world_position[2];
+        orientation[0] = world_orientation[0];
+        orientation[1] = world_orientation[1];
+        orientation[2] = world_orientation[2];
+        orientation[3] = world_orientation[3];
+
+        return this.#remote_transform_scratch;
     }
 
     /**

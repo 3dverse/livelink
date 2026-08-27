@@ -8,6 +8,7 @@ export * from "./LXRSurface";
 export * from "./LXRCameraRig";
 export * from "./LXRViewport";
 export * from "./LXRContext";
+export * from "./LXRFrameLoop";
 export * from "./LXRContextPassthrough";
 export * from "./LXRLocomotion";
 export * from "./LXRScaling";

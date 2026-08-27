@@ -58,8 +58,13 @@ export type XRAnimationCallback = ({
  * Run a callback on every frame of the active XR session, with the elapsed time since the previous
  * one.
  *
- * The callback is held in a ref, so passing an inline closure neither restarts the loop on every
- * render nor leaves it calling a stale one.
+ * It registers in the session's `input` phase rather than arming a `requestAnimationFrame` of its
+ * own: each hook using this used to start a chain of its own — four sticks meant four chains on top
+ * of the render loop — and their order against the draw was whatever the user agent decided. See
+ * {@link XRLivelink.addFrameCallback}.
+ *
+ * The callback is held in a ref, so passing an inline closure neither re-registers on every render
+ * nor leaves it calling a stale one.
  *
  * @param onFrame - Called once per XR frame with the frame delta in seconds — 0 on the first frame,
  * where there is no previous timestamp to measure against.
@@ -74,31 +79,14 @@ export function useXRFrameLoop(onFrame: (dt: number, frame: XRFrame) => void, { 
 
     //--------------------------------------------------------------------------
     useEffect(() => {
-        const xr_session = xrLivelink?.xr_session;
-        if (!xr_session || !enabled) {
+        if (!xrLivelink || !enabled) {
             return;
         }
 
-        let animation_frame_id = 0;
-        let last_time: DOMHighResTimeStamp = 0;
-
-        //----------------------------------------------------------------------
-        const onAnimationFrame = (time: DOMHighResTimeStamp, frame: XRFrame): void => {
-            const dt = last_time ? (time - last_time) / 1000 : 0;
-            last_time = time;
-
-            onFrameRef.current(dt, frame);
-
-            animation_frame_id = xr_session.requestAnimationFrame(onAnimationFrame);
-        };
-
-        animation_frame_id = xr_session.requestAnimationFrame(onAnimationFrame);
-
-        return (): void => {
-            if (animation_frame_id) {
-                xr_session.cancelAnimationFrame(animation_frame_id);
-            }
-        };
+        return xrLivelink.addFrameCallback({
+            phase: "input",
+            callback: ({ dt, frame }) => onFrameRef.current(dt, frame),
+        });
     }, [xrLivelink, enabled]);
 }
 
@@ -128,7 +116,8 @@ export type XRLocomotionOptions = {
 //------------------------------------------------------------------------------
 /**
  * Generic hook for XR animations driven by a continuous value.
- * Uses the XR session's requestAnimationFrame to stay in sync with the XR display refresh rate.
+ * Runs in the session's `input` phase, so it stays in sync with the XR display refresh rate and is
+ * applied ahead of the frame that draws it. See {@link useXRFrameLoop}.
  *
  * The raw value handed to {@link update} is conditioned before it reaches the callback — a deadzone
  * so a stick that does not rest at zero does not creep, and a ramp so starts and stops have weight
