@@ -1,5 +1,12 @@
 # @3dverse/livelink-webxr
 
+## 0.2.8
+
+### Patch Changes
+
+- fix(livelink.webxr): eye-crossing in XR headsets when latency compensation is disabled
+- feat(livelink.webxr): unify render and locomotion loops
+
 ## 0.2.7
 
 ### Patch Changes

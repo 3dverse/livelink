@@ -1,5 +1,11 @@
 # @3dverse/livelink-agent
 
+## 0.5.3
+
+### Patch Changes
+
+- fix(livelink.agent): remove samples related documentation from livelink.agent
+
 ## 0.5.2
 
 ### Patch Changes
