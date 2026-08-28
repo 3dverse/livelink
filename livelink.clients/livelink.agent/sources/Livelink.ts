@@ -9,6 +9,9 @@ import { Scene } from "@livelink.base/scene/Scene";
 import { Session, type SessionSelector } from "@livelink.base/session/Session";
 import type { SessionInfo } from "@livelink.base/session/SessionInfo";
 
+//------------------------------------------------------------------------------
+import { installGatewaySocketGuard } from "./nodeSocketGuard";
+
 /**
  * The main class for connecting a headless agent to a 3dverse session.
  *
@@ -97,6 +100,7 @@ export class Livelink extends LivelinkBase<Entity, Scene, Session> {
         onProgress?: LivelinkProgressCallback;
     }): Promise<Livelink> {
         onProgress?.("initializing");
+        installGatewaySocketGuard();
         await DynamicLoader.load();
 
         const session_instance = session instanceof Session ? session : Session.createFromInfo(session);
