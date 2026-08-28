@@ -5,6 +5,7 @@ import { DynamicLoader } from "@3dverse/livelink.core";
 //------------------------------------------------------------------------------
 import type { LivelinkInstance } from "./LivelinkInstance";
 import { getApiUrl, setApiUrl } from "./config/api";
+import { computeIntervalInMs } from "./rates";
 import type { SceneBase } from "./scene/Scene";
 import type { Entity } from "./scene/Entity";
 import type { Session } from "./session/Session";
@@ -401,20 +402,4 @@ export abstract class LivelinkBase<
             this.session._onClientLeft({ client_id });
         }
     };
-}
-
-/**
- * Convert an update rate in Hz to a timer interval in milliseconds.
- *
- * @throws RangeError if the rate is not a finite number in the `(0, 125]` range.
- */
-function computeIntervalInMs({ name, rate }: { name: string; rate: number }): number {
-    const interval_in_ms = 1000 / rate;
-    if (!Number.isFinite(interval_in_ms) || interval_in_ms < 8) {
-        throw new RangeError(
-            `${name} must be a finite number in the (0, 125] range so that the resulting interval` +
-                ` is at least 8 ms, got ${rate}.`,
-        );
-    }
-    return interval_in_ms;
 }
