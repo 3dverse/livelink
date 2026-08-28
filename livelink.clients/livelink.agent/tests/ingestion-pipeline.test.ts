@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
 import { IngestionPipeline } from "../sources/data/IngestionPipeline";
+import { continuous } from "../sources/data/EventMapping";
 import type { EventMapping } from "../sources/data/EventMapping";
 import type { IngestEvent } from "../sources/data/IngestEvent";
 
@@ -179,6 +180,81 @@ describe("IngestionPipeline event handling", () => {
 
         await pipeline.ingest(event("mqtt", { id: "dev-1", bad: true }));
         expect(onError).toHaveBeenCalledWith(expect.objectContaining({ message: "updates failed" }));
+    });
+});
+
+//------------------------------------------------------------------------------
+// Let every microtask already queued run. The apply path is several awaits deep — the scene-loaded
+// wait, then the resolution, then the write — so a couple of `Promise.resolve()`s would stop short
+// of it and pass an assertion that nothing happened for the wrong reason.
+const flush = (): Promise<void> => new Promise(resolve => setTimeout(resolve, 0));
+
+describe("IngestionPipeline scene loading", () => {
+    it("resolves nothing until the scene reports its referenced scenes loaded", async () => {
+        const pipeline = new IngestionPipeline({ mappings: positionMapping });
+        const scene = new FakeScene();
+        const servo = new FakeEntity();
+        scene.existing.set(SERVO_UUID, servo);
+
+        let release = (_loaded: boolean): void => {};
+        scene.scene_loaded_gate = new Promise<boolean>(resolve => {
+            release = resolve;
+        });
+        pipeline.bind({ scene: scene.asScene() });
+
+        const ingested = pipeline.ingest(event("mqtt", { id: "dev-1", pos: [1, 2, 3] }));
+        await flush();
+
+        // An entity of a scene still streaming in must not be looked up at all: the resolver caches
+        // its misses, and a miss here is only "not there yet".
+        expect(scene.findEntity).not.toHaveBeenCalled();
+
+        release(true);
+        await ingested;
+
+        expect(servo.updateComponent).toHaveBeenCalledWith("local_transform", { position: [1, 2, 3] });
+    });
+
+    it("goes ahead and counts the miss when the wait ends without the scene loaded", async () => {
+        const pipeline = new IngestionPipeline({ mappings: positionMapping });
+        const scene = new FakeScene();
+        // `false` is what a disconnection mid-wait reports. Resolution still proceeds, finds
+        // nothing, and says so through `drops` rather than swallowing the event.
+        scene.scene_loaded_gate = Promise.resolve(false);
+        pipeline.bind({ scene: scene.asScene() });
+
+        await pipeline.ingest(event("mqtt", { id: "dev-1", pos: [1, 2, 3] }));
+
+        expect(scene.findEntity).toHaveBeenCalled();
+        expect(pipeline.stats?.drops.unresolved_entity).toBe(1);
+    });
+
+    it("waits on each bound scene separately", async () => {
+        const pipeline = new IngestionPipeline({ mappings: positionMapping });
+        const ready_scene = new FakeScene();
+        const loading_scene = new FakeScene();
+        const ready_servo = new FakeEntity();
+        const loading_servo = new FakeEntity();
+        ready_scene.existing.set(SERVO_UUID, ready_servo);
+        loading_scene.existing.set(SERVO_UUID, loading_servo);
+
+        let release = (_loaded: boolean): void => {};
+        loading_scene.scene_loaded_gate = new Promise<boolean>(resolve => {
+            release = resolve;
+        });
+        pipeline.bind({ scene: ready_scene.asScene() });
+        pipeline.bind({ scene: loading_scene.asScene() });
+
+        const ingested = pipeline.ingest(event("mqtt", { id: "dev-1", pos: [1, 2, 3] }));
+        await flush();
+
+        // One session still loading must not hold the others back.
+        expect(ready_servo.updateComponent).toHaveBeenCalled();
+        expect(loading_servo.updateComponent).not.toHaveBeenCalled();
+
+        release(true);
+        await ingested;
+        expect(loading_servo.updateComponent).toHaveBeenCalled();
     });
 });
 
@@ -663,7 +739,12 @@ describe("IngestionPipeline stats", () => {
         expect(stats.components_written).toBe(1);
         expect(stats.bound_scene_count).toBe(1);
         expect(stats.last_event_at).toBeInstanceOf(Date);
-        expect(stats.per_mapping[0]).toMatchObject({ index: 0, channel: "mqtt", events_matched: 1, updates_applied: 1 });
+        expect(stats.per_mapping[0]).toMatchObject({
+            index: 0,
+            channel: "mqtt",
+            events_matched: 1,
+            updates_applied: 1,
+        });
     });
 
     it("reports null, not zeros, when counting is turned off", async () => {
@@ -710,6 +791,581 @@ describe("IngestionPipeline retry scope", () => {
         await pipeline.ingest(event("mqtt", { id: "1" }));
         expect(scene.findEntitiesByNames).toHaveBeenCalledTimes(2);
         expect(servo.updateComponent).toHaveBeenCalledWith("debug_name", { value: "hit" });
+    });
+});
+
+//------------------------------------------------------------------------------
+describe("IngestionPipeline continuous updates", () => {
+    /** Spins at `rpm`, reading its angle straight off the time since the event that set it. */
+    const spinMapping = (rpm_of: (source: IngestEvent) => number): EventMapping => ({
+        entities: { byUuid: { "dev-1": SERVO_UUID } },
+        updates: source => {
+            const rpm = rpm_of(source);
+            return {
+                id: "dev-1",
+                update: continuous(({ since_seconds }) => ({
+                    local_transform: { eulerOrientation: [rpm * 6 * since_seconds, 0, 0] },
+                })),
+            };
+        },
+    });
+
+    const bindOne = (pipeline: IngestionPipeline): FakeEntity => {
+        const scene = new FakeScene();
+        const servo = new FakeEntity();
+        scene.existing.set(SERVO_UUID, servo);
+        pipeline.bind({ scene: scene.asScene() });
+        return servo;
+    };
+
+    it("writes on the installing event, before any tick", async () => {
+        const pipeline = new IngestionPipeline({ mappings: spinMapping(() => 60) });
+        const servo = bindOne(pipeline);
+
+        await pipeline.ingest(event("mqtt", {}));
+
+        // since_seconds is 0 on the installing event, so the entity starts where it is.
+        expect(servo.updateComponent).toHaveBeenCalledWith("local_transform", { eulerOrientation: [0, 0, 0] });
+        expect(pipeline.stats?.continuations_active).toBe(1);
+    });
+
+    it("keeps producing values on each tick, long after the event that set the rate", async () => {
+        const pipeline = new IngestionPipeline({ mappings: spinMapping(() => 60) });
+        const servo = bindOne(pipeline);
+
+        await pipeline.ingest(event("mqtt", {}));
+
+        // The ticks are the only clock: no timers to fake, and the same ticks always replay the
+        // same motion. 60 rpm is 360 deg/s, so half a second in it is a half turn round.
+        await pipeline.tick(0.25);
+        expect(servo.updateComponent).toHaveBeenLastCalledWith("local_transform", { eulerOrientation: [90, 0, 0] });
+
+        await pipeline.tick(0.25);
+        expect(servo.updateComponent).toHaveBeenLastCalledWith("local_transform", { eulerOrientation: [180, 0, 0] });
+    });
+
+    it("samples the continuation once however many scenes are bound", async () => {
+        // The regression this design exists to prevent: sampling per binding would advance a
+        // stateful closure once per session, and a shaft would turn N times too fast.
+        let samples = 0;
+        const pipeline = new IngestionPipeline({
+            mappings: {
+                entities: { byUuid: { "dev-1": SERVO_UUID } },
+                updates: () => ({
+                    id: "dev-1",
+                    update: continuous(() => {
+                        samples++;
+                        return { local_transform: { position: [samples, 0, 0] } };
+                    }),
+                }),
+            },
+        });
+        const servoA = bindOne(pipeline);
+        const servoB = bindOne(pipeline);
+
+        await pipeline.ingest(event("mqtt", {}));
+        await pipeline.tick(0.1);
+
+        expect(samples).toBe(2); // once on the event, once on the tick — not once per scene.
+        // Both scenes therefore see the same value, rather than drifting apart.
+        expect(servoA.updateComponent).toHaveBeenLastCalledWith("local_transform", { position: [2, 0, 0] });
+        expect(servoB.updateComponent).toHaveBeenLastCalledWith("local_transform", { position: [2, 0, 0] });
+    });
+
+    it("replaces the continuation when a newer event arrives for the same id", async () => {
+        const pipeline = new IngestionPipeline({
+            mappings: spinMapping(source => (source.payload as { rpm: number }).rpm),
+        });
+        const servo = bindOne(pipeline);
+
+        await pipeline.ingest(event("mqtt", { rpm: 60 }));
+        await pipeline.ingest(event("mqtt", { rpm: 0 }));
+        await pipeline.tick(1);
+
+        // The second event took over: at 0 rpm nothing turns any more.
+        expect(servo.updateComponent).toHaveBeenLastCalledWith("local_transform", { eulerOrientation: [0, 0, 0] });
+        expect(pipeline.stats?.continuations_active).toBe(1);
+    });
+
+    it("forgets a continuation that reports it is done, and one whose entity is deleted", async () => {
+        const pipeline = new IngestionPipeline({
+            mappings: {
+                entities: { byUuid: { "dev-1": SERVO_UUID } },
+                updates: source =>
+                    (source.payload as { stop?: boolean }).stop === true
+                        ? { id: "dev-1", update: continuous(() => null) }
+                        : { id: "dev-1", update: continuous(() => ({ local_transform: { position: [1, 0, 0] } })) },
+            },
+        });
+        bindOne(pipeline);
+
+        await pipeline.ingest(event("mqtt", {}));
+        expect(pipeline.stats?.continuations_active).toBe(1);
+
+        await pipeline.ingest(event("mqtt", { stop: true }));
+        expect(pipeline.stats?.continuations_active).toBe(0);
+    });
+
+    it("does not count ticks as events, so the stream's own numbers keep their meaning", async () => {
+        const pipeline = new IngestionPipeline({ mappings: spinMapping(() => 60) });
+        bindOne(pipeline);
+
+        await pipeline.ingest(event("mqtt", {}));
+        const after_event = pipeline.stats;
+
+        await pipeline.tick(0.1);
+        await pipeline.tick(0.1);
+        const after_ticks = pipeline.stats;
+
+        expect(after_ticks?.events_received).toBe(after_event?.events_received);
+        expect(after_ticks?.last_event_at).toEqual(after_event?.last_event_at);
+        expect(after_ticks?.ticks_processed).toBe(2);
+        // The writes the clock produced are still counted as writes, because they are.
+        expect(after_ticks?.components_written).toBeGreaterThan(after_event?.components_written ?? 0);
+    });
+
+    it("is a no-op when nothing is installed, or nothing is bound", async () => {
+        const pipeline = new IngestionPipeline({ mappings: positionMapping });
+        const servo = bindOne(pipeline);
+
+        await pipeline.tick(0.1);
+        expect(servo.updateComponent).not.toHaveBeenCalled();
+
+        const unbound = new IngestionPipeline({ mappings: spinMapping(() => 60) });
+        await expect(unbound.tick(0.1)).resolves.toBeUndefined();
+    });
+
+    it("drops a continuation that throws rather than reporting it on every tick", async () => {
+        const onError = vi.fn();
+        const pipeline = new IngestionPipeline({
+            mappings: {
+                entities: { byUuid: { "dev-1": SERVO_UUID } },
+                updates: () => ({
+                    id: "dev-1",
+                    update: continuous(({ since_seconds }) => {
+                        if (since_seconds > 0) {
+                            throw new Error("boom");
+                        }
+                        return { local_transform: { position: [0, 0, 0] } };
+                    }),
+                }),
+            },
+            onError,
+        });
+        bindOne(pipeline);
+
+        await pipeline.ingest(event("mqtt", {}));
+        await pipeline.tick(0.1);
+        await pipeline.tick(0.1);
+
+        expect(onError).toHaveBeenCalledTimes(1);
+        expect(pipeline.stats?.continuations_active).toBe(0);
+    });
+
+    it("leaves a running motion alone when an event says nothing about its entity", async () => {
+        // One topic, payloads of several shapes: a message with no rate is not a message saying
+        // "stop". `updates` returning null means this event had nothing to say about this entity, so
+        // the shaft keeps turning at the rate the last message that *did* mention it set.
+        const pipeline = new IngestionPipeline({
+            mappings: {
+                entities: { byUuid: { "dev-1": SERVO_UUID } },
+                updates: source => {
+                    const { rpm } = source.payload as { rpm?: number };
+                    if (rpm === undefined) {
+                        return null;
+                    }
+                    return {
+                        id: "dev-1",
+                        update: continuous<{ angle_deg: number }>(
+                            ({ delta_seconds, state }) => {
+                                state.angle_deg += rpm * 6 * delta_seconds;
+                                return { local_transform: { eulerOrientation: [state.angle_deg, 0, 0] } };
+                            },
+                            { initial_state: { angle_deg: 0 } },
+                        ),
+                    };
+                },
+            },
+        });
+        const servo = bindOne(pipeline);
+
+        await pipeline.ingest(event("mqtt", { rpm: 60 }));
+        await pipeline.tick(0.5);
+        expect(servo.updateComponent).toHaveBeenLastCalledWith("local_transform", { eulerOrientation: [180, 0, 0] });
+
+        // A humidity reading on the same topic. It matches the mapping and produces nothing.
+        await pipeline.ingest(event("mqtt", { humidity: 41 }));
+        expect(pipeline.stats?.continuations_active).toBe(1);
+
+        // Still turning, and at the same rate — the motion was neither stopped nor rebased.
+        await pipeline.tick(0.5);
+        expect(servo.updateComponent).toHaveBeenLastCalledWith("local_transform", { eulerOrientation: [360, 0, 0] });
+    });
+
+    it("carries the entity's state across the event that replaces the motion", async () => {
+        // The reason `state` is the pipeline's and not the mapping's: a new rpm must pick the shaft
+        // up where it stands, and integrating with `delta_seconds` cannot run away as re-reading
+        // `since_seconds` would.
+        const pipeline = new IngestionPipeline({
+            mappings: {
+                entities: { byUuid: { "dev-1": SERVO_UUID } },
+                updates: source => ({
+                    id: "dev-1",
+                    update: continuous<{ angle_deg: number }>(
+                        ({ delta_seconds, state }) => {
+                            state.angle_deg += (source.payload as { rpm: number }).rpm * 6 * delta_seconds;
+                            return { local_transform: { eulerOrientation: [state.angle_deg, 0, 0] } };
+                        },
+                        { initial_state: { angle_deg: 0 } },
+                    ),
+                }),
+            },
+        });
+        const servo = bindOne(pipeline);
+
+        await pipeline.ingest(event("mqtt", { rpm: 60 })); // 360 deg/s
+        await pipeline.tick(0.5);
+        expect(servo.updateComponent).toHaveBeenLastCalledWith("local_transform", { eulerOrientation: [180, 0, 0] });
+
+        // A second event installs a fresh continuation — and a fresh `initial_state`, which must NOT
+        // snap the shaft back to zero.
+        await pipeline.ingest(event("mqtt", { rpm: 30 })); // 180 deg/s
+        await pipeline.tick(0.5);
+        expect(servo.updateComponent).toHaveBeenLastCalledWith("local_transform", { eulerOrientation: [270, 0, 0] });
+    });
+
+    it("drops the state with the entity, so an id that comes back starts clean", async () => {
+        const pipeline = new IngestionPipeline({
+            mappings: {
+                entities: { byUuid: { "dev-1": SERVO_UUID } },
+                updates: source =>
+                    (source.payload as { gone?: boolean }).gone === true
+                        ? { id: "dev-1", update: "delete" }
+                        : {
+                              id: "dev-1",
+                              update: continuous<{ ticks: number }>(
+                                  ({ state }) => {
+                                      state.ticks++;
+                                      return { local_transform: { position: [state.ticks, 0, 0] } };
+                                  },
+                                  { initial_state: { ticks: 0 } },
+                              ),
+                          },
+            },
+        });
+        const scene = new FakeScene();
+        const servo = new FakeEntity();
+        scene.existing.set(SERVO_UUID, servo);
+        pipeline.bind({ scene: scene.asScene() });
+
+        await pipeline.ingest(event("mqtt", {}));
+        await pipeline.tick(0.1);
+        expect(servo.updateComponent).toHaveBeenLastCalledWith("local_transform", { position: [2, 0, 0] });
+
+        await pipeline.ingest(event("mqtt", { gone: true }));
+        expect(pipeline.stats?.continuations_active).toBe(0);
+
+        // The id comes back — a device rejoining the fleet — and its counter restarts from scratch
+        // rather than resuming at 3: the state went with the entity.
+        const servo_again = new FakeEntity();
+        scene.existing.set(SERVO_UUID, servo_again);
+        await pipeline.ingest(event("mqtt", {}));
+        expect(servo_again.updateComponent).toHaveBeenLastCalledWith("local_transform", { position: [1, 0, 0] });
+    });
+
+    it("can end a motion with a whole-entity directive", async () => {
+        const pipeline = new IngestionPipeline({
+            mappings: {
+                entities: { byUuid: { "dev-1": SERVO_UUID } },
+                updates: () => ({
+                    id: "dev-1",
+                    update: continuous(({ since_seconds }) =>
+                        since_seconds > 0.5 ? "hide" : { local_transform: { position: [since_seconds, 0, 0] } },
+                    ),
+                }),
+            },
+        });
+        const servo = bindOne(pipeline);
+
+        await pipeline.ingest(event("mqtt", {}));
+        await pipeline.tick(1);
+
+        expect(servo.is_visible).toBe(false);
+    });
+
+    it("refuses a bare function, which is a patch-shaped slip and not a motion", async () => {
+        const onError = vi.fn();
+        const pipeline = new IngestionPipeline({
+            mappings: {
+                entities: { byUuid: { "dev-1": SERVO_UUID } },
+                // Exactly what `continuous()` exists to prevent: well-typed as a function, and
+                // meant as "build me a patch" rather than "keep moving".
+                updates: () => ({ id: "dev-1", update: (() => ({ debug_name: { value: "x" } })) as never }),
+            },
+            onError,
+        });
+        const servo = bindOne(pipeline);
+
+        await pipeline.ingest(event("mqtt", {}));
+
+        expect(servo.updateComponent).not.toHaveBeenCalled();
+        expect(pipeline.stats?.continuations_active).toBe(0);
+        expect(onError).toHaveBeenCalledWith(
+            expect.objectContaining({ message: expect.stringContaining("continuous(") }),
+        );
+    });
+});
+
+//------------------------------------------------------------------------------
+describe("IngestionPipeline continuation lifecycle", () => {
+    /** Spins at `rpm`, reading its angle straight off the time since the event that set it. */
+    const spinMapping: EventMapping = {
+        entities: { byUuid: { "dev-1": SERVO_UUID } },
+        updates: () => ({
+            id: "dev-1",
+            update: continuous(({ since_seconds }) => ({
+                local_transform: { eulerOrientation: [360 * since_seconds, 0, 0] },
+            })),
+        }),
+    };
+
+    it("keeps a motion running when one of the bound scenes cannot resolve its entity", async () => {
+        // The continuation map is shared by every binding, so a miss in one scene must not stop the
+        // motion in the others — with `mode: "join-all"`, one session lacking the entity would
+        // otherwise freeze every session that has it.
+        const pipeline = new IngestionPipeline({ mappings: spinMapping });
+        const withEntity = new FakeScene();
+        const servo = new FakeEntity({ id: SERVO_UUID });
+        withEntity.existing.set(SERVO_UUID, servo);
+        pipeline.bind({ scene: withEntity.asScene() });
+        pipeline.bind({ scene: new FakeScene().asScene() });
+
+        await pipeline.ingest(event("mqtt", {}));
+        await pipeline.tick(0.25);
+
+        expect(pipeline.stats?.continuations_active).toBe(1);
+        expect(servo.updateComponent).toHaveBeenLastCalledWith("local_transform", { eulerOrientation: [90, 0, 0] });
+
+        await pipeline.tick(0.25);
+        expect(servo.updateComponent).toHaveBeenLastCalledWith("local_transform", { eulerOrientation: [180, 0, 0] });
+    });
+
+    it("starts moving by itself once the entity appears, with no further event", async () => {
+        // A machine that reports a rate may say nothing for minutes, so waiting for the next event
+        // to reinstall the motion is not a recovery — the scene stays frozen until then.
+        const pipeline = new IngestionPipeline({ mappings: spinMapping });
+        const scene = new FakeScene();
+        pipeline.bind({ scene: scene.asScene() });
+
+        await pipeline.ingest(event("mqtt", {}));
+        expect(pipeline.stats?.continuations_active).toBe(1);
+        await pipeline.tick(0.25);
+
+        const servo = new FakeEntity({ id: SERVO_UUID });
+        scene.existing.set(SERVO_UUID, servo);
+        scene.emitEntitiesCreated([servo]);
+
+        await pipeline.tick(0.25);
+        expect(servo.updateComponent).toHaveBeenCalledWith("local_transform", { eulerOrientation: [180, 0, 0] });
+    });
+
+    it("does not count a tick that resolves nothing as a dropped event", async () => {
+        // `drops` answers "what became of the stream". One motion running against a scene with no
+        // such entity would otherwise post thirty drops a second and drown every real number in it.
+        const pipeline = new IngestionPipeline({ mappings: spinMapping });
+        pipeline.bind({ scene: new FakeScene().asScene() });
+
+        await pipeline.ingest(event("mqtt", {}));
+        expect(pipeline.stats?.drops.unresolved_entity).toBe(1);
+
+        await pipeline.tick(0.1);
+        await pipeline.tick(0.1);
+        expect(pipeline.stats?.drops.unresolved_entity).toBe(1);
+    });
+
+    it("stops the motion when the entity is hidden, and resumes it where it stopped", async () => {
+        const pipeline = new IngestionPipeline({
+            mappings: {
+                entities: { byUuid: { "dev-1": SERVO_UUID } },
+                updates: source =>
+                    (source.payload as { hidden?: boolean }).hidden === true
+                        ? { id: "dev-1", update: "hide" }
+                        : {
+                              id: "dev-1",
+                              update: continuous<{ angle_deg: number }>(
+                                  ({ delta_seconds, state }) => {
+                                      state.angle_deg += 360 * delta_seconds;
+                                      return { local_transform: { eulerOrientation: [state.angle_deg, 0, 0] } };
+                                  },
+                                  { initial_state: { angle_deg: 0 } },
+                              ),
+                          },
+            },
+        });
+        const scene = new FakeScene();
+        const servo = new FakeEntity({ id: SERVO_UUID });
+        scene.existing.set(SERVO_UUID, servo);
+        pipeline.bind({ scene: scene.asScene() });
+
+        await pipeline.ingest(event("mqtt", {}));
+        await pipeline.tick(0.5);
+        expect(servo.updateComponent).toHaveBeenLastCalledWith("local_transform", { eulerOrientation: [180, 0, 0] });
+
+        // Nothing anyone can see is moving: the entity should stop taking writes altogether.
+        await pipeline.ingest(event("mqtt", { hidden: true }));
+        expect(pipeline.stats?.continuations_active).toBe(0);
+        const writes = servo.updateComponent.mock.calls.length;
+        await pipeline.tick(0.5);
+        expect(servo.updateComponent.mock.calls.length).toBe(writes);
+
+        // Unlike "delete", "hide" keeps the entity's state, so the shaft picks up at 180 — not 0.
+        await pipeline.ingest(event("mqtt", {}));
+        await pipeline.tick(0.5);
+        expect(servo.updateComponent).toHaveBeenLastCalledWith("local_transform", { eulerOrientation: [360, 0, 0] });
+    });
+
+    it("stops installed motions on demand, one id's or all of them", async () => {
+        // Nothing expires a continuation on its own, so this is the switch an operator reaches for
+        // when a stream is known bad and the scene should stop pretending otherwise.
+        const pipeline = new IngestionPipeline({
+            mappings: {
+                entities: { byName: "{id}" },
+                updates: () => [
+                    { id: "blade", update: continuous(() => ({ debug_name: { value: "blade" } })) },
+                    { id: "carriage", update: continuous(() => ({ debug_name: { value: "carriage" } })) },
+                ],
+            },
+        });
+        const scene = new FakeScene();
+        scene.named.set("blade", [new FakeEntity({ name: "blade" })]);
+        scene.named.set("carriage", [new FakeEntity({ name: "carriage" })]);
+        pipeline.bind({ scene: scene.asScene() });
+
+        await pipeline.ingest(event("mqtt", {}));
+        expect(pipeline.stats?.continuations_active).toBe(2);
+
+        pipeline.clearContinuations({ id: "blade" });
+        expect(pipeline.stats?.continuations_active).toBe(1);
+
+        pipeline.clearContinuations();
+        await pipeline.tick(1);
+        expect(pipeline.stats?.continuations_active).toBe(0);
+    });
+
+    it("keeps a motion running however long nothing refreshes it, and says nothing about it", async () => {
+        const pipeline = new IngestionPipeline({ mappings: spinMapping });
+        const scene = new FakeScene();
+        scene.existing.set(SERVO_UUID, new FakeEntity({ id: SERVO_UUID }));
+        pipeline.bind({ scene: scene.asScene() });
+
+        await pipeline.ingest(event("mqtt", {}));
+        await pipeline.tick(61);
+        await pipeline.tick(61);
+
+        // Until replaced means until replaced. The pipeline holds no opinion about how long that is:
+        // "nothing has replaced this motion" is not "the stream is dead", so guessing at the second
+        // from the first would stop live machines and warn about healthy ones.
+        expect(pipeline.stats?.continuations_active).toBe(1);
+        expect(console.warn).not.toHaveBeenCalled();
+    });
+});
+
+//------------------------------------------------------------------------------
+describe("IngestionPipeline continuation observability and retention", () => {
+    it("breaks the continuation gauge down per mapping", async () => {
+        // The global gauge answers "is anything moving?"; with more than one mapping in play, the
+        // question is which one — and which one a stream going quiet has left running.
+        const spinning = (channel: string): EventMapping => ({
+            channel,
+            entities: { byName: "{id}" },
+            updates: () => ({ id: channel, update: continuous(() => ({ debug_name: { value: channel } })) }),
+        });
+        const pipeline = new IngestionPipeline({ mappings: [spinning("blade"), spinning("carriage")] });
+        const scene = new FakeScene();
+        scene.named.set("blade", [new FakeEntity({ name: "blade" })]);
+        scene.named.set("carriage", [new FakeEntity({ name: "carriage" })]);
+        pipeline.bind({ scene: scene.asScene() });
+
+        await pipeline.ingest(event("blade", {}));
+        expect(pipeline.stats?.per_mapping.map(mapping => mapping.continuations_active)).toEqual([1, 0]);
+
+        await pipeline.ingest(event("carriage", {}));
+        expect(pipeline.stats?.per_mapping.map(mapping => mapping.continuations_active)).toEqual([1, 1]);
+        expect(pipeline.stats?.continuations_active).toBe(2);
+
+        pipeline.clearContinuations({ id: "blade" });
+        expect(pipeline.stats?.per_mapping.map(mapping => mapping.continuations_active)).toEqual([0, 1]);
+    });
+
+    it("records a drop reason when every update self-cancels on its first sample", async () => {
+        // Without this, an event whose only entries were motions already over is the one way to
+        // reach `events_dropped` with nothing in `drops` — which during bring-up reads as the
+        // pipeline losing the event rather than the mapping declining it.
+        const pipeline = new IngestionPipeline({
+            mappings: {
+                entities: { byUuid: { "dev-1": SERVO_UUID } },
+                updates: () => ({ id: "dev-1", update: continuous(() => null) }),
+            },
+        });
+        const scene = new FakeScene();
+        scene.existing.set(SERVO_UUID, new FakeEntity({ id: SERVO_UUID }));
+        pipeline.bind({ scene: scene.asScene() });
+
+        await pipeline.ingest(event("mqtt", {}));
+
+        expect(pipeline.stats?.events_dropped).toBe(1);
+        expect(pipeline.stats?.drops.no_updates).toBe(1);
+        expect(pipeline.stats?.per_mapping[0].drops.no_updates).toBe(1);
+        expect(pipeline.stats?.continuations_active).toBe(0);
+    });
+
+    it("does not resolve an entity again on every tick", async () => {
+        // A tick drives an id an event already resolved, so it reads the resolver's cache instead of
+        // going back through the consumer's own `resolve` — thirty times a second, per entity.
+        const resolve = vi.fn(() => SERVO_UUID);
+        const pipeline = new IngestionPipeline({
+            mappings: {
+                entities: { resolve },
+                updates: () => ({ id: "dev-1", update: continuous(() => ({ debug_name: { value: "on" } })) }),
+            },
+        });
+        const scene = new FakeScene();
+        scene.existing.set(SERVO_UUID, new FakeEntity({ id: SERVO_UUID }));
+        pipeline.bind({ scene: scene.asScene() });
+
+        await pipeline.ingest(event("mqtt", {}));
+        for (let tick = 0; tick < 10; tick++) {
+            await pipeline.tick(0.1);
+        }
+
+        expect(resolve).toHaveBeenCalledTimes(1);
+        expect(scene.findEntity).toHaveBeenCalledTimes(1);
+    });
+
+    it("resolves a tick-time fallback against the event that installed the motion", async () => {
+        // The one case a tick still has to resolve: an id whose entity was not in the scene yet.
+        // `resolve` is a function of the event, so the continuation kept the real one — deliberately
+        // stale, since it is the message that said which entity this motion is about.
+        const resolve = vi.fn(({ event: source }: { event: IngestEvent }) => (source.payload as { uuid: string }).uuid);
+        const pipeline = new IngestionPipeline({
+            mappings: {
+                entities: { resolve },
+                updates: () => ({ id: "dev-1", update: continuous(() => ({ debug_name: { value: "on" } })) }),
+            },
+        });
+        const scene = new FakeScene();
+        pipeline.bind({ scene: scene.asScene() });
+
+        await pipeline.ingest(event("mqtt", { uuid: SERVO_UUID }));
+        expect(resolve).toHaveBeenCalledTimes(1);
+
+        const servo = new FakeEntity({ id: SERVO_UUID });
+        scene.existing.set(SERVO_UUID, servo);
+        scene.emitEntitiesCreated([servo]);
+
+        await pipeline.tick(0.1);
+        expect(resolve).toHaveBeenLastCalledWith({ id: "dev-1", event: event("mqtt", { uuid: SERVO_UUID }) });
+        expect(servo.updateComponent).toHaveBeenCalledWith("debug_name", { value: "on" });
     });
 });
 

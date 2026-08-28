@@ -19,7 +19,7 @@
         "prebuild": "node ../livelink.base/ci/auto-generate.js ../../node_modules/ ../livelink.base/ci/ ../livelink.base/_prebuild/",
         "build": "node esbuild.js && tsc && tsc-alias",
         "typecheck": "tsc --noEmit -p tsconfig.test.json",
-        "lint": "eslint sources samples",
+        "lint": "eslint sources",
         "clean": "rimraf dist docs docs-md",
         "clean:docs": "rimraf docs docs-md",
         "dev": "run-p dev:*",
@@ -30,8 +30,6 @@
         "pretest": "node ../livelink.base/ci/auto-generate.js ../../node_modules/ ../livelink.base/ci/ ../livelink.base/_prebuild/",
         "test": "vitest run",
         "test:watch": "vitest",
-        "typecheck:samples": "tsc --noEmit -p tsconfig.samples.json",
-        "generate:x-agent-data-ingestion": "tsx --tsconfig tsconfig.samples.json samples/playback-generators/gen-playback-x-agent-data-ingestion.ts",
         "typedoc": "typedoc --options typedoc.config.mjs",
         "typedoc:md": "typedoc --options typedoc-md.config.mjs --plugin typedoc-plugin-no-inherit --plugin typedoc-plugin-markdown --out docs-md",
         "posttypedoc:md": "prettier --config ../../.prettierrc --write ./docs-md"

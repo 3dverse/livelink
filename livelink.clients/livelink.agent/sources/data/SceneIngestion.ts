@@ -18,6 +18,7 @@ import {
     SessionLeftEvent,
     SessionReadyEvent,
     type AgentErrorEvent,
+    AgentStoppedEvent,
 } from "../AgentEvents";
 
 //------------------------------------------------------------------------------
@@ -33,6 +34,36 @@ import {
     type SceneIngestionEvents,
 } from "./SceneIngestionEvents";
 import { createTransport, type TransportSpec } from "./transports/TransportRegistry";
+
+//------------------------------------------------------------------------------
+// The same guard every rate in the SDK goes through, so `ticksPerSecond` and `updatesPerSecond`
+// reject the same things — and so `NaN` never reaches `setInterval`.
+import { computeIntervalInMs } from "@livelink.base/rates";
+
+/**
+ * The most time one tick may report, in seconds. A process that was suspended — a laptop lid, a
+ * debugger stopped on a breakpoint, a container throttled — comes back with minutes of wall clock to
+ * account for, and handing that to a motion teleports it. Clamping loses that time on purpose: the
+ * scene resumes where it was rather than where it would have been.
+ */
+const MAX_TICK_SECONDS = 0.5;
+
+/**
+ * The clock rate to use when the caller does not choose one: twice the client's own flush rate,
+ * capped at what a timer will accept.
+ *
+ * Ticking *at* the flush rate reads as free — the extra samples merge away — but the two timers are
+ * free-running and beat against each other, so the age of the sample at flush time wanders across a
+ * whole flush window (33 ms at 30 Hz) and the motion visibly jitters. Sampling twice as often bounds
+ * that wander to half a window. Falls back to 60, twice `LivelinkBase`'s own default of 30.
+ */
+function defaultTicksPerSecond(agent: Agent): number {
+    const updates_per_second = agent.config.headless_client?.updatesPerSecond;
+    if (typeof updates_per_second !== "number" || !(updates_per_second > 0)) {
+        return 60;
+    }
+    return Math.min(updates_per_second * 2, 125);
+}
 
 /**
  * Builds a {@link Transport} bound to the ingestion, for a source a {@link TransportSpec} cannot
@@ -102,6 +133,25 @@ export type SceneIngestionOptions = {
      * case you own that transport's lifecycle.
      */
     sources?: Array<IngestionSource>;
+
+    /**
+     * How often per second to advance the pipeline's continuous updates — the mappings that returned
+     * a {@link continuous} update rather than a patch, because what they were told was a rate.
+     *
+     * Defaults to **twice** the agent's `headless_client.updatesPerSecond` (60 when it declares
+     * none). Not once: the two timers free-run and beat against each other, so ticking at exactly
+     * the flush rate lets the age of the sample at flush time wander across a whole flush window and
+     * the motion jitters. Set it to `0` to run no clock at all and call
+     * {@link IngestionPipeline.tick} yourself, from your own loop.
+     *
+     * The clock starts with the sources, on the first ready session, and stops again when the last
+     * session goes — so a process with nothing bound is not left holding a timer. It costs nothing
+     * while no mapping has installed a continuation.
+     *
+     * @throws RangeError unless it is `0` or a finite rate in the `(0, 125]` range — the same rule
+     * `updatesPerSecond` follows, since both end up in a `setInterval`.
+     */
+    ticksPerSecond?: number;
 };
 
 /**
@@ -161,6 +211,40 @@ export class SceneIngestion extends ObservedEventTarget<SceneIngestionEvents> im
     #transports: Array<Transport> = [];
 
     /**
+     * The interval between two advances of the pipeline's continuous updates, in milliseconds;
+     * `null` when the clock is switched off. Validated at construction, so nothing unusable — `NaN`
+     * above all — can reach `setInterval`.
+     */
+    readonly #tick_interval_ms: number | null;
+
+    /**
+     * The clock advancing continuous updates, running while a session is bound.
+     */
+    #tick_interval: ReturnType<typeof setInterval> | null = null;
+
+    /**
+     * When the clock last advanced, on a **monotonic** reading, so each tick reports the time it
+     * actually covered. `performance.now()` and not `Date.now()`: an NTP step backwards would
+     * otherwise hand every motion a negative elapsed time and rewind the whole scene, and a step
+     * forwards would jump it.
+     */
+    #last_tick_ms = 0;
+
+    /**
+     * The advance currently in flight, or `null`. Ticks must not overlap: a resolution can take a
+     * round trip (a `spawn`, a user `resolve` hitting a service), and two overlapping ticks can
+     * apply their samples out of order — which also poisons {@link ComponentPatchApplier}'s dedup
+     * memory, so the stale value is remembered as the last written and the next correct one skipped.
+     */
+    #tick_in_flight: Promise<void> | null = null;
+
+    /**
+     * Elapsed time an overlapping tick could not deliver, folded into the next one so a motion runs
+     * at the right speed under load rather than losing whatever the skipped ticks covered.
+     */
+    #carried_seconds = 0;
+
+    /**
      * True while the sources are starting, so concurrent first-bindings share the one start.
      */
     #sources_starting = false;
@@ -172,14 +256,18 @@ export class SceneIngestion extends ObservedEventTarget<SceneIngestionEvents> im
     #started = false;
 
     /**
-     *
+     * @throws RangeError if `ticksPerSecond` is neither `0` nor a finite rate in `(0, 125]`.
      */
-    constructor({ agent, pipeline, sources }: SceneIngestionOptions) {
+    constructor({ agent, pipeline, sources, ticksPerSecond }: SceneIngestionOptions) {
         super();
 
         this.#agent = agent;
         this.#pipeline = pipeline;
         this.#sources = sources ?? [];
+
+        const ticks_per_second = ticksPerSecond ?? defaultTicksPerSecond(agent);
+        this.#tick_interval_ms =
+            ticks_per_second === 0 ? null : computeIntervalInMs({ name: "ticksPerSecond", rate: ticks_per_second });
     }
 
     /**
@@ -220,6 +308,15 @@ export class SceneIngestion extends ObservedEventTarget<SceneIngestionEvents> im
      * replay tool, a "send one frame" debug control.
      */
     async ingest(event: IngestEvent): Promise<void> {
+        // Settle the motions up to *now* before the event gets to replace any of them. Otherwise the
+        // slice between the last tick and this event is credited to whatever the event installs, at
+        // its new rate, instead of to the rate that was actually in force during it — a sub-tick
+        // misattribution paid once per event, which a rate that keeps changing turns into a
+        // persistent lead. Costs nothing while nothing is moving, and this is the one layer that
+        // owns both the clock and the events, so the split can be made exact.
+        if (this.#tick_interval !== null && this.#pipeline.continuationCount > 0) {
+            await this.#advance();
+        }
         await this.#pipeline.ingest(event);
     }
 
@@ -239,6 +336,7 @@ export class SceneIngestion extends ObservedEventTarget<SceneIngestionEvents> im
         this.#agent.addEventListener("on-session-joined", this.#onSessionJoined);
         this.#agent.addEventListener("on-session-ready", this.#onSessionReady);
         this.#agent.addEventListener("on-session-left", this.#onSessionLeft);
+        this.#agent.addEventListener("on-stopped", this.#onAgentStopped);
         this.#agent.addEventListener("on-error", this.#onAgentError);
 
         await this.#agent.start();
@@ -259,7 +357,14 @@ export class SceneIngestion extends ObservedEventTarget<SceneIngestionEvents> im
         this.#agent.removeEventListener("on-session-joined", this.#onSessionJoined);
         this.#agent.removeEventListener("on-session-ready", this.#onSessionReady);
         this.#agent.removeEventListener("on-session-left", this.#onSessionLeft);
+        this.#agent.removeEventListener("on-stopped", this.#onAgentStopped);
         this.#agent.removeEventListener("on-error", this.#onAgentError);
+
+        this.#stopClock();
+        // The sources are going: whatever rate a mapping was last told is now unconfirmed, and this
+        // is the closest thing the SDK has to "the data stopped". Leaving the motions installed
+        // would have them resume on that stale rate if this ingestion is ever started again.
+        this.#pipeline.clearContinuations();
 
         const transports = this.#transports;
         this.#transports = [];
@@ -297,6 +402,15 @@ export class SceneIngestion extends ObservedEventTarget<SceneIngestionEvents> im
         this._dispatchEvent(new SessionLeftEvent({ livelink: event.livelink, reason: event.reason }));
     };
 
+    // The agent is done, either by its own decision or because someone stopped it directly. Nothing
+    // will bind another session, so the sources have to go too: a broker connection or a playback
+    // timer left running holds a Node process open with no session left to drive.
+    // Our own stop() detaches this listener before stopping the agent, so it never re-enters.
+    #onAgentStopped = (event: AgentStoppedEvent): void => {
+        this._dispatchEvent(new AgentStoppedEvent({ is_automatic: event.is_automatic }));
+        void this.stop().catch((error: Error) => this.#reportError(error));
+    };
+
     #onAgentError = (event: AgentErrorEvent): void => {
         this.#reportError(event.error);
     };
@@ -316,7 +430,61 @@ export class SceneIngestion extends ObservedEventTarget<SceneIngestionEvents> im
         this.#bindings.set(session_id, { binding, livelink });
         this._dispatchEvent(new SessionBoundEvent({ livelink }));
 
+        this.#startClock();
         await this.#ensureSourcesStarted();
+    }
+
+    /**
+     * Start the clock advancing continuous updates, on the first bound session. Idempotent, and a
+     * no-op when the clock is switched off.
+     */
+    #startClock(): void {
+        if (this.#tick_interval !== null || this.#tick_interval_ms === null) {
+            return;
+        }
+        this.#last_tick_ms = performance.now();
+        this.#carried_seconds = 0;
+        this.#tick_interval = setInterval(() => void this.#advance(), this.#tick_interval_ms);
+    }
+
+    /**
+     * Stop the clock. Safe to call when it never started.
+     */
+    #stopClock(): void {
+        if (this.#tick_interval === null) {
+            return;
+        }
+        clearInterval(this.#tick_interval);
+        this.#tick_interval = null;
+    }
+
+    /**
+     * Advance the pipeline's continuous updates by the time since the last advance.
+     *
+     * @returns The advance that will cover this call's elapsed time — the one it started, or the one
+     * already in flight that this call folded its time into.
+     */
+    #advance(): Promise<void> {
+        const now_ms = performance.now();
+        this.#carried_seconds += Math.min((now_ms - this.#last_tick_ms) / 1000, MAX_TICK_SECONDS);
+        this.#last_tick_ms = now_ms;
+
+        // Already advancing: the time just measured is kept rather than dropped, and the advance in
+        // flight is what the caller waits on. Nothing is lost and nothing is applied out of order.
+        if (this.#tick_in_flight !== null) {
+            return this.#tick_in_flight;
+        }
+
+        const seconds = this.#carried_seconds;
+        this.#carried_seconds = 0;
+        // `tick` never throws; it reports to the pipeline's own `onError`.
+        const running = this.#pipeline.tick(seconds).finally(() => {
+            if (this.#tick_in_flight === running) {
+                this.#tick_in_flight = null;
+            }
+        });
+        this.#tick_in_flight = running;
+        return running;
     }
 
     /**
@@ -330,6 +498,14 @@ export class SceneIngestion extends ObservedEventTarget<SceneIngestionEvents> im
         }
         this.#bindings.delete(session_id);
         bound.binding.unbind();
+
+        // Nothing left to drive: a timer firing thirty times a second into an empty pipeline keeps
+        // `ticks_processed` climbing and keeps a Node process from idling. `#bindSession` starts it
+        // again on the next ready session.
+        if (this.#bindings.size === 0) {
+            this.#stopClock();
+        }
+
         this._dispatchEvent(new SessionUnboundEvent({ livelink }));
     }
 

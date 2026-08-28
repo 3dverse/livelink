@@ -5,6 +5,7 @@ import { DynamicLoader } from "@3dverse/livelink.core";
 //------------------------------------------------------------------------------
 import type { LivelinkInstance } from "./LivelinkInstance";
 import { getApiUrl, setApiUrl } from "./config/api";
+import { computeIntervalInMs } from "./rates";
 import type { SceneBase } from "./scene/Scene";
 import type { Entity } from "./scene/Entity";
 import type { Session } from "./session/Session";
@@ -193,6 +194,9 @@ export abstract class LivelinkBase<
             return;
         }
         this.#disconnected = true;
+        // Told rather than listened for: the core's own `on-disconnected` never reaches the scene on
+        // a disconnect we initiate, since the listeners come off just below.
+        this.scene._onDisconnected();
 
         this._uninstallCoreEventListeners();
         this._stopUpdateLoop();
@@ -345,6 +349,7 @@ export abstract class LivelinkBase<
      */
     protected _installCoreEventListeners(): void {
         this.#core.addEventListener("on-disconnected", this.session._onDisconnected);
+        this.#core.addEventListener("on-disconnected", this.scene._onDisconnected);
         this.#core.addEventListener("on-inactivity-warning", this.session._onInactivityWarning);
         this.#core.addEventListener("on-scene-info-loaded", this.scene._onSceneInfoLoaded);
         this.#core.addEventListener("on-activity-detected", this.session._onActivityDetected);
@@ -356,6 +361,7 @@ export abstract class LivelinkBase<
         this.#core.addEventListener("on-script-event-received", this.scene._onScriptEventReceived);
         this.#core.addEventListener("on-client-connected", this.#onClientConnectedEvent);
         this.#core.addEventListener("on-clients-disconnected", this.#onClientsDisconnectedEvent);
+        this.#core.addEventListener("on-asset-loading-status-received", this.scene._onAssetLoadingStatusReceived);
     }
 
     /**
@@ -364,6 +370,7 @@ export abstract class LivelinkBase<
      */
     protected _uninstallCoreEventListeners(): void {
         this.#core.removeEventListener("on-disconnected", this.session._onDisconnected);
+        this.#core.removeEventListener("on-disconnected", this.scene._onDisconnected);
         this.#core.removeEventListener("on-inactivity-warning", this.session._onInactivityWarning);
         this.#core.removeEventListener("on-scene-info-loaded", this.scene._onSceneInfoLoaded);
         this.#core.removeEventListener("on-activity-detected", this.session._onActivityDetected);
@@ -375,6 +382,7 @@ export abstract class LivelinkBase<
         this.#core.removeEventListener("on-script-event-received", this.scene._onScriptEventReceived);
         this.#core.removeEventListener("on-client-connected", this.#onClientConnectedEvent);
         this.#core.removeEventListener("on-clients-disconnected", this.#onClientsDisconnectedEvent);
+        this.#core.removeEventListener("on-asset-loading-status-received", this.scene._onAssetLoadingStatusReceived);
     }
 
     /**
@@ -401,20 +409,4 @@ export abstract class LivelinkBase<
             this.session._onClientLeft({ client_id });
         }
     };
-}
-
-/**
- * Convert an update rate in Hz to a timer interval in milliseconds.
- *
- * @throws RangeError if the rate is not a finite number in the `(0, 125]` range.
- */
-function computeIntervalInMs({ name, rate }: { name: string; rate: number }): number {
-    const interval_in_ms = 1000 / rate;
-    if (!Number.isFinite(interval_in_ms) || interval_in_ms < 8) {
-        throw new RangeError(
-            `${name} must be a finite number in the (0, 125] range so that the resulting interval` +
-                ` is at least 8 ms, got ${rate}.`,
-        );
-    }
-    return interval_in_ms;
 }

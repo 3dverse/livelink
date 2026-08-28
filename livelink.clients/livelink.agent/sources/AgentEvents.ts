@@ -136,6 +136,31 @@ export class AgentErrorEvent extends Event {
 }
 
 /**
+ * Event emitted when the agent stops, whether it was stopped through {@link Agent.stop} or stopped
+ * itself having run out of work (see {@link AgentConfig.mode}).
+ *
+ * Dispatched by {@link Agent} as `on-stopped`, once all sessions have been left.
+ *
+ * @event
+ * @noInheritDoc
+ * @category Main / Events
+ */
+export class AgentStoppedEvent extends Event {
+    /**
+     * Whether the agent stopped itself rather than being stopped through {@link Agent.stop}.
+     */
+    public readonly is_automatic: boolean;
+
+    /**
+     * @internal
+     */
+    constructor({ is_automatic }: { is_automatic: boolean }) {
+        super("on-stopped");
+        this.is_automatic = is_automatic;
+    }
+}
+
+/**
  * Events emitted by the {@link Agent}.
  *
  * @event
@@ -146,5 +171,6 @@ export type AgentEvents = {
     "on-session-joined": SessionJoinedEvent;
     "on-session-ready": SessionReadyEvent;
     "on-session-left": SessionLeftEvent;
+    "on-stopped": AgentStoppedEvent;
     "on-error": AgentErrorEvent;
 };

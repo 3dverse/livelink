@@ -1,6 +1,7 @@
 //------------------------------------------------------------------------------
 import type { Livelink } from "../Livelink";
 import type {
+    AgentStoppedEvent,
     SessionCreatedEvent,
     SessionJoinedEvent,
     SessionLeftEvent,
@@ -118,6 +119,7 @@ export type SceneIngestionEvents = {
     "on-session-joined": SessionJoinedEvent;
     "on-session-ready": SessionReadyEvent;
     "on-session-left": SessionLeftEvent;
+    "on-stopped": AgentStoppedEvent;
     "on-running": IngestionRunningEvent;
     "on-session-bound": SessionBoundEvent;
     "on-session-unbound": SessionUnboundEvent;

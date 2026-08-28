@@ -4,7 +4,15 @@ import type { Scene } from "@livelink.base/scene/Scene";
 
 //------------------------------------------------------------------------------
 import type { IngestEvent } from "./IngestEvent";
-import type { ComponentUpdates, EntityUpdate, EventMapping, SceneEntities } from "./EventMapping";
+import type {
+    AnyContinuousUpdate,
+    ComponentUpdates,
+    EntityDirective,
+    EntityUpdate,
+    EventMapping,
+    SceneEntities,
+} from "./EventMapping";
+import { isContinuousUpdate } from "./EventMapping";
 import type { EntityResolver } from "./resolvers/EntityResolver";
 import { ExistingEntityResolver } from "./resolvers/ExistingEntityResolver";
 import { SpawningEntityResolver } from "./resolvers/SpawningEntityResolver";
@@ -80,12 +88,50 @@ export type IngestionPipelineOptions = {
 };
 
 /**
- * One mapping and its schema-validation state, held once for the pipeline's lifetime.
+ * A continuous update currently driving one id, with what it needs to be re-sampled.
+ */
+type InstalledContinuation = {
+    update: AnyContinuousUpdate;
+    /**
+     * Seconds this continuation has been advanced, accumulated from the ticks themselves rather
+     * than read off the wall clock — so `tick` is the only thing that moves a motion forward, and
+     * replaying the same ticks replays the same motion.
+     */
+    since_seconds: number;
+    /**
+     * The event to resolve this id against: a tick has none of its own, and resolution takes one.
+     * Deliberately **stale** — it is the message that said which entity this motion is about.
+     */
+    event: IngestEvent;
+};
+
+/**
+ * One mapping, its schema-validation state, the continuations it currently drives and the per-entity
+ * state those hand back to it — all held once for the pipeline's lifetime.
+ *
+ * Continuations sit here, per mapping and keyed by id, rather than on a {@link BindingState} slot:
+ * `updates` runs once per event and fans out to every bound scene, so a continuation must be sampled
+ * once per tick and fan out the same way. Per binding, a stateful closure would advance once per
+ * session — two sessions, and a shaft turns at double speed.
+ *
+ * `states` is keyed the same way and deliberately **outlives** the continuations reading it: a new
+ * rate installs a new continuation, and the shaft must carry on from the angle it had reached.
  */
 type CompiledMapping = {
     config: EventMapping;
     validator_promise: Promise<SchemaValidator> | null;
     validated_first: boolean;
+    continuations: Map<string, InstalledContinuation>;
+    states: Map<string, object>;
+};
+
+/**
+ * One entity update on its way to the bound scenes, with the event that produced it — the event
+ * itself for an ingested update, the installing event for one a continuation produced.
+ */
+type PendingUpdate = {
+    entry: EntityUpdate;
+    event: IngestEvent;
 };
 
 /**
@@ -179,7 +225,13 @@ export class IngestionPipeline {
         }
         this.#mappings = list.map((config, index) => {
             validateMapping(config, index);
-            return { config, validator_promise: null, validated_first: false };
+            return {
+                config,
+                validator_promise: null,
+                validated_first: false,
+                continuations: new Map(),
+                states: new Map(),
+            };
         });
 
         this.#stats_enabled = stats ?? true;
@@ -196,7 +248,33 @@ export class IngestionPipeline {
         if (!this.#stats_enabled) {
             return null;
         }
-        return this.#stats.snapshot({ bound_scene_count: this.#bindings.size });
+        return this.#stats.snapshot({
+            bound_scene_count: this.#bindings.size,
+            continuations_active: this.#continuationCounts(),
+        });
+    }
+
+    /**
+     * How many {@link ContinuousUpdate}s are installed across every mapping — the answer to "the
+     * stream is fine, so why is nothing moving?".
+     *
+     * Also readable as `stats.continuations_active`; this getter works with `stats: false` too, and
+     * is what {@link SceneIngestion} checks to know whether its clock has anything to advance.
+     */
+    get continuationCount(): number {
+        let count = 0;
+        for (const mapping of this.#mappings) {
+            count += mapping.continuations.size;
+        }
+        return count;
+    }
+
+    /**
+     * How many continuations each mapping drives, index-aligned with the mappings — what
+     * {@link MappingStats.continuations_active} reports.
+     */
+    #continuationCounts(): Array<number> {
+        return this.#mappings.map(mapping => mapping.continuations.size);
     }
 
     /**
@@ -237,6 +315,28 @@ export class IngestionPipeline {
         });
 
         return binding;
+    }
+
+    /**
+     * Stop the {@link ContinuousUpdate}s currently installed — one id's, or every one of them. The
+     * entities keep their last value, and a later event carrying the same id installs a fresh motion.
+     *
+     * The answer to "the broker died, why is the scene still moving?". Nothing expires a motion on
+     * its own, because "no event replaced it" is not the same fact as "the stream is dead" — one
+     * topic may carry payloads of several shapes. {@link SceneIngestion} calls this when it stops
+     * its sources.
+     *
+     * The per-entity state is **not** dropped, so a motion started again picks up where this one
+     * stopped rather than snapping back.
+     */
+    clearContinuations({ id }: { id?: string } = {}): void {
+        for (const mapping of this.#mappings) {
+            if (id === undefined) {
+                mapping.continuations.clear();
+            } else {
+                mapping.continuations.delete(id);
+            }
+        }
     }
 
     /**
@@ -287,6 +387,105 @@ export class IngestionPipeline {
     }
 
     /**
+     * Advance every {@link ContinuousUpdate} currently installed, and write what they produce.
+     *
+     * This is what keeps a machine moving between two messages: an event that reported a *rate*
+     * installed a continuation, and each tick asks it where the entity is now. It owns **no timer** —
+     * the caller decides the cadence, which is what makes a moving scene reproducible from a test:
+     *
+     * ```typescript
+     * await pipeline.ingest(event);   // "turning at 90 rpm"
+     * await pipeline.tick(0.5);       // half a second later, wherever that puts it
+     * ```
+     *
+     * {@link SceneIngestion} calls this on its own interval, so a consumer using it has nothing to
+     * do. A tick is deliberately **not** an event: it leaves `events_received` and `last_event_at`
+     * alone, so those keep answering "is data still arriving?" while the scene moves.
+     *
+     * Never throws — a continuation that throws is reported to `onError` and dropped.
+     */
+    async tick(elapsed_seconds: number): Promise<void> {
+        this.#stats.tickProcessed();
+        if (this.#bindings.size === 0) {
+            return;
+        }
+
+        for (let index = 0; index < this.#mappings.length; index++) {
+            const mapping = this.#mappings[index];
+            if (mapping.continuations.size === 0) {
+                continue;
+            }
+            const pending = this.#sampleContinuations(mapping, elapsed_seconds);
+            if (pending.length === 0) {
+                continue;
+            }
+            await Promise.all(
+                Array.from(this.#bindings, ([binding, state]) =>
+                    this.#applyToBinding(binding, state, index, pending, { from_tick: true }),
+                ),
+            );
+        }
+    }
+
+    /**
+     * Sample one mapping's continuations once, dropping those that report they are done.
+     *
+     * Sampling happens here, once, rather than inside {@link #applyToBinding}: a continuation is
+     * usually stateful, and running it once per bound scene would advance it once per session.
+     */
+    #sampleContinuations(mapping: CompiledMapping, elapsed_seconds: number): Array<PendingUpdate> {
+        const pending: Array<PendingUpdate> = [];
+
+        for (const [id, installed] of mapping.continuations) {
+            installed.since_seconds += elapsed_seconds;
+
+            const sampled = this.#sample(mapping, id, installed.update, {
+                delta_seconds: elapsed_seconds,
+                since_seconds: installed.since_seconds,
+            });
+            if (sampled === null) {
+                mapping.continuations.delete(id);
+                continue;
+            }
+            pending.push({ entry: { id, update: sampled }, event: installed.event });
+        }
+
+        return pending;
+    }
+
+    /**
+     * Ask one continuous update where its entity is now, against the state the pipeline holds for
+     * that id.
+     *
+     * @returns What to write, or null when the motion is over (or reported a failure) — in both cases
+     * the caller uninstalls it.
+     */
+    #sample(
+        mapping: CompiledMapping,
+        id: string,
+        update: AnyContinuousUpdate,
+        time: { delta_seconds: number; since_seconds: number },
+    ): ComponentUpdates | EntityDirective | null {
+        // `initial_state` applies only to an id that has no state yet, so a later event carrying a
+        // fresh rate cannot reset a motion already under way. Copied rather than shared, so one
+        // `initial_state` object declared once in a mapping cannot end up driving every entity.
+        const held = mapping.states.get(id);
+        const state: object = held ?? { ...(update.initial_state ?? {}) };
+        if (held === undefined) {
+            mapping.states.set(id, state);
+        }
+
+        try {
+            return update.sample({ ...time, state }) ?? null;
+        } catch (error) {
+            // A throwing continuation would throw again on every tick: drop it rather than report the
+            // same failure thirty times a second.
+            this.#on_error(error as Error);
+            return null;
+        }
+    }
+
+    /**
      * Whether an event is covered by a mapping's `channel`/`when` selectors.
      */
     #matches(config: EventMapping, event: IngestEvent): boolean {
@@ -314,7 +513,13 @@ export class IngestionPipeline {
 
         const results = await Promise.all(
             Array.from(this.#bindings, ([binding, state]) =>
-                this.#applyToBinding(binding, state, index, updates, event),
+                this.#applyToBinding(
+                    binding,
+                    state,
+                    index,
+                    updates.map(entry => ({ entry, event })),
+                    { from_tick: false },
+                ),
             ),
         );
         return results.some(Boolean);
@@ -347,27 +552,83 @@ export class IngestionPipeline {
             return null;
         }
 
-        // The id is the only part of an entry the pipeline cannot work without. A mapping ported
-        // from an older SDK — whose `updates` returned bare component patches — lands exactly here,
-        // hence the hint in the warning.
-        if (updates.every(hasUsableId)) {
+        // The id is the only part of an entry the pipeline cannot work without — see `hasUsableId`.
+        let usable = updates;
+        if (!updates.every(hasUsableId)) {
+            usable = updates.filter(hasUsableId);
+            for (let dropped = usable.length; dropped < updates.length; dropped++) {
+                this.#stats.dropped("no_id", index);
+            }
+            this.#reporter.warnOnce(
+                `no-id:${index}`,
+                `[ingestion-pipeline] Mapping #${index} produced an update with no usable \`id\` for an event ` +
+                    `on channel "${event.channel}"; ignoring such updates. Its \`updates\` must return ` +
+                    `\`{ id, update }\` entries.`,
+            );
+        }
+
+        const installed = this.#installContinuations(mapping, usable, event);
+        if (installed.length === 0) {
+            // Every entry was a motion already over on its first sample. Counted, so `events_dropped`
+            // never lands with nothing in `drops` — which reads as the pipeline losing the event
+            // rather than the mapping declining it. `usable` is empty only when `no_id` already
+            // counted every entry.
+            if (usable.length > 0) {
+                this.#stats.dropped("no_updates", index);
+            }
+            return null;
+        }
+        return installed;
+    }
+
+    /**
+     * Install every continuation this event produced, and turn each into the patch it is worth right
+     * now, so the entity moves on the event rather than waiting for the first tick.
+     *
+     * Installing here — where `updates` ran, once per event — is what keeps a continuation shared by
+     * every bound scene instead of one per session.
+     */
+    #installContinuations(
+        mapping: CompiledMapping,
+        updates: Array<EntityUpdate>,
+        event: IngestEvent,
+    ): Array<EntityUpdate> {
+        if (!updates.some(entry => isContinuousUpdate(entry.update))) {
             return updates;
         }
-        const usable = updates.filter(hasUsableId);
-        for (let dropped = usable.length; dropped < updates.length; dropped++) {
-            this.#stats.dropped("no_id", index);
+
+        const entries: Array<EntityUpdate> = [];
+
+        for (const entry of updates) {
+            const update = entry.update;
+            if (!isContinuousUpdate(update)) {
+                entries.push(entry);
+                continue;
+            }
+
+            const id = String(entry.id);
+            mapping.continuations.set(id, { update, since_seconds: 0, event });
+
+            // `delta_seconds` is 0 here: the install itself covers no time, so a value integrated
+            // with it starts from wherever the entity's state already stood.
+            const sampled = this.#sample(mapping, id, update, { delta_seconds: 0, since_seconds: 0 });
+            // A continuation that is already done on its first sample never had anything to say.
+            if (sampled === null) {
+                mapping.continuations.delete(id);
+                continue;
+            }
+            entries.push({ id: entry.id, update: sampled });
         }
-        this.#reporter.warnOnce(
-            `no-id:${index}`,
-            `[ingestion-pipeline] Mapping #${index} produced an update with no usable \`id\` for an event ` +
-                `on channel "${event.channel}"; ignoring such updates. Its \`updates\` must return ` +
-                `\`{ id, update }\` entries.`,
-        );
-        return usable.length > 0 ? usable : null;
+
+        return entries;
     }
 
     /**
      * Resolve and apply every update of one mapping in one bound scene.
+     *
+     * @param from_tick - Whether these came from a clock tick rather than an event, which is what
+     * decides whether a miss is worth counting: `drops` is an event-level story, and a continuation
+     * driving an id one scene does not have would otherwise post a drop thirty times a second.
      *
      * @returns Whether at least one update reached an entity.
      */
@@ -375,17 +636,36 @@ export class IngestionPipeline {
         binding: PipelineBinding,
         state: BindingState,
         index: number,
-        updates: Array<EntityUpdate>,
-        event: IngestEvent,
+        updates: Array<PendingUpdate>,
+        { from_tick }: { from_tick: boolean },
     ): Promise<boolean> {
         const { resolver, applier } = state.slots[index];
 
+        // Nothing here can address an entity that does not exist yet: a scene pulling others in
+        // through `scene_ref` components is streamed in progressively, and resolving against a
+        // half-loaded one would answer misses for entities that are simply still on their way.
+        //
+        // This wait has no deadline of its own, so a scene the server never reports as loaded parks
+        // every event and every tick until the session disconnects — which settles them all and lets
+        // them drain. Deliberate: a scene still loading has nothing to drive, and going ahead would
+        // only cache misses for entities that are on their way.
+        await state.scene.waitForSceneLoaded();
+
         const results = await Promise.all(
-            updates.map(async entry => {
+            updates.map(async ({ entry, event }) => {
                 const id = String(entry.id);
+                // The resolver caches every answer, misses included, so a tick costs a map lookup
+                // rather than a trip through the mapping's own `byName` / `resolve`.
                 const entity = await resolver.resolve({ id, event });
                 if (!entity) {
-                    this.#stats.dropped("unresolved_entity", index);
+                    if (!from_tick) {
+                        this.#stats.dropped("unresolved_entity", index);
+                    }
+                    // A continuation is deliberately left installed. This runs once per bound scene
+                    // against a map shared by all of them, so uninstalling would stop the motion in
+                    // every other scene — and at bring-up it would stop it inside the very
+                    // `ingest()` that installed it. The scene's own `on-entities-created` drops the
+                    // cached miss, so the motion starts by itself once the entity appears.
                     return false;
                 }
                 // The scene may have gone while the resolution was in flight: writing now would
@@ -443,9 +723,17 @@ export class IngestionPipeline {
                 case "delete":
                     await scene.deleteEntities({ entities: [entity] });
                     resolver.forget(id);
+                    // Whatever this entity was doing, it is not doing it any more — and the state it
+                    // was doing it with goes with it, so an id that comes back starts clean.
+                    this.#mappings[index].continuations.delete(id);
+                    this.#mappings[index].states.delete(id);
                     break;
                 case "hide":
                     entity.is_visible = false;
+                    // Nothing anyone can see is moving, so stop paying thirty writes a second for
+                    // it. The entity's state stays — a later event can pick the motion back up from
+                    // where it left off, which is what "hide" rather than "delete" asked for.
+                    this.#mappings[index].continuations.delete(id);
                     break;
                 case "show":
                     entity.is_visible = true;
@@ -462,6 +750,30 @@ export class IngestionPipeline {
                     return;
             }
             this.#stats.applied({ mapping_index: index, written: 0, deduped: 0, directive: true });
+            return;
+        }
+
+        if (typeof update === "function") {
+            // A bare function is not a motion — `continuous()` is. Caught here rather than passed to
+            // the applier, which would write a function's enumerable properties (nothing at all) and
+            // silently move nothing.
+            this.#on_error(
+                new Error(
+                    `Mapping #${index} returned a bare function as an \`update\`; ignoring it. ` +
+                        `Wrap it in \`continuous(fn)\` to declare an entity that keeps moving between events.`,
+                ),
+            );
+            return;
+        }
+
+        if (isContinuousUpdate(update)) {
+            // Unreachable: continuations are installed and sampled into patches before they get here.
+            this.#on_error(
+                new Error(
+                    `Mapping #${index} produced a continuous update that reached the applier unsampled; ` +
+                        `ignoring it. This is an SDK bug, please report it.`,
+                ),
+            );
             return;
         }
 
@@ -511,8 +823,13 @@ export class IngestionPipeline {
 }
 
 /**
- * Whether an update entry carries an id the pipeline can resolve. Guards the one field of an
- * {@link EntityUpdate} that has no sensible default.
+ * Whether an update entry carries an id the pipeline can resolve.
+ *
+ * Not defensive typing, despite `id` being typed: `String(undefined)` is `"undefined"`, a
+ * valid-looking id that would silently drive — or spawn — one wrong entity for every entry missing
+ * one. And it is reachable from clean TypeScript through the documented idiom, since
+ * `event.channel.split("/")[3]` is typed `string` but is `undefined` on a shorter channel. Catching
+ * it here turns that into a counted `no_id` drop and one warning.
  */
 function hasUsableId(entry: EntityUpdate): boolean {
     return typeof entry.id === "string" || typeof entry.id === "number";

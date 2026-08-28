@@ -82,11 +82,7 @@ describe("PlaybackTransport channel fidelity", () => {
     it("filters a dump by channel pattern, so the VDA 5050 rule lives with the caller", async () => {
         const path = write(
             "trace.txt",
-            [
-                `uagv/v2/m/A/order {"a":1}`,
-                `uagv/v2/m/A/visualization {"b":2}`,
-                `uagv/v2/m/A/state {"c":3}`,
-            ].join("\n"),
+            [`uagv/v2/m/A/order {"a":1}`, `uagv/v2/m/A/visualization {"b":2}`, `uagv/v2/m/A/state {"c":3}`].join("\n"),
         );
 
         const sink = new CollectingSink();
@@ -288,10 +284,7 @@ describe("PlaybackTransport source forms", () => {
 
     it("gives up on a factory that returns itself, instead of hanging", async () => {
         const factory = (): unknown => factory;
-        const transport = new PlaybackTransport(
-            { source: factory as () => string },
-            new CollectingSink(),
-        );
+        const transport = new PlaybackTransport({ source: factory as () => string }, new CollectingSink());
         await expect(transport.start()).rejects.toThrow(/returns itself/);
     });
 

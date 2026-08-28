@@ -6,6 +6,7 @@ import { Livelink } from "./Livelink";
 import {
     AgentErrorEvent,
     AgentEvents,
+    AgentStoppedEvent,
     SessionCreatedEvent,
     SessionJoinedEvent,
     SessionLeftEvent,
@@ -42,6 +43,11 @@ export type SessionLeaveReason = "left-on-condition" | "disconnected" | "stopped
  *   sessions appearing later.
  * - `"manual"`: attach to nothing on start; the agent stays idle and joins sessions on demand
  *   through its `join` method.
+ *
+ * Except in `"manual"` mode and when `watch` is enabled, an agent that loses its last session
+ * without being told to — the session dropped, or its leave condition fired — has no way of getting
+ * more work, and stops itself, dispatching `on-stopped`. A session left deliberately through
+ * {@link Agent.leave} does not stop the agent, so it can be rejoined with {@link Agent.join}.
  *
  * @inline
  * @category Main
@@ -277,6 +283,14 @@ export class Agent extends TypedEventTarget<AgentEvents> {
     #started: boolean = false;
 
     /**
+     * The configuration this agent was built with, fixed at construction. Read-only: an agent's
+     * attach policy and update rates are settled before it starts.
+     */
+    get config(): Readonly<AgentConfig> {
+        return this.#config;
+    }
+
+    /**
      * The livelinks of all sessions the agent is currently attached to.
      */
     get livelinks(): ReadonlyArray<Livelink> {
@@ -427,11 +441,23 @@ export class Agent extends TypedEventTarget<AgentEvents> {
      * Stop the agent: leave all sessions (with reason `"stopped"`) and stop the watch loop.
      * Resolves once all sessions have been left; do any post-stop cleanup after it returns.
      * No-op if the agent is not started.
+     *
+     * Dispatches `on-stopped`. The agent may also stop itself, dispatching the same event with
+     * `is_automatic` set — see {@link AgentMode}.
      */
     async stop(): Promise<void> {
+        await this.#stop({ is_automatic: false });
+    }
+
+    /**
+     * Stop the agent, recording whether it stopped itself. A no-op if not started.
+     */
+    async #stop({ is_automatic }: { is_automatic: boolean }): Promise<void> {
         if (!this.#started) {
             return;
         }
+        // Cleared before any await: it is what makes #maybeStopWhenIdle a no-op for the leaves
+        // below, so tearing down the last session here cannot re-enter this method.
         this.#started = false;
 
         if (this.#watch_timeout !== null) {
@@ -442,6 +468,33 @@ export class Agent extends TypedEventTarget<AgentEvents> {
         const session_ids = Array.from(this.#records.keys());
         const leave_promises = session_ids.map(session_id => this.#leave({ session_id, reason: "stopped" }));
         await Promise.all(leave_promises);
+
+        this._dispatchEvent(new AgentStoppedEvent({ is_automatic }));
+    }
+
+    /**
+     * Stop the agent once it has run out of work and has no way of getting more on its own: nothing
+     * attached, nothing joining, no watch loop to pick up a new session. The `"manual"` mode is
+     * excluded because its consumer drives the joins, and so is a deliberate {@link Agent.leave},
+     * which documents rejoining later through {@link Agent.join}.
+     *
+     * Without this the process behind a single-session agent would stay alive with nothing left to
+     * do, since the update loop and the leave timer are gone but nobody said to shut down.
+     */
+    async #maybeStopWhenIdle({ reason }: { reason: SessionLeaveReason }): Promise<void> {
+        const mode = this.#config.mode ?? "join-or-start";
+        const is_idle = this.#records.size === 0 && this.#joining.size === 0;
+
+        if (!this.#started || !is_idle || reason === "stopped" || mode === "manual" || this.#config.watch) {
+            return;
+        }
+
+        console.log(
+            `[agent] Last session left ("${reason}") and the "${mode}" mode has no watch loop to pick up ` +
+                `another one: stopping.`,
+        );
+
+        await this.#stop({ is_automatic: true });
     }
 
     /**
@@ -502,6 +555,9 @@ export class Agent extends TypedEventTarget<AgentEvents> {
         await this.#teardownRecord({ session_id, record });
 
         this._dispatchEvent(new SessionLeftEvent({ livelink: record.livelink, reason }));
+
+        // After the event, so a listener still sees the agent started when it handles the leave.
+        await this.#maybeStopWhenIdle({ reason });
     }
 
     /**
@@ -779,6 +835,9 @@ export class Agent extends TypedEventTarget<AgentEvents> {
         if (this.#records.get(session_id) !== record) {
             return;
         }
+
+        const after_seconds = this.#config.leave_on_condition?.after_seconds;
+        console.log(`[agent] Nothing to stay for in session ${session_id} for ${after_seconds}s: leaving it.`);
 
         await this.#leave({ session_id, reason: "left-on-condition" });
     }

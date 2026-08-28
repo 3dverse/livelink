@@ -154,6 +154,24 @@ export abstract class SceneBase<EntityType extends Entity = Entity>
     #scene_info_promise = new PromiseWithResolver<SceneInfo<EntityType>>();
 
     /**
+     * Whether the server has finished loading every pending referenced scene, as reported by the
+     * last asset loading status received.
+     */
+    #is_scene_loaded: boolean = false;
+
+    /**
+     * Resolves once the server reports it has finished loading every pending referenced scene.
+     * Replaced with a fresh pending promise whenever the server starts loading scenes again.
+     */
+    #scene_loaded_promise = new PromiseWithResolver<void>();
+
+    /**
+     * Resolves when the livelink instance is disconnected, so that a pending
+     * {@link waitForSceneLoaded} can resolve immediately.
+     */
+    #disconnected_promise = new PromiseWithResolver<void>();
+
+    /**
      * @internal
      */
     constructor(instance: LivelinkInstance, core: LivelinkCore) {
@@ -780,6 +798,66 @@ export abstract class SceneBase<EntityType extends Entity = Entity>
     async getInfo(): Promise<SceneInfo<EntityType>> {
         return this.#scene_info_promise.promise;
     }
+
+    /**
+     * Wait until the server reports it has finished loading every pending scene, so that the
+     * entities of the scenes referenced through `scene_ref` components are addressable. Resolves
+     * immediately if the server already reported so.
+     *
+     * A scene referencing others is streamed in progressively: until the server is done, entities
+     * living in those referenced scenes are not available yet. It starts loading again — and this
+     * starts waiting again — whenever a new scene is referenced.
+     *
+     * **This has no timeout, so it may never resolve.** It waits on the server, and the server does
+     * not always report: a scene whose reference the session's token cannot read never finishes
+     * loading, and nothing marks that as an error. Disconnecting is then the only thing that ends
+     * the wait, resolving it `false`. Never rejects — a caller that cannot afford to be parked
+     * indefinitely should race it against a deadline of its own.
+     *
+     * @returns `true` once the server reports the scenes loaded, `false` if the session was
+     * disconnected before it did.
+     */
+    async waitForSceneLoaded(): Promise<boolean> {
+        if (this.#is_scene_loaded) {
+            return true;
+        }
+
+        return await Promise.race([
+            this.#scene_loaded_promise.promise.then(() => true),
+            this.#disconnected_promise.promise.then(() => false),
+        ]);
+    }
+
+    /**
+     * @internal
+     * Track whether the server is done loading scenes, applying the same test the core applies to
+     * decide a scene is loaded. `loading_payloads` is deliberately not part of it: payloads are mesh
+     * and texture data, whose streaming says nothing about whether an entity exists yet.
+     */
+    _onAssetLoadingStatusReceived = ({ pending_scenes, pending_requests }: Events.AssetLoadingStatusEvent): void => {
+        const loaded = pending_scenes === 0 && pending_requests === 0;
+
+        if (loaded) {
+            if (!this.#is_scene_loaded) {
+                this.#is_scene_loaded = true;
+                this.#scene_loaded_promise.resolve();
+            }
+        } else if (this.#is_scene_loaded) {
+            // Loading started again after having completed: the current promise is settled, so arm a
+            // fresh one for the new batch. Only done on that transition — swapping a still-pending
+            // promise would orphan whoever is already awaiting it.
+            this.#is_scene_loaded = false;
+            this.#scene_loaded_promise = new PromiseWithResolver<void>();
+        }
+    };
+
+    /**
+     * @internal
+     * Release whoever is waiting on the scene to load.
+     */
+    _onDisconnected = (): void => {
+        this.#disconnected_promise.resolve();
+    };
 
     /**
      * @internal

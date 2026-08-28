@@ -36,7 +36,7 @@ export type EntityTemplate = {
 /**
  * Spawns an entity for each new id, from a template.
  *
- * Use it when the data stream itself defines the population (e.g. one entity per vehicle serial
+ * Use it when the data stream itself defines the population (e.g. one entity per device serial
  * number). The entity is created on the id's first sighting; concurrent events for the same id
  * await the single in-flight creation.
  *

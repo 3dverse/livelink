@@ -85,11 +85,11 @@ leaves the transport's own reconnection messages legible instead of burying them
 counters. `Ctrl-C` stops the agent, and the entities it spawned go with it
 (`delete_on_client_disconnection`).
 
-`npm run typecheck:samples` checks every script here, against `tsconfig.samples.json`. It resolves
-`@3dverse/livelink-agent` to the package's **build output** rather than to its sources, so what the
-samples compile against is what a consumer installing the package gets — which also means
-`build:agent` has to have run first. The same config drives `tsx` at run time, so a sample runs
-against exactly what it type-checked against.
+`npm run typecheck:agent-samples`, from the livelink.samples root, checks every script here. That
+config resolves `@3dverse/livelink-agent` to the package's **build output** rather
+than to its sources, so what the samples compile against is what a consumer installing the package
+gets — which also means `build:agent` has to have run first. The same config drives `tsx` at run
+time, so a sample runs against exactly what it type-checked against.
 
 ## Generating a recording
 

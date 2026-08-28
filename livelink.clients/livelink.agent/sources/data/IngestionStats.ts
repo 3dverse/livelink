@@ -16,7 +16,11 @@ export type IngestionDropReason =
     | "schema"
     /** The mapping produced an update carrying no usable `id`. */
     | "no_id"
-    /** The mapping's `updates` returned null (or nothing) — a deliberate ignore. */
+    /**
+     * The event produced nothing to write: the mapping's `updates` returned null (or nothing) — a
+     * deliberate ignore — or every entry it did return was a {@link continuous} update that reported
+     * itself already over on its first sample, leaving nothing installed and nothing to apply.
+     */
     | "no_updates"
     /** The id resolved to no entity in the scene. */
     | "unresolved_entity";
@@ -39,6 +43,13 @@ export type MappingStats = {
     drops: Partial<Record<IngestionDropReason, number>>;
     /** When this mapping last matched an event. */
     last_event_at: Date | null;
+    /**
+     * {@link ContinuousUpdate}s this mapping currently drives. The global gauge answers "is anything
+     * moving?"; this one answers "which mapping is moving it?", which is the question with more than
+     * one mapping in play — and the one that tells a motion nobody replaced apart from a stream that
+     * genuinely stopped.
+     */
+    continuations_active: number;
 };
 
 /**
@@ -60,7 +71,10 @@ export type IngestionStats = {
     events_dropped: number;
     /** (entity update, scene) pairs successfully applied. */
     updates_applied: number;
-    /** Component writes actually sent to the scene. */
+    /**
+     * Component writes actually sent to the scene. Includes writes produced by a
+     * {@link ContinuousUpdate} on a clock tick, not only those an event caused directly.
+     */
     components_written: number;
     /** Component writes skipped because the value was unchanged. */
     components_deduped: number;
@@ -74,6 +88,18 @@ export type IngestionStats = {
     last_applied_at: Date | null;
     /** Scenes currently bound. */
     bound_scene_count: number;
+    /**
+     * Clock ticks the pipeline has processed. Ticks are deliberately **not** counted as events:
+     * {@link events_received} and {@link last_event_at} keep meaning "data is arriving" even while a
+     * continuous update drives the scene on its own.
+     */
+    ticks_processed: number;
+    /**
+     * {@link ContinuousUpdate}s currently installed, across every mapping — the answer to "the
+     * stream is fine, so why is nothing moving?". {@link MappingStats.continuations_active} breaks
+     * it down by mapping.
+     */
+    continuations_active: number;
     /** Per-mapping breakdown, index-aligned with the pipeline's mappings. */
     per_mapping: Array<MappingStats>;
 };
@@ -95,7 +121,13 @@ export interface IngestionStatsCollector {
     mappingMatched(index: number, at_ms: number): void;
     dropped(reason: IngestionDropReason, mapping_index?: number): void;
     applied(params: { mapping_index: number; written: number; deduped: number; directive: boolean }): void;
-    snapshot(params: { bound_scene_count: number }): IngestionStats;
+    tickProcessed(): void;
+    /**
+     * @param params.continuations_active - How many continuations each mapping currently drives,
+     * index-aligned with them. A gauge rather than a counter: it is read off the pipeline at snapshot
+     * time instead of being tracked here, so it cannot drift from the maps it describes.
+     */
+    snapshot(params: { bound_scene_count: number; continuations_active: Array<number> }): IngestionStats;
 }
 
 /**
@@ -112,6 +144,7 @@ export class StatsCollector implements IngestionStatsCollector {
     #components_written = 0;
     #components_deduped = 0;
     #directives_applied = 0;
+    #ticks_processed = 0;
     #last_event_at_ms: number | null = null;
     #last_applied_at_ms: number | null = null;
     readonly #drops = new Map<IngestionDropReason, number>();
@@ -183,7 +216,17 @@ export class StatsCollector implements IngestionStatsCollector {
         this.#per_mapping[mapping_index].updates_applied++;
     }
 
-    snapshot({ bound_scene_count }: { bound_scene_count: number }): IngestionStats {
+    tickProcessed(): void {
+        this.#ticks_processed++;
+    }
+
+    snapshot({
+        bound_scene_count,
+        continuations_active,
+    }: {
+        bound_scene_count: number;
+        continuations_active: Array<number>;
+    }): IngestionStats {
         return {
             events_received: this.#events_received,
             events_matched: this.#events_matched,
@@ -196,6 +239,9 @@ export class StatsCollector implements IngestionStatsCollector {
             last_event_at: toDate(this.#last_event_at_ms),
             last_applied_at: toDate(this.#last_applied_at_ms),
             bound_scene_count,
+            ticks_processed: this.#ticks_processed,
+            // Summed rather than passed in twice, so the total and the breakdown cannot disagree.
+            continuations_active: continuations_active.reduce((total, count) => total + count, 0),
             per_mapping: this.#per_mapping.map(mapping => ({
                 index: mapping.index,
                 ...(mapping.channel !== undefined ? { channel: mapping.channel } : {}),
@@ -203,6 +249,7 @@ export class StatsCollector implements IngestionStatsCollector {
                 updates_applied: mapping.updates_applied,
                 drops: Object.fromEntries(mapping.drops),
                 last_event_at: toDate(mapping.last_event_at_ms),
+                continuations_active: continuations_active[mapping.index] ?? 0,
             })),
         };
     }
@@ -222,6 +269,7 @@ export class NoopStatsCollector implements IngestionStatsCollector {
     mappingMatched(): void {}
     dropped(): void {}
     applied(): void {}
+    tickProcessed(): void {}
     snapshot(): IngestionStats {
         throw new Error("Stats are disabled on this pipeline (`stats: false`).");
     }

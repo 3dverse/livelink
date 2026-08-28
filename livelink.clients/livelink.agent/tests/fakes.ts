@@ -64,6 +64,17 @@ export class FakeScene {
 
     readonly #listeners = new Map<string, Set<(event: unknown) => void>>();
 
+    /**
+     * When set, `waitForSceneLoaded()` blocks on this promise and reports whatever it yields — the
+     * pipeline waits on it before resolving anything, so a test can hold an ingest mid-flight and
+     * then let the wait either succeed or time out. Absent a gate the scenes are already loaded.
+     */
+    scene_loaded_gate: Promise<boolean> | null = null;
+
+    waitForSceneLoaded = vi.fn(async (): Promise<boolean> => {
+        return this.scene_loaded_gate === null ? true : await this.scene_loaded_gate;
+    });
+
     findEntity = vi.fn(async ({ entity_uuid }: { entity_uuid: string }): Promise<Entity | null> => {
         return (this.existing.get(entity_uuid) as unknown as Entity) ?? null;
     });
@@ -151,6 +162,16 @@ export class FakeAgent {
     #listeners = new Map<string, Set<(event: unknown) => void>>();
     start = vi.fn(async (): Promise<void> => {});
     stop = vi.fn(async (): Promise<void> => {});
+
+    /**
+     * The agent's config, as the real one exposes it — `SceneIngestion` reads
+     * `headless_client.updatesPerSecond` off it to pick its default tick rate.
+     */
+    readonly config: { headless_client?: { updatesPerSecond?: number } };
+
+    constructor(config: { headless_client?: { updatesPerSecond?: number } } = {}) {
+        this.config = config;
+    }
 
     addEventListener = (name: string, listener: (event: unknown) => void): void => {
         (this.#listeners.get(name) ?? this.#listeners.set(name, new Set()).get(name)!).add(listener);
