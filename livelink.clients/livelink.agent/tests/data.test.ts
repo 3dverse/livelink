@@ -311,13 +311,17 @@ describe("ComponentPatchApplier", () => {
         const entity = new FakeEntity();
         const applier = new ComponentPatchApplier();
 
-        expect(applier.apply({ entity: entity.asEntity(), updates: { local_transform: { position: [1, 2, 3] } } })).toEqual({
+        expect(
+            applier.apply({ entity: entity.asEntity(), updates: { local_transform: { position: [1, 2, 3] } } }),
+        ).toEqual({
             written: 1,
             deduped: 0,
         });
         expect(entity.updateComponent).toHaveBeenCalledWith("local_transform", { position: [1, 2, 3] });
 
-        expect(applier.apply({ entity: entity.asEntity(), updates: { local_transform: { position: [1, 2, 3] } } })).toEqual({
+        expect(
+            applier.apply({ entity: entity.asEntity(), updates: { local_transform: { position: [1, 2, 3] } } }),
+        ).toEqual({
             written: 0,
             deduped: 1,
         });

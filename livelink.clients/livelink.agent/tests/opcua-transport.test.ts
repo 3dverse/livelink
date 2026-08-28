@@ -29,14 +29,10 @@ export const variant_array_type_matches: Assignable<Variant["arrayType"], OpcUaV
 
 export const data_value_value_matches: Assignable<DataValue["value"], OpcUaDataValue["value"]> = true;
 export const data_value_status_matches: Assignable<DataValue["statusCode"], OpcUaDataValue["statusCode"]> = true;
-export const data_value_source_ts_matches: Assignable<
-    DataValue["sourceTimestamp"],
-    OpcUaDataValue["sourceTimestamp"]
-> = true;
-export const data_value_server_ts_matches: Assignable<
-    DataValue["serverTimestamp"],
-    OpcUaDataValue["serverTimestamp"]
-> = true;
+export const data_value_source_ts_matches: Assignable<DataValue["sourceTimestamp"], OpcUaDataValue["sourceTimestamp"]> =
+    true;
+export const data_value_server_ts_matches: Assignable<DataValue["serverTimestamp"], OpcUaDataValue["serverTimestamp"]> =
+    true;
 
 //------------------------------------------------------------------------------
 // `MessageSecurityMode` and `DataType`, per the OPC UA specification — the same constants the
