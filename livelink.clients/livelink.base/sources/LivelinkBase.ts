@@ -194,6 +194,9 @@ export abstract class LivelinkBase<
             return;
         }
         this.#disconnected = true;
+        // Told rather than listened for: the core's own `on-disconnected` never reaches the scene on
+        // a disconnect we initiate, since the listeners come off just below.
+        this.scene._onDisconnected();
 
         this._uninstallCoreEventListeners();
         this._stopUpdateLoop();
@@ -346,6 +349,7 @@ export abstract class LivelinkBase<
      */
     protected _installCoreEventListeners(): void {
         this.#core.addEventListener("on-disconnected", this.session._onDisconnected);
+        this.#core.addEventListener("on-disconnected", this.scene._onDisconnected);
         this.#core.addEventListener("on-inactivity-warning", this.session._onInactivityWarning);
         this.#core.addEventListener("on-scene-info-loaded", this.scene._onSceneInfoLoaded);
         this.#core.addEventListener("on-activity-detected", this.session._onActivityDetected);
@@ -357,6 +361,7 @@ export abstract class LivelinkBase<
         this.#core.addEventListener("on-script-event-received", this.scene._onScriptEventReceived);
         this.#core.addEventListener("on-client-connected", this.#onClientConnectedEvent);
         this.#core.addEventListener("on-clients-disconnected", this.#onClientsDisconnectedEvent);
+        this.#core.addEventListener("on-asset-loading-status-received", this.scene._onAssetLoadingStatusReceived);
     }
 
     /**
@@ -365,6 +370,7 @@ export abstract class LivelinkBase<
      */
     protected _uninstallCoreEventListeners(): void {
         this.#core.removeEventListener("on-disconnected", this.session._onDisconnected);
+        this.#core.removeEventListener("on-disconnected", this.scene._onDisconnected);
         this.#core.removeEventListener("on-inactivity-warning", this.session._onInactivityWarning);
         this.#core.removeEventListener("on-scene-info-loaded", this.scene._onSceneInfoLoaded);
         this.#core.removeEventListener("on-activity-detected", this.session._onActivityDetected);
@@ -376,6 +382,7 @@ export abstract class LivelinkBase<
         this.#core.removeEventListener("on-script-event-received", this.scene._onScriptEventReceived);
         this.#core.removeEventListener("on-client-connected", this.#onClientConnectedEvent);
         this.#core.removeEventListener("on-clients-disconnected", this.#onClientsDisconnectedEvent);
+        this.#core.removeEventListener("on-asset-loading-status-received", this.scene._onAssetLoadingStatusReceived);
     }
 
     /**
