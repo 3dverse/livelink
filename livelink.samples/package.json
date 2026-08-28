@@ -13,7 +13,9 @@
     "preview": "vite preview",
     "agent-sample:quickstart": "tsx --env-file-if-exists=./.env --tsconfig src/samples/agent/tsconfig.json src/samples/agent/quickstart/index.ts",
     "agent-sample:mqtt": "tsx --env-file-if-exists=./.env --tsconfig src/samples/agent/tsconfig.json src/samples/agent/mqtt-ingestion/index.ts",
-    "agent-sample:opcua": "tsx --env-file-if-exists=./.env --tsconfig src/samples/agent/tsconfig.json src/samples/agent/opcua-ingestion/index.ts"
+    "agent-sample:opcua": "tsx --env-file-if-exists=./.env --tsconfig src/samples/agent/tsconfig.json src/samples/agent/opcua-ingestion/index.ts",
+    "typecheck:agent-samples": "tsc --noEmit -p src/samples/agent/tsconfig.json",
+    "generate:x-agent-data-ingestion": "tsx --tsconfig src/samples/agent/tsconfig.json src/samples/agent/playback-generators/gen-playback-x-agent-data-ingestion.ts"
   },
   "dependencies": {
     "@3dverse/livelink": "file:../livelink.clients/livelink.js",

@@ -8,7 +8,7 @@
 // Demonstrates wildcard fan-out: one mapping drives entities identified by topics.
 // Configured via environment: LIVELINK_TOKEN, MQTT_BROKER_URL, SCENE_ID, etc.
 //------------------------------------------------------------------------------
-import { Agent, IngestionPipeline, SceneIngestion } from "@3dverse/livelink-agent";
+import { Agent, IngestionPipeline, SceneIngestion, continuous } from "@3dverse/livelink-agent";
 import type { AgentConfig, ComponentsManifest, EventMapping, SessionInfo } from "@3dverse/livelink-agent";
 
 //------------------------------------------------------------------------------
@@ -79,19 +79,6 @@ function cellHeight(temperature: number): number {
 //------------------------------------------------------------------------------
 // Create mappings (built from site prefix for deployment flexibility).
 function createMappings({ site }: { site: string }): Array<EventMapping> {
-    // Integrate RPM into angle over time (one accumulator per cell).
-    const shafts = new Map<string, { angle: number; at: number }>();
-
-    const integrateShaftAngle = (id: string, rpm: number): number => {
-        const now = performance.now();
-        const shaft = shafts.get(id) ?? { angle: 0, at: now };
-        // Clamp to prevent large jumps on stalled processes.
-        const elapsed_seconds = Math.min((now - shaft.at) / 1000, 0.5);
-        const angle = shaft.angle + ((rpm * 2 * Math.PI) / 60 / SHAFT_GEAR_RATIO) * elapsed_seconds;
-        shafts.set(id, { angle, at: now });
-        return angle;
-    };
-
     //--------------------------------------------------------------------------
     const MOTOR_MAPPING: EventMapping = {
         channel: `${site}/plant/+/+/motor`,
@@ -139,16 +126,32 @@ function createMappings({ site }: { site: string }): Array<EventMapping> {
                 return null;
             }
 
+            // Temperature is a value: the cell's size is settled here and now.
             const height = cellHeight(temperature);
+            const position = cellPosition(id, height);
+
+            // RPM is a *rate*, so the shaft is not set to an angle — it is told a
+            // speed. `continuous` keeps it turning between two messages instead of
+            // stepping forward only when one arrives, which matters here because the
+            // simulator publishes a few times a second and the scene runs at 60.
+            const radians_per_second = (rpm * 2 * Math.PI) / 60 / SHAFT_GEAR_RATIO;
             return {
                 id,
-                update: {
-                    local_transform: {
-                        position: cellPosition(id, height),
-                        scale: [1, height, 1],
-                        orientation: yawQuaternion(integrateShaftAngle(id, rpm)),
+                update: continuous<{ angle: number }>(
+                    ({ delta_seconds, state }) => {
+                        // `state` belongs to the cell, not to this motion, so a new
+                        // rpm picks the shaft up where it stands.
+                        state.angle += radians_per_second * delta_seconds;
+                        return {
+                            local_transform: {
+                                position,
+                                scale: [1, height, 1],
+                                orientation: yawQuaternion(state.angle),
+                            },
+                        };
                     },
-                },
+                    { initial_state: { angle: 0 } },
+                ),
             };
         },
     };
