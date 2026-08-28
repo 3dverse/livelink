@@ -70,6 +70,17 @@ describe("ExistingEntityResolver — byUuid strategy", () => {
         expect(console.warn).toHaveBeenCalledTimes(1);
     });
 
+    it("resolves an id naming an Object.prototype member to null, like any other unmapped id", async () => {
+        // A mapping is free to take its ids straight from the payload's own keys, so `constructor`
+        // is reachable input rather than a hypothetical one.
+        const scene = new FakeScene();
+        const resolver = new ExistingEntityResolver({ scene: scene.asScene(), lookup: { byUuid: {} } });
+
+        expect(await resolver.resolve({ id: "constructor", event: makeEvent({}) })).toBeNull();
+        expect(scene.findEntity).not.toHaveBeenCalled();
+        expect(console.warn).toHaveBeenCalledTimes(1);
+    });
+
     it("finds entities under the shared linkage, overridden per entry", async () => {
         const scene = new FakeScene();
         const entity = new FakeEntity();

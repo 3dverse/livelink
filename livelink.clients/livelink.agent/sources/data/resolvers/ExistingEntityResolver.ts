@@ -37,6 +37,21 @@ export type MappedEntity = {
 export type EntityMap = Record<string, UUID | MappedEntity>;
 
 /**
+ * The entry an id maps to, or null when the map does not declare it.
+ *
+ * An own-property test rather than an index read: an id is stream data, and a mapping is free to
+ * take it straight from a payload key. `payload["constructor"]` would otherwise reach
+ * `Object.prototype`, pass the null check below, and send an `undefined` UUID to the scene instead of
+ * being reported as the unmapped id it is.
+ */
+function entryFor(by_uuid: EntityMap | undefined, id: string): UUID | MappedEntity | null {
+    if (by_uuid === undefined || !Object.hasOwn(by_uuid, id)) {
+        return null;
+    }
+    return by_uuid[id];
+}
+
+/**
  * Whether an entity sits under exactly the given linkage — the same lineage test
  * `Scene.findEntity` applies, needed because name lookups cannot express one.
  */
@@ -154,7 +169,7 @@ export class ExistingEntityResolver extends CachingEntityResolver {
     async #produceByUuid({ id, event }: { id: string; event: IngestEvent }): Promise<Entity | null> {
         const entry = this.#lookup.resolve
             ? await this.#lookup.resolve({ id, event })
-            : (this.#lookup.byUuid?.[id] ?? null);
+            : entryFor(this.#lookup.byUuid, id);
 
         if (!entry) {
             this._warnOnce({

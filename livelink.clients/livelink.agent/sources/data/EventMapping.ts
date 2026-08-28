@@ -287,6 +287,11 @@ export type SceneEntities =
  * };
  * ```
  *
+ * The ids need not be written out: a controller publishing a whole data block names each value in the
+ * payload **key**, so walking the payload into one entry per key drives as many entities as the frame
+ * carries. Whichever way they are derived, they must be unique across everything the mapping drives —
+ * a key alone is not, once the channel pattern matches a second device.
+ *
  * @category Data
  */
 export type EventMapping = {
