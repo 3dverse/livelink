@@ -277,6 +277,14 @@ export class Agent extends TypedEventTarget<AgentEvents> {
     #started: boolean = false;
 
     /**
+     * The configuration this agent was built with, fixed at construction. Read-only: an agent's
+     * attach policy and update rates are settled before it starts.
+     */
+    get config(): Readonly<AgentConfig> {
+        return this.#config;
+    }
+
+    /**
      * The livelinks of all sessions the agent is currently attached to.
      */
     get livelinks(): ReadonlyArray<Livelink> {

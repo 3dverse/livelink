@@ -1,11 +1,6 @@
 //------------------------------------------------------------------------------
 import type { Livelink } from "../Livelink";
-import type {
-    SessionCreatedEvent,
-    SessionJoinedEvent,
-    SessionLeftEvent,
-    SessionReadyEvent,
-} from "../AgentEvents";
+import type { SessionCreatedEvent, SessionJoinedEvent, SessionLeftEvent, SessionReadyEvent } from "../AgentEvents";
 
 /**
  * Event emitted once the sources have started and the ingestion is live.

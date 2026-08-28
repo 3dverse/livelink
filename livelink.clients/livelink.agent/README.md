@@ -52,8 +52,9 @@ const mapping: EventMapping = {
     },
   },
   // What one event does. Return one `{ id, update }`, an array of them when a single event carries
-  // several objects, or null to ignore the event. `update` is a set of component patches, or
-  // "delete" / "hide" / "show" to act on the entity as a whole.
+  // several objects, or null to ignore the event. `update` is a set of component patches,
+  // "delete" / "hide" / "show" to act on the entity as a whole, or `continuous(...)` for
+  // something that keeps moving between events (see below).
   updates: event => ({
     id: event.channel.split("/")[1], // the id can come from the channel, the payload, anywhere
     update: { local_transform: { position: (event.payload as { pos: [number, number, number] }).pos } },
@@ -67,6 +68,70 @@ await pipeline.ingest({ channel: "devices/42/telemetry", payload: { pos: [1, 2, 
 
 Nothing above needs an agent, a session or a broker — which is what makes a mapping straightforward
 to unit-test, to drive from a webhook or a REST handler, and to replay one frame at a time.
+
+### Updates that keep going
+
+Some events carry a **rate**, not a value — "the shaft is turning at 90 rpm". A rate still means
+something after the message that delivered it, so writing a finished patch would leave the entity
+frozen until the next message, which for a machine reporting only on change may be minutes away.
+
+Wrap the update in `continuous()` and it keeps producing values until a later event for that id
+replaces it:
+
+```typescript
+updates: event => {
+  const { rpm } = event.payload as { rpm: number };
+  const id = event.channel.split("/")[1];
+
+  return {
+    id,
+    update: continuous<{ angle_deg: number }>(
+      ({ delta_seconds, state }) => {
+        // 360 degrees a turn, 60 seconds a minute.
+        state.angle_deg = (state.angle_deg + rpm * 6 * delta_seconds) % 360;
+        return {
+          local_transform: {
+            eulerOrientation: [state.angle_deg, 0, 0]
+          }
+        };
+      },
+      { initial_state: { angle_deg: 0 } },
+    ),
+  };
+},
+```
+
+The sample is handed three things:
+
+|                 |                                                                                           |
+| --------------- | ----------------------------------------------------------------------------------------- |
+| `delta_seconds` | Since the previous sample, `0` on the installing event. For a value that **accumulates**. |
+| `since_seconds` | Since this motion started. For a value that is a closed form of its age — a fade, a ramp. |
+| `state`         | Scratch space belonging to the **entity**, not to this motion.                            |
+
+`state` survives the event that replaces the continuation, so a new rpm picks the shaft up where it
+stands rather than snapping it back; `initial_state` therefore applies only the first time an entity is
+given one.
+
+A motion is installed per `(mapping, id)` — not per channel, and not per session, so two sessions on the
+same scene turn the same shaft at the same speed. It runs until one of five things happens: the sample
+returns `null`, it throws, a later event for that id replaces it, it or an event produces `"hide"` or
+`"delete"`, or you call `pipeline.clearContinuations()`.
+
+Nothing expires a motion on a timer, so a stream that dies leaves the scene moving: watch
+`last_event_at` against `continuations_active` (below) for that, and `SceneIngestion` calls
+`clearContinuations()` when it stops its sources.
+
+> **`updates` returning `null` does not stop a motion.** It means the message said nothing about that
+> entity, which is what lets one topic carry payloads of several shapes. To stop a motion from an event,
+> return `continuous(() => null)`. A plain component patch does not stop one either — patch and motion
+> are independent writes, so on a shared component the tick wins.
+
+`SceneIngestion` runs the clock (`ticksPerSecond`, twice the client's flush rate by default, `0` to
+switch it off), redundant writes are still deduplicated so an entity holding still costs nothing, and
+ticks are **not** counted as events. Driving the pipeline yourself, `pipeline.tick(elapsed_seconds)` owns
+no timer, so a motion replays exactly from a test:
+`await pipeline.ingest(event); await pipeline.tick(0.5);`.
 
 ### Addressing entities: the four strategies
 
@@ -129,7 +194,9 @@ const { events_received, updates_applied, components_written, drops, last_event_
 
 `drops` breaks down by reason — `no_binding`, `no_mapping_matched`, `schema`, `no_id`, `no_updates`,
 `unresolved_entity` — which is what separates "the stream isn't arriving" from "it arrives but no
-mapping wants it" during bring-up.
+mapping wants it" during bring-up. `per_mapping` carries the same counters mapping by mapping, plus
+`continuations_active`: with several mappings, that is what says which one is still driving something
+after its stream went quiet.
 
 Counting is on by default: it allocates nothing and costs a few integer increments per event, well
 under a single component write. For the very highest-frequency streams, build the pipeline with
@@ -293,6 +360,8 @@ agent.addEventListener("on-error", event => console.error(event.error));
 ```
 
 There is no "stopped" event: `agent.stop()` is something you call, so do any post-stop cleanup after `await agent.stop()` returns.
+
+Note that `on-session-ready` does **not** mean every entity of the scene is addressable: a scene pulling others in through `scene_ref` components is streamed in progressively, and entities living in those referenced scenes do not exist server-side until the server says it is done. `await livelink.scene.waitForSceneLoaded()` before looking one up — the ingestion layer above already does it for you, before resolving anything. It resolves `true` once the scenes are loaded and `false` if the session disconnected first, and never throws. Note that it has **no timeout**: a scene whose reference the token cannot read never finishes loading, and the wait then only ends on disconnection, so race it against a deadline of your own if you cannot afford to be parked.
 
 ## Using the agent directly
 

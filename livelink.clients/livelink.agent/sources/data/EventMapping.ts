@@ -17,16 +17,169 @@ export type ComponentUpdates = ComponentsManifest;
 
 /**
  * A whole-entity action, written instead of component patches when an event does not *change* the
- * entity but changes whether it is there at all — a vehicle leaving the fleet, a machine part going
+ * entity but changes whether it is there at all — a device leaving the fleet, a machine part going
  * out of service.
  *
  * - `"delete"` removes the entity from the scene (and forgets its resolution, so a later event
  *   carrying the same id resolves — or respawns — it);
  * - `"hide"` / `"show"` toggle `entity.is_visible`, keeping the entity and its resolution.
  *
+ * Both `"delete"` and `"hide"` also stop a {@link continuous} update driving that id — nothing
+ * visible is moving, so nothing should be written for it. `"delete"` drops the entity's state with
+ * it; `"hide"` keeps it, so a later event resumes the motion from where it stopped rather than from
+ * the beginning.
+ *
  * @category Data
  */
 export type EntityDirective = "delete" | "hide" | "show";
+
+/**
+ * Brands a {@link ContinuousUpdate}, so a plain function is never mistaken for one. Not a lock —
+ * `Symbol.for` is reachable by string, and building the object by hand is a supported (if verbose)
+ * alternative to {@link continuous}. It exists so `update: () => buildPatch(payload)`, a plausible
+ * slip, cannot be read as a motion.
+ *
+ * Registered rather than module-private on two counts: two copies of the package loaded side by side
+ * still recognise each other's continuations, and `tsc` cannot emit a declaration file for a type
+ * keyed on a symbol it cannot name.
+ *
+ * @internal
+ */
+export const CONTINUOUS_UPDATE: unique symbol = Symbol.for("@3dverse/livelink-agent.continuous");
+
+/**
+ * What a {@link ContinuousUpdate} is handed every time it is sampled.
+ *
+ * @category Data
+ */
+export type ContinuousUpdateContext<TState extends object = Record<string, never>> = {
+    /**
+     * Seconds since the previous sample, and `0` on the event that installs the continuation — so a
+     * value integrated with it (`state.x += rate * delta_seconds`) never double-counts the install,
+     * and never runs away as re-reading {@link since_seconds} would.
+     *
+     * This is the one to reach for when a value **accumulates**; use {@link since_seconds} when it is
+     * a closed-form function of how long the motion has been running.
+     */
+    delta_seconds: number;
+
+    /**
+     * Seconds since this continuation was installed — since the event that set the rate. `0` on that
+     * installing event.
+     */
+    since_seconds: number;
+
+    /**
+     * Scratch space belonging to the **entity**, not to this motion: it outlives the event that
+     * replaces the continuation, so a shaft told a new rpm carries on from the angle it had reached
+     * rather than snapping back to zero. It is dropped only when the entity is deleted.
+     *
+     * This is what a mapping would otherwise keep in a `Map` of its own, with the phase read at event
+     * time and written back on every tick — a pattern that is one misplaced read away from
+     * accelerating forever.
+     */
+    state: TState;
+};
+
+/**
+ * An update that keeps producing values after the event that installed it. Build one with
+ * {@link continuous}.
+ *
+ * Some events carry a **rate**, not a value — "the shaft is turning at 90 rpm". A rate still means
+ * something once the message that delivered it is gone, so a mapping that returned a finished patch
+ * would leave the entity frozen until the next message. Returning one of these instead says *what
+ * the entity is doing*, and the pipeline re-samples it on its own clock until a later event for the
+ * same id replaces it.
+ *
+ * @category Data
+ */
+export type ContinuousUpdate<TState extends object = Record<string, never>> = {
+    /** @internal */
+    readonly [CONTINUOUS_UPDATE]: true;
+
+    /**
+     * Where the entity is *now*. Returns component patches, a whole-entity {@link EntityDirective}
+     * (so a motion can end by hiding or deleting what it was driving — both also uninstall it), or
+     * `null` when the motion is over — the continuation is then forgotten and the entity keeps its
+     * last value.
+     */
+    sample(context: ContinuousUpdateContext<TState>): ComponentUpdates | EntityDirective | null;
+
+    /**
+     * The state to start from. Used **only** the first time this entity is given a state, so a later
+     * event does not reset a motion already under way.
+     */
+    readonly initial_state?: TState;
+};
+
+/**
+ * A {@link ContinuousUpdate} whose state type has been erased — what an {@link EntityUpdate} holds,
+ * since one `updates` call may return several continuations, each with its own state shape.
+ *
+ * @category Data
+ */
+// The single point where `TState` is erased. `state` sits in both a parameter and a property
+// position, so no concrete type (not `unknown`, not `never`) accepts every `ContinuousUpdate<T>`;
+// the pipeline never reads the state, it only hands it back to the mapping that owns it.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export type AnyContinuousUpdate = ContinuousUpdate<any>;
+
+/**
+ * Declare that an entity **keeps moving** between events, instead of writing one finished value.
+ *
+ * The function is re-sampled on the pipeline's clock until a later event for the same id replaces
+ * it, it returns `null` when the motion is over, and `state` is scratch space that survives those
+ * replacements — which is exactly what a phase needs:
+ *
+ * ```typescript
+ * updates: event => {
+ *     const rpm = (event.payload as { rpm: number }).rpm;
+ *     return {
+ *         id: event.channel.split("/")[2],
+ *         update: continuous<{ angle_deg: number }>(
+ *             ({ delta_seconds, state }) => {
+ *                 // 360 degrees a turn, 60 seconds a minute.
+ *                 state.angle_deg = (state.angle_deg + rpm * 6 * delta_seconds) % 360;
+ *                 return { local_transform: { eulerOrientation: [state.angle_deg, 0, 0] } };
+ *             },
+ *             { initial_state: { angle_deg: 0 } },
+ *         ),
+ *     };
+ * };
+ * ```
+ *
+ * A motion runs until something replaces or stops it: a later event for the same id, a sample
+ * returning `null`, a `"hide"` or `"delete"`, or {@link IngestionPipeline.clearContinuations}. An
+ * event whose `updates` returns `null` is **not** one of those — it means "this message said nothing
+ * about this entity", so a topic carrying payloads of several shapes leaves the motion alone.
+ *
+ * Wrapping is not ceremony: it is what keeps `update: () => buildPatch(payload)` — a plausible
+ * slip, and a perfectly well-typed function — from silently installing a motion that never stops.
+ *
+ * @param sample - Where the entity is now, given the time elapsed and its own state.
+ * @param options - `initial_state` for the value the entity's state starts at.
+ *
+ * @category Data
+ */
+export function continuous<TState extends object = Record<string, never>>(
+    sample: (context: ContinuousUpdateContext<TState>) => ComponentUpdates | EntityDirective | null,
+    options: { initial_state?: TState } = {},
+): ContinuousUpdate<TState> {
+    return {
+        [CONTINUOUS_UPDATE]: true,
+        sample,
+        initial_state: options.initial_state,
+    };
+}
+
+/**
+ * Whether an {@link EntityUpdate.update} is a motion rather than a patch or a directive.
+ *
+ * @internal
+ */
+export function isContinuousUpdate(update: EntityUpdate["update"]): update is AnyContinuousUpdate {
+    return typeof update === "object" && update !== null && CONTINUOUS_UPDATE in update;
+}
 
 /**
  * One entity driven by an event: the id addressing it, and what the event does to it. This is what
@@ -43,10 +196,10 @@ export type EntityUpdate = {
     id: string | number;
 
     /**
-     * What the event does to that entity: component patches, or a whole-entity
-     * {@link EntityDirective}.
+     * What the event does to that entity: component patches, a whole-entity {@link EntityDirective},
+     * or a {@link continuous} update for something that keeps moving between events.
      */
-    update: ComponentUpdates | EntityDirective;
+    update: ComponentUpdates | EntityDirective | AnyContinuousUpdate;
 };
 
 /**
@@ -89,7 +242,7 @@ export type EntityLookup = {
  * - `byUuid` — a fixed `id → entity UUID` table;
  * - `resolve` — an arbitrary function, for lookups the two above cannot express;
  * - `spawn` — no pre-existing entity: one is **created** per new id, from a template. Use it when
- *   the stream itself defines the population (one entity per vehicle serial number).
+ *   the stream itself defines the population (one entity per device serial number).
  *
  * The first three find entities already in the scene and accept a `linkage` (see
  * {@link EntityLookup}); `spawn` creates at the scene root, and so takes none.

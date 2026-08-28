@@ -118,6 +118,8 @@ it, and you can add your own sources alongside the configured ones.
                    │     ▼                                                │
                    │  entity.updateComponent(...)  ───────────────────────►   (broadcast by the agent update loop)
                    │  or delete / hide / show                             │
+                   │                                                      │
+                   │  tick(dt) ─► re-sample the continuous updates ──► 3. │   (no event involved; not counted as one)
                    └──────────────────────────────────────────────────────┘
 ```
 
@@ -203,9 +205,110 @@ stream's ids needs no UUID configuration at all), `byUuid` (a fixed id → UUID 
 arbitrary function), and `spawn` (no pre-existing entity — one is created per new id, from a
 template). The first three accept a `linkage`; `spawn` creates at the scene root and does not.
 
-Each entry's `update` is either component patches or a whole-entity directive — `"delete"`, `"hide"`,
-`"show"` — for events that change whether the entity is there at all (a vehicle leaving the fleet, a
-part going out of service).
+Each entry's `update` is component patches, a whole-entity directive — `"delete"`, `"hide"`, `"show"`,
+for events that change whether the entity is there at all (a device leaving the fleet, a part going
+out of service) — or a **`ContinuousUpdate`**, below.
+
+## An update that keeps going
+
+Some events carry a **rate**, not a value: "the shaft is turning at 90 rpm". A rate still means
+something after the message that delivered it, so a mapping returning a finished patch would leave
+the entity frozen until the next one — and a machine reporting only on change may not send another
+for minutes. `continuous(fn)` instead says what the entity is _doing_, and the pipeline re-samples it
+until a later event for that id replaces it:
+
+```typescript
+updates: event => ({ id, update: continuous(({ delta_seconds, state }) => ({ local_transform: { ... } })) });
+```
+
+The decisions worth recording:
+
+**It is tagged, not merely function-shaped.** Treating any function-valued `update` as a continuation
+is cheaper and has one fatal property: `update: () => buildPatch(payload)` is a plausible slip, is
+perfectly well-typed, and would silently install a motion that never stops. The tag turns that into an
+error message naming the fix. It is not a lock, and does not try to be — `Symbol.for` is reachable by
+string, and a hand-built object is a supported alternative to `continuous()`.
+
+**Continuations live on the mapping, keyed by `(mapping, id)`.** `updates(event)` runs once and fans
+out to every bound scene, so a continuation must be sampled once per tick and fan out the same way. On
+a `BindingState` slot it would advance a _stateful_ closure once per session — two sessions, and the
+shaft turns at double speed. Not per channel either: one mapping matching `plant/+/telemetry` holds
+`plc01` and `plc02` in the same map.
+
+**`state` belongs to the entity, not to the motion.** A rate needs a phase to accumulate into, and that
+phase must survive the event that replaces the continuation — a new rpm picks the shaft up where it
+stands. So `CompiledMapping.states` is keyed by id and outlives the continuations reading it, going
+only when the entity does (`"delete"`); `initial_state` therefore applies **only** to an id with no
+state yet. Left to the mapping, this is a `Map` read at event time and written back on every tick —
+three lines that are one misplaced read away from accelerating forever.
+
+**`tick(elapsed_seconds)` owns no timer**, and `since_seconds` accumulates from the ticks rather than
+the wall clock. Time enters through exactly one argument, so replaying the same ticks replays the same
+motion and a moving scene is testable with no fake timers:
+
+```typescript
+await pipeline.ingest(event); // "turning at 90 rpm"
+await pipeline.tick(0.5); // half a second later, wherever that puts it
+```
+
+`SceneIngestion` owns the interval (`ticksPerSecond`, `0` to switch it off), started on the first ready
+session and stopped when the last one leaves. The default is **twice** the client's `updatesPerSecond`
+(60 when none is declared): the two timers free-run and beat against each other, so ticking at exactly
+the flush rate lets a sample's age at flush time wander across a whole window and the motion jitters;
+twice as often bounds that to half a window. The rate goes through the same `computeIntervalInMs` guard
+as `updatesPerSecond`, so `NaN` — what `Number(process.env.X)` yields for a bad value, and what
+`setInterval` turns into a busy loop — cannot reach a timer. Three properties a bare `setInterval` over
+`Date.now()` would not have:
+
+- **monotonic** (`performance.now()`) — an NTP step backwards would hand every motion a negative
+  elapsed time and rewind the scene;
+- **bounded** (0.5 s per tick) — a process back from suspension has minutes of wall clock to account
+  for, and handing that to a motion teleports it. The time is dropped on purpose;
+- **non-overlapping** (an in-flight promise) — two overlapping ticks can apply out of order, which also
+  poisons `ComponentPatchApplier`'s dedup memory and leaves the entity stuck on the stale value. Skipped
+  time is folded into the next tick, so a motion does not run slow under load.
+
+`SceneIngestion.ingest` also **settles the clock before an event reaches the pipeline**: without it the
+slice between the last tick and the event is credited to whatever the event installs, at its new rate
+rather than the one actually in force. Total time is conserved either way, so it is a misattribution
+rather than a drift — but a changing rate pays it once per event and the phase leads persistently. That
+is the one layer owning both the clock and the events; `IngestionPipeline` stays a pure function of the
+ticks it is handed.
+
+**A tick is not an event.** It leaves `events_received`, `events_matched` and `last_event_at` alone, so
+those keep answering "is data still arriving?" while the scene moves under its own steam — the one
+diagnostic a 30 Hz clock would otherwise destroy. Ticks get `ticks_processed` and a
+`continuations_active` gauge, global and per mapping; `components_written` does include clock-driven
+writes, because they are writes.
+
+**Five ways a motion ends**, and only five: the sample returns `null`; it throws (it would throw again
+on every tick); a newer event for the same id replaces it; it — or an event — produces `"hide"` or
+`"delete"`, since nothing visible is moving; or `clearContinuations()` is called, which `SceneIngestion`
+does when it stops its sources. `"delete"` drops the entity's state with it, `"hide"` keeps it.
+
+**Nothing expires a motion on a timer, deliberately.** An earlier revision had `max_seconds` and warned
+past a minute unrefreshed; both are gone. What they could measure was time since an event _replaced_ the
+motion, which is not "the stream died" — one topic may carry payloads of several shapes, so a healthy
+stream refreshes nothing while the mapping returns `null` for the messages without a rate. The honest
+signal was already there and costs nothing: `last_event_at` against `continuations_active`, the two
+disagreeing being the picture outliving the data, and `clearContinuations()` the switch for acting on it.
+
+**Two things that look like a stop and are not.** `updates` returning `null` returns before
+continuations are touched, so it means "this message said nothing about this entity" — which is what
+makes the mixed-payload topic work; `continuous(() => null)` is how an event stops a motion. And a plain
+component patch for the same id does not stop one either: patch and motion are independent writes, and
+on a shared component the tick wins. Both are documented rather than changed, the alternative being that
+you cannot set an unrelated component on a moving entity.
+
+**Failing to resolve is not on that list.** Resolution runs once per bound scene against a map shared by
+all of them, so uninstalling from there would stop the motion in every other scene — and at bring-up,
+where the entity is not in the scene yet, it would stop the motion inside the very `ingest()` that
+installed it. So an unresolved id costs a cached lookup per tick, and starts moving by itself once the
+scene's own `on-entities-created` drops the cached miss. That fallback is the only reason a continuation
+retains its installing event: resolution takes one and a tick has none, which also makes the event a
+`byName` or `resolve` function sees on a tick deliberately stale — it is the message that said which
+entity this motion is about. Tick-time misses are not counted in `drops`, which stays an event-level
+story rather than a 30 Hz one.
 
 Internally, each bound scene gets its own resolver per mapping — resolvers cache id → entity
 resolutions against that scene (single in-flight production, warn-once on unresolvable ids).
@@ -263,7 +366,10 @@ Counters cover events in, updates out, component writes and dedups, per-mapping 
 bring-up — they separate "the stream is not arriving", "it arrives but nothing is listening yet"
 and "it arrives but no mapping wants it", three failures that otherwise look identical from outside.
 Note that `events_matched` and `events_dropped` overlap: an event a mapping selected but applied
-nothing for counts in both.
+nothing for counts in both — and every way of getting there has a reason attached, including an event
+whose entries were all motions already over on their first sample (`no_updates`). An `events_dropped`
+with nothing in `drops` would read as the pipeline losing events, which is the wrong thing to be
+debugging.
 
 Counting is **on by default**. The counting path allocates nothing — timestamps are held as epoch
 milliseconds and only become `Date`s in a snapshot — so it costs a handful of integer increments per
