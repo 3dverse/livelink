@@ -278,6 +278,12 @@ The `mode` option of the agent config selects how the agent attaches to sessions
 | `"join-all"`                | Join all existing sessions of the scene.                                                                                          |
 | `"manual"`                  | attach to nothing on start; the agent stays idle and joins sessions on demand through its `join` method.                          |
 
+An agent that loses its last session without being told to — it dropped, or the leave condition
+fired — has no way of getting more work, so it stops itself and dispatches `on-stopped`. A
+`SceneIngestion` stops its sources with it, which is what lets a single-session agent's process exit
+on its own. This does not apply while `watch` is enabled, in `"manual"` mode, or to a session left
+deliberately through `leave()` — that one can be rejoined with `join()`.
+
 ### Watching for sessions
 
 With the `watch` option (valid in `"join"` and `"join-all"` modes), the agent polls the session list and joins sessions as they appear:

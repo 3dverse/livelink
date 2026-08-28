@@ -1,6 +1,12 @@
 //------------------------------------------------------------------------------
 import type { Livelink } from "../Livelink";
-import type { SessionCreatedEvent, SessionJoinedEvent, SessionLeftEvent, SessionReadyEvent } from "../AgentEvents";
+import type {
+    AgentStoppedEvent,
+    SessionCreatedEvent,
+    SessionJoinedEvent,
+    SessionLeftEvent,
+    SessionReadyEvent,
+} from "../AgentEvents";
 
 /**
  * Event emitted once the sources have started and the ingestion is live.
@@ -113,6 +119,7 @@ export type SceneIngestionEvents = {
     "on-session-joined": SessionJoinedEvent;
     "on-session-ready": SessionReadyEvent;
     "on-session-left": SessionLeftEvent;
+    "on-stopped": AgentStoppedEvent;
     "on-running": IngestionRunningEvent;
     "on-session-bound": SessionBoundEvent;
     "on-session-unbound": SessionUnboundEvent;

@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 
 import type { UUID } from "@3dverse/livelink.core";
 import { Agent, AgentConfig } from "../sources/Agent";
-import type { SessionLeftEvent, AgentErrorEvent } from "../sources/AgentEvents";
+import type { SessionLeftEvent, AgentErrorEvent, AgentStoppedEvent } from "../sources/AgentEvents";
 import { Livelink } from "../sources/Livelink";
 import type { SessionInfo } from "@livelink.base/session/SessionInfo";
 import type { ClientInfo } from "@livelink.base/session/ClientInfo";
@@ -216,12 +216,16 @@ type EventLog = {
     joined: number;
     ready: number;
     left: Array<SessionLeftEvent>;
+    stopped: Array<AgentStoppedEvent>;
     error: Array<AgentErrorEvent>;
 };
 
 //------------------------------------------------------------------------------
 function recordEvents(agent: Agent): EventLog {
-    const log: EventLog = { created: 0, joined: 0, ready: 0, left: [], error: [] };
+    const log: EventLog = { created: 0, joined: 0, ready: 0, left: [], stopped: [], error: [] };
+    agent.addEventListener("on-stopped", event => {
+        log.stopped.push(event);
+    });
     agent.addEventListener("on-session-created", () => {
         log.created += 1;
     });
@@ -914,6 +918,132 @@ describe("Agent disconnection", () => {
         expect(driver.join).toHaveBeenCalledTimes(2);
         expect(agent.livelinks).toHaveLength(1);
         await agent.stop();
+    });
+});
+
+//------------------------------------------------------------------------------
+describe("Agent automatic stop", () => {
+    it("stops itself when its only session drops", async () => {
+        const driver = installDriverSpies();
+        const { agent, events } = makeAgent({ config: { mode: "join-or-start" } });
+
+        await agent.start();
+        const session_id = agent.livelinks[0].session.session_id;
+        driver.joined_sessions.get(session_id)!.session.emitDisconnected();
+        await vi.advanceTimersByTimeAsync(0);
+
+        expect(events.left[0].reason).toBe("disconnected");
+        expect(events.stopped).toHaveLength(1);
+        expect(events.stopped[0].is_automatic).toBe(true);
+
+        // Really stopped, not merely session-less: start() throws when already started.
+        await agent.start();
+        await agent.stop();
+    });
+
+    it("stops itself when its only session is left on condition", async () => {
+        const driver = installDriverSpies();
+        driver.list.mockResolvedValue([makeSessionInfo({ session_id: "s1" })]);
+        const { agent, events } = makeAgent({
+            config: { mode: "join", leave_on_condition: { after_seconds: 60 } },
+        });
+
+        await agent.start();
+        await vi.advanceTimersByTimeAsync(60000);
+
+        expect(events.left[0].reason).toBe("left-on-condition");
+        expect(events.stopped).toHaveLength(1);
+        expect(events.stopped[0].is_automatic).toBe(true);
+    });
+
+    it("'join-all' stops only once the last session is gone", async () => {
+        const driver = installDriverSpies();
+        driver.list.mockResolvedValue([
+            makeSessionInfo({ session_id: "s1" }),
+            makeSessionInfo({ session_id: "s2" }),
+        ]);
+        const { agent, events } = makeAgent({ config: { mode: "join-all" } });
+
+        await agent.start();
+
+        driver.joined_sessions.get("s1")!.session.emitDisconnected();
+        await vi.advanceTimersByTimeAsync(0);
+        expect(events.stopped).toHaveLength(0);
+        expect(agent.livelinks).toHaveLength(1);
+
+        driver.joined_sessions.get("s2")!.session.emitDisconnected();
+        await vi.advanceTimersByTimeAsync(0);
+        expect(events.stopped).toHaveLength(1);
+    });
+
+    it("keeps running when watching, so the watch loop can rejoin", async () => {
+        const driver = installDriverSpies();
+        driver.list.mockResolvedValue([makeSessionInfo({ session_id: "s1" })]);
+        const { agent, events } = makeAgent({ config: { mode: "join", watch: { interval_seconds: 10 } } });
+
+        await agent.start();
+        driver.joined_sessions.get("s1")!.session.emitDisconnected();
+        await vi.advanceTimersByTimeAsync(0);
+
+        expect(events.left).toHaveLength(1);
+        expect(events.stopped).toHaveLength(0);
+
+        // Still watching: the next tick rejoins the session that is still listed.
+        await vi.advanceTimersByTimeAsync(10000);
+        expect(agent.livelinks).toHaveLength(1);
+
+        await agent.stop();
+    });
+
+    it("never stops itself in 'manual' mode", async () => {
+        const driver = installDriverSpies();
+        driver.list.mockResolvedValue([makeSessionInfo({ session_id: "s1" })]);
+        const { agent, events } = makeAgent({ config: { mode: "manual" } });
+
+        await agent.start();
+        await agent.join({ session_id: "s1" });
+        driver.joined_sessions.get("s1")!.session.emitDisconnected();
+        await vi.advanceTimersByTimeAsync(0);
+
+        expect(events.left).toHaveLength(1);
+        expect(events.stopped).toHaveLength(0);
+
+        // The consumer drives this mode, so it can still rejoin on demand.
+        await agent.join({ session_id: "s1" });
+        expect(agent.livelinks).toHaveLength(1);
+
+        await agent.stop();
+    });
+
+    it("does not stop itself when the session was left deliberately", async () => {
+        const driver = installDriverSpies();
+        driver.list.mockResolvedValue([makeSessionInfo({ session_id: "s1" })]);
+        const { agent, events } = makeAgent({ config: { mode: "join" } });
+
+        await agent.start();
+        await agent.leave({ session_id: "s1" });
+
+        expect(events.left[0].reason).toBe("stopped");
+        expect(events.stopped).toHaveLength(0);
+
+        // leave() documents rejoining later, which requires the agent to still be started.
+        await agent.join({ session_id: "s1" });
+        expect(agent.livelinks).toHaveLength(1);
+
+        await agent.stop();
+    });
+
+    it("reports a deliberate stop as not automatic, exactly once", async () => {
+        const driver = installDriverSpies();
+        driver.list.mockResolvedValue([makeSessionInfo({ session_id: "s1" })]);
+        const { agent, events } = makeAgent({ config: { mode: "join" } });
+
+        await agent.start();
+        await agent.stop();
+        await agent.stop();
+
+        expect(events.stopped).toHaveLength(1);
+        expect(events.stopped[0].is_automatic).toBe(false);
     });
 });
 

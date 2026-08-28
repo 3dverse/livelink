@@ -115,6 +115,39 @@ describe("SceneIngestion lifecycle", () => {
         expect(ingestion.pipeline.boundSceneCount).toBe(0);
     });
 
+    it("stops the source when the agent stops itself, so nothing holds the process open", async () => {
+        const { agent, transport, ingestion } = setup(positionMapping);
+        await ingestion.start();
+        const livelink = makeLivelink("sess-A", new FakeScene());
+        agent.emit("on-session-ready", { livelink });
+        await settle();
+        expect(transport.start).toHaveBeenCalledTimes(1);
+
+        // The agent lost its last session and stopped on its own.
+        agent.emit("on-session-left", { livelink, reason: "left-on-condition" });
+        agent.emit("on-stopped", { is_automatic: true });
+        await settle();
+
+        expect(transport.stop).toHaveBeenCalledTimes(1);
+        expect(ingestion.boundSessionCount).toBe(0);
+        expect(ingestion.pipeline.boundSceneCount).toBe(0);
+    });
+
+    it("re-emits on-stopped and does not re-enter the agent's own stop", async () => {
+        const { agent, ingestion } = setup(positionMapping);
+        const onStopped = vi.fn();
+        ingestion.addEventListener("on-stopped", onStopped);
+        await ingestion.start();
+
+        agent.emit("on-stopped", { is_automatic: true });
+        await settle();
+
+        expect(onStopped).toHaveBeenCalledTimes(1);
+        // ingestion.stop() detaches the listener before stopping the agent, so the agent is asked
+        // to stop exactly once and its own on-stopped cannot bounce back here.
+        expect(agent.stop).toHaveBeenCalledTimes(1);
+    });
+
     it("retries the source on the next binding when its start fails", async () => {
         const { agent, transport, onRunning, onError, ingestion } = setup(positionMapping);
         transport.start.mockRejectedValueOnce(new Error("broker down"));

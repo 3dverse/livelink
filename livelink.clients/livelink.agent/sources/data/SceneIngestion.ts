@@ -18,6 +18,7 @@ import {
     SessionLeftEvent,
     SessionReadyEvent,
     type AgentErrorEvent,
+    AgentStoppedEvent,
 } from "../AgentEvents";
 
 //------------------------------------------------------------------------------
@@ -335,6 +336,7 @@ export class SceneIngestion extends ObservedEventTarget<SceneIngestionEvents> im
         this.#agent.addEventListener("on-session-joined", this.#onSessionJoined);
         this.#agent.addEventListener("on-session-ready", this.#onSessionReady);
         this.#agent.addEventListener("on-session-left", this.#onSessionLeft);
+        this.#agent.addEventListener("on-stopped", this.#onAgentStopped);
         this.#agent.addEventListener("on-error", this.#onAgentError);
 
         await this.#agent.start();
@@ -355,6 +357,7 @@ export class SceneIngestion extends ObservedEventTarget<SceneIngestionEvents> im
         this.#agent.removeEventListener("on-session-joined", this.#onSessionJoined);
         this.#agent.removeEventListener("on-session-ready", this.#onSessionReady);
         this.#agent.removeEventListener("on-session-left", this.#onSessionLeft);
+        this.#agent.removeEventListener("on-stopped", this.#onAgentStopped);
         this.#agent.removeEventListener("on-error", this.#onAgentError);
 
         this.#stopClock();
@@ -397,6 +400,15 @@ export class SceneIngestion extends ObservedEventTarget<SceneIngestionEvents> im
     #onSessionLeft = (event: SessionLeftEvent): void => {
         this.#unbindSession(event.livelink);
         this._dispatchEvent(new SessionLeftEvent({ livelink: event.livelink, reason: event.reason }));
+    };
+
+    // The agent is done, either by its own decision or because someone stopped it directly. Nothing
+    // will bind another session, so the sources have to go too: a broker connection or a playback
+    // timer left running holds a Node process open with no session left to drive.
+    // Our own stop() detaches this listener before stopping the agent, so it never re-enters.
+    #onAgentStopped = (event: AgentStoppedEvent): void => {
+        this._dispatchEvent(new AgentStoppedEvent({ is_automatic: event.is_automatic }));
+        void this.stop().catch((error: Error) => this.#reportError(error));
     };
 
     #onAgentError = (event: AgentErrorEvent): void => {
