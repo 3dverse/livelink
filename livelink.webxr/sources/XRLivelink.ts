@@ -13,6 +13,7 @@ import { LXRLocomotionController } from "./LXRLocomotionController";
 import { LXRInputManager } from "./input/LXRInputManager";
 import { LXRActionMap } from "./input/LXRActionMap";
 import { LXR_DEFAULT_PROFILES_PATH } from "./input/LXRInputProfiles";
+import { LXRPlacement } from "./anchor/LXRPlacement";
 import {
     LXRFrameCallbacks,
     LXRFrameErrorLog,
@@ -100,6 +101,12 @@ export class XRLivelink extends TypedEventTarget<LXREvents> {
      * kept across sessions — see {@link locomotion}.
      */
     readonly #locomotion: LXRLocomotionController;
+
+    /**
+     * Everything between a real surface and the scene standing on it. Built with the rig in the
+     * constructor and kept across sessions — see {@link placement}.
+     */
+    readonly #placement: LXRPlacement;
 
     /**
      * Animation frame request ID for managing the XR frame loop.
@@ -242,6 +249,7 @@ export class XRLivelink extends TypedEventTarget<LXREvents> {
         this.#surface = new LXRSurface(this.#session);
         this.#camera_rig = new LXRCameraRig(livelink.scene);
         this.#locomotion = new LXRLocomotionController({ camera_rig: this.#camera_rig });
+        this.#placement = new LXRPlacement({ camera_rig: this.#camera_rig });
     }
 
     /**
@@ -515,6 +523,19 @@ export class XRLivelink extends TypedEventTarget<LXREvents> {
     }
 
     /**
+     * AR placement: the hit test finding the surface the user is aiming at, the anchor keeping the
+     * scene nailed to it, and the rig anchor both are written to.
+     *
+     * Always present, like {@link actions} and {@link locomotion} — its parameters are consumer
+     * configuration rather than session state. {@link LXRPlacement.is_available} is what says
+     * whether this session can place anything at all, and it is settled by the time
+     * {@link initialize} resolves.
+     */
+    get placement(): LXRPlacement {
+        return this.#placement;
+    }
+
+    /**
      * Base URL the `@webxr-input-profiles/assets` descriptions are fetched from.
      *
      * Point it at a self-hosted copy to keep named components — `a-button`, `thumbrest`, a touchpad
@@ -628,6 +649,7 @@ export class XRLivelink extends TypedEventTarget<LXREvents> {
         // started.
         this.#actions._reset();
         this.#locomotion._reset();
+        this.#placement._reset();
 
         // Comfort defaults follow the device class, like the vignette below: snap turning in a
         // headset, where continuous yaw is the most reliable way to make someone sick, and smooth
@@ -664,6 +686,14 @@ export class XRLivelink extends TypedEventTarget<LXREvents> {
             preserve_initial_orientation,
         });
         this.#throwIfAborted(signal, "viewport configuration");
+
+        // Awaited, unlike the input profile fetch above: `requestHitTestSource` is a local round
+        // trip rather than a CDN one, and awaiting it is what makes `placement.is_available`
+        // meaningful the moment this method resolves — a consumer deciding whether to show a place
+        // control has no event to wait for otherwise. It never throws; a session with no `hit-test`
+        // feature, or a user agent without it, simply leaves placement unavailable.
+        await this.#placement._init({ session });
+        this.#throwIfAborted(signal, "placement configuration");
 
         // Add viewports to livelink after they have been configured
         this.#livelink.addViewports({ viewports: this.viewports });
@@ -826,9 +856,20 @@ export class XRLivelink extends TypedEventTarget<LXREvents> {
         args.dt = dt;
         args.viewer_pose = viewer_pose;
 
-        for (const phase of LXR_FRAME_PHASES) {
-            this.#frame_callbacks[phase].run(args);
-        }
+        this.#frame_callbacks.input.run(args);
+
+        // Between the two phases rather than inside either: a consumer raises `place` from the
+        // `input` phase and the same frame's live hit test result honours it — an `XRHitTestResult`
+        // being valid only during its own frame — while an `anchor` phase callback drawing a
+        // reticle reads this frame's hit pose rather than the previous one's.
+        this.#placement._update({
+            frame,
+            time,
+            reference_space: this.#session.reference_space ?? null,
+            input: this.#input,
+        });
+
+        this.#frame_callbacks.anchor.run(args);
 
         // After the phases and before the rig composes: a consumer callback — and, in a headset, a
         // pointer aimed at a panel — gets to claim an action before locomotion reads it, and the
@@ -1179,6 +1220,7 @@ export class XRLivelink extends TypedEventTarget<LXREvents> {
         this.#input = undefined;
         this.#actions._reset();
         this.#locomotion._reset();
+        this.#placement._reset();
 
         this.#lxr_viewports.forEach(lxr_viewport => lxr_viewport.release());
         this.#lxr_viewports.clear();

@@ -15,6 +15,11 @@ export * from "./LXRLocomotionController";
 export * from "./LXRScaling";
 export * from "./LXRComfort";
 
+// Anchoring
+export * from "./anchor/LXRHitTest";
+export * from "./anchor/LXRAnchorTracker";
+export * from "./anchor/LXRPlacement";
+
 // Input
 export * from "./input/LXRInputSource";
 export * from "./input/LXRInputProfiles";
