@@ -14,6 +14,7 @@ import { LXRInputManager } from "./input/LXRInputManager";
 import { LXRActionMap } from "./input/LXRActionMap";
 import { LXR_DEFAULT_PROFILES_PATH } from "./input/LXRInputProfiles";
 import { LXRPlacement } from "./anchor/LXRPlacement";
+import { LXROverlay } from "./overlay/LXROverlay";
 import {
     LXRFrameCallbacks,
     LXRFrameErrorLog,
@@ -107,6 +108,12 @@ export class XRLivelink extends TypedEventTarget<LXREvents> {
      * constructor and kept across sessions — see {@link placement}.
      */
     readonly #placement: LXRPlacement;
+
+    /**
+     * Everything the session draws that is not the streamed image. Built with the rendering surface
+     * in the constructor — see {@link overlay}.
+     */
+    readonly #overlay: LXROverlay;
 
     /**
      * Animation frame request ID for managing the XR frame loop.
@@ -250,6 +257,7 @@ export class XRLivelink extends TypedEventTarget<LXREvents> {
         this.#camera_rig = new LXRCameraRig(livelink.scene);
         this.#locomotion = new LXRLocomotionController({ camera_rig: this.#camera_rig });
         this.#placement = new LXRPlacement({ camera_rig: this.#camera_rig });
+        this.#overlay = new LXROverlay({ context: this.#surface.context });
     }
 
     /**
@@ -536,6 +544,31 @@ export class XRLivelink extends TypedEventTarget<LXREvents> {
     }
 
     /**
+     * The quads drawn into the XR framebuffer alongside the streamed image — a placement reticle, a
+     * panel, a pointer.
+     *
+     * The only way to show a user anything in a headset: see {@link has_dom_overlay}. Always
+     * present, like {@link placement}, though its GPU resources only exist while there is something
+     * to draw.
+     */
+    get overlay(): LXROverlay {
+        return this.#overlay;
+    }
+
+    /**
+     * Whether the DOM is composited into this session, i.e. whether `dom-overlay` was requested and
+     * granted.
+     *
+     * False in every headset session, AR passthrough included — no headset browser grants the
+     * feature — and true in a handheld AR session on Android. When it is false, nothing in the DOM
+     * is visible to the user, however carefully it is positioned: what has to be seen goes through
+     * {@link overlay} instead.
+     */
+    get has_dom_overlay(): boolean {
+        return !!this.#session.native?.domOverlayState;
+    }
+
+    /**
      * Base URL the `@webxr-input-profiles/assets` descriptions are fetched from.
      *
      * Point it at a self-hosted copy to keep named components — `a-button`, `thumbrest`, a touchpad
@@ -633,6 +666,8 @@ export class XRLivelink extends TypedEventTarget<LXREvents> {
         // that can no longer complete.
         session.addEventListener("end", this.#onXRSessionEnd);
 
+        this.#reportDomOverlayState({ session, xr_session_init });
+
         // Adopted here rather than by whoever consumes the input, and as early as the session
         // exists: controllers that were already awake fired their `inputsourceschange` before this
         // method was even called, so anything built later would be waiting for an event that has
@@ -700,6 +735,36 @@ export class XRLivelink extends TypedEventTarget<LXREvents> {
 
         console.debug("XRLivelink configured successfully");
         return session;
+    }
+
+    /**
+     * Say out loud whether the DOM is composited into this session, when the consumer asked for it.
+     *
+     * `dom-overlay` is an optional feature, and a user agent that does not grant one reports
+     * nothing at all — which is why a DOM reticle being invisible on a headset read as a mystery
+     * for as long as it did, rather than as the one line it is. Everything in the DOM is silently
+     * absent from every headset session; see {@link overlay} for what to do instead.
+     *
+     * @param session The session that has just come up.
+     * @param xr_session_init What was asked for when requesting it.
+     */
+    #reportDomOverlayState({
+        session,
+        xr_session_init,
+    }: {
+        session: XRSession;
+        xr_session_init: XRSessionInit;
+    }): void {
+        const was_requested =
+            !!xr_session_init.domOverlay || !!xr_session_init.optionalFeatures?.includes("dom-overlay");
+        if (!was_requested || session.domOverlayState) {
+            return;
+        }
+
+        console.warn(
+            "WebXR: `dom-overlay` was requested and not granted — nothing in the DOM is composited " +
+                "into this session. Draw through `XRLivelink.overlay` instead.",
+        );
     }
 
     /**
@@ -985,6 +1050,10 @@ export class XRLivelink extends TypedEventTarget<LXREvents> {
             xr_viewports,
             frame_camera_transforms: remote_camera_transforms,
         });
+
+        // On top of the streamed image, in the same framebuffer: in a headset that is the only
+        // place a user can be shown anything at all.
+        this.#overlay._draw({ xr_views, xr_viewports, frame_buffer: gl_layer.framebuffer });
     }
 
     /**
@@ -1221,6 +1290,7 @@ export class XRLivelink extends TypedEventTarget<LXREvents> {
         this.#actions._reset();
         this.#locomotion._reset();
         this.#placement._reset();
+        this.#overlay._release();
 
         this.#lxr_viewports.forEach(lxr_viewport => lxr_viewport.release());
         this.#lxr_viewports.clear();

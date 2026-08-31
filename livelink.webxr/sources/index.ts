@@ -20,6 +20,11 @@ export * from "./anchor/LXRHitTest";
 export * from "./anchor/LXRAnchorTracker";
 export * from "./anchor/LXRPlacement";
 
+// Overlay
+export * from "./overlay/LXRTexture";
+export * from "./overlay/LXRQuad";
+export * from "./overlay/LXROverlay";
+
 // Input
 export * from "./input/LXRInputSource";
 export * from "./input/LXRInputProfiles";
