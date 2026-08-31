@@ -15,6 +15,7 @@ import { LXRActionMap } from "./input/LXRActionMap";
 import { LXR_DEFAULT_PROFILES_PATH } from "./input/LXRInputProfiles";
 import { LXRPlacement } from "./anchor/LXRPlacement";
 import { LXROverlay } from "./overlay/LXROverlay";
+import { LXROverlayManager } from "./overlay/LXROverlayManager";
 import {
     LXRFrameCallbacks,
     LXRFrameErrorLog,
@@ -114,6 +115,12 @@ export class XRLivelink extends TypedEventTarget<LXREvents> {
      * in the constructor — see {@link overlay}.
      */
     readonly #overlay: LXROverlay;
+
+    /**
+     * The panels drawn into that overlay and the pointers aimed at them. Built with the overlay in
+     * the constructor and kept across sessions — see {@link ui}.
+     */
+    readonly #ui: LXROverlayManager;
 
     /**
      * Animation frame request ID for managing the XR frame loop.
@@ -258,6 +265,7 @@ export class XRLivelink extends TypedEventTarget<LXREvents> {
         this.#locomotion = new LXRLocomotionController({ camera_rig: this.#camera_rig });
         this.#placement = new LXRPlacement({ camera_rig: this.#camera_rig });
         this.#overlay = new LXROverlay({ context: this.#surface.context });
+        this.#ui = new LXROverlayManager({ overlay: this.#overlay });
     }
 
     /**
@@ -556,6 +564,21 @@ export class XRLivelink extends TypedEventTarget<LXREvents> {
     }
 
     /**
+     * The in-headset user interface: the panels shown in the session and the pointers the user aims
+     * at them with.
+     *
+     * {@link overlay} is the renderer — arbitrary quads, drawn where they are put. This is the layer
+     * above it: a panel follows a wrist or the head, lays its items out, redraws itself when one of
+     * them changes, and a pointer resolves what the user is pressing and claims that press from
+     * {@link actions} so it does not also move them.
+     *
+     * Always present, like {@link placement}, and idle until the first panel is added.
+     */
+    get ui(): LXROverlayManager {
+        return this.#ui;
+    }
+
+    /**
      * Whether the DOM is composited into this session, i.e. whether `dom-overlay` was requested and
      * granted.
      *
@@ -685,6 +708,9 @@ export class XRLivelink extends TypedEventTarget<LXREvents> {
         this.#actions._reset();
         this.#locomotion._reset();
         this.#placement._reset();
+        // Also puts the consumer's panels back into the overlay, which dropped every quad it held
+        // when the previous session ended.
+        this.#ui._reset();
 
         // Comfort defaults follow the device class, like the vignette below: snap turning in a
         // headset, where continuous yaw is the most reliable way to make someone sick, and smooth
@@ -748,13 +774,7 @@ export class XRLivelink extends TypedEventTarget<LXREvents> {
      * @param session The session that has just come up.
      * @param xr_session_init What was asked for when requesting it.
      */
-    #reportDomOverlayState({
-        session,
-        xr_session_init,
-    }: {
-        session: XRSession;
-        xr_session_init: XRSessionInit;
-    }): void {
+    #reportDomOverlayState({ session, xr_session_init }: { session: XRSession; xr_session_init: XRSessionInit }): void {
         const was_requested =
             !!xr_session_init.domOverlay || !!xr_session_init.optionalFeatures?.includes("dom-overlay");
         if (!was_requested || session.domOverlayState) {
@@ -935,6 +955,11 @@ export class XRLivelink extends TypedEventTarget<LXREvents> {
         });
 
         this.#frame_callbacks.anchor.run(args);
+
+        // Between the last phase and locomotion, which is the whole reason it is here rather than
+        // next to the draw: a pointer resting on a panel claims the trigger it is about to press a
+        // button with, and locomotion — reading the same actions two lines below — never sees it.
+        this.#ui._update({ dt, viewer_pose, input: this.#input, actions: this.#actions });
 
         // After the phases and before the rig composes: a consumer callback — and, in a headset, a
         // pointer aimed at a panel — gets to claim an action before locomotion reads it, and the
@@ -1290,6 +1315,7 @@ export class XRLivelink extends TypedEventTarget<LXREvents> {
         this.#actions._reset();
         this.#locomotion._reset();
         this.#placement._reset();
+        this.#ui._release();
         this.#overlay._release();
 
         this.#lxr_viewports.forEach(lxr_viewport => lxr_viewport.release());

@@ -24,6 +24,9 @@ export * from "./anchor/LXRPlacement";
 export * from "./overlay/LXRTexture";
 export * from "./overlay/LXRQuad";
 export * from "./overlay/LXROverlay";
+export * from "./overlay/LXRPanel";
+export * from "./overlay/LXRPointer";
+export * from "./overlay/LXROverlayManager";
 
 // Input
 export * from "./input/LXRInputSource";
