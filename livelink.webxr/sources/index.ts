@@ -11,8 +11,16 @@ export * from "./LXRContext";
 export * from "./LXRFrameLoop";
 export * from "./LXRContextPassthrough";
 export * from "./LXRLocomotion";
+export * from "./LXRLocomotionController";
 export * from "./LXRScaling";
 export * from "./LXRComfort";
+
+// Input
+export * from "./input/LXRInputSource";
+export * from "./input/LXRInputProfiles";
+export * from "./input/LXRInputManager";
+export * from "./input/LXRStandardActions";
+export * from "./input/LXRActionMap";
 
 // React integration
 export * from "./react";

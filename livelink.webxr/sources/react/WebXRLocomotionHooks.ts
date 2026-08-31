@@ -4,34 +4,13 @@ import { useCallback, useContext, useEffect, useMemo, useRef } from "react";
 //------------------------------------------------------------------------------
 import { WebXRContext } from "./WebXRContext";
 import type { LXRCameraRig } from "../LXRCameraRig";
+import { LXRAxisSmoother, type LXRAxisSmoothingOptions, type LXRTurnMode } from "../LXRComfort";
 import {
-    LXRAxisSmoother,
-    LXRSnapTurn,
-    defaultTurnModeForSessionMode,
-    type LXRAxisSmoothingOptions,
-    type LXRTurnMode,
-} from "../LXRComfort";
-import {
-    LXRStrafeMoveLocalSpace,
-    LXRStrafeMoveWorldSpace,
-    LXRThrustMoveLocalSpace,
-    LXRThrustMoveWorldSpace,
-    LXRVerticalMoveLocalSpace,
-    LXRVerticalMoveWorldSpace,
-    LXRYawRotationLocalSpace,
-    LXRYawRotationWorldSpace,
-    LXRYawSnapLocalSpace,
-    LXRYawSnapWorldSpace,
-} from "../LXRLocomotion";
-// Animation logic moved to WebXRLocomotion.ts
-
-//------------------------------------------------------------------------------
-/**
- * Conditioned axis value under which no movement is applied. Small enough to be invisible; its only
- * job is to stop the rig transform being marked dirty on every frame of a ramp that has all but
- * finished.
- */
-const MIN_LOCOMOTION_VALUE = 0.001;
+    LXR_MIN_LOCOMOTION_VALUE,
+    type LXRLocomotionAxis,
+    type LXRLocomotionController,
+    type LXRLocomotionSpace,
+} from "../LXRLocomotionController";
 
 //------------------------------------------------------------------------------
 /**
@@ -119,6 +98,11 @@ export type XRLocomotionOptions = {
  * Runs in the session's `input` phase, so it stays in sync with the XR display refresh rate and is
  * applied ahead of the frame that draws it. See {@link useXRFrameLoop}.
  *
+ * This is the escape hatch for an arbitrary per-frame effect, and the one locomotion hook that does
+ * *not* go through {@link LXRLocomotionController}: it carries a conditioner of its own, so a value
+ * driven through it neither competes with a thumbstick nor obeys the controller's speed scale. The
+ * axis hooks below are what a virtual joystick should use.
+ *
  * The raw value handed to {@link update} is conditioned before it reaches the callback — a deadzone
  * so a stick that does not rest at zero does not creep, and a ramp so starts and stops have weight
  * instead of being steps. That is also why the loop keeps calling the smoother on frames where the
@@ -161,7 +145,7 @@ export function useXRLivelinkAnimation(
             const smoother = smootherRef.current!;
             const value = isSmoothingEnabled ? smoother.update(valueRef.current, dt) : valueRef.current;
 
-            if (!xrLivelink || Math.abs(value) < MIN_LOCOMOTION_VALUE) {
+            if (!xrLivelink || Math.abs(value) < LXR_MIN_LOCOMOTION_VALUE) {
                 return;
             }
 
@@ -193,39 +177,140 @@ export function useXRLivelinkAnimation(
 
 //------------------------------------------------------------------------------
 /**
- * Hook for left/right strafe movement
+ * The session's locomotion controller, or undefined outside a session.
+ */
+function useLocomotionController(): LXRLocomotionController | undefined {
+    const { xrLivelink } = useContext(WebXRContext);
+    return xrLivelink?.locomotion;
+}
+
+//------------------------------------------------------------------------------
+/**
+ * Drive one axis of {@link LXRLocomotionController} from React.
+ *
+ * The hook configures the axis and returns an `update` that writes the controller's manual input;
+ * the conditioning, the speed scale and the move itself happen in the session's frame loop, in the
+ * same place a physical thumbstick's do. That is the whole point of routing through the controller:
+ * a virtual joystick and a thumbstick are two ways of asking for the same movement, and before this
+ * they were two implementations of it.
+ *
+ * @param axis - The axis to drive
+ * @param speed - Speed for that axis. Left undefined the controller's own default stands.
+ * @param space - Space to apply it in. Left undefined the controller's own default stands.
+ * @param smoothing - Comfort conditioning for that axis, or `false` to feed it straight through
+ */
+function useXRLocomotionAxis({
+    axis,
+    speed,
+    space,
+    smoothing,
+}: {
+    axis: LXRLocomotionAxis;
+    speed?: number;
+    space?: LXRLocomotionSpace;
+    smoothing?: LXRAxisSmoothingOptions | false;
+}): {
+    update: (value: number) => void;
+} {
+    //--------------------------------------------------------------------------
+    const locomotion = useLocomotionController();
+
+    //--------------------------------------------------------------------------
+    useEffect(() => {
+        if (locomotion && speed !== undefined) {
+            locomotion.setSpeed({ axis, speed });
+        }
+    }, [locomotion, axis, speed]);
+
+    //--------------------------------------------------------------------------
+    useEffect(() => {
+        if (locomotion && space !== undefined) {
+            locomotion.setSpace({ axis, space });
+        }
+    }, [locomotion, axis, space]);
+
+    //--------------------------------------------------------------------------
+    // Destructured so the effect depends on numbers rather than on the identity of an options object
+    // the caller almost certainly rebuilds on every render.
+    const isSmoothingEnabled = smoothing !== false;
+    const { deadzone, acceleration_time, deceleration_time, response_exponent } = smoothing || {};
+
+    useEffect(() => {
+        if (!locomotion || smoothing === undefined) {
+            return;
+        }
+
+        locomotion.setSmoothing({
+            axis,
+            smoothing: isSmoothingEnabled
+                ? { deadzone, acceleration_time, deceleration_time, response_exponent }
+                : false,
+        });
+        // `smoothing` itself is deliberately not a dependency: it is the object the fields above were
+        // destructured out of, and depending on it would reconfigure on every render.
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [locomotion, axis, isSmoothingEnabled, deadzone, acceleration_time, deceleration_time, response_exponent]);
+
+    //--------------------------------------------------------------------------
+    // An axis left pushed by a control that has gone away would keep the user moving forever.
+    useEffect(() => {
+        return (): void => locomotion?.setAxisInput({ axis, value: 0 });
+    }, [locomotion, axis]);
+
+    //--------------------------------------------------------------------------
+    const update = useCallback(
+        (value: number) => {
+            locomotion?.setAxisInput({ axis, value });
+        },
+        [locomotion, axis],
+    );
+
+    //--------------------------------------------------------------------------
+    return useMemo(() => ({ update }), [update]);
+}
+
+//------------------------------------------------------------------------------
+/**
+ * Hook for left/right strafe movement. Positive moves right.
  */
 export function useXRStrafeMove({ speed, inPoseLocalSpace = true, smoothing }: XRLocomotionOptions = {}): {
     update: (value: number) => void;
 } {
-    // Import XRStrafeMove from WebXRLocomotion.ts if needed
-    return useXRLivelinkAnimation(inPoseLocalSpace ? LXRStrafeMoveLocalSpace : LXRStrafeMoveWorldSpace, speed, {
+    return useXRLocomotionAxis({
+        axis: "strafe",
+        speed,
+        space: inPoseLocalSpace ? "pose-local" : "world",
         smoothing,
     });
 }
 
 //------------------------------------------------------------------------------
 /**
- * Hook for forward/backward thrust movement
+ * Hook for forward/backward thrust movement. Positive moves *backwards*, which is what a stick
+ * pulled towards the user reports — see {@link LXRLocomotionAxes}.
  */
 export function useXRThrustMove({ speed, inPoseLocalSpace = true, smoothing }: XRLocomotionOptions = {}): {
     update: (value: number) => void;
 } {
-    // Import XRThrustMove from WebXRLocomotion.ts if needed
-    return useXRLivelinkAnimation(inPoseLocalSpace ? LXRThrustMoveLocalSpace : LXRThrustMoveWorldSpace, speed, {
+    return useXRLocomotionAxis({
+        axis: "thrust",
+        speed,
+        space: inPoseLocalSpace ? "pose-local" : "world",
         smoothing,
     });
 }
 
 //------------------------------------------------------------------------------
 /**
- * Hook for world vertical movement (up/down on world Y axis)
+ * Hook for world vertical movement (up/down on world Y axis). Positive moves up.
  */
 export function useXRVerticalMove({ speed, inPoseLocalSpace = false, smoothing }: XRLocomotionOptions = {}): {
     update: (value: number) => void;
 } {
-    // Import XRVerticalMove from WebXRLocomotion.ts if needed
-    return useXRLivelinkAnimation(inPoseLocalSpace ? LXRVerticalMoveLocalSpace : LXRVerticalMoveWorldSpace, speed, {
+    return useXRLocomotionAxis({
+        axis: "vertical",
+        speed,
+        space: inPoseLocalSpace ? "pose-local" : "world",
         smoothing,
     });
 }
@@ -235,10 +320,12 @@ export function useXRVerticalMove({ speed, inPoseLocalSpace = false, smoothing }
  * Hook for discrete yaw rotation — one fixed step per stick push, the comfortable alternative to
  * continuous turning. See {@link LXRSnapTurn}.
  *
- * Runs no frame loop of its own: a snap is an event, so it fires straight out of {@link update} on
- * the call that crosses the threshold. The axis has to fall back to rest before another one fires,
- * which means {@link update} must keep being called — a joystick's `onEnd` handler passing 0 is
- * what re-arms it.
+ * It puts the controller in `snap` turn mode for as long as it is mounted, since calling it is an
+ * explicit request for snapped turning; {@link useXRYawRotation} is the hook to use when the mode
+ * should follow the session or a setting.
+ *
+ * The axis has to fall back to rest before another snap fires, which means {@link update} must keep
+ * being called — a joystick's `onEnd` handler passing 0 is what re-arms it.
  *
  * @param angle - Degrees per snap
  * @param threshold - Throw at which a snap fires
@@ -259,55 +346,33 @@ export function useXRSnapTurn({
     update: (value: number) => void;
 } {
     //--------------------------------------------------------------------------
-    const { xrLivelink } = useContext(WebXRContext);
+    const locomotion = useLocomotionController();
 
     //--------------------------------------------------------------------------
-    const snapTurnRef = useRef<LXRSnapTurn | null>(null);
-    snapTurnRef.current ??= new LXRSnapTurn();
-
     useEffect(() => {
-        snapTurnRef.current?.configure({ angle, threshold, release_threshold: releaseThreshold });
-    }, [angle, threshold, releaseThreshold]);
+        if (locomotion) {
+            locomotion.turn_mode = "snap";
+        }
+    }, [locomotion]);
 
     //--------------------------------------------------------------------------
-    // A stick left over the threshold when the session ends must not snap again on the next one
-    // without being released first.
     useEffect(() => {
-        const snap_turn = snapTurnRef.current;
-        return (): void => snap_turn?.reset();
-    }, [xrLivelink]);
+        locomotion?.configureSnapTurn({ angle, threshold, release_threshold: releaseThreshold });
+    }, [locomotion, angle, threshold, releaseThreshold]);
 
     //--------------------------------------------------------------------------
-    const update = useCallback(
-        (value: number) => {
-            if (!xrLivelink) {
-                return;
-            }
-
-            const turn_angle = snapTurnRef.current!.update(value);
-            if (turn_angle === 0) {
-                return;
-            }
-
-            const snap = inPoseLocalSpace ? LXRYawSnapLocalSpace : LXRYawSnapWorldSpace;
-            snap({ camera_rig: xrLivelink.camera_rig, angle: turn_angle });
-        },
-        [xrLivelink, inPoseLocalSpace],
-    );
-
-    //--------------------------------------------------------------------------
-    return useMemo(() => ({ update }), [update]);
+    return useXRLocomotionAxis({ axis: "yaw", space: inPoseLocalSpace ? "pose-local" : "world" });
 }
 
 //------------------------------------------------------------------------------
 /**
- * Hook for yaw rotation (left/right on world Y axis), continuous or snapped.
+ * Hook for yaw rotation (left/right on world Y axis), continuous or snapped. Positive turns left.
  *
  * @param speed - Speed multiplier, continuous turning only
  * @param inPoseLocalSpace - Whether the rotation is applied in pose-local space rather than world space
- * @param turnMode - `snap` or `smooth`. Left undefined it follows the session mode — see
- * {@link defaultTurnModeForSessionMode} — which snaps in a headset and turns smoothly on a handheld
- * screen.
+ * @param turnMode - `snap` or `smooth`. Left undefined the controller keeps the mode
+ * {@link XRLivelink.initialize} defaulted from the session, which snaps in a headset and turns
+ * smoothly on a handheld screen.
  * @param snapAngle - Degrees per snap, snapped turning only
  * @param smoothing - Comfort conditioning of the axis, continuous turning only
  */
@@ -321,34 +386,32 @@ export function useXRYawRotation({
     update: (value: number) => void;
 } {
     //--------------------------------------------------------------------------
-    const { xrLivelink } = useContext(WebXRContext);
-    const resolvedTurnMode = turnMode ?? (xrLivelink ? defaultTurnModeForSessionMode(xrLivelink.xr_mode) : "smooth");
-    const isSnapping = resolvedTurnMode === "snap";
+    const locomotion = useLocomotionController();
 
     //--------------------------------------------------------------------------
-    // Both are always mounted — hooks cannot be called conditionally — but only the active one
-    // holds a frame loop, and only the active one is fed.
-    const smoothTurn = useXRLivelinkAnimation(
-        inPoseLocalSpace ? LXRYawRotationLocalSpace : LXRYawRotationWorldSpace,
+    // Only when asked for: left alone, the session default stands. Snapped or smooth is now the
+    // controller's single answer for the whole session rather than this hook's, so a thumbstick and
+    // a joystick cannot disagree about it.
+    useEffect(() => {
+        if (locomotion && turnMode !== undefined) {
+            locomotion.turn_mode = turnMode;
+        }
+    }, [locomotion, turnMode]);
+
+    //--------------------------------------------------------------------------
+    useEffect(() => {
+        if (locomotion && snapAngle !== undefined) {
+            locomotion.configureSnapTurn({ angle: snapAngle });
+        }
+    }, [locomotion, snapAngle]);
+
+    //--------------------------------------------------------------------------
+    return useXRLocomotionAxis({
+        axis: "yaw",
         speed,
-        { smoothing, enabled: !isSnapping },
-    );
-    const snapTurn = useXRSnapTurn({ angle: snapAngle, inPoseLocalSpace });
-
-    //--------------------------------------------------------------------------
-    const update = useCallback(
-        (value: number) => {
-            if (isSnapping) {
-                snapTurn.update(value);
-            } else {
-                smoothTurn.update(value);
-            }
-        },
-        [isSnapping, snapTurn, smoothTurn],
-    );
-
-    //--------------------------------------------------------------------------
-    return useMemo(() => ({ update }), [update]);
+        space: inPoseLocalSpace ? "pose-local" : "world",
+        smoothing,
+    });
 }
 
 //------------------------------------------------------------------------------

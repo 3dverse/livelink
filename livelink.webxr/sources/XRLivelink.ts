@@ -8,7 +8,11 @@ import { LXRCameraRig } from "./LXRCameraRig";
 import { LXRViewport } from "./LXRViewport";
 import { TypedEventTarget } from "./utils/TypedEventTarget";
 import { type LXREvents, SessionEndEvent, ViewportUpdatedEvent } from "./LXREvents";
-import { LXR_DEFAULT_COMFORT_VIGNETTE_STRENGTH } from "./LXRComfort";
+import { LXR_DEFAULT_COMFORT_VIGNETTE_STRENGTH, defaultTurnModeForSessionMode } from "./LXRComfort";
+import { LXRLocomotionController } from "./LXRLocomotionController";
+import { LXRInputManager } from "./input/LXRInputManager";
+import { LXRActionMap } from "./input/LXRActionMap";
+import { LXR_DEFAULT_PROFILES_PATH } from "./input/LXRInputProfiles";
 import {
     LXRFrameCallbacks,
     LXRFrameErrorLog,
@@ -74,6 +78,28 @@ export class XRLivelink extends TypedEventTarget<LXREvents> {
      * Map of XR eyes to LXRViewports, which combine XR view data with livelink viewport configuration for rendering.
      */
     readonly #lxr_viewports: Map<XREye, LXRViewport> = new Map();
+
+    /**
+     * The session's input sources, built by {@link initialize} and released with the session.
+     */
+    #input?: LXRInputManager;
+
+    /**
+     * Base URL the controller profile descriptions are fetched from. See {@link input_profiles_path}.
+     */
+    #input_profiles_path: string = LXR_DEFAULT_PROFILES_PATH;
+
+    /**
+     * The bindings turning the input sources into actions, and the actions themselves. Built once
+     * and kept across sessions — see {@link actions}.
+     */
+    readonly #actions: LXRActionMap = new LXRActionMap();
+
+    /**
+     * Everything between an action and the rig moving. Built with the rig in the constructor and
+     * kept across sessions — see {@link locomotion}.
+     */
+    readonly #locomotion: LXRLocomotionController;
 
     /**
      * Animation frame request ID for managing the XR frame loop.
@@ -215,6 +241,7 @@ export class XRLivelink extends TypedEventTarget<LXREvents> {
         this.#session = new LXRSession();
         this.#surface = new LXRSurface(this.#session);
         this.#camera_rig = new LXRCameraRig(livelink.scene);
+        this.#locomotion = new LXRLocomotionController({ camera_rig: this.#camera_rig });
     }
 
     /**
@@ -454,6 +481,61 @@ export class XRLivelink extends TypedEventTarget<LXREvents> {
     }
 
     /**
+     * The session's input sources — controllers, hands, gaze and screen taps — refreshed once per
+     * frame, before the `input` phase. Undefined until {@link initialize} has run and again after
+     * {@link release}.
+     */
+    get input(): LXRInputManager | undefined {
+        return this.#input;
+    }
+
+    /**
+     * What the user is asking for this frame — move, turn, place, select — resolved from every
+     * input source before the `input` phase runs.
+     *
+     * Always present, unlike {@link input}: its bindings are consumer configuration rather than
+     * session state, so they can be set before a session exists and survive one ending. Outside a
+     * session every action simply reads as at rest.
+     */
+    get actions(): LXRActionMap {
+        return this.#actions;
+    }
+
+    /**
+     * How those actions move the user — speeds, comfort conditioning, snap turn — and the channel a
+     * virtual joystick or any other non-XR input writes through.
+     *
+     * Always present, like {@link actions}, and enabled by default: with the default bindings a
+     * consumer gets thumbstick locomotion in a headset without writing any of it. Set
+     * {@link LXRLocomotionController.enabled} to false for an application that drives the rig
+     * itself.
+     */
+    get locomotion(): LXRLocomotionController {
+        return this.#locomotion;
+    }
+
+    /**
+     * Base URL the `@webxr-input-profiles/assets` descriptions are fetched from.
+     *
+     * Point it at a self-hosted copy to keep named components — `a-button`, `thumbrest`, a touchpad
+     * next to a stick — working on a network that cannot reach the default CDN. Bindings written
+     * against the `xr-standard` components keep working either way; see {@link LXRInputProfiles}.
+     *
+     * Read by {@link initialize}, so it has to be set before the session comes up.
+     */
+    get input_profiles_path(): string {
+        return this.#input_profiles_path;
+    }
+
+    /**
+     * Set the base URL the controller profile descriptions are fetched from. See
+     * {@link input_profiles_path}.
+     */
+    set input_profiles_path(value: string) {
+        this.#input_profiles_path = value;
+    }
+
+    /**
      * Access the active XRSession. Throws an error if no session is active.
      */
     get #xr_session(): XRSession {
@@ -529,6 +611,28 @@ export class XRLivelink extends TypedEventTarget<LXREvents> {
         // would otherwise never be reported — leaving the consumer waiting on an initialization
         // that can no longer complete.
         session.addEventListener("end", this.#onXRSessionEnd);
+
+        // Adopted here rather than by whoever consumes the input, and as early as the session
+        // exists: controllers that were already awake fired their `inputsourceschange` before this
+        // method was even called, so anything built later would be waiting for an event that has
+        // already happened. Not awaited either — registration is synchronous, and the profile
+        // descriptions behind it are a CDN round trip that has no business holding up the session
+        // coming up.
+        this.#input?.release();
+        this.#input = new LXRInputManager({ session, profiles_path: this.#input_profiles_path });
+        void this.#input.init();
+
+        // Bindings are kept, per-source state is not: the sources of the previous session are gone,
+        // and an action left engaged by one would still read as held on the first frame of this one.
+        // Same for locomotion, whose ramps must not resume mid-throw in a session that has only just
+        // started.
+        this.#actions._reset();
+        this.#locomotion._reset();
+
+        // Comfort defaults follow the device class, like the vignette below: snap turning in a
+        // headset, where continuous yaw is the most reliable way to make someone sick, and smooth
+        // on a handheld screen, where a window that snaps in 45° steps reads as a fault.
+        this.#locomotion.turn_mode = defaultTurnModeForSessionMode(mode);
 
         this.#throwIfAborted(signal);
 
@@ -710,6 +814,12 @@ export class XRLivelink extends TypedEventTarget<LXREvents> {
         // onto the screen, the draw to place the cameras — and it cannot change within a frame.
         const viewer_pose = this.#getViewerPose(frame);
 
+        // Ahead of every phase: a consumer callback in the `input` phase reads controller state,
+        // and it has to be this frame's, not the one before it. The actions are resolved straight
+        // after the sources they are read from, and before anything can consume one.
+        this.#input?.update({ frame, reference_space: this.#session.reference_space ?? null });
+        this.#actions._update({ sources: this.#input?.sources ?? [] });
+
         const args = this.#frame_callback_args;
         args.frame = frame;
         args.time = time;
@@ -719,6 +829,11 @@ export class XRLivelink extends TypedEventTarget<LXREvents> {
         for (const phase of LXR_FRAME_PHASES) {
             this.#frame_callbacks[phase].run(args);
         }
+
+        // After the phases and before the rig composes: a consumer callback — and, in a headset, a
+        // pointer aimed at a panel — gets to claim an action before locomotion reads it, and the
+        // movement still lands on the frame that draws it rather than the one after.
+        this.#locomotion._update({ dt, actions: this.#actions });
 
         try {
             this.#renderXRFrame({ dt, viewer_pose });
@@ -730,6 +845,7 @@ export class XRLivelink extends TypedEventTarget<LXREvents> {
         // Nothing may hold on to a pose the user agent is about to invalidate.
         args.frame = undefined as unknown as XRFrame;
         args.viewer_pose = null;
+        this.#input?.endFrame();
 
         this.#requestNextXRFrame();
     };
@@ -1058,6 +1174,11 @@ export class XRLivelink extends TypedEventTarget<LXREvents> {
         for (const phase of LXR_FRAME_PHASES) {
             this.#frame_callbacks[phase].clear();
         }
+
+        this.#input?.release();
+        this.#input = undefined;
+        this.#actions._reset();
+        this.#locomotion._reset();
 
         this.#lxr_viewports.forEach(lxr_viewport => lxr_viewport.release());
         this.#lxr_viewports.clear();
