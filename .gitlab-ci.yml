@@ -190,12 +190,9 @@ version:update-version:
 version:publish:
   stage: deploy
   extends:
-    # OIDC trusted publishing only works on GitLab.com-hosted runners
-    # (npm rejects tokens whose `runner_environment` claim is `self-hosted`).
-    - .runner-saas
+    - .runner-saas # OIDC trusted publishing requires a GitLab.com-hosted runner
   image: registry.gitlab.com/3dverse/platform/ci-utils/docker-images/changesets-tools:latest
-  # GitLab mints a short-lived OIDC token that npm >= 11.5.1 picks up automatically
-  # during `npm publish`. Configure the trusted publisher for each package on npmjs.com.
+  # npm OIDC trusted publishing (trusted publisher configured per package on npmjs.com)
   id_tokens:
     NPM_ID_TOKEN:
       aud: "npm:registry.npmjs.org"
@@ -215,11 +212,8 @@ version:publish:
       git config --global user.email "${BOT_3DVERSE_USER_EMAIL}"
       git checkout -b $CI_COMMIT_REF_NAME || git checkout $CI_COMMIT_REF_NAME
       git remote set-url origin "https://${BOT_3DVERSE_USER_USERNAME}:${BOT_3DVERSE_GITLAB_API_TOKEN}@${CI_SERVER_HOST}/${CI_PROJECT_PATH}.git"
-    # @3dverse packages resolve from the public npm registry. Publishing auth is
-    # handled by OIDC trusted publishing (id_tokens above), so no token is set here.
-    - |
-      npm config set @3dverse:registry="https://registry.npmjs.org" --userconfig=".npmrc"
-      npm --version   # must be >= 11.5.1 for OIDC trusted publishing
+    # publish auth is OIDC (id_tokens), no token needed
+    - npm config set @3dverse:registry="https://registry.npmjs.org" --userconfig=".npmrc"
   script:
     # Commit the changes
     - |
