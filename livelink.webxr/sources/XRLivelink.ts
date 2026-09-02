@@ -8,7 +8,14 @@ import { LXRCameraRig } from "./LXRCameraRig";
 import { LXRViewport } from "./LXRViewport";
 import { TypedEventTarget } from "./utils/TypedEventTarget";
 import { type LXREvents, SessionEndEvent, ViewportUpdatedEvent } from "./LXREvents";
-import { LXR_DEFAULT_COMFORT_VIGNETTE_STRENGTH } from "./LXRComfort";
+import { LXR_DEFAULT_COMFORT_VIGNETTE_STRENGTH, defaultTurnModeForSessionMode } from "./LXRComfort";
+import { LXRLocomotionController } from "./LXRLocomotionController";
+import { LXRInputManager } from "./input/LXRInputManager";
+import { LXRActionMap } from "./input/LXRActionMap";
+import { LXR_DEFAULT_PROFILES_PATH } from "./input/LXRInputProfiles";
+import { LXRPlacement } from "./anchor/LXRPlacement";
+import { LXROverlay } from "./overlay/LXROverlay";
+import { LXROverlayManager } from "./overlay/LXROverlayManager";
 import {
     LXRFrameCallbacks,
     LXRFrameErrorLog,
@@ -74,6 +81,46 @@ export class XRLivelink extends TypedEventTarget<LXREvents> {
      * Map of XR eyes to LXRViewports, which combine XR view data with livelink viewport configuration for rendering.
      */
     readonly #lxr_viewports: Map<XREye, LXRViewport> = new Map();
+
+    /**
+     * The session's input sources, built by {@link initialize} and released with the session.
+     */
+    #input?: LXRInputManager;
+
+    /**
+     * Base URL the controller profile descriptions are fetched from. See {@link input_profiles_path}.
+     */
+    #input_profiles_path: string = LXR_DEFAULT_PROFILES_PATH;
+
+    /**
+     * The bindings turning the input sources into actions, and the actions themselves. Built once
+     * and kept across sessions — see {@link actions}.
+     */
+    readonly #actions: LXRActionMap = new LXRActionMap();
+
+    /**
+     * Everything between an action and the rig moving. Built with the rig in the constructor and
+     * kept across sessions — see {@link locomotion}.
+     */
+    readonly #locomotion: LXRLocomotionController;
+
+    /**
+     * Everything between a real surface and the scene standing on it. Built with the rig in the
+     * constructor and kept across sessions — see {@link placement}.
+     */
+    readonly #placement: LXRPlacement;
+
+    /**
+     * Everything the session draws that is not the streamed image. Built with the rendering surface
+     * in the constructor — see {@link overlay}.
+     */
+    readonly #overlay: LXROverlay;
+
+    /**
+     * The panels drawn into that overlay and the pointers aimed at them. Built with the overlay in
+     * the constructor and kept across sessions — see {@link ui}.
+     */
+    readonly #ui: LXROverlayManager;
 
     /**
      * Animation frame request ID for managing the XR frame loop.
@@ -215,6 +262,10 @@ export class XRLivelink extends TypedEventTarget<LXREvents> {
         this.#session = new LXRSession();
         this.#surface = new LXRSurface(this.#session);
         this.#camera_rig = new LXRCameraRig(livelink.scene);
+        this.#locomotion = new LXRLocomotionController({ camera_rig: this.#camera_rig });
+        this.#placement = new LXRPlacement({ camera_rig: this.#camera_rig });
+        this.#overlay = new LXROverlay({ context: this.#surface.context });
+        this.#ui = new LXROverlayManager({ overlay: this.#overlay });
     }
 
     /**
@@ -454,6 +505,114 @@ export class XRLivelink extends TypedEventTarget<LXREvents> {
     }
 
     /**
+     * The session's input sources — controllers, hands, gaze and screen taps — refreshed once per
+     * frame, before the `input` phase. Undefined until {@link initialize} has run and again after
+     * {@link release}.
+     */
+    get input(): LXRInputManager | undefined {
+        return this.#input;
+    }
+
+    /**
+     * What the user is asking for this frame — move, turn, place, select — resolved from every
+     * input source before the `input` phase runs.
+     *
+     * Always present, unlike {@link input}: its bindings are consumer configuration rather than
+     * session state, so they can be set before a session exists and survive one ending. Outside a
+     * session every action simply reads as at rest.
+     */
+    get actions(): LXRActionMap {
+        return this.#actions;
+    }
+
+    /**
+     * How those actions move the user — speeds, comfort conditioning, snap turn — and the channel a
+     * virtual joystick or any other non-XR input writes through.
+     *
+     * Always present, like {@link actions}, and enabled by default: with the default bindings a
+     * consumer gets thumbstick locomotion in a headset without writing any of it. Set
+     * {@link LXRLocomotionController.enabled} to false for an application that drives the rig
+     * itself.
+     */
+    get locomotion(): LXRLocomotionController {
+        return this.#locomotion;
+    }
+
+    /**
+     * AR placement: the hit test finding the surface the user is aiming at, the anchor keeping the
+     * scene nailed to it, and the rig anchor both are written to.
+     *
+     * Always present, like {@link actions} and {@link locomotion} — its parameters are consumer
+     * configuration rather than session state. {@link LXRPlacement.is_available} is what says
+     * whether this session can place anything at all, and it is settled by the time
+     * {@link initialize} resolves.
+     */
+    get placement(): LXRPlacement {
+        return this.#placement;
+    }
+
+    /**
+     * The quads drawn into the XR framebuffer alongside the streamed image — a placement reticle, a
+     * panel, a pointer.
+     *
+     * The only way to show a user anything in a headset: see {@link has_dom_overlay}. Always
+     * present, like {@link placement}, though its GPU resources only exist while there is something
+     * to draw.
+     */
+    get overlay(): LXROverlay {
+        return this.#overlay;
+    }
+
+    /**
+     * The in-headset user interface: the panels shown in the session and the pointers the user aims
+     * at them with.
+     *
+     * {@link overlay} is the renderer — arbitrary quads, drawn where they are put. This is the layer
+     * above it: a panel follows a wrist or the head, lays its items out, redraws itself when one of
+     * them changes, and a pointer resolves what the user is pressing and claims that press from
+     * {@link actions} so it does not also move them.
+     *
+     * Always present, like {@link placement}, and idle until the first panel is added.
+     */
+    get ui(): LXROverlayManager {
+        return this.#ui;
+    }
+
+    /**
+     * Whether the DOM is composited into this session, i.e. whether `dom-overlay` was requested and
+     * granted.
+     *
+     * False in every headset session, AR passthrough included — no headset browser grants the
+     * feature — and true in a handheld AR session on Android. When it is false, nothing in the DOM
+     * is visible to the user, however carefully it is positioned: what has to be seen goes through
+     * {@link overlay} instead.
+     */
+    get has_dom_overlay(): boolean {
+        return !!this.#session.native?.domOverlayState;
+    }
+
+    /**
+     * Base URL the `@webxr-input-profiles/assets` descriptions are fetched from.
+     *
+     * Point it at a self-hosted copy to keep named components — `a-button`, `thumbrest`, a touchpad
+     * next to a stick — working on a network that cannot reach the default CDN. Bindings written
+     * against the `xr-standard` components keep working either way; see {@link LXRInputProfiles}.
+     *
+     * Read by {@link initialize}, so it has to be set before the session comes up.
+     */
+    get input_profiles_path(): string {
+        return this.#input_profiles_path;
+    }
+
+    /**
+     * Set the base URL the controller profile descriptions are fetched from. See
+     * {@link input_profiles_path}.
+     */
+    set input_profiles_path(value: string) {
+        this.#input_profiles_path = value;
+    }
+
+    /**
      * Access the active XRSession. Throws an error if no session is active.
      */
     get #xr_session(): XRSession {
@@ -530,6 +689,34 @@ export class XRLivelink extends TypedEventTarget<LXREvents> {
         // that can no longer complete.
         session.addEventListener("end", this.#onXRSessionEnd);
 
+        this.#reportDomOverlayState({ session, xr_session_init });
+
+        // Adopted here rather than by whoever consumes the input, and as early as the session
+        // exists: controllers that were already awake fired their `inputsourceschange` before this
+        // method was even called, so anything built later would be waiting for an event that has
+        // already happened. Not awaited either — registration is synchronous, and the profile
+        // descriptions behind it are a CDN round trip that has no business holding up the session
+        // coming up.
+        this.#input?.release();
+        this.#input = new LXRInputManager({ session, profiles_path: this.#input_profiles_path });
+        void this.#input.init();
+
+        // Bindings are kept, per-source state is not: the sources of the previous session are gone,
+        // and an action left engaged by one would still read as held on the first frame of this one.
+        // Same for locomotion, whose ramps must not resume mid-throw in a session that has only just
+        // started.
+        this.#actions._reset();
+        this.#locomotion._reset();
+        this.#placement._reset();
+        // Also puts the consumer's panels back into the overlay, which dropped every quad it held
+        // when the previous session ended.
+        this.#ui._reset();
+
+        // Comfort defaults follow the device class, like the vignette below: snap turning in a
+        // headset, where continuous yaw is the most reliable way to make someone sick, and smooth
+        // on a handheld screen, where a window that snaps in 45° steps reads as a fault.
+        this.#locomotion.turn_mode = defaultTurnModeForSessionMode(mode);
+
         this.#throwIfAborted(signal);
 
         // Configure XRWebGLLayer and display parameters
@@ -561,11 +748,43 @@ export class XRLivelink extends TypedEventTarget<LXREvents> {
         });
         this.#throwIfAborted(signal, "viewport configuration");
 
+        // Awaited, unlike the input profile fetch above: `requestHitTestSource` is a local round
+        // trip rather than a CDN one, and awaiting it is what makes `placement.is_available`
+        // meaningful the moment this method resolves — a consumer deciding whether to show a place
+        // control has no event to wait for otherwise. It never throws; a session with no `hit-test`
+        // feature, or a user agent without it, simply leaves placement unavailable.
+        await this.#placement._init({ session });
+        this.#throwIfAborted(signal, "placement configuration");
+
         // Add viewports to livelink after they have been configured
         this.#livelink.addViewports({ viewports: this.viewports });
 
         console.debug("XRLivelink configured successfully");
         return session;
+    }
+
+    /**
+     * Say out loud whether the DOM is composited into this session, when the consumer asked for it.
+     *
+     * `dom-overlay` is an optional feature, and a user agent that does not grant one reports
+     * nothing at all — which is why a DOM reticle being invisible on a headset read as a mystery
+     * for as long as it did, rather than as the one line it is. Everything in the DOM is silently
+     * absent from every headset session; see {@link overlay} for what to do instead.
+     *
+     * @param session The session that has just come up.
+     * @param xr_session_init What was asked for when requesting it.
+     */
+    #reportDomOverlayState({ session, xr_session_init }: { session: XRSession; xr_session_init: XRSessionInit }): void {
+        const was_requested =
+            !!xr_session_init.domOverlay || !!xr_session_init.optionalFeatures?.includes("dom-overlay");
+        if (!was_requested || session.domOverlayState) {
+            return;
+        }
+
+        console.warn(
+            "WebXR: `dom-overlay` was requested and not granted — nothing in the DOM is composited " +
+                "into this session. Draw through `XRLivelink.overlay` instead.",
+        );
     }
 
     /**
@@ -710,15 +929,42 @@ export class XRLivelink extends TypedEventTarget<LXREvents> {
         // onto the screen, the draw to place the cameras — and it cannot change within a frame.
         const viewer_pose = this.#getViewerPose(frame);
 
+        // Ahead of every phase: a consumer callback in the `input` phase reads controller state,
+        // and it has to be this frame's, not the one before it. The actions are resolved straight
+        // after the sources they are read from, and before anything can consume one.
+        this.#input?.update({ frame, reference_space: this.#session.reference_space ?? null });
+        this.#actions._update({ sources: this.#input?.sources ?? [] });
+
         const args = this.#frame_callback_args;
         args.frame = frame;
         args.time = time;
         args.dt = dt;
         args.viewer_pose = viewer_pose;
 
-        for (const phase of LXR_FRAME_PHASES) {
-            this.#frame_callbacks[phase].run(args);
-        }
+        this.#frame_callbacks.input.run(args);
+
+        // Between the two phases rather than inside either: a consumer raises `place` from the
+        // `input` phase and the same frame's live hit test result honours it — an `XRHitTestResult`
+        // being valid only during its own frame — while an `anchor` phase callback drawing a
+        // reticle reads this frame's hit pose rather than the previous one's.
+        this.#placement._update({
+            frame,
+            time,
+            reference_space: this.#session.reference_space ?? null,
+            input: this.#input,
+        });
+
+        this.#frame_callbacks.anchor.run(args);
+
+        // Between the last phase and locomotion, which is the whole reason it is here rather than
+        // next to the draw: a pointer resting on a panel claims the trigger it is about to press a
+        // button with, and locomotion — reading the same actions two lines below — never sees it.
+        this.#ui._update({ dt, viewer_pose, input: this.#input, actions: this.#actions });
+
+        // After the phases and before the rig composes: a consumer callback — and, in a headset, a
+        // pointer aimed at a panel — gets to claim an action before locomotion reads it, and the
+        // movement still lands on the frame that draws it rather than the one after.
+        this.#locomotion._update({ dt, actions: this.#actions });
 
         try {
             this.#renderXRFrame({ dt, viewer_pose });
@@ -730,6 +976,7 @@ export class XRLivelink extends TypedEventTarget<LXREvents> {
         // Nothing may hold on to a pose the user agent is about to invalidate.
         args.frame = undefined as unknown as XRFrame;
         args.viewer_pose = null;
+        this.#input?.endFrame();
 
         this.#requestNextXRFrame();
     };
@@ -828,6 +1075,10 @@ export class XRLivelink extends TypedEventTarget<LXREvents> {
             xr_viewports,
             frame_camera_transforms: remote_camera_transforms,
         });
+
+        // On top of the streamed image, in the same framebuffer: in a headset that is the only
+        // place a user can be shown anything at all.
+        this.#overlay._draw({ xr_views, xr_viewports, frame_buffer: gl_layer.framebuffer });
     }
 
     /**
@@ -1058,6 +1309,14 @@ export class XRLivelink extends TypedEventTarget<LXREvents> {
         for (const phase of LXR_FRAME_PHASES) {
             this.#frame_callbacks[phase].clear();
         }
+
+        this.#input?.release();
+        this.#input = undefined;
+        this.#actions._reset();
+        this.#locomotion._reset();
+        this.#placement._reset();
+        this.#ui._release();
+        this.#overlay._release();
 
         this.#lxr_viewports.forEach(lxr_viewport => lxr_viewport.release());
         this.#lxr_viewports.clear();

@@ -11,8 +11,29 @@ export * from "./LXRContext";
 export * from "./LXRFrameLoop";
 export * from "./LXRContextPassthrough";
 export * from "./LXRLocomotion";
+export * from "./LXRLocomotionController";
 export * from "./LXRScaling";
 export * from "./LXRComfort";
+
+// Anchoring
+export * from "./anchor/LXRHitTest";
+export * from "./anchor/LXRAnchorTracker";
+export * from "./anchor/LXRPlacement";
+
+// Overlay
+export * from "./overlay/LXRTexture";
+export * from "./overlay/LXRQuad";
+export * from "./overlay/LXROverlay";
+export * from "./overlay/LXRPanel";
+export * from "./overlay/LXRPointer";
+export * from "./overlay/LXROverlayManager";
+
+// Input
+export * from "./input/LXRInputSource";
+export * from "./input/LXRInputProfiles";
+export * from "./input/LXRInputManager";
+export * from "./input/LXRStandardActions";
+export * from "./input/LXRActionMap";
 
 // React integration
 export * from "./react";
