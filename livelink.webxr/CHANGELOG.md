@@ -1,5 +1,14 @@
 # @3dverse/livelink-webxr
 
+## 0.8.1
+
+### Patch Changes
+
+- feat(livelink.webxr): AR hit test, anchors and placement
+- feat(livelink.webxr): XR input sources, action map and locomotion controller
+- feat(livelink.webxr): draw an overlay into the XR framebuffer
+- feat(livelink.webxr): panels and pointers in the XR framebuffer
+
 ## 0.2.8
 
 ### Patch Changes
