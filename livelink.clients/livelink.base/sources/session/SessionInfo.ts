@@ -41,7 +41,17 @@ export type SessionInfo = {
     /**
      * The unique identifier of the user who created the session.
      */
-    readonly created_by?: UUID;
+    readonly created_by?: {
+        /**
+         * The unique identifier of the user who created the session.
+         */
+        readonly user_id: UUID;
+
+        /**
+         * The name of the user who created the session.
+         */
+        readonly username: string;
+    };
 
     /**
      * The date and time the session was created.
