@@ -1,5 +1,11 @@
 # @3dverse/livelink-agent
 
+## 0.5.5
+
+### Patch Changes
+
+- Rebuild and release after livelink.base changes.
+
 ## 0.5.4
 
 ### Patch Changes

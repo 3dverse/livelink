@@ -1,6 +1,6 @@
 {
     "name": "@3dverse/livelink-agent",
-    "version": "0.5.4",
+    "version": "0.5.5",
     "description": "Headless agent package for controlling 3dverse rendering sessions programmatically (Node.js and browser compatible)",
     "main": "./dist/index.cjs",
     "module": "./dist/index.mjs",

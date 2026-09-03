@@ -1,5 +1,11 @@
 # @3dverse/livelink
 
+## 0.8.67
+
+### Patch Changes
+
+- Rebuild and release after livelink.base changes.
+
 ## 0.8.66
 
 ### Patch Changes
