@@ -1,77 +1,137 @@
-# Release triggering for livelink.base changes: options and open questions
+# Release triggering for livelink.base changes
 
 `livelink.base` is `"private": true` and is consumed as a **source folder via a build alias**
 (`@livelink.base/*`), not as an npm dependency of `@3dverse/livelink` or
 `@3dverse/livelink-agent` — neither package lists it in `dependencies`/`devDependencies`. Because
-Changesets' version-bump cascade (`updateInternalDependencies` +
-`___experimentalUnsafeOptions_WILL_CHANGE_IN_PATCH.updateInternalDependents` in
-[../../.changeset/config.json](../../.changeset/config.json)) only walks the `package.json`
-dependency graph, a `livelink.base`-only change produces no changeset for the published packages
-by default.
+Changesets' version-bump cascade only walks the `package.json` dependency graph, a
+`livelink.base`-only change produces no changeset for the published packages by default.
 
 ## Current approach (in production)
 
-`.gitlab-ci.yml`'s `version:update-version` job detects `git diff`s touching
+[`.gitlab-ci.yml`](../../.gitlab-ci.yml)'s `version:update-version` job detects `git diff`s touching
 `livelink.clients/livelink.base/` and hand-writes a `.changeset/base-release.md` naming
-`@3dverse/livelink` and `@3dverse/livelink-agent` directly with a patch bump. This works, but it's
-a bespoke script that has to hardcode the consumer package list and re-implement (in bash) a
-smaller version of what Changesets' own dependency graph already does for every other package pair
-in this repo (e.g. `livelink.react` → `livelink`).
+`@3dverse/livelink` and `@3dverse/livelink-agent` directly with a patch bump, inlining the
+`livelink.base` commit subjects as the changeset summary.
 
-## Alternative considered: wire livelink.base into the real Changesets graph
+**This is the correct approach for this repo, and the alternative below has been ruled out.** Do not
+re-investigate it.
 
-Add `"@3dverse/livelink-base": "workspace:*"` as a `devDependency` of `livelink.js` and
-`livelink.agent`. In principle this lets the existing `updateInternalDependents: "always"` config
-(already doing this job for `livelink.react`, `livelink.three`, `livelink.webxr`,
-`livelink.react.ui`) cascade a patch bump automatically once `livelink.base` itself has a
-changeset — shrinking the CI script to "detect a change → write one changeset naming only
-`@3dverse/livelink-base`", with Changesets handling the rest (including proper changelog entries
-mentioning the bumped dependency, instead of hand-written boilerplate text).
+## Ruled out: wiring livelink.base into the Changesets graph
 
-This has **not** been implemented or tested. Two things block it:
+The idea was to declare `@3dverse/livelink-base` as an internal dependency of `livelink.js` and
+`livelink.agent` so that `updateInternalDependents: "always"` (in
+[`.changeset/config.json`](../../.changeset/config.json)) would cascade the patch bump on its own,
+shrinking the CI script to "write one changeset naming only `@3dverse/livelink-base`". Three
+independent blockers, each verified:
 
-1. **Unverified: does the cascade fire for a private, unversioned package?** Changesets'
-   `privatePackages.version` defaults to `false` — a private package's own version is not bumped
-   by default. Whether `updateInternalDependents` still cascades a bump to dependents when the
-   upstream package is private and excluded from versioning isn't documented with certainty
-   (the option itself is flagged experimental / "WILL_CHANGE_IN_PATCH" by Changesets). It may also
-   require `privatePackages: { "version": true }` to work at all, which would start writing (and
-   presumably committing) version bumps to `livelink.base/package.json` too.
-2. **Unverified: can `changesets-tools generate-changesets` emit a changeset for `livelink.base`?**
-   The changeset naming `@3dverse/livelink-base` still has to come from somewhere. Today's
-   `changesets-tools` (a private binary from `registry.gitlab.com/3dverse/platform/ci-utils`, not
-   vendored in this repo) generated `Generated changesets : []` for a
-   `feat(livelink.base): ...` commit — consistent with it not mapping `livelink.base` commits to a
-   package today. If it can't be taught to do so, the CI script would still be needed, just to
-   write a changeset naming `@3dverse/livelink-base` alone instead of the two consumer packages.
+**1. A `devDependencies` edge never bumps anything.** This was the specific form originally
+proposed, and it cannot work by construction. In `determineDependents`
+(`@changesets/assemble-release-plan`), the `devDependencies` branch assigns `type = "none"`; only
+`dependencies`, `optionalDependencies` and `peerDependencies` yield `"patch"`. `assembleReleasePlan`
+says so in a comment: devDeps are in the graph *only* so `apply-release-plan` can rewrite their
+version ranges. Measured: both consumers appear in the release plan at `type: none`, i.e. same
+version in, same version out.
 
-## How to test this, if picked up later
+**2. npm does not implement the `workspace:` protocol.** `bumpVersionsWithWorkspaceProtocolOnly:
+true` is set in our config, and `getDependencyGraph` (`@changesets/get-dependents-graph`) `continue`s
+past every dependency whose range does not start with `workspace:` — so that is the only range form
+that produces a graph edge here. But this is an npm workspace, and `npm install` rejects it outright:
 
-Do this in a scratch git worktree — never in the real working tree, since it involves running
-`@changesets/cli version`, which mutates `package.json`/`CHANGELOG.md`/the lockfile in place:
+```
+npm error code EUNSUPPORTEDPROTOCOL
+npm error Unsupported URL Type "workspace:": workspace:*
+```
 
-1. `git worktree add <scratch-dir>` off the branch you want to test from.
-2. In the worktree, add `"@3dverse/livelink-base": "workspace:*"` as a `devDependency` to
-   `livelink.clients/livelink.js/package.json` and `livelink.clients/livelink.agent/package.json`,
-   then `npm install` so the workspace/lockfile is consistent.
-3. Hand-write `.changeset/test-base-cascade.md` naming **only** `'@3dverse/livelink-base': patch`
-   (do not name `livelink`/`livelink-agent` — the point is to see if they get pulled in on their
-   own).
-4. Run `npx @changesets/cli status --verbose` (non-mutating) to see the computed release plan, then
-   `npx @changesets/cli version` and check:
-   - Did `@3dverse/livelink` and `@3dverse/livelink-agent`'s versions bump?
-   - Did `@3dverse/livelink-base`'s own version change (expected: no, by default)?
-   - Are the generated CHANGELOG entries for the two public packages sensible?
-5. If no cascade happens, retry with `"privatePackages": { "version": true }` added to
-   `.changeset/config.json` in the worktree.
-6. Record the outcome here (or wherever this doc lands next), then `git worktree remove` the
-   scratch dir — nothing from this experiment is meant to land as-is.
+`workspace:` is a pnpm/yarn feature (npm/cli#3847 is still open). Adding it breaks `npm install` for
+every developer and every CI job, so it is not available to us at any price.
 
-**If the cascade works:** simplify `version:update-version` in `.gitlab-ci.yml` to only synthesize
-a changeset naming `@3dverse/livelink-base`, and add the `devDependency` edges for real. Whether
-`changesets-tools generate-changesets` can be taught to do this natively is a separate question for
-whoever owns that tool.
+**3. The only npm-installable variant costs 4 extra publishes per release.** Dropping
+`bumpVersionsWithWorkspaceProtocolOnly` lets a plain `"^0.8.64"` range into the graph and does make
+the cascade fire — but the flag is repo-wide and the cascade is transitive, so it simultaneously
+wakes up every other internal edge (the `@3dverse/livelink` peer ranges in `livelink.react`,
+`livelink.three`, `livelink.webxr`, `livelink.react.ui`):
 
-**If the cascade doesn't work:** the current CI-heuristic approach (hardcoding the consumer
-package list) is confirmed as the correct approach given this repo's architecture — no further
-action needed, and this alternative doesn't need to be re-investigated from scratch later.
+| Scenario | Today | With the flag dropped |
+| --- | --- | --- |
+| `livelink.base`-only change | 2 packages published | **6 packages published** |
+| Routine `livelink.js` change | 1 package published | **5 packages published** |
+
+It also makes every Changesets run log 6 range-validation errors for `livelink.samples`' `file:`
+dependencies (non-fatal — `getDependentsGraph` discards the `valid` flag — but permanent noise).
+There is no way to scope the flag to a single dependency edge.
+
+On top of all three: `changesets-tools generate-changesets` does not map `livelink.base` commits to
+a package (it emitted `Generated changesets : []` for a `feat(livelink.base): ...` commit), so a CI
+script writing the changeset would still be needed either way. The only thing the alternative could
+ever have removed is the hardcoded two-package consumer list.
+
+### A note on the changelog
+
+The cascade would also have made the *published* changelog worse, not better. A cascaded entry reads:
+
+```
+- Updated dependencies
+  - @3dverse/livelink-base@0.8.65
+```
+
+which points at a package no npm consumer can look up. The current script inlines the actual
+`livelink.base` commit subjects into the consumer changelog instead, which is what a reader on npm
+can actually use.
+
+### Correction to an earlier assumption
+
+`privatePackages.version` defaults to **`true`** (`@changesets/config`, not the `false` previously
+assumed here), so `livelink.base` was always eligible for versioning — that was never the obstacle.
+The practical consequence is that a changeset *may* name `@3dverse/livelink-base` directly. It just
+does not pull its consumers along.
+
+## How this was verified
+
+The release plan can be computed in-process without a worktree, without `npm install`, and without
+mutating anything — `@changesets/cli version` is never invoked:
+
+```js
+const { getPackages } = require("./node_modules/@manypkg/get-packages");
+const { read } = require("./node_modules/@changesets/config");
+const assembleReleasePlan = require("./node_modules/@changesets/assemble-release-plan").default;
+
+const packages = await getPackages(repoRoot);
+const config = await read(repoRoot, packages);
+
+// patch the in-memory manifests to try an edge, e.g.:
+// packages.packages.find(p => p.packageJson.name === "@3dverse/livelink")
+//     .packageJson.dependencies["@3dverse/livelink-base"] = "workspace:*";
+
+const plan = assembleReleasePlan(
+    [{ id: "sim", summary: "…", releases: [{ name: "@3dverse/livelink-base", type: "patch" }] }],
+    packages,
+    config,
+    undefined,
+    undefined,
+);
+console.log(plan.releases.map(r => `${r.name} ${r.oldVersion} -> ${r.newVersion} (${r.type})`));
+```
+
+Results for a changeset naming only `@3dverse/livelink-base`:
+
+| Edge added to `livelink.js` + `livelink.agent` | Consumers bumped |
+| --- | --- |
+| none (today) | none |
+| `devDependencies: "workspace:*"` | none — both `type: none` |
+| `devDependencies: "*"` | none — edge dropped from the graph |
+| `dependencies: "*"` | none — edge dropped from the graph |
+| `dependencies: "workspace:*"` | both — but `npm install` fails |
+| `peerDependencies: "workspace:*"` | both — but `npm install` fails |
+
+Measured against `@changesets/cli` 2.31.0 (`assemble-release-plan` 6.0.10,
+`get-dependents-graph` 2.1.4, `config` 3.1.4) and npm 12.0.2. Note that `version:update-version` runs
+`npx @changesets/cli version` without a prior install, so the CLI version used in CI floats — worth
+re-checking these numbers if its behaviour ever looks different from the above.
+
+## Possible refinement (optional, not implemented)
+
+The CI-written changeset could name `@3dverse/livelink-base` *in addition to* the two consumers.
+Verified to be accepted (it is not a "mixed changeset" — private packages are versionable, see
+above) and to stay limited to exactly those three packages. That would give `livelink.base` a
+meaningful version — it is currently frozen at 0.8.64 because no changeset ever names it — and its
+own `CHANGELOG.md` carrying the commit subjects. It changes nothing about release *triggering*.
