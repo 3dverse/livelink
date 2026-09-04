@@ -62,11 +62,63 @@ import { WebXR } from "@3dverse/livelink-webxr/react";
 | `overscan`                   | `boolean`                                          | `false`       | Increases FOV for billboard to hide edge artifacts during head movement                    |
 | `fakeAlpha`                  | `boolean`                                          | `true` for AR | Simulates alpha blending with camera feed (AR sessions)                                    |
 | `scale`                      | `number`                                           | `1.0`         | Resolution scale factor for the XR surface                                                 |
-| `domOverlayRoot`             | `Element`                                          | —             | Custom DOM overlay root (required on iOS via Variant Launch)                               |
+| `domOverlayRoot`             | `Element`                                          | —             | Custom DOM overlay root (required on iOS, see [Entering XR on iOS](#entering-xr-on-ios))   |
 | `onSessionEnd`               | `(event: XRSessionEvent) => void`                  | —             | Callback when the XR session ends                                                          |
 | `renderViewport`             | `(viewport: Viewport, index: number) => ReactNode` | —             | Custom render function for each eye viewport                                               |
 
 The `ref` resolves to `{ livelinkXR: XRLivelink | undefined }` once the session is active.
+
+---
+
+## Entering XR on iOS
+
+iOS Safari exposes no `navigator.xr`, so `isSessionSupported` is false there and always will be. The
+session has to run inside a native **App Clip** that wraps the page in a `WKWebView`, puts an ARKit
+camera behind it and injects a WebXR polyfill. A **launcher** encapsulates that: it answers "can this
+page enter XR, and if not, where do I send the user", so a consumer never branches on the platform
+itself — off iOS every launcher reports `supported` and gets out of the way.
+
+```tsx
+import { LXRAppClipLauncher, useXRLaunch } from "@3dverse/livelink-webxr";
+
+// Built once, outside render: the hook re-resolves whenever the launcher identity changes.
+const launcher = new LXRAppClipLauncher({ domain: "xr.example.com" });
+
+function EnterARButton({ onEnter }: { onEnter: (mode: XRSessionMode) => void }) {
+  const { canLaunch, message, launch } = useXRLaunch({
+    mode: "immersive-ar",
+    launcher,
+    onEnter,
+  });
+
+  return (
+    <button onClick={launch} disabled={!canLaunch}>
+      {message}
+    </button>
+  );
+}
+```
+
+`launch()` either enters the session in place or navigates to the clip, whichever the state calls
+for. Without React, call `launcher.resolve({ mode })` and switch on `state.status` yourself.
+
+### Launchers
+
+| Launcher                   | Clip owned by  | Needs                                    |
+| -------------------------- | -------------- | ---------------------------------------- |
+| `LXRAppClipLauncher`       | You            | A domain serving an App Clip association |
+| `LXRVariantLaunchLauncher` | Variant Launch | An SDK key and a paid plan               |
+
+`LXRAppClipLauncher` builds `https://<domain>/?to=<this page>` — no SDK, no key, no network round
+trip. Hosting it requires an `apple-app-site-association` naming the clip, a Smart App Banner meta
+tag on that domain, and the clip's parent app released on the App Store; see
+[MIGRATION_wem-technology_ios-webxr.md](./MIGRATION_wem-technology_ios-webxr.md).
+
+### What it cannot do
+
+App Clip cards render in **Safari only**. Chrome, Firefox and every in-app browser on iOS load the
+launch URL as an ordinary page instead — `state.needs_safari` reports this so the UI can say so
+before the user taps, and the stock `message` already does.
 
 ---
 
