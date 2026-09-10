@@ -96,7 +96,7 @@ export function SamplePlayer({
     return (
         <SamplePlayerContext.Provider value={{ connectionState, setConnectionState }}>
             <ResizablePanelGroup className="relative flex flex-col xl:flex-row w-full h-full">
-                <ResizablePanel className="relative flex gap-3 h-full bg-foreground rounded-xl overflow-clip p-1 md:p-3 xl:pl-0">
+                <ResizablePanel className="relative flex gap-3 h-full bg-foreground rounded-xl overflow-clip p-1 pb-0 lg:p-3 xl:pl-0">
                     <LivelinkReactUIProvider>
                         {useCustomLayout ? (
                             children
@@ -121,7 +121,7 @@ export function SamplePlayer({
                 {code && (
                     <>
                         {!isCodeBlockCollapsed && <ResizableHandle onResize={resizeCodePanel} />}
-                        <ResizablePanel size={codePanelSize} collapsed={isCodeBlockCollapsed} className="md:p-4">
+                        <ResizablePanel size={codePanelSize} collapsed={isCodeBlockCollapsed} className="lg:p-4">
                             <CodeBlock
                                 code={code}
                                 title={title}

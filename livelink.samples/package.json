@@ -25,7 +25,6 @@
     "@3dverse/livelink-three": "file:../livelink.three",
     "@3dverse/livelink-webxr": "file:../livelink.webxr",
     "@fontsource-variable/manrope": "^5.2.8",
-    "boring-avatars": "^2.0.4",
     "prism-react-renderer": "^2.4.1",
     "react": "^19.2.6",
     "react-dom": "^19.2.6",
