@@ -2,12 +2,21 @@ import { Highlight, themes } from "prism-react-renderer";
 import { CopyCodeButton } from "./CopyCodeButton";
 import { GitHubIcon } from "../icons/GitHubIcon";
 import { CollapseIcon } from "../icons/CollapseIcon";
-import { LOCAL_STORAGE_KEYS, useLocalStorage } from "../../lib/localStorage";
 
 //------------------------------------------------------------------------------
-export function CodeBlock({ code, title, gitPath }: { code: string; title?: string; gitPath?: string }) {
-    const [isCollapsed, setIsCollapsed] = useLocalStorage<boolean>(LOCAL_STORAGE_KEYS.IS_CODE_BLOCK_COLLAPSED, false);
-
+export function CodeBlock({
+    code,
+    title,
+    gitPath,
+    isCollapsed,
+    setIsCollapsed,
+}: {
+    code: string;
+    title?: string;
+    gitPath?: string;
+    isCollapsed: boolean;
+    setIsCollapsed: (isCollapsed: boolean) => void;
+}) {
     return (
         <>
             {isCollapsed ? (
@@ -21,11 +30,11 @@ export function CodeBlock({ code, title, gitPath }: { code: string; title?: stri
                     Code
                 </button>
             ) : (
-                <article className="relative flex flex-col max-h-[50%] xl:max-h-none xl:max-w-[50ch] 2xl:max-w-[60ch] 3xl:max-w-[70ch] 4xl:max-w-[85ch] bg-foreground rounded-xl overflow-y-clip">
+                <article className="@container/code-block relative flex flex-col w-full h-full bg-foreground rounded-xl overflow-y-clip">
                     <header className="flex justify-between items-center gap-3 px-3 py-3 border-b border-quaternary">
                         {title ? <p className="text-xs">{title}</p> : <div />}
                         <div className="flex items-center gap-2">
-                            <CopyCodeButton code={code} />
+                            <CopyCodeButton code={code} labelClassName="hidden @md/code-block:inline" />
                             {gitPath && (
                                 <a
                                     href={gitPath}
@@ -34,7 +43,7 @@ export function CodeBlock({ code, title, gitPath }: { code: string; title?: stri
                                     rel="noopener noreferrer"
                                 >
                                     <GitHubIcon className="w-3 h-3" />
-                                    <span className="ml-2 hidden md:inline">
+                                    <span className="ml-2 hidden @md/code-block:inline">
                                         <span className="hidden xl:inline">View on </span>GitHub
                                     </span>
                                 </a>

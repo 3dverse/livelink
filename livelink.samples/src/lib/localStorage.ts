@@ -4,6 +4,7 @@ import { Dispatch, SetStateAction, useCallback, useEffect, useRef, useState } fr
 export const LOCAL_STORAGE_KEYS = {
     IS_MAIN_MENU_COLLAPSED: "is-main-menu-collapsed",
     IS_CODE_BLOCK_COLLAPSED: "is-code-block-collapsed",
+    CODE_BLOCK_PANEL_SIZE: "code-block-panel-size",
 } as const;
 
 type SetValue<T> = Dispatch<SetStateAction<T>>;
