@@ -1,0 +1,44 @@
+.avatar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    box-sizing: border-box;
+    width: 2.5rem;
+    height: 2.5rem;
+    padding: 0;
+    border: none;
+    border-radius: 9999px;
+
+    background-color: var(--color, #000);
+    color: #fff;
+    font-size: 0.75rem;
+    font-weight: 500;
+    line-height: 1;
+
+    cursor: pointer;
+    user-select: none;
+}
+
+.offscreenIndicatorHitArea {
+    position: absolute;
+    transform: translate(-50%, -50%);
+
+    display: block;
+    background: none;
+    border: none;
+
+    pointer-events: auto;
+    cursor: pointer;
+}
+
+.offscreenIndicator {
+    display: block;
+    border-radius: 2px;
+}
+
+.viewportRect {
+    pointer-events: none;
+    outline: 1px dashed var(--color, #000);
+    outline-offset: -1px;
+}

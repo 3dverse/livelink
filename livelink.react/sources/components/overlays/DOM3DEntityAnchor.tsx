@@ -6,6 +6,7 @@ import type { Entity, Vec3 } from "@3dverse/livelink";
 
 //------------------------------------------------------------------------------
 import { AnchorOffset, DOM3DAnchor } from "./DOM3DAnchor";
+import { PointProjection } from "../../overlays/DOM3DElementProjection";
 
 /**
  * @deprecated Use `DOM3DEntityAnchor` instead.
@@ -34,11 +35,13 @@ export function DOM3DEntityAnchor({
     entity,
     scaleFactor,
     offset,
+    onProjectionChange,
     children,
 }: PropsWithChildren<{
     entity: Entity | null;
     offset?: AnchorOffset;
     scaleFactor?: number;
+    onProjectionChange?: (projection: Readonly<PointProjection>) => void;
 }>): JSX.Element | null {
     const [worldPosition, setWorldPosition] = useState<Vec3>(entity ? entity.global_transform.position : [0, 0, 0]);
     const [isVisible, setIsVisible] = useState(entity ? entity.is_visible : false);
@@ -68,7 +71,12 @@ export function DOM3DEntityAnchor({
     }
 
     return (
-        <DOM3DAnchor worldPosition={worldPosition} offset={offset} scaleFactor={scaleFactor}>
+        <DOM3DAnchor
+            worldPosition={worldPosition}
+            offset={offset}
+            scaleFactor={scaleFactor}
+            onProjectionChange={onProjectionChange}
+        >
             {children}
         </DOM3DAnchor>
     );

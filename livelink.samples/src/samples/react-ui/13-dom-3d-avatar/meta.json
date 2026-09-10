@@ -1,0 +1,5 @@
+{
+  "title": "DOM 3D Avatar",
+  "summary": "Shows a 3D avatar rendered on a DOM overlay.",
+  "useCustomLayout": true
+}

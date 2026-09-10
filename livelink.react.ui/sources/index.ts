@@ -7,6 +7,7 @@ export * from "./components/CameraSpeedSlider";
 export * from "./components/CullingBoxGeometry";
 export * from "./components/CullingBoxGeometry/CullingBoxGeometryButton";
 export * from "./components/DOM3DAnchorLegend";
+export * from "./components/DOM3DAvatar";
 export * from "./components/InactivityWarning";
 export * from "./components/LightControl";
 export * from "./components/LightControl/LightPreview/LightPreview";
