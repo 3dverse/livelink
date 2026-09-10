@@ -50,11 +50,10 @@
             }
         }
 
-        .swiperHost {
-            height: 100%;
-        }
-
         .slide {
+            height: auto;
+            width: 20px;
+            flex-shrink: 0;
             padding-top: 0.6rem;
             padding-right: 0;
             text-align: center;
@@ -112,15 +111,17 @@
     left: 0;
 
     width: 100%;
+    height: 100%;
 }
 
 .swiper {
-    height: 14rem;
+    height: 100%;
     width: 100%;
 }
 
 .slide {
     position: relative;
+    height: 20px;
     text-align: end;
     font-size: 0.75rem;
     line-height: 1rem;
