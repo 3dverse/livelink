@@ -88,15 +88,15 @@ function AppLayout() {
                 />
 
                 {/* Sidebar with clickable labels list - positioned overlay */}
-                <div className="absolute left-4 top-4 w-64 bg-white/95 border border-gray-100 rounded-lg p-4 overflow-y-auto max-h-96 z-10">
-                    <h3 className="font-normal mb-6 text-gray-500 uppercase tracking-wide text-xs">
+                <aside className="absolute left-4 top-4 w-64 p-1 bg-white/95 border border-gray-100 rounded-lg overflow-y-auto max-h-96 z-10">
+                    <h3 className="px-3 my-2 text-gray-500 font-normal text-4xs tracking-wide uppercase">
                         Locations
                     </h3>
-                    <div className="space-y-1">
+                    <div>
                         {entities.map(entity => (
                             <button
                                 key={entity.id}
-                                className="w-full px-3 py-2 text-left text-sm text-gray-600 bg-transparent border-none rounded hover:bg-gray-50 hover:text-gray-900 transition-all cursor-pointer"
+                                className="w-full px-3 py-2 text-left text-2xs text-gray-600 bg-transparent border-none rounded hover:bg-gray-50 hover:text-gray-900 transition-all cursor-pointer"
                                 onClick={() => moveCamera(entity)}
                                 title="Click to move camera here"
                             >
@@ -104,7 +104,7 @@ function AppLayout() {
                             </button>
                         ))}
                     </div>
-                </div>
+                </aside>
 
                 <DOM3DOverlay>
                     {entities.map(entity => (
