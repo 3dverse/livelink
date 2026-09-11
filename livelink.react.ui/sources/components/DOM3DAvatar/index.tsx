@@ -182,14 +182,27 @@ export function DOM3DAvatar({
             const forward = rotateVecByQuat([0, 0, -1], camera.world_orientation as Quat);
             const isInFrontOfCamera = dotVec3(toTarget, forward) > 0;
 
-            const [screenX, screenY] = projection.screen_position;
+            // `viewport.width`/`.height` and `screen_position` are in render-surface pixels, which
+            // are scaled by the surface's render-quality factor (see Settings > Quality) and so
+            // don't generally match the DOM overlay container's CSS pixel size. Left uncorrected,
+            // positions near 0 still land correctly (0 scales to 0), but positions near the
+            // viewport's far edge get placed proportionally past the container's actual CSS bounds
+            // and are clipped by its `overflow: hidden` — offscreen indicators would only ever
+            // reach the top/left edges, never bottom/right. Dividing by the render scale converts
+            // back to the CSS pixel space the overlay container (and this component's own styles)
+            // actually live in.
+            const renderScale = viewport.rendering_surface?.scale || 1;
+            const viewportWidth = viewport.width / renderScale;
+            const viewportHeight = viewport.height / renderScale;
+            const screenX = projection.screen_position[0] / renderScale;
+            const screenY = projection.screen_position[1] / renderScale;
             const isOnScreen =
                 isInFrontOfCamera &&
                 projection.is_visible &&
                 screenX >= -AVATAR_ONSCREEN_MARGIN &&
-                screenX <= viewport.width + AVATAR_ONSCREEN_MARGIN &&
+                screenX <= viewportWidth + AVATAR_ONSCREEN_MARGIN &&
                 screenY >= -AVATAR_ONSCREEN_MARGIN &&
-                screenY <= viewport.height + AVATAR_ONSCREEN_MARGIN;
+                screenY <= viewportHeight + AVATAR_ONSCREEN_MARGIN;
 
             if (showViewportRectangle) {
                 const distanceToLocalCamera = Math.hypot(...toTarget);
@@ -483,9 +496,5 @@ function rotateVecByQuat(v: Vec3, q: Quat): Vec3 {
     const ty = 2 * (iz * v[0] - ix * v[2]);
     const tz = 2 * (ix * v[1] - iy * v[0]);
 
-    return [
-        v[0] + iw * tx + iy * tz - iz * ty,
-        v[1] + iw * ty + iz * tx - ix * tz,
-        v[2] + iw * tz + ix * ty - iy * tx,
-    ];
+    return [v[0] + iw * tx + iy * tz - iz * ty, v[1] + iw * ty + iz * tx - ix * tz, v[2] + iw * tz + ix * ty - iy * tx];
 }
