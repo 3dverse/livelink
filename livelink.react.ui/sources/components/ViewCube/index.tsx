@@ -8,8 +8,16 @@ export const ViewCube = ({
     size = 100,
     perspective = "none",
     viewport: propsViewport,
+    className,
+    style,
     children,
-}: PropsWithChildren<{ size?: number; perspective?: string; viewport?: Viewport }>) => {
+}: PropsWithChildren<{
+    size?: number;
+    perspective?: string;
+    viewport?: Viewport;
+    className?: string;
+    style?: React.CSSProperties;
+}>) => {
     const { viewport: contextViewport } = useContext(ViewportContext);
     const [cubeOrientation, setCubeOrientation] = useState<Vec3>([0, 0, 0]);
 
@@ -75,7 +83,10 @@ export const ViewCube = ({
                     .cube__face--bottom { transform: rotateX(-90deg) translateZ(${Math.floor(size * 0.5)}px); }
                 `}
             </style>
-            <div className="scene livelink-react-ui-component">
+            <div
+                className={["scene", "livelink-react-ui-component", className].filter(Boolean).join(" ")}
+                style={style}
+            >
                 <div
                     className="cube"
                     style={{
