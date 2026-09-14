@@ -118,12 +118,13 @@ export abstract class RenderingSurfaceBase extends TypedEventTarget<RenderingSur
     }
 
     /**
-     * Redraws the last frame.
+     * Redraws the last frame. No-op if its `VideoFrame` was since closed by the decoder.
      */
     redrawLastFrame(): void {
-        if (this.#last_draw_data !== null) {
-            this._drawFrame({ decoded_frame: this.#last_draw_data });
+        if (this.#last_draw_data === null || this.#isLastFrameClosed()) {
+            return;
         }
+        this._drawFrame({ decoded_frame: this.#last_draw_data });
     }
 
     /**
@@ -207,4 +208,17 @@ export abstract class RenderingSurfaceBase extends TypedEventTarget<RenderingSur
      * @param params.decoded_frame - The frame to draw.
      */
     protected abstract _drawFrame({ decoded_frame }: { decoded_frame: DecodedFrame }): void;
+
+    /**
+     * Checks if the last drawn frame's pixels have been closed.
+     */
+    #isLastFrameClosed(): boolean {
+        const pixels = this.#last_draw_data?.pixels;
+        return (
+            typeof VideoFrame !== "undefined" &&
+            pixels instanceof VideoFrame &&
+            // `VideoFrame` closing resets `format` to `null`, per spec.
+            pixels.format === null
+        );
+    }
 }
