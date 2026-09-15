@@ -6,6 +6,7 @@ import { CanvasContext } from "../components/core/Canvas";
 import { LivelinkContext } from "../components/core/Livelink";
 import { useSceneSettings } from "./useSceneSettings";
 import { PointOfViewSnapshotGrid, type PointOfViewTransform } from "./utils/PointOfViewSnapshotGrid";
+import { useKeyedCache } from "./utils/useKeyedCache";
 
 export type { PointOfViewTransform } from "./utils/PointOfViewSnapshotGrid";
 
@@ -25,10 +26,22 @@ const DEFAULT_TILE_HEIGHT = 180;
 const DEFAULT_MAX_SIMULTANEOUS_CAPTURES = 2;
 
 /**
+ * @internal
+ * A cache key scoped to just position/orientation, so unrelated fields a caller might have
+ * attached to a point of view (e.g. a label's title) don't cause spurious re-captures.
+ */
+function hashPointOfView(pointOfView: PointOfViewTransform): string {
+    return JSON.stringify([pointOfView.position, pointOfView.orientation]);
+}
+
+/**
  * @experimental
  *
  * A hook that renders a small snapshot image for each given point of view, by driving temporary
  * cameras through an offscreen surface packed as a grid so several are captured at once.
+ *
+ * Already-captured points of view are cached in memory (keyed by position/orientation) for the
+ * life of the component, so only new or actually-changed points of view get re-captured.
  *
  * Waits for the scene to finish loading (see `Scene.waitForSceneLoaded`) before capturing
  * anything, so snapshots aren't taken of a still-streaming-in scene.
@@ -64,7 +77,7 @@ export function usePointOfViewSnapshots(
 } {
     const tileWidth = options?.tileWidth ?? DEFAULT_TILE_WIDTH;
     const tileHeight = options?.tileHeight ?? DEFAULT_TILE_HEIGHT;
-    const maxSimultaneousCaptures = options?.maxSimultaneousCaptures ?? DEFAULT_MAX_SIMULTANEOUS_CAPTURES;
+    const maxSimultaneousCaptures = Math.max(1, options?.maxSimultaneousCaptures ?? DEFAULT_MAX_SIMULTANEOUS_CAPTURES);
 
     const { instance } = useContext(LivelinkContext);
     const { renderingSurface } = useContext(CanvasContext);
@@ -73,22 +86,37 @@ export function usePointOfViewSnapshots(
     const [images, setImages] = useState<Array<string | null>>([]);
     const [isPending, setIsPending] = useState(true);
 
-    const pointsOfViewHash = JSON.stringify(pointsOfView);
+    const cache = useKeyedCache<string>();
+
+    const entries = pointsOfView.map((pointOfView, index) => ({
+        pointOfView,
+        hash: hashPointOfView(pointOfView),
+        index,
+    }));
+    const hashesKey = JSON.stringify(entries.map(entry => entry.hash));
 
     //--------------------------------------------------------------------------
     useEffect(() => {
-        if (!instance || !sceneSettings || !renderingSurface || pointsOfView.length === 0) {
+        if (!instance || !sceneSettings || !renderingSurface || entries.length === 0) {
+            return;
+        }
+
+        cache.prune(entries.map(entry => entry.hash));
+        setImages(entries.map(entry => cache.get(entry.hash) ?? null));
+
+        const missing = entries.filter(entry => !cache.has(entry.hash));
+        if (missing.length === 0) {
+            setIsPending(false);
             return;
         }
 
         let cancelled = false;
         let grid: PointOfViewSnapshotGrid | null = null;
 
-        setImages(new Array(pointsOfView.length).fill(null));
         setIsPending(true);
 
-        // Waits for the scene to finish loading, then creates the grid, captures every point of
-        // view page by page, and tears it down.
+        // Waits for the scene to finish loading, then creates the grid, captures every missing
+        // point of view page by page, and tears it down.
         const capture = async (): Promise<void> => {
             const sceneLoaded = await instance.scene.waitForSceneLoaded();
             if (cancelled || !sceneLoaded) {
@@ -102,7 +130,7 @@ export function usePointOfViewSnapshots(
                 instance,
                 sceneSettings,
                 renderingSurface,
-                cellCount: Math.min(pointsOfView.length, maxSimultaneousCaptures),
+                cellCount: Math.min(missing.length, maxSimultaneousCaptures),
                 tileWidth,
                 tileHeight,
             });
@@ -112,16 +140,23 @@ export function usePointOfViewSnapshots(
                 return;
             }
 
-            for (let pageStart = 0; pageStart < pointsOfView.length && !cancelled; pageStart += grid.cellCount) {
-                const pageImages = await grid.captureFrame(pointsOfView.slice(pageStart, pageStart + grid.cellCount));
+            for (let pageStart = 0; pageStart < missing.length && !cancelled; pageStart += grid.cellCount) {
+                const page = missing.slice(pageStart, pageStart + grid.cellCount);
+                const pageImages = await grid.captureFrame(page.map(entry => entry.pointOfView));
                 if (cancelled) {
                     break;
                 }
 
+                page.forEach((entry, i) => {
+                    if (pageImages[i]) {
+                        cache.set(entry.hash, pageImages[i]);
+                    }
+                });
+
                 setImages(prevImages => {
                     const nextImages = [...prevImages];
-                    pageImages.forEach((image, i) => {
-                        nextImages[pageStart + i] = image;
+                    page.forEach((entry, i) => {
+                        nextImages[entry.index] = pageImages[i];
                     });
                     return nextImages;
                 });
@@ -139,7 +174,7 @@ export function usePointOfViewSnapshots(
             cancelled = true;
             grid?.cancel();
         };
-    }, [instance, sceneSettings, renderingSurface, pointsOfViewHash, tileWidth, tileHeight, maxSimultaneousCaptures]);
+    }, [instance, sceneSettings, renderingSurface, hashesKey, tileWidth, tileHeight, maxSimultaneousCaptures]);
 
     return { isPending, images };
 }
