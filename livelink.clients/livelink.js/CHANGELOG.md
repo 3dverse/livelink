@@ -1,5 +1,16 @@
 # @3dverse/livelink
 
+## 0.8.68
+
+### Patch Changes
+
+- This release includes the following changes from livelink.base:
+
+  - feat(livelink.webxr): revamp app clip launch for webxr on ios using variant and plan migration to 3dverse fork of https://github.com/wem-technology/ios-webxr
+
+- fix(livelink.js): avoid drawing stale-size frames during a resize/viewport reconfiguration
+- fix(livelink.js): apply external local_transform updates before dispatching on-entity-updated
+
 ## 0.8.67
 
 ### Patch Changes
