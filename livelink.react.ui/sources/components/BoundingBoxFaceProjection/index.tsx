@@ -1,8 +1,8 @@
 //------------------------------------------------------------------------------
-import React, { PropsWithChildren } from "react";
+import React, { PropsWithChildren, useEffect, useState } from "react";
 
 //------------------------------------------------------------------------------
-import type { Entity, Vec3 } from "@3dverse/livelink";
+import type { Entity, Mat4, Vec3 } from "@3dverse/livelink";
 import { DOM3DDiv } from "@3dverse/livelink-react";
 
 //------------------------------------------------------------------------------
@@ -27,15 +27,32 @@ export const BoundingBoxFaceProjection = ({
 }> &
     React.HTMLAttributes<HTMLDivElement> &
     React.DOMAttributes<HTMLDivElement>) => {
-    if (!entity) {
+    const [wsQuad, setWsQuad] = useState<Quad | null>(
+        entity ? computeWorldSpaceQuad({ entity, face, invert }).wsQuad : null,
+    );
+
+    useEffect(() => {
+        if (!entity) {
+            return;
+        }
+
+        const updateQuad = (): void => setWsQuad(computeWorldSpaceQuad({ entity, face, invert }).wsQuad);
+        updateQuad();
+
+        // global_transform (ls_to_ws) depends on every ancestor's transform too.
+        const abortController = new AbortController();
+        for (let node: Entity | null = entity; node; node = node.parent) {
+            node.addEventListener("on-entity-updated", updateQuad, { signal: abortController.signal });
+        }
+
+        return (): void => {
+            abortController.abort();
+        };
+    }, [entity, face, invert]);
+
+    if (!entity || !wsQuad) {
         return null;
     }
-
-    const { wsQuad } = computeWorldSpaceQuad({
-        entity: entity!,
-        face,
-        invert,
-    });
 
     return (
         <DOM3DDiv worldQuad={wsQuad} worldUnitToPixelScale={scale} {...props}>

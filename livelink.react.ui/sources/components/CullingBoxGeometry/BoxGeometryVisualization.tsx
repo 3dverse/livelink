@@ -67,11 +67,16 @@ export function BoxGeometryVisualization({
             });
         };
 
-        boxGeometryEntity.addEventListener("on-entity-updated", updateVisualization);
         updateVisualization();
 
+        // global_transform depends on every ancestor's transform too.
+        const abortController = new AbortController();
+        for (let node: Entity | null = boxGeometryEntity; node; node = node.parent) {
+            node.addEventListener("on-entity-updated", updateVisualization, { signal: abortController.signal });
+        }
+
         return () => {
-            boxGeometryEntity.removeEventListener("on-entity-updated", updateVisualization);
+            abortController.abort();
         };
     }, [overlay, boxGeometryEntity]);
 
