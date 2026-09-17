@@ -1,5 +1,26 @@
 # @3dverse/livelink-react-ui
 
+## 0.3.25
+
+### Patch Changes
+
+- fix(livelink.react.ui): correct screen position calculations in DOM3DAvatar for accurate rendering in CSS pixel space
+- feat(livelink.react.ui): compute oriented quad instead of an axis aligned quad in BoundingBoxFaceProjection
+- chore(livelink.react.ui): bump storybook
+- feat(livelink.react.ui): enhance ViewCube component with className and style props for better customization
+- feat(livelink.react.ui): add DOM3DAvatar component for rendering 3D avatars with offscreen indicators
+- refactor(livelink.react.ui): improve styling and functionality of the speed slider component
+- fix(livelink.react.ui): listen to global transform updates in bounding box and culling box geometry components
+- Updated dependencies
+- Updated dependencies
+- Updated dependencies
+- Updated dependencies
+- Updated dependencies
+- Updated dependencies
+- Updated dependencies
+  - @3dverse/livelink@0.8.68
+  - @3dverse/livelink-react@0.2.66
+
 ## 0.3.24
 
 ### Patch Changes

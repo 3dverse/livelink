@@ -1,5 +1,15 @@
 # @3dverse/livelink-agent
 
+## 0.5.6
+
+### Patch Changes
+
+- This release includes the following changes from livelink.base:
+
+  - feat(livelink.webxr): revamp app clip launch for webxr on ios using variant and plan migration to 3dverse fork of https://github.com/wem-technology/ios-webxr
+
+- feat(livelink.agent): expose IClientOptions for MqttTransport
+
 ## 0.5.5
 
 ### Patch Changes

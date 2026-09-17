@@ -1,5 +1,27 @@
 # @3dverse/livelink-webxr
 
+## 0.8.2
+
+### Patch Changes
+
+- feat(livelink.webxr): revamp app clip launch for webxr on ios using variant and plan migration to 3dverse fork of https://github.com/wem-technology/ios-webxr
+- Updated dependencies
+- Updated dependencies
+- Updated dependencies
+- Updated dependencies
+- Updated dependencies
+- Updated dependencies
+- Updated dependencies
+- Updated dependencies
+- Updated dependencies
+- Updated dependencies
+- Updated dependencies
+- Updated dependencies
+- Updated dependencies
+  - @3dverse/livelink@0.8.68
+  - @3dverse/livelink-react-ui@0.3.25
+  - @3dverse/livelink-react@0.2.66
+
 ## 0.8.1
 
 ### Patch Changes

@@ -1,5 +1,18 @@
 # @3dverse/livelink-react
 
+## 0.2.66
+
+### Patch Changes
+
+- feat(livelink.react): cache point of view snapshots
+- feat(livelink.react.ui): add DOM3DAvatar component for rendering 3D avatars with offscreen indicators
+- fix(livelink.react): watch global_transform through ancestors, fix stale DOM3DEntityAnchor position
+- feat(livelink.react): add usePointOfViewSnapshots and useLabelPointsOfView hooks
+- Updated dependencies
+- Updated dependencies
+- Updated dependencies
+  - @3dverse/livelink@0.8.68
+
 ## 0.2.65
 
 ### Patch Changes
