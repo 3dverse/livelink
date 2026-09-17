@@ -97,7 +97,7 @@ export type EntityProvider =
  */
 export function useEntity(
     entityProvider: EntityProvider,
-    watchedComponents: Array<ComponentName> | "any" = [],
+    watchedComponents: Array<ComponentName | "global_transform"> | "any" = [],
 ): {
     isPending: boolean;
     entity: Entity | null;
@@ -225,24 +225,49 @@ export function useEntity(
     //--------------------------------------------------------------------------
     useEffect(() => {
         const alwaysUpdate = watchedComponents === "any";
-        const neverUpdate = watchedComponents.length === 0;
+        const neverUpdate = !alwaysUpdate && watchedComponents.length === 0;
 
         if (!entity || neverUpdate) {
             return;
         }
 
-        const triggerUpdate = alwaysUpdate
-            ? forceUpdate
-            : (event: EntityUpdatedEvent): void => {
-                  if (event.isAnyComponentDirty({ components: watchedComponents })) {
-                      forceUpdate();
-                  }
-              };
+        if (alwaysUpdate) {
+            entity.addEventListener("on-entity-updated", forceUpdate);
+            return (): void => {
+                entity.removeEventListener("on-entity-updated", forceUpdate);
+            };
+        }
 
-        entity.addEventListener("on-entity-updated", triggerUpdate);
+        // Not a real component: watched separately below via local_transform on every ancestor.
+        const watchesGlobalTransform = watchedComponents.includes("global_transform");
+        const watchedRealComponents = watchedComponents.filter(
+            (name): name is ComponentName => name !== "global_transform",
+        );
+
+        const abortController = new AbortController();
+
+        if (watchedRealComponents.length > 0) {
+            const onEntityUpdated = (event: EntityUpdatedEvent): void => {
+                if (event.isAnyComponentDirty({ components: watchedRealComponents })) {
+                    forceUpdate();
+                }
+            };
+            entity.addEventListener("on-entity-updated", onEntityUpdated, { signal: abortController.signal });
+        }
+
+        if (watchesGlobalTransform) {
+            const onAncestorUpdated = (event: EntityUpdatedEvent): void => {
+                if (event.isAnyComponentDirty({ components: ["local_transform"] })) {
+                    forceUpdate();
+                }
+            };
+            for (let node: Entity | null = entity; node; node = node.parent) {
+                node.addEventListener("on-entity-updated", onAncestorUpdated, { signal: abortController.signal });
+            }
+        }
 
         return (): void => {
-            entity.removeEventListener("on-entity-updated", triggerUpdate);
+            abortController.abort();
         };
     }, [entity, watchedComponents]);
 
