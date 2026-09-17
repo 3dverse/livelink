@@ -370,15 +370,18 @@ export class Entity extends EntityComponentsProxy {
      * `LocalTransformHandler` constructor. `_setLocalTransform` applies the patch in place instead,
      * preserving those references. The (now empty) `local_transform` key is left in place so it
      * still appears in `updated_components` on the dispatched event.
+     *
+     * Applied before delegating to the base class, which dispatches `on-entity-updated`, so
+     * listeners see the new value, not the previous one.
      */
     override _applyComponentsUpdate(params: Parameters<EntityBase["_applyComponentsUpdate"]>[0]): void {
         const local_transform = params.components["local_transform"];
-        super._applyComponentsUpdate(
-            local_transform ? { ...params, components: { ...params.components, local_transform: {} } } : params,
-        );
         if (local_transform) {
             this._setLocalTransform({ local_transform });
         }
+        super._applyComponentsUpdate(
+            local_transform ? { ...params, components: { ...params.components, local_transform: {} } } : params,
+        );
     }
 
     /**

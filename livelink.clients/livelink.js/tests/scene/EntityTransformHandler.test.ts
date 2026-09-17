@@ -91,6 +91,31 @@ describe("child entity global transform", () => {
         parent.local_transform = { position: [10, 0, 0] };
         expect(child.global_transform.position[0]).toBeCloseTo(11);
     });
+
+    it("child global transform reflects an externally-applied parent update by the time on-entity-updated fires", () => {
+        // Simulates a network update (Entity#_applyComponentsUpdate), not a local mutation.
+        const parent = makeEntity(scene);
+        const child = makeEntity(scene, parent);
+
+        parent.local_transform = { position: [5, 0, 0] };
+        child.local_transform = { position: [1, 0, 0] };
+        expect(child.global_transform.position[0]).toBeCloseTo(6);
+
+        let observedDuringEvent = -1;
+        parent.addEventListener("on-entity-updated", event => {
+            if (event.includes("local_transform")) {
+                observedDuringEvent = child.global_transform.position[0];
+            }
+        });
+
+        parent._applyComponentsUpdate({
+            components: { local_transform: { position: [10, 0, 0] } },
+            dispatch_event: true,
+            emitter: null,
+        });
+
+        expect(observedDuringEvent).toBeCloseTo(11);
+    });
 });
 
 // ---------------------------------------------------------------------------
