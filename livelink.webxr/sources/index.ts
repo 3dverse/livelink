@@ -28,6 +28,9 @@ export * from "./overlay/LXRPanel";
 export * from "./overlay/LXRPointer";
 export * from "./overlay/LXROverlayManager";
 
+// iOS launch strategies
+export * from "./launch";
+
 // Input
 export * from "./input/LXRInputSource";
 export * from "./input/LXRInputProfiles";

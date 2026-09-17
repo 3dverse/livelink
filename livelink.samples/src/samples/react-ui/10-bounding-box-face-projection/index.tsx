@@ -52,12 +52,9 @@ function AppLayout() {
 
     const { cameraEntity } = useCameraEntity();
 
-    const { entity } = useEntity(
-        {
-            euid: "c59217fe-309f-4d8b-b3b5-cd3018a52270",
-        },
-        ["local_transform", "local_aabb"],
-    );
+    const { entity } = useEntity({
+        euid: "c59217fe-309f-4d8b-b3b5-cd3018a52270",
+    });
 
     return (
         <Canvas className="w-full h-full">

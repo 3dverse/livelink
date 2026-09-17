@@ -18,6 +18,10 @@ import {
     WebXRVirtualJoysticks,
     LXRScaleUp,
     LXRScaleDown,
+    LXRAppClipLauncher,
+    LXRVariantLaunchLauncher,
+    useXRLaunch,
+    type LXRLauncher,
 } from "@3dverse/livelink-webxr";
 import { LoadingOverlay, PerformancePanel } from "@3dverse/livelink-react-ui";
 import type { Vec3 } from "@3dverse/livelink";
@@ -29,9 +33,29 @@ import { ScaleSelector } from "@/components/common/ScaleSelector";
 //------------------------------------------------------------------------------
 const scene_id = "11e2da67-4740-4546-951b-1d50df1dc55d";
 const token = import.meta.env.VITE_PROD_PUBLIC_TOKEN;
+
+//------------------------------------------------------------------------------
+// iOS Safari exposes no WebXR at all, so the session has to run inside a native App Clip that
+// injects a polyfill and re-opens this page. Prefer the 3dverse-hosted clip; fall back to Variant
+// Launch's hosted one while ours is still in App Review. Off iOS both report "supported" and get
+// out of the way, so this needs no platform branch of its own.
+const app_clip_domain = import.meta.env.VITE_WEBXR_APP_CLIP_DOMAIN;
 const variant_launch_sdk_key = import.meta.env
     .VITE_WEBXR_VARIANT_LAUNCH_SDK_KEY;
-const variant_launch_sdk_url = `https://launchar.app/sdk/v1?key=${variant_launch_sdk_key}&redirect=true`;
+
+function createXRLauncher(): LXRLauncher | undefined {
+    if (app_clip_domain) {
+        return new LXRAppClipLauncher({ domain: app_clip_domain });
+    }
+    if (variant_launch_sdk_key) {
+        return new LXRVariantLaunchLauncher({ sdkKey: variant_launch_sdk_key });
+    }
+    return undefined;
+}
+
+// Built once, at module scope: `useXRLaunch` re-resolves whenever the launcher identity changes,
+// and re-resolving the Variant Launch one means re-running its SDK handshake.
+const xr_launcher = createXRLauncher();
 
 //------------------------------------------------------------------------------
 export function App() {
@@ -71,14 +95,17 @@ export function App() {
     }, [xrMode]);
 
     //--------------------------------------------------------------------------
-    // Important for dom overlay to be displayed by variant launch app clip:
-    // https://launch.variant3d.com/docs/troubleshooting/dom-overlay
+    // The dom-overlay root has to live outside the React tree for Variant Launch's clip to
+    // composite it: https://launch.variant3d.com/docs/troubleshooting/dom-overlay
+    // TODO: likely unnecessary under the self-hosted clip, which puts the camera behind a
+    // transparent WKWebView and so composites the whole page already. Verify on device before
+    // dropping it — see MIGRATION_wem-technology_ios-webxr.md, Phase 5.
     const renderDomOverlay = useCallback(
         (xrMode: XRSessionMode) => {
             // Create xr dom-overlay root if not exists yet
             if (!domOverlayRef.current) {
                 domOverlayRef.current = document.createElement("div");
-                domOverlayRef.current.id = "xr-dom-overlay-root-variant-launch";
+                domOverlayRef.current.id = "xr-dom-overlay-root-launcher";
                 domOverlayRef.current.classList.add(
                     "h-full",
                     "w-full",
@@ -299,133 +326,22 @@ function XRButton({
     mode: XRSessionMode;
     enterXR: (mode: XRSessionMode) => void;
 }) {
-    const [isSessionSupported, setIsSessionSupported] = useState(false);
-    const [message, setMessage] = useState("");
-    const modeTitle = mode.replace("immersive-", "").toUpperCase();
-
-    //--------------------------------------------------------------------------
-    // Dynamic script loading using the DOM
-    function loadScript(url: string) {
-        return new Promise<Event | void>((resolve, reject) => {
-            let script: HTMLScriptElement | null = document.querySelector(
-                `script[src="${url}"]`,
-            );
-            if (script) {
-                resolve();
-                return;
-            }
-            script = document.createElement("script");
-            script.src = url;
-            script.async = true;
-            script.onload = event => resolve(event);
-            script.onerror = event => reject(event);
-            document.body.appendChild(script);
-        });
-    }
-
-    //--------------------------------------------------------------------------
-    // Variant launch sdk initialization event listener.
-    const onVlaunchInitialized = useCallback(
-        (event: Event) => {
-            const customEvent = event as CustomEvent;
-            console.debug("vlaunch-initialized:", customEvent);
-
-            if (customEvent.detail?.launchRequired) {
-                // Load Variant Launch URL to reload the sample inside Variant
-                // Launch iOS Clip App.
-                // @ts-excpect-error
-                const { VLaunch } = window as unknown as {
-                    VLaunch: { getLaunchUrl: (url: string) => string };
-                };
-                const url = new URL(window.location.href);
-                window.location.href = VLaunch.getLaunchUrl(url.toString());
-                return;
-            }
-            XRLivelink.isSessionSupported(mode).then(async supported => {
-                setMessage(
-                    supported
-                        ? `Enter ${modeTitle}`
-                        : `${modeTitle} is not supported.`,
-                );
-                setIsSessionSupported(supported);
-            });
-        },
-        [mode, modeTitle],
-    );
-
-    //--------------------------------------------------------------------------
-    useEffect(() => {
-        if (!window.isSecureContext) {
-            setMessage("WebXR requires a secure context (https).");
-            return;
-        }
-        XRLivelink.isSessionSupported(mode).then(async supported => {
-            if (supported) {
-                // Not on an iOS device requiring Variant Launch SDK for WebXR,
-                // Or variant Launch SDK is already loaded.
-                setMessage(`Enter ${modeTitle}`);
-                setIsSessionSupported(true);
-                return;
-            }
-
-            const { VLaunch } = window as unknown as { VLaunch: object };
-            if (VLaunch) {
-                // Variant Launch SDK is already loaded and WebXR not supported.
-                setMessage(`${modeTitle} is not supported.`);
-                return;
-            }
-
-            if (!variant_launch_sdk_key) {
-                // Missing Variant Launch SDK in .env file
-                setMessage(
-                    "Error: launch.variant3d.com SDK key is not defined",
-                );
-                return;
-            }
-
-            // Load Variant Launch SDK
-            loadScript(variant_launch_sdk_url)
-                .then(() => {
-                    const { VLaunch } = window as unknown as {
-                        VLaunch: object;
-                    };
-                    if (!VLaunch) {
-                        // TODO: something is not clear here, there is a first call to `loadScript` where `VLaunch` is
-                        // not defiend, but it's defined on a further call. This works but may be by chance.
-                        return;
-                        // throw new Error(
-                        //     "Failed to load launch.variant3d.com SDK, verify SDK key.",
-                        // );
-                    }
-                    window.addEventListener(
-                        "vlaunch-initialized",
-                        onVlaunchInitialized,
-                        { once: true },
-                    );
-                })
-                .catch(error => {
-                    setMessage(error.toString());
-                    throw error;
-                });
-        });
-
-        return () => {
-            window.removeEventListener(
-                "vlaunch-initialized",
-                onVlaunchInitialized,
-            );
-        };
-    }, [mode, modeTitle, onVlaunchInitialized]);
+    // Everything platform-specific lives in the launcher: entering the session here, or bouncing
+    // through an App Clip on iOS and coming back, are the same button as far as this is concerned.
+    const { canLaunch, message, launch } = useXRLaunch({
+        mode,
+        launcher: xr_launcher,
+        onEnter: enterXR,
+    });
 
     return (
         <button
             className={
-                "button button-primary" +
-                (!isSessionSupported ? " opacity-50" : "")
+                "button button-primary" + (!canLaunch ? " opacity-50" : "")
             }
-            onClick={() => enterXR(mode)}
-            disabled={!isSessionSupported}
-            style={isSessionSupported ? {} : { cursor: "not-allowed" }}
+            onClick={launch}
+            disabled={!canLaunch}
+            style={canLaunch ? {} : { cursor: "not-allowed" }}
             title={message}
         >
             {message}

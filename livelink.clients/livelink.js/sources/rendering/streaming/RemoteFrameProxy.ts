@@ -113,9 +113,15 @@ export class RemoteFrameProxy implements DecodedFrameConsumer {
     }
 
     /**
-     *
+     * Skips drawing (not decoding) frames still at a stale size, so a pending resize/viewport
+     * change can't flash a mismatched composite — the last good frame just stays on screen.
      */
     consumeDecodedFrame({ decoded_frame }: { decoded_frame: DecodedFrame }): void {
+        const [width, height] = decoded_frame.dimensions_in_pixels;
+        if (width !== this.#dimensions[0] || height !== this.#dimensions[1]) {
+            return;
+        }
+
         for (const surface of this.#surfaces) {
             surface.drawFrame({ decoded_frame });
         }

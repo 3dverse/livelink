@@ -3,7 +3,7 @@ import { CopyIcon } from "../icons/CopyIcon";
 import { CheckIcon } from "../icons/CheckIcon";
 
 //------------------------------------------------------------------------------
-export const CopyCodeButton = ({ code }: { code: string }) => {
+export const CopyCodeButton = ({ code, labelClassName }: { code: string; labelClassName?: string }) => {
     const [hasCopied, setCopied] = useState<boolean>(false);
 
     const onCopy = () => {
@@ -47,14 +47,14 @@ export const CopyCodeButton = ({ code }: { code: string }) => {
     //--------------------------------------------------------------------------
     return (
         <button
-            className={`relative button button-outline button-xs overflow-hidden transition-colors ${hasCopied ? "text-positive" : ""}`}
+            className={`relative button button-outline button-xs gap-2 overflow-hidden transition-colors ${hasCopied ? "text-positive" : ""}`}
             onClick={onCopy}
         >
             {hasCopied && (
                 <CheckIcon className="absolute left-2 w-3 h-3 text-positive bg-ground animate-blur-in [--animation-duration:220ms] [animation-delay:20ms] opacity-0" />
             )}
-            <CopyIcon className={`w-3 h-3 mr-2 ${hasCopied ? "animate-blur-out [--animation-duration:220ms]" : ""}`} />
-            Copy
+            <CopyIcon className={`w-3 h-3 ${hasCopied ? "animate-blur-out [--animation-duration:220ms]" : ""}`} />
+            <span className={labelClassName}>Copy</span>
         </button>
     );
 };

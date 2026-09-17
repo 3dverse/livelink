@@ -12,7 +12,13 @@
     border-radius: 9999px;
     border: 1px solid;
 
-    transition: border-color 0.22s;
+    outline-offset: 0;
+    outline-color: transparent;
+
+    transition-property: border-color, outline-color, outline-offset;
+    transition-duration: 1s;
+    transition-timing-function: ease-in-out;
+
     cursor: pointer;
 
     @media (min-width: 50em) {

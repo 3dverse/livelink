@@ -17,7 +17,7 @@ export const InactivityWarningBadge = ({
     animatedPathRef: RefObject<SVGPathElement | null>;
     animatedOverlayRef: RefObject<HTMLDivElement | null>;
 }) => {
-    //------------------------------------------------------------------------------
+    //--------------------------------------------------------------------------
     useEffect(() => {
         window.addEventListener("click", onActivityReset);
         window.addEventListener("mousemove", onActivityReset);
@@ -31,7 +31,7 @@ export const InactivityWarningBadge = ({
         };
     }, [onActivityReset]);
 
-    //------------------------------------------------------------------------------
+    //--------------------------------------------------------------------------
     return (
         <>
             <div ref={animatedOverlayRef} className={styles.overlay} />

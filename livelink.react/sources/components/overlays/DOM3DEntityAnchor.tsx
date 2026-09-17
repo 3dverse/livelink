@@ -6,6 +6,7 @@ import type { Entity, Vec3 } from "@3dverse/livelink";
 
 //------------------------------------------------------------------------------
 import { AnchorOffset, DOM3DAnchor } from "./DOM3DAnchor";
+import { PointProjection } from "../../overlays/DOM3DElementProjection";
 
 /**
  * @deprecated Use `DOM3DEntityAnchor` instead.
@@ -34,13 +35,17 @@ export function DOM3DEntityAnchor({
     entity,
     scaleFactor,
     offset,
+    onProjectionChange,
     children,
 }: PropsWithChildren<{
     entity: Entity | null;
     offset?: AnchorOffset;
     scaleFactor?: number;
+    onProjectionChange?: (projection: Readonly<PointProjection>) => void;
 }>): JSX.Element | null {
-    const [worldPosition, setWorldPosition] = useState<Vec3>(entity ? entity.global_transform.position : [0, 0, 0]);
+    const [worldPosition, setWorldPosition] = useState<Vec3>(
+        entity ? ([...entity.global_transform.position] as Vec3) : [0, 0, 0],
+    );
     const [isVisible, setIsVisible] = useState(entity ? entity.is_visible : false);
 
     useEffect(() => {
@@ -48,18 +53,23 @@ export function DOM3DEntityAnchor({
             return;
         }
 
-        const updatePosition = (): void => setWorldPosition(entity.global_transform.position);
+        // Cloned: the array reference never changes (mutated in place), so React would bail out.
+        const updatePosition = (): void => setWorldPosition([...entity.global_transform.position] as Vec3);
         const updateVisibility = (): void => setIsVisible(entity.is_visible);
 
-        // Initialize states
         updatePosition();
         updateVisibility();
 
-        entity.addEventListener("on-entity-updated", updatePosition);
-        entity.addEventListener("on-entity-visibility-changed", updateVisibility);
+        // global_transform depends on every ancestor's transform too.
+        const abortController = new AbortController();
+        for (let node: Entity | null = entity; node; node = node.parent) {
+            node.addEventListener("on-entity-updated", updatePosition, { signal: abortController.signal });
+        }
+        entity.addEventListener("on-entity-visibility-changed", updateVisibility, {
+            signal: abortController.signal,
+        });
         return (): void => {
-            entity.removeEventListener("on-entity-updated", updatePosition);
-            entity.removeEventListener("on-entity-visibility-changed", updateVisibility);
+            abortController.abort();
         };
     }, [entity]);
 
@@ -68,7 +78,12 @@ export function DOM3DEntityAnchor({
     }
 
     return (
-        <DOM3DAnchor worldPosition={worldPosition} offset={offset} scaleFactor={scaleFactor}>
+        <DOM3DAnchor
+            worldPosition={worldPosition}
+            offset={offset}
+            scaleFactor={scaleFactor}
+            onProjectionChange={onProjectionChange}
+        >
             {children}
         </DOM3DAnchor>
     );

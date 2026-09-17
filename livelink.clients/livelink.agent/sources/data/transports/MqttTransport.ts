@@ -1,5 +1,5 @@
 //------------------------------------------------------------------------------
-import type { MqttClient } from "mqtt";
+import type { IClientOptions, MqttClient } from "mqtt";
 
 //------------------------------------------------------------------------------
 import type { EventSink, Transport } from "../Transport";
@@ -22,8 +22,16 @@ type MqttModule = {
 export type MqttTransportConfig = {
     /**
      * URL of the MQTT broker, e.g. `mqtt://user:pass@broker.example.com:1883`.
+     *
+     * Optional when `options` fully describes the connection (e.g. via its `host`/`port` or
+     * `servers` fields), matching the underlying `mqtt` module's own `connect(options)` overload.
      */
-    broker_url: string;
+    broker_url?: string;
+
+    /**
+     * MQTT client options passed through to the underlying `mqtt` module's `connect()`.
+     */
+    options?: IClientOptions;
 
     /**
      * Topics to subscribe to. MQTT wildcards (`+`, `#`) are supported.
@@ -71,8 +79,9 @@ export class MqttTransport implements Transport {
      */
     async start(): Promise<void> {
         const url = this.#config.broker_url;
-        if (!url) {
-            throw new Error("MQTT broker_url is required in transport config");
+        const options = this.#config.options;
+        if (!url && !options) {
+            throw new Error("MQTT transport config requires broker_url and/or options");
         }
 
         let mqtt_module: MqttModule;
@@ -93,10 +102,14 @@ export class MqttTransport implements Transport {
             throw new Error('The optional dependency "mqtt" resolved to a module without a `connect` export.');
         }
 
-        this.#client = connect(url);
-        console.log(
-            `[mqtt-transport] Connecting to MQTT broker at ${url.replace(/\/\/([^@]+)@/, "//<credentials>@")}...`,
-        );
+        this.#client = url ? connect(url, options) : connect(options!);
+        if (url) {
+            console.log(
+                `[mqtt-transport] Connecting to MQTT broker at ${url.replace(/\/\/([^@]+)@/, "//<credentials>@")}...`,
+            );
+        } else {
+            console.log("[mqtt-transport] Connecting to MQTT broker via options...");
+        }
 
         this.#client.on("connect", () => {
             console.log(`[mqtt-transport] Connected`);
@@ -106,6 +119,33 @@ export class MqttTransport implements Transport {
         });
         this.#client.on("message", (topic: string, payload: Buffer, packet?: { qos?: number; retain?: boolean }) => {
             void this.#handleMessage(topic, payload.toString(), packet);
+        });
+
+        this.#client.on("error", err => {
+            console.error("========================================");
+            console.error("[mqtt-transport] >>> ERROR");
+            console.error("========================================");
+            console.error("Message:", err.message);
+            console.error("Cause:", err.cause);
+            console.error("Name:", err.name);
+            console.error("Stack:");
+            console.error(err.stack);
+        });
+
+        this.#client.on("close", () => {
+            console.log("[mqtt-transport] >>> CONNECTION CLOSED");
+        });
+
+        this.#client.on("offline", () => {
+            console.log("[mqtt-transport] >>> CLIENT OFFLINE");
+        });
+
+        this.#client.on("end", () => {
+            console.log("[mqtt-transport] >>> CLIENT END");
+        });
+
+        this.#client.on("reconnect", () => {
+            console.log("[mqtt-transport] >>> RECONNECTING");
         });
     }
 

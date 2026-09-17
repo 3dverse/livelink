@@ -92,7 +92,7 @@ export const CameraSpeedSlider = ({
         <div
             className={`${styles.container} ${orientation === "horizontal" ? styles.horizontal : ""} livelink-react-ui-component`}
         >
-            <div className={`${styles.growContainer}`}>
+            <div className={styles.growContainer}>
                 <div className={styles.headerRow}>
                     <Icon as={RiTriangleFill} className={styles.icon} />
                     <p className={styles.unit}>km/h</p>
@@ -105,9 +105,10 @@ export const CameraSpeedSlider = ({
                         loop={false}
                         direction={orientation === "vertical" ? "vertical" : "horizontal"}
                         initialSlide={initialSlide}
+                        touchEventsTarget="container"
                         grabCursor
                         mousewheel
-                        slidesPerView={12}
+                        slidesPerView="auto"
                         freeMode
                         centeredSlides
                         slideToClickedSlide

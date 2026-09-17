@@ -187,23 +187,21 @@ version:update-version:
       BASE_REF="${CI_COMMIT_BEFORE_SHA:-}"
       if [ -n "$BASE_REF" ] && git rev-parse --verify "$BASE_REF" >/dev/null 2>&1; then
         if git diff --name-only "$BASE_REF" HEAD | grep -q '^livelink.clients/livelink.base/'; then
-          printf '%s\n' \
-            '---' \
-            "'@3dverse/livelink': patch" \
-            "'@3dverse/livelink-agent': patch" \
-            '---' \
-            '' \
-            'Rebuild and release after livelink.base changes.' > .changeset/base-release.md
+          CHANGE_SUMMARY="$(git log --format='- %s' "$BASE_REF"..HEAD -- livelink.clients/livelink.base | head -n 20)"
+          {
+            printf '%s\n' '---' "'@3dverse/livelink': patch" "'@3dverse/livelink-agent': patch" '---' '' \
+              'This release includes the following changes from livelink.base:' ''
+            printf '%s\n' "$CHANGE_SUMMARY"
+          } > .changeset/base-release.md
           echo "Detected livelink.base change in commit range; created fallback changeset for released packages"
         fi
       elif git diff --name-only HEAD~1 HEAD | grep -q '^livelink.clients/livelink.base/'; then
-        printf '%s\n' \
-          '---' \
-          "'@3dverse/livelink': patch" \
-          "'@3dverse/livelink-agent': patch" \
-          '---' \
-          '' \
-          'Rebuild and release after livelink.base changes.' > .changeset/base-release.md
+        CHANGE_SUMMARY="$(git log --format='- %s' HEAD~1..HEAD -- livelink.clients/livelink.base | head -n 20)"
+        {
+          printf '%s\n' '---' "'@3dverse/livelink': patch" "'@3dverse/livelink-agent': patch" '---' '' \
+            'This release includes the following changes from livelink.base:' ''
+          printf '%s\n' "$CHANGE_SUMMARY"
+        } > .changeset/base-release.md
         echo "Detected livelink.base change in previous commit; created fallback changeset for released packages"
       fi
     - npx @changesets/cli version

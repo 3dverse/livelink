@@ -6,6 +6,13 @@ import { LivelinkReactUIProvider } from "@3dverse/livelink-react-ui";
 import { ActionBar } from "./ActionBar";
 import { CodeBlock } from "./CodeBlock";
 import { ConnectionState, SamplePlayerContext } from "./SamplePlayerContext";
+import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "../common/Resizable";
+import { LOCAL_STORAGE_KEYS, useLocalStorage } from "../../lib/localStorage";
+
+//------------------------------------------------------------------------------
+const MIN_CODE_PANEL_SIZE = 20;
+const MAX_CODE_PANEL_SIZE = 70;
+const DEFAULT_CODE_PANEL_SIZE = 35;
 
 //------------------------------------------------------------------------------
 export function SamplePlayer({
@@ -29,6 +36,18 @@ export function SamplePlayer({
     autoConnect?: boolean;
 }>) {
     const [connectionState, setConnectionState] = useState<ConnectionState>(autoConnect ? "connected" : "disconnected");
+    const [isCodeBlockCollapsed, setIsCodeBlockCollapsed] = useLocalStorage<boolean>(
+        LOCAL_STORAGE_KEYS.IS_CODE_BLOCK_COLLAPSED,
+        false,
+    );
+    const [codePanelSize, setCodePanelSize] = useLocalStorage<number>(
+        LOCAL_STORAGE_KEYS.CODE_BLOCK_PANEL_SIZE,
+        DEFAULT_CODE_PANEL_SIZE,
+    );
+
+    const resizeCodePanel = (deltaPercent: number) => {
+        setCodePanelSize(prev => Math.min(MAX_CODE_PANEL_SIZE, Math.max(MIN_CODE_PANEL_SIZE, prev - deltaPercent)));
+    };
 
     useEffect(() => {
         if (connectionState === "reconnect") {
@@ -76,8 +95,8 @@ export function SamplePlayer({
     //--------------------------------------------------------------------------
     return (
         <SamplePlayerContext.Provider value={{ connectionState, setConnectionState }}>
-            <div className="relative flex flex-col xl:flex-row gap-1 md:gap-3 w-full h-full p-1 md:p-3 xl:pl-0">
-                <div className="grow relative flex gap-3 h-full bg-foreground rounded-xl overflow-clip">
+            <ResizablePanelGroup className="relative flex flex-col xl:flex-row w-full h-full">
+                <ResizablePanel className="relative flex gap-3 h-full bg-foreground rounded-xl overflow-clip p-1 pb-0 lg:p-3 xl:pl-0">
                     <LivelinkReactUIProvider>
                         {useCustomLayout ? (
                             children
@@ -97,15 +116,28 @@ export function SamplePlayer({
                             </>
                         )}
                     </LivelinkReactUIProvider>
-                </div>
+                </ResizablePanel>
 
-                {code && <CodeBlock code={code} title={title} gitPath={gitPath} />}
+                {code && (
+                    <>
+                        {!isCodeBlockCollapsed && <ResizableHandle onResize={resizeCodePanel} />}
+                        <ResizablePanel size={codePanelSize} collapsed={isCodeBlockCollapsed} className="lg:p-4">
+                            <CodeBlock
+                                code={code}
+                                title={title}
+                                gitPath={gitPath}
+                                isCollapsed={isCodeBlockCollapsed}
+                                setIsCollapsed={setIsCodeBlockCollapsed}
+                            />
+                        </ResizablePanel>
+                    </>
+                )}
                 {description && (
                     <article>
                         <Markdown>{description}</Markdown>
                     </article>
                 )}
-            </div>
+            </ResizablePanelGroup>
         </SamplePlayerContext.Provider>
     );
 }

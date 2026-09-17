@@ -4,6 +4,8 @@ export * from "./hooks/useClients";
 export * from "./hooks/useCameraEntity";
 export * from "./hooks/useSceneSettings";
 export * from "./hooks/useSceneInfo";
+export * from "./hooks/useLabelPointsOfView";
+export * from "./hooks/usePointOfViewSnapshots";
 
 export * from "./components/core/Livelink";
 export * from "./components/core/Canvas";

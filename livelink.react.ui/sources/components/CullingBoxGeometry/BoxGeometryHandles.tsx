@@ -58,11 +58,16 @@ export function BoxGeometryHandles({ boxGeometryEntity, edgeColor }: { boxGeomet
             );
         };
 
-        boxGeometryEntity.addEventListener("on-entity-updated", updateHandles);
         updateHandles();
 
+        // global_transform depends on every ancestor's transform too.
+        const abortController = new AbortController();
+        for (let node: Entity | null = boxGeometryEntity; node; node = node.parent) {
+            node.addEventListener("on-entity-updated", updateHandles, { signal: abortController.signal });
+        }
+
         return () => {
-            boxGeometryEntity.removeEventListener("on-entity-updated", updateHandles);
+            abortController.abort();
         };
     }, [boxGeometryEntity, viewport, viewportDomElement]);
 
