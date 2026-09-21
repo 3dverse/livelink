@@ -9,8 +9,8 @@ import { ContextWebGL, OffscreenSurface, Rect } from "@3dverse/livelink";
  */
 export class SnapshotSurface extends OffscreenSurface<"webgl", WebGLContextAttributes> {
     /**
-     * Virtual position, so this surface doesn't overlap the visible one once both are packed
-     * into the shared remote canvas. See {@link getBoundingRect}.
+     * Virtual position, so this surface doesn't overlap the others once packed into the shared
+     * remote canvas. See {@link getBoundingRect}.
      */
     readonly #offset: { left: number; top: number };
 
