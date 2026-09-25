@@ -10,6 +10,7 @@ import { Session, type SessionSelector } from "@livelink.base/session/Session";
 import type { SessionInfo } from "@livelink.base/session/SessionInfo";
 
 //------------------------------------------------------------------------------
+import { disableInactivityTimeout } from "./inactivity";
 import { installGatewaySocketGuard } from "./nodeSocketGuard";
 
 /**
@@ -107,6 +108,10 @@ export class Livelink extends LivelinkBase<Entity, Scene, Session> {
 
         const livelink = new Livelink({ session: session_instance });
         await livelink._connect({ is_headless: true, onProgress });
+
+        // An agent is never "idle" the way a user is; without this the core drops a connection
+        // that has sent nothing but heartbeats for six minutes. See `disableInactivityTimeout`.
+        disableInactivityTimeout(livelink.activity_watcher);
 
         onProgress?.("ready");
         return livelink;

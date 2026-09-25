@@ -14,6 +14,24 @@ type MqttModule = {
 };
 
 /**
+ * MQTT 5 DISCONNECT reason code for "Session taken over": another client connected with the same
+ * client id, and the broker gave it the session (MQTT 5.0 §3.14.2.1).
+ */
+const SESSION_TAKEN_OVER = 0x8e;
+
+/**
+ * How many closes-without-error inside {@link SILENT_CLOSE_WINDOW_MS} are read as a session
+ * takeover on MQTT 3.1.1, which has no packet to say so. Three: one is a network blip, two can be
+ * a broker restart, three with the client reconnecting in between is another client on the same id.
+ */
+const SILENT_CLOSE_BURST = 3;
+
+/**
+ * The window over which silent closes are counted, in milliseconds.
+ */
+const SILENT_CLOSE_WINDOW_MS = 30_000;
+
+/**
  * Configuration of an {@link MqttTransport}.
  *
  * @inline
@@ -67,6 +85,33 @@ export class MqttTransport implements Transport {
     #client: MqttClient | null = null;
 
     /**
+     * Whether an `error` was reported since the last successful connect. A `close` that no error
+     * preceded is the broker — or the network — closing the socket, which is worth saying: the
+     * `mqtt` module reports every teardown it initiates itself (keepalive or connack timeout) as an
+     * error first, so a silent close never comes from this side.
+     */
+    #errored_since_connect = false;
+
+    /**
+     * How many reconnects the client has attempted since `start()`, so a reconnect loop can be
+     * counted from the log.
+     */
+    #reconnect_count = 0;
+
+    /**
+     * When the broker closed the socket without any error having been reported, most recent last,
+     * pruned to {@link SILENT_CLOSE_WINDOW_MS}. Several of these in a short window is the MQTT
+     * 3.1.1 face of a session takeover — another client connecting with this one's `clientId` —
+     * which is the one thing a broker enforces that the module cannot check up front.
+     */
+    #silent_closes: Array<number> = [];
+
+    /**
+     * Whether the takeover warning has been printed since `start()`; it is printed once.
+     */
+    #takeover_warned = false;
+
+    /**
      *
      */
     constructor(config: MqttTransportConfig, sink: EventSink) {
@@ -102,7 +147,13 @@ export class MqttTransport implements Transport {
             throw new Error('The optional dependency "mqtt" resolved to a module without a `connect` export.');
         }
 
-        this.#client = url ? connect(url, options) : connect(options!);
+        // A copy, never the config's own object: `mqtt` keeps the object it is given as the
+        // client's live options and writes the `clientId` it generates into it. Handed through as
+        // is, the config would come back carrying this client's id, and anything else connecting
+        // from the same config — a second transport, a caller's own client — would connect *as*
+        // this client and take its session over.
+        const connect_options = { ...options };
+        this.#client = url ? connect(url, connect_options) : connect(connect_options);
         if (url) {
             console.log(
                 `[mqtt-transport] Connecting to MQTT broker at ${url.replace(/\/\/([^@]+)@/, "//<credentials>@")}...`,
@@ -111,8 +162,14 @@ export class MqttTransport implements Transport {
             console.log("[mqtt-transport] Connecting to MQTT broker via options...");
         }
 
+        this.#errored_since_connect = false;
+        this.#reconnect_count = 0;
+        this.#silent_closes = [];
+        this.#takeover_warned = false;
+
         this.#client.on("connect", () => {
-            console.log(`[mqtt-transport] Connected`);
+            console.log(`[mqtt-transport] Connected as ${this.#clientId()}`);
+            this.#errored_since_connect = false;
             for (const topic of this.#config.topics ?? []) {
                 this.#client!.subscribe(topic);
             }
@@ -122,6 +179,7 @@ export class MqttTransport implements Transport {
         });
 
         this.#client.on("error", err => {
+            this.#errored_since_connect = true;
             console.error("========================================");
             console.error("[mqtt-transport] >>> ERROR");
             console.error("========================================");
@@ -132,8 +190,31 @@ export class MqttTransport implements Transport {
             console.error(err.stack);
         });
 
+        // An MQTT 5 broker says why it is dropping a client in a DISCONNECT packet; on MQTT 3.1.1
+        // it can only close the socket, and this never fires.
+        this.#client.on("disconnect", packet => {
+            const reason = packet.properties?.reasonString;
+            console.error("========================================");
+            console.error("[mqtt-transport] >>> DISCONNECTED BY THE BROKER");
+            console.error("========================================");
+            console.error("Reason code:", packet.reasonCode ?? "(none)");
+            console.error("Reason:", reason ?? "(none given)");
+            if (packet.reasonCode === SESSION_TAKEN_OVER) {
+                console.error(
+                    `Session taken over: another client connected with this client's id "${this.#clientId()}".`,
+                );
+            }
+        });
+
         this.#client.on("close", () => {
-            console.log("[mqtt-transport] >>> CONNECTION CLOSED");
+            if (this.#errored_since_connect) {
+                console.log("[mqtt-transport] >>> CONNECTION CLOSED");
+                return;
+            }
+            console.log(
+                "[mqtt-transport] >>> CONNECTION CLOSED (no error was reported: the broker closed the socket, or the network did)",
+            );
+            this.#noteSilentClose();
         });
 
         this.#client.on("offline", () => {
@@ -145,8 +226,40 @@ export class MqttTransport implements Transport {
         });
 
         this.#client.on("reconnect", () => {
-            console.log("[mqtt-transport] >>> RECONNECTING");
+            this.#reconnect_count++;
+            console.log(`[mqtt-transport] >>> RECONNECTING (attempt ${this.#reconnect_count} since start)`);
         });
+    }
+
+    /**
+     * The id this client presents to the broker — the one `mqtt` generated when the config carried
+     * none — or `"?"` before there is a client.
+     */
+    #clientId(): string {
+        const client_id = (this.#client?.options as { clientId?: unknown } | undefined)?.clientId;
+        return typeof client_id === "string" ? client_id : "?";
+    }
+
+    /**
+     * Records one silent close and, once, warns when they come in a burst. A broker that takes a
+     * session over says so in a DISCONNECT packet on MQTT 5, but on 3.1.1 it can only drop the
+     * socket, and a client dropped without error several times in a row while it keeps
+     * reconnecting is that, far more often than a flaky network.
+     */
+    #noteSilentClose(): void {
+        const now = Date.now();
+        this.#silent_closes.push(now);
+        this.#silent_closes = this.#silent_closes.filter(at => now - at <= SILENT_CLOSE_WINDOW_MS);
+        if (this.#takeover_warned || this.#silent_closes.length < SILENT_CLOSE_BURST) {
+            return;
+        }
+        this.#takeover_warned = true;
+        const span_s = Math.round((now - this.#silent_closes[0]) / 1000);
+        console.warn(
+            `[mqtt-transport] >>> closed by the broker ${this.#silent_closes.length} times in ${span_s} s with no error ` +
+                `reported. Most likely another client is connecting with the same clientId "${this.#clientId()}" ` +
+                `and the broker is handing the session back and forth (session takeover).`,
+        );
     }
 
     /**

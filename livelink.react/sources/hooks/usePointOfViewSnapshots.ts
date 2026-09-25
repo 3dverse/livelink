@@ -2,7 +2,6 @@
 import { useContext, useEffect, useState } from "react";
 
 //------------------------------------------------------------------------------
-import { CanvasContext } from "../components/core/Canvas";
 import { LivelinkContext } from "../components/core/Livelink";
 import { useSceneSettings } from "./useSceneSettings";
 import { PointOfViewSnapshotGrid, type PointOfViewTransform } from "./utils/PointOfViewSnapshotGrid";
@@ -49,9 +48,6 @@ function hashPointOfView(pointOfView: PointOfViewTransform): string {
  * Generic — deals only in plain camera transforms, not labels or entities — so it's reusable for
  * any point-of-view preview feature.
  *
- * Must be used from a component rendered inside a `<Canvas>`, so the offscreen surface can be
- * positioned to avoid overlapping the visible viewport.
- *
  * @param pointsOfView - The points of view to capture, in order.
  * @param options - Options controlling the size and batching of the capture.
  * @param options.tileWidth - The width in pixels of each snapshot. Default 320.
@@ -80,7 +76,6 @@ export function usePointOfViewSnapshots(
     const maxSimultaneousCaptures = Math.max(1, options?.maxSimultaneousCaptures ?? DEFAULT_MAX_SIMULTANEOUS_CAPTURES);
 
     const { instance } = useContext(LivelinkContext);
-    const { renderingSurface } = useContext(CanvasContext);
     const { sceneSettings } = useSceneSettings();
 
     const [images, setImages] = useState<Array<string | null>>([]);
@@ -97,7 +92,7 @@ export function usePointOfViewSnapshots(
 
     //--------------------------------------------------------------------------
     useEffect(() => {
-        if (!instance || !sceneSettings || !renderingSurface || entries.length === 0) {
+        if (!instance || !sceneSettings || entries.length === 0) {
             return;
         }
 
@@ -129,7 +124,6 @@ export function usePointOfViewSnapshots(
             grid = await PointOfViewSnapshotGrid.create({
                 instance,
                 sceneSettings,
-                renderingSurface,
                 cellCount: Math.min(missing.length, maxSimultaneousCaptures),
                 tileWidth,
                 tileHeight,
@@ -174,7 +168,7 @@ export function usePointOfViewSnapshots(
             cancelled = true;
             grid?.cancel();
         };
-    }, [instance, sceneSettings, renderingSurface, hashesKey, tileWidth, tileHeight, maxSimultaneousCaptures]);
+    }, [instance, sceneSettings, hashesKey, tileWidth, tileHeight, maxSimultaneousCaptures]);
 
     return { isPending, images };
 }

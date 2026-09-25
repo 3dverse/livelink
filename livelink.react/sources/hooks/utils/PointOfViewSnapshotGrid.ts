@@ -7,7 +7,6 @@ import {
     type Entity,
     type Livelink,
     type Quat,
-    type RenderingSurfaceBase,
     type SceneSettingsRecord,
     type Vec3,
 } from "@3dverse/livelink";
@@ -128,20 +127,18 @@ export class PointOfViewSnapshotGrid {
     }
 
     /**
-     * Creates a grid of `cellCount` temporary cameras, positioned to not overlap
-     * `renderingSurface` once both are packed into the shared remote canvas.
+     * Creates a grid of `cellCount` temporary cameras, positioned to not overlap any surface
+     * already registered on `instance` once packed into the shared remote canvas.
      */
     static async create({
         instance,
         sceneSettings,
-        renderingSurface,
         cellCount,
         tileWidth,
         tileHeight,
     }: {
         instance: Livelink;
         sceneSettings: Readonly<SceneSettingsRecord>;
-        renderingSurface: RenderingSurfaceBase;
         cellCount: number;
         tileWidth: number;
         tileHeight: number;
@@ -153,7 +150,7 @@ export class PointOfViewSnapshotGrid {
             width: cols * tileWidth,
             height: rows * tileHeight,
             offset: this.#computeGridOffset({
-                renderingSurface,
+                instance,
                 gridWidth: cols * tileWidth,
                 gridHeight: rows * tileHeight,
             }),
@@ -300,26 +297,36 @@ export class PointOfViewSnapshotGrid {
     }
 
     /**
-     * Positions a grid to the right of `renderingSurface` or below it, whichever keeps their
-     * combined area smaller, so the two never overlap once packed into the shared remote canvas.
+     * Positions a grid to the right of the whole remote canvas (the union of every surface
+     * registered on `instance`) or below it, whichever keeps the total area smaller, so the grid
+     * never overlaps any of them.
      */
     static #computeGridOffset({
-        renderingSurface,
+        instance,
         gridWidth,
         gridHeight,
     }: {
-        renderingSurface: RenderingSurfaceBase;
+        instance: Livelink;
         gridWidth: number;
         gridHeight: number;
     }): { left: number; top: number } {
-        const mainRect = renderingSurface.getBoundingRect();
+        const surfaces = new Set(instance.viewports.map(viewport => viewport.rendering_surface));
+        const rects = Array.from(surfaces, surface => surface.getBoundingRect());
+        if (rects.length === 0) {
+            return { left: 0, top: 0 };
+        }
 
-        const rightArea = (mainRect.width + gridWidth) * Math.max(mainRect.height, gridHeight);
-        const belowArea = Math.max(mainRect.width, gridWidth) * (mainRect.height + gridHeight);
+        const left = Math.min(...rects.map(rect => rect.left));
+        const top = Math.min(...rects.map(rect => rect.top));
+        const right = Math.max(...rects.map(rect => rect.right));
+        const bottom = Math.max(...rects.map(rect => rect.bottom));
+        const width = right - left;
+        const height = bottom - top;
 
-        return rightArea <= belowArea
-            ? { left: mainRect.right, top: mainRect.top }
-            : { left: mainRect.left, top: mainRect.bottom };
+        const rightArea = (width + gridWidth) * Math.max(height, gridHeight);
+        const belowArea = Math.max(width, gridWidth) * (height + gridHeight);
+
+        return rightArea <= belowArea ? { left: right, top } : { left, top: bottom };
     }
 
     /**

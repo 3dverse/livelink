@@ -51,9 +51,9 @@ export const ViewCube = ({
             <style>
                 {`
                     .scene {
-                        width: ${size}px;
-                        height: ${size}px;
-                        perspective: ${perspective};
+                        width: var(--viewcube-size);
+                        height: var(--viewcube-size);
+                        perspective: var(--viewcube-perspective);
                     }
 
                     .cube {
@@ -61,13 +61,13 @@ export const ViewCube = ({
                         height: 100%;
                         position: relative;
                         transform-style: preserve-3d;
-                        transform: translateZ(-${size}px);
+                        transform: translateZ(calc(-1 * var(--viewcube-size)));
                     }
 
                     .cube__face {
                         position: absolute;
-                        width: ${size}px;
-                        height: ${size}px;
+                        width: var(--viewcube-size);
+                        height: var(--viewcube-size);
                         cursor: pointer;
                     }
 
@@ -75,17 +75,24 @@ export const ViewCube = ({
                         box-shadow: 0px 0px 31px 10px #381e1e5f;
                     }
 
-                    .cube__face--front  { transform: rotateY(  0deg) translateZ(${Math.floor(size * 0.5)}px); }
-                    .cube__face--right  { transform: rotateY( 90deg) translateZ(${Math.floor(size * 0.5)}px); }
-                    .cube__face--back   { transform: rotateY(180deg) translateZ(${Math.floor(size * 0.5)}px); }
-                    .cube__face--left   { transform: rotateY(-90deg) translateZ(${Math.floor(size * 0.5)}px); }
-                    .cube__face--top    { transform: rotateX( 90deg) translateZ(${Math.floor(size * 0.5)}px); }
-                    .cube__face--bottom { transform: rotateX(-90deg) translateZ(${Math.floor(size * 0.5)}px); }
+                    .cube__face--front  { transform: rotateY(  0deg) translateZ(var(--viewcube-half)); }
+                    .cube__face--right  { transform: rotateY( 90deg) translateZ(var(--viewcube-half)); }
+                    .cube__face--back   { transform: rotateY(180deg) translateZ(var(--viewcube-half)); }
+                    .cube__face--left   { transform: rotateY(-90deg) translateZ(var(--viewcube-half)); }
+                    .cube__face--top    { transform: rotateX( 90deg) translateZ(var(--viewcube-half)); }
+                    .cube__face--bottom { transform: rotateX(-90deg) translateZ(var(--viewcube-half)); }
                 `}
             </style>
             <div
                 className={["scene", "livelink-react-ui-component", className].filter(Boolean).join(" ")}
-                style={style}
+                style={
+                    {
+                        "--viewcube-size": `${size}px`,
+                        "--viewcube-half": `${Math.floor(size * 0.5)}px`,
+                        "--viewcube-perspective": perspective,
+                        ...style,
+                    } as React.CSSProperties
+                }
             >
                 <div
                     className="cube"
