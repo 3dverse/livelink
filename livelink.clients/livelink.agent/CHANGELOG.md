@@ -1,5 +1,12 @@
 # @3dverse/livelink-agent
 
+## 0.5.7
+
+### Patch Changes
+
+- fix(livelink.agent): never let the core's inactivity watcher drop an agent connection
+- fix(livelink.agent): connect MqttTransport with a copy of its options and name a session takeover
+
 ## 0.5.6
 
 ### Patch Changes

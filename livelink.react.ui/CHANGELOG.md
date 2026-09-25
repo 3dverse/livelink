@@ -1,5 +1,13 @@
 # @3dverse/livelink-react-ui
 
+## 0.3.26
+
+### Patch Changes
+
+- fix(livelink.react-ui): view cubes distinct sizes by using a css variable
+- Updated dependencies
+  - @3dverse/livelink-react@0.2.67
+
 ## 0.3.25
 
 ### Patch Changes
