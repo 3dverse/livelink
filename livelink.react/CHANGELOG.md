@@ -1,5 +1,11 @@
 # @3dverse/livelink-react
 
+## 0.2.67
+
+### Patch Changes
+
+- fix(livelink.react): snapshots are no longer dependant of a canvas context
+
 ## 0.2.66
 
 ### Patch Changes
