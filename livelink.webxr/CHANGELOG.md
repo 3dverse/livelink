@@ -1,5 +1,11 @@
 # @3dverse/livelink-webxr
 
+## 0.8.3
+
+### Patch Changes
+
+- fix(livelink.webxr): stop the Variant Launch SDK from redirecting during detection, and expose getLaunchUrl(target)
+
 ## 0.8.2
 
 ### Patch Changes
