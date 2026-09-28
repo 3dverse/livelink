@@ -32,6 +32,11 @@ type VLaunchInitializedDetail = {
  * key and a paid plan, and resolving takes a script load plus an SDK handshake rather than a string
  * concatenation. Prefer the App Clip launcher once it is live.
  *
+ * The two halves are deliberately separate. {@link resolve} answers "can this page enter XR", loads
+ * the SDK to find out, and never navigates — it is safe to call on page load. {@link getLaunchUrl}
+ * is what acts on a `launch-required` verdict, and it takes the page to open, which is how a
+ * consumer carries a session token or a deep link into the clip.
+ *
  * @see {@link https://launch.variant3d.com/}
  */
 export class LXRVariantLaunchLauncher implements LXRLauncher {
@@ -52,12 +57,45 @@ export class LXRVariantLaunchLauncher implements LXRLauncher {
     //--------------------------------------------------------------------------
     /**
      * @param sdkKey Variant Launch project key.
-     * @param sdkUrl Override for the SDK endpoint. The default asks for the redirecting build,
-     * which is what makes `getLaunchUrl` produce a URL that bounces into the clip.
+     * @param sdkUrl Override for the SDK endpoint — a pinned version, or a build that behaves
+     * differently.
+     *
+     * The default leaves `redirect=true` off on purpose. That parameter tells the SDK to send iOS
+     * visitors to the Launch Card as soon as it initializes, which here means navigating away from
+     * inside {@link resolve} — while merely asking whether AR is available, before the user has
+     * asked for anything, and before a consumer has had the chance to decide which page the clip
+     * should open. `getLaunchUrl` does not depend on it. A consumer that does want the redirect on
+     * load can ask for it through this parameter.
      */
     constructor({ sdkKey, sdkUrl }: { sdkKey: string; sdkUrl?: string }) {
         this.#sdk_key = sdkKey;
-        this.#sdk_url = sdkUrl ?? `https://launchar.app/sdk/v1?key=${sdkKey}&redirect=true`;
+        this.#sdk_url = sdkUrl ?? `https://launchar.app/sdk/v1?key=${encodeURIComponent(sdkKey)}`;
+    }
+
+    //--------------------------------------------------------------------------
+    /**
+     * The URL that opens `target_url` inside Variant's clip.
+     *
+     * Exposed separately from {@link resolve} — whose `launch_url` is always this page — because the
+     * clip reloads the app from scratch: anything the current page had resolved, a session token or
+     * the mode to enter, only survives if it travels in the address. Also what a landing page or a
+     * QR code for another page is built from.
+     *
+     * Meaningful only once {@link resolve} has reported `launch-required`, since the URL is the
+     * SDK's to build and that call is what loads the SDK.
+     *
+     * @param target_url Page the clip should load. Defaults to the current location.
+     * @throws If the Variant Launch SDK has not loaded.
+     */
+    public getLaunchUrl(target_url: string = window.location.href): string {
+        const sdk = this.#getSdk();
+        if (!sdk) {
+            throw new Error(
+                "Variant Launch SDK is not available: await resolve() and check for a launch-required state first.",
+            );
+        }
+
+        return sdk.getLaunchUrl(target_url);
     }
 
     //--------------------------------------------------------------------------
@@ -85,14 +123,13 @@ export class LXRVariantLaunchLauncher implements LXRLauncher {
         }
 
         if (detail?.launchRequired) {
-            const { VLaunch } = window as unknown as { VLaunch?: VLaunchSDK };
-            if (!VLaunch) {
+            if (!this.#getSdk()) {
                 return unsupported("needs-launcher", "Variant Launch SDK failed to load.");
             }
 
             return {
                 status: "launch-required",
-                launch_url: VLaunch.getLaunchUrl(window.location.href),
+                launch_url: this.getLaunchUrl(),
                 needs_safari: !isSafariOnIOS(),
             };
         }
@@ -104,6 +141,15 @@ export class LXRVariantLaunchLauncher implements LXRLauncher {
         }
 
         return unsupported("no-webxr");
+    }
+
+    //--------------------------------------------------------------------------
+    /**
+     * The SDK, once its script has installed itself on `window`. Absent until then, and for good if
+     * the script was blocked or the key rejected.
+     */
+    #getSdk(): VLaunchSDK | undefined {
+        return (window as unknown as { VLaunch?: VLaunchSDK }).VLaunch;
     }
 
     //--------------------------------------------------------------------------

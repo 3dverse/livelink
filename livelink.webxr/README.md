@@ -114,6 +114,15 @@ trip. Hosting it requires an `apple-app-site-association` naming the clip, a Sma
 tag on that domain, and the clip's parent app released on the App Store; see
 [MIGRATION_wem-technology_ios-webxr.md](./MIGRATION_wem-technology_ios-webxr.md).
 
+`LXRVariantLaunchLauncher` loads the Variant Launch SDK to reach their clip, and loads it
+**without** `redirect=true`: that parameter sends iOS visitors to the Launch Card as soon as the SDK
+initializes, which would fire from inside `resolve()` — during detection, before the user has asked
+for anything. Pass your own `sdkUrl` if you want that behaviour.
+
+To launch into a page other than the current one, call `launcher.getLaunchUrl(target)` rather than
+using `state.launch_url`: the clip reloads the app from scratch, so a session token or the mode to
+enter only survives if it travels in the address.
+
 ### What it cannot do
 
 App Clip cards render in **Safari only**. Chrome, Firefox and every in-app browser on iOS load the
