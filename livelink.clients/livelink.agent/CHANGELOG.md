@@ -1,5 +1,16 @@
 # @3dverse/livelink-agent
 
+## 0.5.8
+
+### Patch Changes
+
+- This release includes the following changes from livelink.base:
+
+  - feat(livelink.js): expose update loop rates updates_per_second & broadcasts_per_second, so the sdk user can control those
+
+- feat(livelink.js): expose update loop rates updates_per_second & broadcasts_per_second, so the sdk user can control those
+- chore(livelink.agent): snake case renaming, ticks_per_second, updates_per_second, broadcasts_per_second
+
 ## 0.5.7
 
 ### Patch Changes

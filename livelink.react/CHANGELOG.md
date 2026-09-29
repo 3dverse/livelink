@@ -1,5 +1,14 @@
 # @3dverse/livelink-react
 
+## 0.2.68
+
+### Patch Changes
+
+- feat(livelink.js): expose update loop rates updates_per_second & broadcasts_per_second, so the sdk user can control those
+- Updated dependencies
+- Updated dependencies
+  - @3dverse/livelink@0.8.69
+
 ## 0.2.67
 
 ### Patch Changes

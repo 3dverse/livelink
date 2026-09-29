@@ -1,5 +1,15 @@
 # @3dverse/livelink
 
+## 0.8.69
+
+### Patch Changes
+
+- This release includes the following changes from livelink.base:
+
+  - feat(livelink.js): expose update loop rates updates_per_second & broadcasts_per_second, so the sdk user can control those
+
+- feat(livelink.js): expose update loop rates updates_per_second & broadcasts_per_second, so the sdk user can control those
+
 ## 0.8.68
 
 ### Patch Changes
