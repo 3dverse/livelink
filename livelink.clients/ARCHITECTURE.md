@@ -170,8 +170,8 @@ Three invariants keep the browser transform proxies coherent:
 user code ──► Entity.updateComponent / proxy mutation
                     │  (dirty set + EntityRegistry dirty list)
                     ▼
-   LivelinkBase update loop (updatesPerSecond) ──► core.updateEntities(persist: false)
-   LivelinkBase broadcast loop (broadcastsPerSecond) ──► core.updateEntities(persist: true)
+   LivelinkBase update loop (updates_per_second) ──► core.updateEntities(persist: false)
+   LivelinkBase broadcast loop (broadcasts_per_second) ──► core.updateEntities(persist: true)
 
 server ──► core events (on-entities-updated, on-client-connected, …)
                     │  (installed by LivelinkBase._installCoreEventListeners)

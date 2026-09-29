@@ -204,7 +204,7 @@ function agentConfig({ token }: { token: string }): AgentConfig {
         // flushes goes out. Each cell here publishes every 25 ms, faster than that
         // default — it would send 3 samples out of every 4. 80 gives each one a
         // flush of its own, with room to spare for a late message.
-        headless_client: { updatesPerSecond: 80 },
+        headless_client: { updates_per_second: 80 },
     };
 }
 

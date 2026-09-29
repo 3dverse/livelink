@@ -49,6 +49,34 @@ export type LivelinkConnectionStage =
 export type LivelinkProgressCallback = (stage: LivelinkConnectionStage) => void;
 
 /**
+ * The rates at which a client flushes its pending changes to the server.
+ *
+ * Both must be a finite number in the `(0, 125]` range so that the resulting interval is at least 8 milliseconds.
+ *
+ * @category Main
+ */
+export type UpdateLoopRates = {
+    /**
+     * How many times per second the entity and scene setting changes are sent to the server.
+     * This is the rate at which own edits become visible to everyone, so it bounds
+     * the sample rate of anything animated.
+     *
+     * @defaultValue 30
+     */
+    updates_per_second?: number;
+
+    /**
+     * @deprecated
+     *
+     * How many times per second the transient, non-persisted state of this client — broadcast
+     * entities, broadcast scene settings — is sent to the server.
+     *
+     * @defaultValue 1
+     */
+    broadcasts_per_second?: number;
+};
+
+/**
  * Shared implementation of a livelink client facade.
  *
  * Owns the connection to the core, the wiring of the core event listeners to the session and the
@@ -255,19 +283,20 @@ export abstract class LivelinkBase<
      * Safe to call again: any loop already running is stopped first, so a second start never orphans
      * the previous intervals.
      *
+     * Does nothing once the instance is disconnected: `disconnect()` early-returns on every later
+     * call, so intervals installed after it would never be cleared again.
+     *
      * @throws RangeError if a rate falls outside the accepted range.
      */
-    protected _startUpdateLoop({
-        updatesPerSecond = 30,
-        broadcastsPerSecond = 1,
-    }: {
-        updatesPerSecond?: number;
-        broadcastsPerSecond?: number;
-    } = {}): void {
-        const update_interval_in_ms = computeIntervalInMs({ name: "updatesPerSecond", rate: updatesPerSecond });
+    protected _startUpdateLoop({ updates_per_second = 30, broadcasts_per_second = 1 }: UpdateLoopRates = {}): void {
+        if (this.#disconnected) {
+            return;
+        }
+
+        const update_interval_in_ms = computeIntervalInMs({ name: "updates_per_second", rate: updates_per_second });
         const broadcast_interval_in_ms = computeIntervalInMs({
-            name: "broadcastsPerSecond",
-            rate: broadcastsPerSecond,
+            name: "broadcasts_per_second",
+            rate: broadcasts_per_second,
         });
 
         // Clear any loop already running before installing the new intervals — an orphaned interval

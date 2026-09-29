@@ -6,7 +6,7 @@ export type * from "@3dverse/livelink.core";
 // the public surface — a base flavour published next to the browser one it exists to back would be
 // pure noise in the documentation.
 export * from "@livelink.base/EditionEvent";
-export type { LivelinkConnectionStage, LivelinkProgressCallback } from "@livelink.base/LivelinkBase";
+export type { LivelinkConnectionStage, LivelinkProgressCallback, UpdateLoopRates } from "@livelink.base/LivelinkBase";
 export * from "@livelink.base/session/ClientInfo";
 export * from "@livelink.base/session/SessionInfo";
 export * from "@livelink.base/scene/EntityRegistry";

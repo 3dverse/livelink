@@ -127,7 +127,7 @@ Nothing expires a motion on a timer, so a stream that dies leaves the scene movi
 > return `continuous(() => null)`. A plain component patch does not stop one either — patch and motion
 > are independent writes, so on a shared component the tick wins.
 
-`SceneIngestion` runs the clock (`ticksPerSecond`, twice the client's flush rate by default, `0` to
+`SceneIngestion` runs the clock (`ticks_per_second`, twice the client's flush rate by default, `0` to
 switch it off), redundant writes are still deduplicated so an entity holding still costs nothing, and
 ticks are **not** counted as events. Driving the pipeline yourself, `pipeline.tick(elapsed_seconds)` owns
 no timer, so a motion replays exactly from a test:

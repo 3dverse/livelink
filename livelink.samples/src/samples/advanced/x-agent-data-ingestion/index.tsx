@@ -838,15 +838,15 @@ function DataIngestion({
                 // so the default only just keeps up — 60 leaves room, and still
                 // covers the 2× replay. (At 5× the samples arrive faster than any
                 // flush rate can follow, and the motion simply gets coarser.)
-                updatesPerSecond: 60,
+                updates_per_second: 60,
                 // The other loop: the one that persists `auto_broadcast` entities
                 // so other clients see them. It defaults to 1, which is why a
                 // label driven this way lurches once a second. Only the companion
                 // entities carrying the labels are on that list — the pipeline
                 // sets `auto_broadcast = false` on everything it drives, so the
                 // vehicles never join it. It cannot usefully go above
-                // `updatesPerSecond`, which is the loop that fills the list.
-                broadcastsPerSecond: 20,
+                // `updates_per_second`, which is the loop that fills the list.
+                broadcasts_per_second: 20,
             },
 
             // Leave session 1 minute after all viewers disconnect.

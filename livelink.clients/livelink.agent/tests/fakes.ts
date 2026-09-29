@@ -165,11 +165,11 @@ export class FakeAgent {
 
     /**
      * The agent's config, as the real one exposes it — `SceneIngestion` reads
-     * `headless_client.updatesPerSecond` off it to pick its default tick rate.
+     * `headless_client.updates_per_second` off it to pick its default tick rate.
      */
-    readonly config: { headless_client?: { updatesPerSecond?: number } };
+    readonly config: { headless_client?: { updates_per_second?: number } };
 
-    constructor(config: { headless_client?: { updatesPerSecond?: number } } = {}) {
+    constructor(config: { headless_client?: { updates_per_second?: number } } = {}) {
         this.config = config;
     }
 
