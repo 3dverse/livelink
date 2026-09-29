@@ -3,7 +3,12 @@ import React, { createContext, JSX, PropsWithChildren, useCallback, useEffect, u
 
 //------------------------------------------------------------------------------
 import * as Livelink from "@3dverse/livelink";
-import { Livelink as LivelinkInstance, type UUID, type LivelinkConnectionStage } from "@3dverse/livelink";
+import {
+    Livelink as LivelinkInstance,
+    type UUID,
+    type LivelinkConnectionStage,
+    type UpdateLoopRates,
+} from "@3dverse/livelink";
 import { StrictUnion } from "../../utils";
 
 /**
@@ -122,6 +127,13 @@ export type LivelinkConnectParameters = {
     ConnectionErrorPanel?: React.ComponentType<{ error: string }>;
 
     /**
+     * Optional rates at which the changes made by this client are flushed to the server.
+     *
+     * To change it live, use `restartUpdateLoop` on the instance held by {@link LivelinkContext}.
+     */
+    initialUpdateLoopRates?: UpdateLoopRates;
+
+    /**
      * @internal
      * Additional session options.
      */
@@ -156,6 +168,9 @@ type ConnectionPromisesMap = Map<string, Promise<Livelink.Livelink>>;
  * @param params.InactivityWarningPanel - Optional React node displayed when an inactivity timeout occurs.
  * @param params.ConnectionErrorPanel - Optional React node displayed when the connection is lost.
  * @param params.autoJoinExisting - Specifies the mode for opening the session; defaults to `"join-or-start"`.
+ * @param params.initialUpdateLoopRates - Optional rates at which this client flushes its changes to
+ * the server. Applied once when the update loop starts; call `restartUpdateLoop` on the instance to
+ * change them on a live session.
  *
  * @category Components
  */
@@ -171,6 +186,7 @@ export function LivelinkProvider({
     clientType,
     children,
     sessionOptions,
+    initialUpdateLoopRates,
 }: PropsWithChildren<LivelinkConnectParameters>): JSX.Element {
     const [instance, setInstance] = useState<LivelinkInstance | null>(null);
     const [isConnecting, setIsConnecting] = useState(true);
@@ -283,7 +299,7 @@ export function LivelinkProvider({
                 setInstance(instance);
                 instance.TO_REMOVE__setReadyCallback(async () => {
                     setConnectionStage("ready");
-                    instance.startStreaming();
+                    instance.startStreaming(initialUpdateLoopRates);
                     setIsConnecting(false);
                 });
 

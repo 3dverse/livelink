@@ -1,7 +1,7 @@
 //------------------------------------------------------------------------------
 import type { Enums, Commands, Events, LivelinkCore, Queries, UUID, Vec2i } from "@3dverse/livelink.core";
 import { DynamicLoader } from "@3dverse/livelink.core";
-import { LivelinkBase, type LivelinkProgressCallback } from "@livelink.base/LivelinkBase";
+import { LivelinkBase, type LivelinkProgressCallback, type UpdateLoopRates } from "@livelink.base/LivelinkBase";
 import type { SessionSelector } from "@livelink.base/session/Session";
 import type { SessionInfo } from "@livelink.base/session/SessionInfo";
 
@@ -409,8 +409,12 @@ export class Livelink extends LivelinkBase<Entity, Scene, Session> {
 
     /**
      * Start streaming the viewports from the server.
+     *
+     * @param rates The rates at which the changes are flushed to the server.
+     *
+     * @throws RangeError if a rate falls outside the `(0, 125]` range.
      */
-    startStreaming(): void {
+    startStreaming(rates: UpdateLoopRates = {}): void {
         if (!this.isConfigured()) {
             throw new Error("The Livelink instance is not configured yet");
         }
@@ -426,7 +430,22 @@ export class Livelink extends LivelinkBase<Entity, Scene, Session> {
             this._core.resume();
         }
 
-        this._startUpdateLoop();
+        this._startUpdateLoop(rates);
+    }
+
+    /**
+     * Restart the loops flushing changes to the server at new rates.
+     *
+     * Does nothing once the instance is disconnected.
+     *
+     * @param rates The rates at which the changes are flushed to the server. Both are required: an
+     * omitted rate would fall back to its default rather than to the value in use, so passing one
+     * alone would silently retime the other.
+     *
+     * @throws RangeError if a rate falls outside the `(0, 125]` range.
+     */
+    restartUpdateLoop(rates: Required<UpdateLoopRates>): void {
+        this._startUpdateLoop(rates);
     }
 
     /**
@@ -442,9 +461,13 @@ export class Livelink extends LivelinkBase<Entity, Scene, Session> {
 
     /**
      * @experimental
+     *
+     * @param rates The rates at which the changes are flushed to the server.
+     *
+     * @throws RangeError if a rate falls outside the `(0, 125]` range.
      */
-    async startHeadlessClient(): Promise<void> {
-        this._startUpdateLoop();
+    async startHeadlessClient(rates: UpdateLoopRates = {}): Promise<void> {
+        this._startUpdateLoop(rates);
     }
 
     /**

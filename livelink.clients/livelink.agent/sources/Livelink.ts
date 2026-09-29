@@ -3,7 +3,7 @@ import type { LivelinkCore, UUID } from "@3dverse/livelink.core";
 import { DynamicLoader } from "@3dverse/livelink.core";
 
 //------------------------------------------------------------------------------
-import { LivelinkBase, type LivelinkProgressCallback } from "@livelink.base/LivelinkBase";
+import { LivelinkBase, type LivelinkProgressCallback, type UpdateLoopRates } from "@livelink.base/LivelinkBase";
 import type { Entity } from "@livelink.base/scene/Entity";
 import { Scene } from "@livelink.base/scene/Scene";
 import { Session, type SessionSelector } from "@livelink.base/session/Session";
@@ -132,13 +132,7 @@ export class Livelink extends LivelinkBase<Entity, Scene, Session> {
      *
      * @throws RangeError if a rate falls outside the accepted range.
      */
-    async startUpdateLoop({
-        updatesPerSecond,
-        broadcastsPerSecond,
-    }: {
-        updatesPerSecond?: number;
-        broadcastsPerSecond?: number;
-    } = {}): Promise<void> {
+    async startUpdateLoop({ updatesPerSecond, broadcastsPerSecond }: UpdateLoopRates = {}): Promise<void> {
         this._startUpdateLoop({ updatesPerSecond, broadcastsPerSecond });
     }
 }
