@@ -251,12 +251,12 @@ await pipeline.ingest(event); // "turning at 90 rpm"
 await pipeline.tick(0.5); // half a second later, wherever that puts it
 ```
 
-`SceneIngestion` owns the interval (`ticksPerSecond`, `0` to switch it off), started on the first ready
-session and stopped when the last one leaves. The default is **twice** the client's `updatesPerSecond`
+`SceneIngestion` owns the interval (`ticks_per_second`, `0` to switch it off), started on the first ready
+session and stopped when the last one leaves. The default is **twice** the client's `updates_per_second`
 (60 when none is declared): the two timers free-run and beat against each other, so ticking at exactly
 the flush rate lets a sample's age at flush time wander across a whole window and the motion jitters;
 twice as often bounds that to half a window. The rate goes through the same `computeIntervalInMs` guard
-as `updatesPerSecond`, so `NaN` — what `Number(process.env.X)` yields for a bad value, and what
+as `updates_per_second`, so `NaN` — what `Number(process.env.X)` yields for a bad value, and what
 `setInterval` turns into a busy loop — cannot reach a timer. Three properties a bare `setInterval` over
 `Date.now()` would not have:
 
@@ -341,7 +341,7 @@ resolutions against that scene (single in-flight production, warn-once on unreso
 ### The flush rate has to outpace the stream
 
 An applied write is not a sent write. `updateComponent` only flags the entity dirty; the client
-flushes whatever is dirty on a fixed timer — `headless_client.updatesPerSecond`, **30 by default**
+flushes whatever is dirty on a fixed timer — `headless_client.updates_per_second`, **30 by default**
 (capped at 125, an 8 ms interval). A stream arriving at the same rate as that timer is the bad case:
 the two free-running timers alias, so some flushes carry two samples — the first is overwritten in
 the dirty entity and never leaves the process — and some carry none. Every event is ingested,

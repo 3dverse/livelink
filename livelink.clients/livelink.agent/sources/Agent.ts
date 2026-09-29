@@ -12,7 +12,7 @@ import {
     SessionLeftEvent,
     SessionReadyEvent,
 } from "./AgentEvents";
-import type { LivelinkConnectionStage, LivelinkProgressCallback } from "@livelink.base/LivelinkBase";
+import type { LivelinkConnectionStage, LivelinkProgressCallback, UpdateLoopRates } from "@livelink.base/LivelinkBase";
 import { Client } from "@livelink.base/session/Client";
 import { Scene } from "@livelink.base/scene/Scene";
 import { Session, type SessionSelector } from "@livelink.base/session/Session";
@@ -137,10 +137,7 @@ export type AgentConfig = {
     /**
      * Options for the headless client update loop started in each session.
      */
-    headless_client?: {
-        updatesPerSecond?: number;
-        broadcastsPerSecond?: number;
-    };
+    headless_client?: UpdateLoopRates;
 
     /**
      * Callback for tracking connection progress of each session the agent attaches to.

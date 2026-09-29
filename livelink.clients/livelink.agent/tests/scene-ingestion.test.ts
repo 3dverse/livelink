@@ -294,7 +294,7 @@ describe("SceneIngestion continuous-update clock", () => {
             const ingestion = new SceneIngestion({
                 agent: agent.asAgent(),
                 pipeline,
-                ticksPerSecond: 50,
+                ticks_per_second: 50,
             });
             await ingestion.start();
 
@@ -325,7 +325,7 @@ describe("SceneIngestion continuous-update clock", () => {
         try {
             const agent = new FakeAgent();
             const pipeline = new IngestionPipeline({ mappings: spinMapping });
-            const ingestion = new SceneIngestion({ agent: agent.asAgent(), pipeline, ticksPerSecond: 50 });
+            const ingestion = new SceneIngestion({ agent: agent.asAgent(), pipeline, ticks_per_second: 50 });
             await ingestion.start();
 
             const scene = new FakeScene();
@@ -358,7 +358,7 @@ describe("SceneIngestion continuous-update clock", () => {
     it("stops the motions it was driving when it stops its sources", async () => {
         const agent = new FakeAgent();
         const pipeline = new IngestionPipeline({ mappings: spinMapping });
-        const ingestion = new SceneIngestion({ agent: agent.asAgent(), pipeline, ticksPerSecond: 0 });
+        const ingestion = new SceneIngestion({ agent: agent.asAgent(), pipeline, ticks_per_second: 0 });
         await ingestion.start();
 
         const scene = new FakeScene();
@@ -375,12 +375,12 @@ describe("SceneIngestion continuous-update clock", () => {
         expect(pipeline.stats?.continuations_active).toBe(0);
     });
 
-    it("runs no clock at all when `ticksPerSecond` is 0", async () => {
+    it("runs no clock at all when `ticks_per_second` is 0", async () => {
         vi.useFakeTimers();
         try {
             const agent = new FakeAgent();
             const pipeline = new IngestionPipeline({ mappings: spinMapping });
-            const ingestion = new SceneIngestion({ agent: agent.asAgent(), pipeline, ticksPerSecond: 0 });
+            const ingestion = new SceneIngestion({ agent: agent.asAgent(), pipeline, ticks_per_second: 0 });
             await ingestion.start();
 
             const scene = new FakeScene();
@@ -411,13 +411,13 @@ describe("SceneIngestion clock accuracy and safety", () => {
     /** An ingestion with one bound session whose scene holds the driven entity. */
     async function bound({
         agent = new FakeAgent(),
-        ticksPerSecond,
-    }: { agent?: FakeAgent; ticksPerSecond?: number } = {}): Promise<{
+        ticks_per_second,
+    }: { agent?: FakeAgent; ticks_per_second?: number } = {}): Promise<{
         pipeline: IngestionPipeline;
         ingestion: SceneIngestion;
     }> {
         const pipeline = new IngestionPipeline({ mappings: spinMapping });
-        const ingestion = new SceneIngestion({ agent: agent.asAgent(), pipeline, ticksPerSecond });
+        const ingestion = new SceneIngestion({ agent: agent.asAgent(), pipeline, ticks_per_second });
         await ingestion.start();
 
         const scene = new FakeScene();
@@ -428,11 +428,11 @@ describe("SceneIngestion clock accuracy and safety", () => {
         return { pipeline, ingestion };
     }
 
-    const build = (ticksPerSecond: number): SceneIngestion =>
+    const build = (ticks_per_second: number): SceneIngestion =>
         new SceneIngestion({
             agent: new FakeAgent().asAgent(),
             pipeline: new IngestionPipeline({ mappings: positionMapping }),
-            ticksPerSecond,
+            ticks_per_second,
         });
 
     it("rejects a tick rate that would not produce a usable interval", () => {
@@ -452,7 +452,7 @@ describe("SceneIngestion clock accuracy and safety", () => {
         vi.useFakeTimers();
         try {
             const { pipeline, ingestion } = await bound({
-                agent: new FakeAgent({ headless_client: { updatesPerSecond: 10 } }),
+                agent: new FakeAgent({ headless_client: { updates_per_second: 10 } }),
             });
 
             await vi.advanceTimersByTimeAsync(1000);
@@ -468,7 +468,7 @@ describe("SceneIngestion clock accuracy and safety", () => {
         vi.useFakeTimers();
         try {
             const now = vi.spyOn(performance, "now").mockReturnValue(0);
-            const { pipeline, ingestion } = await bound({ ticksPerSecond: 50 });
+            const { pipeline, ingestion } = await bound({ ticks_per_second: 50 });
             const tick = vi.spyOn(pipeline, "tick");
 
             // The process comes back from ten minutes of suspension: handing that to a motion at
@@ -488,7 +488,7 @@ describe("SceneIngestion clock accuracy and safety", () => {
     it("never overlaps two ticks, and folds the time a skipped one measured into the next", async () => {
         vi.useFakeTimers();
         try {
-            const { pipeline, ingestion } = await bound({ ticksPerSecond: 50 });
+            const { pipeline, ingestion } = await bound({ ticks_per_second: 50 });
 
             // The first tick hangs on a resolution still in flight — a `spawn` round trip, or a
             // `resolve` reaching a service.
@@ -526,7 +526,7 @@ describe("SceneIngestion clock accuracy and safety", () => {
         // during it, not to the one the event is about to install.
         vi.useFakeTimers();
         try {
-            const { pipeline, ingestion } = await bound({ ticksPerSecond: 50 });
+            const { pipeline, ingestion } = await bound({ ticks_per_second: 50 });
             const tick = vi.spyOn(pipeline, "tick");
 
             // Nothing is moving yet, so the first event costs no extra tick at all.

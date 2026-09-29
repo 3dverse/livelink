@@ -36,7 +36,7 @@ import {
 import { createTransport, type TransportSpec } from "./transports/TransportRegistry";
 
 //------------------------------------------------------------------------------
-// The same guard every rate in the SDK goes through, so `ticksPerSecond` and `updatesPerSecond`
+// The same guard every rate in the SDK goes through, so `ticks_per_second` and `updates_per_second`
 // reject the same things — and so `NaN` never reaches `setInterval`.
 import { computeIntervalInMs } from "@livelink.base/rates";
 
@@ -58,7 +58,7 @@ const MAX_TICK_SECONDS = 0.5;
  * that wander to half a window. Falls back to 60, twice `LivelinkBase`'s own default of 30.
  */
 function defaultTicksPerSecond(agent: Agent): number {
-    const updates_per_second = agent.config.headless_client?.updatesPerSecond;
+    const updates_per_second = agent.config.headless_client?.updates_per_second;
     if (typeof updates_per_second !== "number" || !(updates_per_second > 0)) {
         return 60;
     }
@@ -138,7 +138,7 @@ export type SceneIngestionOptions = {
      * How often per second to advance the pipeline's continuous updates — the mappings that returned
      * a {@link continuous} update rather than a patch, because what they were told was a rate.
      *
-     * Defaults to **twice** the agent's `headless_client.updatesPerSecond` (60 when it declares
+     * Defaults to **twice** the agent's `headless_client.updates_per_second` (60 when it declares
      * none). Not once: the two timers free-run and beat against each other, so ticking at exactly
      * the flush rate lets the age of the sample at flush time wander across a whole flush window and
      * the motion jitters. Set it to `0` to run no clock at all and call
@@ -149,9 +149,9 @@ export type SceneIngestionOptions = {
      * while no mapping has installed a continuation.
      *
      * @throws RangeError unless it is `0` or a finite rate in the `(0, 125]` range — the same rule
-     * `updatesPerSecond` follows, since both end up in a `setInterval`.
+     * `updates_per_second` follows, since both end up in a `setInterval`.
      */
-    ticksPerSecond?: number;
+    ticks_per_second?: number;
 };
 
 /**
@@ -256,18 +256,18 @@ export class SceneIngestion extends ObservedEventTarget<SceneIngestionEvents> im
     #started = false;
 
     /**
-     * @throws RangeError if `ticksPerSecond` is neither `0` nor a finite rate in `(0, 125]`.
+     * @throws RangeError if `ticks_per_second` is neither `0` nor a finite rate in `(0, 125]`.
      */
-    constructor({ agent, pipeline, sources, ticksPerSecond }: SceneIngestionOptions) {
+    constructor({ agent, pipeline, sources, ticks_per_second: requested_ticks_per_second }: SceneIngestionOptions) {
         super();
 
         this.#agent = agent;
         this.#pipeline = pipeline;
         this.#sources = sources ?? [];
 
-        const ticks_per_second = ticksPerSecond ?? defaultTicksPerSecond(agent);
+        const ticks_per_second = requested_ticks_per_second ?? defaultTicksPerSecond(agent);
         this.#tick_interval_ms =
-            ticks_per_second === 0 ? null : computeIntervalInMs({ name: "ticksPerSecond", rate: ticks_per_second });
+            ticks_per_second === 0 ? null : computeIntervalInMs({ name: "ticks_per_second", rate: ticks_per_second });
     }
 
     /**

@@ -132,7 +132,7 @@ export class Livelink extends LivelinkBase<Entity, Scene, Session> {
      *
      * @throws RangeError if a rate falls outside the accepted range.
      */
-    async startUpdateLoop({ updatesPerSecond, broadcastsPerSecond }: UpdateLoopRates = {}): Promise<void> {
-        this._startUpdateLoop({ updatesPerSecond, broadcastsPerSecond });
+    async startUpdateLoop({ updates_per_second, broadcasts_per_second }: UpdateLoopRates = {}): Promise<void> {
+        this._startUpdateLoop({ updates_per_second, broadcasts_per_second });
     }
 }
