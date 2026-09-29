@@ -374,7 +374,7 @@ function agentConfig({ token }: { token: string }): AgentConfig {
         // not the 100 events a second the five parts add up to. The default
         // keeps up fine; 60 just shortens the wait before a sample leaves, so
         // the motion reads more evenly.
-        headless_client: { updatesPerSecond: 60 },
+        headless_client: { updates_per_second: 60 },
     };
 }
 
