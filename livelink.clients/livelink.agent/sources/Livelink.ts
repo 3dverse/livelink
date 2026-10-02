@@ -52,7 +52,8 @@ export class Livelink extends LivelinkBase<Entity, Scene, Session> {
     static async join_or_start({
         scene_id,
         token,
-        session_selector = ({ sessions }: { sessions: Array<SessionInfo> }): SessionInfo => sessions[0],
+        session_selector = ({ sessions }: { sessions: Array<SessionInfo> }): SessionInfo | null =>
+            sessions.find(s => s.is_transient_session === is_transient) ?? null,
         is_transient = false,
         session_options,
         onProgress,
