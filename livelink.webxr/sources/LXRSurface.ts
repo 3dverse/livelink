@@ -6,6 +6,21 @@ import { LXRContext } from "./LXRContext";
 import { LXRSession } from "./LXRSession";
 
 //------------------------------------------------------------------------------
+/**
+ * Largest frame dimension, in pixels, the remote renderer is assumed able to deliver. 4096 is the
+ * width and height ceiling of the common H.264 and HEVC hardware encode levels, and a request past
+ * it comes back as a frame of the renderer's own size instead — which used to blank the stream and
+ * now merely costs resolution. See {@link LXRSurface.max_remote_frame_dimension}.
+ */
+const LXR_DEFAULT_MAX_REMOTE_FRAME_DIMENSION = 4096;
+
+/**
+ * Room left for the macroblock rounding the remote frame proxy applies on top of a requested size.
+ * One HEVC macroblock covers the worst case.
+ */
+const MACROBLOCK_SLACK = 64;
+
+//------------------------------------------------------------------------------
 // TODO: may not be relevant class => XRLivelink if no other clear responsability
 /**
  * Manages WebXR rendering configuration following Single Responsibility Principle.
@@ -18,11 +33,25 @@ import { LXRSession } from "./LXRSession";
  *
  * @experimental
  */
-export class LXRSurface extends OffscreenSurface<"webgl", { xrCompatible: boolean }> {
+export class LXRSurface extends OffscreenSurface<"webgl", WebGLContextAttributes & { xrCompatible: boolean }> {
     /**
      * Reference to the WebXR session manager for accessing session information when configuring the surface.
      */
     readonly #session: LXRSession;
+
+    /**
+     * Size of the XR framebuffer, as reported by the base layer. Kept because the offscreen canvas
+     * carries it scaled, and {@link clampSurfaceScale} needs the unscaled value.
+     */
+    #framebuffer_size: [number, number] = [0, 0];
+
+    /**
+     * Largest frame dimension the remote renderer is expected to be able to deliver. Overscan asks
+     * for 1.5x the framebuffer in each direction, which on a stereo headset is enough to cross an
+     * encoder's ceiling; the scale is clamped to stay inside this instead. Lower it for a renderer
+     * or a connection with a tighter limit.
+     */
+    max_remote_frame_dimension: number = LXR_DEFAULT_MAX_REMOTE_FRAME_DIMENSION;
 
     /**
      * Constructor for LXRSurface.
@@ -35,7 +64,10 @@ export class LXRSurface extends OffscreenSurface<"webgl", { xrCompatible: boolea
             height: window.innerHeight,
             context_constructor: LXRContext,
             context_type: "webgl",
-            context_attributes: { xrCompatible: true },
+            // `antialias: false` because this canvas is never displayed: every draw goes to the XR
+            // framebuffer, so multisampling its drawing buffer only has the user agent allocate a
+            // full stereo resolution MSAA target that nothing ever samples.
+            context_attributes: { xrCompatible: true, antialias: false },
         });
         this.#session = session;
     }
@@ -145,10 +177,39 @@ export class LXRSurface extends OffscreenSurface<"webgl", { xrCompatible: boolea
      * @param layer_init Optional WebGL layer initialization options
      */
     public async updateRenderState(session: XRSession, layer_init: XRWebGLLayerInit = {}): Promise<XRWebGLLayer> {
-        const baseLayer = new XRWebGLLayer(session, this.context.native, layer_init);
+        // `antialias` defaults to true per spec, and on a headset the user agent honours that with a
+        // multisampled target the size of both eyes. What gets drawn into it is one textured quad
+        // per eye plus the overlay's quads, so the only thing multisampling buys is marginally
+        // smoother overlay panel edges, at a cost in fill rate a mobile GPU feels. A consumer that
+        // wants it back passes `{ antialias: true }` through `XRLivelink.updateRenderState`.
+        const baseLayer = new XRWebGLLayer(session, this.context.native, { antialias: false, ...layer_init });
         await session.updateRenderState({ baseLayer });
         this.context.frame_buffer = baseLayer.framebuffer;
+        this.#framebuffer_size = [baseLayer.framebufferWidth, baseLayer.framebufferHeight];
         this.resize(baseLayer.framebufferWidth, baseLayer.framebufferHeight);
         return baseLayer;
+    }
+
+    /**
+     * The given scale, brought down to what the remote renderer can be expected to deliver.
+     *
+     * The surface scale multiplies the size requested from the renderer, so overscan at 1.5 asks for
+     * 2.25x the pixels of the XR framebuffer. On a stereo headset that crosses the encoder's
+     * dimension ceiling, and a request the renderer declines comes back as a frame of a different
+     * size — which costs resolution at best. Clamping keeps the request deliverable, and because
+     * only the pixel density changes the image stays geometrically correct, just softer.
+     *
+     * @param scale The desired surface scale.
+     * @returns The desired scale, or the largest deliverable one if that is smaller.
+     */
+    public clampSurfaceScale(scale: number): number {
+        const largest_dimension = Math.max(this.#framebuffer_size[0], this.#framebuffer_size[1]);
+        if (largest_dimension === 0) {
+            // No base layer yet, so there is no framebuffer size to clamp against.
+            return scale;
+        }
+
+        const max_scale = (this.max_remote_frame_dimension - MACROBLOCK_SLACK) / largest_dimension;
+        return Math.min(scale, max_scale);
     }
 }

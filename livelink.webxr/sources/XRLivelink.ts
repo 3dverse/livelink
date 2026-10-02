@@ -336,6 +336,25 @@ export class XRLivelink extends TypedEventTarget<LXREvents> {
     }
 
     /**
+     * The largest frame dimension, in pixels, the remote renderer is expected to be able to deliver.
+     * The size requested from it is clamped to stay inside this — see
+     * {@link LXRSurface.clampSurfaceScale} for why overscan on a stereo headset needs that.
+     */
+    get max_remote_frame_dimension(): number {
+        return this.#surface.max_remote_frame_dimension;
+    }
+
+    /**
+     * Set the largest frame dimension, in pixels, the remote renderer is expected to be able to
+     * deliver. Lower it for a renderer or a connection with a tighter limit than the default; the
+     * surface scale is re-clamped immediately.
+     */
+    set max_remote_frame_dimension(value: number) {
+        this.#surface.max_remote_frame_dimension = value;
+        this.#updateSurfaceScale();
+    }
+
+    /**
      * Whether to enable the fake alpha for AR sessions. It blends the XRWebGLLayer with a real world background
      * (device camera) to approximate alpha blending based on FTL frame pixel luminance.
      */
@@ -1276,13 +1295,27 @@ export class XRLivelink extends TypedEventTarget<LXREvents> {
      * the overscan or latency compensation settings are changed to ensure the surface scale is correctly updated.
      */
     #updateSurfaceScale(): void {
-        if (this.#enable_overscan && this.#enable_latency_compensation) {
-            this.#surface.scale = this.#resolution_scale * this.#overscan_fov_factor;
-            this.#surface.scale_factor = this.#overscan_fov_factor;
-        } else {
-            this.#surface.scale = this.#resolution_scale;
-            this.#surface.scale_factor = 1;
+        const is_overscanning = this.#enable_overscan && this.#enable_latency_compensation;
+        const desired_scale = is_overscanning
+            ? this.#resolution_scale * this.#overscan_fov_factor
+            : this.#resolution_scale;
+
+        // Only the resolution is clamped. `scale_factor` keeps the full overscan factor because it
+        // sizes the billboard quad and the comfort vignette, which have to stay consistent with the
+        // overridden FOV computed in `#configureOverscan` — clamping it too would shrink the quad
+        // away from the frustum the remote camera is actually rendering.
+        const scale = this.#surface.clampSurfaceScale(desired_scale);
+        if (scale < desired_scale) {
+            console.warn(
+                `⚠️ XR surface scale clamped from ${desired_scale} to ${scale}: ` +
+                    `${desired_scale} times the XR framebuffer is past the ` +
+                    `${this.#surface.max_remote_frame_dimension}px frame dimension the remote renderer ` +
+                    "is assumed to deliver. The streamed image is at a lower resolution than requested.",
+            );
         }
+
+        this.#surface.scale = scale;
+        this.#surface.scale_factor = is_overscanning ? this.#overscan_fov_factor : 1;
     }
 
     /**
