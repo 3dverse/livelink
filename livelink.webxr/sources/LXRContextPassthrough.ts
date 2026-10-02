@@ -26,11 +26,6 @@ export class LXRContextPassthrough extends ContextProvider {
     #shader_program: WebGLProgram | null = null;
 
     /**
-     * The alternative frame buffer to draw on.
-     */
-    #frame_buffer: WebGLFramebuffer | null = null;
-
-    /**
      *
      */
     #last_frame_section: FrameSection | null = null;
@@ -55,13 +50,6 @@ export class LXRContextPassthrough extends ContextProvider {
      */
     get native(): WebGLRenderingContext | WebGL2RenderingContext {
         return this.#context;
-    }
-
-    /**
-     *
-     */
-    set frame_buffer(fb: WebGLFramebuffer) {
-        this.#frame_buffer = fb;
     }
 
     /**
@@ -102,43 +90,52 @@ export class LXRContextPassthrough extends ContextProvider {
     }
 
     /**
+     * Blit the streamed frame straight into each viewport, with no billboard and no reprojection.
      *
+     * Deliberately takes the same parameters as {@link LXRContext.drawXRFrame} — down to the ones it
+     * has no use for — so that swapping `context_constructor` in {@link LXRSurface} is the only edit
+     * needed to compare against it.
+     *
+     * @param xr_views The XR views of this frame. Only their number is used, to split the frame.
+     * @param xr_viewports The viewport each view is drawn into.
+     * @param frame_buffer The framebuffer to draw into, or null for the canvas one.
      */
     drawXRFrame({
         xr_views,
+        xr_viewports,
+        frame_buffer,
     }: {
-        xr_views: Array<{
-            view: XRView;
-            viewport: XRViewport;
-            frame_camera_transform: {
-                position: Vec3;
-                orientation: Quat;
-            };
-        }>;
+        xr_views: readonly XRView[];
+        xr_viewports: XRViewport[];
+        frame_camera_transforms?: {
+            position: Vec3;
+            orientation: Quat;
+        }[];
+        frame_buffer: WebGLFramebuffer | null;
     }): void {
+        const gl = this.#context;
+
+        // Bound and cleared before the early-out, as in {@link LXRContext.drawXRFrame} and for the
+        // same reason. Red rather than transparent: this context exists to be looked at while
+        // debugging, and a frame with nothing to show saying so is the point of it.
+        gl.bindFramebuffer(gl.FRAMEBUFFER, frame_buffer);
+        gl.clearColor(1, 0, 0, 1);
+        gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+
         if (!this.#last_frame_section) {
             return;
         }
-
-        const gl = this.#context;
-
-        if (this.#frame_buffer !== null) {
-            gl.bindFramebuffer(gl.FRAMEBUFFER, this.#frame_buffer);
-        }
-
-        gl.clearColor(1, 0, 0, 1);
-        gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
         const ls = gl.getUniformLocation(this.#shader_program!, "size");
         const lo = gl.getUniformLocation(this.#shader_program!, "offset");
 
         const viewportWidth = this.#last_frame_section.section.width / xr_views.length;
         const viewportHeight = this.#last_frame_section.section.height;
-        const combinedViewportWidth = xr_views.reduce((acc, { viewport }) => acc + viewport.width, 0);
+        const combinedViewportWidth = xr_viewports.reduce((acc, { width }) => acc + width, 0);
 
         gl.uniform2fv(ls, [viewportWidth, viewportHeight]);
 
-        for (const { viewport } of xr_views) {
+        for (const viewport of xr_viewports) {
             const viewport_offset = viewport.x / combinedViewportWidth;
             const frame_offset =
                 this.#last_frame_section.section.left + viewport_offset * this.#last_frame_section.section.width;
@@ -163,8 +160,9 @@ export class LXRContextPassthrough extends ContextProvider {
      */
     release(): void {
         const gl = this.#context;
-        gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+        // Unbind before clearing, for the reason given in LXRContext.release.
         gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+        gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
     }
 
     /**

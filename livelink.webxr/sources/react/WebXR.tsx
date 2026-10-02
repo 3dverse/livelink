@@ -59,6 +59,10 @@ export const WebXR = forwardRef(function (
 
         /**
          * Optional features for XR session. See {@link https://developer.mozilla.org/en-US/docs/Web/API/XRSystem/requestSession#options XRSessionInit.optionalFeatures}.
+         *
+         * `"dom-overlay"` is always added, and in `immersive-ar` so are `"hit-test"` and
+         * `"anchors"`, which `XRLivelink.placement` is built out of. All three are optional: a
+         * device that declines one still gets its session.
          */
         optionalFeatures?: string[];
 
@@ -191,6 +195,11 @@ export const WebXR = forwardRef(function (
         // XRLivelink suppresses the ends it causes itself, so this fires only for the ones the
         // consumer has to react to.
         const onXRSessionEnd = (event: SessionEndEvent): void => {
+            // The instance outlives the session that just died, but nothing reachable through it
+            // is usable any more, and this state is what the context, the imperative handle, the
+            // viewport children and the prop effects below all render against. A consumer that
+            // does not unmount us from its own handler would otherwise go on writing into it.
+            setXRLivelink(null);
             onSessionEndRef.current?.(event.xr_session_event);
         };
         xr.addEventListener("on-session-end", onXRSessionEnd);
@@ -245,6 +254,10 @@ export const WebXR = forwardRef(function (
             console.debug(`[${effectId}] Releasing XRLivelink`);
             xr.removeEventListener("on-session-end", onXRSessionEnd);
             abort_controller.abort();
+            // Ignored when this is an unmount, but a dependency change — a switch from AR to VR,
+            // say — re-runs this effect on a live tree, and the instance about to be released must
+            // not stay the one the viewport children and the prop effects below render against.
+            setXRLivelink(null);
             cleanupPromiseRef.current = xr.release().finally(() => {
                 cleanupPromiseRef.current = null;
                 console.debug(`[${effectId}] XRLivelink released`);

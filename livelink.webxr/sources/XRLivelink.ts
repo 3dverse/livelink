@@ -142,6 +142,15 @@ export class XRLivelink extends TypedEventTarget<LXREvents> {
     readonly #frame_error_log = new LXRFrameErrorLog();
 
     /**
+     * Deduplicating log of its own for {@link #getViewerPose}, kept apart from
+     * {@link #frame_error_log} because the two would otherwise clear each other: a user agent that
+     * throws from `getViewerPose` while tracking is lost leaves the rest of the frame succeeding, and
+     * sharing one log would have that success un-suppress the pose error on every single frame —
+     * printing at 72–90 Hz the one thing the deduplication exists to print once.
+     */
+    readonly #viewer_pose_error_log = new LXRFrameErrorLog();
+
+    /**
      * Consumer callbacks, one list per {@link LXRFramePhase}, run in phase order by
      * {@link #onXRFrame} before the rig update and the draw.
      */
@@ -332,6 +341,25 @@ export class XRLivelink extends TypedEventTarget<LXREvents> {
      */
     set resolution_scale(value: number) {
         this.#resolution_scale = value;
+        this.#updateSurfaceScale();
+    }
+
+    /**
+     * The largest frame dimension, in pixels, the remote renderer is expected to be able to deliver.
+     * The size requested from it is clamped to stay inside this — see
+     * {@link LXRSurface.clampSurfaceScale} for why overscan on a stereo headset needs that.
+     */
+    get max_remote_frame_dimension(): number {
+        return this.#surface.max_remote_frame_dimension;
+    }
+
+    /**
+     * Set the largest frame dimension, in pixels, the remote renderer is expected to be able to
+     * deliver. Lower it for a renderer or a connection with a tighter limit than the default; the
+     * surface scale is re-clamped immediately.
+     */
+    set max_remote_frame_dimension(value: number) {
+        this.#surface.max_remote_frame_dimension = value;
         this.#updateSurfaceScale();
     }
 
@@ -918,67 +946,75 @@ export class XRLivelink extends TypedEventTarget<LXREvents> {
      * re-arming would leave the user staring at the last frame ever drawn, rigidly following their
      * head with no way out but a page reload. Skipping a frame is recoverable; dying is not.
      *
+     * Each phase already swallows its own errors, so that one failing costs only what it was there
+     * to do rather than the draw — see {@link LXRLocomotionController._update} and its siblings, and
+     * {@link LXRFrameCallbacks.run} for the consumer callbacks. The `try`/`finally` here is the
+     * backstop that makes the promise above structural rather than contingent on all of them
+     * remembering: whatever reaches it, the frame state is dropped and the loop re-arms.
+     *
      * @param time The high resolution timestamp for the current frame, used to derive the frame delta time-based effects need.
      * @param frame The XRFrame containing the latest pose and view data from the XR session, which is used to update the viewports and render the frame.
      */
     #onXRFrame = (time: DOMHighResTimeStamp, frame: XRFrame): void => {
-        const dt = this.#last_frame_timestamp ? (time - this.#last_frame_timestamp) / 1000 : 0;
-        this.#last_frame_timestamp = time;
-
-        // One viewer pose for the whole frame. Every phase wants it — the anchor phase to project
-        // onto the screen, the draw to place the cameras — and it cannot change within a frame.
-        const viewer_pose = this.#getViewerPose(frame);
-
-        // Ahead of every phase: a consumer callback in the `input` phase reads controller state,
-        // and it has to be this frame's, not the one before it. The actions are resolved straight
-        // after the sources they are read from, and before anything can consume one.
-        this.#input?.update({ frame, reference_space: this.#session.reference_space ?? null });
-        this.#actions._update({ sources: this.#input?.sources ?? [] });
-
-        const args = this.#frame_callback_args;
-        args.frame = frame;
-        args.time = time;
-        args.dt = dt;
-        args.viewer_pose = viewer_pose;
-
-        this.#frame_callbacks.input.run(args);
-
-        // Between the two phases rather than inside either: a consumer raises `place` from the
-        // `input` phase and the same frame's live hit test result honours it — an `XRHitTestResult`
-        // being valid only during its own frame — while an `anchor` phase callback drawing a
-        // reticle reads this frame's hit pose rather than the previous one's.
-        this.#placement._update({
-            frame,
-            time,
-            reference_space: this.#session.reference_space ?? null,
-            input: this.#input,
-        });
-
-        this.#frame_callbacks.anchor.run(args);
-
-        // Between the last phase and locomotion, which is the whole reason it is here rather than
-        // next to the draw: a pointer resting on a panel claims the trigger it is about to press a
-        // button with, and locomotion — reading the same actions two lines below — never sees it.
-        this.#ui._update({ dt, viewer_pose, input: this.#input, actions: this.#actions });
-
-        // After the phases and before the rig composes: a consumer callback — and, in a headset, a
-        // pointer aimed at a panel — gets to claim an action before locomotion reads it, and the
-        // movement still lands on the frame that draws it rather than the one after.
-        this.#locomotion._update({ dt, actions: this.#actions });
-
         try {
+            const dt = this.#last_frame_timestamp ? (time - this.#last_frame_timestamp) / 1000 : 0;
+            this.#last_frame_timestamp = time;
+
+            // One viewer pose for the whole frame. Every phase wants it — the anchor phase to
+            // project onto the screen, the draw to place the cameras — and it cannot change within
+            // a frame.
+            const viewer_pose = this.#getViewerPose(frame);
+
+            // Ahead of every phase: a consumer callback in the `input` phase reads controller state,
+            // and it has to be this frame's, not the one before it. The actions are resolved straight
+            // after the sources they are read from, and before anything can consume one.
+            this.#input?.update({ frame, reference_space: this.#session.reference_space ?? null });
+            this.#actions._update({ sources: this.#input?.sources ?? [] });
+
+            const args = this.#frame_callback_args;
+            args.frame = frame;
+            args.time = time;
+            args.dt = dt;
+            args.viewer_pose = viewer_pose;
+
+            this.#frame_callbacks.input.run(args);
+
+            // Between the two phases rather than inside either: a consumer raises `place` from the
+            // `input` phase and the same frame's live hit test result honours it — an `XRHitTestResult`
+            // being valid only during its own frame — while an `anchor` phase callback drawing a
+            // reticle reads this frame's hit pose rather than the previous one's.
+            this.#placement._update({
+                frame,
+                time,
+                reference_space: this.#session.reference_space ?? null,
+                input: this.#input,
+            });
+
+            this.#frame_callbacks.anchor.run(args);
+
+            // Between the last phase and locomotion, which is the whole reason it is here rather than
+            // next to the draw: a pointer resting on a panel claims the trigger it is about to press a
+            // button with, and locomotion — reading the same actions two lines below — never sees it.
+            this.#ui._update({ dt, viewer_pose, input: this.#input, actions: this.#actions });
+
+            // After the phases and before the rig composes: a consumer callback — and, in a headset, a
+            // pointer aimed at a panel — gets to claim an action before locomotion reads it, and the
+            // movement still lands on the frame that draws it rather than the one after.
+            this.#locomotion._update({ dt, actions: this.#actions });
+
             this.#renderXRFrame({ dt, viewer_pose });
             this.#frame_error_log.reportSuccess();
         } catch (error) {
             this.#frame_error_log.report("Skipped an XR frame", error);
+        } finally {
+            // Nothing may hold on to a pose the user agent is about to invalidate.
+            const args = this.#frame_callback_args;
+            args.frame = undefined as unknown as XRFrame;
+            args.viewer_pose = null;
+            this.#input?.endFrame();
+
+            this.#requestNextXRFrame();
         }
-
-        // Nothing may hold on to a pose the user agent is about to invalidate.
-        args.frame = undefined as unknown as XRFrame;
-        args.viewer_pose = null;
-        this.#input?.endFrame();
-
-        this.#requestNextXRFrame();
     };
 
     /**
@@ -998,9 +1034,11 @@ export class XRLivelink extends TypedEventTarget<LXREvents> {
         }
 
         try {
-            return frame.getViewerPose(reference_space) ?? null;
+            const viewer_pose = frame.getViewerPose(reference_space) ?? null;
+            this.#viewer_pose_error_log.reportSuccess();
+            return viewer_pose;
         } catch (error) {
-            this.#frame_error_log.report("Could not read the XR viewer pose", error);
+            this.#viewer_pose_error_log.report("Could not read the XR viewer pose", error);
             return null;
         }
     }
@@ -1074,6 +1112,7 @@ export class XRLivelink extends TypedEventTarget<LXREvents> {
             xr_views,
             xr_viewports,
             frame_camera_transforms: remote_camera_transforms,
+            frame_buffer: gl_layer.framebuffer,
         });
 
         // On top of the streamed image, in the same framebuffer: in a headset that is the only
@@ -1276,13 +1315,27 @@ export class XRLivelink extends TypedEventTarget<LXREvents> {
      * the overscan or latency compensation settings are changed to ensure the surface scale is correctly updated.
      */
     #updateSurfaceScale(): void {
-        if (this.#enable_overscan && this.#enable_latency_compensation) {
-            this.#surface.scale = this.#resolution_scale * this.#overscan_fov_factor;
-            this.#surface.scale_factor = this.#overscan_fov_factor;
-        } else {
-            this.#surface.scale = this.#resolution_scale;
-            this.#surface.scale_factor = 1;
+        const is_overscanning = this.#enable_overscan && this.#enable_latency_compensation;
+        const desired_scale = is_overscanning
+            ? this.#resolution_scale * this.#overscan_fov_factor
+            : this.#resolution_scale;
+
+        // Only the resolution is clamped. `scale_factor` keeps the full overscan factor because it
+        // sizes the billboard quad and the comfort vignette, which have to stay consistent with the
+        // overridden FOV computed in `#configureOverscan` — clamping it too would shrink the quad
+        // away from the frustum the remote camera is actually rendering.
+        const scale = this.#surface.clampSurfaceScale(desired_scale);
+        if (scale < desired_scale) {
+            console.warn(
+                `⚠️ XR surface scale clamped from ${desired_scale} to ${scale}: ` +
+                    `${desired_scale} times the XR framebuffer is past the ` +
+                    `${this.#surface.max_remote_frame_dimension}px frame dimension the remote renderer ` +
+                    "is assumed to deliver. The streamed image is at a lower resolution than requested.",
+            );
         }
+
+        this.#surface.scale = scale;
+        this.#surface.scale_factor = is_overscanning ? this.#overscan_fov_factor : 1;
     }
 
     /**

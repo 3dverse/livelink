@@ -3,6 +3,16 @@ import { createPromiseWithResolvers } from "./utils/createPromiseWithResolvers";
 
 //------------------------------------------------------------------------------
 /**
+ * The features {@link LXRPlacement} is built out of, requested for every AR session.
+ *
+ * Asked for by the library rather than left to the consumer, because the library is the party that
+ * knows placement needs them: without them `requestHitTestSource` rejects and placement is dead
+ * for the whole session, and an application has no way of knowing it had to ask.
+ */
+export const LXR_AR_OPTIONAL_FEATURES: readonly string[] = ["hit-test", "anchors"];
+
+//------------------------------------------------------------------------------
+/**
  * Manages WebXR session lifecycle following Single Responsibility Principle.
  * Responsible for:
  * - Session initialization
@@ -17,6 +27,18 @@ export class LXRSession {
      * The active XRSession
      */
     #xr_session?: XRSession;
+
+    /**
+     * Whether {@link #xr_session} has ended, whoever ended it.
+     */
+    #has_ended: boolean = false;
+
+    /**
+     * Kept in a field so {@link release} can unregister it.
+     */
+    #onEnd = (): void => {
+        this.#has_ended = true;
+    };
 
     /**
      * The XR session mode (inline, immersive-vr, immersive-ar)
@@ -59,6 +81,16 @@ export class LXRSession {
      */
     get native(): XRSession | undefined {
         return this.#xr_session;
+    }
+
+    /**
+     * Whether the underlying XRSession has ended, whoever ended it — this manager through
+     * {@link release}, or the system through the headset menu, a back gesture or a doff timeout.
+     *
+     * An ended session is inert: it services no animation frame, and most of its methods throw.
+     */
+    get has_ended(): boolean {
+        return this.#has_ended;
     }
 
     /**
@@ -106,6 +138,35 @@ export class LXRSession {
     }
 
     /**
+     * The optional feature list to request the session with, {@link LXR_AR_OPTIONAL_FEATURES}
+     * added for an AR session.
+     *
+     * Optional rather than required, deliberately: a device that cannot hit test must still get a
+     * session, it simply gets one where placement is unavailable. Requiring them would turn "no
+     * reticle" into "no session at all".
+     *
+     * @param xr_session_init What the consumer asked for.
+     * @returns The list to request with, or the consumer's own for a non-AR session.
+     */
+    #withARFeatures(xr_session_init: XRSessionInit): Array<string> | undefined {
+        if (!this.is_ar) {
+            return xr_session_init.optionalFeatures;
+        }
+
+        // Deduplicated against both of the consumer's lists: one they already made *required* must
+        // not reappear as optional, and one they already asked for optionally must not be doubled.
+        const requested = new Set([
+            ...(xr_session_init.requiredFeatures ?? []),
+            ...(xr_session_init.optionalFeatures ?? []),
+        ]);
+
+        return [
+            ...(xr_session_init.optionalFeatures ?? []),
+            ...LXR_AR_OPTIONAL_FEATURES.filter(feature => !requested.has(feature)),
+        ];
+    }
+
+    /**
      * Initialize the XRSession.
      * @param mode The XR session mode (inline, immersive-vr, immersive-ar)
      * @param xr_session_init Optional XRSessionInit parameters
@@ -143,14 +204,20 @@ export class LXRSession {
         const spaceTypes: Array<XRReferenceSpaceType> = ["local-floor", "local"];
         let lastError: unknown;
 
+        // Computed once: the retry below only ever varies the reference space type.
+        const optionalFeatures = this.#withARFeatures(xr_session_init);
+
         for (const spaceType of spaceTypes) {
             const sessionOptions: XRSessionInit = {
                 ...xr_session_init,
                 requiredFeatures: [...(xr_session_init.requiredFeatures || []), spaceType],
+                optionalFeatures,
             };
 
             try {
                 this.#xr_session = await navigator.xr!.requestSession(mode, sessionOptions);
+                this.#has_ended = false;
+                this.#xr_session.addEventListener("end", this.#onEnd, { once: true });
                 this.#throwIfAborted(signal);
 
                 await this.setReferenceSpaceType(spaceType);
@@ -159,7 +226,14 @@ export class LXRSession {
             } catch (error) {
                 console.warn(
                     "Failed to request XR session",
-                    { spaceType, requiredFeatures: sessionOptions.requiredFeatures },
+                    {
+                        spaceType,
+                        requiredFeatures: sessionOptions.requiredFeatures,
+                        // Named because the library adds to this list itself: a user agent that
+                        // rejects a session over an optional feature it does not recognise is
+                        // otherwise indistinguishable from one that cannot do the reference space.
+                        optionalFeatures: sessionOptions.optionalFeatures,
+                    },
                     error,
                 );
                 await this.release();
@@ -237,10 +311,22 @@ export class LXRSession {
      * @returns Promise resolving when session is ended
      */
     public async release(): Promise<void> {
-        if (this.#xr_session) {
-            await this.#xr_session.end().catch(error => console.warn("Could not end XR session:", error));
-            this.#xr_session = undefined;
-            this.#xr_reference_space = undefined;
+        if (!this.#xr_session) {
+            return;
         }
+
+        this.#xr_session.removeEventListener("end", this.#onEnd);
+
+        // An end we did not initiate — headset menu, back gesture, doff timeout — has already
+        // happened by the time we get here, and `end()` on an ended session throws
+        // InvalidStateError. The catch stays for the genuine race: the session can still end
+        // between this check and the call.
+        if (!this.#has_ended) {
+            await this.#xr_session.end().catch(error => console.warn("Could not end XR session:", error));
+        }
+
+        this.#xr_session = undefined;
+        this.#xr_reference_space = undefined;
+        this.#has_ended = false;
     }
 }

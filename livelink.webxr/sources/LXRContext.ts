@@ -71,11 +71,6 @@ export class LXRContext extends ContextProvider {
     #position_attribute_location: number = -1;
 
     /**
-     * Alternative frame buffer to draw on.
-     */
-    #frame_buffer: WebGLFramebuffer | null = null;
-
-    /**
      * Last drawn frame section, used for rendering and frame metadata.
      */
     #last_frame_section: FrameSection | null = null;
@@ -164,13 +159,6 @@ export class LXRContext extends ContextProvider {
     }
 
     /**
-     * Custom framebuffer for rendering. Defaults to the canvas framebuffer.
-     */
-    set frame_buffer(fb: WebGLFramebuffer) {
-        this.#frame_buffer = fb;
-    }
-
-    /**
      * Creates a new LXRContext instance.
      * @param canvas The HTMLCanvasElement or OffscreenCanvas to use for rendering.
      * @param context_type The type of WebGL context to create ("webgl" or "webgl2").
@@ -232,11 +220,13 @@ export class LXRContext extends ContextProvider {
      * @param xr_views The XR views to render, containing view and projection matrices.
      * @param xr_viewports The corresponding viewports for each XR view, defining where to render on the canvas.
      * @param frame_camera_transforms The world-space camera transforms for this frame, used for billboard calculations.
+     * @param frame_buffer The framebuffer to draw into, or null for the canvas one.
      */
     drawXRFrame({
         xr_views,
         xr_viewports,
         frame_camera_transforms,
+        frame_buffer,
     }: {
         xr_views: readonly XRView[];
         xr_viewports: XRViewport[];
@@ -244,19 +234,22 @@ export class LXRContext extends ContextProvider {
             position: Vec3;
             orientation: Quat;
         }[];
+        frame_buffer: WebGLFramebuffer | null;
     }): void {
+        const gl = this.#context;
+
+        // Bound and cleared before anything below may bail out. The contents of an XR framebuffer
+        // are undefined at the start of a frame, so a frame the stream has nothing for still has to
+        // leave it in a state someone chose: transparent, which is the passthrough camera in AR and
+        // black in VR. Returning early used to leave it untouched, and the overlay — which binds it
+        // straight after — then drew its panels over whatever the compositor had left behind.
+        gl.bindFramebuffer(gl.FRAMEBUFFER, frame_buffer);
+        gl.clearColor(0, 0, 0, 0);
+        gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+
         if (!this.#last_frame_section) {
             return;
         }
-
-        const gl = this.#context;
-
-        if (this.#frame_buffer !== null) {
-            gl.bindFramebuffer(gl.FRAMEBUFFER, this.#frame_buffer);
-        }
-
-        gl.clearColor(0, 0, 0, 0);
-        gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
         gl.enable(gl.BLEND);
         gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
@@ -372,8 +365,12 @@ export class LXRContext extends ContextProvider {
      */
     release(): void {
         const gl = this.#context;
-        gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+        // The XRWebGLLayer framebuffer the last draw left bound is only writable inside an XR
+        // animation frame callback, and by the time we get here the frame — often the whole
+        // session — is over. Unbinding first puts the clear on the default framebuffer, where it
+        // is always legal.
         gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+        gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
         this.#releaseGLResources();
     }
 
