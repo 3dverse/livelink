@@ -1,5 +1,14 @@
 # @3dverse/livelink-webxr
 
+## 0.8.4
+
+### Patch Changes
+
+- fix(livelink.webxr): keep the XR frame loop alive structurally, and hand the draw the live framebuffer,
+- fix(livelink.webxr): never request a frame size the pipeline cannot deliver, drop the pointless MSAA on the XR path
+- fix(livelink.webxr): lifecycle, end the xr session more cleanly
+- fix(livelink.webxr): request hit-test and anchors in AR sessions, and stop re-requesting a refused hit test source every frame
+
 ## 0.8.3
 
 ### Patch Changes

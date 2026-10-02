@@ -1,5 +1,11 @@
 # @3dverse/livelink-agent
 
+## 0.5.9
+
+### Patch Changes
+
+- fix(livelink.agent): default session selector for join_or_start mode must filter transient sessions if requested by is_transient option
+
 ## 0.5.8
 
 ### Patch Changes
