@@ -184,7 +184,9 @@ export class LXRSurface extends OffscreenSurface<"webgl", WebGLContextAttributes
         // wants it back passes `{ antialias: true }` through `XRLivelink.updateRenderState`.
         const baseLayer = new XRWebGLLayer(session, this.context.native, { antialias: false, ...layer_init });
         await session.updateRenderState({ baseLayer });
-        this.context.frame_buffer = baseLayer.framebuffer;
+        // The framebuffer deliberately is not cached on the context: the draw is handed the live
+        // layer's one every frame, the way the overlay already was, so the two cannot disagree about
+        // which framebuffer the frame belongs to.
         this.#framebuffer_size = [baseLayer.framebufferWidth, baseLayer.framebufferHeight];
         this.resize(baseLayer.framebufferWidth, baseLayer.framebufferHeight);
         return baseLayer;

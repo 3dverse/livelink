@@ -274,6 +274,13 @@ export class LXROverlay {
         // that belongs to *its* program: leaving this one enabled would leave an array pointing at
         // a buffer nothing else knows about.
         gl.disableVertexAttribArray(this.#position_attribute_location);
+
+        // The framebuffer binding is deliberately left as it is. Restoring the previous one would
+        // mean reading it back with `getParameter(FRAMEBUFFER_BINDING)` every frame, which is a
+        // driver sync point in a 72–90 Hz loop, and there is nothing to restore it for:
+        // `LXRContext.drawXRFrame` binds the framebuffer of the frame it is drawing unconditionally,
+        // at the top of every frame. Each frame establishes its own binding rather than inheriting
+        // one — which is the invariant that makes save/restore unnecessary here.
     }
 
     /**
