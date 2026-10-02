@@ -54,7 +54,7 @@ import { WebXR } from "@3dverse/livelink-webxr/react";
 | ---------------------------- | -------------------------------------------------- | ------------- | ------------------------------------------------------------------------------------------ |
 | `mode`                       | `XRSessionMode`                                    | —             | `"immersive-vr"` or `"immersive-ar"`                                                       |
 | `requiredFeatures`           | `string[]`                                         | `[]`          | XR session required features                                                               |
-| `optionalFeatures`           | `string[]`                                         | `[]`          | XR session optional features (`"dom-overlay"` always added)                                |
+| `optionalFeatures`           | `string[]`                                         | `[]`          | XR session optional features (`"dom-overlay"` always added; `"hit-test"` and `"anchors"` too in `immersive-ar`) |
 | `forceSingleView`            | `boolean`                                          | —             | Forces mono rendering on stereo-capable devices                                            |
 | `originTransform`            | `Partial<Transform>`                               | —             | Initial position/orientation/scale of the XR origin. Supports `eulerOrientation` (degrees) |
 | `preserveInitialOrientation` | `boolean`                                          | `false`       | If `true`, preserves device pitch/roll at session start; default zeros them out            |
@@ -67,6 +67,13 @@ import { WebXR } from "@3dverse/livelink-webxr/react";
 | `renderViewport`             | `(viewport: Viewport, index: number) => ReactNode` | —             | Custom render function for each eye viewport                                               |
 
 The `ref` resolves to `{ livelinkXR: XRLivelink | undefined }` once the session is active.
+
+In an `immersive-ar` session the SDK also requests `"hit-test"` and `"anchors"` as optional
+features, since `XRLivelink.placement` is built out of them. Optional, never required: a device
+that declines either still gets its session, and `placement.is_available` (can anything be placed
+at all) and `placement.is_tracking` (is the placement being held true by a device anchor) report
+what it can actually do. Name either feature in `requiredFeatures` yourself to make session
+creation *fail* without it instead.
 
 ---
 

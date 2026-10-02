@@ -48,6 +48,14 @@ export class LXRHitTest {
     #source_space?: XRSpace;
 
     /**
+     * The space a request has already failed for, so it is not asked for again.
+     *
+     * Without this, a rejection leaves {@link #source_space} unset while {@link #resolveSpace}
+     * keeps returning the same space, so {@link #syncSpace} re-requests on every frame.
+     */
+    #failed_space?: XRSpace;
+
+    /**
      * The `viewer` reference space, requested once at init and reused for every re-request.
      */
     #viewer_space?: XRReferenceSpace;
@@ -192,12 +200,25 @@ export class LXRHitTest {
      */
     async _init({ session }: { session: XRSession }): Promise<void> {
         this._release();
-        this.#session = session;
 
         if (!LXRHitTest.is_supported) {
             console.debug("No XR hit test: the user agent does not implement requestHitTestSource");
             return;
         }
+
+        // The grant, not the capability: `requestHitTestSource` sits on the prototype of every
+        // Chromium `XRSession` whether or not the feature was granted, so `is_supported` says
+        // nothing about *this* session. Returning before `#session` is stored is the whole
+        // mechanism — `#syncSpace`, which runs every frame, requests nothing without it.
+        //
+        // A user agent that reports no `enabledFeatures` at all says nothing either way, so it
+        // falls through to the request, whose failure `#requestSource` latches.
+        if (session.enabledFeatures && !session.enabledFeatures.includes("hit-test")) {
+            console.debug("No XR hit test: the session was not granted the `hit-test` feature");
+            return;
+        }
+
+        this.#session = session;
 
         try {
             this.#viewer_space = await session.requestReferenceSpace("viewer");
@@ -295,6 +316,7 @@ export class LXRHitTest {
         this.#hit_test_source?.cancel();
         this.#hit_test_source = undefined;
         this.#source_space = undefined;
+        this.#failed_space = undefined;
         this.#viewer_space = undefined;
         this.#session = undefined;
         this.#hit_pose = undefined;
@@ -315,7 +337,7 @@ export class LXRHitTest {
         }
 
         const space = this.#resolveSpace(input);
-        if (space === this.#source_space) {
+        if (space === this.#source_space || space === this.#failed_space) {
             return;
         }
 
@@ -361,10 +383,18 @@ export class LXRHitTest {
         try {
             hit_test_source = await session.requestHitTestSource?.({ space });
         } catch (error) {
+            // Not tried again for this space: nothing a request fails over — the feature was not
+            // granted, the device cannot cast from this space — resolves itself mid-session, and
+            // retrying is what turned one failure into one warning per frame.
+            this.#failed_space = space;
             console.warn("Could not create an XR hit test source", error);
             return;
         }
         if (!hit_test_source) {
+            // Latched for the same reason as the rejection above: unlatched, a user agent whose
+            // `requestHitTestSource` resolves to nothing re-requested on every frame too — the
+            // same loop, without even a log line to show for it.
+            this.#failed_space = space;
             return;
         }
 

@@ -206,12 +206,14 @@ export class LXRPlacement {
      * Whether a placement is registered with the device's tracking subsystem, so it stays on the
      * real surface as the device refines its estimate of the room.
      *
-     * Defaults to feature detection. Set it to false for a runtime where `XRAnchor` exists and does
-     * not work — the library has no way of recognising one, and a placement that anchors to nothing
-     * is worse than one that simply holds still.
+     * Defaults to what the live session can actually do — see {@link LXRAnchorTracker.is_available},
+     * which accounts for the `anchors` feature not having been granted. Set it to false for a
+     * runtime where `XRAnchor` exists, is granted, and still does not work — the library has no way
+     * of recognising one, and a placement that anchors to nothing is worse than one that simply
+     * holds still.
      */
     get enable_anchors(): boolean {
-        return this.#enable_anchors ?? LXRAnchorTracker.is_supported;
+        return this.#enable_anchors ?? this.#anchors.is_available;
     }
 
     /**
@@ -312,7 +314,7 @@ export class LXRPlacement {
      * @param session The session to place in.
      */
     async _init({ session }: { session: XRSession }): Promise<void> {
-        this.#anchors._init();
+        this.#anchors._init({ session });
         await this.#hit_test._init({ session });
     }
 

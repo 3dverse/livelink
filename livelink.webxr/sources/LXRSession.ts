@@ -3,6 +3,16 @@ import { createPromiseWithResolvers } from "./utils/createPromiseWithResolvers";
 
 //------------------------------------------------------------------------------
 /**
+ * The features {@link LXRPlacement} is built out of, requested for every AR session.
+ *
+ * Asked for by the library rather than left to the consumer, because the library is the party that
+ * knows placement needs them: without them `requestHitTestSource` rejects and placement is dead
+ * for the whole session, and an application has no way of knowing it had to ask.
+ */
+export const LXR_AR_OPTIONAL_FEATURES: readonly string[] = ["hit-test", "anchors"];
+
+//------------------------------------------------------------------------------
+/**
  * Manages WebXR session lifecycle following Single Responsibility Principle.
  * Responsible for:
  * - Session initialization
@@ -106,6 +116,35 @@ export class LXRSession {
     }
 
     /**
+     * The optional feature list to request the session with, {@link LXR_AR_OPTIONAL_FEATURES}
+     * added for an AR session.
+     *
+     * Optional rather than required, deliberately: a device that cannot hit test must still get a
+     * session, it simply gets one where placement is unavailable. Requiring them would turn "no
+     * reticle" into "no session at all".
+     *
+     * @param xr_session_init What the consumer asked for.
+     * @returns The list to request with, or the consumer's own for a non-AR session.
+     */
+    #withARFeatures(xr_session_init: XRSessionInit): Array<string> | undefined {
+        if (!this.is_ar) {
+            return xr_session_init.optionalFeatures;
+        }
+
+        // Deduplicated against both of the consumer's lists: one they already made *required* must
+        // not reappear as optional, and one they already asked for optionally must not be doubled.
+        const requested = new Set([
+            ...(xr_session_init.requiredFeatures ?? []),
+            ...(xr_session_init.optionalFeatures ?? []),
+        ]);
+
+        return [
+            ...(xr_session_init.optionalFeatures ?? []),
+            ...LXR_AR_OPTIONAL_FEATURES.filter(feature => !requested.has(feature)),
+        ];
+    }
+
+    /**
      * Initialize the XRSession.
      * @param mode The XR session mode (inline, immersive-vr, immersive-ar)
      * @param xr_session_init Optional XRSessionInit parameters
@@ -143,10 +182,14 @@ export class LXRSession {
         const spaceTypes: Array<XRReferenceSpaceType> = ["local-floor", "local"];
         let lastError: unknown;
 
+        // Computed once: the retry below only ever varies the reference space type.
+        const optionalFeatures = this.#withARFeatures(xr_session_init);
+
         for (const spaceType of spaceTypes) {
             const sessionOptions: XRSessionInit = {
                 ...xr_session_init,
                 requiredFeatures: [...(xr_session_init.requiredFeatures || []), spaceType],
+                optionalFeatures,
             };
 
             try {
@@ -159,7 +202,14 @@ export class LXRSession {
             } catch (error) {
                 console.warn(
                     "Failed to request XR session",
-                    { spaceType, requiredFeatures: sessionOptions.requiredFeatures },
+                    {
+                        spaceType,
+                        requiredFeatures: sessionOptions.requiredFeatures,
+                        // Named because the library adds to this list itself: a user agent that
+                        // rejects a session over an optional feature it does not recognise is
+                        // otherwise indistinguishable from one that cannot do the reference space.
+                        optionalFeatures: sessionOptions.optionalFeatures,
+                    },
                     error,
                 );
                 await this.release();

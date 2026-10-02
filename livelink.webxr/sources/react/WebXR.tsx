@@ -59,6 +59,10 @@ export const WebXR = forwardRef(function (
 
         /**
          * Optional features for XR session. See {@link https://developer.mozilla.org/en-US/docs/Web/API/XRSystem/requestSession#options XRSessionInit.optionalFeatures}.
+         *
+         * `"dom-overlay"` is always added, and in `immersive-ar` so are `"hit-test"` and
+         * `"anchors"`, which `XRLivelink.placement` is built out of. All three are optional: a
+         * device that declines one still gets its session.
          */
         optionalFeatures?: string[];
 

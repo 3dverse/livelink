@@ -36,12 +36,42 @@ export class LXRAnchorTracker {
     #is_running = false;
 
     /**
+     * Whether this session granted the `anchors` feature, or undefined outside a session and on a
+     * user agent that does not report what it granted.
+     *
+     * Tri-state on purpose: "not reported" has to read as "try it", which is all the iOS WebXR
+     * polyfill leaves possible, while "reported and absent" is a session where every
+     * `createAnchor` rejects — once per tap, each one logged — and where placing statically is the
+     * right answer from the first tap.
+     */
+    #is_feature_granted?: boolean;
+
+    /**
      * Whether this user agent can create anchors at all.
+     *
+     * Device capability only — a session can still decline the feature, so {@link is_available} is
+     * the per-session answer.
      */
     static get is_supported(): boolean {
         // `typeof` rather than `XRFrame?.prototype`: optional chaining does not save an identifier
         // that was never declared, and a browser with no WebXR at all declares none of them.
         return typeof XRFrame !== "undefined" && "createAnchor" in XRFrame.prototype;
+    }
+
+    /**
+     * Whether anchors can actually be created in the live session: the user agent implements them
+     * **and** the session was granted the `anchors` feature.
+     *
+     * {@link is_supported} cannot answer this — `createAnchor` is on the prototype whether or not
+     * the feature was granted — and a session where it is false has `createAnchor` reject on every
+     * single tap.
+     *
+     * Optimistic before {@link _init} — `!== false`, not `=== true` — so a consumer reading it
+     * before entering a session gets the device's capability rather than a false that only means
+     * "no session yet".
+     */
+    get is_available(): boolean {
+        return LXRAnchorTracker.is_supported && this.#is_feature_granted !== false;
     }
 
     /**
@@ -116,9 +146,23 @@ export class LXRAnchorTracker {
      * @internal
      *
      * Mark the tracker as belonging to a live session, so anchors may be created and adopted.
+     *
+     * @param session The session anchors will be created in, read for its granted features.
      */
-    _init(): void {
+    _init({ session }: { session: XRSession }): void {
         this.#is_running = true;
+        // Left undefined when the user agent reports nothing, which reads as "try it": the
+        // creation is guarded either way, and refusing to try would lose anchors on every runtime
+        // that does not list its features.
+        this.#is_feature_granted = session.enabledFeatures?.includes("anchors");
+
+        if (this.#is_feature_granted === false) {
+            console.debug(
+                "No XR anchors: the session was not granted the `anchors` feature, so a placement " +
+                    "holds where it was put instead of being kept true as the device refines its " +
+                    "estimate of the room",
+            );
+        }
     }
 
     /**
@@ -163,6 +207,9 @@ export class LXRAnchorTracker {
      */
     _release(): void {
         this.#is_running = false;
+        // Cleared rather than kept: the next session makes its own grant, and inheriting this one's
+        // would place statically in a session that would have allowed anchors.
+        this.#is_feature_granted = undefined;
         this.#is_anchor_requested = false;
         this.setTrackedAnchor(undefined);
     }
