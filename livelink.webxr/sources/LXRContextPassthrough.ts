@@ -160,8 +160,9 @@ export class LXRContextPassthrough extends ContextProvider {
      */
     release(): void {
         const gl = this.#context;
-        gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+        // Unbind before clearing, for the reason given in LXRContext.release.
         gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+        gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
     }
 
     /**

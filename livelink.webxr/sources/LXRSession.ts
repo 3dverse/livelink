@@ -29,6 +29,18 @@ export class LXRSession {
     #xr_session?: XRSession;
 
     /**
+     * Whether {@link #xr_session} has ended, whoever ended it.
+     */
+    #has_ended: boolean = false;
+
+    /**
+     * Kept in a field so {@link release} can unregister it.
+     */
+    #onEnd = (): void => {
+        this.#has_ended = true;
+    };
+
+    /**
      * The XR session mode (inline, immersive-vr, immersive-ar)
      */
     #xr_mode: XRSessionMode = "inline";
@@ -69,6 +81,16 @@ export class LXRSession {
      */
     get native(): XRSession | undefined {
         return this.#xr_session;
+    }
+
+    /**
+     * Whether the underlying XRSession has ended, whoever ended it — this manager through
+     * {@link release}, or the system through the headset menu, a back gesture or a doff timeout.
+     *
+     * An ended session is inert: it services no animation frame, and most of its methods throw.
+     */
+    get has_ended(): boolean {
+        return this.#has_ended;
     }
 
     /**
@@ -194,6 +216,8 @@ export class LXRSession {
 
             try {
                 this.#xr_session = await navigator.xr!.requestSession(mode, sessionOptions);
+                this.#has_ended = false;
+                this.#xr_session.addEventListener("end", this.#onEnd, { once: true });
                 this.#throwIfAborted(signal);
 
                 await this.setReferenceSpaceType(spaceType);
@@ -287,10 +311,22 @@ export class LXRSession {
      * @returns Promise resolving when session is ended
      */
     public async release(): Promise<void> {
-        if (this.#xr_session) {
-            await this.#xr_session.end().catch(error => console.warn("Could not end XR session:", error));
-            this.#xr_session = undefined;
-            this.#xr_reference_space = undefined;
+        if (!this.#xr_session) {
+            return;
         }
+
+        this.#xr_session.removeEventListener("end", this.#onEnd);
+
+        // An end we did not initiate — headset menu, back gesture, doff timeout — has already
+        // happened by the time we get here, and `end()` on an ended session throws
+        // InvalidStateError. The catch stays for the genuine race: the session can still end
+        // between this check and the call.
+        if (!this.#has_ended) {
+            await this.#xr_session.end().catch(error => console.warn("Could not end XR session:", error));
+        }
+
+        this.#xr_session = undefined;
+        this.#xr_reference_space = undefined;
+        this.#has_ended = false;
     }
 }

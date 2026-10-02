@@ -365,8 +365,12 @@ export class LXRContext extends ContextProvider {
      */
     release(): void {
         const gl = this.#context;
-        gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+        // The XRWebGLLayer framebuffer the last draw left bound is only writable inside an XR
+        // animation frame callback, and by the time we get here the frame — often the whole
+        // session — is over. Unbinding first puts the clear on the default framebuffer, where it
+        // is always legal.
         gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+        gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
         this.#releaseGLResources();
     }
 
