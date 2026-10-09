@@ -1,5 +1,11 @@
 # @3dverse/livelink-react
 
+## 0.2.69
+
+### Patch Changes
+
+- feat(livelink.react): useLabelPointsOfView returns labels sorted with their ordinal in the scene hierarchy
+
 ## 0.2.68
 
 ### Patch Changes
