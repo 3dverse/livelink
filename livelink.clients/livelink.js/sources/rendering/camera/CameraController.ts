@@ -226,6 +226,24 @@ export class CameraController extends CameraControls {
     }
 
     /**
+     * Sets the target at the given distance in front of the camera, keeping the camera in place. A short distance
+     * achieves an FPS-like look, a long one an orbital look.
+     *
+     * @param distance - Distance between the camera and the new target. Beware truck speed is relative to target
+     * distance.
+     * @param enable_transition - Interpolate to the new target instead of setting it immediately.
+     *
+     * @returns A promise resolving once the camera has come to rest.
+     */
+    setForwardTarget(distance: number, enable_transition: boolean = false): Promise<void> {
+        const quaternion = new Quaternion(...this.#camera_entity.local_transform.orientation);
+        const forward = new Vector3(0, 0, -1).applyQuaternion(quaternion);
+        forward.multiplyScalar(distance);
+        const target = this.getPosition(new Vector3()).add(forward);
+        return this.setTarget(...(target.toArray() as Vec3), enable_transition);
+    }
+
+    /**
      *
      */
     #deepMerge<T extends object, U extends object>(target: T, ...sources: U[]): T & U {
@@ -264,19 +282,19 @@ export class CameraController extends CameraControls {
      *
      */
     #initController(): void {
-        const { target } = this.init_options;
+        const { target, forward_target_distance } = this.init_options;
         if (target) {
             this.setLookAt(...this.#camera_entity.local_transform.position, ...target);
+        } else if (forward_target_distance !== undefined) {
+            // Preserve the point of view of the camera entity with a specified forward target distance.
+            this.setForwardTarget(forward_target_distance);
+        } else {
+            // Preserve the point of view of the camera entity, `CameraControls` would default to the world origin.
+            this.setForwardTarget(Math.max(this.distance, this.minDistance));
         }
 
-        const { forward_target_distance } = this.init_options;
-        if (forward_target_distance !== undefined) {
-            const quaternion = new Quaternion(...this.#camera_entity.local_transform.orientation);
-            const forward = new Vector3(0, 0, -1).applyQuaternion(quaternion);
-            forward.multiplyScalar(forward_target_distance);
-            const target = this.getPosition(new Vector3()).add(forward);
-            this.setTarget(...(target.toArray() as Vec3));
-        }
+        // Fallback orbit point used when the pointer picks the void, it must not default to the world origin.
+        this.#orbit_on_cursor.orbit_point = this.getTarget(new Vector3()).toArray() as Vec3;
 
         const { keyboard_fly_controls } = this.init_options;
         if (keyboard_fly_controls?.enabled) {

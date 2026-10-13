@@ -13,15 +13,19 @@ import { Vec3 } from "@3dverse/livelink.core";
 export type LockMousePointerAim = "off" | "always" | "on-drag";
 
 /**
- * Set of options to be used at `CameraController` creation
+ * Set of options to be used at `CameraController` creation.
+ *
+ * Without `target` nor `forward_target_distance`, the target defaults in front of the camera entity at its distance
+ * from the world origin, which preserves the point of view of the camera entity.
+ *
  * @category Camera
  */
 export type CameraControllerInitOptions = {
-    /** Set the default target */
+    /** Set the default target. Takes precedence over `forward_target_distance`. */
     target?: Vec3;
     /**
-     * Set the default target at a distance in the direction of the camera from its current position. Beware that
-     * Beware truck speed is relative to target distance.
+     * Set the default target at a distance in the direction of the camera from its current position, through
+     * {@link CameraController.setForwardTarget}. Beware truck speed is relative to target distance.
      */
     forward_target_distance?: number;
     keyboard_fly_controls?: {
@@ -42,6 +46,9 @@ export type CameraControllerInitOptions = {
  * @category Camera
  */
 export type CameraControllerPreset = {
+    // Unique identifier for the preset
+    id: string;
+
     // livelink-camera-controls/CameraControls properties
     /** Mouse buttons bindings */
     mouseButtons?: Partial<MouseButtons>;
