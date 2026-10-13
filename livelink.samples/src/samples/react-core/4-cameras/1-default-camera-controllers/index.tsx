@@ -64,6 +64,8 @@ function AppLayout() {
     // Override some properties of the preset to make it more suitable for this sample scene
     const overridenPreset = { ...cameraControllerPreset };
     if (cameraControllerPreset === CameraControllerPresets.fly) {
+        // Increase the truck speed for the fly preset to make it more responsive on this scene.
+        // Real use case could adjust this value based on user preferences or scene bounding box.
         overridenPreset.truckSpeed! *= 10;
     }
 
@@ -85,14 +87,29 @@ function AppLayout() {
                     Reset position
                 </button>
                 {presetKeys.map((presetKey, index) => {
-                    const preset = CameraControllerPresets[presetKey];
+                    let preset = CameraControllerPresets[presetKey];
                     const name = presetKey.replaceAll("_", " ");
-                    const isCurrentPreset = preset === cameraControllerPreset;
+                    const isSelected = preset.id === cameraControllerPreset.id;
+                    const selectPreset = () => {
+                        if (presetKey === "orbital") {
+                            // clone to avoid mutating the original preset
+                            preset = {
+                                ...preset,
+                                init_options: {
+                                    ...preset.init_options,
+                                },
+                            };
+                            // Remove the initial target for the orbital preset to not "jump" back the orbit
+                            // target to world origin.
+                            delete preset.init_options?.target;
+                        }
+                        setCameraControllerPreset(preset);
+                    };
                     return (
                         <button
                             key={index}
-                            className={`button button-overlay capitalize ${isCurrentPreset ? "bg-accent" : ""}`}
-                            onClick={() => setCameraControllerPreset(preset)}
+                            className={`button button-overlay capitalize ${isSelected ? "bg-accent" : ""}`}
+                            onClick={selectPreset}
                         >
                             {name}
                         </button>

@@ -25,6 +25,8 @@ import { Vec3 } from "@3dverse/livelink.core";
  * @category Camera
  */
 export const orbital: CameraControllerPreset = Object.freeze({
+    id: "orbital",
+
     //--------------------------------------------------------------------------
     // CameraController properties
     /** CameraController init options */
@@ -58,6 +60,8 @@ export const orbital: CameraControllerPreset = Object.freeze({
  * @category Camera
  */
 export const pointer_locked_orbital: CameraControllerPreset = Object.freeze({
+    id: "pointer_locked_orbital",
+
     //--------------------------------------------------------------------------
     // livelink-camera-controls/CameraControls properties
     mouseButtons: {
@@ -111,6 +115,8 @@ export const pointer_locked_orbital: CameraControllerPreset = Object.freeze({
  * @category Camera
  */
 export const fly: CameraControllerPreset = Object.freeze({
+    id: "fly",
+
     //--------------------------------------------------------------------------
     // livelink-camera-controls/CameraControls properties
     mouseButtons: {

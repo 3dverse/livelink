@@ -1,5 +1,5 @@
 //------------------------------------------------------------------------------
-import { Components, Vec2, Vec3 } from "@3dverse/livelink.core";
+import { Components, Quat, Vec2, Vec3 } from "@3dverse/livelink.core";
 import CameraControls, { Clock, ACTION, KeyboardFlyControls } from "@3dverse/livelink-camera-controls";
 
 //------------------------------------------------------------------------------
@@ -24,6 +24,22 @@ enum MouseEventButton {
     // Typically the Browser Forward button
     fifth = 4,
 }
+
+/**
+ * Maximum delay between two taps for them to be considered a double tap.
+ */
+const MAX_DOUBLE_TAP_DELAY_IN_MS = 300;
+
+/**
+ * Maximum distance between two taps for them to be considered a double tap.
+ */
+const MAX_DOUBLE_TAP_DISTANCE_IN_PIXELS = 40;
+
+/**
+ * Number of `smoothTime` constants after which a transition is considered visually arrived: past
+ * that less than 0.1% of the travel is left, whatever its distance.
+ */
+const TRAVEL_SETTLE_TIME_CONSTANTS = 5;
 
 /**
  * A camera controller based on the `camera-controls` library.
@@ -109,6 +125,39 @@ export class CameraController extends CameraControls {
     } = {
         count: 0,
         down_position: null,
+    };
+
+    /**
+     * Double click or double tap to target options
+     * @default - { enabled: true }
+     */
+    double_click_to_target: {
+        /** Enable for a double click or a double tap to look at the point picked under the pointer */
+        enabled: boolean;
+    } = {
+        enabled: true,
+    };
+
+    /**
+     *
+     */
+    #double_tap: {
+        time: number;
+        position: Vec2;
+    } = {
+        time: 0,
+        position: [0, 0],
+    };
+
+    /**
+     *
+     */
+    #travel: {
+        count: number;
+        enabled: boolean;
+    } = {
+        count: 0,
+        enabled: true,
     };
 
     /**
@@ -201,6 +250,8 @@ export class CameraController extends CameraControls {
         this._domElement?.addEventListener("pointerdown", this.#onPointerDown);
         this._domElement?.addEventListener("pointerup", this.#onPointerUp);
         this._domElement?.addEventListener("mousedown", this.#onMouseDownLock);
+        this._domElement?.addEventListener("dblclick", this.#onDoubleClick);
+        this._domElement?.addEventListener("touchend", this.#onTouchEnd);
 
         this.keyboard_fly_controls?.enable();
     }
@@ -214,6 +265,8 @@ export class CameraController extends CameraControls {
         this._domElement?.removeEventListener("mousedown", this.#onMouseDownLock);
         this._domElement?.removeEventListener("mouseup", this.#onMouseUpLock);
         this._domElement?.removeEventListener("mousemove", this.#onMouseMoveLock);
+        this._domElement?.removeEventListener("dblclick", this.#onDoubleClick);
+        this._domElement?.removeEventListener("touchend", this.#onTouchEnd);
 
         this.keyboard_fly_controls?.disable();
 
@@ -223,6 +276,172 @@ export class CameraController extends CameraControls {
 
         clearInterval(this.#update_interval);
         this.#update_interval = null;
+    }
+
+    /**
+     * Sets the target at the given distance in front of the camera, keeping the camera in place. A short distance
+     * achieves an FPS-like look, a long one an orbital look.
+     *
+     * @param distance - Distance between the camera and the new target. Beware truck speed is relative to target
+     * distance.
+     * @param enable_transition - Interpolate to the new target instead of setting it immediately.
+     *
+     * @returns A promise resolving once the camera has come to rest.
+     */
+    setForwardTarget(distance: number, enable_transition: boolean = false): Promise<void> {
+        const target = computeForwardPoint({
+            position: this.getPosition(new Vector3()).toArray() as Vec3,
+            orientation: this.#camera_entity.local_transform.orientation,
+            distance,
+        });
+        return this.setTarget(...target, enable_transition);
+    }
+
+    /**
+     * Moves the camera to `position` and makes it look at `look_at`, which becomes the orbit target. User input is
+     * ignored for the duration of the travel.
+     *
+     * The focal offset is reset and the zoom restored to its initial value. A controller created with
+     * {@link CameraControllerInitOptions.forward_target_distance} gets it re-applied once arrived, as truck and dolly
+     * speeds are relative to the target distance.
+     *
+     * @param options
+     * @param options.position - Destination position of the camera.
+     * @param options.look_at - Point the camera looks at from its destination.
+     * @param options.enable_transition - Interpolate to the destination instead of setting it immediately. Defaults
+     * to `true`.
+     * @param options.reset_focal_offset - Reset the focal offset to zero. Defaults to `true`.
+     * @param options.zoom_to_initial - Zoom to the initial zoom level. Defaults to `true`.
+     *
+     * @returns A promise resolving once the camera has visually arrived.
+     */
+    async travel({
+        position,
+        look_at,
+        enable_transition = true,
+        reset_focal_offset = true,
+        zoom_to_initial = true,
+    }: {
+        position: Vec3;
+        look_at: Vec3;
+        enable_transition?: boolean;
+        reset_focal_offset?: boolean;
+        zoom_to_initial?: boolean;
+    }): Promise<void> {
+        this.#beginTravel();
+        try {
+            if (reset_focal_offset) {
+                this.setFocalOffset(0, 0, 0, enable_transition);
+            }
+            if (zoom_to_initial) {
+                this.zoomTo(this._zoom0, enable_transition);
+            }
+            await this.#waitForTransition(this.setLookAt(...position, ...look_at, enable_transition));
+
+            const { forward_target_distance } = this.init_options;
+            if (forward_target_distance !== undefined) {
+                await this.setForwardTarget(forward_target_distance);
+            }
+        } finally {
+            this.#endTravel();
+        }
+    }
+
+    /**
+     * Moves the camera to the given point of view, as stored on a `label` component or read from another client.
+     *
+     * The orbit target lands in front of the destination, at the current target distance or at
+     * {@link CameraControllerInitOptions.forward_target_distance} when the controller has one. Everything else
+     * behaves as {@link CameraController.travel}.
+     *
+     * @param options
+     * @param options.position - Destination position of the camera.
+     * @param options.orientation - Orientation of the camera once arrived.
+     * @param options.enable_transition - Interpolate to the destination instead of setting it immediately. Defaults
+     * to `true`.
+     * @param options.reset_focal_offset - Reset the focal offset to zero. Defaults to `true`.
+     * @param options.zoom_to_initial - Zoom to the initial zoom level. Defaults to `true`.
+     *
+     * @returns A promise resolving once the camera has visually arrived.
+     */
+    travelToPointOfView({
+        position,
+        orientation,
+        target_distance,
+        enable_transition = true,
+        reset_focal_offset = false,
+        zoom_to_initial = true,
+    }: {
+        position: Vec3;
+        orientation: Quat;
+        target_distance?: number;
+        enable_transition?: boolean;
+        reset_focal_offset?: boolean;
+        zoom_to_initial?: boolean;
+    }): Promise<void> {
+        const { forward_target_distance } = this.init_options;
+        return this.travel({
+            position,
+            look_at: computeForwardPoint({
+                position,
+                orientation,
+                distance: target_distance ?? forward_target_distance ?? this.distance,
+            }),
+            enable_transition,
+            reset_focal_offset,
+            zoom_to_initial,
+        });
+    }
+
+    /**
+     *
+     */
+    #beginTravel(): void {
+        if (this.#travel.count++ > 0) {
+            return;
+        }
+
+        this.#travel.enabled = this.enabled;
+
+        // `enabled` only discards user input, all the methods keep working.
+        this.enabled = false;
+        this.keyboard_fly_controls?.disable();
+    }
+
+    /**
+     *
+     */
+    #endTravel(): void {
+        if (--this.#travel.count > 0) {
+            return;
+        }
+
+        this.enabled = this.#travel.enabled;
+        if (this.#travel.enabled) {
+            this.keyboard_fly_controls?.enable();
+        }
+    }
+
+    /**
+     *
+     */
+    async #waitForTransition(transition: Promise<void>): Promise<void> {
+        // `transition` settles on the `rest` event, an absolute threshold over deltas mixing radians,
+        // world units and zoom: it fires well after the camera has visually arrived, and never at all
+        // when the camera was already moving as the transition started. Time bounds it reliably
+        // instead, as the residual of `smoothDamp` depends on elapsed time over `smoothTime` alone
+        // and not on the distance — unless `maxSpeed` is lowered from its default, which this ignores.
+        let timer: ReturnType<typeof setTimeout> | undefined;
+        try {
+            await Promise.race([
+                transition,
+                new Promise<void>(resolve => {
+                    timer = setTimeout(resolve, this.smoothTime * TRAVEL_SETTLE_TIME_CONSTANTS * 1000);
+                }),
+            ]);
+        } finally {
+            clearTimeout(timer);
+        }
     }
 
     /**
@@ -264,19 +483,19 @@ export class CameraController extends CameraControls {
      *
      */
     #initController(): void {
-        const { target } = this.init_options;
+        const { target, forward_target_distance } = this.init_options;
         if (target) {
             this.setLookAt(...this.#camera_entity.local_transform.position, ...target);
+        } else if (forward_target_distance !== undefined) {
+            // Preserve the point of view of the camera entity with a specified forward target distance.
+            this.setForwardTarget(forward_target_distance);
+        } else {
+            // Preserve the point of view of the camera entity, `CameraControls` would default to the world origin.
+            this.setForwardTarget(Math.max(this.distance, this.minDistance));
         }
 
-        const { forward_target_distance } = this.init_options;
-        if (forward_target_distance !== undefined) {
-            const quaternion = new Quaternion(...this.#camera_entity.local_transform.orientation);
-            const forward = new Vector3(0, 0, -1).applyQuaternion(quaternion);
-            forward.multiplyScalar(forward_target_distance);
-            const target = this.getPosition(new Vector3()).add(forward);
-            this.setTarget(...(target.toArray() as Vec3));
-        }
+        // Fallback orbit point used when the pointer picks the void, it must not default to the world origin.
+        this.#orbit_on_cursor.orbit_point = this.getTarget(new Vector3()).toArray() as Vec3;
 
         const { keyboard_fly_controls } = this.init_options;
         if (keyboard_fly_controls?.enabled) {
@@ -539,17 +758,77 @@ export class CameraController extends CameraControls {
     /**
      *
      */
+    #onDoubleClick = (event: MouseEvent): void => {
+        if (!this.double_click_to_target.enabled || !this.enabled) {
+            return;
+        }
+
+        // A locked pointer freezes the event coordinates, the aim is then the center of the viewport.
+        const screen_position: Vec2 = this.#isPointerLockActive
+            ? [0.5, 0.5]
+            : this.#viewport.getScreenPositionFromEvent({ event });
+
+        this.#pickAndLookAt(screen_position);
+    };
+
+    /**
+     *
+     */
+    #onTouchEnd = (event: TouchEvent): void => {
+        if (!this.double_click_to_target.enabled || !this.enabled) {
+            return;
+        }
+
+        // Ignore multi finger gestures
+        if (event.touches.length > 0 || event.changedTouches.length !== 1) {
+            return;
+        }
+
+        const { clientX, clientY } = event.changedTouches[0];
+        const { time, position } = this.#double_tap;
+        const now = Date.now();
+        const distance = Math.hypot(clientX - position[0], clientY - position[1]);
+
+        if (now - time > MAX_DOUBLE_TAP_DELAY_IN_MS || distance > MAX_DOUBLE_TAP_DISTANCE_IN_PIXELS) {
+            this.#double_tap = { time: now, position: [clientX, clientY] };
+            return;
+        }
+
+        this.#double_tap.time = 0;
+        this.#pickAndLookAt(this.#viewport._getScreenPosition({ position: [clientX, clientY] }));
+    };
+
+    /**
+     *
+     */
+    async #pickAndLookAt(screen_position: Vec2): Promise<void> {
+        if (this.#travel.count > 0) {
+            return;
+        }
+
+        const result = await this.#viewport.castScreenSpaceRay({
+            screen_position,
+            mode: "None",
+        });
+        if (!result) {
+            return;
+        }
+
+        await this.travel({
+            position: this.getPosition(new Vector3()).toArray() as Vec3,
+            look_at: result.world_position,
+        });
+    }
+
+    /**
+     *
+     */
     async #pickAndSetOrbitPoint(event: MouseEvent): Promise<void> {
         if (!this._domElement) {
             return;
         }
 
-        const { clientX, clientY } = event;
-        const { left, top } = this._domElement.getBoundingClientRect();
-        const screen_position: Vec2 = [
-            (clientX - left) / this._domElement.clientWidth,
-            (clientY - top) / this._domElement.clientHeight,
-        ];
+        const screen_position = this.#viewport.getScreenPositionFromEvent({ event });
 
         const result = await this.#viewport.castScreenSpaceRay({
             screen_position,
@@ -602,6 +881,25 @@ export class CameraController extends CameraControls {
             }
         }
     }
+}
+
+/**
+ * Returns the point at `distance` in front of `position` along `orientation`.
+ */
+function computeForwardPoint({
+    position,
+    orientation,
+    distance,
+}: {
+    position: Vec3;
+    orientation: Quat;
+    distance: number;
+}): Vec3 {
+    return new Vector3(0, 0, -1)
+        .applyQuaternion(new Quaternion(...orientation))
+        .multiplyScalar(distance)
+        .add(new Vector3(...position))
+        .toArray() as Vec3;
 }
 
 /**
