@@ -1,5 +1,12 @@
 # @3dverse/livelink
 
+## 0.8.70
+
+### Patch Changes
+
+- feat(livelink.js): add travel functions to camera controller and double click or tap to pick and look at
+- feat(livelink.js): preserve the point of view of the camera entity for pointer_locked_orbital preset (no target in options), and add unique id to preset to allow using altered copied of a preset (see next livelink.samples commit)
+
 ## 0.8.69
 
 ### Patch Changes
