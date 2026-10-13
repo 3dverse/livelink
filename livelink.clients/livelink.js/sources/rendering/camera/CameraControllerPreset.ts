@@ -82,6 +82,11 @@ export type CameraControllerPreset = {
         /** Enable to use the previous target when none is picked to prevent target shift on truck and dolly actions. */
         cancel_target_offset?: boolean;
     };
+    /** [custom] Double click or double tap to target options */
+    double_click_to_target?: {
+        /** Enable for a double click or a double tap to look at the point picked under the pointer */
+        enabled: boolean;
+    };
     /** [custom] Lock pointer options */
     lock_pointer?: {
         /** Aim of the pointer lock */
