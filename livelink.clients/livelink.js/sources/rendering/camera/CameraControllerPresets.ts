@@ -127,8 +127,8 @@ export const fly: CameraControllerPreset = Object.freeze({
     },
     touches: {
         one: ACTION.TOUCH_ROTATE,
-        two: ACTION.TOUCH_TRUCK,
-        three: ACTION.TOUCH_SCREEN_PAN,
+        two: ACTION.TOUCH_SCREEN_PAN,
+        three: ACTION.TOUCH_TRUCK,
     },
     /**
      * Invert speed for the camera to follow the mouse cursor direction during truck action.
