@@ -1,5 +1,14 @@
 # @3dverse/livelink-react-ui
 
+## 0.3.27
+
+### Patch Changes
+
+- feat(livelink.react.ui): enhance LightPreview component to accept className and style props for better customization
+- Updated dependencies
+- Updated dependencies
+  - @3dverse/livelink@0.8.71
+
 ## 0.3.26
 
 ### Patch Changes

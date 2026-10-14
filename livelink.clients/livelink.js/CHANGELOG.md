@@ -1,5 +1,12 @@
 # @3dverse/livelink
 
+## 0.8.71
+
+### Patch Changes
+
+- fix(livelink.js): CameraController, travel to point of view was not resetting focal offset by default
+- feat(livelink.js): CameraController, fly mode use 2 fingers to pan on ground plane and 3 fingers to pan on local XY plane
+
 ## 0.8.70
 
 ### Patch Changes
