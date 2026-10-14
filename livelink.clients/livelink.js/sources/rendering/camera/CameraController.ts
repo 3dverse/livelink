@@ -369,7 +369,7 @@ export class CameraController extends CameraControls {
         orientation,
         target_distance,
         enable_transition = true,
-        reset_focal_offset = false,
+        reset_focal_offset = true,
         zoom_to_initial = true,
     }: {
         position: Vec3;
