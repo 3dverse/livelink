@@ -4,18 +4,19 @@ import { useLightControl } from "../LightControlContext";
 import styles from "./lightPreview.module.css";
 
 //------------------------------------------------------------------------------
-export const LightPreview = () => {
+export const LightPreview = ({ className, style }: { className?: string; style?: React.CSSProperties }) => {
     //--------------------------------------------------------------------------
     const { isPowered, color, intensity, intensityMax } = useLightControl();
 
     //--------------------------------------------------------------------------
     return (
         <div
-            className={`${styles.lightPreviewContainer} ${!isPowered ? styles.dimmed : ""}`}
+            className={`${styles.lightPreviewContainer} ${!isPowered ? styles.dimmed : ""} ${className}`}
             style={
                 {
                     "--color": color,
                     "--intensity": Math.min(Math.max(0, easeOutExpo(intensity / intensityMax)), 1),
+                    ...style,
                 } as React.CSSProperties
             }
         >
