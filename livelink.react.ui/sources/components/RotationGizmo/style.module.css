@@ -1,0 +1,241 @@
+/*
+ * Theming: every --rotation-gizmo-* variable below can be overridden on the gizmo or any of its ancestors.
+ * Lengths are in viewBox units, the gizmo being 100 units wide whatever its size.
+ */
+.dial {
+    /* Axes */
+    --rotation-gizmo-color-x: hsl(0 85% 63%);
+    --rotation-gizmo-color-y: hsl(128 58% 50%);
+    --rotation-gizmo-color-z: hsl(214 95% 64%);
+
+    /* Rings, faint so that the deltas stand out */
+    --rotation-gizmo-track-width: 0.75px;
+    --rotation-gizmo-track-opacity: 0.4;
+    --rotation-gizmo-out-of-range-color: var(--3dverse-color-content-tertiary);
+    --rotation-gizmo-out-of-range-opacity: 0.35;
+    /* --rotation-gizmo-reference-mark-color: unset, the 0° mark of each ring takes the color of its axis. */
+
+    /* Deltas */
+    --rotation-gizmo-delta-width: 2px;
+    --rotation-gizmo-delta-glow: 1.5px;
+    --rotation-gizmo-delta-glow-opacity: 0.35;
+    --rotation-gizmo-sector-opacity: 0.45;
+
+    /* Sphere, only a hint of it */
+    --rotation-gizmo-sphere-color: var(--3dverse-color-content-primary);
+    --rotation-gizmo-sphere-fill-opacity: 0.05;
+    --rotation-gizmo-sphere-stroke-opacity: 0.25;
+    --rotation-gizmo-back-opacity: 0.45;
+
+    /* Handles */
+    --rotation-gizmo-handle-outline-color: var(--3dverse-color-bg-ground);
+    --rotation-gizmo-handle-hover-scale: 1.2;
+    --rotation-gizmo-handle-active-scale: 1.35;
+
+    /* Labels */
+    --rotation-gizmo-value-font-size: 8px;
+    --rotation-gizmo-value-font-weight: 600;
+    --rotation-gizmo-label-outline-color: var(--3dverse-color-bg-ground);
+
+    /* Hovered or edited gizmo */
+    --rotation-gizmo-highlight-track-opacity: 0.75;
+    --rotation-gizmo-highlight-sector-opacity: 0.6;
+    --rotation-gizmo-highlight-sphere-fill-opacity: 0.12;
+    --rotation-gizmo-highlight-sphere-stroke-opacity: 0.7;
+    --rotation-gizmo-highlight-back-opacity: 0.7;
+
+    display: block;
+    overflow: visible;
+    touch-action: none;
+    user-select: none;
+
+    /* Only the rings and the handles catch the pointer, see .hitArea and .handle. */
+    pointer-events: none;
+
+    &.grabbable {
+        cursor: grab;
+    }
+
+    &.dragging {
+        cursor: grabbing;
+    }
+}
+
+.hitArea {
+    fill: none;
+    stroke: transparent;
+    pointer-events: stroke;
+}
+
+/* Rings */
+
+.track,
+.outOfRange {
+    fill: none;
+    stroke-width: var(--rotation-gizmo-track-width);
+    transition: stroke-opacity 0.15s ease-out;
+}
+
+.track {
+    stroke: var(--axis-color);
+    stroke-opacity: var(--rotation-gizmo-track-opacity);
+}
+
+.outOfRange {
+    stroke: var(--rotation-gizmo-out-of-range-color);
+    stroke-opacity: var(--rotation-gizmo-out-of-range-opacity);
+    stroke-dasharray: 1.5 2.5;
+}
+
+.referenceTick {
+    stroke: var(--rotation-gizmo-reference-mark-color, var(--axis-color));
+    stroke-width: 1;
+    stroke-linecap: round;
+}
+
+/* Deltas */
+
+.delta {
+    fill: none;
+    stroke: var(--axis-color);
+    stroke-width: var(--rotation-gizmo-delta-width);
+    stroke-linecap: round;
+}
+
+/* A wider, translucent copy of the arc under it: the same glow as a drop-shadow filter, far cheaper to redraw. */
+.deltaGlow {
+    fill: none;
+    stroke: var(--axis-color);
+    stroke-width: calc(var(--rotation-gizmo-delta-width) + 2 * var(--rotation-gizmo-delta-glow));
+    stroke-opacity: var(--rotation-gizmo-delta-glow-opacity);
+    stroke-linecap: round;
+}
+
+.sector {
+    fill: var(--axis-color);
+    fill-opacity: var(--rotation-gizmo-sector-opacity);
+    stroke: var(--axis-color);
+    stroke-width: 0.75;
+    stroke-linejoin: round;
+    transition: fill-opacity 0.15s ease-out;
+}
+
+/* Handles */
+
+.handle {
+    fill: var(--axis-color);
+    stroke: var(--rotation-gizmo-handle-outline-color);
+    stroke-width: 1.5;
+    outline: none;
+    cursor: grab;
+    pointer-events: visiblePainted;
+
+    transform-box: fill-box;
+    transform-origin: center;
+    transition: transform 0.12s ease-out;
+
+    &:focus-visible {
+        stroke: var(--3dverse-color-content-primary);
+    }
+}
+
+.needle {
+    fill: var(--axis-color);
+}
+
+.ring.highlighted {
+    .track {
+        stroke-opacity: var(--rotation-gizmo-highlight-track-opacity);
+    }
+
+    .sector {
+        fill-opacity: var(--rotation-gizmo-highlight-sector-opacity);
+    }
+
+    .handle {
+        transform: scale(var(--rotation-gizmo-handle-hover-scale));
+    }
+}
+
+.ring.active .handle {
+    transform: scale(var(--rotation-gizmo-handle-active-scale));
+}
+
+.pivot {
+    fill: var(--3dverse-color-content-primary);
+}
+
+/* Labels */
+
+.valueLabel {
+    fill: var(--axis-color);
+    font-size: var(--rotation-gizmo-value-font-size);
+    font-weight: var(--rotation-gizmo-value-font-weight);
+    font-variant-numeric: tabular-nums;
+    white-space: pre;
+    pointer-events: none;
+}
+
+.poleLabel {
+    fill: var(--axis-color);
+    font-size: 7px;
+    font-weight: 700;
+    text-anchor: middle;
+    dominant-baseline: central;
+    pointer-events: none;
+
+    paint-order: stroke;
+    stroke: var(--rotation-gizmo-label-outline-color);
+    stroke-width: 2px;
+    stroke-linejoin: round;
+}
+
+/* Sphere */
+
+.sphere {
+    fill: var(--rotation-gizmo-sphere-color);
+    fill-opacity: var(--rotation-gizmo-sphere-fill-opacity);
+    stroke: var(--rotation-gizmo-sphere-color);
+    stroke-opacity: var(--rotation-gizmo-sphere-stroke-opacity);
+    stroke-width: 0.5;
+    transition:
+        fill-opacity 0.15s ease-out,
+        stroke-opacity 0.15s ease-out;
+}
+
+/* What lies on the far side of the sphere. */
+.back {
+    opacity: var(--rotation-gizmo-back-opacity);
+
+    .track {
+        stroke-dasharray: 1.5 1.5;
+    }
+}
+
+.behind {
+    opacity: 0.5;
+}
+
+/* The hovered or edited gizmo stands out, to tell it apart from the ones it overlaps. */
+.dial.highlighted {
+    .sphere {
+        fill-opacity: var(--rotation-gizmo-highlight-sphere-fill-opacity);
+        stroke-opacity: var(--rotation-gizmo-highlight-sphere-stroke-opacity);
+    }
+
+    .track {
+        stroke-opacity: var(--rotation-gizmo-highlight-track-opacity);
+    }
+
+    .back {
+        opacity: var(--rotation-gizmo-highlight-back-opacity);
+    }
+
+    /* Outlined only then, to stay legible over the rings of the gizmos it overlaps. */
+    .valueLabel {
+        paint-order: stroke;
+        stroke: var(--rotation-gizmo-label-outline-color);
+        stroke-width: 2.5px;
+        stroke-linejoin: round;
+    }
+}

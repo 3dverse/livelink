@@ -2,6 +2,7 @@
 export * from "./components/Provider";
 
 //------------------------------------------------------------------------------
+export * from "./components/RotationGizmo";
 export * from "./components/BoundingBoxFaceProjection";
 export * from "./components/CameraSpeedSlider";
 export * from "./components/CullingBoxGeometry";
@@ -26,6 +27,7 @@ export * from "./components/VirtualGamepad";
 export * from "./components/VirtualJoystick";
 
 //------------------------------------------------------------------------------
+export * from "./components-common/ContextMenu";
 export * from "./components-common/ViewerPanel";
 
 //------------------------------------------------------------------------------

@@ -19,6 +19,6 @@ export default create({
     // Toolbar default and active colors
     barBg: "var(--color-bg-ground)",
 
-    // Form colors
-    inputBg: "var(--color-bg-foreground)",
+    // Note: Storybook doesn't support CSS variables like var(--color-bg-foreground) in the inputBg color
+    inputBg: "rgba(21, 30, 42, 0.5)",
 });
