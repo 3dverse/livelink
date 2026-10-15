@@ -1,5 +1,5 @@
 //------------------------------------------------------------------------------
-import React, { useState } from "react";
+import { useState } from "react";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 
 //------------------------------------------------------------------------------
@@ -11,6 +11,7 @@ const meta = {
     component: Switch,
     parameters: {
         layout: "centered",
+        livelink: false,
     },
 } satisfies Meta<typeof Switch>;
 

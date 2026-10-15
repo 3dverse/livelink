@@ -1,7 +1,6 @@
 //------------------------------------------------------------------------------
 import React from "react";
 import type { Meta, StoryObj } from "@storybook/react-vite";
-import { DOM3DAnchorLegend } from ".";
 import {
     CameraController,
     Canvas,
@@ -13,6 +12,7 @@ import {
 } from "@3dverse/livelink-react";
 
 //------------------------------------------------------------------------------
+import { DOM3DAnchorLegend } from ".";
 import { SUN_POSITION_PICKER_SCENE_ID } from "../../../.storybook/sceneIds";
 
 //------------------------------------------------------------------------------
@@ -96,7 +96,6 @@ export const DirectionEnd: Story = {
         </AnchorLegendDemo>
     ),
 };
-
 
 //------------------------------------------------------------------------------
 export const Color: Story = {

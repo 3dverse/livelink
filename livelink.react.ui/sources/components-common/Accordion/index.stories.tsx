@@ -15,6 +15,7 @@ const meta = {
     },
     parameters: {
         layout: "centered",
+        livelink: false,
     },
 } satisfies Meta<typeof AccordionItem>;
 

@@ -12,6 +12,7 @@ const meta = {
     component: ContextMenu,
     parameters: {
         layout: "fullscreen",
+        livelink: false,
     },
 } satisfies Meta<typeof ContextMenu>;
 

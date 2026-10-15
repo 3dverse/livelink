@@ -1,5 +1,4 @@
 //------------------------------------------------------------------------------
-import React from "react";
 import type { ArgTypes, Meta, StoryObj } from "@storybook/react-vite";
 
 //------------------------------------------------------------------------------
@@ -11,6 +10,7 @@ const meta = {
     component: Skeleton,
     parameters: {
         layout: "centered",
+        livelink: false,
     },
     argTypes: {
         note: {

@@ -1,6 +1,8 @@
 //------------------------------------------------------------------------------
-import type { LivelinkConnectionStage } from "@3dverse/livelink";
 import React from "react";
+import type { LivelinkConnectionStage } from "@3dverse/livelink";
+
+//------------------------------------------------------------------------------
 import { Rocket3dverse } from "../../components-common/Rocket3dverse";
 import styles from "./style.module.css";
 
