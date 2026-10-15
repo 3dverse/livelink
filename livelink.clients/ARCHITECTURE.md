@@ -16,8 +16,8 @@ livelink.clients/
                  │      (livelink.js)     │   │     (livelink.agent)     │
                  │                        │   │                          │
                  │ streaming / rendering  │   │  Agent (attach policy)   │
-                 │ viewports / inputs     │   │  watch & leave policies  │
-                 │ audio / proxied Entity │   │  headless Livelink       │
+                 │ viewports / inputs     │   │  headless Livelink       │
+                 │ audio / proxied Entity │   │  data ingestion module   │
                  └───────────┬────────────┘   └────────────┬─────────────┘
                              │      bundles (source alias) │
                              ▼                             ▼
@@ -57,6 +57,7 @@ Key modules (`livelink.base/sources/`):
 | `TypedEventTarget.ts`           | Typed wrapper over DOM `EventTarget`, the event backbone of every layer.                                                                                                                                                                                                                                                                                                                                                                   |
 | `config/api.ts`                 | Mutable API base URL (`getApiUrl` / `setApiUrl`), surfaced by the facades as `Livelink._api_url`.                                                                                                                                                                                                                                                                                                                                          |
 | `config/env.ts`                 | `BROWSER_ENV` / `NODE_ENV` detection without relying on DOM or Node ambient types.                                                                                                                                                                                                                                                                                                                                                         |
+| `rates.ts`                      | `computeIntervalInMs`: the single guard every Hz-to-`setInterval` conversion in the family goes through, so they all reject the same things — notably `NaN`, which `setInterval` coerces to a busy loop.                                                                                                                                                                                                                                   |
 | `_prebuild/EntityComponents.ts` | **Generated** (see "Code generation"): the component storage class with one accessor per engine component.                                                                                                                                                                                                                                                                                                                                 |
 
 ### `livelink.js` — the browser SDK
@@ -89,8 +90,11 @@ core model classes:
 
 ### `livelink.agent` — the headless agent SDK
 
-A small SDK for driving sessions programmatically (bots, server-side logic),
-with no rendering at all. Runs in Node.js or the browser.
+An SDK for driving sessions programmatically (bots, server-side logic), with no rendering at all.
+Runs in Node.js or the browser. Two layers behind one entry point: the agent core below, and an
+opt-in data-ingestion module (`sources/data/`) that drives scene entities from an external event
+stream — transports, mappings, pipeline. The module has its own
+[ARCHITECTURE.md](./livelink.agent/ARCHITECTURE.md); nothing in the core knows it exists.
 
 - `Livelink.ts` — headless facade: `Livelink.start` / `join` / `join_or_start`
   and a public `startUpdateLoop()` that launches the shared update loop.
@@ -117,8 +121,20 @@ with no rendering at all. Runs in Node.js or the browser.
   - the leave timer re-checks `should_stay` before actually leaving
     (`#leaveIfStillAlone`), so a stale async evaluation can never abandon a
     session that has a live viewer.
-- `AgentEvents.ts` — `on-session-created/joined/ready/left`, `on-error`;
-  every event carries the session's `livelink`.
+- `AgentEvents.ts` — the session lifecycle (`on-session-created/joined/ready/left`, each carrying
+  the session's `livelink`), plus `on-error` (whose `livelink` is null when no session was
+  established) and `on-stopped`, dispatched once every session has been left and flagging whether
+  the agent stopped itself or was stopped through `Agent.stop`.
+- `inactivity.ts` / `nodeSocketGuard.ts` — two accommodations of the core, applied by
+  `Livelink.ts`. The first pushes the core's activity-watcher timeouts to their maximum: the
+  watcher exists to reclaim seats from users who walked away, and an agent — which may only
+  _receive_ — looked exactly like one and was disconnected six minutes after joining. Whether to
+  leave is `Agent`'s `leave_on_condition` policy, not a timer counting messages. The second
+  neutralizes a `throw` from the core's WebSocket `onerror`, which under Node escapes as an
+  `uncaughtException` and says nothing a `close` does not; it goes once the core stops throwing.
+- `ObservedEventTarget.ts` — a `TypedEventTarget` that tracks its own listeners, so an emitter can
+  tell whether an error event reached anybody. Only `SceneIngestion` needs it, which is why it is
+  here and not in `livelink.base`.
 
 ## The two component models
 
@@ -229,21 +245,19 @@ own minimal interface, declared alongside `SceneBase` in `scene/Scene.ts`
 (`SceneEntityInterface` for `Entity`, `SceneScriptEventInterface` for
 `ScriptEventEmitted`) and listed in `SceneBase`'s `implements` clause; the
 consumer module imports the interface by name instead of declaring its own
-local `Pick`. `SceneSettings` still declares its own local, non-exported
-`type SceneHost = Pick<SceneBase, "_dispatchEvent" | "_resolveEmitter">`, and
-`LivelinkInstance.scene` its own `Pick<SceneBase, "_findEntity">` — the plain
-`Pick` idiom, not yet migrated to this pattern; `SessionClass` is the same idea
-for the session statics.
+local `Pick`.
 
-Unlike a local, unexported `Pick`, these interfaces have to be exported
+The plain `Pick` idiom is the other half of the picture, used where the
+consumer sits close enough to declare its own: `SceneSettings` holds a local,
+non-exported `type SceneHost = Pick<SceneBase, "_dispatchEvent" |
+"_resolveEmitter">`, `LivelinkInstance.scene` a `Pick<SceneBase,
+"_findEntity">`, and `SessionClass` is the same idea for the session statics.
+A `Pick` re-derives its signatures from `SceneBase` automatically and stays
+off the public surface by construction; a named interface has to be exported
 (`SceneBase` lives in `Scene.ts`, a different module than most consumers, and
-must be able to name them) — they stay out of the public docs surface via
-`@internal` instead of by not being exported. The trade-off versus `Pick` is
-that `SceneBase` must keep matching each interface by hand instead of the
-`Pick` re-deriving signatures automatically from `SceneBase` itself.
-
-Keeping the `Pick`s local and unexported also keeps them out of the public
-surface by construction.
+must be able to name them), relies on `@internal` to stay out of the docs, and
+must be kept matching `SceneBase` by hand. Reach for the interface when the
+same member set is needed in more than one module.
 
 ## Public API surface
 
@@ -255,11 +269,11 @@ The browser SDK cannot: for the six modules it overrides (`LivelinkBase`,
 would put the base flavour on the public surface right next to the browser one
 it exists to back. Those modules are therefore **not** star re-exported; only
 their non-overridden siblings are picked out by name (`SessionSelector`,
-`DisconnectedEvent`, `EntitiesDeletedEvent`, `SceneInfo`, …). The shadowed base
-symbols are not re-exported under alias names either (`SessionBase`,
-`ClientBase`, `EntityBase`, … are gone) — TypeDoc never gave an aliased
-re-export of a shadowed symbol a page anyway, so the aliases only ever widened
-the TypeScript surface. Pick base siblings out with `export type { … }` when
+`DisconnectedEvent`, `EntitiesDeletedEvent`, `SceneInfo`, …). Nor are the
+shadowed base symbols republished under alias names (`SessionBase`,
+`ClientBase`, `EntityBase`): TypeDoc gives an aliased re-export of a shadowed
+symbol no page, so such an alias widens the TypeScript surface and documents
+nothing. Pick base siblings out with `export type { … }` when
 they are types: `stripInternal` deletes `@internal` declarations from the
 emitted `.d.ts`, so naming one explicitly would leave `index.d.ts` re-exporting
 a declaration that no longer exists.
@@ -333,19 +347,15 @@ node instead of trailing at the bottom of the area's list. The
 `categoryOrder` in both `typedoc.config.mjs` files interleaves the titles so
 `Session / Events` sits right after `Session`, and so on.
 
-It is a **sibling category, not a nested group**, because TypeDoc renders a
-category node's children flat (`DefaultTheme.buildNavigation`) — there is no
-group-inside-category nesting, so `@group Events` cannot add a sub-node under
-`Session`. The only nesting TypeDoc offers is the other way round
-(`categorizeByGroup: true` renders a group's *categories* as children), which
-would mean moving every area from the category axis to the group axis. That is
-ruled out by `@3dverse/livelink.core`: it ships its own `@category` tags
-(`Core`, `Engine Types`, `Engine Schemas`, …) and no `@group`, and it is a
-separate package, so its symbols would stay on the category axis while ours
-moved — the sidebar would mix our areas with TypeDoc's default
-`Classes` / `Interfaces` / `Type Aliases` buckets. A category title is just a
-trimmed string, so `Session / Events` is a normal top-level node whose name
-carries the relationship; the `/` is not a path and does not split into folders.
+It is a **sibling category, not a nested group**. TypeDoc renders a category
+node's children flat (`DefaultTheme.buildNavigation`), so `@group Events`
+cannot add a sub-node under `Session`; the only nesting on offer is the inverse
+(`categorizeByGroup: true`), which would move every area onto the group axis
+while `@3dverse/livelink.core` — a separate package shipping its own
+`@category` tags and no `@group` — stayed on the category axis, mixing our
+areas with TypeDoc's default `Classes` / `Interfaces` buckets. So the `/` in
+`Session / Events` is not a path: a category title is a trimmed string, and
+this is an ordinary top-level node whose name carries the relationship.
 
 Left alone: `EditionEvent` stays in `@category Utils` — it is the shared base
 class of the edition events, not an event itself.
@@ -382,6 +392,8 @@ Each package has its own `vitest` suite under `tests/`:
   transform sync, session find, events, filters) against a mock scene helper;
 - `livelink.agent/tests/` — `Agent` policy tests (start/stop lifecycle, modes,
   watch loop, leave-on-condition, roster, stop/rejoin) spying on the
-  `Session.list` / `Livelink` connection statics;
+  `Session.list` / `Livelink` connection statics, and the data module's own
+  suites: the pipeline, `SceneIngestion`, and one per transport against a fake
+  client;
 - `livelink.js/tests/` — browser-flavour tests (proxied component identity,
   transform handling, rendering events).
