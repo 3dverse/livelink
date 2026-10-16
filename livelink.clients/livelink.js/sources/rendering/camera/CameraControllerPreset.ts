@@ -82,6 +82,16 @@ export type CameraControllerPreset = {
         /** Enable to use the previous target when none is picked to prevent target shift on truck and dolly actions. */
         cancel_target_offset?: boolean;
     };
+    /** [custom] Middle button emulation options */
+    middle_button_emulation?: {
+        /** Enable for holding the left and right buttons together to act as the middle button */
+        enabled: boolean;
+    };
+    /** [custom] Last button preemption options. Ignored while `middle_button_emulation` applies. */
+    last_button_preemption?: {
+        /** Enable for the last pressed button to preempt the buttons held before it */
+        enabled: boolean;
+    };
     /** [custom] Double click or double tap to target options */
     double_click_to_target?: {
         /** Enable for a double click or a double tap to look at the point picked under the pointer */
