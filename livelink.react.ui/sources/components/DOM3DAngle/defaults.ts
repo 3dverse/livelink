@@ -12,6 +12,7 @@ export const DOM3D_ANGLE_DEFAULTS = {
     size: 0.22,
     scaleRange: [-90, 90],
     scaleFadeDeg: 70,
+    showScaleValues: true,
     uncertaintyDeg: 0,
     showNeedle: true,
 } satisfies Partial<DOM3DAngleProps>;

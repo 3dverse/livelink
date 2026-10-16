@@ -3,6 +3,20 @@
  * or its `style`: the defaults have no specificity. Lengths of the gauge are in viewBox units, the gauge being 100
  * units wide whatever its size. Lengths of the needle, which faces the camera, are in screen pixels.
  */
+
+/* Registered, so that the component reads them in pixels, to lay the values of the scale out past the ticks. */
+@property --dom3d-angle-zone-width {
+    syntax: "<length>";
+    inherits: true;
+    initial-value: 1.5px;
+}
+
+@property --dom3d-angle-tick-length {
+    syntax: "<length>";
+    inherits: true;
+    initial-value: 3px;
+}
+
 :where(.root) {
     /* Zones */
     --dom3d-angle-color-acceptable: var(--3dverse-color-positive, #22c55e);
@@ -24,7 +38,7 @@
     --dom3d-angle-uncertainty-opacity: 0.18;
 
     /* Needle, facing the camera */
-    --dom3d-angle-needle-width: 4px;
+    --dom3d-angle-needle-width: 3px;
 }
 
 .root {
@@ -133,9 +147,10 @@
     animation: alert-pulse 1s ease-in-out infinite;
 }
 
-.scaleLabel {
+/* In the color of the zone the value leads into. */
+.scaleValue {
     display: block;
-    color: var(--dom3d-angle-scale-color);
+    color: var(--level-color);
     font-size: 1.5rem;
     font-weight: 600;
     font-variant-numeric: tabular-nums;

@@ -1,9 +1,9 @@
 //------------------------------------------------------------------------------
-import React from "react";
+import React, { useCallback, useState } from "react";
 
 //------------------------------------------------------------------------------
 import type { Vec3 } from "@3dverse/livelink";
-import { DOM3DAnchor, DOM3DDiv } from "@3dverse/livelink-react";
+import { DOM3DAnchor, DOM3DDiv, type AnchorOffset } from "@3dverse/livelink-react";
 
 //------------------------------------------------------------------------------
 import { DEG_TO_RAD, clamp, rotateVec3 } from "../RotationGizmo/math";
@@ -111,6 +111,12 @@ export type DOM3DAngleProps = {
     scaleFadeDeg?: number;
 
     /**
+     * Whether to show the values of the scale, 0° and the angles where the zones meet, past the ticks, each in the
+     * color of the zone it leads into, away from 0°. Defaults to true.
+     */
+    showScaleValues?: boolean;
+
+    /**
      * Accuracy of the measurement, in degrees, shown around the needle, in the plane of the gauge. Defaults to 0,
      * hidden.
      */
@@ -144,9 +150,20 @@ const DEFAULT_NEEDLE_LENGTH_RATIO = 1.25;
 const GAUGE_PIXEL_SIZE = 480;
 /** The plumb line, the 0° reference, goes past the scale by this ratio of `size`. */
 const PLUMB_LINE_RATIO = 1.32;
-const SCALE_LABEL_RATIO = 1.16;
 const TICK_STEP_DEG = 10;
 const MAJOR_TICK_STEP_DEG = 30;
+/** Major ticks are this much longer than the others, as set in CSS. */
+const MAJOR_TICK_LENGTH_RATIO = 1.2;
+/** Gap between the values of the scale and the ends of the ticks, or of the plumb line for 0°, in viewBox units. */
+const SCALE_VALUE_GAP = 1.5;
+/**
+ * A value of the scale lies past its point on screen, away from the vertex: it is centered on its point, horizontally
+ * or vertically, when the direction from the vertex is that close to vertical or horizontal, as a share of its
+ * length.
+ */
+const SCALE_VALUE_CENTERED = 0.38;
+/** Lengths of the scale set in CSS, in viewBox units, until they are read. */
+const DEFAULT_SCALE_LENGTHS: ScaleLengths = { zoneWidth: 1.5, tickLength: 3 };
 /** Ticks are drawn as lines this long, in viewBox units, cut to their length, and given their width, in CSS. */
 const TICK_LINE_LENGTH = 20;
 /** Gap between two zones on the scale, in degrees. */
@@ -245,6 +262,7 @@ function AngleGauge({
     needleLength = size * DEFAULT_NEEDLE_LENGTH_RATIO,
     scaleRange = DEFAULTS.scaleRange,
     scaleFadeDeg = DEFAULTS.scaleFadeDeg,
+    showScaleValues = DEFAULTS.showScaleValues,
     uncertaintyDeg = DEFAULTS.uncertaintyDeg,
     showNeedle = DEFAULTS.showNeedle,
     children,
@@ -252,10 +270,23 @@ function AngleGauge({
     style,
 }: DOM3DAngleProps): React.JSX.Element {
     const viewportCamera = useViewportCamera();
+    const [measureScale, scaleLengths] = useScaleLengths(className, style);
 
     const halfSize = Math.max(size * PLUMB_LINE_RATIO, needleLength) * 1.05;
     const plane = computePlane({ worldPosition, planeNormal, referenceDirection, halfSize });
-    const view = viewportCamera ? computeView({ plane, worldPosition, viewportCamera, size, scaleRange }) : null;
+
+    // Lengths in the viewBox.
+    const toViewBox = VIEWBOX_SIZE / 2 / halfSize;
+    const scaleRadius = size * toViewBox;
+    const needle = needleLength * toViewBox;
+    const plumbLineLength = scaleRadius * PLUMB_LINE_RATIO;
+    // Past the ends of the major ticks, as long as CSS makes them.
+    const ticksEnd =
+        scaleRadius - scaleLengths.zoneWidth / 2 + scaleLengths.tickLength * MAJOR_TICK_LENGTH_RATIO + SCALE_VALUE_GAP;
+
+    const view = viewportCamera
+        ? computeView({ plane, worldPosition, viewportCamera, size, scaleExtent: ticksEnd / toViewBox, scaleRange })
+        : null;
     const edgeOnAmount = view?.edgeOnAmount ?? 0;
     const gaugeOpacity = 1 - edgeOnAmount;
 
@@ -279,12 +310,8 @@ function AngleGauge({
         .filter(Boolean)
         .join(" ");
 
-    // Lengths in the viewBox.
-    const toViewBox = VIEWBOX_SIZE / 2 / halfSize;
-    const scaleRadius = size * toViewBox;
-    const needle = needleLength * toViewBox;
     const shownAngleDeg = clamp(angleDeg, -180, 180);
-    const plumbLineTop = pointAtAngle(CENTER, scaleRadius * PLUMB_LINE_RATIO, 0);
+    const plumbLineTop = pointAtAngle(CENTER, plumbLineLength, 0);
 
     const [scaleMin, scaleMax] = scaleRange;
     const zoneArcs = (scaleZones ?? [{ min: scaleMin, max: scaleMax, level: "neutral" as const }])
@@ -303,13 +330,18 @@ function AngleGauge({
         ticks.push(tickDeg);
     }
     const fade = createScaleFade(scaleRange, scaleFadeDeg);
-    const scaleLabels = [...new Set([0, ...(scaleZones ? zoneBoundaries(scaleZones, scaleRange) : [])])]
-        .map(labelDeg => ({
-            angleDeg: labelDeg,
-            // The 0° label belongs to the plumb line, past the scale: it doesn't fade with it.
-            opacity: gaugeOpacity * (labelDeg === 0 ? 1 : fade.opacityAt(labelDeg)),
+    const scaleValues = (
+        showScaleValues ? [...new Set([0, ...(scaleZones ? zoneBoundaries(scaleZones, scaleRange) : [])])] : []
+    )
+        .map(valueDeg => ({
+            angleDeg: valueDeg,
+            level: scaleZones ? levelLedInto(valueDeg, scaleZones) : ("neutral" as const),
+            // 0° belongs to the plumb line, past the scale: it doesn't fade with it.
+            distance: (valueDeg === 0 ? Math.max(ticksEnd, plumbLineLength + SCALE_VALUE_GAP) : ticksEnd) / toViewBox,
+            offset: viewportCamera ? offsetAwayFromVertex(plane.directionAt(valueDeg), viewportCamera) : "center",
+            opacity: gaugeOpacity * (valueDeg === 0 ? 1 : fade.opacityAt(valueDeg)),
         }))
-        .filter(scaleLabel => scaleLabel.opacity > 0);
+        .filter(scaleValue => scaleValue.opacity > 0);
 
     return (
         <>
@@ -322,6 +354,7 @@ function AngleGauge({
                 data-status={status}
             >
                 <div
+                    ref={measureScale}
                     className={styles.gauge}
                     style={{ opacity: gaugeOpacity }}
                     role="img"
@@ -384,18 +417,18 @@ function AngleGauge({
                     </svg>
                 </div>
             </DOM3DDiv>
-            {scaleLabels.map(scaleLabel => (
-                // Facing the camera, so that the labels never read mirrored when the gauge is seen from behind.
+            {scaleValues.map(scaleValue => (
+                // Facing the camera, so that the values never read mirrored when the gauge is seen from behind.
                 <DOM3DAnchor
-                    key={scaleLabel.angleDeg}
-                    worldPosition={plane.pointAt(
-                        scaleLabel.angleDeg,
-                        size * (scaleLabel.angleDeg === 0 ? PLUMB_LINE_RATIO + 0.1 : SCALE_LABEL_RATIO),
-                    )}
+                    key={scaleValue.angleDeg}
+                    worldPosition={plane.pointAt(scaleValue.angleDeg, scaleValue.distance)}
+                    offset={scaleValue.offset}
                     className={rootClassName}
-                    style={{ ...style, pointerEvents: "none", opacity: scaleLabel.opacity }}
+                    style={{ ...style, pointerEvents: "none", opacity: scaleValue.opacity }}
                 >
-                    <span className={styles.scaleLabel}>{scaleLabel.angleDeg}°</span>
+                    <span className={styles.scaleValue} data-level={scaleValue.level}>
+                        {scaleValue.angleDeg}°
+                    </span>
                 </DOM3DAnchor>
             ))}
             {viewportCamera && (
@@ -518,6 +551,8 @@ type Plane = {
     right: Vec3;
     quad: [Vec3, Vec3, Vec3, Vec3];
     size: number;
+    /** Unit vector from the vertex at an angle. */
+    directionAt: (angleDeg: number) => Vec3;
     pointAt: (angleDeg: number, distance: number) => Vec3;
 };
 
@@ -544,6 +579,8 @@ function computePlane({
 
     const at = (upAmount: number, rightAmount: number): Vec3 =>
         add(worldPosition, add(scale(up, upAmount), scale(right, rightAmount)));
+    const directionAt = (angleDeg: number): Vec3 =>
+        add(scale(up, Math.cos(angleDeg * DEG_TO_RAD)), scale(right, Math.sin(angleDeg * DEG_TO_RAD)));
 
     return {
         normal,
@@ -551,8 +588,8 @@ function computePlane({
         right,
         quad: [at(halfSize, -halfSize), at(halfSize, halfSize), at(-halfSize, halfSize), at(-halfSize, -halfSize)],
         size: 2 * halfSize,
-        pointAt: (angleDeg, distance) =>
-            at(distance * Math.cos(angleDeg * DEG_TO_RAD), distance * Math.sin(angleDeg * DEG_TO_RAD)),
+        directionAt,
+        pointAt: (angleDeg, distance) => add(worldPosition, scale(directionAt(angleDeg), distance)),
     };
 }
 
@@ -566,12 +603,15 @@ function computeView({
     worldPosition,
     viewportCamera,
     size,
+    scaleExtent,
     scaleRange,
 }: {
     plane: Plane;
     worldPosition: Vec3;
     viewportCamera: ViewportCamera;
     size: number;
+    /** Distance from the vertex to the values of the scale, past the ticks, in world units. */
+    scaleExtent: number;
     scaleRange: readonly [min: number, max: number];
 }): { edgeOnAmount: number; childrenSide: "left" | "right"; childrenGapPx: number; pixelRatio: number } | null {
     const lineOfSight = subtract(worldPosition, viewportCamera.position);
@@ -584,8 +624,8 @@ function computeView({
     const facing = Math.abs(dot(plane.normal, lineOfSight)) / distance;
     const cameraRight = rotateVec3(viewportCamera.orientation, [1, 0, 0]);
     const pixelsPerUnit = viewportCamera.focalLengthPx / distance;
-    // How far the scale and its labels extend on the side of the negative angles.
-    const negativeExtent = size * SCALE_LABEL_RATIO * Math.sin(clamp(-scaleRange[0], 0, 90) * DEG_TO_RAD);
+    // How far the scale and its values extend on the side of the negative angles.
+    const negativeExtent = scaleExtent * Math.sin(clamp(-scaleRange[0], 0, 90) * DEG_TO_RAD);
 
     return {
         edgeOnAmount: 1 - smoothstep(EDGE_ON_HIDDEN, EDGE_ON_SHOWN, facing),
@@ -598,4 +638,67 @@ function computeView({
 function smoothstep(edge0: number, edge1: number, x: number): number {
     const t = clamp((x - edge0) / (edge1 - edge0), 0, 1);
     return t * t * (3 - 2 * t);
+}
+
+//------------------------------------------------------------------------------
+/** Lengths of the scale set in CSS, by the theming variables, in viewBox units. */
+type ScaleLengths = { zoneWidth: number; tickLength: number };
+
+/**
+ * Reads the lengths of the scale set in CSS from the gauge, through the returned ref, for the values of the scale to
+ * clear the ticks. Read again when `className` or `style` change, as they may set the theming variables.
+ */
+function useScaleLengths(
+    className: string | undefined,
+    style: React.CSSProperties | undefined,
+): [measure: (element: HTMLElement | null) => void, lengths: ScaleLengths] {
+    const [lengths, setLengths] = useState(DEFAULT_SCALE_LENGTHS);
+
+    const measure = useCallback(
+        (element: HTMLElement | null): void => {
+            if (!element) {
+                return;
+            }
+            // Registered with `@property`: computed in pixels, whatever their units.
+            const computedStyle = getComputedStyle(element);
+            const read = (name: string, fallback: number): number => {
+                const value = parseFloat(computedStyle.getPropertyValue(name));
+                return Number.isFinite(value) ? value : fallback;
+            };
+            const next: ScaleLengths = {
+                zoneWidth: read("--dom3d-angle-zone-width", DEFAULT_SCALE_LENGTHS.zoneWidth),
+                tickLength: read("--dom3d-angle-tick-length", DEFAULT_SCALE_LENGTHS.tickLength),
+            };
+            setLengths(previous =>
+                previous.zoneWidth === next.zoneWidth && previous.tickLength === next.tickLength ? previous : next,
+            );
+        },
+        // Not read inside: when they change, the new ref measures the gauge again.
+        [className, style],
+    );
+
+    return [measure, lengths];
+}
+
+/**
+ * Level of the zone a value of the scale leads into, away from 0°: the zone starting there for a positive angle,
+ * ending there for a negative one, so that values symmetric around 0° take the same color.
+ */
+function levelLedInto(angleDeg: number, zones: ReadonlyArray<AngleZone>): AngleZoneLevel {
+    const endingIndex = angleDeg < 0 ? zones.findIndex(zone => zone.max === angleDeg) : -1;
+    return zones[endingIndex >= 0 ? endingIndex : findZoneIndex(angleDeg, zones)]!.level;
+}
+
+/**
+ * Edge of a value of the scale anchored on its point: the one facing the vertex on screen, so that the value lies
+ * past its point, away from the ticks, whatever its size.
+ */
+function offsetAwayFromVertex(direction: Vec3, viewportCamera: ViewportCamera): AnchorOffset {
+    const right = dot(direction, rotateVec3(viewportCamera.orientation, [1, 0, 0]));
+    const up = dot(direction, rotateVec3(viewportCamera.orientation, [0, 1, 0]));
+    const threshold = Math.hypot(right, up) * SCALE_VALUE_CENTERED;
+
+    const horizontal = right > threshold ? "left" : right < -threshold ? "right" : "center";
+    const vertical = up > threshold ? "bottom" : up < -threshold ? "top" : "center";
+    return horizontal === "center" && vertical === "center" ? "center" : (`${horizontal}-${vertical}` as AnchorOffset);
 }

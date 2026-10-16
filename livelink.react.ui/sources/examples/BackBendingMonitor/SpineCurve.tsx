@@ -27,7 +27,8 @@ const MARGIN_PX = 48;
  * hides.
  *
  * It is also the progress bar of the time held: in a zone with a hold limit, it fills from the hips to the neck, up
- * to the limit, then pulses. With `showValue`, the value and the time held are written above it.
+ * to the limit, then pulses. Elsewhere, e.g. in the acceptable zone, it stays as it is before it fills. With
+ * `showValue`, the value and the time held are written above it.
  */
 export function SpineCurve({
     hipCenter,
@@ -80,7 +81,7 @@ export function SpineCurve({
 //------------------------------------------------------------------------------
 /**
  * A curve through `points`, smoothed as a Catmull-Rom spline, with a dot on each point, filled up to `holdProgress`,
- * and `label` written past its end.
+ * if timed, and `label` written past its end.
  */
 function CurveDrawing({
     points: worldPoints,
@@ -103,7 +104,7 @@ function CurveDrawing({
     const points = projected as Array<Point>;
 
     const path = catmullRomPath(points);
-    const progress = holdProgress === null ? 1 : clamp(holdProgress, 0, 1);
+    const progress = holdProgress === null ? 0 : clamp(holdProgress, 0, 1);
 
     // Past the end of the curve, away from the rest of it.
     const end = points[points.length - 1]!;
@@ -116,7 +117,7 @@ function CurveDrawing({
 
     return (
         <g className={styles.curve} data-level={exposure.level} data-status={exposure.status}>
-            {holdProgress !== null && <path className={styles.track} d={path} />}
+            <path className={styles.track} d={path} />
             {progress > 0 && (
                 <path
                     className={styles.progress}

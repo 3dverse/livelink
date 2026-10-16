@@ -26,7 +26,7 @@
     stroke-linecap: round;
 }
 
-/* Not filled yet, in a zone with a hold limit. */
+/* Not filled yet, in a zone with a hold limit, or not timed. */
 .track {
     stroke-opacity: 0.3;
 }
