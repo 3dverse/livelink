@@ -66,7 +66,7 @@ function AppLayout() {
     if (cameraControllerPreset === CameraControllerPresets.fly) {
         // Increase the truck speed for the fly preset to make it more responsive on this scene.
         // Real use case could adjust this value based on user preferences or scene bounding box.
-        overridenPreset.truckSpeed! *= 10;
+        overridenPreset.truckSpeed! *= 50;
     }
 
     return (
@@ -79,12 +79,9 @@ function AppLayout() {
                     />
                 </Viewport>
             </Canvas>
-            <div className="absolute bottom-[5vh] left-1/2 -translate-x-1/2 flex flex-row gap-1 w-max">
-                <button
-                    className="button button-overlay mr-4"
-                    onClick={moveCamera}
-                >
-                    Reset position
+            <div className="absolute bottom-[5vh] flex flex-row flex-wrap justify-center not-visited:gap-3 w-full px-1">
+                <button className="button button-overlay" onClick={moveCamera}>
+                    Reset
                 </button>
                 {presetKeys.map((presetKey, index) => {
                     let preset = CameraControllerPresets[presetKey];
@@ -108,7 +105,7 @@ function AppLayout() {
                     return (
                         <button
                             key={index}
-                            className={`button button-overlay capitalize ${isSelected ? "bg-accent" : ""}`}
+                            className={`button text-4xs button-overlay capitalize ${isSelected ? "bg-accent" : ""}`}
                             onClick={selectPreset}
                         >
                             {name}
