@@ -13,7 +13,7 @@ import {
     reject,
     signedAngleDeg,
     subtract,
-} from "../../components/DOM3DAngleAlert/vector";
+} from "../../components/DOM3DAngle/vector";
 import type { BodyLandmarks } from "./bodyRig";
 
 //------------------------------------------------------------------------------

@@ -1,14 +1,32 @@
 //------------------------------------------------------------------------------
-import {
-    TRUNK_INCLINATION_ZONES,
-    type AngleHoldLimits,
-    type AngleZoneLevel,
-    type DOM3DAngleAlertCurve,
-} from "../../components/DOM3DAngleAlert";
+import type { Vec3 } from "@3dverse/livelink";
+
+//------------------------------------------------------------------------------
+import type { AngleZone, AngleZoneLevel } from "../../components/DOM3DAngle";
+import type { AngleHoldLimits } from "../../components/DOM3DAngle/useAngleExposure";
 import { NEUTRAL_POSTURE, type BodyLandmarks, type BodyPosture } from "./bodyRig";
 import type { TrunkPosture } from "./trunkPosture";
 
 //------------------------------------------------------------------------------
+/**
+ * Zones of trunk inclination of EN 1005-4 and ISO 11226: the angle of the trunk line, from the hip joints
+ * to the base of the neck (C7), from the vertical, positive forward.
+ * - Up to 20°: acceptable.
+ * - 20° to 60°: conditionally acceptable, depending on how long and how often it is held, and on support.
+ * - Over 60°: not acceptable.
+ * - Leaning backward is only acceptable with the trunk supported. It becomes conditionally acceptable past 10°,
+ *   a margin for the accuracy of the measurement and for the sway of standing.
+ */
+export const TRUNK_INCLINATION_ZONES: ReadonlyArray<AngleZone> = [
+    { min: Number.NEGATIVE_INFINITY, max: -10, level: "conditional" },
+    { min: -10, max: 20, level: "acceptable" },
+    { min: 20, max: 60, level: "conditional" },
+    { min: 60, max: Number.POSITIVE_INFINITY, level: "notAcceptable" },
+];
+
+/** Inclinations shown on the gauge and the meter of the readout: a little backward, and forward past horizontal. */
+export const TRUNK_INCLINATION_SCALE_RANGE: readonly [min: number, max: number] = [-30, 120];
+
 /**
  * Criteria of a harmful back bend. The trunk inclination is the main one, assessed by zone, by how long it is
  * held and by how often it happens; the others make a bend more harmful.
@@ -104,8 +122,8 @@ export function listAggravatingFactors({
 /**
  * The spine, from its base at the hips to the base of the neck, through its pivots at the waist and at the chest.
  */
-export function spineCurve(landmarks: BodyLandmarks): DOM3DAngleAlertCurve {
-    return { points: [landmarks.spineBase, landmarks.waist, landmarks.chest, landmarks.neckBase] };
+export function spinePoints(landmarks: BodyLandmarks): ReadonlyArray<Vec3> {
+    return [landmarks.spineBase, landmarks.waist, landmarks.chest, landmarks.neckBase];
 }
 
 export function formatDeg(angleDeg: number): string {

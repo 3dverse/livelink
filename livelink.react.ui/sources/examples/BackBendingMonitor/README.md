@@ -99,33 +99,34 @@ Check the standards against their current editions before relying on them.
 | Frequency window           | Bends over the last 60 s                                                  | —                                                                                         | Implementation                              |
 | Accuracy shown             | ±5°                                                                       | Typical of a markerless body capture                                                      | Set it for the capture system               |
 
-They are defined in `backBending.ts` (`BACK_BENDING_RULES`) and in the component (`TRUNK_INCLINATION_ZONES`,
-`DEFAULT_HOLD_LIMITS`).
+They are defined in `backBending.ts`: `TRUNK_INCLINATION_ZONES` and `BACK_BENDING_RULES`.
 
 ## How it is shown
 
 The angle and the time are shown on separate scales: filling an angle as time passes would draw a duration on a scale
 of degrees.
 
-- **The gauge**, `DOM3DAngleAlert`, lies in the sagittal plane at the hip joints, like a goniometer: a dashed plumb
-  line for 0°, a scale graduated every 10° and colored by zone, green, amber and red, and the angle filled from 0° in
-  the color of its zone.
-- **The vertex** is marked by a landmark at the hip joint center, the midpoint of the heads of the femurs, which is
-  lower than the pelvis and the base of the spine: it is where the standards put the vertex of the trunk
-  inclination.
-- **The spine** is drawn as a curve through 4 landmarks: its 3 pivots, at the hips, the waist and the chest, then the
-  base of the neck, where the trunk line ends. An arc joins it to the vertex, from the hip joint center to the base of
-  the spine. Curve and landmarks take the color of the zone of the trunk inclination. The curve is also the progress
-  bar of the time held: in a zone with a hold limit, it fills from the hip joint center to the neck up to the limit,
-  then pulses. Its shape shows a rounded back.
-- **The needle**, hidden by default with `showNeedle`, is the straight trunk line, from the hip joint center to the
-  base of the neck, with the accuracy of the measurement around it. Next to it, the gap with the curve of the spine
-  is the rounding of the back.
-- **The readout**, optional, beside the hips: the value, its zone, the time held against the limit, and a vertical
-  meter of the angle.
-- **Seen from the front**, the gauge is edge-on and fades out. The landmarks, the spine and the readout are drawn on
-  planes facing the camera, so they keep reading from any side. Without the readout, the value and the time held are
-  written above the spine.
+`DOM3DAngle` knows nothing of bodies: it shows an angle at its vertex, against zones, alerting when it is held too long. The
+example gives it the trunk inclination, the zones of EN 1005-4 and a readout, and draws the spine over it.
+
+- **The gauge**, from `DOM3DAngle`, lies in the sagittal plane at the hip joints, like a goniometer: a dashed
+  plumb line for 0°, a scale graduated every 10° and colored by zone, green, amber and red, and the angle filled from
+  0° in the color of its zone.
+- **The vertex** is the hip joint center, the midpoint of the heads of the femurs, which is lower than the pelvis and
+  the base of the spine: it is where the standards put the vertex of the trunk inclination.
+- **The spine**, `SpineCurve.tsx`, is drawn by the example through 4 landmarks: its 3 pivots, at the hips, the waist
+  and the chest, then the base of the neck, where the trunk line ends. An arc joins it to the vertex, from the hip
+  joint center to the base of the spine. It faces the camera, over the gauge, takes the color of the zone of the
+  trunk inclination, and is also the progress bar of the time held: in a zone with a hold limit, it fills from the hip
+  joint center to the neck up to the limit, then pulses. Its shape shows a rounded back.
+- **The needle** of `DOM3DAngle`, hidden by default with `showNeedle`, is the straight trunk line, from the hip
+  joint center to the base of the neck, facing the camera, with the accuracy of the measurement around it. Next to it,
+  the gap with the curve of the spine is the rounding of the back.
+- **The readout**, `Readout.tsx`, optional, is given as `children` to `DOM3DAngle`, which shows it beside the
+  hips: the value, its zone, the time held against the limit, and a vertical meter of the angle.
+- **Seen from the front**, the gauge is edge-on and fades out. The spine, the needle and the readout are drawn facing
+  the camera, so they keep reading from any side. Without the readout, the value and the time held are written above
+  the spine.
 - **The monitor panel** of the example lists every reading with its assessment, the exposure of the day, and the
   references. **The alert banner** above the worker says what triggered the alert and what made the bend more harmful.
 
@@ -147,26 +148,45 @@ const exposure = useAngleExposure({
 });
 
 <DOM3DOverlay>
-  <DOM3DAngleAlert
+  <DOM3DAngle
     worldPosition={posture.hipCenter}
     planeNormal={posture.lateralAxis}
     angleDeg={posture.trunkInclinationDeg}
+    zones={BACK_BENDING_RULES.zones}
     exposure={exposure}
-    label="Trunk inclination"
     needleLength={posture.trunkLength}
-    curve={spineCurve(landmarks, posture)}
+    scaleRange={TRUNK_INCLINATION_SCALE_RANGE}
     uncertaintyDeg={5}
+    showNeedle={false}
+  >
+    <Readout
+      label="Trunk inclination"
+      angleDeg={posture.trunkInclinationDeg}
+      uncertaintyDeg={5}
+      exposure={exposure}
+      zones={BACK_BENDING_RULES.zones}
+      scaleRange={TRUNK_INCLINATION_SCALE_RANGE}
+    />
+  </DOM3DAngle>
+  <SpineCurve
+    hipCenter={posture.hipCenter}
+    spinePoints={spinePoints(landmarks)}
+    angleDeg={posture.trunkInclinationDeg}
+    exposure={exposure}
+    showValue={false}
   />
 </DOM3DOverlay>;
 ```
 
-| File                         | What it does                                                                          |
-| ---------------------------- | ------------------------------------------------------------------------------------- |
-| `trunkPosture.ts`            | Measures the angles from the landmarks.                                               |
-| `backBending.ts`             | The rules, the aggravating factors, the spine curve, and the scenario of the story.   |
-| `bodyRig.ts`                 | Poses the robot of the story and gives its landmarks, standing in for a body capture. |
-| `panels.tsx`                 | The monitor panel and the alert banner.                                               |
-| `components/DOM3DAngleAlert` | The gauge, and `useAngleExposure`, which times the exposure.                          |
+| File                    | What it does                                                                              |
+| ----------------------- | ----------------------------------------------------------------------------------------- |
+| `trunkPosture.ts`       | Measures the angles from the landmarks.                                                   |
+| `backBending.ts`        | The zones, the rules, the aggravating factors, the points of the spine, and the scenario. |
+| `bodyRig.ts`            | Poses the robot of the story and gives its landmarks, standing in for a body capture.     |
+| `Readout.tsx`           | The readout beside the hips.                                                              |
+| `SpineCurve.tsx`        | The spine, over the gauge, filling with the time held.                                    |
+| `panels.tsx`            | The monitor panel and the alert banner.                                                   |
+| `components/DOM3DAngle` | The gauge, for any angle, and `useAngleExposure`, which times the exposure against zones. |
 
 ## Limitations
 

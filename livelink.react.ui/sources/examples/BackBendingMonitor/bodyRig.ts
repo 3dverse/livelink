@@ -5,7 +5,7 @@ import { LivelinkContext, useEntities, useEntity } from "@3dverse/livelink-react
 
 //------------------------------------------------------------------------------
 import { axisAngleToQuat, conjugateQuat, multiplyQuat, rotateVec3 } from "../../components/RotationGizmo/math";
-import { add, midpoint, subtract } from "../../components/DOM3DAngleAlert/vector";
+import { add, midpoint, subtract } from "../../components/DOM3DAngle/vector";
 import { CONTROLLER_EUID } from "../PromptSkeletonPosition/rig";
 
 //------------------------------------------------------------------------------

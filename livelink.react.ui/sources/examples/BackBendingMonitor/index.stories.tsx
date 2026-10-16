@@ -13,19 +13,23 @@ import {
 } from "@3dverse/livelink-react";
 
 //------------------------------------------------------------------------------
-import { DOM3DAngleAlert, useAngleExposure, type AngleExposureAlert } from "../../components/DOM3DAngleAlert";
+import { DOM3DAngle } from "../../components/DOM3DAngle";
+import { useAngleExposure, type AngleExposureAlert } from "../../components/DOM3DAngle/useAngleExposure";
 import { Button } from "../../components-common/Button";
 import { SKELETON_SCENE_ID } from "../../../.storybook/sceneIds";
 import { NEUTRAL_POSTURE, type BodyPosture } from "./bodyRig";
 import {
     BACK_BENDING_RULES,
     SCENARIO,
+    TRUNK_INCLINATION_SCALE_RANGE,
     listAggravatingFactors,
-    spineCurve,
+    spinePoints,
     type AggravatingFactor,
     type ScenarioStep,
 } from "./backBending";
 import { AlertBanner, MonitorPanel } from "./panels";
+import { Readout } from "./Readout";
+import { SpineCurve } from "./SpineCurve";
 import { above, useMeasuredBody } from "./useMeasuredBody";
 import { usePostureTransition } from "./usePostureTransition";
 
@@ -55,7 +59,7 @@ type BackBendingMonitorArgs = BodyPosture & {
     conditionalLimitS: number;
     /** Accuracy of the body capture, in degrees, shown around the needle. */
     uncertaintyDeg: number;
-    /** Shows the readout beside the hips. Without it, the edge-on meter writes the value. */
+    /** Shows the readout beside the hips. Without it, the value and the time held are written above the spine. */
     showReadout: boolean;
     /** Draws the spine, from the hips to the base of the neck, through its pivots at the waist and the chest. */
     showSpine: boolean;
@@ -220,20 +224,38 @@ function BackBendingMonitor({
                 <CameraController ref={lookAtRobot} />
                 {landmarks && measurement && standingLandmarks && (
                     <DOM3DOverlay>
-                        <DOM3DAngleAlert
+                        <DOM3DAngle
                             worldPosition={measurement.hipCenter}
                             planeNormal={measurement.lateralAxis}
                             angleDeg={measurement.trunkInclinationDeg}
                             zones={BACK_BENDING_RULES.zones}
                             exposure={exposure}
-                            label="Trunk inclination"
                             needleLength={measurement.trunkLength}
+                            scaleRange={TRUNK_INCLINATION_SCALE_RANGE}
                             uncertaintyDeg={uncertaintyDeg}
-                            curve={spineCurve(landmarks)}
-                            showCurve={showSpine}
-                            showReadout={showReadout}
                             showNeedle={showNeedle}
-                        />
+                        >
+                            {showReadout && (
+                                <Readout
+                                    label="Trunk inclination"
+                                    angleDeg={measurement.trunkInclinationDeg}
+                                    uncertaintyDeg={uncertaintyDeg}
+                                    exposure={exposure}
+                                    zones={BACK_BENDING_RULES.zones}
+                                    scaleRange={TRUNK_INCLINATION_SCALE_RANGE}
+                                />
+                            )}
+                        </DOM3DAngle>
+                        {showSpine && (
+                            // After the gauge, so that it is drawn over it, and over the needle.
+                            <SpineCurve
+                                hipCenter={measurement.hipCenter}
+                                spinePoints={spinePoints(landmarks)}
+                                angleDeg={measurement.trunkInclinationDeg}
+                                exposure={exposure}
+                                showValue={!showReadout}
+                            />
+                        )}
                         <DOM3DAnchor
                             worldPosition={above(standingLandmarks.head, BANNER_HEIGHT_ABOVE_HEAD)}
                             offset="center-bottom"

@@ -2,8 +2,9 @@
 import React from "react";
 
 //------------------------------------------------------------------------------
-import { ANGLE_ZONE_LEVEL_LABELS, type AngleExposure, type AngleExposureAlert } from "../../components/DOM3DAngleAlert";
-import { formatSeconds } from "../../components/DOM3DAngleAlert/Readout";
+import type { AngleExposure, AngleExposureAlert } from "../../components/DOM3DAngle/useAngleExposure";
+import { ANGLE_ZONE_LEVEL_LABELS } from "../../components/DOM3DAngle/zones";
+import { formatSeconds } from "../../components/DOM3DAngle/format";
 import { ViewerPanel } from "../../components-common/ViewerPanel";
 import {
     BACK_BENDING_REFERENCES,
@@ -54,7 +55,7 @@ export function MonitorPanel({
         exposure.status === "alert" ? "danger" : exposure.holdLimitS !== null && isBending ? "warning" : "ok";
 
     return (
-        <ViewerPanel variant="outline" className={styles.monitor}>
+        <ViewerPanel className={styles.monitor}>
             <header className={styles.monitorHeader}>
                 <span className={styles.monitorTitle}>Back bending monitor</span>
                 <span className={styles.live}>Live</span>

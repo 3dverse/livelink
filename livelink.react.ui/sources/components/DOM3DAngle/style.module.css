@@ -136,7 +136,7 @@
 .scaleLabel {
     display: block;
     color: var(--dom3d-angle-scale-color);
-    font-size: 10px;
+    font-size: 1.5rem;
     font-weight: 600;
     font-variant-numeric: tabular-nums;
     opacity: 0.8;

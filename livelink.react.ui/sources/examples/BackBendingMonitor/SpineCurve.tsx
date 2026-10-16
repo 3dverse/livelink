@@ -5,52 +5,98 @@ import React from "react";
 import type { Vec3 } from "@3dverse/livelink";
 
 //------------------------------------------------------------------------------
-import { clamp } from "../RotationGizmo/math";
-import type { Projector } from "./CameraFacingLayer";
-import type { Point } from "./geometry";
-import type { AngleZoneLevel } from "./zones";
-import styles from "./style.module.css";
-
-//------------------------------------------------------------------------------
-/**
- * Shape of what the angle measures, when it isn't a straight line from the vertex, e.g. the joints of an
- * articulated arm.
- */
-export type DOM3DAngleAlertCurve = {
-    /**
-     * World positions along it, from the vertex end outward. Drawn as a smooth curve through them.
-     */
-    points: ReadonlyArray<Vec3>;
-};
+import { clamp, formatAngle } from "../../components/RotationGizmo/math";
+import { CameraFacingLayer, type Projector } from "../../components/DOM3DAngle/CameraFacingLayer";
+import { formatSeconds } from "../../components/DOM3DAngle/format";
+import type { Point } from "../../components/DOM3DAngle/geometry";
+import type { AngleExposure } from "../../components/DOM3DAngle/useAngleExposure";
+import { useViewportCamera } from "../../components/DOM3DAngle/useViewportCamera";
+import styles from "./SpineCurve.module.css";
 
 //------------------------------------------------------------------------------
 const POINT_RADIUS_PX = 3.6;
 const LABEL_OFFSET_PX = 16;
+/** Room around the curve, for the value above it. */
+const MARGIN_PX = 48;
 
+//------------------------------------------------------------------------------
 /**
- * A curve through the points of `curve`, smoothed as a Catmull-Rom spline, with a dot on each point, in the color
- * of the current zone.
+ * The spine, from the hip joint center, the vertex of the trunk inclination, through its pivots to the base of the
+ * neck: a smooth curve facing the camera, so that it reads from any side, over the gauge of `DOM3DAngle`, in
+ * the color of the zone of the trunk inclination. Its shape shows a rounded back, which the straight trunk line
+ * hides.
  *
- * It is also the progress bar of the time held: in a zone with a hold limit, it fills from its first point to its
- * last, up to the limit. Elsewhere, it is filled. The label is written past its end.
- * @internal
+ * It is also the progress bar of the time held: in a zone with a hold limit, it fills from the hips to the neck, up
+ * to the limit, then pulses. With `showValue`, the value and the time held are written above it.
  */
-export function CurveDrawing({
-    curve,
+export function SpineCurve({
+    hipCenter,
+    spinePoints,
+    angleDeg,
+    exposure,
+    showValue,
+}: {
+    hipCenter: Vec3;
+    /** Pivots of the spine, from its base at the hips, to the base of the neck. */
+    spinePoints: ReadonlyArray<Vec3>;
+    /** Trunk inclination, in degrees. */
+    angleDeg: number;
+    exposure: AngleExposure;
+    showValue: boolean;
+}): React.JSX.Element | null {
+    const viewportCamera = useViewportCamera();
+    if (!viewportCamera) {
+        return null;
+    }
+
+    const isTimed = exposure.level !== "acceptable";
+    const holdProgress = isTimed && exposure.holdLimitS ? exposure.holdS / exposure.holdLimitS : null;
+    const points = [hipCenter, ...spinePoints];
+    const label = showValue
+        ? formatAngle(angleDeg, 0) + (isTimed ? ` · ${formatSeconds(exposure.holdS)}` : "")
+        : undefined;
+
+    return (
+        <CameraFacingLayer
+            anchor={hipCenter}
+            viewportCamera={viewportCamera}
+            extent={points}
+            marginPx={MARGIN_PX}
+            className={styles.spine}
+        >
+            {project => (
+                <CurveDrawing
+                    points={points}
+                    project={project}
+                    exposure={exposure}
+                    holdProgress={holdProgress}
+                    label={label}
+                />
+            )}
+        </CameraFacingLayer>
+    );
+}
+
+//------------------------------------------------------------------------------
+/**
+ * A curve through `points`, smoothed as a Catmull-Rom spline, with a dot on each point, filled up to `holdProgress`,
+ * and `label` written past its end.
+ */
+function CurveDrawing({
+    points: worldPoints,
     project,
-    level,
+    exposure,
     holdProgress,
     label,
 }: {
-    curve: DOM3DAngleAlertCurve;
+    points: ReadonlyArray<Vec3>;
     project: Projector;
-    level: AngleZoneLevel;
+    exposure: AngleExposure;
     /** Time held in the current zone over its limit, from 0 to 1, or null when not timed. */
     holdProgress: number | null;
-    /** Text past the end of the curve, e.g. the value. */
     label?: string;
 }): React.JSX.Element | null {
-    const projected = curve.points.map(project);
+    const projected = worldPoints.map(project);
     if (projected.length < 2 || projected.some(point => point === null)) {
         return null;
     }
@@ -69,23 +115,22 @@ export function CurveDrawing({
     };
 
     return (
-        <g data-level={level}>
-            <path className={styles.curveOutline} d={path} />
-            {holdProgress !== null && <path className={styles.curveTrack} d={path} />}
+        <g className={styles.curve} data-level={exposure.level} data-status={exposure.status}>
+            {holdProgress !== null && <path className={styles.track} d={path} />}
             {progress > 0 && (
                 <path
-                    className={styles.curveProgress}
+                    className={styles.progress}
                     d={path}
                     pathLength={1}
                     strokeDasharray={progress < 1 ? `${progress} 1` : undefined}
                 />
             )}
             {points.map((point, index) => (
-                <circle key={index} className={styles.curvePoint} cx={point.x} cy={point.y} r={POINT_RADIUS_PX} />
+                <circle key={index} className={styles.point} cx={point.x} cy={point.y} r={POINT_RADIUS_PX} />
             ))}
             {label && (
                 <text
-                    className={styles.curveLabel}
+                    className={styles.label}
                     x={labelPosition.x}
                     y={labelPosition.y}
                     textAnchor="middle"
@@ -96,26 +141,6 @@ export function CurveDrawing({
             )}
         </g>
     );
-}
-
-/**
- * The vertex of the angle on its own, in the color of the current zone.
- * @internal
- */
-export function VertexDot({
-    position,
-    project,
-    level,
-}: {
-    position: Vec3;
-    project: Projector;
-    level: AngleZoneLevel;
-}): React.JSX.Element | null {
-    const point = project(position);
-    if (!point) {
-        return null;
-    }
-    return <circle className={styles.curvePoint} data-level={level} cx={point.x} cy={point.y} r={POINT_RADIUS_PX} />;
 }
 
 /** The Catmull-Rom spline through `points`, the ends repeated, as cubic Béziers. */
