@@ -1,0 +1,177 @@
+/*
+ * Theming: every --dom3d-angle-* variable below can be overridden on the component, through its `className`
+ * or its `style`: the defaults have no specificity. Lengths of the gauge are in viewBox units, the gauge being 100
+ * units wide whatever its size. Lengths of the needle, which faces the camera, are in screen pixels.
+ */
+:where(.root) {
+    /* Zones */
+    --dom3d-angle-color-acceptable: var(--3dverse-color-positive, #22c55e);
+    --dom3d-angle-color-conditional: var(--3dverse-color-warning, #f59e0b);
+    --dom3d-angle-color-not-acceptable: var(--3dverse-color-negative, #ef4444);
+    /* Without zones */
+    --dom3d-angle-color-neutral: #9ca3af;
+
+    /* Gauge */
+    --dom3d-angle-scale-color: #ffffff;
+    --dom3d-angle-zone-width: 1.5px;
+    --dom3d-angle-zone-opacity: 0.75;
+    /* Ticks, across the zones, in their colors. Major ticks, every 30°, are 20% longer. */
+    --dom3d-angle-tick-length: 3px;
+    --dom3d-angle-tick-width: 0.4px;
+    --dom3d-angle-tick-opacity: 1;
+    --dom3d-angle-sector-opacity: 0.8;
+    --dom3d-angle-sector-outline-width: 0.2px;
+    --dom3d-angle-uncertainty-opacity: 0.18;
+
+    /* Needle, facing the camera */
+    --dom3d-angle-needle-width: 4px;
+}
+
+.root {
+    /* Color of the current reading */
+    --color: var(--dom3d-angle-color-acceptable);
+
+    &.conditional {
+        --color: var(--dom3d-angle-color-conditional);
+    }
+
+    &.notAcceptable {
+        --color: var(--dom3d-angle-color-not-acceptable);
+    }
+
+    &.neutral {
+        --color: var(--dom3d-angle-color-neutral);
+    }
+}
+
+/* Gauge ------------------------------------------------------------------- */
+
+.gauge {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    transition: opacity 150ms;
+}
+
+/* The scale, and the rest of the gauge, on top of each other. */
+.gaugeLayer {
+    position: absolute;
+    inset: 0;
+    display: block;
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+}
+
+/* Color of the elements drawn for a given level, e.g. a zone of the scale. */
+.root [data-level="acceptable"] {
+    --level-color: var(--dom3d-angle-color-acceptable);
+}
+
+.root [data-level="conditional"] {
+    --level-color: var(--dom3d-angle-color-conditional);
+}
+
+.root [data-level="notAcceptable"] {
+    --level-color: var(--dom3d-angle-color-not-acceptable);
+}
+
+.root [data-level="neutral"] {
+    --level-color: var(--dom3d-angle-color-neutral);
+}
+
+.zoneBand {
+    fill: none;
+    stroke: var(--level-color);
+    stroke-width: var(--dom3d-angle-zone-width);
+    stroke-opacity: var(--dom3d-angle-zone-opacity);
+}
+
+/*
+ * Each tick is a line drawn at 0°, outward from the middle of the zones, and turned to its angle: its dash is its
+ * length. It is moved inward by half the width of the zones, so that its base is on their inner edge, whatever
+ * their width.
+ */
+.tick,
+.majorTick {
+    --tick-length: var(--dom3d-angle-tick-length);
+
+    fill: none;
+    stroke: var(--level-color);
+    stroke-opacity: var(--dom3d-angle-tick-opacity);
+    stroke-linecap: butt;
+    stroke-width: var(--dom3d-angle-tick-width);
+    stroke-dasharray: var(--tick-length) 100;
+    transform: translateY(calc(var(--dom3d-angle-zone-width) / 2));
+}
+
+.majorTick {
+    --tick-length: calc(var(--dom3d-angle-tick-length) * 1.2);
+}
+
+.plumbLine {
+    stroke: var(--dom3d-angle-scale-color);
+    stroke-opacity: 0.5;
+    stroke-width: 0.4px;
+    stroke-dasharray: 2 1.5;
+}
+
+.sector {
+    fill: var(--color);
+    fill-opacity: var(--dom3d-angle-sector-opacity);
+    stroke: var(--color);
+    stroke-width: var(--dom3d-angle-sector-outline-width);
+    stroke-linejoin: round;
+}
+
+.uncertaintyBand {
+    fill: var(--color);
+    fill-opacity: var(--dom3d-angle-uncertainty-opacity);
+}
+
+.alerting .sector {
+    animation: alert-pulse 1s ease-in-out infinite;
+}
+
+.scaleLabel {
+    display: block;
+    color: var(--dom3d-angle-scale-color);
+    font-size: 10px;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    opacity: 0.8;
+    white-space: nowrap;
+}
+
+/* Needle, facing the camera, in pixels ------------------------------------ */
+
+.needleTrack,
+.needleProgress {
+    fill: none;
+    stroke: var(--level-color);
+    stroke-width: var(--dom3d-angle-needle-width);
+    stroke-linecap: round;
+}
+
+/* Not filled yet, in a zone with a hold limit. */
+.needleTrack {
+    stroke-opacity: 0.3;
+}
+
+.alerting .needleProgress {
+    animation: alert-pulse 1s ease-in-out infinite;
+}
+
+.needlePoint {
+    fill: var(--level-color);
+}
+
+@keyframes alert-pulse {
+    0%,
+    100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.45;
+    }
+}
