@@ -79,3 +79,27 @@ export function VertexDot({
     }
     return <circle className={styles.needlePoint} data-level={level} cx={point.x} cy={point.y} r={POINT_RADIUS_PX} />;
 }
+
+/**
+ * The value of the angle, rounded to the degree, centered on `position`, over the needle.
+ * @internal
+ */
+export function AngleValueText({
+    position,
+    angleDeg,
+    project,
+}: {
+    position: Vec3;
+    angleDeg: number;
+    project: Projector;
+}): React.JSX.Element | null {
+    const point = project(position);
+    if (!point) {
+        return null;
+    }
+    return (
+        <text className={styles.angleValue} x={point.x} y={point.y}>
+            {Math.round(angleDeg)}°
+        </text>
+    );
+}

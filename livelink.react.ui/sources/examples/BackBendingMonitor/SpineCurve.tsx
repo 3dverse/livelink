@@ -22,9 +22,8 @@ const MARGIN_PX = 48;
 //------------------------------------------------------------------------------
 /**
  * The spine, from the hip joint center, the vertex of the trunk inclination, through its pivots to the base of the
- * neck: a smooth curve facing the camera, so that it reads from any side, over the gauge of `DOM3DAngle`, in
- * the color of the zone of the trunk inclination. Its shape shows a rounded back, which the straight trunk line
- * hides.
+ * neck: a smooth curve facing the camera, so that it reads from any side, under `DOM3DAngle`, in the color of the
+ * zone of the trunk inclination. Its shape shows a rounded back, which the straight trunk line hides.
  *
  * It is also the progress bar of the time held: in a zone with a hold limit, it fills from the hips to the neck, up
  * to the limit, then pulses. Elsewhere, e.g. in the acceptable zone, it stays as it is before it fills. With
@@ -63,6 +62,8 @@ export function SpineCurve({
             viewportCamera={viewportCamera}
             extent={points}
             marginPx={MARGIN_PX}
+            // Under DOM3DAngle, so that its needle, its values and the readout stay readable over the spine.
+            stacking="under"
             className={styles.spine}
         >
             {project => (

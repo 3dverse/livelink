@@ -190,6 +190,9 @@ export const PerAxisModes: Story = {
  * is placed in the page, and outside of a viewport, the sphere is seen from a three-quarter view.
  */
 export const Standalone: Story = {
+    parameters: {
+        livelink: false,
+    },
     args: { label: "Rotation" },
     render: args => <StandaloneDemo {...args} />,
 };

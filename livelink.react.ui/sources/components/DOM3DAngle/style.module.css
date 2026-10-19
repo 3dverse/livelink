@@ -39,6 +39,11 @@
 
     /* Needle, facing the camera */
     --dom3d-angle-needle-width: 3px;
+
+    /* Value of the angle, facing the camera, outlined to read over the gauge and the needle */
+    --dom3d-angle-value-color: #ffffff;
+    --dom3d-angle-value-outline-color: rgb(0 0 0 / 0.25);
+    --dom3d-angle-value-font-size: 16px;
 }
 
 .root {
@@ -179,6 +184,20 @@
 
 .needlePoint {
     fill: var(--level-color);
+}
+
+/* Value of the angle, centered on its point: the outline is painted under the fill. */
+.angleValue {
+    fill: var(--dom3d-angle-value-color);
+    stroke: var(--dom3d-angle-value-outline-color);
+    stroke-width: 3px;
+    stroke-linejoin: round;
+    paint-order: stroke;
+    font-size: var(--dom3d-angle-value-font-size);
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    text-anchor: middle;
+    dominant-baseline: central;
 }
 
 @keyframes alert-pulse {

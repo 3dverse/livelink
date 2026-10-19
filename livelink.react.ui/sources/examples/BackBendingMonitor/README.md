@@ -107,7 +107,7 @@ The angle and the time are shown on separate scales: filling an angle as time pa
 of degrees.
 
 `DOM3DAngle` knows nothing of bodies: it shows an angle at its vertex, against zones, alerting when it is held too long. The
-example gives it the trunk inclination, the zones of EN 1005-4 and a readout, and draws the spine over it.
+example gives it the trunk inclination, the zones of EN 1005-4 and a readout, and draws the spine under it.
 
 - **The gauge**, from `DOM3DAngle`, lies in the sagittal plane at the hip joints, like a goniometer: a dashed
   plumb line for 0°, a scale graduated every 10° and colored by zone, green, amber and red, and the angle filled from
@@ -116,9 +116,9 @@ example gives it the trunk inclination, the zones of EN 1005-4 and a readout, an
   the base of the spine: it is where the standards put the vertex of the trunk inclination.
 - **The spine**, `SpineCurve.tsx`, is drawn by the example through 4 landmarks: its 3 pivots, at the hips, the waist
   and the chest, then the base of the neck, where the trunk line ends. An arc joins it to the vertex, from the hip
-  joint center to the base of the spine. It faces the camera, over the gauge, takes the color of the zone of the
-  trunk inclination, and is also the progress bar of the time held: in a zone with a hold limit, it fills from the hip
-  joint center to the neck up to the limit, then pulses. Its shape shows a rounded back.
+  joint center to the base of the spine. It faces the camera, under the gauge and its values, takes the color of the
+  zone of the trunk inclination, and is also the progress bar of the time held: in a zone with a hold limit, it fills
+  from the hip joint center to the neck up to the limit, then pulses. Its shape shows a rounded back.
 - **The needle** of `DOM3DAngle`, hidden by default with `showNeedle`, is the straight trunk line, from the hip
   joint center to the base of the neck, facing the camera, with the accuracy of the measurement around it. Next to it,
   the gap with the curve of the spine is the rounding of the back.
@@ -184,7 +184,7 @@ const exposure = useAngleExposure({
 | `backBending.ts`        | The zones, the rules, the aggravating factors, the points of the spine, and the scenario. |
 | `bodyRig.ts`            | Poses the robot of the story and gives its landmarks, standing in for a body capture.     |
 | `Readout.tsx`           | The readout beside the hips.                                                              |
-| `SpineCurve.tsx`        | The spine, over the gauge, filling with the time held.                                    |
+| `SpineCurve.tsx`        | The spine, under the gauge, filling with the time held.                                   |
 | `panels.tsx`            | The monitor panel and the alert banner.                                                   |
 | `components/DOM3DAngle` | The gauge, for any angle, and `useAngleExposure`, which times the exposure against zones. |
 

@@ -6,7 +6,6 @@ import {
     CameraController,
     Canvas,
     DefaultCameraController,
-    DOM3DAnchor,
     DOM3DOverlay,
     useCameraEntity,
     Viewport,
@@ -14,7 +13,7 @@ import {
 
 //------------------------------------------------------------------------------
 import { DOM3DAngle } from "../../components/DOM3DAngle";
-import { useAngleExposure, type AngleExposureAlert } from "../../components/DOM3DAngle/useAngleExposure";
+import { useAngleExposure } from "../../components/DOM3DAngle/useAngleExposure";
 import { Button } from "../../components-common/Button";
 import { SKELETON_SCENE_ID } from "../../../.storybook/sceneIds";
 import { NEUTRAL_POSTURE, type BodyPosture } from "./bodyRig";
@@ -27,10 +26,10 @@ import {
     type AggravatingFactor,
     type ScenarioStep,
 } from "./backBending";
-import { AlertBanner, MonitorPanel } from "./panels";
+import { MonitorPanel } from "./panels";
 import { Readout } from "./Readout";
 import { SpineCurve } from "./SpineCurve";
-import { above, useMeasuredBody } from "./useMeasuredBody";
+import { useMeasuredBody } from "./useMeasuredBody";
 import { usePostureTransition } from "./usePostureTransition";
 
 //------------------------------------------------------------------------------
@@ -43,9 +42,6 @@ const CAMERA_TARGET: Vec3 = [0, 0.85, 0.1];
 const TRANSITION_MS = 1000;
 /** Alerts raised earlier today, before the story started, so that the first one reads "3 times today". */
 const ALERTS_EARLIER_TODAY = 2;
-const BANNER_LINGER_MS = 4000;
-/** Height of the bottom of the alert banner above the head of the robot standing, in meters. */
-const BANNER_HEIGHT_ABOVE_HEAD = 0.35;
 
 //------------------------------------------------------------------------------
 type BackBendingMonitorArgs = BodyPosture & {
@@ -189,15 +185,11 @@ function BackBendingMonitor({
 
     const { isPending, isFound, landmarks, measurement, standingLandmarks } = useMeasuredBody(posture);
 
-    const [lastAlert, setLastAlert] = useState<{ alert: AngleExposureAlert; factors: Array<AggravatingFactor> } | null>(
-        null,
-    );
     const factorsRef = useRef<Array<AggravatingFactor>>([]);
     const exposure = useAngleExposure({
         angleDeg: measurement?.trunkInclinationDeg ?? 0,
         zones: BACK_BENDING_RULES.zones,
         holdLimits: { conditional: conditionalLimitS, notAcceptable: staticLimitS },
-        onAlert: alert => setLastAlert({ alert, factors: factorsRef.current }),
     });
     const factors = measurement
         ? listAggravatingFactors({
@@ -212,7 +204,6 @@ function BackBendingMonitor({
     });
 
     const alertsToday = ALERTS_EARLIER_TODAY + exposure.alertCount;
-    const isBannerVisible = useLingeringFlag(exposure.status === "alert", BANNER_LINGER_MS);
 
     if (!isPending && !isFound) {
         console.error("The robot bones or its animation controller couldn't be found in the scene");
@@ -247,7 +238,7 @@ function BackBendingMonitor({
                             )}
                         </DOM3DAngle>
                         {showSpine && (
-                            // After the gauge, so that it is drawn over it, and over the needle.
+                            // Drawn under the gauge, its needle, its values and the readout.
                             <SpineCurve
                                 hipCenter={measurement.hipCenter}
                                 spinePoints={spinePoints(landmarks)}
@@ -256,18 +247,6 @@ function BackBendingMonitor({
                                 showValue={!showReadout}
                             />
                         )}
-                        <DOM3DAnchor
-                            worldPosition={above(standingLandmarks.head, BANNER_HEIGHT_ABOVE_HEAD)}
-                            offset="center-bottom"
-                            style={{ pointerEvents: "none" }}
-                        >
-                            <AlertBanner
-                                isVisible={isBannerVisible && lastAlert !== null}
-                                alertsToday={alertsToday}
-                                alert={lastAlert?.alert ?? null}
-                                factors={lastAlert?.factors ?? []}
-                            />
-                        </DOM3DAnchor>
                     </DOM3DOverlay>
                 )}
                 {measurement && (
@@ -341,24 +320,4 @@ function useScenario(isPlaying: boolean, transitionTo: (posture: BodyPosture) =>
     }, [isPlaying, transitionTo]);
 
     return SCENARIO[stepIndex]!;
-}
-
-/** True while `isActive`, and for `lingerMs` after. */
-function useLingeringFlag(isActive: boolean, lingerMs: number): boolean {
-    const [isLingering, setIsLingering] = useState(false);
-    const wasActiveRef = useRef(isActive);
-
-    useEffect(() => {
-        const wasActive = wasActiveRef.current;
-        wasActiveRef.current = isActive;
-        if (isActive || !wasActive) {
-            return;
-        }
-
-        setIsLingering(true);
-        const timeoutId = window.setTimeout(() => setIsLingering(false), lingerMs);
-        return (): void => window.clearTimeout(timeoutId);
-    }, [isActive, lingerMs]);
-
-    return isActive || isLingering;
 }

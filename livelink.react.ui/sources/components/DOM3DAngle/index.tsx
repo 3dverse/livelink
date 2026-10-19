@@ -10,7 +10,7 @@ import { DEG_TO_RAD, clamp, rotateVec3 } from "../RotationGizmo/math";
 import { CameraFacingLayer } from "./CameraFacingLayer";
 import { DOM3D_ANGLE_DEFAULTS as DEFAULTS } from "./defaults";
 import { CENTER, VIEWBOX_SIZE, arcPath, pointAtAngle, wedgePath } from "./geometry";
-import { NeedleDrawing, VertexDot } from "./Needle";
+import { AngleValueText, NeedleDrawing, VertexDot } from "./Needle";
 import {
     useAngleExposure,
     type AngleExposure,
@@ -117,6 +117,12 @@ export type DOM3DAngleProps = {
     showScaleValues?: boolean;
 
     /**
+     * Whether to show the value of the angle, on its bisector, inside the scale, facing the camera, over the gauge and
+     * the needle. Like the needle, it stays when the gauge is seen edge-on. Defaults to true.
+     */
+    showAngleValue?: boolean;
+
+    /**
      * Accuracy of the measurement, in degrees, shown around the needle, in the plane of the gauge. Defaults to 0,
      * hidden.
      */
@@ -183,6 +189,10 @@ const CHILDREN_MIN_GAP = 0.2;
 const CHILDREN_EXTRA_GAP_PX = 12;
 /** Room around the camera-facing drawings, for the dots and the outline of the needle. */
 const CAMERA_FACING_MARGIN_PX = 8;
+/** The value of the angle is on its bisector, this ratio of `size` from the vertex: inside the filled angle. */
+const ANGLE_VALUE_DISTANCE_RATIO = 0.6;
+/** Room around the camera-facing drawings for the value of the angle, centered on its point, e.g. "-120°". */
+const ANGLE_VALUE_MARGIN_PX = 40;
 
 /**
  * Shows an angle measured in the world, the way a goniometer or an inclinometer does, e.g. the angle of a robot
@@ -197,9 +207,10 @@ const CAMERA_FACING_MARGIN_PX = 8;
  * - optionally, the accuracy of the measurement around the needle.
  *
  * Facing the camera, so that it reads from any side, and over the gauge, the needle runs from the vertex along the
- * angle, in the color of the current zone. It is also the progress bar of the time held: in a zone with a hold
- * limit, it fills from the vertex outward up to the limit, then pulses. Seen edge-on, the gauge would only be a
- * line and fades out, while the needle keeps reading.
+ * angle, in the color of the current zone, and the value of the angle is written on its bisector. The needle is also
+ * the progress bar of the time held: in a zone with a hold limit, it fills from the vertex outward up to the limit,
+ * then pulses. Seen edge-on, the gauge would only be a line and fades out, while the needle and the value keep
+ * reading.
  *
  * The angle is timed against `holdLimits`, or, to share the exposure with the rest of the interface, e.g. to log
  * the alerts, by `useAngleExposure`, whose result is given as `exposure`. Content given as `children`, e.g. a
@@ -263,6 +274,7 @@ function AngleGauge({
     scaleRange = DEFAULTS.scaleRange,
     scaleFadeDeg = DEFAULTS.scaleFadeDeg,
     showScaleValues = DEFAULTS.showScaleValues,
+    showAngleValue = DEFAULTS.showAngleValue,
     uncertaintyDeg = DEFAULTS.uncertaintyDeg,
     showNeedle = DEFAULTS.showNeedle,
     children,
@@ -311,6 +323,7 @@ function AngleGauge({
         .join(" ");
 
     const shownAngleDeg = clamp(angleDeg, -180, 180);
+    const angleValuePosition = plane.pointAt(shownAngleDeg / 2, size * ANGLE_VALUE_DISTANCE_RATIO);
     const plumbLineTop = pointAtAngle(CENTER, plumbLineLength, 0);
 
     const [scaleMin, scaleMax] = scaleRange;
@@ -435,24 +448,33 @@ function AngleGauge({
                 <CameraFacingLayer
                     anchor={worldPosition}
                     viewportCamera={viewportCamera}
-                    extent={showNeedle ? [worldPosition, needleTip] : [worldPosition]}
-                    marginPx={CAMERA_FACING_MARGIN_PX}
+                    extent={[
+                        worldPosition,
+                        ...(showNeedle ? [needleTip] : []),
+                        ...(showAngleValue ? [angleValuePosition] : []),
+                    ]}
+                    marginPx={showAngleValue ? ANGLE_VALUE_MARGIN_PX : CAMERA_FACING_MARGIN_PX}
                     className={rootClassName}
                     style={style}
                 >
-                    {project =>
-                        showNeedle ? (
-                            <NeedleDrawing
-                                from={worldPosition}
-                                to={needleTip}
-                                project={project}
-                                level={level}
-                                holdProgress={holdProgress}
-                            />
-                        ) : (
-                            <VertexDot position={worldPosition} project={project} level={level} />
-                        )
-                    }
+                    {project => (
+                        <>
+                            {showNeedle ? (
+                                <NeedleDrawing
+                                    from={worldPosition}
+                                    to={needleTip}
+                                    project={project}
+                                    level={level}
+                                    holdProgress={holdProgress}
+                                />
+                            ) : (
+                                <VertexDot position={worldPosition} project={project} level={level} />
+                            )}
+                            {showAngleValue && (
+                                <AngleValueText position={angleValuePosition} angleDeg={angleDeg} project={project} />
+                            )}
+                        </>
+                    )}
                 </CameraFacingLayer>
             )}
             {children && view && (

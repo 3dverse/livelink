@@ -1,6 +1,5 @@
 //------------------------------------------------------------------------------
 import { useMemo } from "react";
-import type { Vec3 } from "@3dverse/livelink";
 
 //------------------------------------------------------------------------------
 import {
@@ -51,9 +50,4 @@ export function useMeasuredBody(posture: BodyPosture): {
         measurement,
         standingLandmarks: calibration?.landmarks ?? null,
     };
-}
-
-/** Point `height` above `position`. */
-export function above(position: Vec3, height: number): Vec3 {
-    return [position[0], position[1] + height, position[2]];
 }

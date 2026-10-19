@@ -2,17 +2,11 @@
 import React from "react";
 
 //------------------------------------------------------------------------------
-import type { AngleExposure, AngleExposureAlert } from "../../components/DOM3DAngle/useAngleExposure";
+import type { AngleExposure } from "../../components/DOM3DAngle/useAngleExposure";
 import { ANGLE_ZONE_LEVEL_LABELS } from "../../components/DOM3DAngle/zones";
 import { formatSeconds } from "../../components/DOM3DAngle/format";
 import { ViewerPanel } from "../../components-common/ViewerPanel";
-import {
-    BACK_BENDING_REFERENCES,
-    BACK_BENDING_RULES,
-    formatDeg,
-    formatRate,
-    type AggravatingFactor,
-} from "./backBending";
+import { BACK_BENDING_REFERENCES, BACK_BENDING_RULES, formatDeg, formatRate } from "./backBending";
 import type { TrunkPosture } from "./trunkPosture";
 import styles from "./panels.module.css";
 
@@ -151,64 +145,5 @@ function Reading({
             <dd className={styles.readingValue}>{value}</dd>
             <dd className={styles.readingNote}>{note}</dd>
         </div>
-    );
-}
-
-//------------------------------------------------------------------------------
-/**
- * Alert raised when a bend is held too long, with what made it harmful.
- */
-export function AlertBanner({
-    isVisible,
-    alertsToday,
-    alert,
-    factors,
-}: {
-    isVisible: boolean;
-    alertsToday: number;
-    alert: AngleExposureAlert | null;
-    factors: ReadonlyArray<AggravatingFactor>;
-}): React.JSX.Element {
-    // Where the zone of the alert starts, forward, e.g. 60° for the zone that isn't acceptable.
-    const zoneStartDeg = BACK_BENDING_RULES.zones.find(zone => zone.level === alert?.level && zone.min >= 0)?.min;
-
-    return (
-        <div role="alert" aria-hidden={!isVisible} className={styles.banner} data-visible={isVisible}>
-            <ViewerPanel variant="outline" className={styles.bannerPanel}>
-                <WarningIcon />
-                <div className={styles.bannerText}>
-                    <strong className={styles.bannerTitle}>Harmful back bending</strong>
-                    <span className={styles.bannerDetail}>
-                        {alert && zoneStartDeg !== undefined
-                            ? `Bent over ${zoneStartDeg}° for more than ${formatLimit(alert.holdLimitS)}, `
-                            : ""}
-                        {alertsToday} {alertsToday === 1 ? "time" : "times"} today
-                    </span>
-                    {factors.length > 0 && (
-                        <span className={styles.factors}>
-                            {factors.map(factor => (
-                                <span key={factor.id} className={styles.factor}>
-                                    {factor.label} <span className={styles.factorValue}>{factor.value}</span>
-                                </span>
-                            ))}
-                        </span>
-                    )}
-                </div>
-            </ViewerPanel>
-        </div>
-    );
-}
-
-function formatLimit(seconds: number): string {
-    return Number.isInteger(seconds) ? `${seconds} s` : formatSeconds(seconds);
-}
-
-function WarningIcon(): React.JSX.Element {
-    return (
-        <svg width="28" height="28" viewBox="0 0 24 24" aria-hidden className={styles.warningIcon}>
-            <path d="M12 3 L22 20 H2 Z" fill="currentColor" strokeLinejoin="round" />
-            <path d="M12 9.5 V14" stroke="white" strokeWidth="2" strokeLinecap="round" />
-            <circle cx="12" cy="17" r="1.1" fill="white" />
-        </svg>
     );
 }
