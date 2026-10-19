@@ -1,4 +1,5 @@
 {
-    "title": "Data Ingestion",
-    "summary": "Replay a recorded event stream into a scene through SceneIngestion."
+  "title": "Data Ingestion",
+  "summary": "Replay a recorded event stream into a scene through SceneIngestion.",
+  "isNew": true
 }

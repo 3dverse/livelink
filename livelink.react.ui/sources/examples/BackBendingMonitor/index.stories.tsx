@@ -33,10 +33,15 @@ import { useMeasuredBody } from "./useMeasuredBody";
 import { usePostureTransition } from "./usePostureTransition";
 
 //------------------------------------------------------------------------------
-/** Sees the robot from its left, slightly from the front: forward bends read in profile. */
-const SIDE_CAMERA_POSITION: Vec3 = [2.4, 1.2, 1.0];
-/** Sees the robot from the front, slightly from its left: forward bends come toward the camera. */
-const FRONT_CAMERA_POSITION: Vec3 = [0.5, 1.3, 2.7];
+type View = "side" | "front";
+
+/** Where the camera sees the robot from, in each view, before orbiting. */
+const VIEW_CAMERA_POSITIONS: Record<View, Vec3> = {
+    /** From its left, slightly from the front: forward bends read in profile. */
+    side: [2.4, 1.2, 1.0],
+    /** From the front, slightly from its left: forward bends come toward the camera. */
+    front: [0.5, 1.3, 2.7],
+};
 const CAMERA_TARGET: Vec3 = [0, 0.85, 0.1];
 
 const TRANSITION_MS = 1000;
@@ -61,8 +66,6 @@ type BackBendingMonitorArgs = BodyPosture & {
     showSpine: boolean;
     /** Shows the needle, the straight trunk line from the hip joint center to the base of the neck. */
     showNeedle: boolean;
-    /** Where the camera starts, before orbiting. */
-    view: "side" | "front";
 };
 
 const isManual = { arg: "mode", eq: "manual" } as const;
@@ -84,7 +87,6 @@ const meta = {
         showReadout: true,
         showSpine: true,
         showNeedle: false,
-        view: "side",
     },
     argTypes: {
         mode: { control: "radio", options: ["scenario", "manual"] },
@@ -97,7 +99,6 @@ const meta = {
         staticLimitS: { control: { type: "range", min: 1, max: 10, step: 1 } },
         conditionalLimitS: { control: { type: "range", min: 5, max: 120, step: 5 } },
         uncertaintyDeg: { control: { type: "range", min: 0, max: 10, step: 1 } },
-        view: { control: "radio", options: ["side", "front"] },
     },
 } satisfies Meta<BackBendingMonitorArgs>;
 
@@ -133,16 +134,7 @@ export const Default: Story = {
     render: args => <BackBendingMonitor {...args} />,
 };
 
-//------------------------------------------------------------------------------
-/**
- * Seen from the front, the gauge is edge-on and fades out, while the spine, drawn facing the camera, keeps reading:
- * in the color of the zone, filling from the hips to the neck with the time held. Without the readout, the value and
- * the time held are written above it.
- */
-export const FrontView: Story = {
-    args: { view: "front", showReadout: false },
-    render: args => <BackBendingMonitor {...args} />,
-};
+const INITIAL_VIEW: View = "side";
 
 //------------------------------------------------------------------------------
 function BackBendingMonitor({
@@ -159,18 +151,25 @@ function BackBendingMonitor({
     showReadout,
     showSpine,
     showNeedle,
-    view,
-}: BackBendingMonitorArgs): React.JSX.Element {
-    const cameraPosition = view === "front" ? FRONT_CAMERA_POSITION : SIDE_CAMERA_POSITION;
-    const { cameraEntity } = useCameraEntity({ position: cameraPosition });
-    // The orbital camera controller orbits around a target, the origin by default, so it is aimed at the robot
-    // instead. Memoized so that the ref callback is only called again when the view changes.
-    const lookAtRobot = useCallback(
-        (cameraController: DefaultCameraController | undefined | null): void => {
-            cameraController?.setLookAt(...cameraPosition, ...CAMERA_TARGET, false);
-        },
-        [cameraPosition],
+}: BackBendingMonitorArgs & { initialView?: View }): React.JSX.Element {
+    const [view, setView] = useState(INITIAL_VIEW);
+    const { cameraEntity } = useCameraEntity({ position: VIEW_CAMERA_POSITIONS[INITIAL_VIEW] });
+    const [cameraController, setCameraController] = useState<DefaultCameraController | null>(null);
+    const keepCameraController = useCallback(
+        (controller: DefaultCameraController | undefined | null): void => setCameraController(controller ?? null),
+        [],
     );
+    // The orbital camera controller orbits around a target, the origin by default: it is aimed at the robot instead,
+    // from the position of the view, at once when it is created, then moving there smoothly when the view changes.
+    const aimedCameraControllerRef = useRef<DefaultCameraController | null>(null);
+    useEffect(() => {
+        if (!cameraController) {
+            return;
+        }
+        const isAimed = aimedCameraControllerRef.current === cameraController;
+        aimedCameraControllerRef.current = cameraController;
+        cameraController.setLookAt(...VIEW_CAMERA_POSITIONS[view], ...CAMERA_TARGET, isAimed);
+    }, [cameraController, view]);
     const { posture, transitionTo } = usePostureTransition(NEUTRAL_POSTURE, TRANSITION_MS);
 
     const [isPlaying, setIsPlaying] = useState(true);
@@ -212,7 +211,7 @@ function BackBendingMonitor({
     return (
         <Canvas style={{ width: "100%", height: "100vh" }}>
             <Viewport cameraEntity={cameraEntity} style={{ width: "100%", height: "100%" }}>
-                <CameraController ref={lookAtRobot} />
+                <CameraController ref={keepCameraController} />
                 {landmarks && measurement && standingLandmarks && (
                     <DOM3DOverlay>
                         <DOM3DAngle
@@ -258,20 +257,28 @@ function BackBendingMonitor({
                         uncertaintyDeg={uncertaintyDeg}
                     />
                 )}
-                {isScenario && (
-                    <div style={TOOLBAR_STYLE}>
+                <div style={TOOLBAR_STYLE}>
+                    {isScenario && (
                         <Button
                             variant="secondary"
                             size="sm"
                             aria-pressed={isPlaying}
                             onClick={() => setIsPlaying(previous => !previous)}
-                            style={{ backgroundColor: "var(--3dverse-color-bg-overground)" }}
+                            style={BUTTON_STYLE}
                         >
                             {isPlaying ? "Pause" : "Play"}
                         </Button>
-                        <span style={CAPTION_STYLE}>{step.caption}</span>
-                    </div>
-                )}
+                    )}
+                    <Button
+                        variant="secondary"
+                        size="sm"
+                        onClick={() => setView(previous => (previous === "side" ? "front" : "side"))}
+                        style={BUTTON_STYLE}
+                    >
+                        {view === "side" ? "Front view" : "Side view"}
+                    </Button>
+                    {isScenario && <span style={CAPTION_STYLE}>{step.caption}</span>}
+                </div>
             </Viewport>
         </Canvas>
     );
@@ -285,6 +292,10 @@ const TOOLBAR_STYLE: React.CSSProperties = {
     display: "flex",
     alignItems: "center",
     gap: "0.75rem",
+};
+
+const BUTTON_STYLE: React.CSSProperties = {
+    backgroundColor: "var(--3dverse-color-bg-overground)",
 };
 
 const CAPTION_STYLE: React.CSSProperties = {

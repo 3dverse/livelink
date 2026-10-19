@@ -1,0 +1,5 @@
+{
+  "title": "DOM 3D Angle",
+  "isNew": true,
+  "summary": "A gauge measuring the angle of a turning joint against its working range, and alerting when it is held too long out of it."
+}
