@@ -340,6 +340,7 @@ const Avatar3D = ({
             label={letter}
             showViewportRectangle={showViewport}
             showOffscreenIndicator
+            inertia={0.1}
             onTravel={onTravel}
         />
     );
