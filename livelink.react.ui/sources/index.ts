@@ -12,6 +12,7 @@ export * from "./components/DOM3DAngle";
 export { DEFAULT_HOLD_LIMITS, useAngleExposure } from "./components/DOM3DAngle/useAngleExposure";
 export { ANGLE_ZONE_LEVEL_LABELS } from "./components/DOM3DAngle/zones";
 export * from "./components/DOM3DAvatar";
+export * from "./components/DOM3DZone";
 export * from "./components/InactivityWarning";
 export * from "./components/LightControl";
 export * from "./components/LightControl/LightPreview/LightPreview";
