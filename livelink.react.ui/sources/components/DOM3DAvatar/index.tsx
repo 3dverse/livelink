@@ -3,7 +3,7 @@ import React, { PropsWithChildren, useCallback, useContext, useEffect, useMemo, 
 
 //------------------------------------------------------------------------------
 import type { Client, Entity, Quat, Vec3 } from "@3dverse/livelink";
-import { DOM3DDiv, DOM3DEntityAnchor, ViewportContext } from "@3dverse/livelink-react";
+import { DOM3DAnchor, DOM3DDiv, DOM3DEntityAnchor, ViewportContext } from "@3dverse/livelink-react";
 
 //------------------------------------------------------------------------------
 import styles from "./style.module.css";
@@ -58,6 +58,17 @@ const DEFAULT_ASPECT_RATIO = 16 / 9;
  */
 const VIEWPORT_RECT_FADE_START_DISTANCE = 1.5;
 const VIEWPORT_RECT_FADE_END_DISTANCE = 0.8;
+
+/**
+ * With `inertia` on, the avatar is considered caught up with the client's camera once both its
+ * distance to it (world units) and its speed (world units per second) drop below this. It then
+ * snaps the rest of the way and stops animating until the camera moves again.
+ */
+const AVATAR_INERTIA_SETTLE_THRESHOLD = 1e-3;
+
+//------------------------------------------------------------------------------
+/** What `DOM3DAnchor` reports to `onProjectionChange` on every rendered frame. */
+type AnchorProjection = { screen_position: Vec3; is_visible: boolean };
 
 //------------------------------------------------------------------------------
 /**
@@ -114,6 +125,15 @@ export type DOM3DAvatarProps = PropsWithChildren<{
     showOffscreenIndicator?: boolean;
 
     /**
+     * Makes the avatar trail behind the client's camera instead of sticking to it: it eases toward
+     * the camera's position, so it lags behind (and seems to float) when the camera moves fast, then
+     * settles back onto it once the camera stops. Roughly the time, in seconds, it takes to catch up;
+     * `0` disables it. The viewport rectangle always tracks the camera's exact position regardless,
+     * while the offscreen indicator follows the avatar.
+     */
+    inertia?: number;
+
+    /**
      * Called when the avatar, or its offscreen indicator, is clicked.
      */
     onTravel?: (entity: Entity) => void;
@@ -151,6 +171,7 @@ export function DOM3DAvatar({
     label,
     showViewportRectangle = false,
     showOffscreenIndicator = false,
+    inertia = 0,
     onTravel,
     className,
     style,
@@ -164,18 +185,21 @@ export function DOM3DAvatar({
     const resolvedLabel = label ?? client.id.charAt(0).toUpperCase();
 
     // Fires every rendered frame (driven by the overlay), so it also reacts to the local camera
-    // moving even when the client's own camera stays still. It keeps firing even while `entity`
-    // is behind the local camera: unlike `DOM3DEntityAnchor`'s children, which unmount in that
-    // case, this callback lives on the anchor's own props and isn't gated on its render output —
-    // which is what lets the offscreen indicator below still track a client who's behind you.
+    // moving even when the client's own camera stays still. It keeps firing even while the avatar
+    // is behind the local camera: unlike the anchor's children, which unmount in that case, this
+    // callback lives on the anchor's own props and isn't gated on its render output — which is what
+    // lets the offscreen indicator below still track a client who's behind you.
+    //
+    // `avatarPosition` is where the avatar is actually drawn: the client's camera position, or
+    // the position trailing behind it when `inertia` is on.
     const handleProjectionChange = useCallback(
-        (projection: { screen_position: Vec3; is_visible: boolean }) => {
+        (projection: AnchorProjection, avatarPosition: Vec3) => {
             const camera = viewport?.camera_projection;
             if (!viewport || !camera || !entity) {
                 return;
             }
 
-            const toTarget = subVec3(entity.global_transform.position as Vec3, camera.world_position as Vec3);
+            const toTarget = subVec3(avatarPosition, camera.world_position as Vec3);
             // A target behind the camera can still project inside the viewport bounds (the
             // perspective divide mirrors it), so `screen_position` alone isn't enough — it must
             // also be in front of the camera to count as on-screen.
@@ -205,7 +229,11 @@ export function DOM3DAvatar({
                 screenY <= viewportHeight + AVATAR_ONSCREEN_MARGIN;
 
             if (showViewportRectangle) {
-                const distanceToLocalCamera = Math.hypot(...toTarget);
+                // Measured from the client's actual camera position, where the rectangle is drawn,
+                // rather than from the (possibly trailing) avatar.
+                const distanceToLocalCamera = Math.hypot(
+                    ...subVec3(entity.global_transform.position as Vec3, camera.world_position as Vec3),
+                );
                 setRectOpacity(
                     normalize(
                         distanceToLocalCamera,
@@ -228,7 +256,7 @@ export function DOM3DAvatar({
                 computeOffscreenIndicatorState({
                     cameraPosition: camera.world_position as Vec3,
                     cameraOrientation: camera.world_orientation as Quat,
-                    targetPosition: entity.global_transform.position as Vec3,
+                    targetPosition: avatarPosition,
                     viewportWidth: viewport.width,
                     viewportHeight: viewport.height,
                 }),
@@ -241,27 +269,46 @@ export function DOM3DAvatar({
         return null;
     }
 
+    // Hidden while offscreen: the anchor only knows the target is in front of the camera, not
+    // whether it's within the viewport's bounds, so without this it keeps rendering the full avatar
+    // right on top of the offscreen indicator.
+    const avatar = !offscreen && (
+        <button
+            type="button"
+            title={resolvedLabel}
+            onClick={() => onTravel?.(entity)}
+            className={[styles.avatar, "livelink-react-ui-component", className].filter(Boolean).join(" ")}
+            style={{ ...style, ["--color" as string]: resolvedColor } as React.CSSProperties}
+        >
+            {children ?? resolvedLabel}
+        </button>
+    );
+
     return (
         <>
             {showViewportRectangle && (
                 <ClientViewportRect entity={entity} color={resolvedColor} opacity={rectOpacity} />
             )}
-            <DOM3DEntityAnchor entity={entity} scaleFactor={scaleFactor} onProjectionChange={handleProjectionChange}>
-                {/* Hidden while offscreen: the anchor only knows the target is in front of the camera,
-                    not whether it's within the viewport's bounds, so without this it keeps rendering the
-                    full avatar right on top of the offscreen indicator. */}
-                {!offscreen && (
-                    <button
-                        type="button"
-                        title={resolvedLabel}
-                        onClick={() => onTravel?.(entity)}
-                        className={[styles.avatar, "livelink-react-ui-component", className].filter(Boolean).join(" ")}
-                        style={{ ...style, ["--color" as string]: resolvedColor } as React.CSSProperties}
-                    >
-                        {children ?? resolvedLabel}
-                    </button>
-                )}
-            </DOM3DEntityAnchor>
+            {inertia > 0 ? (
+                <InertialEntityAnchor
+                    entity={entity}
+                    inertia={inertia}
+                    scaleFactor={scaleFactor}
+                    onProjectionChange={handleProjectionChange}
+                >
+                    {avatar}
+                </InertialEntityAnchor>
+            ) : (
+                <DOM3DEntityAnchor
+                    entity={entity}
+                    scaleFactor={scaleFactor}
+                    onProjectionChange={projection =>
+                        handleProjectionChange(projection, entity.global_transform.position as Vec3)
+                    }
+                >
+                    {avatar}
+                </DOM3DEntityAnchor>
+            )}
             {offscreen && (
                 <OffscreenIndicator
                     label={resolvedLabel}
@@ -392,6 +439,121 @@ function OffscreenIndicator({
             <span className={styles.offscreenIndicator} style={{ width, height, backgroundColor: color }} />
         </button>
     );
+}
+
+//------------------------------------------------------------------------------
+/**
+ * Stand-in for `DOM3DEntityAnchor` that eases toward the entity's position instead of snapping to
+ * it, so its content trails behind fast movements and settles back once the entity stops. Reports
+ * the position it's actually drawn at alongside each projection.
+ */
+function InertialEntityAnchor({
+    entity,
+    inertia,
+    scaleFactor,
+    onProjectionChange,
+    children,
+}: PropsWithChildren<{
+    entity: Entity;
+    inertia: number;
+    scaleFactor?: number;
+    onProjectionChange: (projection: AnchorProjection, worldPosition: Vec3) => void;
+}>): React.JSX.Element {
+    const worldPosition = useInertialPosition(entity, inertia);
+
+    return (
+        <DOM3DAnchor
+            worldPosition={worldPosition}
+            scaleFactor={scaleFactor}
+            onProjectionChange={projection => onProjectionChange(projection, worldPosition)}
+        >
+            {children}
+        </DOM3DAnchor>
+    );
+}
+
+/**
+ * `entity`'s position, followed through a critically damped spring rather than as-is: it lags
+ * behind fast movements and eases back onto the entity in roughly `smoothTime` seconds.
+ *
+ * Animates on `requestAnimationFrame` rather than on `on-entity-updated` alone, so the avatar keeps
+ * gliding between (and after) transform updates. The loop only runs while there's ground left to
+ * cover: it stops once settled and the next `on-entity-updated` starts it again.
+ */
+function useInertialPosition(entity: Entity, smoothTime: number): Vec3 {
+    // Cloned: `global_transform.position` is the same array reference on every access.
+    const [position, setPosition] = useState<Vec3>(() => [...entity.global_transform.position] as Vec3);
+
+    useEffect(() => {
+        let current = [...entity.global_transform.position] as Vec3;
+        let velocity: Vec3 = [0, 0, 0];
+        let lastTime = 0;
+        let frameId: number | null = null;
+
+        const step = (time: number): void => {
+            const deltaTime = Math.max(0, time - lastTime) / 1000;
+            lastTime = time;
+
+            const target = entity.global_transform.position as Vec3;
+            [current, velocity] = smoothDampVec3(current, target, velocity, smoothTime, deltaTime);
+
+            const isSettled =
+                Math.hypot(...subVec3(target, current)) < AVATAR_INERTIA_SETTLE_THRESHOLD &&
+                Math.hypot(...velocity) < AVATAR_INERTIA_SETTLE_THRESHOLD;
+
+            if (isSettled) {
+                current = [...target] as Vec3;
+                velocity = [0, 0, 0];
+                frameId = null;
+            } else {
+                frameId = requestAnimationFrame(step);
+            }
+
+            setPosition(current);
+        };
+
+        const wake = (): void => {
+            if (frameId === null) {
+                lastTime = performance.now();
+                frameId = requestAnimationFrame(step);
+            }
+        };
+
+        setPosition(current);
+        entity.addEventListener("on-entity-updated", wake);
+        return (): void => {
+            entity.removeEventListener("on-entity-updated", wake);
+            if (frameId !== null) {
+                cancelAnimationFrame(frameId);
+            }
+        };
+    }, [entity, smoothTime]);
+
+    return position;
+}
+
+/**
+ * One step of a critically damped spring pulling `current` toward `target` (the same approximation
+ * as Unity's `SmoothDamp`). Frame-rate independent; returns the new position and velocity.
+ */
+function smoothDampVec3(
+    current: Vec3,
+    target: Vec3,
+    velocity: Vec3,
+    smoothTime: number,
+    deltaTime: number,
+): [Vec3, Vec3] {
+    const omega = 2 / smoothTime;
+    const x = omega * deltaTime;
+    const decay = 1 / (1 + x + 0.48 * x * x + 0.235 * x * x * x);
+
+    const change = subVec3(current, target);
+    const temp = scaleVec3(addVec3(velocity, scaleVec3(change, omega)), deltaTime);
+
+    return [
+        addVec3(target, scaleVec3(addVec3(change, temp), decay)),
+        scaleVec3(subVec3(velocity, scaleVec3(temp, omega)), decay),
+    ];
 }
 
 //------------------------------------------------------------------------------

@@ -2,12 +2,17 @@
 export * from "./components/Provider";
 
 //------------------------------------------------------------------------------
+export * from "./components/RotationGizmo";
 export * from "./components/BoundingBoxFaceProjection";
 export * from "./components/CameraSpeedSlider";
 export * from "./components/CullingBoxGeometry";
 export * from "./components/CullingBoxGeometry/CullingBoxGeometryButton";
 export * from "./components/DOM3DAnchorLegend";
+export * from "./components/DOM3DAngle";
+export { DEFAULT_HOLD_LIMITS, useAngleExposure } from "./components/DOM3DAngle/useAngleExposure";
+export { ANGLE_ZONE_LEVEL_LABELS } from "./components/DOM3DAngle/zones";
 export * from "./components/DOM3DAvatar";
+export * from "./components/DOM3DZone";
 export * from "./components/InactivityWarning";
 export * from "./components/LightControl";
 export * from "./components/LightControl/LightPreview/LightPreview";
@@ -26,6 +31,7 @@ export * from "./components/VirtualGamepad";
 export * from "./components/VirtualJoystick";
 
 //------------------------------------------------------------------------------
+export * from "./components-common/ContextMenu";
 export * from "./components-common/ViewerPanel";
 
 //------------------------------------------------------------------------------

@@ -1,5 +1,4 @@
 //------------------------------------------------------------------------------
-import React from "react";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { CameraController, Canvas, useCameraEntity, Viewport } from "@3dverse/livelink-react";
 

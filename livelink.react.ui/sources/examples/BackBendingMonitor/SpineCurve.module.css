@@ -1,0 +1,60 @@
+/* The colors of the zones, the same as the ones of DOM3DAngle. */
+.spine {
+    --spine-color-acceptable: var(--3dverse-color-positive, #22c55e);
+    --spine-color-conditional: var(--3dverse-color-warning, #f59e0b);
+    --spine-color-not-acceptable: var(--3dverse-color-negative, #ef4444);
+    --spine-outline-color: rgb(0 0 0 / 0.6);
+}
+
+.curve {
+    --color: var(--spine-color-acceptable);
+
+    &[data-level="conditional"] {
+        --color: var(--spine-color-conditional);
+    }
+
+    &[data-level="notAcceptable"] {
+        --color: var(--spine-color-not-acceptable);
+    }
+}
+
+.track,
+.progress {
+    fill: none;
+    stroke: var(--color);
+    stroke-width: 4px;
+    stroke-linecap: round;
+}
+
+/* Not filled yet, in a zone with a hold limit, or not timed. */
+.track {
+    stroke-opacity: 0.3;
+}
+
+.curve[data-status="alert"] .progress {
+    animation: spine-pulse 1s ease-in-out infinite;
+}
+
+.point {
+    fill: var(--color);
+}
+
+.label {
+    fill: var(--color);
+    font-size: 12px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    paint-order: stroke;
+    stroke: var(--spine-outline-color);
+    stroke-width: 3px;
+}
+
+@keyframes spine-pulse {
+    0%,
+    100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.45;
+    }
+}

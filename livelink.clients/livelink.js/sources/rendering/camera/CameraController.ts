@@ -1,6 +1,7 @@
 //------------------------------------------------------------------------------
 import { Components, Quat, Vec2, Vec3 } from "@3dverse/livelink.core";
-import CameraControls, { Clock, ACTION, KeyboardFlyControls } from "@3dverse/livelink-camera-controls";
+import CameraControls, { Clock, ACTION, KeyboardFlyControls, MOUSE_BUTTON } from "@3dverse/livelink-camera-controls";
+import type { MouseButtons } from "@3dverse/livelink-camera-controls";
 
 //------------------------------------------------------------------------------
 import type { Entity } from "../../scene/Entity";
@@ -24,6 +25,11 @@ enum MouseEventButton {
     // Typically the Browser Forward button
     fifth = 4,
 }
+
+/**
+ * The three mouse button bindings of `CameraControls`, without the wheel.
+ */
+type MouseButtonActions = Pick<MouseButtons, "left" | "middle" | "right">;
 
 /**
  * Maximum delay between two taps for them to be considered a double tap.
@@ -120,11 +126,46 @@ export class CameraController extends CameraControls {
      *
      */
     #lock_pointer: {
-        count: number;
         down_position: Vec2 | null;
     } = {
-        count: 0,
         down_position: null,
+    };
+
+    /**
+     * Middle button emulation options
+     * @default - { enabled: true }
+     */
+    middle_button_emulation: {
+        /** Enable for holding the left and right buttons together to act as the middle button */
+        enabled: boolean;
+    } = {
+        enabled: true,
+    };
+
+    /**
+     * Last button preemption options
+     * @default - { enabled: false }
+     */
+    last_button_preemption: {
+        /** Enable for the last pressed button to preempt the buttons held before it */
+        enabled: boolean;
+    } = {
+        enabled: false,
+    };
+
+    /**
+     *
+     */
+    #multi_button: {
+        /** Held buttons in press order, most recent last. `PointerEvent.buttons` carries no order. */
+        press_order: number[];
+        previous_buttons: number;
+        /** Bindings saved while an override is applied. */
+        saved_bindings: MouseButtonActions | null;
+    } = {
+        press_order: [],
+        previous_buttons: 0,
+        saved_bindings: null,
     };
 
     /**
@@ -248,7 +289,15 @@ export class CameraController extends CameraControls {
         }, 1000 / 60);
 
         this._domElement?.addEventListener("pointerdown", this.#onPointerDown);
-        this._domElement?.addEventListener("pointerup", this.#onPointerUp);
+        this._domElement?.addEventListener("pointerup", this.#onPointerStateChange);
+        this._domElement?.addEventListener("pointercancel", this.#onPointerStateChange);
+        // A second button going down or back up is reported as a `pointermove` with an updated `buttons`,
+        // `pointerdown` and `pointerup` are not fired for chorded presses. On the document and in the
+        // capture phase, to run before the `CameraControls` handler and to see the moves that leave the
+        // viewport.
+        this._domElement?.ownerDocument.addEventListener("pointermove", this.#onPointerStateChange, {
+            capture: true,
+        });
         this._domElement?.addEventListener("mousedown", this.#onMouseDownLock);
         this._domElement?.addEventListener("dblclick", this.#onDoubleClick);
         this._domElement?.addEventListener("touchend", this.#onTouchEnd);
@@ -261,7 +310,11 @@ export class CameraController extends CameraControls {
      */
     deactivate(): void {
         this._domElement?.removeEventListener("pointerdown", this.#onPointerDown);
-        this._domElement?.removeEventListener("pointerup", this.#onPointerUp);
+        this._domElement?.removeEventListener("pointerup", this.#onPointerStateChange);
+        this._domElement?.removeEventListener("pointercancel", this.#onPointerStateChange);
+        this._domElement?.ownerDocument.removeEventListener("pointermove", this.#onPointerStateChange, {
+            capture: true,
+        });
         this._domElement?.removeEventListener("mousedown", this.#onMouseDownLock);
         this._domElement?.removeEventListener("mouseup", this.#onMouseUpLock);
         this._domElement?.removeEventListener("mousemove", this.#onMouseMoveLock);
@@ -269,6 +322,7 @@ export class CameraController extends CameraControls {
         this._domElement?.removeEventListener("touchend", this.#onTouchEnd);
 
         this.keyboard_fly_controls?.disable();
+        this.#syncMouseButtons(0);
 
         if (!this.#update_interval) {
             return;
@@ -549,7 +603,6 @@ export class CameraController extends CameraControls {
         const { ownerDocument } = this._domElement;
         ownerDocument.removeEventListener("pointerlockchange", this.#onPointerLockChange);
         ownerDocument.removeEventListener("pointerlockerror", this.#onPointerLockError);
-        this.#lock_pointer.count = 0;
         if (this.#isPointerLockActive) {
             ownerDocument.exitPointerLock?.();
         }
@@ -587,10 +640,6 @@ export class CameraController extends CameraControls {
             return;
         }
 
-        if (this.lock_pointer.aim !== "always") {
-            this.#lock_pointer.count++;
-        }
-
         if (this.#isPointerLockActive || this.lock_pointer.aim === "off") {
             return;
         }
@@ -605,12 +654,10 @@ export class CameraController extends CameraControls {
     /**
      *
      */
-    #onMouseUpLock = (_event: MouseEvent): void => {
-        if (this.#lock_pointer.count > 0) {
-            this.#lock_pointer.count--;
-        }
-
-        if (this.#lock_pointer.count > 0 || !this._domElement) {
+    #onMouseUpLock = (event: MouseEvent): void => {
+        // Hold the lock as long as another button is down. A press count cannot be used: relocking on drag
+        // goes through `#unlockPointer`, which would lose it.
+        if (event.buttons !== 0 || !this._domElement) {
             return;
         }
 
@@ -619,9 +666,7 @@ export class CameraController extends CameraControls {
             return;
         }
 
-        if (this.#lock_pointer.count === 0) {
-            this.#unlockPointer();
-        }
+        this.#unlockPointer();
     };
 
     /**
@@ -654,6 +699,127 @@ export class CameraController extends CameraControls {
         this.#unlockPointer();
         this.#lockPointer();
     };
+
+    /**
+     * Resolves what several simultaneously held mouse buttons do, by rewriting `mouseButtons`. Left alone,
+     * `CameraControls` ORs the action of every held button; it also rebuilds that action from
+     * `mouseButtons` on every pointer move, so rewriting the bindings while the buttons are held is all it
+     * takes. `middle_button_emulation` takes precedence over `last_button_preemption`.
+     *
+     * Driven by `PointerEvent.buttons` only, so bindings left dangling by a lost pointer up are restored
+     * on the next pointer event.
+     */
+    #syncMouseButtons(buttons: number): void {
+        if (buttons === this.#multi_button.previous_buttons) {
+            return;
+        }
+        this.#multi_button.previous_buttons = buttons;
+        this.#updateButtonPressOrder(buttons);
+
+        const { press_order, saved_bindings } = this.#multi_button;
+        const bindings: MouseButtonActions = saved_bindings ?? {
+            left: this.mouseButtons.left,
+            middle: this.mouseButtons.middle,
+            right: this.mouseButtons.right,
+        };
+
+        const override = this.#resolveMouseButtons({ buttons, press_order, bindings });
+
+        if (override) {
+            this.#multi_button.saved_bindings = bindings;
+            Object.assign(this.mouseButtons, override.bindings);
+        } else if (saved_bindings) {
+            this.#multi_button.saved_bindings = null;
+            Object.assign(this.mouseButtons, saved_bindings);
+        }
+
+        this.#syncDollyDirection({ buttons, bindings, override });
+    }
+
+    /**
+     * Inverts `dollySpeed` while the dolly is being driven by the middle button, or by the chord standing
+     * in for it. Cannot be keyed on `pointerdown`/`pointerup`: those are not fired for chorded presses, so
+     * a middle button pressed or released alongside another one would leave the speed the wrong way round.
+     */
+    #syncDollyDirection({
+        buttons,
+        bindings,
+        override,
+    }: {
+        buttons: number;
+        bindings: MouseButtonActions;
+        override: { bindings: MouseButtonActions; emulates_middle_button: boolean } | null;
+    }): void {
+        if (!this.invert_middle_button_dolly || bindings.middle !== ACTION.DOLLY) {
+            return;
+        }
+
+        const effective = override?.bindings ?? bindings;
+        const is_middle_dolly_active =
+            override?.emulates_middle_button ||
+            ((buttons & MOUSE_BUTTON.MIDDLE) !== 0 && effective.middle === ACTION.DOLLY);
+
+        this.dollySpeed = is_middle_dolly_active ? -Math.abs(this.dollySpeed) : Math.abs(this.dollySpeed);
+    }
+
+    /**
+     * `pointerdown` and `pointerup` are not fired for chorded button presses, so the press order has to be
+     * tracked from the `PointerEvent.buttons` transitions.
+     */
+    #updateButtonPressOrder(buttons: number): void {
+        const { press_order } = this.#multi_button;
+        for (const button of [MOUSE_BUTTON.LEFT, MOUSE_BUTTON.MIDDLE, MOUSE_BUTTON.RIGHT]) {
+            const index = press_order.indexOf(button);
+            if ((buttons & button) === 0) {
+                if (index !== -1) {
+                    press_order.splice(index, 1);
+                }
+            } else if (index === -1) {
+                press_order.push(button);
+            }
+        }
+    }
+
+    /**
+     * The bindings to apply for the currently held buttons, or `null` to leave them alone.
+     */
+    #resolveMouseButtons({
+        buttons,
+        press_order,
+        bindings,
+    }: {
+        buttons: number;
+        press_order: number[];
+        bindings: MouseButtonActions;
+    }): { bindings: MouseButtonActions; emulates_middle_button: boolean } | null {
+        const chord_mask = MOUSE_BUTTON.LEFT | MOUSE_BUTTON.RIGHT;
+        if (
+            this.middle_button_emulation.enabled &&
+            (buttons & chord_mask) === chord_mask &&
+            bindings.middle !== ACTION.NONE
+        ) {
+            // The middle action has to go to `right`: `CameraControls` tears the drag down on
+            // `contextmenu` when `mouseButtons.right` is `ACTION.NONE`.
+            return {
+                bindings: { left: ACTION.NONE, middle: bindings.middle, right: bindings.middle },
+                emulates_middle_button: true,
+            };
+        }
+
+        if (this.last_button_preemption.enabled && press_order.length > 1) {
+            const newest = press_order[press_order.length - 1];
+            return {
+                bindings: {
+                    left: newest === MOUSE_BUTTON.LEFT ? bindings.left : ACTION.NONE,
+                    middle: newest === MOUSE_BUTTON.MIDDLE ? bindings.middle : ACTION.NONE,
+                    right: newest === MOUSE_BUTTON.RIGHT ? bindings.right : ACTION.NONE,
+                },
+                emulates_middle_button: false,
+            };
+        }
+
+        return null;
+    }
 
     /**
      *
@@ -719,14 +885,8 @@ export class CameraController extends CameraControls {
      *
      */
     #onPointerDown = (event: PointerEvent): void => {
-        if (
-            this.invert_middle_button_dolly &&
-            event.button === MouseEventButton.auxilary &&
-            this.mouseButtons.middle === ACTION.DOLLY
-        ) {
-            // Inverse dolly speed direction if using middle button (dolly)
-            this.dollySpeed = -Math.abs(this.dollySpeed);
-        }
+        // Must come first for the check below to see the resolved bindings.
+        this.#syncMouseButtons(event.buttons);
 
         if (this.orbit_on_cursor.enabled && this.#isPointerRotateAction(event)) {
             // orbit on cursor changes orbit when rotate action is used (except if bound to wheel)
@@ -737,15 +897,8 @@ export class CameraController extends CameraControls {
     /**
      *
      */
-    #onPointerUp = (event: PointerEvent): void => {
-        if (
-            this.invert_middle_button_dolly &&
-            event.button === MouseEventButton.auxilary &&
-            this.mouseButtons.middle === ACTION.DOLLY
-        ) {
-            // Cancel inverted dolly speed direction if stop using middle button (dolly)
-            this.dollySpeed = Math.abs(this.dollySpeed);
-        }
+    #onPointerStateChange = (event: PointerEvent): void => {
+        this.#syncMouseButtons(event.buttons);
     };
 
     /**

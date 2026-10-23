@@ -6,9 +6,9 @@ import { LoadingOverlay } from ".";
 const meta = {
     title: "Components/Loading Overlay",
     component: LoadingOverlay,
-
     parameters: {
         layout: "fullscreen",
+        livelink: false,
     },
 } satisfies Meta<typeof LoadingOverlay>;
 

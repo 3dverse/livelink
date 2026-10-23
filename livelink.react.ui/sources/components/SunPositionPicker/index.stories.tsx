@@ -2,7 +2,6 @@
 import React from "react";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { Canvas, useCameraEntity, useEntity, Viewport } from "@3dverse/livelink-react";
-import type { Entity } from "@3dverse/livelink";
 
 //------------------------------------------------------------------------------
 import { ViewerPanel } from "../../components-common/ViewerPanel";

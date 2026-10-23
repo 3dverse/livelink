@@ -16,6 +16,7 @@ import { Vec3 } from "@3dverse/livelink.core";
  *  + Hold left button: rotate.
  *  + Hold middle button or wheel: dolly.
  *  + Hold right button: truck.
+ *  + Hold several buttons: the last pressed one preempts the others.
  *
  * Touch controls:
  *  + 1 finger: rotate.
@@ -29,6 +30,9 @@ export const orbital: CameraControllerPreset = Object.freeze({
 
     //--------------------------------------------------------------------------
     // CameraController properties
+    middle_button_emulation: { enabled: false },
+    last_button_preemption: { enabled: true },
+
     /** CameraController init options */
     init_options: {
         /** init target at world origin*/
@@ -51,6 +55,7 @@ export const orbital: CameraControllerPreset = Object.freeze({
  *  + Hold left button: rotate
  *  + Hold middle button or wheel: dolly
  *  + Hold right button: truck
+ *  + Hold several buttons: the last pressed one preempts the others
  *
  * Touch controls:
  *  + 1 finger: rotate
@@ -85,6 +90,8 @@ export const pointer_locked_orbital: CameraControllerPreset = Object.freeze({
 
     //--------------------------------------------------------------------------
     // CameraController properties
+    middle_button_emulation: { enabled: false },
+    last_button_preemption: { enabled: true },
     invert_middle_button_dolly: true,
     orbit_on_cursor: {
         enabled: true,
@@ -106,6 +113,7 @@ export const pointer_locked_orbital: CameraControllerPreset = Object.freeze({
  *  + Hold middle button: truck
  *  + Wheel: screen pan forward/backward
  *  + Hold right button: rotate
+ *  + Hold left and right buttons together: truck, as the middle button
  *
  * Touch controls:
  *  + 1 finger: rotate

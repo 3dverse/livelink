@@ -1,0 +1,5 @@
+{
+  "title": "Rotation Gizmo",
+  "isNew": true,
+  "summary": "Rotation gizmos on the joints of a humanoid robot, editing the pose of its head, neck and waist bones."
+}

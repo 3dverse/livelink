@@ -16,34 +16,26 @@ scene". It is re-exported from the same entry, but its heavy dependencies (`mqtt
 _loaded_ unless you actually use the matching transport or schema validation. A consumer that has
 not installed them still builds: bundlers leave an unresolvable dynamic import alone (Vite emits an
 empty stub chunk). Where they _are_ installed, a bundler emits them as separate chunks — fetched
-only if the code path runs. (One entry = one bundle = one core: an earlier `/data` subpath split was
-collapsed to avoid a duplicated-core hazard when a consumer used both entries.)
+only if the code path runs. One entry means one bundle and one core; a subpath export would let a
+consumer using both load the core twice.
 
-Optional at runtime is not the same as absent at development time: all four — `mqtt`,
-`@azure/event-hubs`, `ajv` and `node-opcua-client` — are also devDependencies, so `tsc` checks the
-calls against their real types and a signature change upstream fails the build rather than a live
-connection. `transports/OpcUaClientModule.ts` names those types (`import type`, erased at compile
-time, so nothing static is added to the bundle) alongside the OPC UA specification constants, which
-stay spelled out because they read more cheaply than the enum lookups they replace.
+Optional at runtime is not the same as absent at development time: all four are also
+devDependencies, so `tsc` checks the calls against their real types and a signature change upstream
+fails the build rather than a live connection. `transports/OpcUaClientModule.ts` names those types
+(`import type`, erased at compile time, so nothing static is added to the bundle) alongside the OPC
+UA specification constants, which stay spelled out because they read more cheaply than the enum
+lookups they replace. The two payload projections (`OpcUaVariant` / `OpcUaDataValue`) stay narrow
+structural types so a test sample can be a plain object literal; `opcua-transport.test.ts` pins them
+field by field against the real `Variant` / `DataValue` so the narrowing cannot drift.
 
-`node-opcua-client` is ~90 Node-only packages, which is why it was for a while **declared rather
-than installed** — an ambient `declare module` plus a hand-written structural view of the six methods
-`OpcUaTransport` calls. That traded the compiler's ability to notice upstream drift for an install
-cost, and it was retired once the install cost was paid: the transport's tests run against a fake
-that would keep passing through any such drift, so the type check was the only thing standing behind
-those six calls.
-
-The reason it could not simply be installed before is worth keeping in mind, because it is a
-property of npm workspaces rather than of this package: a workspace member's devDependencies hoist
+`node-opcua-client` being ~90 Node-only packages makes that devDependency a hazard for one consumer,
+and the cause is npm workspaces rather than this package: a workspace member's devDependencies hoist
 to the root `node_modules`, where `livelink.samples` — the one browser-bundled consumer of this SDK
 — resolves them, and npm has no per-workspace opt-out. The transport reaches its peer through a
 statically analysable `import("node-opcua-client")`, so a bundler that _can_ resolve the specifier
-will pull the whole Node-only tree into a browser bundle. That is now prevented at the single place
-it can happen: `livelink.samples/vite.config.ts` excludes the specifier from both the dev-server
-prebundle and the production build, restoring exactly the behavior of a consumer who never installed
-it. The two payload projections (`OpcUaVariant` / `OpcUaDataValue`) stay narrow structural types so a
-test sample can be a plain object literal; `opcua-transport.test.ts` pins them field by field against
-the real `Variant` / `DataValue` so the narrowing cannot drift.
+pulls the whole Node-only tree into a browser bundle. `livelink.samples/vite.config.ts` excludes the
+specifier from both the dev-server prebundle and the production build, which is the single place it
+can happen.
 
 ---
 
@@ -58,42 +50,13 @@ object, and the one that answers the third is thin wiring:
 | How does an event drive entities? | **EventMapping** → **IngestionPipeline** | a plain object: selection + `entities` + `updates`                                        |
 | Which scene(s)/session(s)?        | **Agent** + **SceneIngestion**           | the `Agent`'s mode: one session (`join-or-start`) … all sessions (`join-all` + watch)     |
 
-```typescript
-import { Agent, SceneIngestion, type EventMapping } from "@3dverse/livelink-agent";
-
-// ONE plain object describes how an event type drives entities: two fields do the work.
-const mapping: EventMapping = {
-  channel: "uagv/+/+/+/visualization", // MQTT-style pattern over the event's channel
-  schema: agvEventSchema, // optional: the FIRST matching event is validated
-  // Which scene entities the ids carried by those events address:
-  entities: { spawn: { name: "AGV-{id}", components: { scene_ref: { value: SCENE } } } },
-  //  or: { byName: "{id}" } / { byUuid: {...} } / { resolve: fn } for entities already there
-  updates: event => ({
-    id: event.channel.split("/")[3], // the serial number, from the topic
-    update: { local_transform: agvPoseToTransform(event.payload.agvPosition) },
-  }),
-};
-
-const ingestion = new SceneIngestion({
-  agent: new Agent({ config: { scene_id, token, mode: "join-all" } }),
-  pipeline: new IngestionPipeline({ mappings: mapping, onError }), // or an array of mappings
-  sources: [{ kind: "mqtt", config: { broker_url, topics } }],
-});
-await ingestion.start();
-```
+[README.md](./README.md#usage) shows the three wired together.
 
 ## `ingest` is the entry point
 
-The pipeline is a plain object you can hold, bind scenes to, and **push events into**. Transports
-are one way to feed it, not the only way:
-
-```typescript
-const pipeline = new IngestionPipeline({ mappings });
-pipeline.bind({ scene });
-await pipeline.ingest({ channel: "uagv/v2/m/AGV-1/visualization", payload });
-```
-
-That is what makes a mapping testable without a broker, drivable from a webhook or a REST handler,
+The pipeline is a plain object you can hold, bind scenes to, and **push events into**
+(`pipeline.bind({ scene })`, then `pipeline.ingest(event)`). Transports are one way to feed it, not
+the only way. That is what makes a mapping testable without a broker, drivable from a webhook or a REST handler,
 and replayable one frame at a time from a debug control. `SceneIngestion` exposes the same
 `ingest`, and **is** an `EventSink` — so any transport, bundled or yours, can be pointed straight at
 it, and you can add your own sources alongside the configured ones.
@@ -161,19 +124,17 @@ a constant. Narrow a dump with `channel_filter` rather than pre-filtering the re
 ## Playback is a source, not a file
 
 `PlaybackTransport` replays a _dump of an event stream_. Where those bytes live is incidental, so
-`source` accepts a file path (`{ file_path }`, Node only), a URL (`{ url }`, `fetch`, so browser and
-Node), the dump itself as a string or bytes, a `ReadableStream` or async iterable, records the caller
-already parsed, or a `() => source` factory. Only the `{ file_path }` form touches Node's file
-system — which is what lets the same transport drive a server-side replay and a browser demo
-(`livelink.samples`' _Data Ingestion_ sample feeds it a bundled string).
+`source` accepts a path, a URL, the dump itself, a stream, parsed records or a factory (the README
+lists the forms). Only the `{ file_path }` form touches Node's file system — which is what lets the
+same transport drive a server-side replay and a browser demo (`livelink.samples`' _Data Ingestion_
+sample feeds it a bundled string).
 
 It **buffers the whole recording before replaying**: looping needs every message in memory, and
 pacing needs the first timestamp before the second message can be scheduled. It is a replayer, not a
-reader of live streams — for a live source, write a `Transport` that pushes as it reads. `speed`
-scales the recorded pace, `loop` (on by default) starts over at the end.
+reader of live streams — for a live source, write a `Transport` that pushes as it reads.
 
-`"file"` remains registered as a deprecated alias of `"playback"` that maps `{ file_path, ... }` onto
-the new config and keeps the old `"file"` default channel.
+`"file"` is registered as a deprecated alias of `"playback"` that maps `{ file_path, ... }` onto the
+playback config and keeps the old `"file"` default channel.
 
 ## EventMapping: one event type each
 
@@ -194,10 +155,8 @@ What the events then do is **one field**, `updates`, a function of the whole eve
   publishing a whole-state frame;
 - **`null`** (or an empty array) to ignore the event.
 
-There is deliberately no second, declarative form. An earlier revision split this into a
-`targetId` + `updates` pair beside a multi-target `targets`, three fields whose mutual exclusivity
-only a runtime throw could express; the pair only existed to support a dot-path string id
-(`"serialNumber"`), which every real consumer bypassed with a function anyway.
+There is deliberately no second, declarative form alongside it: a dot-path string id would buy one
+simple case at the price of a set of mutually exclusive fields only a runtime throw could police.
 
 `entities` declares what those ids address — four sibling strategies, one question ("how does this id
 find its entity?"): `byName` (the entity whose _name_ the id produces, so a scene named after the
@@ -224,10 +183,10 @@ updates: event => ({ id, update: continuous(({ delta_seconds, state }) => ({ loc
 The decisions worth recording:
 
 **It is tagged, not merely function-shaped.** Treating any function-valued `update` as a continuation
-is cheaper and has one fatal property: `update: () => buildPatch(payload)` is a plausible slip, is
-perfectly well-typed, and would silently install a motion that never stops. The tag turns that into an
-error message naming the fix. It is not a lock, and does not try to be — `Symbol.for` is reachable by
-string, and a hand-built object is a supported alternative to `continuous()`.
+would be cheaper and has one fatal property: `update: () => buildPatch(payload)` is a plausible slip,
+is perfectly well-typed, and would silently install a motion that never stops. The tag turns that into
+an error message naming the fix. It is not a lock — `Symbol.for` is reachable by string, and a
+hand-built object is a supported alternative to `continuous()`.
 
 **Continuations live on the mapping, keyed by `(mapping, id)`.** `updates(event)` runs once and fans
 out to every bound scene, so a continuation must be sampled once per tick and fan out the same way. On
@@ -239,26 +198,20 @@ shaft turns at double speed. Not per channel either: one mapping matching `plant
 phase must survive the event that replaces the continuation — a new rpm picks the shaft up where it
 stands. So `CompiledMapping.states` is keyed by id and outlives the continuations reading it, going
 only when the entity does (`"delete"`); `initial_state` therefore applies **only** to an id with no
-state yet. Left to the mapping, this is a `Map` read at event time and written back on every tick —
-three lines that are one misplaced read away from accelerating forever.
+state yet.
 
 **`tick(elapsed_seconds)` owns no timer**, and `since_seconds` accumulates from the ticks rather than
 the wall clock. Time enters through exactly one argument, so replaying the same ticks replays the same
-motion and a moving scene is testable with no fake timers:
-
-```typescript
-await pipeline.ingest(event); // "turning at 90 rpm"
-await pipeline.tick(0.5); // half a second later, wherever that puts it
-```
+motion and a moving scene is testable with no fake timers.
 
 `SceneIngestion` owns the interval (`ticks_per_second`, `0` to switch it off), started on the first ready
 session and stopped when the last one leaves. The default is **twice** the client's `updates_per_second`
-(60 when none is declared): the two timers free-run and beat against each other, so ticking at exactly
-the flush rate lets a sample's age at flush time wander across a whole window and the motion jitters;
-twice as often bounds that to half a window. The rate goes through the same `computeIntervalInMs` guard
-as `updates_per_second`, so `NaN` — what `Number(process.env.X)` yields for a bad value, and what
-`setInterval` turns into a busy loop — cannot reach a timer. Three properties a bare `setInterval` over
-`Date.now()` would not have:
+capped at 125 (60 when none is declared): the two timers free-run and beat against each other, so
+ticking at exactly the flush rate lets a sample's age at flush time wander across a whole window and the
+motion jitters; twice as often bounds that to half a window. The rate goes through the same
+`computeIntervalInMs` guard as `updates_per_second`, so `NaN` — what `Number(process.env.X)` yields for
+a bad value, and what `setInterval` turns into a busy loop — cannot reach a timer. Three properties a
+bare `setInterval` over `Date.now()` would not have:
 
 - **monotonic** (`performance.now()`) — an NTP step backwards would hand every motion a negative
   elapsed time and rewind the scene;
@@ -286,12 +239,12 @@ on every tick); a newer event for the same id replaces it; it — or an event �
 `"delete"`, since nothing visible is moving; or `clearContinuations()` is called, which `SceneIngestion`
 does when it stops its sources. `"delete"` drops the entity's state with it, `"hide"` keeps it.
 
-**Nothing expires a motion on a timer, deliberately.** An earlier revision had `max_seconds` and warned
-past a minute unrefreshed; both are gone. What they could measure was time since an event _replaced_ the
-motion, which is not "the stream died" — one topic may carry payloads of several shapes, so a healthy
-stream refreshes nothing while the mapping returns `null` for the messages without a rate. The honest
-signal was already there and costs nothing: `last_event_at` against `continuations_active`, the two
-disagreeing being the picture outliving the data, and `clearContinuations()` the switch for acting on it.
+**Nothing expires a motion on a timer, deliberately.** All such a timer can measure is time since an
+event _replaced_ the motion, which is not "the stream died": one topic may carry payloads of several
+shapes, so a healthy stream refreshes nothing while the mapping returns `null` for the messages
+without a rate. The honest signal costs nothing — `last_event_at` against `continuations_active`, the
+two disagreeing being the picture outliving the data, and `clearContinuations()` the switch for
+acting on it.
 
 **Two things that look like a stop and are not.** `updates` returning `null` returns before
 continuations are touched, so it means "this message said nothing about this entity" — which is what
@@ -381,11 +334,13 @@ Below the counters, transports log what no counter can express — a node report
 server revising the subscription intervals it was asked for — on the console, prefixed with the
 transport kind and emitted once per condition rather than once per publication.
 
-`SceneIngestion` is a `TypedEventTarget`: `on-running`, `on-session-bound` / `on-session-unbound`,
+`SceneIngestion` is an event target: `on-running`, `on-session-bound` / `on-session-unbound`,
 `on-error`, plus the agent's own `on-session-created` / `-joined` / `-ready` / `-left` re-emitted, so
 observing the ingestion never means reaching through `.agent`. Errors split by layer — the pipeline's
 `onError` covers mappings and entity writes, the ingestion's `on-error` covers source starts and the
-agent — and an `on-error` nobody listens for still reaches the console (`TypedEventTarget._hasListeners`).
+agent — and an `on-error` nobody listens for still reaches the console. That last part is why it
+extends `ObservedEventTarget` rather than `TypedEventTarget`: a plain `EventTarget` cannot report
+whether a dispatch reached anybody.
 
 ## Source start policy
 
@@ -401,28 +356,21 @@ the ingestion (it is an `EventSink`) instead of listing it in `sources`.
 
 ## Escape hatches
 
-Every piece remains public and usable alone: the `IngestionPipeline` with no agent at all, a custom
-`Transport` (register a kind on the `defaultTransportRegistry` or pass a factory), the resolvers
-(`ExistingEntityResolver` / `SpawningEntityResolver` on the caching base), the
-`ComponentPatchApplier`, or skip the data module entirely and wire a raw `Agent` yourself (README,
-"Wiring a datasource").
+Each layer is usable without the ones above it: the `IngestionPipeline` with no agent at all, a
+custom `Transport` (register a kind on the `defaultTransportRegistry` or pass a factory), or skip
+the data module entirely and wire a raw `Agent` yourself (README, "Wiring a datasource").
 
-## Future directions (deliberately not built yet)
-
-- **`IngestionFleet`** — a factory managing several `SceneIngestion`s (several scenes). The current
-  shapes already fit: a fleet only _manages_ self-contained ingestions.
-- **`SharedSource`** — one physical broker connection fanned out to several ingestions/scenes; slots
-  in as an `IngestionTransportFactory` without API changes.
-- **Coalescing / backpressure** — keep-latest-per-id for very high-frequency telemetry.
-- **Ordering / dedup on `source_timestamp`** — the field is now carried on every event; nothing
-  consumes it yet.
+The machinery underneath is **not** API: `data/index.ts` re-exports only the configuration types the
+mapping surface refers to, leaving the resolvers, the `SchemaValidator` and the
+`ComponentPatchApplier` unexported — and the package declares a single `"."` export, so there is no
+deep path to them either. A mapping cannot plug in its own resolver.
 
 ## Layout (`sources/data/`)
 
 | Folder        | Contents                                                                                                                                                                                         |
 | ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | root          | `IngestionPipeline.ts` (engine), `SceneIngestion.ts` (wiring), `SceneIngestionEvents.ts`, `EventMapping.ts`, `IngestEvent.ts`, `Transport.ts`, `IngestionStats.ts`, `SchemaValidator.ts`         |
-| `transports/` | `TransportRegistry.ts`, `PlaybackTransport.ts`, `MqttTransport.ts`, `AzureEventHubTransport.ts`, `OpcUaTransport.ts` (+ `OpcUaClientModule.ts`, its optional peer declared rather than imported) |
+| `transports/` | `TransportRegistry.ts`, `PlaybackTransport.ts`, `MqttTransport.ts`, `AzureEventHubTransport.ts`, `OpcUaTransport.ts` (+ `OpcUaClientModule.ts`, the lazy import and narrowed types of its optional peer) |
 | `resolvers/`  | `EntityResolver.ts` (caching base), `ExistingEntityResolver.ts`, `SpawningEntityResolver.ts`                                                                                                     |
 | `apply/`      | `ComponentPatchApplier.ts` (write dedup)                                                                                                                                                         |
 | `util/`       | `channel.ts`, `reporting.ts`                                                                                                                                                                     |

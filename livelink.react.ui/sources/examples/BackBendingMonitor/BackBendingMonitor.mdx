@@ -1,0 +1,8 @@
+import { Markdown, Meta } from "@storybook/addon-docs/blocks";
+
+import * as BackBendingMonitorStories from "./index.stories";
+import readme from "./README.md?raw";
+
+<Meta of={BackBendingMonitorStories} name="Docs" />
+
+<Markdown>{readme}</Markdown>

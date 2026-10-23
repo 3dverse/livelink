@@ -10,11 +10,14 @@ import type { UUID } from "@3dverse/livelink";
 
 //------------------------------------------------------------------------------
 import { LivelinkReactUIProvider } from "../sources/components/Provider";
+import { LoadingOverlay } from "../sources/components/LoadingOverlay";
+
+//------------------------------------------------------------------------------
+import { SWORD_SCENE_ID } from "./sceneIds";
 
 //------------------------------------------------------------------------------
 import "@3dverse/design-tokens/css/design-tokens.css";
 import "./doc-pages-style.css";
-import { SWORD_SCENE_ID } from "./sceneIds";
 
 //------------------------------------------------------------------------------
 /** Passed via `story.parameters.livelinkSceneId` / `meta.parameters.livelinkSceneId`. */
@@ -22,6 +25,11 @@ function resolveLivelinkSceneId(context: StoryContext): UUID {
     const fromParameters =
         typeof context.parameters.livelinkSceneId === "string" ? context.parameters.livelinkSceneId : undefined;
     return (fromParameters ?? SWORD_SCENE_ID) as UUID;
+}
+
+//------------------------------------------------------------------------------
+function shouldWrapInLivelink(context: StoryContext): boolean {
+    return context.parameters.livelink !== false;
 }
 
 //------------------------------------------------------------------------------
@@ -64,10 +72,18 @@ const preview: Preview = {
             attributeName: "data-theme",
         }),
         (Story: React.ComponentType, context: StoryContext) => {
+            if (!shouldWrapInLivelink(context)) {
+                return (
+                    <LivelinkReactUIProvider>
+                        <Story />
+                    </LivelinkReactUIProvider>
+                );
+            }
+
             const token = import.meta.env.STORYBOOK_3DVERSE_PUBLIC_TOKEN;
             const sceneId = resolveLivelinkSceneId(context);
             return (
-                <Livelink token={token} sceneId={sceneId}>
+                <Livelink token={token} sceneId={sceneId} LoadingPanel={LoadingOverlay}>
                     <LivelinkReactUIProvider>
                         <Story />
                     </LivelinkReactUIProvider>

@@ -104,12 +104,17 @@ export function MainMenu({ isPageEmbedded }: { isPageEmbedded?: boolean }) {
                                             to={resolveSamplePath(s.path)}
                                             className={({ isActive }) =>
                                                 [
-                                                    "button button-ghost px-3 py-[3px] text-3xs leading-normal justify-start rounded-lg",
+                                                    "button button-ghost px-3 py-0.75 text-3xs leading-normal justify-start rounded-lg",
                                                     isActive ? "active" : "",
                                                 ].join(" ")
                                             }
                                         >
                                             {s.title}
+                                            {s.isNew && (
+                                                <span className="ml-2 px-1 text-primary text-[.65rem] font-medium tracking-wider uppercase bg-primary/15 rounded-sm">
+                                                    New
+                                                </span>
+                                            )}
                                         </NavLink>
                                     ))}
                                 </li>

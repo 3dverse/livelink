@@ -1,5 +1,4 @@
 //------------------------------------------------------------------------------
-import React from "react";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 
 //------------------------------------------------------------------------------
@@ -11,6 +10,7 @@ const meta = {
     component: Tooltip,
     parameters: {
         layout: "centered",
+        livelink: false,
     },
 } satisfies Meta<typeof Tooltip>;
 

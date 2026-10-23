@@ -8,6 +8,7 @@ const meta = {
     component: InactivityWarning,
     parameters: {
         layout: "centered",
+        livelink: false,
     },
 } satisfies Meta<typeof InactivityWarning>;
 

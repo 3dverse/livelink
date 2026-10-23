@@ -56,6 +56,9 @@ import VideoRecorder from "./react-ui/9-video-recorder/manifest";
 import BoundingBoxFaceProjection from "./react-ui/10-bounding-box-face-projection/manifest";
 import DOM3DAnchorLegendSample from "./react-ui/12-dom-3d-anchor-legend/manifest";
 import DOM3DAvatar from "./react-ui/13-dom-3d-avatar/manifest";
+import RotationGizmo from "./react-ui/15-rotation-gizmo/manifest";
+import DOM3DAngle from "./react-ui/16-dom-3d-angle/manifest";
+import DOM3DZone from "./react-ui/17-dom-3d-zone/manifest";
 
 //------------------------------------------------------------------------------
 import LiveSkeletalAnimation from "./advanced/x-live-skeletal-animation/manifest";
@@ -79,6 +82,8 @@ type SampleCategory = {
 //------------------------------------------------------------------------------
 export type SampleMetadata = {
     title: string;
+    /** Shows a "New" badge next to the title, in the menu. */
+    isNew?: boolean;
     summary?: string;
     description?: string;
     useCustomLayout?: boolean;
@@ -156,6 +161,9 @@ export default [
             BoundingBoxFaceProjection,
             DOM3DAnchorLegendSample,
             DOM3DAvatar,
+            RotationGizmo,
+            DOM3DAngle,
+            DOM3DZone,
         ],
     },
     {

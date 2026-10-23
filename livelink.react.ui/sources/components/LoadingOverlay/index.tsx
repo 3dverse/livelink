@@ -1,6 +1,8 @@
 //------------------------------------------------------------------------------
-import type { LivelinkConnectionStage } from "@3dverse/livelink";
 import React from "react";
+import type { LivelinkConnectionStage } from "@3dverse/livelink";
+
+//------------------------------------------------------------------------------
 import { Rocket3dverse } from "../../components-common/Rocket3dverse";
 import styles from "./style.module.css";
 
@@ -19,7 +21,7 @@ const stageMessages: Record<LivelinkConnectionStage, string> = {
 export const LoadingOverlay = ({ stage }: { stage: LivelinkConnectionStage }) => {
     return (
         <div className={`${styles.container} ${styles.glowEffectStyle} livelink-react-ui-component`}>
-            <div className={styles.logoContainer}>
+            <div style={{ maxWidth: "2rem" }} className={styles.logoContainer}>
                 <Rocket3dverse />
             </div>
             <div className={styles.loaderProgressBarIndeterminateContainer} role="progressbar">

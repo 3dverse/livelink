@@ -1,6 +1,5 @@
 //------------------------------------------------------------------------------
-import React from "react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Swiper, SwiperSlide } from "swiper/react";
 import type { Swiper as SwiperType } from "swiper";
 import { RiTriangleFill } from "react-icons/ri";
