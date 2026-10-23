@@ -1,5 +1,11 @@
 # @3dverse/livelink-agent
 
+## 0.5.10
+
+### Patch Changes
+
+- docs(livelink.clients): ARCHITECTURE.md files review
+
 ## 0.5.9
 
 ### Patch Changes

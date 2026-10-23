@@ -1,5 +1,22 @@
 # @3dverse/livelink-react-ui
 
+## 0.3.28
+
+### Patch Changes
+
+- feat(DOM3DAngle): add showScaleValues option and enhance scale value rendering
+- feat(livelink.react.ui): add RotationGizmo component
+- feat(livelink.react.ui): integrate LoadingOverlay and improve Livelink scene handling in Storybook
+- feat(livelink.react.ui): add DOM3DAngle component with angle measurement and exposure tracking features
+- feat(livelink.react.ui): update InactivityWarning and LoadingOverlay stories to disable livelink parameter
+- feat(livelink.react.ui): enhance DOM3DAvatar with inertia feature and refactor projection handling
+- feat(livelink.samples): add DOM3DAngle sample with angle measurement and exposure tracking features
+- refactor(BackBendingMonitor): update DOM3DAngle integration, enhance readout and spine visualization
+- feat(livelink.react.ui): add DOM3DZone component for rendering interactive zones around entities
+- feat(livelink.react.ui): DOM3DAngle add showAngleValue option and display angle value in the gauge
+- Updated dependencies
+  - @3dverse/livelink@0.8.72
+
 ## 0.3.27
 
 ### Patch Changes
