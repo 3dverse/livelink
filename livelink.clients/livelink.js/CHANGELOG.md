@@ -1,5 +1,11 @@
 # @3dverse/livelink
 
+## 0.8.72
+
+### Patch Changes
+
+- feat(livelink.js): CameraController, middle button emulation and last button preemption
+
 ## 0.8.71
 
 ### Patch Changes
