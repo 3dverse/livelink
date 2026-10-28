@@ -163,6 +163,95 @@ describe("setting global transform derives local transform", () => {
 
 // ---------------------------------------------------------------------------
 
+// The proxy write paths flag descendants through `_markGlobalTransformAsDirty` /
+// `_markLocalTransformAsDirty`; `_setGlobalTransform` and `_set_parent` have to do it themselves.
+// Every test here primes the child's cache first, because an unread child is dirty regardless and
+// would pass without any invalidation at all.
+describe("ancestor invalidation on the non-proxy write paths", () => {
+    it("child global transform follows a parent written through the wholesale global_transform setter", () => {
+        const parent = makeEntity(scene);
+        const child = makeEntity(scene, parent);
+
+        parent.local_transform = { position: [5, 0, 0] };
+        child.local_transform = { position: [1, 0, 0] };
+        expect(child.global_transform.position[0]).toBeCloseTo(6);
+
+        parent.global_transform = { position: [10, 0, 0] };
+
+        expect(child.global_transform.position[0]).toBeCloseTo(11);
+        expect(child.ls_to_ws[12]).toBeCloseTo(11);
+    });
+
+    it("grandchild global transform follows a grandparent written through the wholesale setter", () => {
+        const grandparent = makeEntity(scene);
+        const parent = makeEntity(scene, grandparent);
+        const child = makeEntity(scene, parent);
+
+        grandparent.local_transform = { position: [5, 0, 0] };
+        parent.local_transform = { position: [1, 0, 0] };
+        child.local_transform = { position: [2, 0, 0] };
+        expect(child.global_transform.position[0]).toBeCloseTo(8);
+
+        grandparent.global_transform = { position: [10, 0, 0] };
+
+        expect(child.global_transform.position[0]).toBeCloseTo(13);
+    });
+
+    it("child global transform reflects a wholesale parent write by the time on-entity-updated fires", () => {
+        const parent = makeEntity(scene);
+        const child = makeEntity(scene, parent);
+
+        parent.local_transform = { position: [5, 0, 0] };
+        child.local_transform = { position: [1, 0, 0] };
+        expect(child.global_transform.position[0]).toBeCloseTo(6);
+
+        let observedDuringEvent = -1;
+        parent.addEventListener("on-entity-updated", event => {
+            if (event.includes("local_transform")) {
+                observedDuringEvent = child.global_transform.position[0];
+            }
+        });
+
+        parent.global_transform = { position: [10, 0, 0] };
+
+        expect(observedDuringEvent).toBeCloseTo(11);
+    });
+
+    it("_setGlobalTransform invalidates descendants without flagging the entity for broadcast", () => {
+        // `EncodedFrameConsumer` applies the other clients' camera poses through this path on every
+        // frame and must not echo them back, so the invalidation here cannot go through
+        // `_markLocalTransformAsDirty`.
+        const parent = makeEntity(scene);
+        const child = makeEntity(scene, parent);
+        expect(child.global_transform.position[0]).toBeCloseTo(0);
+
+        parent._setGlobalTransform({ global_transform: { position: [10, 0, 0] }, emitter: null });
+
+        expect(child.global_transform.position[0]).toBeCloseTo(10);
+        expect(registry._flushDirtyEntities()).toHaveLength(0);
+    });
+
+    it("child global transform follows an engine-driven reparent through _set_parent", () => {
+        const parentA = makeEntity(scene);
+        const parentB = makeEntity(scene);
+        const child = makeEntity(scene, parentA);
+
+        parentA.local_transform = { position: [5, 0, 0] };
+        parentB.local_transform = { position: [100, 0, 0] };
+        child.local_transform = { position: [1, 0, 0] };
+        expect(child.global_transform.position[0]).toBeCloseTo(6);
+        // Leaves both parents on the same update id, so what is exercised below is the reparent
+        // flag and not an incidental mismatch between the ids the child compares.
+        void parentB.global_transform.position;
+
+        child._set_parent(parentB);
+
+        expect(child.global_transform.position[0]).toBeCloseTo(101);
+    });
+});
+
+// ---------------------------------------------------------------------------
+
 describe("ls_to_ws matrix", () => {
     it("is identity for a root entity at the origin with unit scale", () => {
         const entity = makeEntity(scene);

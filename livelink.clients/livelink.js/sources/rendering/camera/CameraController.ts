@@ -8,7 +8,7 @@ import type { Entity } from "../../scene/Entity";
 import type { Viewport } from "./Viewport";
 import { CameraControllerInitOptions, CameraControllerPreset, LockMousePointerAim } from "./CameraControllerPreset";
 import * as CameraControllerPresets from "./CameraControllerPresets";
-import { Quaternion, Vector3 } from "threejs-math";
+import { Matrix4, Quaternion, Vector3 } from "threejs-math";
 
 /**
  *
@@ -49,6 +49,14 @@ const TRAVEL_SETTLE_TIME_CONSTANTS = 5;
 
 /**
  * A camera controller based on the `camera-controls` library.
+ *
+ * It drives the camera entity's `local_transform`, so its state is in the space that transform is expressed
+ * in: **its parent's local space**, or world space with no parent. A parented camera is therefore carried by
+ * its parent and placed within it, which is how it can follow a moving entity and still be orbited.
+ *
+ * `travel` and `travelToPointOfView` take world space either way. What is read back — `position`,
+ * `orientation`, `direction`, `getPosition`, `getTarget`, `distance` — is in that space and is not converted;
+ * the camera's place in the world is the viewport's `camera_projection`.
  *
  * @noInheritDoc
  * @category Camera
@@ -360,8 +368,8 @@ export class CameraController extends CameraControls {
      * speeds are relative to the target distance.
      *
      * @param options
-     * @param options.position - Destination position of the camera.
-     * @param options.look_at - Point the camera looks at from its destination.
+     * @param options.position - Destination position of the camera, in world space.
+     * @param options.look_at - Point the camera looks at from its destination, in world space.
      * @param options.enable_transition - Interpolate to the destination instead of setting it immediately. Defaults
      * to `true`.
      * @param options.reset_focal_offset - Reset the focal offset to zero. Defaults to `true`.
@@ -390,7 +398,13 @@ export class CameraController extends CameraControls {
             if (zoom_to_initial) {
                 this.zoomTo(this._zoom0, enable_transition);
             }
-            await this.#waitForTransition(this.setLookAt(...position, ...look_at, enable_transition));
+            await this.#waitForTransition(
+                this.setLookAt(
+                    ...this.#toControllerSpace(position),
+                    ...this.#toControllerSpace(look_at),
+                    enable_transition,
+                ),
+            );
 
             const { forward_target_distance } = this.init_options;
             if (forward_target_distance !== undefined) {
@@ -565,12 +579,45 @@ export class CameraController extends CameraControls {
     }
 
     /**
-     *
+     * The `local_transform`: the controller's state is in the camera entity's parent's space.
      */
     #onCameraUpdate = (): void => {
-        this.position.toArray(this.#camera_entity.global_transform.position);
-        this.orientation.toArray(this.#camera_entity.global_transform.orientation);
+        this.position.toArray(this.#camera_entity.local_transform.position);
+        this.orientation.toArray(this.#camera_entity.local_transform.orientation);
     };
+
+    /**
+     * `world` in the controller's own space: the camera entity's parent's local space, or `world` itself with
+     * no parent. Every world-space point crossing the public API goes through here.
+     *
+     * A parented camera inherits two limits from that space: the orbit's up is the parent's +Y, so a parent
+     * that is not upright tilts it, and `distance` is a length in the parent's space, so a scaled parent
+     * scales it.
+     */
+    #toControllerSpace(world: Vec3): Vec3 {
+        const { parent } = this.#camera_entity;
+        if (!parent) {
+            return world;
+        }
+        return new Vector3()
+            .fromArray(world)
+            .applyMatrix4(new Matrix4().fromArray([...parent.ws_to_ls]))
+            .toArray() as Vec3;
+    }
+
+    /**
+     * The other way round: a point of the controller's space in world space.
+     */
+    #toWorldSpace(local: Vec3): Vec3 {
+        const { parent } = this.#camera_entity;
+        if (!parent) {
+            return local;
+        }
+        return new Vector3()
+            .fromArray(local)
+            .applyMatrix4(new Matrix4().fromArray([...parent.ls_to_ws]))
+            .toArray() as Vec3;
+    }
 
     /**
      *
@@ -967,8 +1014,9 @@ export class CameraController extends CameraControls {
             return;
         }
 
+        // `travel` takes world space; `getPosition` gives the controller's space.
         await this.travel({
-            position: this.getPosition(new Vector3()).toArray() as Vec3,
+            position: this.#toWorldSpace(this.getPosition(new Vector3()).toArray() as Vec3),
             look_at: result.world_position,
         });
     }
@@ -989,8 +1037,10 @@ export class CameraController extends CameraControls {
         });
         const world_position = result?.world_position;
         if (world_position) {
-            this.#orbit_on_cursor.orbit_point = world_position;
-            this.setOrbitPoint(...world_position);
+            // In the controller's space, as the fallback `#initController` seeds it with is.
+            const orbit_point = this.#toControllerSpace(world_position);
+            this.#orbit_on_cursor.orbit_point = orbit_point;
+            this.setOrbitPoint(...orbit_point);
         } else if (this.orbit_on_cursor.cancel_target_offset) {
             // Truck and dolly actions move the target offset, so reset to previous orbit point when void is picked
             this.setOrbitPoint(...this.#orbit_on_cursor.orbit_point);

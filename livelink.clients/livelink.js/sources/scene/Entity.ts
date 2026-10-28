@@ -314,6 +314,16 @@ export class Entity extends EntityComponentsProxy {
      */
     override set parent(parent: Entity | null) {
         super.parent = parent;
+    }
+
+    /**
+     * @internal
+     *
+     * Flags the global transform dirty: the local transform is kept, so a reparent moves the world
+     * pose. Here rather than in `set parent`, which the engine's own reparent bypasses.
+     */
+    override _set_parent(parent: EntityBase | null): void {
+        super._set_parent(parent);
         this.#is_global_transform_dirty = true;
     }
 
@@ -418,6 +428,11 @@ export class Entity extends EntityComponentsProxy {
         }
 
         this._computeTransformMatrices();
+
+        // Descendants detect our move only by this counter. Bare, since `EncodedFrameConsumer` takes
+        // this path to avoid the broadcast flagging `_markLocalTransformAsDirty` would add, and
+        // before the dispatch, so a listener reading a descendant sees the new pose.
+        this.#last_update_id++;
 
         this._dispatchEvent(
             new EntityUpdatedEvent({

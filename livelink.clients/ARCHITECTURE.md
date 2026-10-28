@@ -164,7 +164,7 @@ differently:
   entities have no counterpart: they hand out the raw stored values and carry
   no proxy state.
 
-Three invariants keep the browser transform proxies coherent:
+Four invariants keep the browser transform proxies coherent:
 
 1. Local patches are merged with `assignComponentPatchInPlace`, which copies
    arrays element-wise instead of replacing them — the explicit model's
@@ -179,6 +179,17 @@ Three invariants keep the browser transform proxies coherent:
    `#applyComponents`, and the browser constructor / `_setLocalTransform` via
    the protected `_refreshLocalTransformShadow()` — and its re-sync writes
    element-wise in place, so the proxy-captured arrays stay live there too.
+4. Every path that moves an entity's world pose invalidates its descendants,
+   which detect an ancestor's move only by comparing `_last_update_id` against
+   the `#last_parent_update_id` they recorded, or by walking `#is_dirty` up the
+   chain. So a path bumps `#last_update_id` when its own cache is already
+   correct, or sets `#is_global_transform_dirty` when it is not. The two
+   transform proxy handlers route to `_markLocalTransformAsDirty` /
+   `_markGlobalTransformAsDirty` and `_setLocalTransform` sets the flag;
+   `_setGlobalTransform` and `_set_parent` are the two paths that carry it
+   explicitly, the former with a bare bump so it stays free of the
+   dirty-set/broadcast side effects that the per-frame remote camera updates
+   depend on it not having.
 
 ## Data flow
 
