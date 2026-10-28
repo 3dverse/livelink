@@ -1,5 +1,12 @@
 # @3dverse/livelink
 
+## 0.8.73
+
+### Patch Changes
+
+- feat(livelink.js): drive the camera entity's local_transform, so a parented camera can be controlled
+- fix(livelink.js): invalidate descendants on the non-proxy transform writes
+
 ## 0.8.72
 
 ### Patch Changes
