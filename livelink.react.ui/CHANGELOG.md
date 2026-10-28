@@ -1,5 +1,14 @@
 # @3dverse/livelink-react-ui
 
+## 0.3.29
+
+### Patch Changes
+
+- fix(livelink.react.ui): add missing companion cube scene id to the storybook
+- Updated dependencies
+- Updated dependencies
+  - @3dverse/livelink@0.8.73
+
 ## 0.3.28
 
 ### Patch Changes
