@@ -126,7 +126,7 @@ const LightControlInner = () => {
                         <LightBrightnessSlider />
                     </div>
                 </Card>
-                <Card style={{ justifyContent: "end", alignItems: "end" }}>
+                <Card style={{ justifyContent: "end", alignItems: "end", transform: "translateX(.5rem)" }}>
                     <LightSwitchOnOff />
                 </Card>
             </div>
