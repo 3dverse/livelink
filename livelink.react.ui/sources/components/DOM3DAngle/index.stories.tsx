@@ -62,6 +62,7 @@ const ROTATION_PERIOD_SEC = 12;
 const meta = {
     title: "Components/DOM 3D Angle",
     id: "components-dom3d-angle",
+    tags: ["new"],
     component: DOM3DAngle,
     parameters: {
         layout: "fullscreen",

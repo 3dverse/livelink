@@ -96,6 +96,7 @@ type StoryArgs = Pick<
 const meta = {
     title: "Components/Rotation Gizmo",
     id: "components-rotation-gizmo",
+    tags: ["new"],
     component: RotationGizmo,
     parameters: {
         layout: "fullscreen",

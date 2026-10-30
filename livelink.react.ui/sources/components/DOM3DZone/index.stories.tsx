@@ -39,6 +39,7 @@ type DOM3DZoneStoryArgs = Omit<EntityZoneOptions, "entity"> & {
 const meta = {
     title: "Components/DOM 3D Zone",
     id: "components-dom3d-zone",
+    tags: ["new"],
     parameters: {
         layout: "fullscreen",
         livelinkSceneId: COMPANION_CUBE_SCENE_ID,
