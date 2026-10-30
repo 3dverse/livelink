@@ -4,7 +4,7 @@ import type { Meta, StoryObj } from "@storybook/react-vite";
 import { Canvas, useCameraEntity, useEntity, Viewport } from "@3dverse/livelink-react";
 
 //------------------------------------------------------------------------------
-import { ViewerPanel } from "../../components-common/ViewerPanel";
+import { ViewerPanel } from "../../components-common";
 import { SunPositionPicker } from ".";
 
 //------------------------------------------------------------------------------

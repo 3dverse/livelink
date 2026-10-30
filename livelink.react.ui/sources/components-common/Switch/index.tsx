@@ -3,14 +3,14 @@ import React from "react";
 import clsx from "clsx";
 
 //------------------------------------------------------------------------------
-import { Size } from "../Input";
+import { type InputSize } from "../Input";
 import styles from "./index.module.css";
 
 //------------------------------------------------------------------------------
 type SwitchProps = {
     id?: string;
     label?: string;
-    size?: Size;
+    size?: InputSize;
     isChecked: boolean;
     isDisabled?: boolean;
     onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;

@@ -65,7 +65,6 @@ export const LightControl = ({
     };
 
     //--------------------------------------------------------------------------
-    // UI
     if (!light.point_light) {
         // TODO: add a feedback in UI
         return null;

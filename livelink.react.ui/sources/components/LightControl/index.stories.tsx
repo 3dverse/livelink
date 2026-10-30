@@ -13,7 +13,7 @@ import type { Entity } from "@3dverse/livelink";
 import clsx from "clsx";
 
 //------------------------------------------------------------------------------
-import { ViewerPanel } from "../../components-common/ViewerPanel";
+import { ViewerPanel } from "../../components-common";
 import { LightPreview } from "./LightPreview/LightPreview";
 import { LightColorSelector } from "./LightColorSelector/LightColorSelector";
 import { LightTemperatureSlider } from "./LightTemperatureSlider/LightTemperatureSlider";

@@ -4,7 +4,7 @@ import clsx from "clsx";
 
 //------------------------------------------------------------------------------
 import styles from "./index.module.css";
-import { Size } from "../Input";
+import { type InputSize } from "../Input";
 
 //------------------------------------------------------------------------------
 type CheckboxProps = {
@@ -12,7 +12,7 @@ type CheckboxProps = {
     label?: string;
     name?: string;
     title?: string;
-    size?: Size;
+    size?: InputSize;
     isChecked: boolean;
     isDisabled?: boolean;
     onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;

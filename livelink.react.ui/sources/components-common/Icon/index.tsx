@@ -6,12 +6,12 @@ import clsx from "clsx";
 import styles from "./index.module.css";
 
 //------------------------------------------------------------------------------
-export type Size = "xs" | "sm" | "md";
+export type IconSize = "xs" | "sm" | "md";
 
 //------------------------------------------------------------------------------
 interface IconProps extends React.SVGProps<SVGSVGElement> {
     as?: React.ComponentType<React.SVGProps<SVGSVGElement>>;
-    size?: Size;
+    size?: IconSize;
 }
 
 //------------------------------------------------------------------------------

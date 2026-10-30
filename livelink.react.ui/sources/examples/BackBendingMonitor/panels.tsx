@@ -5,7 +5,7 @@ import React from "react";
 import type { AngleExposure } from "../../components/DOM3DAngle/useAngleExposure";
 import { ANGLE_ZONE_LEVEL_LABELS } from "../../components/DOM3DAngle/zones";
 import { formatSeconds } from "../../components/DOM3DAngle/format";
-import { ViewerPanel } from "../../components-common/ViewerPanel";
+import { ViewerPanel } from "../../components-common";
 import { BACK_BENDING_REFERENCES, BACK_BENDING_RULES, formatDeg, formatRate } from "./backBending";
 import type { TrunkPosture } from "./trunkPosture";
 import styles from "./panels.module.css";

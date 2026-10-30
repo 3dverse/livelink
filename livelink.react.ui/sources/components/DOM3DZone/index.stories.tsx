@@ -14,7 +14,7 @@ import {
 //------------------------------------------------------------------------------
 import { EntityZones, type EntityZoneOptions } from ".";
 import { ENTITY_ZONE_DEFAULTS } from "./entityZoneOptions";
-import { Button } from "../../components-common/Button";
+import { Button } from "../../components-common";
 import { COMPANION_CUBE_SCENE_ID } from "../../../.storybook/sceneIds";
 
 //------------------------------------------------------------------------------

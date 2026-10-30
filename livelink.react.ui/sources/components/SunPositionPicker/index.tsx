@@ -5,7 +5,7 @@ import { FaRegSun } from "react-icons/fa6";
 import type { Components, Entity, EntityUpdatedEvent, Vec2, Vec3 } from "@3dverse/livelink";
 
 //------------------------------------------------------------------------------
-import { Checkbox } from "../../components-common/Checkbox/index";
+import { Checkbox } from "../../components-common";
 import styles from "./style.module.css";
 
 //------------------------------------------------------------------------------
@@ -335,7 +335,6 @@ export const SunPositionPicker = ({
     }, [sun, hasShadows]);
 
     //--------------------------------------------------------------------------
-    // UI
     return (
         <div className={`${styles.container} livelink-react-ui-component`}>
             <div style={containerStyle}>

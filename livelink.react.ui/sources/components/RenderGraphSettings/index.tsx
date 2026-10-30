@@ -4,14 +4,18 @@ import { Entity, RenderGraphDataObject } from "@3dverse/livelink";
 import { FaArrowRotateLeft, FaFolder } from "react-icons/fa6";
 
 //------------------------------------------------------------------------------
-import { Icon } from "../../components-common/Icon";
-import { Button } from "../../components-common/Button";
-import { IconButton } from "../../components-common/IconButton";
-import { Tooltip } from "../../components-common/Tooltip";
-import { Spinner } from "../../components-common/Spinner";
-import { Checkbox } from "../../components-common/Checkbox";
-import { FormControlWidget } from "../../components-common/FormControlWidget";
-import { AccordionItem, AccordionButton, AccordionPanel } from "../../components-common/Accordion";
+import {
+    AccordionButton,
+    AccordionItem,
+    AccordionPanel,
+    Button,
+    Checkbox,
+    FormControlWidget,
+    Icon,
+    IconButton,
+    Spinner,
+    Tooltip,
+} from "../../components-common";
 
 //------------------------------------------------------------------------------
 import styles from "./style.module.css";

@@ -28,7 +28,7 @@ import { useAngleExposure } from "./useAngleExposure";
 import { ANGLE_ZONE_LEVEL_LABELS } from "./zones";
 import { angleBetweenDeg, cross, length, normalize, reject, signedAngleDeg } from "./vector";
 import { axisAngleToQuat, multiplyQuat, rotateVec3 } from "../RotationGizmo/math";
-import { Button } from "../../components-common/Button";
+import { Button } from "../../components-common";
 import { DOM3D_ANGLE_SCENE_ID } from "../../../.storybook/sceneIds";
 
 //------------------------------------------------------------------------------

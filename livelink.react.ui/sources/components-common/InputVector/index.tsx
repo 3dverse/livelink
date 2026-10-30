@@ -4,7 +4,7 @@ import clsx from "clsx";
 
 //------------------------------------------------------------------------------
 import stylesInput from "../Input/index.module.css";
-import { Size } from "../Input";
+import { type InputSize } from "../Input";
 import styles from "./index.module.css";
 
 //------------------------------------------------------------------------------
@@ -19,7 +19,7 @@ export const InputVector = ({
 }: {
     id?: string;
     type: string;
-    size?: Size;
+    size?: InputSize;
     value: number[];
     placeholder?: number[];
     onChange: (event: ChangeEvent<HTMLInputElement>, value: number[]) => void;

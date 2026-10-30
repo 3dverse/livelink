@@ -5,7 +5,7 @@ import { Canvas, useCameraEntity, Viewport } from "@3dverse/livelink-react";
 import { Entity } from "@3dverse/livelink";
 
 //------------------------------------------------------------------------------
-import { ViewerPanel } from "../../components-common/ViewerPanel";
+import { ViewerPanel } from "../../components-common";
 import { RenderGraphSettings } from ".";
 
 //------------------------------------------------------------------------------
