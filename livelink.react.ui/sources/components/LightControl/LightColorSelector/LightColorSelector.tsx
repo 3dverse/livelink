@@ -3,6 +3,8 @@ import React from "react";
 import { useLightControl } from "../LightControlContext";
 import { lightColors } from "./lightColors";
 import styles from "./lightColorSelector.module.css";
+import { FaPalette } from "react-icons/fa6";
+import { Icon } from "../../../components-common/Icon";
 
 //------------------------------------------------------------------------------
 export const LightColorSelector = ({ className }: { className?: string }) => {
@@ -32,6 +34,7 @@ export const LightColorSelector = ({ className }: { className?: string }) => {
                     backgroundColor: color,
                 }}
             >
+                <Icon as={FaPalette} className={styles.icon} />
                 <input
                     type="color"
                     id="color-picker"
