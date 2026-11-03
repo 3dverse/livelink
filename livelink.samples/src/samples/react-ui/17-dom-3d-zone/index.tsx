@@ -76,6 +76,7 @@ function AppLayout() {
     const { entity: cube } = useEntity({ euid: TARGET_ENTITY_ID });
 
     const [isTurning, setIsTurning] = useState(true);
+    const [isZoneVisible, setIsZoneVisible] = useState(true);
     const [radiusM, setRadiusM] = useState(1.4);
     const [hasOccluder, setHasOccluder] = useState(true);
     const [show, setShow] = useState<Record<EntityZonePart, boolean>>({
@@ -104,7 +105,7 @@ function AppLayout() {
         <Canvas className="w-full h-full">
             <Viewport cameraEntity={cameraEntity} className="w-full h-full">
                 <CameraController ref={lookAtCube} />
-                <EntityZones zones={zones} />
+                <EntityZones zones={zones} visible={isZoneVisible} />
                 <div className="absolute top-4 left-4 flex gap-2">
                     <button
                         className="button button-overlay"
@@ -112,6 +113,13 @@ function AppLayout() {
                         onClick={() => setIsTurning(previous => !previous)}
                     >
                         {isTurning ? "Pause rotation" : "Play rotation"}
+                    </button>
+                    <button
+                        className="button button-overlay"
+                        aria-pressed={isZoneVisible}
+                        onClick={() => setIsZoneVisible(previous => !previous)}
+                    >
+                        {isZoneVisible ? "Hide zone" : "Show zone"}
                     </button>
                 </div>
                 <div className="absolute right-3 bottom-3 w-72 rounded-md bg-black/70 p-3 text-white backdrop-blur-sm">

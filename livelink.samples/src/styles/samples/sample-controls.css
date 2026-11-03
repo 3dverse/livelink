@@ -54,3 +54,7 @@ div.sample-controls > div > div:first-child * {
     cursor: pointer;
     user-select: none;
 }
+
+div.sample-controls > div > div:first-child > i {
+    opacity: 0;
+}

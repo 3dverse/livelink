@@ -12,8 +12,9 @@ import {
 } from "@3dverse/livelink-react";
 
 //------------------------------------------------------------------------------
-import { EntityZones, type EntityZoneOptions } from ".";
+import { EntityZones, type EntityZoneOptions, type EntityZonesProps } from ".";
 import { ENTITY_ZONE_DEFAULTS } from "./entityZoneOptions";
+import { EntityZonesSvg } from "./svg";
 import { Button } from "../../components-common";
 import { COMPANION_CUBE_SCENE_ID } from "../../../.storybook/sceneIds";
 
@@ -77,6 +78,9 @@ type Story = StoryObj<DOM3DZoneStoryArgs>;
  *
  * The cube's bounding box is given as `occluder`: the far side of the curtain, and the pad under the cube, fade out
  * behind it. The colors are design tokens: switch the theme in the toolbar, the zone is recolored.
+ *
+ * Hide the zone, then show it again, from the button: it fades and shrinks back to the cube's feet, and fades and
+ * grows out again, as it did when it first showed.
  */
 export const _Component: Story = {
     render: args => <DOM3DZoneDemo {...args} />,
@@ -113,7 +117,8 @@ export const Minimal: Story = {
 
 //------------------------------------------------------------------------------
 /**
- * `colors` takes any CSS color, a design token's `var()` included. A taller curtain, in other colors.
+ * `colors` takes any CSS color, a design token's `var()` included. A taller curtain, in other colors, on a tinted
+ * glass: clear by default, it is as opaque as its color's alpha.
  */
 export const CustomColors: Story = {
     args: {
@@ -125,11 +130,27 @@ export const CustomColors: Story = {
 
 //------------------------------------------------------------------------------
 /**
- * The cube of the scene with a zone round it, the zone's options given as `args`, turning while the rotation plays.
+ * A prototype of the same zone in SVG, with no three.js: the pad, sweep and curtain projected and drawn as paths each
+ * frame. The occluder's outline on screen, blurred by `occlusionSoftnessRad`, masks the pad and the curtain's far
+ * half: what the cube can stand in front of. The curtain's near half is never behind it, and is drawn over it.
  */
-function DOM3DZoneDemo({ turnSpeedDegPerS, ...options }: DOM3DZoneStoryArgs): React.JSX.Element {
+export const Svg: Story = {
+    render: args => <DOM3DZoneDemo {...args} Zones={EntityZonesSvg} />,
+};
+
+//------------------------------------------------------------------------------
+/**
+ * The cube of the scene with a zone round it, the zone's options given as `args`, turning while the rotation plays,
+ * and shown or hidden from a button. Drawn by `Zones`: `EntityZones` by default.
+ */
+function DOM3DZoneDemo({
+    turnSpeedDegPerS,
+    Zones = EntityZones,
+    ...options
+}: DOM3DZoneStoryArgs & { Zones?: React.ComponentType<EntityZonesProps> }): React.JSX.Element {
     const { radiusM, curtainHeightM, occluder, occlusionSoftnessRad, turnDirection, colors, show } = options;
     const [isTurning, setIsTurning] = useState(true);
+    const [isZoneVisible, setIsZoneVisible] = useState(true);
     const { cameraEntity } = useCameraEntity({
         position: CAMERA_POSITION,
         settings: { atmosphere: true, gradient: false },
@@ -151,8 +172,8 @@ function DOM3DZoneDemo({ turnSpeedDegPerS, ...options }: DOM3DZoneStoryArgs): Re
         <Canvas style={{ width: "100%", height: "100vh" }}>
             <Viewport cameraEntity={cameraEntity} style={{ width: "100%", height: "100%" }}>
                 <CameraController ref={lookAtTarget} />
-                <EntityZones zones={zones} />
-                <div style={{ position: "absolute", top: "1rem", left: "1rem" }}>
+                <Zones zones={zones} visible={isZoneVisible} />
+                <div style={{ position: "absolute", top: "1rem", left: "1rem", display: "flex", gap: "0.5rem" }}>
                     <Button
                         variant="secondary"
                         size="sm"
@@ -161,6 +182,15 @@ function DOM3DZoneDemo({ turnSpeedDegPerS, ...options }: DOM3DZoneStoryArgs): Re
                         style={{ backgroundColor: "var(--3dverse-color-bg-overground)" }}
                     >
                         {isTurning ? "Pause rotation" : "Play rotation"}
+                    </Button>
+                    <Button
+                        variant="secondary"
+                        size="sm"
+                        aria-pressed={isZoneVisible}
+                        onClick={() => setIsZoneVisible(value => !value)}
+                        style={{ backgroundColor: "var(--3dverse-color-bg-overground)" }}
+                    >
+                        {isZoneVisible ? "Hide zone" : "Show zone"}
                     </Button>
                 </div>
             </Viewport>
