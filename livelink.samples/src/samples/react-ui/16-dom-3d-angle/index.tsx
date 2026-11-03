@@ -1,8 +1,10 @@
 //------------------------------------------------------------------------------
 import { useEffect, useRef, useState } from "react";
+import { folder, useControls } from "leva";
+import { MathUtils, Quaternion, Vector3 } from "three";
 
 //------------------------------------------------------------------------------
-import type { Vec3 } from "@3dverse/livelink";
+import type { Quat, Vec3 } from "@3dverse/livelink";
 import {
     Livelink,
     Canvas,
@@ -22,10 +24,11 @@ import {
     type AngleHoldLimits,
     type AngleZone,
     type AngleZoneLevel,
+    type DOM3DAngleProps,
 } from "@3dverse/livelink-react-ui";
 
 //------------------------------------------------------------------------------
-import { DisconnectedModal } from "@/components/SamplePlayer";
+import { DisconnectedModal, json } from "@/components/SamplePlayer";
 
 //------------------------------------------------------------------------------
 const scene_id = "505ba29e-3789-458d-8918-5815514f6ede";
@@ -52,6 +55,11 @@ const joint_zones: Array<AngleZone> = [
 
 /** Seconds the joint can stay in each zone before the alert. */
 const hold_limits: AngleHoldLimits = { conditional: 5, notAcceptable: 2 };
+
+const initial_angle_deg = 40;
+
+const sector_colorings: Array<NonNullable<DOM3DAngleProps["sectorColoring"]>> =
+    ["zones", "currentZone"];
 
 /** The swing takes the joint across all its zones, and back. */
 const swing_amplitude_deg = 110;
@@ -83,26 +91,110 @@ function AppLayout() {
     const { cameraEntity } = useCameraEntity({ position: camera_position });
     const { entity: joint } = useEntity({ euid: joint_euid });
     const { angleDeg, setAngleDeg, isSwinging, toggleSwing } =
-        useJointAngle(40);
+        useJointAngle(initial_angle_deg);
 
-    const [showZones, setShowZones] = useState(true);
-    const [showNeedle, setShowNeedle] = useState(true);
-    const [showScaleValues, setShowScaleValues] = useState(true);
+    // Every prop of the gauge, as in its stories, passed as it is. The objects
+    // are shown as JSON, to edit as text.
+    const [{ exposure: isExposurePassed, ...gaugeProps }, setControls] =
+        useControls(() => ({
+            angleDeg: {
+                value: initial_angle_deg,
+                min: -150,
+                max: 150,
+                step: 1,
+                // Called when the swing moves the slider too: only a drag sets the
+                // angle.
+                onChange: (value: number, _path, { fromPanel }) => {
+                    if (fromPanel) setAngleDeg(value);
+                },
+            },
+            Plane: folder({
+                worldPosition: { value: [0, 0, 0], step: 0.1 },
+                planeNormal: { value: [0, 1, 0], step: 0.1 },
+                referenceDirection: { value: [0, 0, 1], step: 0.1 },
+            }),
+            Gauge: folder({
+                size: { value: 0.6, min: 0.2, max: 1, step: 0.05 },
+                scaleRange: {
+                    value: [-120, 120],
+                    min: -180,
+                    max: 180,
+                    step: 5,
+                },
+                scaleFadeDeg: { value: 70, min: 0, max: 90, step: 5 },
+                showScaleValues: true,
+                showAngleValue: true,
+            }),
+            Needle: folder({
+                showNeedle: true,
+                // Unset, it is 1.25 times the size.
+                needleLength: {
+                    value: 0.75,
+                    min: 0.2,
+                    max: 1,
+                    step: 0.05,
+                    optional: true,
+                    disabled: true,
+                },
+                uncertaintyDeg: { value: 0, min: 0, max: 10, step: 1 },
+            }),
+            Zones: folder({
+                zones: json({ value: joint_zones, optional: true }),
+                sectorColoring: {
+                    options: sector_colorings,
+                    hint: "Shows once the angle crosses a zone, e.g. at 100°: the angle filled zone by zone, or all in the color of the current one.",
+                },
+                holdLimits: json({ value: hold_limits, optional: true }),
+                // Timed by `useAngleExposure` below, and shown as it goes: given to
+                // the gauge, it takes the place of `holdLimits`.
+                exposure: json<AngleExposure | null>({
+                    value: null,
+                    editable: false,
+                    optional: true,
+                }),
+            }),
+        }));
 
-    // Turns the joint by the angle, around the vertical.
+    // The gauge starts at the joint, once it is loaded.
     useEffect(() => {
         if (joint) {
-            joint.local_transform = { eulerOrientation: [0, angleDeg, 0] };
+            setControls({
+                worldPosition: [...joint.global_transform.position] as Vec3,
+            });
         }
-    }, [joint, angleDeg]);
+    }, [joint, setControls]);
 
-    // Times the angle against the zones. The gauge could do it by itself,
-    // given `holdLimits`: timed here, the exposure is shown in the panel too.
+    // The slider follows the joint while it swings.
+    useEffect(() => {
+        setControls({ angleDeg: Math.round(angleDeg) });
+    }, [angleDeg, setControls]);
+
+    // Turns the joint by the angle, in the plane of the gauge.
+    const { planeNormal, referenceDirection, zones, holdLimits } = gaugeProps;
+    useEffect(() => {
+        if (joint) {
+            joint.local_transform = {
+                orientation: jointOrientation(
+                    planeNormal,
+                    referenceDirection,
+                    angleDeg,
+                ),
+            };
+        }
+    }, [joint, planeNormal, referenceDirection, angleDeg]);
+
+    // Times the angle against the zones, for the status under the gauge. The
+    // hook needs zones: without any, it goes on timing the joint's.
     const exposure = useAngleExposure({
         angleDeg,
-        zones: joint_zones,
-        holdLimits: hold_limits,
+        zones: zones?.length ? zones : joint_zones,
+        holdLimits: holdLimits ?? {},
     });
+
+    // The panel shows the exposure as it goes.
+    useEffect(() => {
+        setControls({ exposure });
+    }, [exposure, setControls]);
 
     return (
         <Canvas className="w-full h-full">
@@ -111,19 +203,16 @@ function AppLayout() {
                 {joint && (
                     <DOM3DOverlay>
                         <DOM3DAngle
-                            worldPosition={
-                                [...joint.global_transform.position] as Vec3
-                            }
-                            planeNormal={[0, 1, 0]}
-                            referenceDirection={[0, 0, 1]}
+                            {...gaugeProps}
                             angleDeg={angleDeg}
-                            zones={showZones ? joint_zones : undefined}
-                            exposure={showZones ? exposure : undefined}
-                            size={0.6}
-                            scaleRange={[-120, 120]}
-                            showNeedle={showNeedle}
-                            showScaleValues={showScaleValues}
-                        />
+                            exposure={
+                                zones && isExposurePassed !== undefined
+                                    ? exposure
+                                    : undefined
+                            }
+                        >
+                            {zones && <ExposureStatus exposure={exposure} />}
+                        </DOM3DAngle>
                     </DOM3DOverlay>
                 )}
                 <div className="absolute top-4 left-4 flex gap-2">
@@ -135,46 +224,38 @@ function AppLayout() {
                         {isSwinging ? "Pause swing" : "Play swing"}
                     </button>
                 </div>
-                <div className="absolute right-3 bottom-3 w-72 rounded-md bg-black/70 p-3 text-white backdrop-blur-sm">
-                    <h3 className="mb-2 text-sm font-semibold">DOM3DAngle</h3>
-                    <label className="mb-2 block text-xs">
-                        <span className="mb-1 block">
-                            Angle: {Math.round(angleDeg)}°
-                        </span>
-                        <input
-                            className="w-full"
-                            type="range"
-                            min={-150}
-                            max={150}
-                            step={1}
-                            value={Math.round(angleDeg)}
-                            onChange={event =>
-                                setAngleDeg(Number(event.target.value))
-                            }
-                        />
-                    </label>
-                    <div className="mb-2 flex flex-wrap gap-x-4 gap-y-1 text-xs">
-                        <Checkbox
-                            label="Zones"
-                            checked={showZones}
-                            onChange={setShowZones}
-                        />
-                        <Checkbox
-                            label="Needle"
-                            checked={showNeedle}
-                            onChange={setShowNeedle}
-                        />
-                        <Checkbox
-                            label="Scale values"
-                            checked={showScaleValues}
-                            onChange={setShowScaleValues}
-                        />
-                    </div>
-                    {showZones && <ExposureStatus exposure={exposure} />}
-                </div>
             </Viewport>
         </Canvas>
     );
+}
+
+//------------------------------------------------------------------------------
+/**
+ * Orientation of the joint turned by `angleDeg` in the plane of the gauge: its
+ * vertical tilted onto `planeNormal`, then turned around it, from its forward to
+ * `referenceDirection`, and on by the angle. In the default plane, it is only
+ * turned around the vertical by the angle.
+ */
+function jointOrientation(
+    planeNormal: Vec3,
+    referenceDirection: Vec3,
+    angleDeg: number,
+): Quat {
+    const normal = new Vector3(...planeNormal).normalize();
+    const tilt = new Quaternion().setFromUnitVectors(
+        new Vector3(0, 1, 0),
+        normal,
+    );
+    const forward = new Vector3(0, 0, 1).applyQuaternion(tilt);
+    const reference = new Vector3(...referenceDirection).projectOnPlane(normal);
+    const twist = Math.atan2(
+        new Vector3().crossVectors(forward, reference).dot(normal),
+        forward.dot(reference),
+    );
+    return new Quaternion()
+        .setFromAxisAngle(normal, twist + MathUtils.degToRad(angleDeg))
+        .multiply(tilt)
+        .toArray() as Quat;
 }
 
 //------------------------------------------------------------------------------
@@ -194,47 +275,31 @@ function lookAtJoint(controller: DefaultCameraController | undefined | null) {
  */
 function ExposureStatus({ exposure }: { exposure: AngleExposure }) {
     return (
-        <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 border-t border-white/20 pt-2 text-xs tabular-nums">
-            <dt className="text-white/60">Zone</dt>
-            <dd className={level_text_colors[exposure.level]}>
-                {ANGLE_ZONE_LEVEL_LABELS[exposure.level]}
-            </dd>
-            <dt className="text-white/60">Held</dt>
-            <dd>
-                {exposure.level === "acceptable"
-                    ? "—"
-                    : `${exposure.holdS.toFixed(1)} s` +
-                      (exposure.holdLimitS !== null
-                          ? ` / ${exposure.holdLimitS} s`
-                          : "")}
-            </dd>
-            <dt className="text-white/60">Alerts</dt>
-            <dd className={exposure.status === "alert" ? "text-red-400" : ""}>
-                {exposure.alertCount}
-            </dd>
-        </dl>
-    );
-}
-
-//------------------------------------------------------------------------------
-function Checkbox({
-    label,
-    checked,
-    onChange,
-}: {
-    label: string;
-    checked: boolean;
-    onChange: (checked: boolean) => void;
-}) {
-    return (
-        <label className="flex items-center gap-2">
-            <input
-                type="checkbox"
-                checked={checked}
-                onChange={event => onChange(event.target.checked)}
-            />
-            {label}
-        </label>
+        <div className="w-56 px-3 py-2 text-white bg-black/70 rounded-md backdrop-blur-md">
+            <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-px text-2xs tabular-nums">
+                <dt className="text-white/60">Zone</dt>
+                <dd className={level_text_colors[exposure.level]}>
+                    {ANGLE_ZONE_LEVEL_LABELS[exposure.level]}
+                </dd>
+                <dt className="text-white/60">Held</dt>
+                <dd>
+                    {exposure.level === "acceptable"
+                        ? "—"
+                        : `${exposure.holdS.toFixed(1)} s` +
+                          (exposure.holdLimitS !== null
+                              ? ` / ${exposure.holdLimitS} s`
+                              : "")}
+                </dd>
+                <dt className="text-white/60">Alerts</dt>
+                <dd
+                    className={
+                        exposure.status === "alert" ? "text-red-400" : ""
+                    }
+                >
+                    {exposure.alertCount}
+                </dd>
+            </dl>
+        </div>
     );
 }
 

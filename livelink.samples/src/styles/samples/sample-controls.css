@@ -1,0 +1,15 @@
+/* Leva draws button labels and checkbox ticks in the panel's text color, over its accent: they need the dark text. */
+div.sample-controls button:only-child:not(:disabled) {
+    color: var(--color-content-primary-dark);
+}
+
+div.sample-controls input:checked + label > svg {
+    stroke: var(--color-content-primary-dark);
+}
+
+/* Samples declare their controls as they mount, before their scene is loaded: the panel waits for the loading overlay
+   of Livelink React UI, the one component with a progress bar, to go away. It stays laid out meanwhile, as Leva measures
+   its folders to open them. */
+.sample-viewport:has(.livelink-react-ui-component > [role="progressbar"]) .sample-controls {
+    visibility: hidden;
+}

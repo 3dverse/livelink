@@ -1,10 +1,11 @@
-import { PropsWithChildren, useEffect, useState } from "react";
+import { PropsWithChildren, useContext, useEffect, useState } from "react";
 import Markdown from "react-markdown";
 import { LivelinkReactUIProvider } from "@3dverse/livelink-react-ui";
 
 //------------------------------------------------------------------------------
 import { ActionBar } from "./ActionBar";
 import { CodeBlock } from "./CodeBlock";
+import { SampleControls } from "./SampleControls";
 import { ConnectionState, SamplePlayerContext } from "./SamplePlayerContext";
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "../common/Resizable";
 import { LOCAL_STORAGE_KEYS, useLocalStorage } from "../../lib/localStorage";
@@ -36,6 +37,8 @@ export function SamplePlayer({
     autoConnect?: boolean;
 }>) {
     const [connectionState, setConnectionState] = useState<ConnectionState>(autoConnect ? "connected" : "disconnected");
+    // Samples with a custom layout nest players of their own: Leva has a single panel, shown by the outermost one.
+    const isNested = useContext(SamplePlayerContext).setConnectionState !== null;
     const [isCodeBlockCollapsed, setIsCodeBlockCollapsed] = useLocalStorage<boolean>(
         LOCAL_STORAGE_KEYS.IS_CODE_BLOCK_COLLAPSED,
         false,
@@ -96,7 +99,7 @@ export function SamplePlayer({
     return (
         <SamplePlayerContext.Provider value={{ connectionState, setConnectionState }}>
             <ResizablePanelGroup className="relative flex flex-col xl:flex-row w-full h-full">
-                <ResizablePanel className="relative flex gap-3 h-full bg-foreground rounded-xl overflow-clip p-1 pb-0 lg:p-3 xl:pl-0">
+                <ResizablePanel className="sample-viewport relative flex gap-3 h-full bg-foreground *:rounded-lg *:overflow-clip p-1 pb-0 lg:p-3 xl:pl-0">
                     <LivelinkReactUIProvider>
                         {useCustomLayout ? (
                             children
@@ -104,10 +107,10 @@ export function SamplePlayer({
                             <>
                                 {mountChildren && children}
                                 {mountPlayButton && (
-                                    <div className="grow flex flex-col items-center justify-center select-none">
+                                    <div className="grow flex flex-col items-center justify-center select-none text-balance max-w-120 mx-auto">
                                         {connectButton}
                                         <h1 className="mt-6 text-center font-medium">{title}</h1>
-                                        <h2 className="mt-px text-xs text-center font-normal text-tertiary">
+                                        <h2 className="mt-1 text-2xs text-center font-normal text-tertiary leading-5">
                                             {summary}
                                         </h2>
                                     </div>
@@ -115,6 +118,7 @@ export function SamplePlayer({
                                 {mountActionBar && <ActionBar disconnect={() => setConnectionState("disconnected")} />}
                             </>
                         )}
+                        {!isNested && <SampleControls />}
                     </LivelinkReactUIProvider>
                 </ResizablePanel>
 

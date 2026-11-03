@@ -19,7 +19,7 @@
     }
 
     .button-outline-overlay {
-        @apply bg-transparent text-[white] border border-[#ffffff30] backdrop-blur-xl;
+        @apply bg-[white]/30 text-primary-dark border border-tertiary/20 backdrop-blur-xl;
 
         &:hover,
         &:focus,
