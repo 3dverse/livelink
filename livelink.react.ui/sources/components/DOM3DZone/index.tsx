@@ -10,7 +10,7 @@ const EntityZonesLayer = lazy(() => import("./EntityZonesLayer"));
 //------------------------------------------------------------------------------
 /**
  * Zones drawn round entities in three.js, over the stream — see README.md. Mount it inside a
- * `Viewport`, as a use case's `viewport` slot is. three.js loads with it, not with the viewer.
+ * `Viewport`. three.js loads with it, not with the rest of the package.
  */
 export function EntityZones(props: EntityZonesProps) {
     return (

@@ -1,5 +1,5 @@
 //------------------------------------------------------------------------------
-// A zone round an entity, after Mitek's control zone pad: a disc of glass on the floor round it, ringed
+// A zone round an entity: a pad, a disc of glass on the floor round it, ringed
 // in light and ticked like a dial, and a curtain of light rising off its rim, going wherever the entity
 // goes. A sweep over the pad points the way the entity faces, turning as it turns, a dashed ring with
 // it: the zone says where the entity is headed, from wherever it is seen. See `EntityZoneOptions` for

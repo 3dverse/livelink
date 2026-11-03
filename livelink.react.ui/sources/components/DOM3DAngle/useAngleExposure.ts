@@ -66,7 +66,7 @@ export type UseAngleExposureOptions = {
 //------------------------------------------------------------------------------
 /**
  * The alert is raised as soon as the angle isn't acceptable, and never in a conditionally acceptable zone, which
- * only warns. Set the limits of the use case instead, e.g. the 4 s after which a posture counts as static.
+ * only warns. Set limits of your own instead, e.g. the 4 s after which a posture counts as static.
  */
 export const DEFAULT_HOLD_LIMITS: AngleHoldLimits = { notAcceptable: 0 };
 

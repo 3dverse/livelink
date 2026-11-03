@@ -33,7 +33,7 @@ type BuiltZone = { zone: EntityZone; colors: EntityZoneColors };
  * The zones, on one canvas over the viewport (`ZoneOverlay`) whatever their number: built once the
  * canvas is there, again whenever `zones` changes, recoloured with the app's theme, and shown or
  * hidden all together with `visible`.
- * Default-exported for `React.lazy`: three.js loads with the first zone, not with the viewer.
+ * Default-exported for `React.lazy`: three.js loads with the first zone, not with the rest of the package.
  */
 export default function EntityZonesLayer({ zones, visible = true }: EntityZonesProps) {
     //--------------------------------------------------------------------------

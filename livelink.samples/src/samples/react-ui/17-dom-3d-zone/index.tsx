@@ -47,13 +47,17 @@ const camera_target: Vec3 = [0, 0.4, 0];
 const turn_speed_deg_per_s = 30;
 
 /**
- * Where the color pickers start from, once a color is picked: unset, the zone
- * takes design tokens. The glass is as opaque as its alpha.
+ * The zone's colors when none are given, as the dark theme's design tokens set
+ * them: where the color pickers start from, as they can't read a token's
+ * `var()`. The glass is as opaque as its alpha.
  */
-const picked_colors: EntityZoneColors = {
-    glass: "#0b102099",
-    edge: "#3ee6ff",
-    sweep: "#ff3d81",
+const default_colors: EntityZoneColors = {
+    // transparent
+    glass: "#00000000",
+    // --3dverse-color-content-informative
+    edge: "hsl(202 100% 62%)",
+    // --3dverse-color-brand
+    sweep: "hsl(47 100% 50%)",
 };
 
 //------------------------------------------------------------------------------
@@ -83,22 +87,24 @@ function AppLayout() {
 
     // Every option of the zone, as in its stories. Leva returns the values of
     // its folders flat: `colors` and `show` are put back together below.
-    const {
-        visible,
-        turnSpeedDegPerS,
-        radiusM,
-        curtainHeightM,
-        occluder,
-        occlusionSoftnessRad,
-        turnDirection,
-        glass,
-        edge,
-        sweep,
-        showTicks,
-        showDashedRing,
-        showSweep,
-        showCurtain,
-    } = useControls({
+    const [
+        {
+            visible,
+            turnSpeedDegPerS,
+            radiusM,
+            curtainHeightM,
+            occluder,
+            occlusionSoftnessRad,
+            turnDirection,
+            glass,
+            edge,
+            sweep,
+            showTicks,
+            showDashedRing,
+            showSweep,
+            showCurtain,
+        },
+    ] = useControls(() => ({
         visible: true,
         turnSpeedDegPerS: {
             value: turn_speed_deg_per_s,
@@ -121,15 +127,13 @@ function AppLayout() {
         },
         colors: folder({
             glass: {
-                value: picked_colors.glass,
+                value: default_colors.glass,
                 optional: true,
-                disabled: true,
             },
-            edge: { value: picked_colors.edge, optional: true, disabled: true },
+            edge: { value: default_colors.edge, optional: true },
             sweep: {
-                value: picked_colors.sweep,
+                value: default_colors.sweep,
                 optional: true,
-                disabled: true,
             },
         }),
         // Named apart from the colors: `sweep` is one of each.
@@ -139,7 +143,7 @@ function AppLayout() {
             showSweep: { value: true, label: "sweep" },
             showCurtain: { value: true, label: "curtain" },
         }),
-    });
+    }));
 
     useTurn(cube, isTurning ? turnSpeedDegPerS : 0);
 

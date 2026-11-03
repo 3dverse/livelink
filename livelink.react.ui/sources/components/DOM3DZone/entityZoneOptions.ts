@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
-// What an entity zone is asked to be: see `EntityZones`. No three.js here, so that a use case can
-// describe its zones without loading it.
+// What an entity zone is asked to be: see `EntityZones`. No three.js here, so that zones can be
+// described without loading it.
 //------------------------------------------------------------------------------
 import type { Entity, Vec3 } from "@3dverse/livelink";
 
