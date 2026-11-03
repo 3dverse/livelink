@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { Leva } from "leva";
 
 //------------------------------------------------------------------------------
@@ -20,10 +20,29 @@ const DENSE_LAYOUT = {
 //------------------------------------------------------------------------------
 export function SampleControls() {
     const theme = useMemo(() => ({ ...levaThemeFromDesignTokens(), ...DENSE_LAYOUT }), []);
+    // Leva opens and closes the panel from the chevron of its title bar only: the state is held here, for the whole
+    // bar to toggle it. The click is stopped there, not to be toggled twice from the chevron.
+    const [collapsed, setCollapsed] = useState(false);
+    const toggleFromTitleBar = (event: React.MouseEvent<HTMLDivElement>) => {
+        const titleBar = event.currentTarget.firstElementChild?.firstElementChild;
+        if (titleBar?.contains(event.target as Node)) {
+            event.stopPropagation();
+            setCollapsed(previous => !previous);
+        }
+    };
 
     return (
-        <div className="sample-controls absolute z-10 top-2 md:top-4 right-2 md:right-4 w-72 max-h-[calc(100%-4rem)] overflow-y-auto rounded-lg">
-            <Leva fill theme={theme} titleBar={{ title: "Controls", drag: false, filter: false }} hideCopyButton />
+        <div
+            className="sample-controls absolute z-10 top-2 md:top-4 right-2 md:right-4 w-72 max-h-[calc(100%-4rem)] rounded-lg"
+            onClickCapture={toggleFromTitleBar}
+        >
+            <Leva
+                fill
+                theme={theme}
+                titleBar={{ title: "Controls", drag: false, filter: false }}
+                collapsed={{ collapsed, onChange: setCollapsed }}
+                hideCopyButton
+            />
         </div>
     );
 }

@@ -1,5 +1,5 @@
 //------------------------------------------------------------------------------
-import { useState } from "react";
+import { useControls } from "leva";
 
 //------------------------------------------------------------------------------
 import {
@@ -46,9 +46,11 @@ export function App() {
 
 //------------------------------------------------------------------------------
 function AppLayout() {
-    const [face, setFace] = useState<Face>("front");
-    const [invert, setInvert] = useState(false);
-    const [scale, setScale] = useState(250);
+    const { face, invert, scale } = useControls({
+        face: { options: FACES },
+        invert: false,
+        scale: { value: 250, min: 10, max: 1000, step: 10 },
+    });
 
     const { cameraEntity } = useCameraEntity();
 
@@ -63,15 +65,6 @@ function AppLayout() {
                 className="relative w-full h-full"
             >
                 <CameraController preset={CameraControllerPresets.fly} />
-
-                <ControlPanel
-                    face={face}
-                    invert={invert}
-                    scale={scale}
-                    setFace={setFace}
-                    setInvert={setInvert}
-                    setScale={setScale}
-                />
 
                 <DOM3DOverlay className="text-[0.5rem]">
                     <BoundingBoxFaceProjection
@@ -116,8 +109,8 @@ function AppLayout() {
                                 the entity's bounding box.
                             </p>
                             <p className="leading-relaxed text-slate-300">
-                                Use the controls at the bottom-right to change
-                                the face, invert the projection, and adjust the
+                                Use the controls at the top right to change the
+                                face, invert the projection, and adjust the
                                 scale.
                             </p>
                         </div>
@@ -169,71 +162,5 @@ function AppLayout() {
                 </DOM3DOverlay>
             </Viewport>
         </Canvas>
-    );
-}
-
-//------------------------------------------------------------------------------
-function ControlPanel({
-    face,
-    invert,
-    scale,
-    setFace,
-    setInvert,
-    setScale,
-}: {
-    face: Face;
-    invert: boolean;
-    scale: number;
-    setFace: (face: Face) => void;
-    setInvert: (invert: boolean) => void;
-    setScale: (scale: number) => void;
-}) {
-    return (
-        <div className="absolute right-3 bottom-3 w-72 rounded-md bg-black/70 p-3 text-white backdrop-blur-sm z-1">
-            <h3 className="mb-2 text-sm font-semibold">
-                BoundingBoxFaceProjection
-            </h3>
-
-            <label className="mb-2 block text-xs">
-                <span className="mb-1 block">Face</span>
-                <select
-                    className="w-full rounded bg-white/10 px-2 py-1 text-sm outline-none ring-1 ring-white/20"
-                    value={face}
-                    onChange={event => setFace(event.target.value as Face)}
-                >
-                    {FACES.map(faceOption => (
-                        <option
-                            key={faceOption}
-                            value={faceOption}
-                            className="text-black"
-                        >
-                            {faceOption}
-                        </option>
-                    ))}
-                </select>
-            </label>
-
-            <label className="mb-2 flex items-center gap-2 text-xs">
-                <input
-                    type="checkbox"
-                    checked={invert}
-                    onChange={event => setInvert(event.target.checked)}
-                />
-                Invert
-            </label>
-
-            <label className="mb-2 block text-xs">
-                <span className="mb-1 block">Scale: {scale}</span>
-                <input
-                    className="w-full"
-                    type="range"
-                    min={10}
-                    max={1000}
-                    step={10}
-                    value={scale}
-                    onChange={event => setScale(Number(event.target.value))}
-                />
-            </label>
-        </div>
     );
 }

@@ -13,3 +13,44 @@ div.sample-controls input:checked + label > svg {
 .sample-viewport:has(.livelink-react-ui-component > [role="progressbar"]) .sample-controls {
     visibility: hidden;
 }
+
+/* As tall as its controls, up to its maximum height: past it, they scroll under the title bar. Leva only does it in a
+   panel of its own, rather than one filling ours: its root is laid out as a column, the title bar on top, the controls
+   in what is left. Leva hides the root with its inline display, which is kept then. */
+div.sample-controls {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+div.sample-controls > div[style*="display: block"] {
+    display: flex !important;
+    flex-direction: column;
+    min-height: 0;
+}
+
+div.sample-controls > div > div:not(:last-child) {
+    flex-shrink: 0;
+}
+
+div.sample-controls > div > div:last-child {
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-border-secondary) transparent;
+}
+
+/* Leva sets the height of a folder while it opens or closes it, along with its overflow, and removes both once done.
+   Under React's StrictMode, it also sets it alone, when its effect runs a second time, and waits for a transition
+   that never comes: the folder would keep that height, and its controls would overflow it as they are added. */
+div.sample-controls [style^="height"]:not([style*="overflow"]) {
+    height: auto !important;
+}
+
+/* The whole title bar opens and closes the panel. */
+div.sample-controls > div > div:first-child,
+div.sample-controls > div > div:first-child * {
+    cursor: pointer;
+    user-select: none;
+}

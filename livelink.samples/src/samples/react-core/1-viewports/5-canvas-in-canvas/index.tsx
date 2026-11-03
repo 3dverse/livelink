@@ -40,7 +40,7 @@ function AppLayout() {
                 className="relative w-full h-full"
             >
                 <CameraController />
-                <Canvas className="top-20 right-4 w-1/4 aspect-video border border-tertiary rounded-xl shadow-xl">
+                <Canvas className="top-20 right-4 w-1/4 aspect-video border border-tertiary shadow-xl">
                     <Viewport
                         cameraEntity={pipCamera}
                         className="w-full h-full"
