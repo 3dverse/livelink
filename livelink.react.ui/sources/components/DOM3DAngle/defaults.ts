@@ -14,6 +14,7 @@ export const DOM3D_ANGLE_DEFAULTS = {
     scaleFadeDeg: 70,
     showScaleValues: true,
     showAngleValue: true,
+    sectorColoring: "zones",
     uncertaintyDeg: 0,
     showNeedle: true,
 } satisfies Partial<DOM3DAngleProps>;

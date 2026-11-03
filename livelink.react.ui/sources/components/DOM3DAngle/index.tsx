@@ -24,6 +24,7 @@ import { add, cross, dot, length, normalize, reject, scale, subtract } from "./v
 import {
     ANGLE_ZONE_LEVEL_LABELS,
     findZoneIndex,
+    splitByZone,
     zoneBoundaries,
     type AngleZone,
     type AngleZoneLevel,
@@ -123,6 +124,17 @@ export type DOM3DAngleProps = {
     showAngleValue?: boolean;
 
     /**
+     * How the angle, filled from 0°, is colored:
+     * - "zones": cut where it crosses from one zone into the next, each part in the color of its zone, to read how far
+     *   the angle is into a zone, e.g. how much to bring it back into the acceptable one. On alert, only the part in
+     *   the current zone pulses.
+     * - "currentZone": whole, in the color of the zone the angle is in.
+     *
+     * Defaults to "zones". Without zones, it is grey either way.
+     */
+    sectorColoring?: "zones" | "currentZone";
+
+    /**
      * Accuracy of the measurement, in degrees, shown around the needle, in the plane of the gauge. Defaults to 0,
      * hidden.
      */
@@ -203,7 +215,7 @@ const ANGLE_VALUE_MARGIN_PX = 40;
  * The gauge lies in the plane the angle is measured in, at its vertex:
  * - a dashed plumb line, the 0° reference;
  * - a scale graduated every 10°, colored by zone of acceptability, green, amber and red, or grey without zones;
- * - the angle, filled from 0°, in the color of its zone;
+ * - the angle, filled from 0°, each part in the color of the zone it crosses, or whole in the color of its zone;
  * - optionally, the accuracy of the measurement around the needle.
  *
  * Facing the camera, so that it reads from any side, and over the gauge, the needle runs from the vertex along the
@@ -275,6 +287,7 @@ function AngleGauge({
     scaleFadeDeg = DEFAULTS.scaleFadeDeg,
     showScaleValues = DEFAULTS.showScaleValues,
     showAngleValue = DEFAULTS.showAngleValue,
+    sectorColoring = DEFAULTS.sectorColoring,
     uncertaintyDeg = DEFAULTS.uncertaintyDeg,
     showNeedle = DEFAULTS.showNeedle,
     children,
@@ -323,6 +336,11 @@ function AngleGauge({
         .join(" ");
 
     const shownAngleDeg = clamp(angleDeg, -180, 180);
+    // From 0° to the angle: the last part is the one the angle is in.
+    const sectorParts: Array<{ from: number; to: number; level: ShownLevel }> =
+        scaleZones && sectorColoring === "zones"
+            ? splitByZone(0, shownAngleDeg, scaleZones)
+            : [{ from: 0, to: shownAngleDeg, level }];
     const angleValuePosition = plane.pointAt(shownAngleDeg / 2, size * ANGLE_VALUE_DISTANCE_RATIO);
     const plumbLineTop = pointAtAngle(CENTER, plumbLineLength, 0);
 
@@ -415,7 +433,16 @@ function AngleGauge({
                             x2={plumbLineTop.x}
                             y2={plumbLineTop.y}
                         />
-                        <path className={styles.sector} d={wedgePath(CENTER, scaleRadius * 0.92, 0, shownAngleDeg)} />
+                        {sectorParts.map((part, index) => (
+                            <path
+                                key={part.from}
+                                className={styles.sector}
+                                data-level={part.level}
+                                // The part the angle is in, which pulses on alert.
+                                data-current={index === sectorParts.length - 1 || undefined}
+                                d={wedgePath(CENTER, scaleRadius * 0.92, part.from, part.to)}
+                            />
+                        ))}
                         {showNeedle && uncertaintyDeg > 0 && (
                             <path
                                 className={styles.uncertaintyBand}
