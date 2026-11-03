@@ -104,7 +104,12 @@ function stringifyJson(value: unknown): string {
         },
         2,
     );
-    return marked.replace(/"\\u0000(-?Infinity)"/g, "$1");
+    return (
+        marked
+            .replace(/"\\u0000(-?Infinity)"/g, "$1")
+            // Arrays of numbers, e.g. vectors, read better on a line.
+            .replace(/\[\s+([^[\]{}"]*?)\s+\]/g, (_array, items: string) => `[${items.split(/,\s+/).join(", ")}]`)
+    );
 }
 
 function parseJson(text: string): unknown {
