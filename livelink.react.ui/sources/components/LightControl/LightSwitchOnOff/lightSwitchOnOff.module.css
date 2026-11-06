@@ -12,8 +12,16 @@
     border-radius: var(--3dverse-border-radius-md);
 
     cursor: pointer;
-}
 
-.toggleText {
-    transition: opacity 0.22s;
+    & * {
+        transition: color 0.22s;
+    }
+
+    &[data-state="off"] [data-slot="on"] {
+        color: var(--3dverse-color-content-quaternary);
+    }
+
+    &[data-state="on"] [data-slot="off"] {
+        color: var(--3dverse-color-content-tertiary);
+    }
 }
