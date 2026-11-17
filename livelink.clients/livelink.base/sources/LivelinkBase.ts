@@ -207,8 +207,15 @@ export abstract class LivelinkBase<
         await this.session.registerClient({ is_headless });
 
         onProgress?.("connecting");
-        await this.#core.connect({ session: this.session });
+        // Before connecting: under Node, messages batched with the auth response (e.g. the client list)
+        // are dispatched before `connect` resolves, and a listener installed afterwards misses them.
         this._installCoreEventListeners();
+        try {
+            await this.#core.connect({ session: this.session });
+        } catch (error) {
+            this._uninstallCoreEventListeners();
+            throw error;
+        }
     }
 
     /**

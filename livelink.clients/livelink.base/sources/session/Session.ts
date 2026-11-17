@@ -548,12 +548,13 @@ export class Session<ClientType extends Client = Client>
 
     /**
      * @internal
+     * Clients listed before `client_id` is known were already in the session: no `on-client-joined`.
      */
     _onClientJoined({ core, client_info }: { core: LivelinkInstance; client_info: ClientInfo }): void {
         console.debug("--- Client joined", client_info);
         const client = this._instantiateClient({ core, client_info, session_id: this.session_id });
         this.#clients.set(client.id, client);
-        if (client.id !== this.client_id) {
+        if (this.client_id !== null && client.id !== this.client_id) {
             this._dispatchEvent(new ClientJoinedEvent({ client }));
         }
     }
