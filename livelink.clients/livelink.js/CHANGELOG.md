@@ -1,5 +1,13 @@
 # @3dverse/livelink
 
+## 0.8.74
+
+### Patch Changes
+
+- This release includes the following changes from livelink.base:
+
+  - fix(livelink.base): install core event listeners before connecting
+
 ## 0.8.73
 
 ### Patch Changes

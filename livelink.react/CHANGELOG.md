@@ -1,5 +1,13 @@
 # @3dverse/livelink-react
 
+## 0.2.70
+
+### Patch Changes
+
+- chore(livelink.react): remove unexpected threejs-math dependency
+- Updated dependencies
+  - @3dverse/livelink@0.8.74
+
 ## 0.2.69
 
 ### Patch Changes

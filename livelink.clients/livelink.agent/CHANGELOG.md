@@ -1,5 +1,13 @@
 # @3dverse/livelink-agent
 
+## 0.5.11
+
+### Patch Changes
+
+- This release includes the following changes from livelink.base:
+
+  - fix(livelink.base): install core event listeners before connecting
+
 ## 0.5.10
 
 ### Patch Changes

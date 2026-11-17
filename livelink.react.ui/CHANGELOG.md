@@ -1,5 +1,22 @@
 # @3dverse/livelink-react-ui
 
+## 0.3.30
+
+### Patch Changes
+
+- style(livelink.react.ui): enhance LightSwitchOnOff component with state-based styling
+- chore(livelink.react.ui): update Storybook dependencies and introduce new badge for components
+- feat(livelink.react.ui): add sectorColoring feature to DOM3DAngle component
+- style(livelink.react.ui): adjust LightControl layout and enhance LightColorSelector icon styles
+- style(livelink.react.ui): update LightColorSelector styles and add icon support
+- docs(livelink.react.ui): refine comments and documentation for clarity in DOM3DZone and useAngleExposure components
+- refactor(livelink.react.ui): consolidate imports from components-common for better organization
+- feat(livelink.react.ui): update EntityZone to support visibility toggling and SVG rendering
+- Updated dependencies
+- Updated dependencies
+  - @3dverse/livelink@0.8.74
+  - @3dverse/livelink-react@0.2.70
+
 ## 0.3.29
 
 ### Patch Changes
