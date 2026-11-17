@@ -4,13 +4,13 @@ import clsx from "clsx";
 
 //------------------------------------------------------------------------------
 import buttonStyles from "../Button/index.module.css";
-import { Size, Variant } from "../Button";
+import { type ButtonSize, type ButtonVariant } from "../Button";
 import styles from "./index.module.css";
 
 //------------------------------------------------------------------------------
 interface IconButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-    variant?: Variant;
-    size?: Size;
+    variant?: ButtonVariant;
+    size?: ButtonSize;
     icon: React.ReactNode;
     isDisabled?: boolean;
 }

@@ -2,7 +2,7 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
 
 //------------------------------------------------------------------------------
-import { ViewerPanel } from "../../components-common/ViewerPanel";
+import { ViewerPanel } from "../../components-common";
 import { PerformancePanel } from ".";
 
 //------------------------------------------------------------------------------

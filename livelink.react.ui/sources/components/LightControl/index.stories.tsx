@@ -13,7 +13,7 @@ import type { Entity } from "@3dverse/livelink";
 import clsx from "clsx";
 
 //------------------------------------------------------------------------------
-import { ViewerPanel } from "../../components-common/ViewerPanel";
+import { ViewerPanel } from "../../components-common";
 import { LightPreview } from "./LightPreview/LightPreview";
 import { LightColorSelector } from "./LightColorSelector/LightColorSelector";
 import { LightTemperatureSlider } from "./LightTemperatureSlider/LightTemperatureSlider";
@@ -126,7 +126,7 @@ const LightControlInner = () => {
                         <LightBrightnessSlider />
                     </div>
                 </Card>
-                <Card style={{ justifyContent: "end", alignItems: "end" }}>
+                <Card style={{ justifyContent: "end", alignItems: "end", transform: "translateX(.5rem)" }}>
                     <LightSwitchOnOff />
                 </Card>
             </div>

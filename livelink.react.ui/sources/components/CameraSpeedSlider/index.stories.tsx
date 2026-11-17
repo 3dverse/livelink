@@ -5,7 +5,7 @@ import { CameraControllerPresets } from "@3dverse/livelink";
 import { CameraController, Canvas, DefaultCameraController, useCameraEntity, Viewport } from "@3dverse/livelink-react";
 
 //------------------------------------------------------------------------------
-import { ViewerPanel } from "../../components-common/ViewerPanel";
+import { ViewerPanel } from "../../components-common";
 import { CameraSpeedSlider } from ".";
 
 //------------------------------------------------------------------------------

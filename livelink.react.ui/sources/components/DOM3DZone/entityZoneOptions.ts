@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
-// What an entity zone is asked to be: see `EntityZones`. No three.js here, so that a use case can
-// describe its zones without loading it.
+// What an entity zone is asked to be: see `EntityZones`. No three.js here, so that zones can be
+// described without loading it.
 //------------------------------------------------------------------------------
 import type { Entity, Vec3 } from "@3dverse/livelink";
 
@@ -13,7 +13,7 @@ export type EntityZonePart = "ticks" | "dashedRing" | "sweep" | "curtain";
  * changes.
  */
 export type EntityZoneColors = {
-    /** The pad's glass. */
+    /** The pad's glass, as opaque as its alpha: clear by default. */
     glass: string;
     /** Its rim, ticks and rings, and the light rising off it. */
     edge: string;
@@ -69,6 +69,11 @@ export type EntityZonesProps = {
      * rebuilds every zone.
      */
     zones: EntityZoneOptions[];
+    /**
+     * Whether the zones show: they fade in and grow out from their entity's feet as they first show and
+     * as it turns true, and fade out and shrink back as it turns false. Rebuilds nothing. True by default.
+     */
+    visible?: boolean;
 };
 
 //------------------------------------------------------------------------------
@@ -76,7 +81,7 @@ export const ENTITY_ZONE_DEFAULTS = {
     curtainHeightM: 0.7,
     occlusionSoftnessRad: 0.03,
     colors: {
-        glass: "var(--3dverse-color-bg-ground)",
+        glass: "transparent",
         edge: "var(--3dverse-color-content-informative)",
         sweep: "var(--3dverse-color-brand)",
     },

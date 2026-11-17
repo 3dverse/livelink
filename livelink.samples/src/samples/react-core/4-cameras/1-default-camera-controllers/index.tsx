@@ -80,38 +80,44 @@ function AppLayout() {
                 </Viewport>
             </Canvas>
             <div className="absolute bottom-[5vh] flex flex-row flex-wrap justify-center not-visited:gap-3 w-full px-1">
-                <button className="button button-overlay" onClick={moveCamera}>
+                <button
+                    className="button button-overlay shadow-none text-xs"
+                    onClick={moveCamera}
+                >
                     Reset
                 </button>
-                {presetKeys.map((presetKey, index) => {
-                    let preset = CameraControllerPresets[presetKey];
-                    const name = presetKey.replaceAll("_", " ");
-                    const isSelected = preset.id === cameraControllerPreset.id;
-                    const selectPreset = () => {
-                        if (presetKey === "orbital") {
-                            // clone to avoid mutating the original preset
-                            preset = {
-                                ...preset,
-                                init_options: {
-                                    ...preset.init_options,
-                                },
-                            };
-                            // Remove the initial target for the orbital preset to not "jump" back the orbit
-                            // target to world origin.
-                            delete preset.init_options?.target;
-                        }
-                        setCameraControllerPreset(preset);
-                    };
-                    return (
-                        <button
-                            key={index}
-                            className={`button text-4xs button-overlay capitalize ${isSelected ? "bg-accent" : ""}`}
-                            onClick={selectPreset}
-                        >
-                            {name}
-                        </button>
-                    );
-                })}
+                <div className="flex flex-row flex-wrap justify-center divide-x divide-ground/10 *:first:rounded-l-sm *:last:rounded-r-sm">
+                    {presetKeys.map((presetKey, index) => {
+                        let preset = CameraControllerPresets[presetKey];
+                        const name = presetKey.replaceAll("_", " ");
+                        const isSelected =
+                            preset.id === cameraControllerPreset.id;
+                        const selectPreset = () => {
+                            if (presetKey === "orbital") {
+                                // clone to avoid mutating the original preset
+                                preset = {
+                                    ...preset,
+                                    init_options: {
+                                        ...preset.init_options,
+                                    },
+                                };
+                                // Remove the initial target for the orbital preset to not "jump" back the orbit
+                                // target to world origin.
+                                delete preset.init_options?.target;
+                            }
+                            setCameraControllerPreset(preset);
+                        };
+                        return (
+                            <button
+                                key={index}
+                                className={`button button-overlay rounded-none shadow-none text-xs capitalize ${isSelected ? "bg-accent" : ""}`}
+                                onClick={selectPreset}
+                            >
+                                {name}
+                            </button>
+                        );
+                    })}
+                </div>
             </div>
         </>
     );

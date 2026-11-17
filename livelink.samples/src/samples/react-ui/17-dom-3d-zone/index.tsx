@@ -1,5 +1,6 @@
 //------------------------------------------------------------------------------
 import { useEffect, useMemo, useRef, useState } from "react";
+import { folder, useControls } from "leva";
 
 //------------------------------------------------------------------------------
 import type { Entity, Vec3 } from "@3dverse/livelink";
@@ -15,12 +16,12 @@ import {
 import {
     LoadingOverlay,
     EntityZones,
+    type EntityZoneColors,
     type EntityZoneOptions,
-    type EntityZonePart,
 } from "@3dverse/livelink-react-ui";
 
 //------------------------------------------------------------------------------
-import { DisconnectedModal } from "@/components/SamplePlayer";
+import { DisconnectedModal, json } from "@/components/SamplePlayer";
 
 //------------------------------------------------------------------------------
 const scene_id = "0bb2690b-7962-4c66-baa9-35f83e66e866";
@@ -45,11 +46,18 @@ const camera_target: Vec3 = [0, 0.4, 0];
 /** Counter-clockwise seen from above: the sweep on the pad turns with it. */
 const turn_speed_deg_per_s = 30;
 
-const part_labels: Record<EntityZonePart, string> = {
-    ticks: "Ticks",
-    dashedRing: "Dashed ring",
-    sweep: "Sweep",
-    curtain: "Curtain",
+/**
+ * The zone's colors when none are given, as the dark theme's design tokens set
+ * them: where the color pickers start from, as they can't read a token's
+ * `var()`. The glass is as opaque as its alpha.
+ */
+const default_colors: EntityZoneColors = {
+    // transparent
+    glass: "#00000000",
+    // --3dverse-color-content-informative
+    edge: "hsl(202 100% 62%)",
+    // --3dverse-color-brand
+    sweep: "hsl(47 100% 50%)",
 };
 
 //------------------------------------------------------------------------------
@@ -76,16 +84,89 @@ function AppLayout() {
     const { entity: cube } = useEntity({ euid: TARGET_ENTITY_ID });
 
     const [isTurning, setIsTurning] = useState(true);
-    const [radiusM, setRadiusM] = useState(1.4);
-    const [hasOccluder, setHasOccluder] = useState(true);
-    const [show, setShow] = useState<Record<EntityZonePart, boolean>>({
-        ticks: true,
-        dashedRing: true,
-        sweep: true,
-        curtain: true,
-    });
 
-    useTurn(cube, isTurning ? turn_speed_deg_per_s : 0);
+    // Every option of the zone, as in its stories. Leva returns the values of
+    // its folders flat: `colors` and `show` are put back together below.
+    const [
+        {
+            visible,
+            turnSpeedDegPerS,
+            radiusM,
+            curtainHeightM,
+            occluder,
+            occlusionSoftnessRad,
+            turnDirection,
+            glass,
+            edge,
+            sweep,
+            showTicks,
+            showDashedRing,
+            showSweep,
+            showCurtain,
+        },
+    ] = useControls(() => ({
+        visible: true,
+        turnSpeedDegPerS: {
+            value: turn_speed_deg_per_s,
+            min: -120,
+            max: 120,
+            step: 5,
+        },
+        radiusM: { value: 1.4, min: 0.6, max: 3, step: 0.1 },
+        curtainHeightM: { value: 0.7, min: 0, max: 2, step: 0.05 },
+        occluder: json({ value: cube_occluder, optional: true }),
+        occlusionSoftnessRad: { value: 0.03, min: 0, max: 0.2, step: 0.005 },
+        // Unset, it is taken from how the cube turns.
+        turnDirection: {
+            options: {
+                "counter-clockwise": 1 as const,
+                clockwise: -1 as const,
+            },
+            optional: true,
+            disabled: true,
+        },
+        colors: folder({
+            glass: {
+                value: default_colors.glass,
+                optional: true,
+            },
+            edge: { value: default_colors.edge, optional: true },
+            sweep: {
+                value: default_colors.sweep,
+                optional: true,
+            },
+        }),
+        // Named apart from the colors: `sweep` is one of each.
+        show: folder({
+            showTicks: { value: true, label: "ticks" },
+            showDashedRing: { value: true, label: "dashedRing" },
+            showSweep: { value: true, label: "sweep" },
+            showCurtain: { value: true, label: "curtain" },
+        }),
+    }));
+
+    useTurn(cube, isTurning ? turnSpeedDegPerS : 0);
+
+    // An unset color is left out, for the zone to take its default: given as
+    // undefined, it would take the place of the default.
+    const colors = useMemo(
+        () =>
+            Object.fromEntries(
+                Object.entries({ glass, edge, sweep }).filter(
+                    ([, color]) => color !== undefined,
+                ),
+            ),
+        [glass, edge, sweep],
+    );
+    const show = useMemo(
+        () => ({
+            ticks: showTicks,
+            dashedRing: showDashedRing,
+            sweep: showSweep,
+            curtain: showCurtain,
+        }),
+        [showTicks, showDashedRing, showSweep, showCurtain],
+    );
 
     // Memoized: a new array rebuilds every zone.
     const zones = useMemo<Array<EntityZoneOptions>>(
@@ -93,18 +174,32 @@ function AppLayout() {
             {
                 entity: cube,
                 radiusM,
-                occluder: hasOccluder ? cube_occluder : undefined,
+                curtainHeightM,
+                occluder,
+                occlusionSoftnessRad,
+                turnDirection,
+                colors,
                 show,
             },
         ],
-        [cube, radiusM, hasOccluder, show],
+        [
+            cube,
+            radiusM,
+            curtainHeightM,
+            occluder,
+            occlusionSoftnessRad,
+            turnDirection,
+            colors,
+            show,
+        ],
     );
 
     return (
         <Canvas className="w-full h-full">
             <Viewport cameraEntity={cameraEntity} className="w-full h-full">
                 <CameraController ref={lookAtCube} />
-                <EntityZones zones={zones} />
+                {/* Shown or hidden, it fades and scales in or out. */}
+                <EntityZones zones={zones} visible={visible} />
                 <div className="absolute top-4 left-4 flex gap-2">
                     <button
                         className="button button-overlay"
@@ -113,45 +208,6 @@ function AppLayout() {
                     >
                         {isTurning ? "Pause rotation" : "Play rotation"}
                     </button>
-                </div>
-                <div className="absolute right-3 bottom-3 w-72 rounded-md bg-black/70 p-3 text-white backdrop-blur-sm">
-                    <h3 className="mb-2 text-sm font-semibold">Entity zone</h3>
-                    <label className="mb-2 block text-xs">
-                        <span className="mb-1 block">
-                            Radius: {radiusM.toFixed(1)} m
-                        </span>
-                        <input
-                            className="w-full"
-                            type="range"
-                            min={0.8}
-                            max={2.5}
-                            step={0.1}
-                            value={radiusM}
-                            onChange={event =>
-                                setRadiusM(Number(event.target.value))
-                            }
-                        />
-                    </label>
-                    <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs">
-                        <Checkbox
-                            label="Occluder"
-                            checked={hasOccluder}
-                            onChange={setHasOccluder}
-                        />
-                        {Object.entries(part_labels).map(([part, label]) => (
-                            <Checkbox
-                                key={part}
-                                label={label}
-                                checked={show[part as EntityZonePart]}
-                                onChange={checked =>
-                                    setShow(previous => ({
-                                        ...previous,
-                                        [part]: checked,
-                                    }))
-                                }
-                            />
-                        ))}
-                    </div>
                 </div>
             </Viewport>
         </Canvas>
@@ -166,28 +222,6 @@ function AppLayout() {
  */
 function lookAtCube(controller: DefaultCameraController | undefined | null) {
     controller?.setLookAt(...camera_position, ...camera_target, false);
-}
-
-//------------------------------------------------------------------------------
-function Checkbox({
-    label,
-    checked,
-    onChange,
-}: {
-    label: string;
-    checked: boolean;
-    onChange: (checked: boolean) => void;
-}) {
-    return (
-        <label className="flex items-center gap-2">
-            <input
-                type="checkbox"
-                checked={checked}
-                onChange={event => onChange(event.target.checked)}
-            />
-            {label}
-        </label>
-    );
 }
 
 //------------------------------------------------------------------------------

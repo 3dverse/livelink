@@ -28,7 +28,7 @@ import { useAngleExposure } from "./useAngleExposure";
 import { ANGLE_ZONE_LEVEL_LABELS } from "./zones";
 import { angleBetweenDeg, cross, length, normalize, reject, signedAngleDeg } from "./vector";
 import { axisAngleToQuat, multiplyQuat, rotateVec3 } from "../RotationGizmo/math";
-import { Button } from "../../components-common/Button";
+import { Button } from "../../components-common";
 import { DOM3D_ANGLE_SCENE_ID } from "../../../.storybook/sceneIds";
 
 //------------------------------------------------------------------------------
@@ -62,6 +62,7 @@ const ROTATION_PERIOD_SEC = 12;
 const meta = {
     title: "Components/DOM 3D Angle",
     id: "components-dom3d-angle",
+    tags: ["new"],
     component: DOM3DAngle,
     parameters: {
         layout: "fullscreen",
@@ -93,6 +94,7 @@ const meta = {
         size: { control: { type: "range", min: 0.2, max: 1, step: 0.05 } },
         scaleFadeDeg: { control: { type: "range", min: 0, max: 90, step: 5 } },
         uncertaintyDeg: { control: { type: "range", min: 0, max: 10, step: 1 } },
+        sectorColoring: { options: ["zones", "currentZone"], control: "inline-radio" },
     },
 } satisfies Meta<typeof DOM3DAngle>;
 
@@ -120,6 +122,19 @@ export const _Component: Story = {
  */
 export const WithZones: Story = {
     args: { zones: JOINT_ZONES },
+    render: args => <DOM3DAngleDemo {...args} />,
+};
+
+//------------------------------------------------------------------------------
+/**
+ * With `sectorColoring` at "zones", its default, the angle is filled zone by zone, to read how far it is into each:
+ * at 100°, the part in red, past 90°, is how much to bring it back for it to be conditionally acceptable, and the
+ * parts in amber and red, past 60°, for it to be acceptable. Play the rotation to see the parts grow and shrink.
+ *
+ * Set `sectorColoring` to "currentZone" from the controls: the whole angle is filled in the color of its zone.
+ */
+export const SectorColoredByCurrentZone: Story = {
+    args: { angleDeg: 100, zones: JOINT_ZONES, sectorColoring: "currentZone" },
     render: args => <DOM3DAngleDemo {...args} />,
 };
 

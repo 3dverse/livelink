@@ -27,7 +27,8 @@ import { droid_idle } from "../animations/droid_idle.ts";
 import { droid_walk } from "../animations/droid_walk.ts";
 import { droid_tpose } from "../animations/droid_tpose.ts";
 import { joint_parents } from "../animations/droid_skeleton.ts";
-import { useContext, useEffect, useRef, useState } from "react";
+import { useContext, useEffect, useRef } from "react";
+import { useControls } from "leva";
 
 //------------------------------------------------------------------------------
 const token = import.meta.env.VITE_PROD_PUBLIC_TOKEN;
@@ -115,7 +116,15 @@ function SkeletonController() {
         euid: "dbe0b7de-fd0c-46d8-a90c-8a9f2f896002",
     });
 
-    const [animation, setAnimation] = useState<string | null>(null);
+    const { animation } = useControls({
+        animation: {
+            options: {
+                "User controlled": "user-controlled",
+                Idle: "idle",
+                Walk: "walk",
+            },
+        },
+    });
 
     useEffect(() => {
         if (!instance || !controller) {
@@ -135,10 +144,6 @@ function SkeletonController() {
     }, [instance, controller]);
 
     useEffect(() => {
-        if (!animation) {
-            return;
-        }
-
         if (animation === "user-controlled") {
             handleUserControlledSkeleton(instance, controller);
             return;
@@ -154,20 +159,7 @@ function SkeletonController() {
         };
     }, [animation, controller, instance]);
 
-    return (
-        <div className="absolute bottom-[5vh] left-1/2 -translate-x-1/2">
-            <select
-                className="select select-primary"
-                name="animations"
-                id="animation"
-                onChange={e => setAnimation(e.target.value)}
-            >
-                <option value="user-controlled">User Controlled</option>
-                <option value="idle">Idle</option>
-                <option value="walk">Walk</option>
-            </select>
-        </div>
-    );
+    return null;
 }
 //------------------------------------------------------------------------------
 let joints: Array<THREE.Object3D> | undefined = undefined;

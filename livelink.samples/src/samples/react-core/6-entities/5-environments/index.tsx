@@ -1,5 +1,6 @@
 //------------------------------------------------------------------------------
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
+import { useControls } from "leva";
 
 //------------------------------------------------------------------------------
 import {
@@ -88,9 +89,12 @@ function EnvironmentSelector() {
         },
     });
 
-    const [selectedEnvironment, setSelectedEnvironment] = useState<
-        keyof typeof environments
-    >(Object.keys(environments)[0]);
+    const { selectedEnvironment } = useControls({
+        selectedEnvironment: {
+            label: "environment",
+            options: Object.keys(environments),
+        },
+    });
 
     useEffect(() => {
         if (!environment || !environment.environment) {
@@ -104,23 +108,5 @@ function EnvironmentSelector() {
         environment.environment.irradianceUUID = selectedSkybox.irradiance;
     }, [environment, selectedEnvironment]);
 
-    return (
-        <div className="absolute bottom-[5vh] left-1/2 -translate-x-1/2">
-            <select
-                className="select select-primary min-w-[20rem]"
-                value={selectedEnvironment}
-                onChange={event =>
-                    setSelectedEnvironment(
-                        event.target.value as keyof typeof environments,
-                    )
-                }
-            >
-                {Object.keys(environments).map(item => (
-                    <option key={item} value={item}>
-                        {item}
-                    </option>
-                ))}
-            </select>
-        </div>
-    );
+    return null;
 }

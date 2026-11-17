@@ -2,7 +2,7 @@
 import React, { RefObject, useEffect } from "react";
 
 //------------------------------------------------------------------------------
-import { ViewerPanel } from "../../components-common/ViewerPanel";
+import { ViewerPanel } from "../../components-common";
 import styles from "./style.module.css";
 
 //------------------------------------------------------------------------------

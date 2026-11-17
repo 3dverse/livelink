@@ -17,7 +17,7 @@ import {
 //------------------------------------------------------------------------------
 import { RotationGizmo, type RotationGizmoAxes, type RotationGizmoAxis, type RotationGizmoProps } from ".";
 import { axisAngleToQuat, multiplyQuat, rotateVec3 } from "./math";
-import { Button } from "../../components-common/Button";
+import { Button } from "../../components-common";
 import { SKELETON_SCENE_ID } from "../../../.storybook/sceneIds";
 
 //------------------------------------------------------------------------------
@@ -96,6 +96,7 @@ type StoryArgs = Pick<
 const meta = {
     title: "Components/Rotation Gizmo",
     id: "components-rotation-gizmo",
+    tags: ["new"],
     component: RotationGizmo,
     parameters: {
         layout: "fullscreen",

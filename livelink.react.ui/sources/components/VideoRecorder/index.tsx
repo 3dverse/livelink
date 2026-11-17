@@ -4,8 +4,7 @@ import { Recorder } from "@3dverse/livelink-react";
 import { FaCheck, FaRegFileVideo } from "react-icons/fa6";
 
 //------------------------------------------------------------------------------
-import { Button, Size } from "../../components-common/Button";
-import { Tooltip } from "../../components-common/Tooltip";
+import { Button, ButtonSize, Tooltip } from "../../components-common";
 import styles from "./style.module.css";
 
 //------------------------------------------------------------------------------
@@ -18,7 +17,7 @@ export const VideoRecorder = ({
     label?: string;
     recordingLabel?: string;
     successLabel?: string;
-    size?: Exclude<Size, "3xs" | "2xs">;
+    size?: Exclude<ButtonSize, "3xs" | "2xs">;
 }) => {
     //--------------------------------------------------------------------------
     const [isRecording, setIsRecording] = useState<boolean>(false);

@@ -16,7 +16,7 @@
     outline-color: transparent;
 
     transition-property: border-color, outline-color, outline-offset;
-    transition-duration: 1s;
+    transition-duration: 150ms;
     transition-timing-function: ease-in-out;
 
     cursor: pointer;
@@ -39,6 +39,9 @@
 
 .customColorButton {
     position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     width: calc(1.75rem + 2px);
     height: calc(1.75rem + 2px);
 
@@ -55,6 +58,12 @@
 
     &:not(.active) {
         background: conic-gradient(#ffd93d, #5e60ce, #a3de83, #ffd93d);
+    }
+
+    .icon {
+        width: 60%;
+        height: 60%;
+        filter: drop-shadow(0 0 1px rgba(0, 0, 0, 0.75));
     }
 }
 

@@ -6,7 +6,7 @@ import { GamepadInputRelay, GamepadJoystick, GamepadButton, GamepadAxis } from "
 
 //------------------------------------------------------------------------------
 import { VirtualJoystick, type JoystickEvent } from "../VirtualJoystick";
-import { Button } from "../../components-common/Button";
+import { Button } from "../../components-common";
 
 import styles from "./style.module.css";
 

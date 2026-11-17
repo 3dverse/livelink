@@ -3,7 +3,7 @@ import React, { useContext, useEffect, useState } from "react";
 import { LivelinkContext } from "@3dverse/livelink-react";
 
 //------------------------------------------------------------------------------
-import { Skeleton } from "../../components-common/Skeleton";
+import { Skeleton } from "../../components-common";
 import styles from "./style.module.css";
 
 //------------------------------------------------------------------------------

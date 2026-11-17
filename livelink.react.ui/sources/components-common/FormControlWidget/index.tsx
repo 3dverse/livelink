@@ -3,10 +3,7 @@ import React from "react";
 
 //------------------------------------------------------------------------------
 import { hexToVec3, vec3ToHex } from "../../lib/helper-colors";
-import { Switch } from "../../components-common/Switch";
-import { Size } from "../../components-common/Input";
-import { InputVector } from "../../components-common/InputVector";
-import { InputNumber } from "../../components-common/InputNumber";
+import { Switch, InputVector, InputNumber, InputSize } from "../../components-common";
 
 //------------------------------------------------------------------------------
 export const FormControlWidget = ({
@@ -35,7 +32,7 @@ export const FormControlWidget = ({
         | "mat4"
         | "color"
         | any;
-    size?: Size;
+    size?: InputSize;
     onChange: (event: React.ChangeEvent<HTMLInputElement>, value: boolean | number | number[]) => void;
 }) => {
     //--------------------------------------------------------------------------

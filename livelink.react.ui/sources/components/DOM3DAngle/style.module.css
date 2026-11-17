@@ -135,10 +135,11 @@
     stroke-dasharray: 2 1.5;
 }
 
+/* In parts, each in the color of its zone, or whole, in the color of the current zone. */
 .sector {
-    fill: var(--color);
+    fill: var(--level-color);
     fill-opacity: var(--dom3d-angle-sector-opacity);
-    stroke: var(--color);
+    stroke: var(--level-color);
     stroke-width: var(--dom3d-angle-sector-outline-width);
     stroke-linejoin: round;
 }
@@ -148,7 +149,7 @@
     fill-opacity: var(--dom3d-angle-uncertainty-opacity);
 }
 
-.alerting .sector {
+.alerting .sector[data-current] {
     animation: alert-pulse 1s ease-in-out infinite;
 }
 

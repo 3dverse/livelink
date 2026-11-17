@@ -6,7 +6,7 @@ import { FaCopy } from "react-icons/fa6";
 import type { Vec3 } from "@3dverse/livelink";
 
 //------------------------------------------------------------------------------
-import { ContextMenu, ContextMenuItem } from "../../components-common/ContextMenu";
+import { ContextMenu, ContextMenuItem } from "../../components-common";
 import type { RotationGizmoAxis } from "./types";
 
 //------------------------------------------------------------------------------

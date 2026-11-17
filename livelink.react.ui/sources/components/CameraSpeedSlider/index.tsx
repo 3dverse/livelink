@@ -7,7 +7,7 @@ import { CameraController, CameraControllerPresets } from "@3dverse/livelink";
 import { useSceneInfo } from "@3dverse/livelink-react";
 
 //------------------------------------------------------------------------------
-import { Icon } from "../../components-common/Icon";
+import { Icon } from "../../components-common";
 import styles from "./style.module.css";
 import { DEFAULT_SPEEDS, computeDiagonalKm, generateSpeeds } from "./speeds";
 

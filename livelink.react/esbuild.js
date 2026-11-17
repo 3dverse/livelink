@@ -11,7 +11,7 @@ const commonBuildOptions = {
     bundle: true,
     platform: "browser",
     packages: "bundle",
-    external: [...Object.keys(pkg.peerDependencies), "threejs-math"],
+    external: [...Object.keys(pkg.peerDependencies)],
     sourcemap: true,
     define: {
         PACKAGE_NAME: `"${pkg.name}"`,

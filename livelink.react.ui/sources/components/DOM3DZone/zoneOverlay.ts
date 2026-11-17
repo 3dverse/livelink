@@ -8,8 +8,7 @@ const MAX_PIXEL_RATIO = 2;
 
 //------------------------------------------------------------------------------
 /**
- * The entity zones' three.js, on a canvas of its own laid over the viewport, as Mitek's control zone
- * is drawn.
+ * The entity zones' three.js, on a canvas of its own laid over the viewport.
  *
  * It is one of the viewport's overlays, for the moment it is drawn: the viewport draws its overlays
  * with every frame it composites, so the zone is rendered with that frame's camera and never drifts

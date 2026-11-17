@@ -1,4 +1,8 @@
 //------------------------------------------------------------------------------
+import { useEffect } from "react";
+import { useControls } from "leva";
+
+//------------------------------------------------------------------------------
 import {
     Livelink,
     Canvas,
@@ -41,7 +45,7 @@ function AppLayout() {
     return (
         <Canvas className="max-h-screen">
             {cube && cube.material && (
-                <ThresholdSlider material={cube.material.dataJSON} />
+                <ThresholdControl material={cube.material.dataJSON} />
             )}
             <Viewport cameraEntity={cameraEntity} className="w-full h-full">
                 <CameraController />
@@ -56,29 +60,30 @@ type MaterialInterface = {
 };
 
 //------------------------------------------------------------------------------
-function ThresholdSlider({ material }: { material: MaterialInterface }) {
+function ThresholdControl({ material }: { material: MaterialInterface }) {
     const threshold = material.threshold ?? 0;
 
-    return (
-        <div className="absolute bottom-[5vh] left-1/2 -translate-x-1/2 p-3 pt-2 bg-ground rounded-md shadow-md">
-            <label className="flex flex-col gap-1">
-                <p className="flex justify-between items-baseline gap-2">
-                    Threshold
-                    <span className="text-xs text-secondary tabular-nums">
-                        {threshold.toFixed(2)}
-                    </span>
-                </p>
-                <input
-                    type="range"
-                    min={0}
-                    max={1}
-                    step={0.01}
-                    value={threshold}
-                    onChange={e =>
-                        (material.threshold = parseFloat(e.target.value))
-                    }
-                />
-            </label>
-        </div>
+    const [, setControls] = useControls(
+        () => ({
+            threshold: {
+                value: threshold,
+                min: 0,
+                max: 1,
+                step: 0.01,
+                // Called when the material moves the slider too: only a drag
+                // writes to it.
+                onChange: (value: number, _path, { fromPanel }) => {
+                    if (fromPanel) material.threshold = value;
+                },
+            },
+        }),
+        [material],
     );
+
+    // The slider follows the material, which other clients can change too.
+    useEffect(() => {
+        setControls({ threshold });
+    }, [threshold, setControls]);
+
+    return null;
 }

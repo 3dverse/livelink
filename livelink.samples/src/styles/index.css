@@ -21,6 +21,9 @@
 @import "./tailwind/components/canvas.css";
 @import "./tailwind/components/scrollable-area.css";
 
+/* Sample */
+@import "./samples/sample-controls.css";
+
 :root {
     /* Font family */
 
@@ -37,7 +40,7 @@
 .stroke-solid {
     stroke-dashoffset: 0;
     stroke-dasharray: 300;
-    stroke-width: 4px;
+    stroke-width: 2px;
     transition:
         stroke-dashoffset 1s ease,
         opacity 1s ease;

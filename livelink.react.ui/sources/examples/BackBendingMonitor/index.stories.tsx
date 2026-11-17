@@ -14,7 +14,7 @@ import {
 //------------------------------------------------------------------------------
 import { DOM3DAngle } from "../../components/DOM3DAngle";
 import { useAngleExposure } from "../../components/DOM3DAngle/useAngleExposure";
-import { Button } from "../../components-common/Button";
+import { Button } from "../../components-common";
 import { SKELETON_SCENE_ID } from "../../../.storybook/sceneIds";
 import { NEUTRAL_POSTURE, type BodyPosture } from "./bodyRig";
 import {
